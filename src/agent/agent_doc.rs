@@ -48,13 +48,17 @@ impl AgentDoc {
 			OutputSection,
 			// Inside the code block
 			OutputCodeBlock,
+			// Below the after_all heading (perhaps not in a code block)
+			AfterAllSection,
+			// Inside the code block
+			AfterAllCodeBlock,
 		}
 
 		impl CaptureMode {
 			fn is_inside_code_block(&self) -> bool {
 				matches!(
 					self,
-					CaptureMode::ConfigTomlBlock | CaptureMode::DataCodeBlock | CaptureMode::OutputCodeBlock
+					CaptureMode::ConfigTomlBlock | CaptureMode::DataCodeBlock | CaptureMode::OutputCodeBlock | CaptureMode::AfterAllCodeBlock
 				)
 			}
 		}
@@ -65,6 +69,7 @@ impl AgentDoc {
 		let mut data_script = String::new();
 		let mut inst = String::new();
 		let mut output_script = String::new();
+		let mut after_all_script = String::new();
 
 		// -- The actual parsing
 		// NOTE: For now custom parsing. `markdown` and `pulldown-cmark` are losing information
@@ -81,6 +86,8 @@ impl AgentDoc {
 					capture_mode = CaptureMode::Inst;
 				} else if header == "output" {
 					capture_mode = CaptureMode::OutputSection;
+				} else if header == "after all" {
+					capture_mode = CaptureMode::AfterAllSection;
 				} else {
 					// Stop processing current section if new top-level header
 					capture_mode = CaptureMode::None;
@@ -138,6 +145,20 @@ impl AgentDoc {
 						push_line(&mut output_script, line);
 					}
 				}
+				CaptureMode::AfterAllSection => {
+					if line.starts_with("```rhai") {
+						capture_mode = CaptureMode::AfterAllCodeBlock;
+						continue;
+					}
+				}
+				CaptureMode::AfterAllCodeBlock => {
+					if line.starts_with("```") {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut after_all_script, line);
+					}
+				}
 			}
 		}
 
@@ -161,6 +182,7 @@ impl AgentDoc {
 			inst,
 			data_script: string_as_option_if_empty(data_script),
 			output_script: string_as_option_if_empty(output_script),
+			after_all_script: string_as_option_if_empty(after_all_script),
 			messages: None,
 		};
 
@@ -217,6 +239,11 @@ mod tests {
 			"output_script does not contain."
 		);
 
+		let after_all_script = agent.after_all_script().ok_or("Should have after_all_script")?;
+		assert!(
+			after_all_script.contains("/// Optional after all processing."),
+			"after_all_script does not contain."
+		);
 		Ok(())
 	}
 
@@ -244,6 +271,11 @@ mod tests {
 		assert!(
 			output_script.contains("/// Optional output processing."),
 			"output_script does not contain."
+		);
+		let after_all_script = agent.after_all_script().ok_or("Should have after_all_script")?;
+		assert!(
+			after_all_script.contains("/// Optional after all processing."),
+			"after_all_script does not contain."
 		);
 
 		Ok(())

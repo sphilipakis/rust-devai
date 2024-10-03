@@ -34,6 +34,10 @@ pub fn rhai_module() -> Module {
 		.in_global_namespace()
 		.set_into_module(&mut module, list_with_glob);
 
+	FuncRegistration::new("exists")
+		.in_global_namespace()
+		.set_into_module(&mut module, exists);
+
 	module
 }
 
@@ -104,4 +108,15 @@ fn save(file_path: &str, content: &str) -> RhaiResult {
 	}
 }
 
+/// ## RHAI Documentation
+/// ```rhai
+/// exists(file_path: string) -> bool
+/// ```
+/// 
+/// Checks if the file specified by `path` exists.
+fn exists(file_path: &str) -> RhaiResult {
+    let path = Path::new(file_path);
+    let exists = path.exists();
+    Ok(Dynamic::from_bool(exists))
+}
 // endregion: --- Rhai Functions

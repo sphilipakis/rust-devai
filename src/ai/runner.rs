@@ -40,7 +40,7 @@ pub async fn run_agent_items(
 		let mut join_set = JoinSet::new();
 		let mut in_progress = 0;
 
-		for (item_idx, item) in items.into_iter().enumerate() {
+		for (item_idx, item) in items.clone().into_iter().enumerate() {
 			let client_clone = client.clone();
 			let agent_clone = agent.clone();
 			let ai_run_config_clone = ai_run_config.clone();
@@ -78,11 +78,31 @@ pub async fn run_agent_items(
 				}
 			}
 		}
+		print!(">>>> {:?}", agent.after_all_script());
+		let response_value: Value = if let Some(after_all_script) = agent.after_all_script() {
+			let scope_output = json!({
+				"items": items.clone(),
+				// "data": data,
+				// "ai_output": ai_output,
+			});
+			rhai_eval(after_all_script, Some(scope_output))?
+		} else {
+			Value::Null
+		};
+		// if the response value is a String, then, print it
+		if let Some(response_txt) = response_value.as_str() {
+			println!("\n-- Agent After All Output:\n\n{response_txt}");
+		}
+		// Ok(response_value)
+		//  else {
+		// 	ai_output.into()
+		// };
 	}
 	// If no items, have one with Value::null
 	else {
 		run_agent_item(0, client, agent, Value::Null, &ai_run_config).await?;
 	}
+
 
 	Ok(())
 }

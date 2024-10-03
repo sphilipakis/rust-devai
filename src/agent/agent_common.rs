@@ -75,6 +75,9 @@ impl Agent {
 	pub fn output_script(&self) -> Option<&str> {
 		self.inner.output_script.as_deref()
 	}
+	pub fn after_all_script(&self) -> Option<&str> {
+		self.inner.after_all_script.as_deref()
+	}
 }
 
 // region:    --- AgentInner
@@ -100,5 +103,6 @@ pub struct AgentInner {
 	#[allow(unused)]
 	pub messages: Option<Vec<ChatMessage>>,
 	pub output_script: Option<String>,
+	pub after_all_script: Option<String>,
 }
 // endregion: --- AgentInner

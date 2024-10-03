@@ -16,12 +16,16 @@
 use crate::support::decode_html_entities;
 use rhai::plugin::RhaiResult;
 use rhai::{FuncRegistration, Module};
+use std::path::Path;
 
 pub fn rhai_module() -> Module {
 	// Create a module for text functions
 	let mut module = Module::new();
 
 	// Register the functions to the module
+	FuncRegistration::new("remove_last_path_component")
+		.in_global_namespace()
+		.set_into_module(&mut module, remove_last_path_component);
 
 	FuncRegistration::new("escape_decode")
 		.in_global_namespace()
@@ -91,7 +95,13 @@ fn remove_first_lines(content: &str, num_of_lines: usize) -> &str {
 	// Return the remaining content from `start_idx` to the end of the string
 	&content[start_idx..]
 }
-
+fn remove_last_path_component(path: &str) -> String {
+    let path = Path::new(path);
+    match path.parent() {
+        Some(parent) => parent.to_str().unwrap_or("").to_string(),
+        None => "".to_string(),
+    }
+}
 ///  ## RHAI Documentation
 /// ```rhai
 /// remove_last_line(content: string) -> string
