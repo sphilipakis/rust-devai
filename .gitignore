@@ -8,6 +8,7 @@ _*
 !_init/
 # '_' in src dir, ok.
 !**/src/**/_*
+!_init/**/_*
 
 *.lock
 *.lockb
