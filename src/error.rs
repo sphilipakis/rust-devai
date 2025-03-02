@@ -43,8 +43,9 @@ pub enum Error {
 	#[display("name field is missing or empty in '{_0}'")]
 	NameMissing(String),
 
+	#[display("Fail to install pack: {aipack_ref}\nCause: {cause}")]
 	FailToInstall {
-		aipack_file: String,
+		aipack_ref: String,
 		cause: String,
 	},
 

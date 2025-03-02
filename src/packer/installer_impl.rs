@@ -1,6 +1,7 @@
 use crate::dir_context::DirContext;
 use crate::pack::PackIdentity;
-use crate::packer::pack_toml::{PackToml, parse_validate_pack_toml};
+use crate::packer::PackToml;
+use crate::packer::pack_toml::parse_validate_pack_toml;
 use crate::support::zip;
 use crate::{Error, Result};
 use reqwest::Client;
@@ -12,14 +13,15 @@ use time_tz::OffsetDateTimeExt;
 
 // region:    --- PackUri
 
-enum PackUri {
+#[derive(Debug, Clone)]
+pub enum PackUri {
 	RepoPack(PackIdentity),
 	LocalPath(String),
 	HttpLink(String),
 }
 
 impl PackUri {
-	fn parse(uri: &str) -> Self {
+	pub fn parse(uri: &str) -> Self {
 		// Try to parse as PackIdentity first
 		if let Ok(pack_identity) = PackIdentity::from_str(uri) {
 			return PackUri::RepoPack(pack_identity);
@@ -31,6 +33,16 @@ impl PackUri {
 		} else {
 			// Otherwise, treat as local path
 			PackUri::LocalPath(uri.to_string())
+		}
+	}
+}
+
+impl std::fmt::Display for PackUri {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			PackUri::RepoPack(identity) => write!(f, "{}", identity),
+			PackUri::LocalPath(path) => write!(f, "local file '{}'", path),
+			PackUri::HttpLink(url) => write!(f, "URL '{}'", url),
 		}
 	}
 }
@@ -99,181 +111,203 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str) -> Result<In
 	let pack_uri = PackUri::parse(pack_uri);
 
 	// Get the aipack file path, downloading if needed
-	let aipack_zipped_file = match pack_uri {
-		PackUri::RepoPack(pack_identity) => download_from_repo(dir_context, &pack_identity).await?,
-		PackUri::LocalPath(path) => resolve_local_path(dir_context, &path)?,
-		PackUri::HttpLink(url) => download_pack(dir_context, &url).await?,
+	let (aipack_zipped_file, pack_uri) = match pack_uri {
+		pack_uri @ PackUri::RepoPack(_) => download_from_repo(dir_context, pack_uri).await?,
+		pack_uri @ PackUri::LocalPath(_) => resolve_local_path(dir_context, pack_uri)?,
+		pack_uri @ PackUri::HttpLink(_) => download_pack(dir_context, pack_uri).await?,
 	};
 
 	// Validate file exists and has correct extension
-	validate_aipack_file(&aipack_zipped_file)?;
+	validate_aipack_file(&aipack_zipped_file, &pack_uri)?;
 
 	// Get the zip file size
-	let zip_size = get_file_size(&aipack_zipped_file)?;
+	let zip_size = get_file_size(&aipack_zipped_file, &pack_uri)?;
 
 	// Common installation steps for both local and remote files
-	let mut installed_pack = install_aipack_file(dir_context, &aipack_zipped_file)?;
+	let mut installed_pack = install_aipack_file(dir_context, &aipack_zipped_file, &pack_uri)?;
 	installed_pack.zip_size = zip_size;
 
 	Ok(installed_pack)
 }
 
 /// Downloads a pack from the repository based on PackIdentity
-async fn download_from_repo(dir_context: &DirContext, pack_identity: &PackIdentity) -> Result<SPath> {
-	// Construct the URL to the latest.toml file
-	let latest_toml_url = format!(
-		"https://repo.aipack.ai/pack/{}/{}/stable/latest.toml",
-		pack_identity.namespace, pack_identity.name
-	);
+async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::RepoPack(ref pack_identity) = pack_uri {
+		// Construct the URL to the latest.toml file
+		let latest_toml_url = format!(
+			"https://repo.aipack.ai/pack/{}/{}/stable/latest.toml",
+			pack_identity.namespace, pack_identity.name
+		);
 
-	// Fetch the latest.toml file
-	let client = Client::new();
-	let response = client.get(&latest_toml_url).send().await.map_err(|e| Error::FailToInstall {
-		aipack_file: latest_toml_url.clone(),
-		cause: format!("Failed to download latest.toml: {}", e),
-	})?;
+		// Fetch the latest.toml file
+		let client = Client::new();
+		let response = client.get(&latest_toml_url).send().await.map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to download latest.toml: {}", e),
+		})?;
 
-	// Check if the request was successful
-	if !response.status().is_success() {
-		return Err(Error::FailToInstall {
-			aipack_file: latest_toml_url,
-			cause: format!("HTTP error when fetching latest.toml: {}", response.status()),
-		});
+		// Check if the request was successful
+		if !response.status().is_success() {
+			return Err(Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("HTTP error when fetching latest.toml: {}", response.status()),
+			});
+		}
+
+		// Parse the latest.toml content
+		let latest_toml_content = response.text().await.map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to read latest.toml content: {}", e),
+		})?;
+
+		let latest_toml: LatestToml = toml::from_str(&latest_toml_content).map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to parse latest.toml: {}", e),
+		})?;
+
+		// Validate the latest.toml content
+		let (_version, rel_path) = latest_toml.validate()?;
+
+		// Construct the full URL to the .aipack file
+		let base_url = format!(
+			"https://repo.aipack.ai/pack/{}/{}/stable/",
+			pack_identity.namespace, pack_identity.name
+		);
+
+		let aipack_url = format!("{}{}", base_url, rel_path);
+
+		// Use HttpLink to download the actual pack
+		let http_uri = PackUri::HttpLink(aipack_url);
+		let (aipack_file, _) = download_pack(dir_context, http_uri).await?;
+
+		return Ok((aipack_file, pack_uri));
 	}
 
-	// Parse the latest.toml content
-	let latest_toml_content = response.text().await.map_err(|e| Error::FailToInstall {
-		aipack_file: latest_toml_url.clone(),
-		cause: format!("Failed to read latest.toml content: {}", e),
-	})?;
-
-	let latest_toml: LatestToml = toml::from_str(&latest_toml_content).map_err(|e| Error::FailToInstall {
-		aipack_file: latest_toml_url.clone(),
-		cause: format!("Failed to parse latest.toml: {}", e),
-	})?;
-
-	// Validate the latest.toml content
-	let (_version, rel_path) = latest_toml.validate()?;
-
-	// Construct the full URL to the .aipack file
-	let base_url = format!(
-		"https://repo.aipack.ai/pack/{}/{}/stable/",
-		pack_identity.namespace, pack_identity.name
-	);
-
-	let aipack_url = format!("{}{}", base_url, rel_path);
-
-	// Download the aipack file
-	download_pack(dir_context, &aipack_url).await
+	Err(Error::custom(
+		"Expected RepoPack variant but got a different one".to_string(),
+	))
 }
 
 /// Resolves a local path to an absolute SPath
-fn resolve_local_path(dir_context: &DirContext, path: &str) -> Result<SPath> {
-	let aipack_zipped_file = SPath::from(path);
+fn resolve_local_path(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::LocalPath(ref path) = pack_uri {
+		let aipack_zipped_file = SPath::from(path);
 
-	if aipack_zipped_file.path().is_absolute() {
-		Ok(aipack_zipped_file)
+		if aipack_zipped_file.path().is_absolute() {
+			Ok((aipack_zipped_file, pack_uri))
+		} else {
+			let absolute_path = dir_context.current_dir().join_str(aipack_zipped_file.to_str());
+			Ok((absolute_path, pack_uri))
+		}
 	} else {
-		Ok(dir_context.current_dir().join_str(aipack_zipped_file.to_str()))
+		Err(Error::custom(
+			"Expected LocalPath variant but got a different one".to_string(),
+		))
 	}
 }
 
 /// Downloads a pack from a URL and returns the path to the downloaded file
-async fn download_pack(dir_context: &DirContext, url: &str) -> Result<SPath> {
-	// Get the download directory
-	let download_dir = dir_context.aipack_paths().get_base_pack_download_dir()?;
+async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::HttpLink(ref url) = pack_uri {
+		// Get the download directory
+		let download_dir = dir_context.aipack_paths().get_base_pack_download_dir()?;
 
-	// Create the download directory if it doesn't exist
-	if !download_dir.exists() {
-		ensure_dir(&download_dir)?;
+		// Create the download directory if it doesn't exist
+		if !download_dir.exists() {
+			ensure_dir(&download_dir)?;
+		}
+
+		// Extract the filename from the URL
+		let url_path = url.split('/').last().unwrap_or("unknown.aipack");
+		let filename = url_path.replace(' ', "-");
+
+		// Create a timestamped filename using the time crate
+		let now = OffsetDateTime::now_utc();
+		// attempt to get local now (otherwise, no big deal, same machine so should be consistent return)
+		let now = if let Ok(local) = time_tz::system::get_timezone() {
+			now.to_timezone(local)
+		} else {
+			now
+		};
+
+		let timestamp =
+			now.format(&time::format_description::well_known::Rfc3339)
+				.map_err(|e| Error::FailToInstall {
+					aipack_ref: pack_uri.to_string(),
+					cause: format!("Failed to format timestamp: {}", e),
+				})?;
+
+		// Create a cleaner timestamp for filenames (removing colons, etc.)
+		let file_timestamp = timestamp.replace([':', 'T'], "-");
+		let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
+		let timestamped_filename = format!("{}-{}", file_timestamp, filename);
+		let download_path = download_dir.join_str(&timestamped_filename);
+
+		// Download the file
+		let client = Client::new();
+		let response = client.get(url).send().await.map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to download file: {}", e),
+		})?;
+
+		// Check if the request was successful
+		if !response.status().is_success() {
+			return Err(Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("HTTP error: {}", response.status()),
+			});
+		}
+
+		// Stream the response body to file
+		let mut stream = response.bytes_stream();
+		use tokio::fs::File as TokioFile;
+		use tokio::io::AsyncWriteExt;
+
+		// We need to use tokio's async file for proper streaming
+		let mut file = TokioFile::create(download_path.path())
+			.await
+			.map_err(|e| Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("Failed to create file: {}", e),
+			})?;
+
+		while let Some(chunk_result) = tokio_stream::StreamExt::next(&mut stream).await {
+			let chunk = chunk_result.map_err(|e| Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("Failed to download chunk: {}", e),
+			})?;
+
+			file.write_all(&chunk).await.map_err(|e| Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("Failed to write chunk to file: {}", e),
+			})?;
+		}
+
+		file.flush().await.map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to flush file: {}", e),
+		})?;
+
+		return Ok((download_path, pack_uri));
 	}
 
-	// Extract the filename from the URL
-	let url_path = url.split('/').last().unwrap_or("unknown.aipack");
-	let filename = url_path.replace(' ', "-");
-
-	// Create a timestamped filename using the time crate
-	let now = OffsetDateTime::now_utc();
-	// attempt to get local now (otherwise, no big deal, same machine so should be consistent return)
-	let now = if let Ok(local) = time_tz::system::get_timezone() {
-		now.to_timezone(local)
-	} else {
-		now
-	};
-
-	let timestamp = now
-		.format(&time::format_description::well_known::Rfc3339)
-		.map_err(|e| Error::FailToInstall {
-			aipack_file: url.to_string(),
-			cause: format!("Failed to format timestamp: {}", e),
-		})?;
-
-	// Create a cleaner timestamp for filenames (removing colons, etc.)
-	let file_timestamp = timestamp.replace([':', 'T'], "-");
-	let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
-	let timestamped_filename = format!("{}-{}", file_timestamp, filename);
-	let download_path = download_dir.join_str(&timestamped_filename);
-
-	// Download the file
-	let client = Client::new();
-	let response = client.get(url).send().await.map_err(|e| Error::FailToInstall {
-		aipack_file: url.to_string(),
-		cause: format!("Failed to download file: {}", e),
-	})?;
-
-	// Check if the request was successful
-	if !response.status().is_success() {
-		return Err(Error::FailToInstall {
-			aipack_file: url.to_string(),
-			cause: format!("HTTP error: {}", response.status()),
-		});
-	}
-
-	// Stream the response body to file
-	let mut stream = response.bytes_stream();
-	use tokio::fs::File as TokioFile;
-	use tokio::io::AsyncWriteExt;
-
-	// We need to use tokio's async file for proper streaming
-	let mut file = TokioFile::create(download_path.path())
-		.await
-		.map_err(|e| Error::FailToInstall {
-			aipack_file: url.to_string(),
-			cause: format!("Failed to create file: {}", e),
-		})?;
-
-	while let Some(chunk_result) = tokio_stream::StreamExt::next(&mut stream).await {
-		let chunk = chunk_result.map_err(|e| Error::FailToInstall {
-			aipack_file: url.to_string(),
-			cause: format!("Failed to download chunk: {}", e),
-		})?;
-
-		file.write_all(&chunk).await.map_err(|e| Error::FailToInstall {
-			aipack_file: url.to_string(),
-			cause: format!("Failed to write chunk to file: {}", e),
-		})?;
-	}
-
-	file.flush().await.map_err(|e| Error::FailToInstall {
-		aipack_file: url.to_string(),
-		cause: format!("Failed to flush file: {}", e),
-	})?;
-
-	Ok(download_path)
+	Err(Error::custom(
+		"Expected HttpLink variant but got a different one".to_string(),
+	))
 }
 
 /// Validates that the file exists and has the correct extension
-fn validate_aipack_file(aipack_zipped_file: &SPath) -> Result<()> {
+fn validate_aipack_file(aipack_zipped_file: &SPath, pack_uri: &PackUri) -> Result<()> {
 	if !aipack_zipped_file.exists() {
 		return Err(Error::FailToInstall {
-			aipack_file: aipack_zipped_file.to_string(),
+			aipack_ref: pack_uri.to_string(),
 			cause: "aipack file does not exist".to_string(),
 		});
 	}
 
 	if aipack_zipped_file.ext() != "aipack" {
 		return Err(Error::FailToInstall {
-			aipack_file: aipack_zipped_file.to_string(),
+			aipack_ref: pack_uri.to_string(),
 			cause: format!(
 				"aipack file must be '.aipack' file, but was {}",
 				aipack_zipped_file.name()
@@ -285,9 +319,9 @@ fn validate_aipack_file(aipack_zipped_file: &SPath) -> Result<()> {
 }
 
 /// Get the size of a file in bytes
-fn get_file_size(file_path: &SPath) -> Result<usize> {
+fn get_file_size(file_path: &SPath, pack_uri: &PackUri) -> Result<usize> {
 	let metadata = std::fs::metadata(file_path.path()).map_err(|e| Error::FailToInstall {
-		aipack_file: file_path.to_string(),
+		aipack_ref: pack_uri.to_string(),
 		cause: format!("Failed to get file metadata: {}", e),
 	})?;
 
@@ -296,14 +330,18 @@ fn get_file_size(file_path: &SPath) -> Result<usize> {
 
 /// Common installation logic for both local and remote aipack files
 /// Return the InstalledPack containing pack information and installation details
-fn install_aipack_file(dir_context: &DirContext, aipack_zipped_file: &SPath) -> Result<InstalledPack> {
+fn install_aipack_file(
+	dir_context: &DirContext,
+	aipack_zipped_file: &SPath,
+	pack_uri: &PackUri,
+) -> Result<InstalledPack> {
 	// -- Get the aipack base pack install dir
 	// This is the pack base dir and now, we need ot add `namespace/pack_name`
 	let pack_installed_dir = dir_context.aipack_paths().get_base_pack_installed_dir()?;
 
 	if !pack_installed_dir.exists() {
 		return Err(Error::FailToInstall {
-			aipack_file: aipack_zipped_file.to_string(),
+			aipack_ref: pack_uri.to_string(),
 			cause: format!(
 				"aipack base directory '{pack_installed_dir}' not found.\n   recommendation: Run 'aip init'"
 			),
@@ -311,12 +349,25 @@ fn install_aipack_file(dir_context: &DirContext, aipack_zipped_file: &SPath) -> 
 	}
 
 	// -- Extract the pack.toml from zip
-	let toml_content = zip::extract_text_content(aipack_zipped_file, "pack.toml")?;
-	let pack_toml = parse_validate_pack_toml(&toml_content, &format!("{aipack_zipped_file} pack.toml"))?;
+	let toml_content =
+		zip::extract_text_content(aipack_zipped_file, "pack.toml").map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to extract pack.toml: {}", e),
+		})?;
+
+	let pack_toml = parse_validate_pack_toml(&toml_content, &format!("pack.toml for {}", pack_uri)).map_err(|e| {
+		Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Invalid pack.toml for '{}': {}", pack_uri, e),
+		}
+	})?;
 
 	let pack_target_dir = pack_installed_dir.join_str(&pack_toml.namespace).join_str(&pack_toml.name);
 
-	zip::unzip_file(aipack_zipped_file, &pack_target_dir)?;
+	zip::unzip_file(aipack_zipped_file, &pack_target_dir).map_err(|e| Error::FailToInstall {
+		aipack_ref: pack_uri.to_string(),
+		cause: format!("Failed to unzip pack: {}", e),
+	})?;
 
 	// Calculate the size of the installed pack
 	let size = calculate_directory_size(&pack_target_dir)?;

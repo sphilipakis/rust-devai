@@ -1,10 +1,20 @@
 //! Module that pack the files into their .aipack
 
-use crate::packer::pack_toml::{PackDirData, parse_validate_pack_toml};
+use crate::packer::pack_toml::parse_validate_pack_toml;
+use crate::packer::PackToml;
 use crate::support::zip;
 use crate::{Error, Result};
 use camino::Utf8Path;
+use simple_fs::SPath;
 use std::fs;
+
+/// Data returned when packing a directory
+#[derive(Debug)]
+pub struct PackDirData {
+    pub pack_file: SPath,
+    #[allow(unused)]
+    pub pack_toml: PackToml,
+}
 
 /// Packs a directory into a .aipack file
 ///
