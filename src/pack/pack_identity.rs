@@ -21,10 +21,10 @@ impl FromStr for PackIdentity {
 
 		// Check for valid pattern: name@namespace
 		match (parts.first(), parts.get(1), parts.get(2)) {
-			(Some(name), Some(namespace), None) => {
+			(Some(namespace), Some(name), None) => {
 				// name@namespace format
-				Self::validate_name(name)?;
 				Self::validate_namespace(namespace)?;
+				Self::validate_name(name)?;
 				Ok(PackIdentity {
 					namespace: namespace.to_string(),
 					name: name.to_string(),
@@ -97,15 +97,15 @@ mod tests {
 	fn test_agent_pack_identity_valids() -> Result<()> {
 		// -- Setup & Fixtures
 		let data = &[
-			("pack-name@default", "pack-name", "default"),
-			("pack-name@my-namespace", "pack-name", "my-namespace"),
+			("default@pack-name", "pack-name", "default"),
+			("my-namespace@pack-name", "pack-name", "my-namespace"),
 			(
-				"complex_name_with_underscores@other-namespace",
+				"other-namespace@complex_name_with_underscores",
 				"complex_name_with_underscores",
 				"other-namespace",
 			),
 			(
-				"_starts_with_underscore@_namespace",
+				"_namespace@_starts_with_underscore",
 				"_starts_with_underscore",
 				"_namespace",
 			),
@@ -133,21 +133,21 @@ mod tests {
 				"pack-name",
 				"Missing '@' symbol in pack identity. Format must be 'name@namespace'",
 			),
-			("pack-name@namespace@extra", "Too many '@' symbols in pack identity"),
+			("namespace@pack-name@extra", "Too many '@' symbols in pack identity"),
 			(
-				"1pack-name@namespace",
+				"namespace@1pack-name",
 				"Pack name can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
 			),
 			(
-				"pack-name@1namespace",
+				"1namespace@pack-name",
 				"Pack namespace can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
 			),
 			(
-				"pack-name@na me$%^",
+				"na me$%^@pack-name",
 				"Pack namespace can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
 			),
 			(
-				"na me$%^@namespace",
+				"namespace@na me$%^",
 				"Pack name can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
 			),
 		];
