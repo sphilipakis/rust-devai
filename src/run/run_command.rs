@@ -46,6 +46,18 @@ pub async fn run_command_agent(
 
 	let literals = Literals::from_dir_context_and_agent_path(runtime.dir_context(), &agent)?;
 
+	// display relative agent path if possible
+	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
+		Ok(path) => path.to_string(),
+		Err(_) => agent.file_path().to_string(),
+	};
+
+	hub.publish(format!(
+		"\n======= RUNNING: {}\n     Agent path: {agent_path}\n",
+		agent.name()
+	))
+	.await;
+
 	// -- Run the before all
 	let BeforeAllResponse {
 		inputs,
@@ -266,6 +278,8 @@ pub async fn run_command_agent(
 	} else {
 		None
 	};
+
+	hub.publish(format!("\n======= COMPLETED: {}", agent.name())).await;
 
 	Ok(RunCommandResponse { after_all, outputs })
 }

@@ -3,7 +3,7 @@
 
 use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
-use crate::dir_context::{DirContext, PathResolver, find_pack_dirs};
+use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
 use crate::pack::LocalPackRef;
 use crate::support::tomls::parse_toml;
 use crate::{Error, Result};
@@ -14,8 +14,8 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 
 	let base_options = load_and_merge_configs_agent_options(dir_context)?;
 
-	// -- For now, if end with .aip, we try to find direct
 	let agent = match partial_agent_ref {
+		// -- If local path, we try to find the .aip and run it
 		PartialAgentRef::LocalPath(local_path) => {
 			let path = dir_context.resolve_path(&local_path, PathResolver::CurrentDir)?;
 			let possible_paths = possible_aip_paths(path.clone(), false);
@@ -33,20 +33,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 			doc.into_agent(name, agent_ref, base_options)?
 		}
 		PartialAgentRef::PackRef(pack_ref) => {
-			let pack_dirs = find_pack_dirs(dir_context, pack_ref.namespace.as_deref(), Some(&pack_ref.name))?;
-
-			// -- in case > 1, for now, no support
-			if pack_dirs.len() > 1 {
-				return Err(Error::custom(format!(
-					"{name} matches multiple AI packs across different namespaces.\n\nRun aip run ... with one of the full AI pack references below:\n\n{}\n",
-					pack_dirs.iter().map(|p| p.to_string()).collect::<Vec<String>>().join("\n")
-				)));
-			}
-
-			// -- Get the pack dir
-			let Some(pack_dir) = pack_dirs.into_iter().next() else {
-				return Err(Error::custom(format!("No aipack matches for {pack_ref}.")));
-			};
+			let pack_dir = find_to_run_pack_dir(dir_context, pack_ref.namespace.as_deref(), Some(&pack_ref.name))?;
 
 			// -- Find the aip path
 			// Note: if it is None, the pack_dir, then, we have the as_dir to avoid do the dir.aip

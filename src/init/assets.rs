@@ -44,7 +44,7 @@ pub fn extract_template_pack_toml_zfile() -> Result<ZFile> {
 }
 
 pub fn extract_template_zfile(path: &str) -> Result<ZFile> {
-	extract_zfile("template", path)
+	extract_zfile("_template", path)
 }
 
 // endregion: --- Template ZFiles

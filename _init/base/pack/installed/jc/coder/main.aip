@@ -45,10 +45,9 @@ local _line_blocks, inst_content = utils.text.extract_line_blocks(inst,
                                              {starts_with = ">", extrude = "content"})
 inst = utils.text.trim(inst_content)
 
-print("\nOPEN your @coder prompt file: " .. prompt_file_rel_path .. "\n\n")
-
 -- Determine if we should keep
 if inst == "" then
+    print("\nOPEN your @coder prompt file: " .. prompt_file_rel_path .. "\n\n")
     return aipack.skip("Empty instruction - Start writing and do a Redo.")
 end
 
@@ -96,8 +95,12 @@ else
     print("INFO: No base_dir, update in place ")
 end
 
+print("\nOPEN your @coder prompt file: " .. prompt_file_rel_path .. "\n")
+
+
 -- == Build the inputs(for now, only one)
 local input_base = {
+    prompt_file_rel_path         = prompt_file_rel_path,
     default_language             = meta.default_language or "Rust Programming",
     knowledge_refs               = knowledge_refs,
     prompt_template              = p_values.prompt_template,
@@ -371,6 +374,6 @@ local prompt_content = first_part .. "\n\n" .. ai_content_for_prompt
 
 utils.file.save(data.prompt_path, prompt_content)
 
--- This will be printed by aipack if it is a string
-return msg
+print("\nExecuted from your @coder prompt file: " .. data.prompt_file_rel_path .. "\n")
+
 ```
