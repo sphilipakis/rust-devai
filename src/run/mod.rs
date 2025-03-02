@@ -2,10 +2,13 @@
 mod literals;
 mod run_input;
 
+mod ai_response;
 mod genai_client;
 mod run_command;
 mod run_options;
 mod runtime;
+
+use ai_response::*;
 
 pub use genai_client::*;
 pub use run_command::*;

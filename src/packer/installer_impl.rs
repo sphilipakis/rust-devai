@@ -5,11 +5,8 @@ use crate::{Error, Result};
 use reqwest::Client;
 use simple_fs::{SPath, ensure_dir};
 use std::fs::File;
-use std::io::{Write, copy};
-use std::path::Path;
-use std::time::SystemTime;
 use time::OffsetDateTime;
-use time_tz::{OffsetDateTimeExt, timezones};
+use time_tz::OffsetDateTimeExt;
 
 // region:    --- PackUri
 
@@ -33,6 +30,7 @@ impl PackUri {
 pub struct InstalledPack {
 	pub pack_toml: PackToml,
 	pub path: SPath,
+	#[allow(unused)]
 	pub size: usize,
 	pub zip_size: usize,
 }
@@ -133,7 +131,7 @@ async fn download_pack(dir_context: &DirContext, url: &str) -> Result<SPath> {
 	}
 
 	// Create the output file
-	let mut file = File::create(download_path.path()).map_err(|e| Error::FailToInstall {
+	let _file = File::create(download_path.path()).map_err(|e| Error::FailToInstall {
 		aipack_file: url.to_string(),
 		cause: format!("Failed to create file: {}", e),
 	})?;
