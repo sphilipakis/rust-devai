@@ -34,7 +34,7 @@ pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) 
 
 	// Create the output filename
 	let aipack_filename = format!(
-		"{}-{}-v-{}.aipack",
+		"{}@{}-v{}.aipack",
 		pack_toml.namespace, pack_toml.name, normalized_version
 	);
 	let aipack_path = dest_dir.join(aipack_filename);
