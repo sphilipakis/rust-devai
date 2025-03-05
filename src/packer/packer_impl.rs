@@ -2,6 +2,7 @@
 
 use crate::packer::PackToml;
 use crate::packer::pack_toml::parse_validate_pack_toml;
+use crate::packer::support;
 use crate::support::zip;
 use crate::{Error, Result};
 use camino::Utf8Path;
@@ -40,7 +41,7 @@ pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) 
 	let pack_toml = parse_validate_pack_toml(&toml_content, toml_path.as_str())?;
 
 	// Normalize version - replace special characters with hyphens
-	let normalized_version = normalize_version(&pack_toml.version);
+	let normalized_version = support::normalize_version(&pack_toml.version);
 
 	// Create the output filename
 	let aipack_filename = format!(
@@ -61,31 +62,6 @@ pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) 
 		pack_file: aipack_path.into(),
 		pack_toml,
 	})
-}
-
-/// Normalizes a version string by replacing dots and special characters with hyphens
-/// This is just to write the file names (cosmetic)
-/// and ensuring no consecutive hyphens
-fn normalize_version(version: &str) -> String {
-	let mut result = String::new();
-	let mut last_was_hyphen = false;
-
-	for c in version.chars() {
-		if c.is_alphanumeric() {
-			result.push(c);
-			last_was_hyphen = false;
-		} else if !last_was_hyphen {
-			result.push('-');
-			last_was_hyphen = true;
-		}
-	}
-
-	// Remove trailing hyphen if exists
-	if result.ends_with('-') {
-		result.pop();
-	}
-
-	result
 }
 
 // region:    --- Tests

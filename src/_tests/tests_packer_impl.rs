@@ -8,19 +8,6 @@ use std::fs;
 pub type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
-fn test_packer_impl_normalize_version_simple() -> Result<()> {
-	assert_eq!(normalize_version("1.0.0"), "1-0-0");
-	assert_eq!(normalize_version("1.0-alpha"), "1-0-alpha");
-	assert_eq!(normalize_version("1.0 beta"), "1-0-beta");
-	assert_eq!(normalize_version("1.0-beta-2"), "1-0-beta-2");
-	assert_eq!(normalize_version("1.0--beta--2"), "1-0-beta-2");
-	assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
-	assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
-
-	Ok(())
-}
-
-#[test]
 fn test_packer_impl_pack_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_for_temp_dir()?;

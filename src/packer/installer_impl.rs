@@ -1,7 +1,7 @@
 use crate::dir_context::DirContext;
 use crate::pack::PackIdentity;
 use crate::packer::PackToml;
-use crate::packer::pack_toml::parse_validate_pack_toml;
+use crate::packer::support;
 use crate::support::zip;
 use crate::{Error, Result};
 use reqwest::Client;
@@ -118,10 +118,10 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str) -> Result<In
 	};
 
 	// Validate file exists and has correct extension
-	validate_aipack_file(&aipack_zipped_file, &pack_uri)?;
+	support::validate_aipack_file(&aipack_zipped_file, &pack_uri.to_string())?;
 
 	// Get the zip file size
-	let zip_size = get_file_size(&aipack_zipped_file, &pack_uri)?;
+	let zip_size = support::get_file_size(&aipack_zipped_file, &pack_uri.to_string())?;
 
 	// Common installation steps for both local and remote files
 	let mut installed_pack = install_aipack_file(dir_context, &aipack_zipped_file, &pack_uri)?;
@@ -296,38 +296,6 @@ async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(S
 	))
 }
 
-/// Validates that the file exists and has the correct extension
-fn validate_aipack_file(aipack_zipped_file: &SPath, pack_uri: &PackUri) -> Result<()> {
-	if !aipack_zipped_file.exists() {
-		return Err(Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: "aipack file does not exist".to_string(),
-		});
-	}
-
-	if aipack_zipped_file.ext() != "aipack" {
-		return Err(Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!(
-				"aipack file must be '.aipack' file, but was {}",
-				aipack_zipped_file.name()
-			),
-		});
-	}
-
-	Ok(())
-}
-
-/// Get the size of a file in bytes
-fn get_file_size(file_path: &SPath, pack_uri: &PackUri) -> Result<usize> {
-	let metadata = std::fs::metadata(file_path.path()).map_err(|e| Error::FailToInstall {
-		aipack_ref: pack_uri.to_string(),
-		cause: format!("Failed to get file metadata: {}", e),
-	})?;
-
-	Ok(metadata.len() as usize)
-}
-
 /// Common installation logic for both local and remote aipack files
 /// Return the InstalledPack containing pack information and installation details
 fn install_aipack_file(
@@ -353,19 +321,8 @@ fn install_aipack_file(
 		});
 	}
 
-	// -- Extract the pack.toml from zip
-	let toml_content =
-		zip::extract_text_content(aipack_zipped_file, "pack.toml").map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to extract pack.toml: {}", e),
-		})?;
-
-	let pack_toml = parse_validate_pack_toml(&toml_content, &format!("pack.toml for {}", pack_uri)).map_err(|e| {
-		Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Invalid pack.toml for '{}': {}", pack_uri, e),
-		}
-	})?;
+	// -- Extract the pack.toml from zip and validate
+	let pack_toml = support::extract_pack_toml_from_pack_file(aipack_zipped_file)?;
 
 	let pack_target_dir = pack_installed_dir.join_str(&pack_toml.namespace).join_str(&pack_toml.name);
 
@@ -375,7 +332,7 @@ fn install_aipack_file(
 	})?;
 
 	// Calculate the size of the installed pack
-	let size = calculate_directory_size(&pack_target_dir)?;
+	let size = support::calculate_directory_size(&pack_target_dir)?;
 
 	Ok(InstalledPack {
 		pack_toml,
@@ -383,21 +340,6 @@ fn install_aipack_file(
 		size,
 		zip_size: 0, // This will be populated by the caller
 	})
-}
-
-/// Calculate the total size of a directory recursively
-fn calculate_directory_size(dir_path: &SPath) -> Result<usize> {
-	use walkdir::WalkDir;
-
-	let total_size = WalkDir::new(dir_path.path())
-		.into_iter()
-		.filter_map(|entry| entry.ok())
-		.filter_map(|entry| entry.metadata().ok())
-		.filter(|metadata| metadata.is_file())
-		.map(|metadata| metadata.len() as usize)
-		.sum();
-
-	Ok(total_size)
 }
 
 // region:    --- Tests
