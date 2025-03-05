@@ -1,0 +1,7 @@
+[pack]
+namespace = "test"
+
+name = "test_pack_01"
+version = "0.1.0"
+
+

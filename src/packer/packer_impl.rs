@@ -1,7 +1,7 @@
 //! Module that pack the files into their .aipack
 
-use crate::packer::pack_toml::parse_validate_pack_toml;
 use crate::packer::PackToml;
+use crate::packer::pack_toml::parse_validate_pack_toml;
 use crate::support::zip;
 use crate::{Error, Result};
 use camino::Utf8Path;
@@ -11,9 +11,9 @@ use std::fs;
 /// Data returned when packing a directory
 #[derive(Debug)]
 pub struct PackDirData {
-    pub pack_file: SPath,
-    #[allow(unused)]
-    pub pack_toml: PackToml,
+	pub pack_file: SPath,
+	#[allow(unused)]
+	pub pack_toml: PackToml,
 }
 
 /// Packs a directory into a .aipack file
@@ -91,23 +91,7 @@ fn normalize_version(version: &str) -> String {
 // region:    --- Tests
 
 #[cfg(test)]
-mod tests {
-	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
-
-	use super::*;
-
-	#[test]
-	fn test_packer_normalize_version_simple() -> Result<()> {
-		assert_eq!(normalize_version("1.0.0"), "1-0-0");
-		assert_eq!(normalize_version("1.0-alpha"), "1-0-alpha");
-		assert_eq!(normalize_version("1.0 beta"), "1-0-beta");
-		assert_eq!(normalize_version("1.0-beta-2"), "1-0-beta-2");
-		assert_eq!(normalize_version("1.0--beta--2"), "1-0-beta-2");
-		assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
-		assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
-
-		Ok(())
-	}
-}
+#[path = "../_tests/tests_packer_impl.rs"]
+mod tests_packer_impl;
 
 // endregion: --- Tests

@@ -339,6 +339,11 @@ fn install_aipack_file(
 	// This is the pack base dir and now, we need ot add `namespace/pack_name`
 	let pack_installed_dir = dir_context.aipack_paths().get_base_pack_installed_dir()?;
 
+	// Now, we automatically create, so we do not require it to be init-base
+	ensure_dir(&pack_installed_dir)?;
+
+	// Note: This should not happen, as it should have failed in the ensure_dir above.
+	//       Howeer, for now,
 	if !pack_installed_dir.exists() {
 		return Err(Error::FailToInstall {
 			aipack_ref: pack_uri.to_string(),
@@ -397,6 +402,8 @@ fn calculate_directory_size(dir_path: &SPath) -> Result<usize> {
 
 // region:    --- Tests
 
-// TODO: Need to write basic test about this one
+#[cfg(test)]
+#[path = "../_tests/tests_installer_impl.rs"]
+mod tests_installer_impl;
 
 // endregion: --- Tests
