@@ -2,7 +2,7 @@
 
 <a href="https://crates.io/crates/aipack"><img src="https://img.shields.io/crates/v/aipack.svg" /></a>
 <a href="https://github.com/jeremychone/rust-aipack"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-Repo?color=%23336699"></a>
-<a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/YouTube_aipack_(devai)_Intro-Video?style=flat&logo=youtube&color=%23ff0000"></a>
+<a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_Introduction_-Video?style=flat&logo=youtube&color=%23ff0000"></a>
 
 </div>
 
