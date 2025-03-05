@@ -1,5 +1,9 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-04 - [v0.6.6](https://github.com/jeremychone/rust-devai/compare/v0.6.5...v0.6.6)
+
+- `.` Minor cleanup and update AIPACK resource links and text. 
+
 ## 2025-03-02 - [v0.6.5](https://github.com/jeremychone/rust-devai/compare/v0.6.4...v0.6.5)
 
 - `!` now pack `jc@coder` is not preinstalled. Install it with `aip install jc@coder`
