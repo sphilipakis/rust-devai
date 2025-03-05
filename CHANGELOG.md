@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-02 - [v0.6.5](https://github.com/jeremychone/rust-devai/compare/v0.6.4...v0.6.5)
+
+- `!` now pack `jc@coder` is not preinstalled. Install it with `aip install jc@coder`
+- `.` refators and fixes
+
 ## 2025-03-01 - [v0.6.4](https://github.com/jeremychone/rust-devai/compare/v0.6.3...v0.6.4)
 
 - `^` demo & jc agents - change default prompt file to be under .aipack/.prompt/namespace@pack_name/...-prompt.md

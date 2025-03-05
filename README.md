@@ -1,28 +1,21 @@
-### IMPORTANT NOTICE - from v0.6.0 onward - AIPACK (rename from devai) 
-
-- This project is rebranding to [aipack](https://aipack.ai), a more suitable name for its future development.
-
-- This repo is now https://github.com/aipack-ai/aipack.
-
-- **same codebase**, **same feature set**, **same licenses (MIT or Apache)**
-
-- But now `aipack` centric, which is going to bring huge value for the users and community.
-
-You can find more information in the following [discussion #51](https://github.com/aipack-ai/aipack/discussions/51)
-
 <div align="center">
 
 <a href="https://crates.io/crates/aipack"><img src="https://img.shields.io/crates/v/aipack.svg" /></a>
 <a href="https://github.com/jeremychone/rust-aipack"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-Repo?color=%23336699"></a>
-<a href="https://www.youtube.com/watch?v=b3LJcNkhkH4&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigqj"><img alt="Static Badge" src="https://img.shields.io/badge/YouTube_aipack_(devai)_Intro-Video?style=flat&logo=youtube&color=%23ff0000"></a>
+<a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/YouTube_aipack_(devai)_Intro-Video?style=flat&logo=youtube&color=%23ff0000"></a>
 
 </div>
 
-# aipack - Build, Run, Share
+# AIPACK - Run, Build, and Share AI Packs
 
-> DISCLAIMER: For now, v0.6.x, AIPACK works on **Linux & Mac**, and requires **WSL** on **Windows** 
->
-> IMPORTANT: **Proper Windows support** is coming sometime in v0.6.x and **definitely by v0.7.x** (about **Mid / End of March**)
+Checkout the site: https://aipack.ai for more information and links.
+
+Open-source Agentic Runtime to run, build, and share AI Packs.
+- Supports **all** major AI providers and models.
+- Efficient and small (**< 20MB**), with **zero** dependencies.
+- Built in **Rust**, using Lua for embedded scripting (small and efficient).
+- Runs locally, completely IDE-agnostic.
+- Or in the cloud—server or serverless.
 
 ### Quick Start
 
@@ -30,11 +23,15 @@ You can find more information in the following [discussion #51](https://github.c
 
 For now, the install requires building it directly from source via Rust. Works great on all OSes.
 
-- Install Rust https://www.rust-lang.org/tools/install
-- For now, install with `cargo install aipack`
+- Install Rust: https://www.rust-lang.org/tools/install  
+- For now, install with `cargo install aipack`  
 
-> NOTE: Ironically the binary is relatively small, <15MB with batteries included, but building it will download quite a bit. 
-> Binaries and install instructions will be available on https://aipack.ai
+> **NOTE:** Ironically, while the binary is relatively small (<20MB with batteries included), the build process can take up quite a bit of space. However, Cargo should clean it up afterward.  
+> Binaries and installation instructions will be available at https://aipack.ai
+
+> DISCLAIMER: For now, v0.6.x, AIPACK works on **Linux & Mac**, and requires **WSL** on **Windows** 
+>
+> IMPORTANT: **Proper Windows support** is coming sometime in v0.6.x and **definitely by v0.7.x** (about **Mid / End of March**)
 
 **Run**
 
@@ -68,11 +65,15 @@ aip run path/to/file.aip
 aip run core@ask-aipack
 # prompt file will be at `.aipack/.prompt/core@ask-aipack/ask-prompt.md`
 
-# And then the big jc@coder 
-# Note: Today, it is preinstalled, but later it will the first 
-#       aip install jc@coder (which will go to aipack.ai)
-aip run jc@coder
 ```
+
+**jc@coder**
+
+- You can install `jc@coder` with `aip install jc@coder`, and then  
+- Run it with `aip run jc@coder` or `aip run @coder` if you don't have any other `@coder` pack in a different namespace.  
+
+This is the agent I use every day for my production coding.
+
 
 **IMPORTANT 1**: Make sure everything is committed before usage (at least while you are learning about aipack).
 
@@ -92,11 +93,14 @@ COHERE_API_KEY
 
 - Website: https://aipack.ai
 
+- [AIPack Overview Video](https://www.youtube.com/watch?v=SioUg_N9HS0)
+
 - [Full intro video for v0.5 (still old devai name, but same concept)](https://www.youtube.com/watch?v=b3LJcNkhkH4&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigqj)
 
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports all the top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
-- Top new features:
+- Top new features: (see full [CHANGELOG](CHANGELOG.md))
+  - **2025-03-02 (v0.6.4) -  Fixes, and now support first repo pack `aip install jc@coder`**
   - **2025-02-28 (v0.6.3) - `aip pack ..`, `aip instal local...`, `ai_response.price_usd`, and more**
   - **2025-02-26 **(v0.6.0)** - BIG UPDATE - to **AIPACK**, now with pack support (`aip run demo@craft/code`)**
   - 2025-02-22 (v0.5.11) - Huge update with parametric agents, and coder (more info soon)
