@@ -49,6 +49,12 @@ pub enum Error {
 		cause: String,
 	},
 
+	#[display("Cannot install version {new_version} because installed version {installed_version} is newer")]
+	InstallFailInstalledVersionAbove {
+		installed_version: String,
+		new_version: String,
+	},
+
 	// -- Run
 	BeforeAllFailWrongReturn {
 		cause: String,

@@ -1,6 +1,7 @@
 use crate::dir_context::DirContext;
 use crate::pack::PackIdentity;
 use crate::packer::PackToml;
+use crate::packer::pack_toml::parse_validate_pack_toml;
 use crate::packer::support;
 use crate::support::zip;
 use crate::{Error, Result};
@@ -322,9 +323,46 @@ fn install_aipack_file(
 	}
 
 	// -- Extract the pack.toml from zip and validate
-	let pack_toml = support::extract_pack_toml_from_pack_file(aipack_zipped_file)?;
+	let new_pack_toml = support::extract_pack_toml_from_pack_file(aipack_zipped_file)?;
 
-	let pack_target_dir = pack_installed_dir.join_str(&pack_toml.namespace).join_str(&pack_toml.name);
+	// -- Check if a pack with the same namespace/name is already installed
+	let potential_existing_path = pack_installed_dir
+		.join_str(&new_pack_toml.namespace)
+		.join_str(&new_pack_toml.name);
+
+	if potential_existing_path.exists() {
+		// If an existing pack is found, we need to check its version
+		let existing_pack_toml_path = potential_existing_path.join_str("pack.toml");
+
+		if existing_pack_toml_path.exists() {
+			// Read the existing pack.toml file
+			let existing_toml_content =
+				std::fs::read_to_string(existing_pack_toml_path.path()).map_err(|e| Error::FailToInstall {
+					aipack_ref: pack_uri.to_string(),
+					cause: format!("Failed to read existing pack.toml: {}", e),
+				})?;
+
+			// Parse the existing pack.toml
+			let existing_pack_toml =
+				parse_validate_pack_toml(&existing_toml_content, existing_pack_toml_path.to_str())?;
+
+			// Check if the installed version is greater than the new version
+			support::validate_version_update(&existing_pack_toml.version, &new_pack_toml.version)?;
+		}
+	}
+
+	// If we've gotten here, either there's no existing pack or the new version is greater than or equal to the installed version
+	let pack_target_dir = pack_installed_dir
+		.join_str(&new_pack_toml.namespace)
+		.join_str(&new_pack_toml.name);
+
+	// If the directory exists, remove it first to ensure clean installation
+	if pack_target_dir.exists() {
+		std::fs::remove_dir_all(pack_target_dir.path()).map_err(|e| Error::FailToInstall {
+			aipack_ref: pack_uri.to_string(),
+			cause: format!("Failed to remove existing pack directory: {}", e),
+		})?;
+	}
 
 	zip::unzip_file(aipack_zipped_file, &pack_target_dir).map_err(|e| Error::FailToInstall {
 		aipack_ref: pack_uri.to_string(),
@@ -335,7 +373,7 @@ fn install_aipack_file(
 	let size = support::calculate_directory_size(&pack_target_dir)?;
 
 	Ok(InstalledPack {
-		pack_toml,
+		pack_toml: new_pack_toml,
 		path: pack_target_dir,
 		size,
 		zip_size: 0, // This will be populated by the caller

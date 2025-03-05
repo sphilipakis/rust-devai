@@ -3,6 +3,7 @@ use crate::packer::pack_toml::{PartialPackToml, parse_validate_pack_toml};
 use crate::support::zip;
 use crate::{Error, Result};
 use simple_fs::SPath;
+use semver::Version;
 
 /// Extracts and validates the pack.toml from an .aipack file
 ///
@@ -85,6 +86,45 @@ pub fn validate_aipack_file(aipack_file: &SPath, reference: &str) -> Result<()> 
 	Ok(())
 }
 
+/// Validates if the new version is greater than or equal to the installed version
+/// 
+/// Returns Ok(()) if the new version is greater than or equal to the installed version
+/// or if either version can't be parsed as a valid semver version.
+/// 
+/// Returns Err(Error::InstallFailInstalledVersionAbove) if the installed version is greater 
+/// than the new version.
+/// 
+/// # Parameters
+/// - `installed_version`: The currently installed version
+/// - `new_version`: The new version to be installed
+/// 
+/// # Returns
+/// - Ok(()): If version comparison passes
+/// - Err(Error): If validation fails
+pub fn validate_version_update(installed_version: &str, new_version: &str) -> Result<()> {
+    // Remove leading 'v' if present for both versions
+    let installed = installed_version.trim_start_matches('v');
+    let new = new_version.trim_start_matches('v');
+    
+    // Parse versions into semver::Version
+    match (Version::parse(installed), Version::parse(new)) {
+        (Ok(installed_semver), Ok(new_semver)) => {
+            // Check if installed version is greater than new version
+            if installed_semver > new_semver {
+                return Err(Error::InstallFailInstalledVersionAbove {
+                    installed_version: installed_version.to_string(),
+                    new_version: new_version.to_string(),
+                });
+            }
+        },
+        // If we can't parse one of the versions, we'll just allow the installation
+        // since we can't reliably determine which is newer
+        _ => {}
+    }
+    
+    Ok(())
+}
+
 /// Normalizes a version string by replacing dots and special characters with hyphens
 /// This is just to write the file names (cosmetic)
 /// and ensuring no consecutive hyphens
@@ -142,6 +182,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
+	use crate::Error;
 
 	#[test]
 	fn test_packer_support_normalize_version_simple() -> Result<()> {
@@ -153,6 +194,38 @@ mod tests {
 		assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
 		assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
 
+		Ok(())
+	}
+	
+	#[test]
+	fn test_validate_version_update() -> Result<()> {
+		// Test case: New version is greater than installed
+		assert!(validate_version_update("1.0.0", "1.0.1").is_ok());
+		assert!(validate_version_update("1.0.0", "1.1.0").is_ok());
+		assert!(validate_version_update("1.0.0", "2.0.0").is_ok());
+		
+		// Test case: New version is equal to installed
+		assert!(validate_version_update("1.0.0", "1.0.0").is_ok());
+		
+		// Test case: New version is less than installed
+		let err = validate_version_update("1.0.1", "1.0.0").unwrap_err();
+		match err {
+			Error::InstallFailInstalledVersionAbove { installed_version, new_version } => {
+				assert_eq!(installed_version, "1.0.1");
+				assert_eq!(new_version, "1.0.0");
+			},
+			_ => panic!("Expected InstallFailInstalledVersionAbove error"),
+		}
+		
+		// Test with leading 'v'
+		assert!(validate_version_update("v1.0.0", "1.0.1").is_ok());
+		assert!(validate_version_update("1.0.0", "v1.0.1").is_ok());
+		
+		// Test with invalid versions (should pass since we can't compare them)
+		assert!(validate_version_update("invalid", "1.0.0").is_ok());
+		assert!(validate_version_update("1.0.0", "invalid").is_ok());
+		assert!(validate_version_update("invalid", "invalid").is_ok());
+		
 		Ok(())
 	}
 }

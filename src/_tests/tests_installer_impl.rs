@@ -2,7 +2,7 @@ use super::*;
 use crate::_test_support::{create_test_dir, remove_test_dir};
 use crate::packer::{self, PackToml, install_pack};
 use crate::run::Runtime;
-use simple_fs::SPath;
+use simple_fs::{SPath, ensure_file_dir};
 use std::fs;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
@@ -10,7 +10,7 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 #[tokio::test]
 async fn test_installer_impl_local_file_simple() -> Result<()> {
 	// -- Setup & Fixtures
-	// this will create the .tests-data/.tmp/... and the base di for .aipack/ and .aipack-base
+	// this will create the .tests-data/.tmp/... and the base dir for .aipack/ and .aipack-base
 	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
 	let dir_context = runtime.dir_context();
 	// Prep the pack dir
@@ -49,5 +49,72 @@ async fn test_installer_impl_local_file_simple() -> Result<()> {
 	// This will check that it is a `tests-data/.tmp`
 	remove_test_dir(dir_context.current_dir())?;
 
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_installer_impl_local_version_above_err() -> Result<()> {
+	// -- Setup & Fixtures
+	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let dir_context = runtime.dir_context();
+
+	// Create common main.aip content for both packs
+	let main_aip_content = r#"# Test Main
+
+This is a test agent file for installation testing."#;
+
+	// Step 1: Create old pack directory (version 0.2.0)
+	let old_pack_dir = dir_context.current_dir().join_str("pack_to_install/test_old/test-pack-01");
+	std::fs::create_dir_all(old_pack_dir.path())?;
+	let old_pack_toml = r#"
+[pack]
+namespace = "test_ns"
+name = "test-pack-01"
+version = "0.2.0"
+"#;
+	std::fs::write(old_pack_dir.join_str("pack.toml").path(), old_pack_toml)?;
+	ensure_file_dir(old_pack_dir.join_str("main.aip"))?;
+
+	let old_pack_data = packer::pack_dir(&old_pack_dir, dir_context.current_dir())?;
+	let old_pack_file = old_pack_data.pack_file;
+	// Install the old pack (version 0.2.0)
+	let _installed_old_pack = install_pack(dir_context, old_pack_file.to_str()).await?;
+	// (Optional: assert that installed_old_pack.pack_toml.version == "0.2.0")
+
+	// Step 2: Create new pack directory (version 0.1.0)
+	let new_pack_dir = dir_context.current_dir().join_str("pack_to_install/test_new/test-pack-01");
+	std::fs::create_dir_all(new_pack_dir.path())?;
+	let new_pack_toml = r#"
+[pack]
+namespace = "test_ns"
+name = "test-pack-01"
+version = "0.1.0"
+"#;
+	std::fs::write(new_pack_dir.join_str("pack.toml").path(), new_pack_toml)?;
+	std::fs::write(new_pack_dir.join_str("main.aip").path(), main_aip_content)?;
+	let new_pack_data = packer::pack_dir(&new_pack_dir, dir_context.current_dir())?;
+	let new_pack_file = new_pack_data.pack_file;
+
+	// -- Execute: Try to install the new pack (version 0.1.0)
+	let result = install_pack(dir_context, new_pack_file.to_str()).await;
+
+	// -- Check: The new pack installation should fail.
+	assert!(result.is_err(), "Installing lower version should fail");
+
+	if let Err(error) = result {
+		match error {
+			Error::InstallFailInstalledVersionAbove {
+				installed_version,
+				new_version,
+			} => {
+				assert_eq!(installed_version, "0.2.0");
+				assert_eq!(new_version, "0.1.0");
+			}
+			other => panic!("Expected InstallFailInstalledVersionAbove error, got: {:?}", other),
+		}
+	}
+
+	// -- Cleanup
+	remove_test_dir(dir_context.current_dir())?;
 	Ok(())
 }
