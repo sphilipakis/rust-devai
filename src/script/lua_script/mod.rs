@@ -15,6 +15,7 @@ mod utils_lua;
 mod utils_md;
 mod utils_path;
 mod utils_rust;
+mod utils_semver;
 mod utils_text;
 mod utils_web;
 

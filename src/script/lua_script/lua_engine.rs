@@ -2,10 +2,6 @@ use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::RuntimeContext;
 use crate::script::lua_script::helpers::{process_lua_eval_result, serde_to_lua_value};
-use crate::script::lua_script::{
-	utils_aipack, utils_cmd, utils_code, utils_file, utils_git, utils_hbs, utils_html, utils_json, utils_lua, utils_md,
-	utils_path, utils_rust, utils_text, utils_web,
-};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -23,7 +19,7 @@ impl LuaEngine {
 		init_utils(&lua, &runtime_context)?;
 
 		// -- init aipack
-		utils_aipack::init_module(&lua, &runtime_context)?;
+		super::utils_aipack::init_module(&lua, &runtime_context)?;
 
 		// -- Init print
 		init_print(&lua)?;
@@ -154,7 +150,7 @@ macro_rules! init_and_set {
     ($table:expr, $lua:expr, $runtime_context:expr, $($name:ident),*) => {
         paste::paste! {
             $(
-                let $name = [<utils_ $name>]::init_module($lua, $runtime_context)?;
+                let $name = super::[<utils_ $name>]::init_module($lua, $runtime_context)?;
                 $table.set(stringify!($name), $name)?;
             )*
         }
@@ -183,7 +179,8 @@ fn init_utils(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
 		cmd,
 		lua,
 		code,
-		hbs
+		hbs,
+		semver
 	);
 
 	let globals = lua_vm.globals();
