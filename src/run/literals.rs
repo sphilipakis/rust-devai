@@ -32,6 +32,10 @@ impl Literals {
 
 		store.push(("PWD", dir_context.current_dir().to_string()));
 
+		// -- AIPACK information
+		store.push(("AIPACK_VERSION", crate::VERSION.to_string()));
+
+		// -- Pack Identity / Ref
 		if let AgentRef::PackRef(pack_ref) = agent.agent_ref() {
 			store.push(("PACK_NAMESPACE", pack_ref.namespace().to_string()));
 			store.push(("PACK_NAME", pack_ref.name().to_string()));
@@ -47,13 +51,13 @@ impl Literals {
 			store.push(("PACK_DIR", pack_ref.pack_dir.to_string()));
 		}
 
-		// The workspace_dir should be absolute, and all of the other paths will relative to it.
+		// -- Workspace / base dirs
 		store.push(("WORKSPACE_DIR", dir_context.wks_dir().to_string()));
-
 		// Those are the absolute path for `~/.aipack-base/` and `.aipack/`
 		store.push(("WORKSPACE_AIPACK_DIR", aipack_paths.wks_aipack_dir().to_string()));
 		store.push(("BASE_AIPACK_DIR", aipack_paths.base_aipack_dir().to_string()));
 
+		// -- Agent Information
 		store.push(("AGENT_NAME", agent.name().to_string()));
 		store.push(("AGENT_FILE_NAME", agent_path.name().to_string()));
 		store.push(("AGENT_FILE_PATH", agent_path.to_str().to_string()));
