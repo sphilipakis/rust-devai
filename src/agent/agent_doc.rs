@@ -15,6 +15,59 @@ pub struct AgentDoc {
 	raw_content: String,
 }
 
+// region:    --- Capture State
+
+#[derive(Debug)]
+enum CaptureMode {
+	None,
+
+	// Below the output heading (perhaps not in a code block)
+	BeforeAllSection,
+	// Inside the code block
+	BeforeAllCodeBlock,
+
+	// Below the # Options section
+	OptionsSection,
+	OptionsTomlBlock,
+
+	// Below the data heading (perhaps not in a code block)
+	DataSection,
+	// Inside the code block
+	DataCodeBlock,
+
+	PromptPart,
+
+	// Below the output heading (perhaps not in a code block)
+	OutputSection,
+	// Inside the code block
+	OutputCodeBlock,
+
+	// Below the output heading (perhaps not in a code block)
+	AfterAllSection,
+	// Inside the code block
+	AfterAllCodeBlock,
+}
+
+impl CaptureMode {
+	/// Here we are inside a code block that is getting captured for an action
+	/// either Lua script, toml, ...
+	///
+	/// NOTE: This is not used anymore since we have the `is_in_any_block`, but can be later.
+	#[allow(unused)]
+	fn is_inside_actionable_block(&self) -> bool {
+		matches!(
+			self,
+			CaptureMode::OptionsTomlBlock
+				| CaptureMode::BeforeAllCodeBlock
+				| CaptureMode::DataCodeBlock
+				| CaptureMode::OutputCodeBlock
+				| CaptureMode::AfterAllCodeBlock
+		)
+	}
+}
+
+// endregion: --- Capture State
+
 /// Constructor
 impl AgentDoc {
 	pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
@@ -32,65 +85,9 @@ impl AgentDoc {
 	/// Internal method to create the first part of the agent inner
 	/// This is sort of a Lexer, but very customize to extracting the Agent parts
 	fn into_agent_inner(self, name: &str, agent_ref: AgentRef, agent_options: AgentOptions) -> Result<AgentInner> {
-		#[derive(Debug)]
-		enum CaptureMode {
-			None,
-
-			// Below the output heading (perhaps not in a code block)
-			BeforeAllSection,
-			// Inside the code block
-			BeforeAllCodeBlock,
-
-			// Below the # Options section
-			OptionsSection,
-			OptionsTomlBlock,
-
-			// (legacy) Below the # Config section
-			ConfigSection,
-			// (legacy) inside the ConfigTomlBlock
-			ConfigTomlBlock,
-
-			// Below the data heading (perhaps not in a code block)
-			DataSection,
-			// Inside the code block
-			DataCodeBlock,
-
-			PromptPart,
-
-			// Below the output heading (perhaps not in a code block)
-			OutputSection,
-			// Inside the code block
-			OutputCodeBlock,
-
-			// Below the output heading (perhaps not in a code block)
-			AfterAllSection,
-			// Inside the code block
-			AfterAllCodeBlock,
-		}
-
-		impl CaptureMode {
-			/// Here we are inside a code block that is getting captured for an action
-			/// either Lua script, toml, ...
-			///
-			/// NOTE: This is not used anymore since we have the `is_in_any_block`, but can be later.
-			#[allow(unused)]
-			fn is_inside_actionable_block(&self) -> bool {
-				matches!(
-					self,
-					CaptureMode::ConfigTomlBlock
-						| CaptureMode::OptionsTomlBlock
-						| CaptureMode::BeforeAllCodeBlock
-						| CaptureMode::DataCodeBlock
-						| CaptureMode::OutputCodeBlock
-						| CaptureMode::AfterAllCodeBlock
-				)
-			}
-		}
-
 		let mut capture_mode = CaptureMode::None;
 
 		// -- The buffers
-		let mut config_toml: Vec<&str> = Vec::new();
 		let mut options_toml: Vec<&str> = Vec::new();
 		let mut before_all_script: Vec<&str> = Vec::new();
 		let mut data_script: Vec<&str> = Vec::new();
@@ -113,9 +110,7 @@ impl AgentDoc {
 			// If heading we decide the capture mode
 			if block_state.is_out() && line.starts_with('#') && !line.starts_with("##") {
 				let header = line[1..].trim().to_lowercase();
-				if header == "config" {
-					capture_mode = CaptureMode::ConfigSection;
-				} else if header == "options" {
+				if header == "options" {
 					capture_mode = CaptureMode::OptionsSection;
 				} else if header == "before all" {
 					capture_mode = CaptureMode::BeforeAllSection;
@@ -140,23 +135,6 @@ impl AgentDoc {
 
 			match capture_mode {
 				CaptureMode::None => {}
-
-				// -- Config (legacy, now use options)
-				CaptureMode::ConfigSection => {
-					if line.starts_with("```toml") {
-						capture_mode = CaptureMode::ConfigTomlBlock;
-						continue;
-					}
-				}
-
-				CaptureMode::ConfigTomlBlock => {
-					if line.starts_with("```") {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut config_toml, line);
-					}
-				}
 
 				// -- Options
 				CaptureMode::OptionsSection => {
@@ -256,20 +234,12 @@ impl AgentDoc {
 
 		// -- Returning the data
 
-		let config_toml = buffer_to_string(config_toml);
 		let options_toml = buffer_to_string(options_toml);
 
-		let agent_options_ov: Option<AgentOptions> = match (config_toml, options_toml) {
-			(None, None) => None,
-			(None, Some(options_toml)) => Some(AgentOptions::from_options_value(parse_toml(&options_toml)?)?),
-			(Some(config_toml), None) => Some(AgentOptions::from_config_value(parse_toml(&config_toml)?)?),
-			(Some(_), Some(_)) => {
-				return Err("\
-Agent .aipack file cannot have a '# Config' and '# Options' section.
-Use the '# Options' section ('# Config' is not the legacy way to provides agent options)
-"
-				.into());
-			}
+		let agent_options_ov: Option<AgentOptions> = if let Some(options_toml) = options_toml {
+			Some(AgentOptions::from_options_value(parse_toml(&options_toml)?)?)
+		} else {
+			None
 		};
 
 		let agent_options = match agent_options_ov {
@@ -318,7 +288,7 @@ impl AgentDoc {
 // region:    --- Support
 
 fn get_prompt_part_kind(header: &str) -> Option<PartKind> {
-	if header == "inst" || header == "instruction" {
+	if header == "user" || header == "inst" || header == "instruction" {
 		Some(PartKind::Instruction)
 	} else if header == "system" {
 		Some(PartKind::System)
@@ -359,3 +329,5 @@ fn buffer_to_string(content: Vec<&str>) -> Option<String> {
 		Some(content.join(""))
 	}
 }
+
+// endregion: --- Support
