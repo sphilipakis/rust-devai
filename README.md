@@ -93,13 +93,14 @@ COHERE_API_KEY
 
 - Website: https://aipack.ai
 
-- [AIPack Overview Video](https://www.youtube.com/watch?v=SioUg_N9HS0)
+- [AIPACK Overview Video](https://www.youtube.com/watch?v=SioUg_N9HS0)
 
-- [Full intro video for v0.5 (still old devai name, but same concept)](https://www.youtube.com/watch?v=b3LJcNkhkH4&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigqj)
+- [Preview 'devai' intro video for v0.5](https://www.youtube.com/watch?v=b3LJcNkhkH4&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigqj)
 
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports all the top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
 - Top new features: (see full [CHANGELOG](CHANGELOG.md))
+  - **2025-03-02 (v0.6.7) -  Fixes and tuneup. Pack install test and other refactoring**
   - **2025-03-02 (v0.6.4) -  Fixes, and now support first repo pack `aip install jc@coder`**
   - **2025-02-28 (v0.6.3) - `aip pack ..`, `aip instal local...`, `ai_response.price_usd`, and more**
   - **2025-02-26 **(v0.6.0)** - BIG UPDATE - to **AIPACK**, now with pack support (`aip run demo@craft/code`)**

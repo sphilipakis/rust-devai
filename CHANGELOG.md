@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-03-06 - [v0.6.7](https://github.com/jeremychone/rust-devai/compare/v0.6.6...v0.6.7)
+
+- `!` lua - added the 'utils' to the 'aip' (which might be the new name for base aip utils). For now, they just alias to the same utilities set
+- `.` @craft/text - minor prompt update
+- `+` lua - add utils.semver.compare and more
+- `.` add CTX.AIPACK_VERSION
+- `.` .aip format - removed legacy config, added 'user' as alias of 'instruction'
+- `>` refactor tui
+- `^` install - installing pack check version now to make sure greater than. 
+- `>` refactors - tui, printers, tests_installer, tests_packer
+
 ## 2025-03-04 - [v0.6.6](https://github.com/jeremychone/rust-devai/compare/v0.6.5...v0.6.6)
 
 - `.` Minor cleanup and update AIPACK resource links and text. 
