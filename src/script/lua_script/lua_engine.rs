@@ -15,10 +15,10 @@ impl LuaEngine {
 	pub fn new(runtime_context: RuntimeContext) -> Result<Self> {
 		let lua = Lua::new();
 
-		// -- init utils
+		// -- init utils (now under 'aip' namespace, and kept the 'utils')
 		init_utils(&lua, &runtime_context)?;
 
-		// -- init aipack
+		// -- init aipack (TODO: ths will need to be below the 'aip' namespace, once we find good submodule space)
 		super::utils_aipack::init_module(&lua, &runtime_context)?;
 
 		// -- Init print
@@ -184,6 +184,10 @@ fn init_utils(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
 	);
 
 	let globals = lua_vm.globals();
+	// NOTE: now the aipack utilities are below `aip`,
+	//       this way clearer that this does not belong to default lua.
+	globals.set("aip", &table)?;
+	// NOTE: For now, we keep the compatibility of utils.
 	globals.set("utils", table)?;
 	Ok(())
 }
