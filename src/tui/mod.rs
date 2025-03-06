@@ -1,6 +1,8 @@
 // region:    --- Modules
 
+mod hub_event_handler;
 mod in_reader;
+mod support;
 mod tui_elem;
 
 mod tui_app;

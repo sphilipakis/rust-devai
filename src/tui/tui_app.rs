@@ -1,7 +1,9 @@
 use crate::cli::CliArgs;
 use crate::exec::{ExecCommand, ExecEvent};
 use crate::hub::{HubEvent, get_hub};
+use crate::tui::hub_event_handler::handle_hub_event;
 use crate::tui::in_reader::InReader;
+use crate::tui::support::{safer_println, send_to_executor};
 use crate::tui::tui_elem;
 use crate::{Error, Result};
 use crossterm::cursor::MoveUp;
@@ -131,27 +133,7 @@ impl TuiApp {
 				let evt_res = rx.recv().await;
 				match evt_res {
 					Ok(event) => {
-						match event {
-							HubEvent::Message(msg) => {
-								safer_println(&format!("{msg}"), interactive);
-							}
-							HubEvent::Error { error } => {
-								safer_println(&format!("Error: {error}"), interactive);
-							}
-
-							HubEvent::LuaPrint(text) => safer_println(&text, interactive),
-
-							HubEvent::Executor(exec_event) => {
-								if let (ExecEvent::RunEnd, true) = (exec_event, interactive) {
-									// safer_println("\n[ r ]: Redo   |   [ q ]: Quit", interactive);
-									tui_elem::print_bottom_bar();
-								}
-							}
-							HubEvent::DoExecRedo => send_to_executor(&exec_tx, ExecCommand::Redo).await,
-							HubEvent::Quit => {
-								// Nothing to do for now
-							}
-						}
+						handle_hub_event(event, &exec_tx, interactive).await;
 					}
 					Err(err) => {
 						println!("TuiApp handle_hub_event event error: {err}");
@@ -206,40 +188,6 @@ impl TuiApp {
 }
 
 // region:    --- Support
-
-fn safer_println(msg: &str, interactive: bool) {
-	if interactive {
-		let stdout = std::io::stdout();
-		let mut stdout_lock = stdout.lock(); // Locking stdout to avoid multiple open handles
-
-		for line in msg.split("\n") {
-			// Clear the current line and move the cursor to the start
-			execute!(
-				stdout_lock,
-				terminal::Clear(ClearType::CurrentLine),
-				cursor::MoveToColumn(0)
-			)
-			.expect("Failed to clear line and reset cursor");
-			// Write the line content
-			// write!(stdout_lock, "{}", line).expect("Failed to write to stdout");
-			println!("{line}");
-			stdout_lock.flush().expect("Failed to flush stdout");
-			stdout_lock.flush().expect("Failed to flush stdout");
-		}
-		// Flush to ensure everything is displayed properly
-	} else {
-		println!("{msg}");
-	}
-}
-
-async fn send_to_executor(exec_tx: &mpsc::Sender<ExecCommand>, exec_cmd: ExecCommand) {
-	// clear_last_n_lines(1);
-	if let Err(err) = exec_tx.send(exec_cmd).await {
-		get_hub()
-			.publish(Error::cc("start_app - cannot send ExecCommand::Redo", err))
-			.await;
-	};
-}
 
 /// IMPORTANT: Assumes term is in raw mode
 /// For now, we keep this code in case. It works, but can be confusing to users.
