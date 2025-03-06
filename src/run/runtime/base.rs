@@ -3,7 +3,6 @@ use crate::dir_context::DirContext;
 use crate::run::{RuntimeContext, get_genai_client};
 use crate::script::LuaEngine;
 use genai::Client;
-use simple_fs::SPath;
 
 #[derive(Clone)]
 pub struct Runtime {
@@ -50,9 +49,6 @@ impl Runtime {
 }
 
 // region:    --- Tests Support
-#[cfg(test)]
-use tests_support::*;
-
 #[cfg(test)]
 mod tests_support {
 	use super::*;

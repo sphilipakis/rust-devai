@@ -2,7 +2,7 @@ use crate::packer::PackToml;
 use crate::packer::pack_toml::{PartialPackToml, parse_validate_pack_toml};
 use crate::support::zip;
 use crate::{Error, Result};
-use lazy_regex::{lazy_regex, regex};
+use lazy_regex::regex;
 use semver::Version;
 use simple_fs::SPath;
 
@@ -44,6 +44,7 @@ pub fn extract_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PackTo
 /// # Returns
 /// - Ok(PartialPackToml): If extraction is successful
 /// - Err(Error): If any error occurs during extraction
+#[allow(unused)]
 pub fn extract_partial_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PartialPackToml> {
 	// Extract the pack.toml from zip
 	let toml_content = zip::extract_text_content(path_to_aipack, "pack.toml").map_err(|e| Error::FailToInstall {

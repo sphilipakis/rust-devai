@@ -4,8 +4,7 @@ use crate::hub::get_hub;
 use crossterm::terminal::ClearType;
 use crossterm::{cursor, execute, terminal};
 use std::io::Write as _;
-use tokio::sync::broadcast::Receiver;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::mpsc;
 
 pub fn safer_println(msg: &str, interactive: bool) {
 	if interactive {

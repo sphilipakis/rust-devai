@@ -1,5 +1,4 @@
-use super::*;
-use crate::_test_support::{create_test_dir, remove_test_dir};
+use crate::_test_support::remove_test_dir;
 use crate::packer::{self};
 use crate::run::Runtime;
 use simple_fs::SPath;

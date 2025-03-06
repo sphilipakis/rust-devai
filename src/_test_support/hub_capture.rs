@@ -9,6 +9,7 @@ pub struct HubCapture {
 	stop_signal: Option<oneshot::Sender<()>>,
 }
 
+/// TODO: Probably needs to DEPRECATE. Was for debugging
 #[allow(unused)]
 impl HubCapture {
 	pub fn new_and_start() -> Self {
@@ -30,6 +31,11 @@ impl HubCapture {
 								let mut content = content_clone.lock().await;
 								content.push_str(&msg);
 								content.push('\n');
+							}
+
+							HubEvent::Print(print_event) => {
+								let mut content = content_clone.lock().await;
+								content.push_str(&format!("Print: {print_event:?}\n"));
 							}
 							HubEvent::Error { error } => {
 								let mut content = content_clone.lock().await;

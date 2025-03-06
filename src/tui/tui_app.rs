@@ -1,16 +1,14 @@
+use crate::Result;
 use crate::cli::CliArgs;
 use crate::exec::{ExecCommand, ExecEvent};
 use crate::hub::{HubEvent, get_hub};
 use crate::tui::hub_event_handler::handle_hub_event;
 use crate::tui::in_reader::InReader;
 use crate::tui::support::{safer_println, send_to_executor};
-use crate::tui::tui_elem;
-use crate::{Error, Result};
 use crossterm::cursor::MoveUp;
 use crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::execute;
 use crossterm::terminal::{Clear, ClearType};
-use crossterm::{cursor, execute, terminal};
-use std::io::Write as _;
 use tokio::sync::broadcast::Receiver;
 use tokio::sync::{mpsc, oneshot};
 
@@ -133,7 +131,9 @@ impl TuiApp {
 				let evt_res = rx.recv().await;
 				match evt_res {
 					Ok(event) => {
-						handle_hub_event(event, &exec_tx, interactive).await;
+						if let Err(err) = handle_hub_event(event, &exec_tx, interactive).await {
+							println!("Tui ERROR while handling handle_hub_event. Cause {err}")
+						}
 					}
 					Err(err) => {
 						println!("TuiApp handle_hub_event event error: {err}");

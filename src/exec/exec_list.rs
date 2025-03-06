@@ -2,7 +2,7 @@ use crate::Result;
 use crate::agent::PartialAgentRef;
 use crate::cli::ListArgs;
 use crate::dir_context::{DirContext, find_pack_dirs};
-use crate::tui::print_pack_list;
+use crate::hub::get_hub;
 
 pub async fn exec_list(dir_context: DirContext, list_args: ListArgs) -> Result<()> {
 	// -- extract the optional namespace / pack_name from the args
@@ -28,7 +28,7 @@ pub async fn exec_list(dir_context: DirContext, list_args: ListArgs) -> Result<(
 
 	let pack_dirs = find_pack_dirs(&dir_context, ns.as_deref(), pack_name.as_deref())?;
 
-	print_pack_list(&pack_dirs);
+	get_hub().publish(pack_dirs).await;
 
 	Ok(())
 }

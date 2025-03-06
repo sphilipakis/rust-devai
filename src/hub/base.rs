@@ -1,6 +1,6 @@
 // src/hub/hub_base.rs
 
-use crate::hub::event::HubEvent;
+use crate::hub::hub_event::HubEvent;
 use std::sync::{Arc, LazyLock};
 use tokio::sync::broadcast;
 

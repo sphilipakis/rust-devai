@@ -1,9 +1,8 @@
 use super::*;
-use crate::_test_support::{create_test_dir, remove_test_dir, save_file_content};
-use crate::packer::{self, PackToml, install_pack};
+use crate::_test_support::{remove_test_dir, save_file_content};
+use crate::packer::{self, install_pack};
 use crate::run::Runtime;
-use simple_fs::{SPath, ensure_dir, ensure_file_dir};
-use std::fs;
+use simple_fs::{SPath, ensure_dir};
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 

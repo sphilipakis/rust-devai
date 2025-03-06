@@ -1,5 +1,6 @@
 use crate::Error;
 use crate::exec::ExecEvent;
+use crate::tui::PrintEvent;
 use derive_more::derive::From;
 use std::sync::Arc;
 
@@ -26,6 +27,8 @@ pub enum HubEvent {
 	// -- Sent by the lua engine "print override"
 	LuaPrint(Arc<str>),
 
+	Print(Arc<PrintEvent>),
+
 	// -- Action event
 	// for now, the watches send and event to the hub,
 	// which will trigger the app to send it to the executor.
@@ -36,6 +39,15 @@ pub enum HubEvent {
 }
 
 // region:    --- Froms
+
+impl<T> From<T> for HubEvent
+where
+	T: Into<PrintEvent>,
+{
+	fn from(p: T) -> Self {
+		HubEvent::Print(Arc::new(p.into()))
+	}
+}
 
 // Implementing From trait for Event
 impl From<String> for HubEvent {

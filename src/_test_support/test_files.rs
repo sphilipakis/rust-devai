@@ -54,6 +54,7 @@ pub fn create_test_file(path: &str, content: &str) -> Result<SPath> {
 }
 
 /// Create a test directory in tests-data/.tmp/ directory
+#[allow(unused)]
 pub fn create_test_dir(path: &str) -> Result<SPath> {
 	let dir_path = gen_tmp_test_path(path);
 	fs::create_dir_all(dir_path.path())?;
