@@ -21,6 +21,24 @@ pub fn gen_tmp_test_path(path: &str) -> SPath {
 	SPath::new(TEST_TMP_DIR).unwrap().join_str(path)
 }
 
+/// Saves the given content to the specified path.
+/// Ensures that the parent directory exists before saving.
+///
+/// # Parameters
+/// - `path`: The file path where the content should be saved.
+/// - `content`: The content to write to the file.
+///
+/// # Returns
+/// - Ok(()) if the file was saved successfully.
+/// - Err(Error) if any IO error occurs.
+pub fn save_file_content(path: &SPath, content: &str) -> Result<()> {
+	if let Some(parent) = path.path().parent() {
+		fs::create_dir_all(parent)?;
+	}
+	fs::write(path.path(), content)?;
+	Ok(())
+}
+
 /// Create a test file in tests-data/.tmp/ directory
 #[allow(unused)]
 pub fn create_test_file(path: &str, content: &str) -> Result<SPath> {

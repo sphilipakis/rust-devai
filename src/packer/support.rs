@@ -2,8 +2,9 @@ use crate::packer::PackToml;
 use crate::packer::pack_toml::{PartialPackToml, parse_validate_pack_toml};
 use crate::support::zip;
 use crate::{Error, Result};
-use simple_fs::SPath;
+use lazy_regex::{lazy_regex, regex};
 use semver::Version;
+use simple_fs::SPath;
 
 /// Extracts and validates the pack.toml from an .aipack file
 ///
@@ -87,42 +88,85 @@ pub fn validate_aipack_file(aipack_file: &SPath, reference: &str) -> Result<()> 
 }
 
 /// Validates if the new version is greater than or equal to the installed version
-/// 
+///
 /// Returns Ok(()) if the new version is greater than or equal to the installed version
 /// or if either version can't be parsed as a valid semver version.
-/// 
-/// Returns Err(Error::InstallFailInstalledVersionAbove) if the installed version is greater 
+///
+/// Returns Err(Error::InstallFailInstalledVersionAbove) if the installed version is greater
 /// than the new version.
-/// 
+///
 /// # Parameters
 /// - `installed_version`: The currently installed version
 /// - `new_version`: The new version to be installed
-/// 
+///
 /// # Returns
 /// - Ok(()): If version comparison passes
 /// - Err(Error): If validation fails
 pub fn validate_version_update(installed_version: &str, new_version: &str) -> Result<()> {
-    // Remove leading 'v' if present for both versions
-    let installed = installed_version.trim_start_matches('v');
-    let new = new_version.trim_start_matches('v');
-    
-    // Parse versions into semver::Version
-    match (Version::parse(installed), Version::parse(new)) {
-        (Ok(installed_semver), Ok(new_semver)) => {
-            // Check if installed version is greater than new version
-            if installed_semver > new_semver {
-                return Err(Error::InstallFailInstalledVersionAbove {
-                    installed_version: installed_version.to_string(),
-                    new_version: new_version.to_string(),
-                });
-            }
-        },
-        // If we can't parse one of the versions, we'll just allow the installation
-        // since we can't reliably determine which is newer
-        _ => {}
-    }
-    
-    Ok(())
+	// Remove leading 'v' if present for both versions
+	let installed = installed_version.trim_start_matches('v');
+	let new = new_version.trim_start_matches('v');
+
+	// Parse versions into semver::Version
+	match (Version::parse(installed), Version::parse(new)) {
+		(Ok(installed_semver), Ok(new_semver)) => {
+			// Check if installed version is greater than new version
+			if installed_semver > new_semver {
+				return Err(Error::InstallFailInstalledVersionAbove {
+					installed_version: installed_version.to_string(),
+					new_version: new_version.to_string(),
+				});
+			}
+		}
+		// If we can't parse one of the versions, we'll just allow the installation
+		// since we can't reliably determine which is newer
+		_ => {}
+	}
+
+	Ok(())
+}
+
+/// Validates if the version format is valid for installation
+///
+/// In addition to standard semver validation, this function checks that
+/// prerelease versions (e.g., -alpha, -beta) must end with a .number
+///
+/// Examples of valid versions:
+/// - 0.1.1
+/// - 0.1.1-alpha.1
+/// - 0.1.1-beta.123
+/// - 0.1.1-rc.1.2
+///
+/// Examples of invalid versions:
+/// - 0.1.1-alpha (missing .number)
+/// - 0.1.1-alpha.text (not ending with number)
+///
+/// # Parameters
+/// - `version`: The version string to validate
+///
+/// # Returns
+/// - Ok(()): If the version format is valid
+/// - Err(Error): If the version format is invalid
+pub fn validate_version_for_install(version: &str) -> Result<()> {
+	// Remove leading 'v' if present
+	let version_str = version.trim_start_matches('v');
+
+	// Check if there's a prerelease portion (after a hyphen)
+	if let Some(hyphen_idx) = version_str.find('-') {
+		let prerelease = &version_str[hyphen_idx + 1..];
+
+		// Regex to check if the prerelease ends with .number
+		// This matches: any characters followed by a dot and then one or more digits at the end
+		let prerelease_ending_with_number = regex!(r"\.[0-9]+$");
+
+		if !prerelease_ending_with_number.is_match(prerelease) {
+			return Err(Error::InvalidPrereleaseFormat {
+				version: version.to_string(),
+			});
+		}
+	}
+
+	Ok(())
 }
 
 /// Normalizes a version string by replacing dots and special characters with hyphens
@@ -196,36 +240,77 @@ mod tests {
 
 		Ok(())
 	}
-	
+
 	#[test]
 	fn test_validate_version_update() -> Result<()> {
 		// Test case: New version is greater than installed
 		assert!(validate_version_update("1.0.0", "1.0.1").is_ok());
 		assert!(validate_version_update("1.0.0", "1.1.0").is_ok());
 		assert!(validate_version_update("1.0.0", "2.0.0").is_ok());
-		
+
 		// Test case: New version is equal to installed
 		assert!(validate_version_update("1.0.0", "1.0.0").is_ok());
-		
+
 		// Test case: New version is less than installed
 		let err = validate_version_update("1.0.1", "1.0.0").unwrap_err();
 		match err {
-			Error::InstallFailInstalledVersionAbove { installed_version, new_version } => {
+			Error::InstallFailInstalledVersionAbove {
+				installed_version,
+				new_version,
+			} => {
 				assert_eq!(installed_version, "1.0.1");
 				assert_eq!(new_version, "1.0.0");
-			},
+			}
 			_ => panic!("Expected InstallFailInstalledVersionAbove error"),
 		}
-		
+
 		// Test with leading 'v'
 		assert!(validate_version_update("v1.0.0", "1.0.1").is_ok());
 		assert!(validate_version_update("1.0.0", "v1.0.1").is_ok());
-		
+
 		// Test with invalid versions (should pass since we can't compare them)
 		assert!(validate_version_update("invalid", "1.0.0").is_ok());
 		assert!(validate_version_update("1.0.0", "invalid").is_ok());
 		assert!(validate_version_update("invalid", "invalid").is_ok());
-		
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_validate_version_for_install() -> Result<()> {
+		// Test valid versions
+		assert!(validate_version_for_install("0.1.0").is_ok());
+		assert!(validate_version_for_install("1.0.0").is_ok());
+		assert!(validate_version_for_install("0.1.1-alpha.1").is_ok());
+		assert!(validate_version_for_install("0.1.1-beta.123").is_ok());
+		assert!(validate_version_for_install("0.1.1-rc.1.2").is_ok());
+		assert!(validate_version_for_install("v1.0.0-alpha.1").is_ok());
+
+		// Test invalid versions
+		let err = validate_version_for_install("0.1.1-alpha").unwrap_err();
+		match err {
+			Error::InvalidPrereleaseFormat { version } => {
+				assert_eq!(version, "0.1.1-alpha");
+			}
+			_ => panic!("Expected InvalidPrereleaseFormat error"),
+		}
+
+		let err = validate_version_for_install("0.1.1-alpha.text").unwrap_err();
+		match err {
+			Error::InvalidPrereleaseFormat { version } => {
+				assert_eq!(version, "0.1.1-alpha.text");
+			}
+			_ => panic!("Expected InvalidPrereleaseFormat error"),
+		}
+
+		let err = validate_version_for_install("0.1.1-alpha.1.some").unwrap_err();
+		match err {
+			Error::InvalidPrereleaseFormat { version } => {
+				assert_eq!(version, "0.1.1-alpha.1.some");
+			}
+			_ => panic!("Expected InvalidPrereleaseFormat error"),
+		}
+
 		Ok(())
 	}
 }

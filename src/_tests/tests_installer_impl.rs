@@ -1,8 +1,8 @@
 use super::*;
-use crate::_test_support::{create_test_dir, remove_test_dir};
+use crate::_test_support::{create_test_dir, remove_test_dir, save_file_content};
 use crate::packer::{self, PackToml, install_pack};
 use crate::run::Runtime;
-use simple_fs::{SPath, ensure_file_dir};
+use simple_fs::{SPath, ensure_dir, ensure_file_dir};
 use std::fs;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
@@ -65,15 +65,14 @@ This is a test agent file for installation testing."#;
 
 	// Step 1: Create old pack directory (version 0.2.0)
 	let old_pack_dir = dir_context.current_dir().join_str("pack_to_install/test_old/test-pack-01");
-	std::fs::create_dir_all(old_pack_dir.path())?;
+	ensure_dir(&old_pack_dir)?;
 	let old_pack_toml = r#"
 [pack]
 namespace = "test_ns"
 name = "test-pack-01"
 version = "0.2.0"
 "#;
-	std::fs::write(old_pack_dir.join_str("pack.toml").path(), old_pack_toml)?;
-	ensure_file_dir(old_pack_dir.join_str("main.aip"))?;
+	save_file_content(&old_pack_dir.join_str("pack.toml"), old_pack_toml)?;
 
 	let old_pack_data = packer::pack_dir(&old_pack_dir, dir_context.current_dir())?;
 	let old_pack_file = old_pack_data.pack_file;
@@ -83,15 +82,15 @@ version = "0.2.0"
 
 	// Step 2: Create new pack directory (version 0.1.0)
 	let new_pack_dir = dir_context.current_dir().join_str("pack_to_install/test_new/test-pack-01");
-	std::fs::create_dir_all(new_pack_dir.path())?;
+	ensure_dir(&new_pack_dir)?;
 	let new_pack_toml = r#"
 [pack]
 namespace = "test_ns"
 name = "test-pack-01"
 version = "0.1.0"
 "#;
-	std::fs::write(new_pack_dir.join_str("pack.toml").path(), new_pack_toml)?;
-	std::fs::write(new_pack_dir.join_str("main.aip").path(), main_aip_content)?;
+	save_file_content(&new_pack_dir.join_str("pack.toml"), new_pack_toml)?;
+	save_file_content(&new_pack_dir.join_str("main.aip"), main_aip_content)?;
 	let new_pack_data = packer::pack_dir(&new_pack_dir, dir_context.current_dir())?;
 	let new_pack_file = new_pack_data.pack_file;
 
@@ -111,6 +110,56 @@ version = "0.1.0"
 				assert_eq!(new_version, "0.1.0");
 			}
 			other => panic!("Expected InstallFailInstalledVersionAbove error, got: {:?}", other),
+		}
+	}
+
+	// -- Cleanup
+	remove_test_dir(dir_context.current_dir())?;
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_installer_impl_invalid_prerelease_err() -> Result<()> {
+	// -- Setup & Fixtures
+	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let dir_context = runtime.dir_context();
+
+	// Create a pack directory with an invalid prerelease version "0.1.0-alpha"
+	// (the prerelease must end with ".number" such as "-alpha.1")
+	let invalid_pack_dir = dir_context
+		.current_dir()
+		.join_str("pack_to_install/invalid_prerelease/test-pack-02");
+	ensure_dir(&invalid_pack_dir)?;
+	let invalid_pack_toml = r#"
+[pack]
+namespace = "test_ns"
+name = "test-pack-02"
+version = "0.1.0-alpha"
+"#;
+	save_file_content(&invalid_pack_dir.join_str("pack.toml"), invalid_pack_toml)?;
+	save_file_content(
+		&invalid_pack_dir.join_str("main.aip"),
+		"# Test Main\nInvalid prerelease version.",
+	)?;
+
+	// Pack the directory into a .aipack file
+	let pack_data = packer::pack_dir(&invalid_pack_dir, dir_context.current_dir())?;
+	let pack_file_str = pack_data.pack_file.to_str();
+
+	// Attempt to install the pack, expecting an error due to invalid prerelease format
+	let result = install_pack(dir_context, pack_file_str).await;
+
+	assert!(
+		result.is_err(),
+		"Installation should fail due to invalid prerelease format"
+	);
+
+	if let Err(error) = result {
+		match error {
+			Error::InvalidPrereleaseFormat { version } => {
+				assert_eq!(version, "0.1.0-alpha");
+			}
+			other => panic!("Expected InvalidPrereleaseFormat error, got: {:?}", other),
 		}
 	}
 

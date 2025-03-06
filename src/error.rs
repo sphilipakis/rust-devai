@@ -54,6 +54,11 @@ pub enum Error {
 		installed_version: String,
 		new_version: String,
 	},
+	
+	#[display("Invalid prerelease format in version {version}. Prereleases must end with .number (e.g., -alpha.1)")]
+	InvalidPrereleaseFormat {
+		version: String,
+	},
 
 	// -- Run
 	BeforeAllFailWrongReturn {

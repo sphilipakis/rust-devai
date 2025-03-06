@@ -325,6 +325,9 @@ fn install_aipack_file(
 	// -- Extract the pack.toml from zip and validate
 	let new_pack_toml = support::extract_pack_toml_from_pack_file(aipack_zipped_file)?;
 
+	// NEW: Validate prerelease format for installation
+	support::validate_version_for_install(&new_pack_toml.version)?;
+
 	// -- Check if a pack with the same namespace/name is already installed
 	let potential_existing_path = pack_installed_dir
 		.join_str(&new_pack_toml.namespace)
