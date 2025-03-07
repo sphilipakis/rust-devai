@@ -2,7 +2,7 @@
 //! Note: For now, the content of the variant of the ExecCommand often contain the CliArgs,
 //!       but this will eventual change to have it's own
 
-use crate::cli::{InitArgs, ListArgs, NewArgs, PackArgs, RunArgs, InstallArgs};
+use crate::cli::{InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs};
 
 /// This is the Executor Command that needs to be performed
 /// NOTE: This is not the `ExecStateEvent` which is sent to the hub.

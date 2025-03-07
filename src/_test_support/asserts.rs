@@ -112,7 +112,7 @@ impl DataContainer<'_> {
 					return false;
 				}
 				slice.last().unwrap().ends_with(val)
-			},
+			}
 			DataContainer::Str(string) => string.ends_with(val),
 		}
 	}
@@ -148,12 +148,12 @@ mod tests {
 		let data_vec = vec!["apple", "banana", "cherry"];
 		let data_slice: &[&str] = &["dog", "cat", "mouse"];
 		let data_str = "This is a test string";
-		
+
 		// -- Exec & Check
 		assert_ends_with(&data_vec, "y");
 		assert_ends_with(data_slice, "e");
 		assert_ends_with(data_str, "string");
-		
+
 		assert_not_ends_with(&data_vec, "x");
 		assert_not_ends_with(data_slice, "dog");
 		assert_not_ends_with(data_str, "test");
