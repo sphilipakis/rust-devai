@@ -17,7 +17,7 @@ pub async fn handle_hub_event(event: HubEvent, exec_tx: &mpsc::Sender<ExecComman
 
 		HubEvent::LuaPrint(text) => safer_println(&text, interactive),
 
-		HubEvent::Print(print_event) => handle_print(print_event),
+		HubEvent::Print(print_event) => handle_print(print_event, interactive),
 
 		HubEvent::Executor(exec_event) => {
 			if let (ExecEvent::RunEnd, true) = (exec_event, interactive) {

@@ -6,7 +6,7 @@ use crossterm::{
 use std::{collections::HashSet, io::stdout};
 
 #[allow(unused_must_use)] // TODO: need to remove and make this function return error
-pub fn print_pack_list(pack_dirs: &[&PackDir]) {
+pub fn print_pack_list(pack_dirs: &[&PackDir], _interactive: bool) {
 	let mut stdout = stdout();
 
 	let mut width = 0;
