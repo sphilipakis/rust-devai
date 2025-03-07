@@ -197,7 +197,7 @@ fn resolve_local_path(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SP
 		if aipack_zipped_file.path().is_absolute() {
 			Ok((aipack_zipped_file, pack_uri))
 		} else {
-			let absolute_path = dir_context.current_dir().join_str(aipack_zipped_file.to_str());
+			let absolute_path = dir_context.current_dir().join(aipack_zipped_file.to_str());
 			Ok((absolute_path, pack_uri))
 		}
 	} else {
@@ -242,7 +242,7 @@ async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(S
 		let file_timestamp = timestamp.replace([':', 'T'], "-");
 		let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
 		let timestamped_filename = format!("{}-{}", file_timestamp, filename);
-		let download_path = download_dir.join_str(&timestamped_filename);
+		let download_path = download_dir.join(&timestamped_filename);
 
 		// Download the file
 		let client = Client::new();
@@ -329,13 +329,11 @@ fn install_aipack_file(
 	support::validate_version_for_install(&new_pack_toml.version)?;
 
 	// -- Check if a pack with the same namespace/name is already installed
-	let potential_existing_path = pack_installed_dir
-		.join_str(&new_pack_toml.namespace)
-		.join_str(&new_pack_toml.name);
+	let potential_existing_path = pack_installed_dir.join(&new_pack_toml.namespace).join(&new_pack_toml.name);
 
 	if potential_existing_path.exists() {
 		// If an existing pack is found, we need to check its version
-		let existing_pack_toml_path = potential_existing_path.join_str("pack.toml");
+		let existing_pack_toml_path = potential_existing_path.join("pack.toml");
 
 		if existing_pack_toml_path.exists() {
 			// Read the existing pack.toml file
@@ -355,9 +353,7 @@ fn install_aipack_file(
 	}
 
 	// If we've gotten here, either there's no existing pack or the new version is greater than or equal to the installed version
-	let pack_target_dir = pack_installed_dir
-		.join_str(&new_pack_toml.namespace)
-		.join_str(&new_pack_toml.name);
+	let pack_target_dir = pack_installed_dir.join(&new_pack_toml.namespace).join(&new_pack_toml.name);
 
 	// If the directory exists, remove it first to ensure clean installation
 	if pack_target_dir.exists() {

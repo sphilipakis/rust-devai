@@ -55,18 +55,16 @@ mod tests_support {
 	use crate::_test_support::{SANDBOX_01_BASE_AIPACK_DIR, SANDBOX_01_WKS_DIR, gen_test_dir_path};
 	use crate::dir_context::AipackPaths;
 	use simple_fs::{SPath, ensure_dir};
-	use std::path::Path;
 
 	impl Runtime {
 		/// This will create a new Runtime for the .tests-data/sandbox-01/ folder
 		pub fn new_test_runtime_sandbox_01() -> Result<Self> {
-			let current_dir = Path::new(SANDBOX_01_WKS_DIR).canonicalize()?;
-			let current_dir = SPath::new(current_dir)?;
+			let current_dir = SPath::new(SANDBOX_01_WKS_DIR).canonicalize()?;
+			let current_dir = SPath::new(current_dir);
 
-			let wks_aipack_dir = current_dir.join_str(".aipack");
+			let wks_aipack_dir = current_dir.join(".aipack");
 
-			let base_aipack_dir = Path::new(SANDBOX_01_BASE_AIPACK_DIR).canonicalize()?;
-			let base_aipack_dir = SPath::new(base_aipack_dir)?;
+			let base_aipack_dir = SPath::new(SANDBOX_01_BASE_AIPACK_DIR).canonicalize()?;
 
 			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(base_aipack_dir, wks_aipack_dir)?;
 
@@ -86,9 +84,9 @@ mod tests_support {
 			let current_dir = current_dir.canonicalize()?;
 
 			// TODO: Probably do an base init for tose guys.
-			let wks_aipack_dir = current_dir.join_str(".aipack");
+			let wks_aipack_dir = current_dir.join(".aipack");
 			ensure_dir(&wks_aipack_dir)?;
-			let base_aipack_dir = current_dir.join_str(".aipack-base");
+			let base_aipack_dir = current_dir.join(".aipack-base");
 			ensure_dir(&base_aipack_dir)?;
 
 			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(base_aipack_dir, wks_aipack_dir)?;

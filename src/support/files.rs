@@ -9,7 +9,7 @@ use walkdir::WalkDir;
 /// Returns the current dir
 pub fn current_dir() -> Result<SPath> {
 	let dir = env::current_dir().map_err(|err| Error::cc("Current dir error", err))?;
-	let dir = SPath::new(dir)?;
+	let dir = SPath::from_std_path_buf(dir)?;
 	Ok(dir)
 }
 
@@ -110,7 +110,6 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use super::*;
-	use std::path::Path;
 
 	#[test]
 	fn test_support_files_list_dirs_only_leaf() -> Result<()> {
@@ -139,7 +138,7 @@ mod tests {
 		];
 
 		for exp in expected {
-			let exp_path = SPath::new(Path::new(exp).canonicalize()?)?;
+			let exp_path = SPath::new(exp).canonicalize()?;
 			let found = dirs
 				.iter()
 				.any(|d| d.canonicalize().map(|p| p.to_str() == exp_path.to_str()).unwrap_or(false));
@@ -164,7 +163,7 @@ mod tests {
 		let expected = vec!["src/agent", "src/cli", "src/script", "src/support", "src/script/lua_script"];
 
 		for exp in expected {
-			let exp_path = SPath::new(Path::new(exp).canonicalize()?)?;
+			let exp_path = SPath::new(exp).canonicalize()?;
 			let found = dirs
 				.iter()
 				.any(|d| d.canonicalize().map(|p| p.to_str() == exp_path.to_str()).unwrap_or(false));

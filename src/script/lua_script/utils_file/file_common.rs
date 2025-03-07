@@ -42,7 +42,7 @@ pub(super) fn file_load(
 	options: Option<Value>,
 ) -> mlua::Result<mlua::Value> {
 	let base_path = compute_base_dir(ctx.dir_context(), options.as_ref())?;
-	let rel_path = SPath::new(rel_path).map_err(Error::from)?;
+	let rel_path = SPath::new(rel_path);
 
 	let file_record = FileRecord::load(&base_path, &rel_path)?;
 	let res = file_record.into_lua(lua)?;
@@ -63,7 +63,7 @@ pub(super) fn file_load(
 /// Does not return anything
 ///
 pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, content: String) -> mlua::Result<()> {
-	let path = ctx.dir_context().resolve_path(&rel_path, PathResolver::WksDir)?;
+	let path = ctx.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
 	ensure_file_dir(&path).map_err(Error::from)?;
 
 	write(&path, content)?;
@@ -86,7 +86,7 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 /// Does not return anything
 ///
 pub(super) fn file_append(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, content: String) -> mlua::Result<()> {
-	let path = ctx.dir_context().resolve_path(&rel_path, PathResolver::WksDir)?;
+	let path = ctx.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
 	ensure_file_dir(&path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
@@ -123,8 +123,8 @@ pub(super) fn file_ensure_exists(
 	options: Option<EnsureExistsOptions>,
 ) -> mlua::Result<mlua::Value> {
 	let options = options.unwrap_or_default();
-	let rel_path = SPath::new(path).map_err(Error::from)?;
-	let full_path = ctx.dir_context().resolve_path(&rel_path, PathResolver::WksDir)?;
+	let rel_path = SPath::new(path);
+	let full_path = ctx.dir_context().resolve_path(rel_path.clone(), PathResolver::WksDir)?;
 
 	// if the file does not exist, create it.
 	if !full_path.exists() {
@@ -374,7 +374,7 @@ fn base_dir_and_globs(
 
 fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Result<SPath> {
 	// the default base_path is the workspace dir.
-	let workspace_path = dir_context.resolve_path("", PathResolver::WksDir)?;
+	let workspace_path = dir_context.resolve_path("".into(), PathResolver::WksDir)?;
 
 	// if options, try to resolve the options.base_dir
 	let base_dir = get_value_prop_as_string(options, "base_dir", "utils.file... options fail")?;
@@ -382,7 +382,7 @@ fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Result
 	let base_dir = match base_dir {
 		Some(base_dir) => {
 			if paths::is_relative(&base_dir) {
-				workspace_path.join_str(&base_dir)
+				workspace_path.join(&base_dir)
 			} else {
 				SPath::from(base_dir)
 			}

@@ -49,7 +49,7 @@ async fn test_run_agent_script_before_all_simple() -> Result<()> {
 	let agent = load_test_agent("./agent-script/agent-before-all.aip", &runtime)?;
 
 	// -- Execute
-	let on_path = SPath::new("./some-random/file.txt")?;
+	let on_path = SPath::new("./some-random/file.txt");
 	let path_ref = FileMeta::from(on_path);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 

@@ -18,7 +18,7 @@ pub fn gen_test_dir_path() -> SPath {
 
 /// Resolve a path relative to tests-data/.tmp/ directory
 pub fn gen_tmp_test_path(path: &str) -> SPath {
-	SPath::new(TEST_TMP_DIR).unwrap().join_str(path)
+	SPath::new(TEST_TMP_DIR).join(path)
 }
 
 /// Saves the given content to the specified path.

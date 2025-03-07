@@ -87,10 +87,10 @@ pub async fn update_files(pre_path: &str, dest_dir: &SPath, file_paths: &[&str],
 	for &file_path in file_paths {
 		if force_update || !existing_names.contains(file_path) {
 			let dest_rel_path = SPath::from(file_path);
-			let dest_path = SPath::new(dest_dir)?.join_str(dest_rel_path.to_str());
+			let dest_path = SPath::new(dest_dir).join(dest_rel_path.to_str());
 			// if the rel_path had a parent
 			if let Some(parent_dir) = dest_rel_path.parent() {
-				let parent_dir = dest_dir.join(parent_dir)?;
+				let parent_dir = dest_dir.join(parent_dir);
 				ensure_dir(parent_dir)?;
 			}
 			let zfile = extract_zfile(pre_path, dest_rel_path.to_str())?;

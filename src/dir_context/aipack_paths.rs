@@ -4,7 +4,7 @@ use crate::dir_context::path_consts::PACK_DOWNLOAD;
 use crate::{Error, Result};
 use home::home_dir;
 use simple_fs::SPath;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// AipackPaths is the component that manages all of the Aipack Paths from
 /// - workspace paths `./.aipack`
@@ -41,12 +41,12 @@ impl AipackPaths {
 				err
 			))
 		})?;
-		let wks_dir = SPath::from_path(wks_path)?;
+		let wks_dir = SPath::from_std_path(wks_path)?;
 
 		// -- Compute the aipack_wks_dir
 		// TODO: Needs to define if we have to check if it exists
 		//       We want to explore if we can work without workspace, just with the base
-		let wks_aipack_dir = wks_dir.join(AIPACK_DIR_NAME)?;
+		let wks_aipack_dir = wks_dir.join(AIPACK_DIR_NAME);
 
 		// -- Compute the aipack_base_dir
 		// TODO: Probably need to check that the path exist
@@ -63,12 +63,7 @@ impl AipackPaths {
 #[cfg(test)]
 impl AipackPaths {
 	/// For test use the: DirContext::new_test_runtime_sandbox_01() which will use this to create the mock aipack_paths
-	pub fn from_aipack_base_and_wks_dirs(
-		base_aipack_dir: impl AsRef<Path>,
-		wks_aipack_dir: impl AsRef<Path>,
-	) -> Result<Self> {
-		let base_aipack_dir = SPath::new(base_aipack_dir.as_ref())?;
-		let wks_aipack_dir = SPath::new(wks_aipack_dir.as_ref())?;
+	pub fn from_aipack_base_and_wks_dirs(base_aipack_dir: SPath, wks_aipack_dir: SPath) -> Result<Self> {
 		let wks_dir = wks_aipack_dir.parent().ok_or("Should have partent wks_dir (it's for test)")?;
 		Ok(AipackPaths {
 			wks_dir,
@@ -137,19 +132,19 @@ impl PackRepo {
 impl AipackPaths {
 	// region:    --- Workspace Files & Dirs
 	pub fn get_wks_config_toml_path(&self) -> Result<SPath> {
-		let path = self.wks_aipack_dir.join(CONFIG_FILE_NAME)?;
+		let path = self.wks_aipack_dir.join(CONFIG_FILE_NAME);
 		Ok(path)
 	}
 
 	// TOOD: PRobably to return paths of wks, and base
 	pub fn get_wks_config_toml_paths(&self) -> Result<Vec<SPath>> {
 		let wks_config_path = self.get_wks_config_toml_path()?;
-		let base_config_path = self.base_aipack_dir.join(CONFIG_FILE_NAME)?;
+		let base_config_path = self.base_aipack_dir.join(CONFIG_FILE_NAME);
 		Ok(vec![base_config_path, wks_config_path])
 	}
 
 	pub fn get_wks_pack_custom_dir(&self) -> Result<SPath> {
-		let dir = self.wks_aipack_dir.join(PACK_CUSTOM)?;
+		let dir = self.wks_aipack_dir.join(PACK_CUSTOM);
 		Ok(dir)
 	}
 	// endregion: --- Workspace Files & Dirs
@@ -157,17 +152,17 @@ impl AipackPaths {
 	// region:    --- Base Files & Dirs
 
 	pub fn get_base_pack_custom_dir(&self) -> Result<SPath> {
-		let dir = self.base_aipack_dir.join(PACK_CUSTOM)?;
+		let dir = self.base_aipack_dir.join(PACK_CUSTOM);
 		Ok(dir)
 	}
 
 	pub fn get_base_pack_installed_dir(&self) -> Result<SPath> {
-		let dir = self.base_aipack_dir.join(PACK_INSTALLED)?;
+		let dir = self.base_aipack_dir.join(PACK_INSTALLED);
 		Ok(dir)
 	}
 
 	pub fn get_base_pack_download_dir(&self) -> Result<SPath> {
-		let dir = self.base_aipack_dir.join(PACK_DOWNLOAD)?;
+		let dir = self.base_aipack_dir.join(PACK_DOWNLOAD);
 		Ok(dir)
 	}
 
@@ -213,24 +208,25 @@ pub fn aipack_base_dir() -> Result<SPath> {
 	if !home_dir.exists() {
 		Err(format!("Home dir '{}' does not exist", home_dir.to_string_lossy()))?;
 	}
+	let home_dir = SPath::from_std_path_buf(home_dir)?;
 
-	let base_dir = SPath::new(home_dir.join(AIPACK_BASE))?;
+	let base_dir = home_dir.join(AIPACK_BASE);
 
 	Ok(base_dir)
 }
 
 /// Return an option of spath tuple as (workspace_dir, aipack_dir)
-pub fn find_wks_dir(from_dir: impl AsRef<Path>) -> Result<Option<SPath>> {
-	let mut tmp_dir: Option<PathBuf> = Some(from_dir.as_ref().to_path_buf());
+pub fn find_wks_dir(from_dir: SPath) -> Result<Option<SPath>> {
+	let mut tmp_dir: Option<SPath> = Some(from_dir);
 
 	while let Some(parent_dir) = tmp_dir {
 		let wks_dir = AipackPaths::from_wks_dir(&parent_dir)?;
 
 		if wks_dir.wks_aipack_dir().exists() {
-			return Ok(Some(SPath::new(parent_dir)?));
+			return Ok(Some(parent_dir));
 		}
 
-		tmp_dir = parent_dir.parent().map(|p| p.into());
+		tmp_dir = parent_dir.parent();
 	}
 
 	Ok(None)

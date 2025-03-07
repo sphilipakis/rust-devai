@@ -13,7 +13,7 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 	let hub = get_hub();
 
 	let wks_dir = if let Some(dir) = ref_dir {
-		SPath::new(dir)?
+		SPath::new(dir)
 	} else if let Some(path) = find_wks_dir(current_dir()?)? {
 		path
 	} else {

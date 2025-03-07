@@ -35,7 +35,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Create the config file (only if not present)
 	// Note: For now, "config.toml" is not force, no matter what
-	let config_path = base_dir.join_str("config.toml");
+	let config_path = base_dir.join("config.toml");
 	if !config_path.exists() {
 		let config_zfile = assets::extract_base_config_toml_zfile()?;
 		write(&config_path, config_zfile.content)?;
@@ -61,7 +61,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 /// - if match current version all good.
 /// - if not recreate file with version,
 async fn check_is_new_version(base_dir: &SPath) -> Result<bool> {
-	let version_path = base_dir.join_str("version.txt");
+	let version_path = base_dir.join("version.txt");
 
 	let mut is_new = true;
 

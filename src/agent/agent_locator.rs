@@ -17,7 +17,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 	let agent = match partial_agent_ref {
 		// -- If local path, we try to find the .aip and run it
 		PartialAgentRef::LocalPath(local_path) => {
-			let path = dir_context.resolve_path(&local_path, PathResolver::CurrentDir)?;
+			let path = dir_context.resolve_path((&local_path).into(), PathResolver::CurrentDir)?;
 			let possible_paths = possible_aip_paths(path.clone(), false);
 			let found_path = possible_paths.into_iter().find(|p| p.exists()).ok_or_else(|| {
 				Error::custom(format!(
@@ -38,7 +38,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 			// -- Find the aip path
 			// Note: if it is None, the pack_dir, then, we have the as_dir to avoid do the dir.aip
 			let (aip_path, as_dir) = match pack_ref.sub_path.as_deref() {
-				Some(sub_path) => (pack_dir.path.join_str(sub_path), false),
+				Some(sub_path) => (pack_dir.path.join(sub_path), false),
 				None => (pack_dir.path.clone(), true),
 			};
 
@@ -77,11 +77,11 @@ pub fn possible_aip_paths(path: SPath, as_dir: bool) -> Vec<SPath> {
 
 	// if a dir, then, just add `main.aip` per convention
 	if as_dir || path_str.ends_with('/') {
-		vec![path.join_str("main.aip")]
+		vec![path.join("main.aip")]
 	}
 	// otherwise, we have to possible paths add .aip and another with /main.aip
 	else {
-		vec![SPath::from(format!("{path_str}.aip")), path.join_str("main.aip")]
+		vec![SPath::from(format!("{path_str}.aip")), path.join("main.aip")]
 	}
 }
 

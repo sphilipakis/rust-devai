@@ -11,7 +11,7 @@ fn test_packer_impl_pack_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
 	let dir_context = runtime.dir_context();
-	let to_pack_dir = SPath::new("tests-data/test_packs_folder/test_pack_01")?;
+	let to_pack_dir = SPath::new("tests-data/test_packs_folder/test_pack_01");
 
 	// -- Exec
 	let pack_result = packer::pack_dir(to_pack_dir, dir_context.current_dir())?;

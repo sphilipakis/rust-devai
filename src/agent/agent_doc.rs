@@ -71,7 +71,7 @@ impl CaptureMode {
 /// Constructor
 impl AgentDoc {
 	pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
-		let spath = SPath::new(path.as_ref())?;
+		let spath = SPath::from_std_path(path.as_ref())?;
 		let raw_content = read_to_string(path)?;
 		Ok(Self { spath, raw_content })
 	}
@@ -278,8 +278,8 @@ impl AgentDoc {
 /// Constructor for test
 #[cfg(test)]
 impl AgentDoc {
-	pub fn from_content(path: impl AsRef<Path>, content: impl Into<String>) -> Result<Self> {
-		let spath = SPath::new(path.as_ref())?;
+	pub fn from_content(spath: impl AsRef<Path>, content: impl Into<String>) -> Result<Self> {
+		let spath = SPath::from_std_path(spath.as_ref())?;
 		let raw_content = content.into();
 		Ok(Self { spath, raw_content })
 	}

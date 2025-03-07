@@ -30,7 +30,7 @@ async fn test_run_agent_llm_c_on_file_ok() -> Result<()> {
 	let agent = load_test_agent("./agent-llm/agent-on-file.aip", &runtime)?;
 
 	// -- Execute
-	let on_file = SPath::new("./other/hello.txt")?;
+	let on_file = SPath::new("./other/hello.txt");
 	let file_meta = FileMeta::from(on_file);
 
 	let res = run_test_agent_with_input(&runtime, &agent, file_meta).await?;

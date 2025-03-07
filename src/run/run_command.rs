@@ -24,7 +24,7 @@ pub struct RunCommandResponse {
 /// - If .aipack/ or relative to workspace, then, relatively to workspace
 /// - If ~/.aipack-base/ then, absolute path
 fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> {
-	let file_path = SPath::new(file_path)?;
+	let file_path = SPath::new(file_path);
 
 	if file_path.to_str().contains(".aipack-base") {
 		Ok(file_path)

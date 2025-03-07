@@ -20,9 +20,9 @@ impl Literals {
 
 		let mut store = Vec::new();
 
-		let agent_path = dir_context.current_dir().join(agent.file_path())?;
+		let agent_path = dir_context.current_dir().join(agent.file_path());
 		// Add back the './' prefix to follow convention of being relative to workspace_dir
-		let agent_path = SPath::new(format!("./{agent_path}"))?;
+		let agent_path = SPath::new(format!("./{agent_path}"));
 
 		let agent_dir = agent_path
 			.parent()

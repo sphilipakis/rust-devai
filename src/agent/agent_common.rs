@@ -110,7 +110,7 @@ impl Agent {
 	}
 
 	pub fn file_dir(&self) -> Result<SPath> {
-		Ok(SPath::new(&self.inner.file_path)?
+		Ok(SPath::new(&self.inner.file_path)
 			.parent()
 			.ok_or("Agent does not have a parent dir")?)
 	}

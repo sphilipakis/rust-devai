@@ -27,7 +27,7 @@ impl FileRecord {
 		let full_path = if rel_path.path().is_absolute() {
 			rel_path
 		} else {
-			&base_path.join(rel_path)?
+			&base_path.join(rel_path)
 		};
 
 		let content = read_to_string(full_path).map_err(|err| Error::cc(format!("Fail to read {full_path}"), err))?;

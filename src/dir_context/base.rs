@@ -2,7 +2,6 @@ use super::AipackPaths;
 use crate::Result;
 use crate::support::files::current_dir;
 use simple_fs::SPath;
-use std::path::Path;
 
 #[allow(clippy::enum_variant_names)] // to remove
 pub enum PathResolver {
@@ -66,16 +65,14 @@ impl DirContext {
 
 /// Resolvers
 impl DirContext {
-	pub fn resolve_path(&self, path: impl AsRef<Path>, mode: PathResolver) -> Result<SPath> {
-		let path = SPath::from_path(path)?;
-
+	pub fn resolve_path(&self, path: SPath, mode: PathResolver) -> Result<SPath> {
 		if path.path().is_absolute() {
 			Ok(path)
 		} else {
 			match mode {
-				PathResolver::CurrentDir => Ok(self.current_dir.join(path)?),
-				PathResolver::WksDir => Ok(self.wks_dir().join(path)?),
-				PathResolver::AipackDir => Ok(self.aipack_paths().wks_aipack_dir().join(path)?),
+				PathResolver::CurrentDir => Ok(self.current_dir.join(path)),
+				PathResolver::WksDir => Ok(self.wks_dir().join(path)),
+				PathResolver::AipackDir => Ok(self.aipack_paths().wks_aipack_dir().join(path)),
 			}
 		}
 	}
