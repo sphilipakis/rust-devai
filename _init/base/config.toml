@@ -10,7 +10,7 @@
 #            Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
 #             xAI: "grok-beta"
 #        DeepSeek: "deepseek-chat", "deepseek-reasoner" (from deepseek.com)
-#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b" 
+#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-2.0-flash-lite"
 #       Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
 #          OpenAI: "o3-mini", "o3-mini-high", "o3-mini-low", "gpt-4o", "gpt-4o-mini"
 model = "gpt-4o-mini" # or an alias below (e.g. "flash", "claude")
@@ -27,6 +27,7 @@ input_concurrency = 2
 [default_options.model_aliases]
 claude   = "claude-3-7-sonnet-latest"
 high     = "o3-mini-high"
+med      = "o3-mini"
 low      = "o3-mini-low"
 standard = "gpt-4o"
 cheap    = "gpt-4o-mini"
