@@ -90,7 +90,6 @@ pub fn find_pack_dirs(dir_context: &DirContext, ns: Option<&str>, pack_name: Opt
 
 	for repo_dir in repo_dirs {
 		let repo_kind = repo_dir.kind;
-
 		match (ns, pack_name) {
 			(Some(ns_name), Some(pack_name)) => {
 				let ns_dirs = list_dirs(repo_dir.path(), 1, true);

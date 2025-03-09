@@ -32,11 +32,15 @@ pub fn list_dirs(base_dir: impl AsRef<Path>, depth: usize, only_leaf: bool) -> V
 	for entry in WalkDir::new(base_path)
 		.min_depth(if only_leaf { depth } else { 1 })
 		.max_depth(depth)
+		.follow_links(true) // Add this to follow symlinks when walking
 		.into_iter()
-		.filter_entry(|e| e.file_type().is_dir())
-	{
+		.filter_entry(|e| {
+			// Include both actual directories and symlinks to directories
+			e.file_type().is_dir() || (e.path().is_dir() && e.file_type().is_symlink())
+		}) {
 		let entry = entry.expect("Error walking directory");
-		if entry.file_type().is_dir() {
+		// Now check if the path is a directory (will be true for symlinks to directories)
+		if entry.path().is_dir() {
 			// Skip the base directory itself if only_leaf is true and depth is 0
 			if only_leaf && depth == 0 && entry.path() == base_path {
 				continue;
