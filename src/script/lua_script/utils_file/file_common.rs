@@ -1,13 +1,15 @@
-use crate::dir_context::{DirContext, PathResolver};
+use crate::Error;
+use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::run::RuntimeContext;
 use crate::script::LuaValueExt;
-use crate::script::lua_script::helpers::{get_value_prop_as_string, to_vec_of_strings};
-use crate::support::{AsStrsExt, files, paths};
+use crate::script::lua_script::utils_file::support::{
+	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options,
+};
+use crate::support::{AsStrsExt, files};
 use crate::types::{FileMeta, FileRecord};
-use crate::{Error, Result};
 use mlua::{FromLua, IntoLua, Lua, Value};
-use simple_fs::{ListOptions, SPath, ensure_file_dir, iter_files, list_files};
+use simple_fs::{SPath, ensure_file_dir, iter_files};
 use std::fs::write;
 use std::io::Write;
 
@@ -74,9 +76,9 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 	if rel_path.as_str().starts_with("..") {
 		let wks_dir = dir_context.wks_dir();
 		return Err(Error::custom(format!(
-			"Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}`.\nCannot save file out of workspace at this point"
-		))
-		.into());
+            "Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}`.\nCannot save file out of workspace at this point"
+        ))
+        .into());
 	}
 	get_hub().publish_sync(format!("-> Lua utils.file.save called on: {}", rel_path));
 
@@ -186,32 +188,7 @@ pub(super) fn file_list(
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let sfiles = list_files(
-		&base_path,
-		Some(&include_globs.x_as_strs()),
-		Some(ListOptions::from_relative_glob(!absolute)),
-	)
-	.map_err(Error::from)?;
-
-	// Now, we put back the paths found relative to base_path
-	let sfiles = sfiles
-		.into_iter()
-		.map(|f| {
-			if absolute {
-				Ok(SPath::from(f))
-			} else {
-				//
-				let diff = f.try_diff(&base_path)?;
-				// if the diff goes back from base_path, then, we put the absolute path
-				if diff.as_str().starts_with("..") {
-					Ok(SPath::from(f))
-				} else {
-					Ok(diff)
-				}
-			}
-		})
-		.collect::<simple_fs::Result<Vec<SPath>>>()
-		.map_err(|err| crate::Error::cc("Cannot list files to base", err))?;
+	let sfiles = list_files_with_options(&base_path, &include_globs.x_as_strs(), absolute)?;
 
 	let file_metas: Vec<FileMeta> = sfiles.into_iter().map(FileMeta::from).collect();
 	let res = file_metas.into_lua(lua)?;
@@ -253,35 +230,9 @@ pub(super) fn file_list_load(
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let sfiles = list_files(
-		&base_path,
-		Some(&include_globs.x_as_strs()),
-		Some(ListOptions::from_relative_glob(!absolute)),
-	)
-	.map_err(Error::from)?;
+	let sfiles = list_files_with_options(&base_path, &include_globs.x_as_strs(), absolute)?;
 
-	let file_records = sfiles
-		.into_iter()
-		.map(|sfile| -> Result<FileRecord> {
-			if absolute {
-				// Note the first path won't be taken in account by FileRecord (will need to make that better typed)
-				let file_record = FileRecord::load(&SPath::from(""), &sfile.into())?;
-				Ok(file_record)
-			} else {
-				//
-				let diff = sfile.try_diff(&base_path)?;
-				// if the diff goes back from base_path, then, we put the absolute path
-				// TODO: need to double check this
-				let (base_path, rel_path) = if diff.as_str().starts_with("..") {
-					(SPath::from(""), SPath::from(sfile))
-				} else {
-					(base_path.clone(), diff)
-				};
-				let file_record = FileRecord::load(&base_path, &rel_path)?;
-				Ok(file_record)
-			}
-		})
-		.collect::<Result<Vec<_>>>()?;
+	let file_records = create_file_records(sfiles, &base_path, absolute)?;
 
 	let res = file_records.into_lua(lua)?;
 
@@ -326,8 +277,8 @@ pub(super) fn file_first(
 
 	let mut sfiles = iter_files(
 		&base_path,
-		Some(&include_globs.x_as_strs()),
-		Some(ListOptions::from_relative_glob(!absolute)),
+		Some(&include_globs.iter().map(|s| s.as_str()).collect::<Vec<&str>>()),
+		Some(simple_fs::ListOptions::from_relative_glob(!absolute)),
 	)
 	.map_err(Error::from)?;
 
@@ -352,7 +303,7 @@ pub(super) fn file_first(
 #[derive(Debug, Default)]
 pub struct EnsureExistsOptions {
 	/// Set the eventual provided content if the file is empty (only whitespaces)
-	content_when_empty: bool,
+	pub content_when_empty: bool,
 }
 
 impl FromLua for EnsureExistsOptions {
@@ -368,42 +319,6 @@ impl FromLua for EnsureExistsOptions {
 }
 
 // endregion: --- Options
-
-// region:    --- Support
-
-/// return (base_path, globs)
-fn base_dir_and_globs(
-	ctx: &RuntimeContext,
-	include_globs: Value,
-	options: Option<&Value>,
-) -> Result<(SPath, Vec<String>)> {
-	let globs: Vec<String> = to_vec_of_strings(include_globs, "file::file_list globs argument")?;
-	let base_dir = compute_base_dir(ctx.dir_context(), options)?;
-	Ok((base_dir, globs))
-}
-
-fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Result<SPath> {
-	// the default base_path is the workspace dir.
-	let workspace_path = dir_context.resolve_path("".into(), PathResolver::WksDir)?;
-
-	// if options, try to resolve the options.base_dir
-	let base_dir = get_value_prop_as_string(options, "base_dir", "utils.file... options fail")?;
-
-	let base_dir = match base_dir {
-		Some(base_dir) => {
-			if paths::is_relative(&base_dir) {
-				workspace_path.join(&base_dir)
-			} else {
-				SPath::from(base_dir)
-			}
-		}
-		None => workspace_path,
-	};
-
-	Ok(base_dir)
-}
-
-// endregion: --- Support
 
 // region:    --- Tests
 
@@ -546,7 +461,7 @@ mod tests {
 		let lua_code = r#"
 local files = utils.file.list({"**/*.*"}, {base_dir = "sub-dir-a"})
 return { files = files }
-		"#;
+        "#;
 
 		// -- Exec
 		let res = eval_lua(&lua, lua_code)?;
@@ -585,7 +500,7 @@ return { files = files }
 		let lua_code = r#"
 local files = utils.file.list({"agent-hello-*.aip"}, {base_dir = "sub-dir-a"})
 return { files = files }
-		"#;
+        "#;
 
 		// -- Exec
 		let res = eval_lua(&lua, lua_code)?;
