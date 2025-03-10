@@ -76,7 +76,7 @@ pub async fn run_agent_input(
 	lua_scope.set("options", agent.options_as_ref())?;
 
 	let agent_dir = agent.file_dir()?;
-	let agent_dir_str = agent_dir.to_str();
+	let agent_dir_str = agent_dir.as_str();
 
 	// -- Execute data
 	let data = if let Some(data_script) = agent.data_script().as_ref() {

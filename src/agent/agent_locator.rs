@@ -23,7 +23,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 				Error::custom(format!(
 					"No agent found for local path: '{}'\n   (full path: {})",
 					local_path,
-					path.to_str()
+					path.as_str()
 				))
 			})?;
 			let doc = AgentDoc::from_file(found_path)?;
@@ -69,7 +69,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 /// NOTE: This does not test if the files or path exists
 ///       Just give the possible path, which then need to be tested
 pub fn possible_aip_paths(path: SPath, as_dir: bool) -> Vec<SPath> {
-	let path_str = path.to_str();
+	let path_str = path.as_str();
 	// if end with .aip, then, direct path, so, this is it
 	if path_str.ends_with(".aip") {
 		return vec![path];
@@ -241,7 +241,7 @@ mod tests {
 		// -- Check
 		// When the input ends with ".aip", it should return the direct path.
 		assert_eq!(paths.len(), 1);
-		assert_eq!(paths[0].to_str(), path_str);
+		assert_eq!(paths[0].as_str(), path_str);
 
 		Ok(())
 	}
@@ -258,7 +258,7 @@ mod tests {
 		// -- Check
 		// When the input is a directory (ends with '/'), it should return a single path with "main.aip" appended.
 		assert_eq!(paths.len(), 1);
-		assert_eq!(paths[0].to_str(), "directory/main.aip");
+		assert_eq!(paths[0].as_str(), "directory/main.aip");
 
 		Ok(())
 	}
@@ -277,8 +277,8 @@ mod tests {
 		// 1. Append .aip to the path: "regular_path.aip"
 		// 2. Append "/main.aip": "regular_path/main.aip"
 		assert_eq!(paths.len(), 2);
-		assert_eq!(paths[0].to_str(), "regular_path.aip");
-		assert_eq!(paths[1].to_str(), "regular_path/main.aip");
+		assert_eq!(paths[0].as_str(), "regular_path.aip");
+		assert_eq!(paths[1].as_str(), "regular_path/main.aip");
 
 		Ok(())
 	}

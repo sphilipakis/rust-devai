@@ -66,14 +66,18 @@ impl DirContext {
 /// Resolvers
 impl DirContext {
 	pub fn resolve_path(&self, path: SPath, mode: PathResolver) -> Result<SPath> {
-		if path.path().is_absolute() {
-			Ok(path)
+		let path = if path.path().is_absolute() {
+			path
 		} else {
 			match mode {
-				PathResolver::CurrentDir => Ok(self.current_dir.join(path)),
-				PathResolver::WksDir => Ok(self.wks_dir().join(path)),
-				PathResolver::AipackDir => Ok(self.aipack_paths().wks_aipack_dir().join(path)),
+				PathResolver::CurrentDir => self.current_dir.join(path),
+				PathResolver::WksDir => self.wks_dir().join(path),
+				PathResolver::AipackDir => self.aipack_paths().wks_aipack_dir().join(path),
 			}
-		}
+		};
+
+		let path = path.into_normalized();
+
+		Ok(path)
 	}
 }

@@ -17,7 +17,7 @@ use simple_fs::SPath;
 pub fn extract_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PackToml> {
 	// Extract the pack.toml from zip
 	let toml_content = zip::extract_text_content(path_to_aipack, "pack.toml").map_err(|e| Error::FailToInstall {
-		aipack_ref: path_to_aipack.to_str().to_string(),
+		aipack_ref: path_to_aipack.as_str().to_string(),
 		cause: format!("Failed to extract pack.toml: {}", e),
 	})?;
 
@@ -25,7 +25,7 @@ pub fn extract_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PackTo
 	let pack_toml =
 		parse_validate_pack_toml(&toml_content, &format!("pack.toml for {}", path_to_aipack)).map_err(|e| {
 			Error::FailToInstall {
-				aipack_ref: path_to_aipack.to_str().to_string(),
+				aipack_ref: path_to_aipack.as_str().to_string(),
 				cause: format!("Invalid pack.toml: {}", e),
 			}
 		})?;
@@ -48,13 +48,13 @@ pub fn extract_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PackTo
 pub fn extract_partial_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PartialPackToml> {
 	// Extract the pack.toml from zip
 	let toml_content = zip::extract_text_content(path_to_aipack, "pack.toml").map_err(|e| Error::FailToInstall {
-		aipack_ref: path_to_aipack.to_str().to_string(),
+		aipack_ref: path_to_aipack.as_str().to_string(),
 		cause: format!("Failed to extract pack.toml: {}", e),
 	})?;
 
 	// Parse the TOML content without validation
 	let partial_pack_toml = toml::from_str(&toml_content).map_err(|e| Error::FailToInstall {
-		aipack_ref: path_to_aipack.to_str().to_string(),
+		aipack_ref: path_to_aipack.as_str().to_string(),
 		cause: format!("Failed to parse pack.toml: {}", e),
 	})?;
 

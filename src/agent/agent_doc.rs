@@ -262,7 +262,7 @@ impl AgentDoc {
 			agent_ref,
 
 			file_name: self.spath.name().to_string(),
-			file_path: self.spath.to_str().to_string(),
+			file_path: self.spath.as_str().to_string(),
 
 			model_name,
 

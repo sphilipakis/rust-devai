@@ -26,10 +26,10 @@ pub struct RunCommandResponse {
 fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> {
 	let file_path = SPath::new(file_path);
 
-	if file_path.to_str().contains(".aipack-base") {
+	if file_path.as_str().contains(".aipack-base") {
 		Ok(file_path)
 	} else {
-		let spath = file_path.diff(dir_context.wks_dir())?;
+		let spath = file_path.try_diff(dir_context.wks_dir())?;
 		Ok(spath)
 	}
 }
@@ -71,7 +71,7 @@ pub async fn run_command_agent(
 		lua_scope.set("CTX", literals.to_lua(&lua_engine)?)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
-		let lua_value = lua_engine.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.to_str()]))?;
+		let lua_value = lua_engine.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		let before_all_res = serde_json::to_value(lua_value)?;
 
 		match AipackCustom::from_value(before_all_res)? {
@@ -273,7 +273,7 @@ pub async fn run_command_agent(
 		lua_scope.set("CTX", literals.to_lua(&lua_engine)?)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
-		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.to_str()]))?;
+		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		Some(serde_json::to_value(lua_value)?)
 	} else {
 		None

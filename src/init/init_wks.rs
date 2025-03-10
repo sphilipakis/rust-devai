@@ -76,7 +76,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 		hub.publish(format!(
 			"-> {:<18} '{}'",
 			"Create config file",
-			config_path.diff(wks_dir)?
+			config_path.try_diff(wks_dir)?
 		))
 		.await;
 	}

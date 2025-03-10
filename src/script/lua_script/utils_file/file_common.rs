@@ -63,11 +63,21 @@ pub(super) fn file_load(
 /// Does not return anything
 ///
 pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, content: String) -> mlua::Result<()> {
-	let path = ctx.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
+	let rel_path = SPath::new(rel_path);
+	let path = ctx.dir_context().resolve_path(rel_path, PathResolver::WksDir)?;
+	let dir_context = ctx.dir_context();
 	ensure_file_dir(&path).map_err(Error::from)?;
 
 	write(&path, content)?;
 
+	let rel_path = path.diff(dir_context.wks_dir()).unwrap_or(path);
+	if rel_path.as_str().starts_with("..") {
+		let wks_dir = dir_context.wks_dir();
+		return Err(Error::custom(format!(
+			"Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}`.\nCannot save file out of workspace at this point"
+		))
+		.into());
+	}
 	get_hub().publish_sync(format!("-> Lua utils.file.save called on: {}", rel_path));
 
 	Ok(())
@@ -191,9 +201,9 @@ pub(super) fn file_list(
 				Ok(SPath::from(f))
 			} else {
 				//
-				let diff = f.diff(&base_path)?;
+				let diff = f.try_diff(&base_path)?;
 				// if the diff goes back from base_path, then, we put the absolute path
-				if diff.to_str().starts_with("..") {
+				if diff.as_str().starts_with("..") {
 					Ok(SPath::from(f))
 				} else {
 					Ok(diff)
@@ -259,10 +269,10 @@ pub(super) fn file_list_load(
 				Ok(file_record)
 			} else {
 				//
-				let diff = sfile.diff(&base_path)?;
+				let diff = sfile.try_diff(&base_path)?;
 				// if the diff goes back from base_path, then, we put the absolute path
 				// TODO: need to double check this
-				let (base_path, rel_path) = if diff.to_str().starts_with("..") {
+				let (base_path, rel_path) = if diff.as_str().starts_with("..") {
 					(SPath::from(""), SPath::from(sfile))
 				} else {
 					(base_path.clone(), diff)
@@ -329,7 +339,7 @@ pub(super) fn file_first(
 		sfile.into()
 	} else {
 		sfile
-			.diff(&base_path)
+			.try_diff(&base_path)
 			.map_err(|err| Error::cc("Cannot diff with base_path", err))?
 	};
 
@@ -401,7 +411,8 @@ fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Result
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::{SANDBOX_01_WKS_DIR, assert_contains, eval_lua, run_reflective_agent, setup_lua};
+	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
+	use crate::run::Runtime;
 	use std::path::Path;
 	use value_ext::JsonValueExt as _;
 
@@ -426,7 +437,9 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_file_save_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let fx_dest_path = "./.tmp/test_file_save_simple_ok/agent-hello.aip";
+		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context.wks_dir().join(".tmp/test_lua_file_save_simple_ok.md");
 		let fx_content = "hello from test_file_save_simple_ok";
 
 		// -- Exec
@@ -437,9 +450,32 @@ mod tests {
 		.await?;
 
 		// -- Check
-		let dest_path = Path::new(SANDBOX_01_WKS_DIR).join(fx_dest_path);
-		let file_content = std::fs::read_to_string(dest_path)?;
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
 		assert_eq!(file_content, fx_content);
+
+		Ok(())
+	}
+
+	/// Note: need the multi-thread, because save do a `get_hub().publish_sync`
+	///       which does a tokio blocking (requiring multi thread)
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_simple_fail() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context.wks_dir().join("../.tmp/test_lua_file_save_simple_fail.md");
+		let fx_content = "hello from test_file_save_simple_ok";
+
+		// -- Exec
+		let res = run_reflective_agent(
+			&format!(r#"return utils.file.save("{fx_dest_path}", "{fx_content}");"#),
+			None,
+		)
+		.await;
+
+		// -- Check
+		let Err(err) = res else { panic!("Should return error") };
+		assert!(err.to_string().contains("does not belong to the workspace dir"));
 
 		Ok(())
 	}

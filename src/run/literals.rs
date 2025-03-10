@@ -60,7 +60,7 @@ impl Literals {
 		// -- Agent Information
 		store.push(("AGENT_NAME", agent.name().to_string()));
 		store.push(("AGENT_FILE_NAME", agent_path.name().to_string()));
-		store.push(("AGENT_FILE_PATH", agent_path.to_str().to_string()));
+		store.push(("AGENT_FILE_PATH", agent_path.as_str().to_string()));
 		store.push(("AGENT_FILE_DIR", agent_dir.to_string()));
 		store.push(("AGENT_FILE_STEM", agent_path.stem().to_string()));
 

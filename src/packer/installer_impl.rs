@@ -197,7 +197,7 @@ fn resolve_local_path(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SP
 		if aipack_zipped_file.path().is_absolute() {
 			Ok((aipack_zipped_file, pack_uri))
 		} else {
-			let absolute_path = dir_context.current_dir().join(aipack_zipped_file.to_str());
+			let absolute_path = dir_context.current_dir().join(aipack_zipped_file.as_str());
 			Ok((absolute_path, pack_uri))
 		}
 	} else {
@@ -345,7 +345,7 @@ fn install_aipack_file(
 
 			// Parse the existing pack.toml
 			let existing_pack_toml =
-				parse_validate_pack_toml(&existing_toml_content, existing_pack_toml_path.to_str())?;
+				parse_validate_pack_toml(&existing_toml_content, existing_pack_toml_path.as_str())?;
 
 			// Check if the installed version is greater than the new version
 			support::validate_version_update(&existing_pack_toml.version, &new_pack_toml.version)?;

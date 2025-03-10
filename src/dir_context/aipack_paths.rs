@@ -120,7 +120,7 @@ impl PackRepo {
 
 	#[allow(unused)]
 	pub fn to_str(&self) -> &str {
-		self.path.to_str()
+		self.path.as_str()
 	}
 
 	pub fn path(&self) -> &SPath {
@@ -250,7 +250,7 @@ mod tests {
 		// -- Check
 		// check longer, because shouuld be absolute path
 		assert_ends_with(
-			aipack_paths.get_wks_config_toml_paths()?[1].to_str(),
+			aipack_paths.get_wks_config_toml_paths()?[1].as_str(),
 			"tests-data/sandbox-01/.aipack/config.toml",
 		);
 

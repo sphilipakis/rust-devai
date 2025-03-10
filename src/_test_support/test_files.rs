@@ -94,7 +94,7 @@ fn ensure_test_tmp_dir_path_safe(path: &SPath) -> Result<()> {
 	let canonical = path.canonicalize()?;
 
 	// Check if the canonical path contains tests-data
-	if !canonical.to_str().contains("tests-data/.tmp") {
+	if !canonical.as_str().contains("tests-data/.tmp") {
 		return Err(format!("Safety check failed: Path must be within tests-data directory: {canonical}").into());
 	}
 
@@ -110,14 +110,14 @@ mod tests {
 		let name1 = gen_test_dir_path();
 		let name2 = gen_test_dir_path();
 
-		assert!(name1.to_str().starts_with("./tests-data/.tmp/test-"));
-		assert!(name2.to_str().starts_with("./tests-data/.tmp/test-"));
-		assert_ne!(name1.to_str(), name2.to_str(), "Generated names should be unique");
+		assert!(name1.as_str().starts_with("./tests-data/.tmp/test-"));
+		assert!(name2.as_str().starts_with("./tests-data/.tmp/test-"));
+		assert_ne!(name1.as_str(), name2.as_str(), "Generated names should be unique");
 	}
 
 	#[test]
 	fn test_test_support_gen_tmp_test_path() {
 		let path = gen_tmp_test_path("subdir/file.txt");
-		assert!(path.to_str().contains("tests-data/.tmp/subdir/file.txt"));
+		assert!(path.as_str().contains("tests-data/.tmp/subdir/file.txt"));
 	}
 }

@@ -145,7 +145,7 @@ mod tests {
 			let exp_path = SPath::new(exp).canonicalize()?;
 			let found = dirs
 				.iter()
-				.any(|d| d.canonicalize().map(|p| p.to_str() == exp_path.to_str()).unwrap_or(false));
+				.any(|d| d.canonicalize().map(|p| p.as_str() == exp_path.as_str()).unwrap_or(false));
 			assert!(found, "Expected directory {:?} not found in the returned list", exp);
 		}
 
@@ -170,7 +170,7 @@ mod tests {
 			let exp_path = SPath::new(exp).canonicalize()?;
 			let found = dirs
 				.iter()
-				.any(|d| d.canonicalize().map(|p| p.to_str() == exp_path.to_str()).unwrap_or(false));
+				.any(|d| d.canonicalize().map(|p| p.as_str() == exp_path.as_str()).unwrap_or(false));
 			assert!(found, "Expected directory {:?} not found in the returned list", exp);
 		}
 

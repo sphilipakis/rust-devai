@@ -185,7 +185,7 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 			.into_iter()
 			.filter_map(|file| {
 				let absolute_file = file.canonicalize().ok()?;
-				let absolute_file = absolute_file.diff(workspace_dir).ok()?;
+				let absolute_file = absolute_file.try_diff(workspace_dir).ok()?;
 				Some(absolute_file)
 			})
 			.collect();

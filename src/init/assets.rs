@@ -81,22 +81,22 @@ pub async fn update_files(pre_path: &str, dest_dir: &SPath, file_paths: &[&str],
 
 	let existing_names: HashSet<String> = existing_files
 		.iter()
-		.filter_map(|f| f.diff(dest_dir).ok().map(|p| p.to_string()))
+		.filter_map(|f| f.try_diff(dest_dir).ok().map(|p| p.to_string()))
 		.collect();
 
 	for &file_path in file_paths {
 		if force_update || !existing_names.contains(file_path) {
 			let dest_rel_path = SPath::from(file_path);
-			let dest_path = SPath::new(dest_dir).join(dest_rel_path.to_str());
+			let dest_path = SPath::new(dest_dir).join(dest_rel_path.as_str());
 			// if the rel_path had a parent
 			if let Some(parent_dir) = dest_rel_path.parent() {
 				let parent_dir = dest_dir.join(parent_dir);
 				ensure_dir(parent_dir)?;
 			}
-			let zfile = extract_zfile(pre_path, dest_rel_path.to_str())?;
+			let zfile = extract_zfile(pre_path, dest_rel_path.as_str())?;
 			write(&dest_path, zfile.content)?;
 			get_hub()
-				.publish(format!("-> {:<18} '{}'", "Create file", dest_path.diff(dest_dir)?))
+				.publish(format!("-> {:<18} '{}'", "Create file", dest_path.try_diff(dest_dir)?))
 				.await;
 		}
 	}

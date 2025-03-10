@@ -18,7 +18,7 @@ async fn test_installer_impl_local_file_simple() -> Result<()> {
 	let aipack_file_path = pack_result.pack_file;
 
 	// -- Exec
-	let installed_pack = install_pack(dir_context, aipack_file_path.to_str()).await?;
+	let installed_pack = install_pack(dir_context, aipack_file_path.as_str()).await?;
 
 	// -- Check
 	// Verify that the pack was installed correctly
@@ -31,7 +31,7 @@ async fn test_installer_impl_local_file_simple() -> Result<()> {
 		.aipack_paths()
 		.get_base_pack_installed_dir()?
 		.join("test/test_pack_01");
-	assert_eq!(installed_pack.path.to_str(), expected_install_path.to_str());
+	assert_eq!(installed_pack.path.as_str(), expected_install_path.as_str());
 
 	// Verify that the main.aip file was extracted
 	let main_aip_path = expected_install_path.join("main.aip");
@@ -76,7 +76,7 @@ version = "0.2.0"
 	let old_pack_data = packer::pack_dir(&old_pack_dir, dir_context.current_dir())?;
 	let old_pack_file = old_pack_data.pack_file;
 	// Install the old pack (version 0.2.0)
-	let _installed_old_pack = install_pack(dir_context, old_pack_file.to_str()).await?;
+	let _installed_old_pack = install_pack(dir_context, old_pack_file.as_str()).await?;
 	// (Optional: assert that installed_old_pack.pack_toml.version == "0.2.0")
 
 	// Step 2: Create new pack directory (version 0.1.0)
@@ -94,7 +94,7 @@ version = "0.1.0"
 	let new_pack_file = new_pack_data.pack_file;
 
 	// -- Execute: Try to install the new pack (version 0.1.0)
-	let result = install_pack(dir_context, new_pack_file.to_str()).await;
+	let result = install_pack(dir_context, new_pack_file.as_str()).await;
 
 	// -- Check: The new pack installation should fail.
 	assert!(result.is_err(), "Installing lower version should fail");
@@ -143,7 +143,7 @@ version = "0.1.0-alpha"
 
 	// Pack the directory into a .aipack file
 	let pack_data = packer::pack_dir(&invalid_pack_dir, dir_context.current_dir())?;
-	let pack_file_str = pack_data.pack_file.to_str();
+	let pack_file_str = pack_data.pack_file.as_str();
 
 	// Attempt to install the pack, expecting an error due to invalid prerelease format
 	let result = install_pack(dir_context, pack_file_str).await;
