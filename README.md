@@ -17,6 +17,12 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 - Runs locally, completely IDE-agnostic.
 - Or in the cloud—server or serverless.
 
+## <img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
+
+- [jc@coder Pack Demo ](https://www.youtube.com/watch?v=-xFd00rrfLk&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [AIPACK Introduction](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+
 ### Quick Start
 
 **Install**
