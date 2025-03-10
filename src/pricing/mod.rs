@@ -7,7 +7,6 @@ mod pricer;
 
 // region:    --- Public API
 
-#[allow(unused)]
 pub use pricer::price_it;
 
 // endregion: --- Public API

@@ -3,7 +3,7 @@
 use crate::support::W;
 use genai::ModelName;
 use genai::adapter::AdapterKind;
-use genai::chat::MetaUsage;
+use genai::chat::Usage;
 use mlua::IntoLua;
 use serde::Serialize;
 
@@ -13,7 +13,7 @@ pub struct AiResponse {
 	pub reasoning_content: Option<String>,
 	pub model_name: ModelName,
 	pub adapter_kind: AdapterKind,
-	pub usage: MetaUsage,
+	pub usage: Usage,
 	pub price_usd: Option<f64>,
 	pub duration_sec: f64,
 	pub info: String,
@@ -36,7 +36,7 @@ impl IntoLua for AiResponse {
 	}
 }
 
-impl IntoLua for W<&MetaUsage> {
+impl IntoLua for W<&Usage> {
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
 		let usage = self.0;
@@ -51,6 +51,9 @@ impl IntoLua for W<&MetaUsage> {
 			// Note: The leaf value can be absent (same as nil in Lua)
 			if let Some(v) = prompt_tokens_details.cached_tokens {
 				prompt_details_table.set("cached_tokens", v.into_lua(lua)?)?;
+			}
+			if let Some(v) = prompt_tokens_details.cache_creation_tokens {
+				prompt_details_table.set("cache_creation_tokens", v.into_lua(lua)?)?;
 			}
 			if let Some(v) = prompt_tokens_details.audio_tokens {
 				prompt_details_table.set("audio_tokens", v.into_lua(lua)?)?;

@@ -8,7 +8,7 @@ use crate::run::{DryMode, RunBaseOptions, Runtime};
 use crate::script::{AipackCustom, FromValue};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{format_duration, format_num};
-use genai::chat::{ChatMessage, ChatRequest, ChatResponse, MetaUsage};
+use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, Usage};
 use serde_json::Value;
 use std::collections::HashMap;
 use tokio::time::Instant;
@@ -115,13 +115,21 @@ pub async fn run_agent_input(
 	let mut chat_messages: Vec<ChatMessage> = Vec::new();
 	let data_scope = serde_json::to_value(data_scope)?;
 	for prompt_part in agent.prompt_parts() {
-		let PromptPart { kind, content } = prompt_part;
+		let PromptPart { kind, content, options } = prompt_part;
+
+		let options = if options.as_ref().map(|v| v.cache).unwrap_or(false) {
+			Some(CacheControl::Ephemeral.into())
+		} else {
+			None
+		};
+
 		let content = hbs_render(content, &data_scope)?;
 		// For now, only add if not empty
 		if !content.trim().is_empty() {
 			chat_messages.push(ChatMessage {
 				role: kind.into(),
 				content: content.into(),
+				options,
 			})
 		}
 	}
@@ -256,14 +264,19 @@ fn get_price(chat_res: &ChatResponse) -> Option<f64> {
 	price_it(provider, model_name, &chat_res.usage)
 }
 
-fn format_usage(usage: &MetaUsage) -> String {
+fn format_usage(usage: &Usage) -> String {
 	let mut buff = String::new();
 
 	buff.push_str("Prompt Tokens: ");
 	buff.push_str(&format_num(usage.prompt_tokens.unwrap_or_default() as i64));
-	if let Some(cached) = usage.prompt_tokens_details.as_ref().and_then(|v| v.cached_tokens) {
+	if let Some(prompt_tokens_details) = usage.prompt_tokens_details.as_ref() {
 		buff.push_str(" (cached: ");
+		let cached = prompt_tokens_details.cached_tokens.unwrap_or(0);
 		buff.push_str(&format_num(cached as i64));
+		if let Some(cache_creation_tokens) = prompt_tokens_details.cache_creation_tokens {
+			buff.push_str(", cache_creation: ");
+			buff.push_str(&format_num(cache_creation_tokens as i64));
+		}
 		buff.push(')');
 	}
 

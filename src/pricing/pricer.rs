@@ -1,5 +1,5 @@
 use crate::pricing::data::PROVIDERS;
-use genai::chat::MetaUsage;
+use genai::chat::Usage;
 
 /// Calculates the price for a given provider type, model name, and usage.
 ///
@@ -10,7 +10,7 @@ use genai::chat::MetaUsage;
 ///
 /// # Returns
 /// * `Option<f64>` - The calculated price in USD, or None if the provider or model was not found
-pub fn price_it(provider_type: &str, model_name: &str, usage: &MetaUsage) -> Option<f64> {
+pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<f64> {
 	// Find the provider
 	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
 
@@ -22,18 +22,20 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &MetaUsage) -> Opt
 	let completion_tokens = usage.completion_tokens.unwrap_or(0) as f64;
 
 	// Calculate cached vs normal prompt tokens
-	let (cached_tokens, normal_tokens) = match &usage.prompt_tokens_details {
+	let (cached_tokens, cache_creation_tokens) = match &usage.prompt_tokens_details {
 		Some(details) => {
 			let cached = details.cached_tokens.unwrap_or(0) as f64;
-			let normal = prompt_tokens - cached;
-			(cached, normal)
+			let cache_creation_tokens = details.cache_creation_tokens.unwrap_or(0) as f64;
+			(cached, cache_creation_tokens)
 		}
-		None => (0.0, prompt_tokens),
+		None => (0.0, 0.0),
 	};
 
 	// Calculate price (convert from per million tokens to actual price)
+	// NOTE: For now, hack the * 1.25 for cache_creation_tokens (which is Anthropic rules, and this is only anthropic data)
 	let price = (cached_tokens * model.input_cached / 1_000_000.0)
-		+ (normal_tokens * model.input_normal / 1_000_000.0)
+		+ (cache_creation_tokens * 1.25 * model.input_normal / 1_000_000.0)
+		+ (prompt_tokens * model.input_normal / 1_000_000.0)
 		+ (completion_tokens * model.output / 1_000_000.0);
 
 	let price = (price * 10_000.0).round() / 10_000.0;
@@ -48,12 +50,12 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use genai::chat::PromptTokensDetails;
+	use genai::chat::{PromptTokensDetails, Usage};
 
 	#[test]
 	fn test_pricing_pricer_price_it_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let usage = MetaUsage {
+		let usage = Usage {
 			prompt_tokens: Some(1000),
 			completion_tokens: Some(500),
 			prompt_tokens_details: None,
@@ -76,12 +78,13 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_with_cached() -> Result<()> {
 		// -- Setup & Fixtures
-		let usage = MetaUsage {
+		let usage = Usage {
 			prompt_tokens: Some(1000),
 			completion_tokens: Some(500),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(400),
 				audio_tokens: None,
+				cache_creation_tokens: None,
 			}),
 			..Default::default()
 		};
@@ -106,7 +109,7 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_unknown_provider() -> Result<()> {
 		// -- Setup & Fixtures
-		let usage = MetaUsage {
+		let usage = Usage {
 			prompt_tokens: Some(1000),
 			completion_tokens: Some(500),
 			..Default::default()
@@ -124,7 +127,7 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_unknown_model() -> Result<()> {
 		// -- Setup & Fixtures
-		let usage = MetaUsage {
+		let usage = Usage {
 			prompt_tokens: Some(1000),
 			completion_tokens: Some(500),
 			..Default::default()

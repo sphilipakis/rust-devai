@@ -2,9 +2,9 @@ use genai::chat::ChatRole;
 
 #[derive(Debug, Clone)]
 pub struct PromptPart {
-	#[allow(unused)] // for now
 	pub kind: PartKind,
 	pub content: String,
+	pub options: Option<PartOptions>,
 }
 
 #[derive(Debug, Clone)]
@@ -12,6 +12,11 @@ pub enum PartKind {
 	Instruction,
 	System,
 	Assistant,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct PartOptions {
+	pub cache: bool,
 }
 
 // region:    --- Froms

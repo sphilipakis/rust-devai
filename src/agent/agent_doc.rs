@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::agent::agent_options::AgentOptions;
 use crate::agent::agent_ref::AgentRef;
-use crate::agent::{Agent, AgentInner, PartKind, PromptPart};
+use crate::agent::{Agent, AgentInner, PartKind, PartOptions, PromptPart};
 use crate::support::md::InBlockState;
 use crate::support::tomls::parse_toml;
 use genai::ModelName;
@@ -122,10 +122,11 @@ impl AgentDoc {
 					capture_mode = CaptureMode::AfterAllSection;
 				} else if let Some(part_kind) = get_prompt_part_kind(&header) {
 					capture_mode = CaptureMode::PromptPart;
+					let part_options = get_prompt_part_options(&header);
 					// we finalize the previous part if present
 					finalize_current_prompt_part(&mut current_part, &mut prompt_parts);
 					// then, we create the new current_part
-					current_part = Some(CurrentPromptPart(part_kind, Vec::new()));
+					current_part = Some(CurrentPromptPart(part_kind, part_options, Vec::new()));
 				} else {
 					// Stop processing current section if new top-level header
 					capture_mode = CaptureMode::None;
@@ -188,7 +189,7 @@ impl AgentDoc {
 				// -- Pompt Part
 				CaptureMode::PromptPart => {
 					if let Some(current_part) = &mut current_part {
-						current_part.1.push(line);
+						current_part.2.push(line);
 					} else {
 						// This should not happen, as the current_part should be been created when we enterred the section
 						// TODO: Need to capture warning if we reach this point.
@@ -287,7 +288,21 @@ impl AgentDoc {
 
 // region:    --- Support
 
+/// Parse the header and return the PartOptions
+fn get_prompt_part_options(header: &str) -> Option<PartOptions> {
+	// TODO: Fix, should parse LUA style, to see if `{cache = true}`
+	// For now, need to have exactly `{cache = true}` including backticks
+	if header.contains("`{cache = true}`") {
+		Some(PartOptions { cache: true })
+	} else {
+		None
+	}
+}
+
+/// Parse the header and return the part kind
 fn get_prompt_part_kind(header: &str) -> Option<PartKind> {
+	let header = header.split_once('`').map(|(before, _)| before).unwrap_or(header);
+	let header = header.trim();
 	if header == "user" || header == "inst" || header == "instruction" {
 		Some(PartKind::Instruction)
 	} else if header == "system" {
@@ -300,18 +315,20 @@ fn get_prompt_part_kind(header: &str) -> Option<PartKind> {
 }
 
 /// Type of the function below and the `into_agent_inner` lexer
-struct CurrentPromptPart<'a>(PartKind, Vec<&'a str>);
+/// (PartKind, PartOptions, Content)
+struct CurrentPromptPart<'a>(PartKind, Option<PartOptions>, Vec<&'a str>);
 
 /// Finalize a eventual current_part
 fn finalize_current_prompt_part(current_part: &mut Option<CurrentPromptPart<'_>>, prompt_parts: &mut Vec<PromptPart>) {
 	if let Some(current_part) = current_part.take() {
 		// to have the last line
 		let kind = current_part.0;
-		let mut content = current_part.1;
+		let options = current_part.1;
+		let mut content = current_part.2;
 		content.push("");
 		let content = content.join("\n");
 
-		let part = PromptPart { kind, content };
+		let part = PromptPart { kind, options, content };
 		prompt_parts.push(part);
 	}
 }
