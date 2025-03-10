@@ -1,5 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-10 - [v0.6.8](https://github.com/jeremychone/rust-devai/compare/v0.6.7...v0.6.8)
+
+- `+` agent - added support for Prompt PartOptions, e.g., cache = true
+- `*` First pass at Anthropic Caching support
+- `-` negative glob support e.g. `context_globs = ["src/**/*.rs", "!src/**/mod.rs"]`
+- `^` find_agent - now support symlink for pack dirs
+- `.` int - base config model name update.
 
 ## 2025-03-06 - [v0.6.7](https://github.com/jeremychone/rust-devai/compare/v0.6.6...v0.6.7)
 
