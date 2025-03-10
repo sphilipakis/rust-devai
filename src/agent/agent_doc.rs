@@ -1,7 +1,9 @@
 use crate::Result;
 use crate::agent::agent_options::AgentOptions;
 use crate::agent::agent_ref::AgentRef;
-use crate::agent::{Agent, AgentInner, PartKind, PartOptions, PromptPart};
+use crate::agent::{
+	Agent, AgentInner, PartKind, PartOptions, PromptPart, get_prompt_part_kind, get_prompt_part_options,
+};
 use crate::support::md::InBlockState;
 use crate::support::tomls::parse_toml;
 use genai::ModelName;
@@ -109,20 +111,21 @@ impl AgentDoc {
 			block_state = block_state.compute_new(line);
 			// If heading we decide the capture mode
 			if block_state.is_out() && line.starts_with('#') && !line.starts_with("##") {
-				let header = line[1..].trim().to_lowercase();
-				if header == "options" {
+				let header_lower = line[1..].trim().to_lowercase();
+				if header_lower == "options" {
 					capture_mode = CaptureMode::OptionsSection;
-				} else if header == "before all" {
+				} else if header_lower == "before all" {
 					capture_mode = CaptureMode::BeforeAllSection;
-				} else if header == "data" {
+				} else if header_lower == "data" {
 					capture_mode = CaptureMode::DataSection;
-				} else if header == "output" {
+				} else if header_lower == "output" {
 					capture_mode = CaptureMode::OutputSection;
-				} else if header == "after all" {
+				} else if header_lower == "after all" {
 					capture_mode = CaptureMode::AfterAllSection;
-				} else if let Some(part_kind) = get_prompt_part_kind(&header) {
+				} else if let Some(part_kind) = get_prompt_part_kind(&header_lower) {
 					capture_mode = CaptureMode::PromptPart;
-					let part_options = get_prompt_part_options(&header);
+					// TODO: will need to pass full case header in case we take string values in part options
+					let part_options = get_prompt_part_options(&header_lower)?;
 					// we finalize the previous part if present
 					finalize_current_prompt_part(&mut current_part, &mut prompt_parts);
 					// then, we create the new current_part
@@ -287,32 +290,6 @@ impl AgentDoc {
 }
 
 // region:    --- Support
-
-/// Parse the header and return the PartOptions
-fn get_prompt_part_options(header: &str) -> Option<PartOptions> {
-	// TODO: Fix, should parse LUA style, to see if `{cache = true}`
-	// For now, need to have exactly `{cache = true}` including backticks
-	if header.contains("`{cache = true}`") {
-		Some(PartOptions { cache: true })
-	} else {
-		None
-	}
-}
-
-/// Parse the header and return the part kind
-fn get_prompt_part_kind(header: &str) -> Option<PartKind> {
-	let header = header.split_once('`').map(|(before, _)| before).unwrap_or(header);
-	let header = header.trim();
-	if header == "user" || header == "inst" || header == "instruction" {
-		Some(PartKind::Instruction)
-	} else if header == "system" {
-		Some(PartKind::System)
-	} else if header == "assistant" || header == "model" || header == "mind trick" || header == "jedi trick" {
-		Some(PartKind::Assistant)
-	} else {
-		None
-	}
-}
 
 /// Type of the function below and the `into_agent_inner` lexer
 /// (PartKind, PartOptions, Content)
