@@ -4,7 +4,7 @@ use crate::hub::get_hub;
 use crate::run::RuntimeContext;
 use crate::script::LuaValueExt;
 use crate::script::lua_script::utils_file::support::{
-	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options,
+	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options, process_path_reference,
 };
 use crate::support::{AsStrsExt, files};
 use crate::types::{FileMeta, FileRecord};
@@ -43,7 +43,9 @@ pub(super) fn file_load(
 	rel_path: String,
 	options: Option<Value>,
 ) -> mlua::Result<mlua::Value> {
-	let base_path = compute_base_dir(ctx.dir_context(), options.as_ref())?;
+	let dir_context = ctx.dir_context();
+	let base_path = compute_base_dir(dir_context, options.as_ref())?;
+	let rel_path = process_path_reference(dir_context, &rel_path)?;
 	let rel_path = SPath::new(rel_path);
 
 	let file_record = FileRecord::load(&base_path, &rel_path)?;
@@ -350,6 +352,22 @@ mod tests {
 		assert_contains(res.x_get_str("content")?, "from agent-hello.aip");
 		assert_eq!(res.x_get_str("path")?, fx_path);
 		assert_eq!(res.x_get_str("name")?, "agent-hello.aip");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_load_pack_ref() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_path = "ns_b@pack_b_2/main.aip";
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return utils.file.load("{fx_path}")"#), None).await?;
+
+		// -- Check
+		assert_contains(res.x_get_str("content")?, "custom ns_b@pack_b_2 main.aip");
+		assert_contains(res.x_get_str("path")?, "pack_b_2/main.aip");
+		assert_eq!(res.x_get_str("name")?, "main.aip");
 
 		Ok(())
 	}

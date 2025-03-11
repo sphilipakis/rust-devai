@@ -25,6 +25,42 @@ pub fn base_dir_and_globs(
 	Ok((base_dir, processed_globs))
 }
 
+/// Processes a single file path to handle pack references
+///
+/// Converts pack references like "jc@rust10x/common/file.md" to their actual paths
+pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<String> {
+	// Check if the path starts with a potential pack reference
+	if let Some(pack_ref) = extract_pack_reference(path) {
+		// Parse the pack reference
+		if let Ok(partial_pack_ref) = PartialPackRef::from_str(pack_ref) {
+			// Try to find the pack directory
+			let namespace = partial_pack_ref.namespace.as_deref();
+			let pack_name = Some(&partial_pack_ref.name);
+
+			if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name.map(|s| s.as_str())) {
+				// Replace the pack reference with the actual path
+				let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
+				let pack_path = pack_dir.path.join(&sub_path);
+
+				// Get the remaining path (after the pack reference)
+				let remaining_path = path.strip_prefix(pack_ref).unwrap_or("").trim_start_matches('/');
+
+				// Combine the pack path with the remaining path
+				let resolved_path = if remaining_path.is_empty() {
+					pack_path.to_string()
+				} else {
+					pack_path.join(remaining_path).to_string()
+				};
+
+				return Ok(resolved_path);
+			}
+		}
+	}
+
+	// No pack reference or couldn't resolve, return the original path
+	Ok(path.to_string())
+}
+
 /// Processes globs to handle pack references
 ///
 /// Converts pack references like "jc@rust10x/common/**/*.md" to their actual paths
@@ -238,7 +274,7 @@ mod tests {
 
 	use crate::_test_support::assert_contains;
 	use crate::run::Runtime;
-	use crate::script::lua_script::utils_file::support::process_pack_references;
+	use crate::script::lua_script::utils_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
 
 	#[test]
@@ -260,6 +296,22 @@ mod tests {
 		let first = res.first().ok_or("Should have first")?;
 		assert_contains(*first, "ns_b/pack_b_2/main.aip");
 		assert_contains(&res, "**/*.txt");
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_lua_file_support_process_path_reference() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let dir_context = runtime.dir_context();
+		let fx_path = "ns_b@pack_b_2/main.aip";
+
+		// -- Exec
+		let res = process_path_reference(dir_context, fx_path)?;
+
+		// -- Check
+		assert_contains(&res, "ns_b/pack_b_2/main.aip");
 
 		Ok(())
 	}
