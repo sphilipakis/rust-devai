@@ -28,6 +28,8 @@ impl PartialAgentRef {
 	///
 	/// If the input string does not contain '@':
 	///   - It is treated as a local file path.
+	///
+	/// TODO: Probably need to use PatialPackRef
 	pub fn new(input: &str) -> Self {
 		// Check if the input contains the delimiter '@'
 		if input.contains('@') {

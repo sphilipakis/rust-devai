@@ -14,8 +14,8 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	// Find the provider
 	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
 
-	// Find the model within the provider
-	let model = provider.models.iter().find(|m| model_name.starts_with(m.name))?;
+	// Find the model within the provider (longest start_with)
+	let model = provider.models.iter().find(|m| m.name.starts_with(model_name))?;
 
 	// Extract token counts from usage
 	let prompt_tokens = usage.prompt_tokens.unwrap_or(0) as f64;
@@ -78,11 +78,14 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_with_cached() -> Result<()> {
 		// -- Setup & Fixtures
+		let fx_prompt_tokens = 1000;
+		let fx_completion_tokens = 500;
+		let fx_cached_tokens = 400;
 		let usage = Usage {
-			prompt_tokens: Some(1000),
-			completion_tokens: Some(500),
+			prompt_tokens: Some(fx_prompt_tokens),
+			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
-				cached_tokens: Some(400),
+				cached_tokens: Some(fx_cached_tokens),
 				audio_tokens: None,
 				cache_creation_tokens: None,
 			}),
@@ -90,17 +93,24 @@ mod tests {
 		};
 
 		// -- Exec
-		let price = price_it("openai", "gpt-4o", &usage);
+		let price = price_it("openai", "gpt-4o-mini", &usage);
 
 		// -- Check
 		assert!(price.is_some());
 		let price = price.unwrap();
+		// ModelPricing {
+		// 	name: "gpt-4o-mini",
+		// 	input_cached: 0.075,
+		// 	input_normal: 0.150,
+		// 	output: 0.600,
+		// },
+
 		// Calculate expected:
-		// Cached: 400 * 1.25 / 1_000_000 = 0.0005
-		// Normal: 600 * 2.5 / 1_000_000 = 0.0015
-		// Output: 500 * 10.0 / 1_000_000 = 0.005
-		// Total: 0.0005 + 0.0015 + 0.005 = 0.007
-		let expected = 0.0005 + 0.0015 + 0.005;
+		let cached = fx_cached_tokens as f64 * 0.075 / 1_000_000.0;
+		let prompt = fx_prompt_tokens as f64 * 0.150 / 1_000_000.0;
+		let completion = fx_completion_tokens as f64 * 0.6 / 1_000_000.0;
+		let expected = cached + prompt + completion;
+		let expected = (expected * 10_000.0).round() / 10_000.0;
 		assert!((price - expected).abs() < f64::EPSILON);
 
 		Ok(())
