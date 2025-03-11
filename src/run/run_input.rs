@@ -117,15 +117,14 @@ pub async fn run_agent_input(
 	for prompt_part in agent.prompt_parts() {
 		let PromptPart { kind, content, options } = prompt_part;
 
-		let options = if options.as_ref().map(|v| v.cache).unwrap_or(false) {
-			Some(CacheControl::Ephemeral.into())
-		} else {
-			None
-		};
-
 		let content = hbs_render(content, &data_scope)?;
 		// For now, only add if not empty
 		if !content.trim().is_empty() {
+			let options = if options.as_ref().map(|v| v.cache).unwrap_or(false) {
+				Some(CacheControl::Ephemeral.into())
+			} else {
+				None
+			};
 			chat_messages.push(ChatMessage {
 				role: kind.into(),
 				content: content.into(),
