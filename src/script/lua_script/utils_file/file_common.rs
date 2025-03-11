@@ -556,6 +556,39 @@ return { files = files }
 	}
 
 	#[tokio::test]
+	async fn test_lua_file_process_pack_references() -> Result<()> {
+		// -- Setup & Fixtures
+
+		// -- Exec
+		let res = run_reflective_agent(
+			r#"
+			local files = utils.file.list({"ns_b@pack_b_2/*.*", "no_ns@pack_b_2/main.aip", "**/*.txt"})
+			return files
+			"#,
+			None,
+		)
+		.await?;
+
+		// -- Check
+		let res_paths = to_res_paths(&res);
+		assert_eq!(res_paths.len(), 5, "Should have 5 paths");
+
+		// Check that the pack reference was resolved
+		let has_pack_file = res_paths.iter().any(|path| path.contains("ns_b/pack_b_2/main.aip"));
+		assert!(has_pack_file, "Should have resolved the pack reference");
+
+		//
+		let has_pack_file = res_paths.iter().any(|path| path.contains("ns_b/pack_b_2/some.md"));
+		assert!(has_pack_file, "Should have resolved the pack reference");
+
+		// Check that the text files are included
+		let has_txt_files = res_paths.iter().any(|path| path.ends_with(".txt"));
+		assert!(has_txt_files, "Should include .txt files from the glob");
+
+		Ok(())
+	}
+
+	#[tokio::test]
 	async fn test_lua_file_first_glob_deep() -> Result<()> {
 		// -- Fixtures
 		// This is the rust Path logic
