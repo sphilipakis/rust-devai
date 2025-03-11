@@ -70,16 +70,23 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 	let dir_context = ctx.dir_context();
 	ensure_file_dir(&path).map_err(Error::from)?;
 
-	write(&path, content)?;
+	let wks_dir = dir_context.wks_dir();
 
-	let rel_path = path.diff(dir_context.wks_dir()).unwrap_or(path);
-	if rel_path.as_str().starts_with("..") {
-		let wks_dir = dir_context.wks_dir();
-		return Err(Error::custom(format!(
-            "Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}`.\nCannot save file out of workspace at this point"
+	if let Some(rel_path) = path.diff(wks_dir) {
+		if rel_path.as_str().starts_with("..") {
+			// allow the .aipack-base
+			if !path.as_str().contains(".aipack-base") {
+				return Err(Error::custom(format!(
+            "Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
         ))
         .into());
+			}
+		}
 	}
+
+	write(&path, content)?;
+
+	let rel_path = path.diff(wks_dir).unwrap_or(path);
 	get_hub().publish_sync(format!("-> Lua utils.file.save called on: {}", rel_path));
 
 	Ok(())
@@ -371,15 +378,40 @@ mod tests {
 		Ok(())
 	}
 
-	/// Note: need the multi-thread, because save do a `get_hub().publish_sync`
-	///       which does a tokio blocking (requiring multi thread)
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_file_save_simple_fail() -> Result<()> {
+	async fn test_lua_file_save_ok_in_base() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let dir_context = runtime.dir_context();
-		let fx_dest_path = dir_context.wks_dir().join("../.tmp/test_lua_file_save_simple_fail.md");
-		let fx_content = "hello from test_file_save_simple_ok";
+		let fx_dest_path = dir_context
+			.aipack_paths()
+			.base_aipack_dir()
+			.join(".tmp/test_lua_file_save_ok_in_base.md");
+		let fx_content = "hello from test_lua_file_save_ok_in_base";
+
+		// -- Exec
+		let _res = run_reflective_agent(
+			&format!(r#"return utils.file.save("{fx_dest_path}", "{fx_content}");"#),
+			None,
+		)
+		.await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content);
+
+		Ok(())
+	}
+
+	/// Note: need the multi-thread, because save do a `get_hub().publish_sync`
+	///       which does a tokio blocking (requiring multi thread)
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_err_out_workspace() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context.wks_dir().join("../.tmp/test_lua_file_save_err_out_workspace.md");
+		let fx_content = "hello from test_lua_file_save_err_out_workspace";
 
 		// -- Exec
 		let res = run_reflective_agent(
