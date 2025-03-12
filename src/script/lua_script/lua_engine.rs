@@ -26,7 +26,7 @@ impl LuaEngine {
 		}
 
 		// -- init aipack (TODO: ths will need to be below the 'aip' namespace, once we find good submodule space)
-		super::utils_flow::init_module(&lua, &runtime_context)?;
+		super::aip_flow::init_module(&lua, &runtime_context)?;
 
 		// -- Init print
 		init_print(&lua)?;
@@ -157,7 +157,7 @@ macro_rules! init_and_set {
     ($table:expr, $lua:expr, $runtime_context:expr, $($name:ident),*) => {
         paste::paste! {
             $(
-                let $name = super::[<utils_ $name>]::init_module($lua, $runtime_context)?;
+                let $name = super::[<aip_ $name>]::init_module($lua, $runtime_context)?;
                 $table.set(stringify!($name), $name)?;
             )*
         }

@@ -274,7 +274,7 @@ mod tests {
 
 	use crate::_test_support::assert_contains;
 	use crate::run::Runtime;
-	use crate::script::lua_script::utils_file::support::{process_pack_references, process_path_reference};
+	use crate::script::lua_script::aip_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
 
 	#[test]

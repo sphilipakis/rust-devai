@@ -97,10 +97,11 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_lua;
 
 	#[tokio::test]
 	async fn test_lua_dump_ok() -> Result<()> {
-		let lua = setup_lua(super::init_module, "lua")?;
+		let lua = setup_lua(aip_lua::init_module, "lua")?;
 		let script = r#"
 local tbl = {
   nested = { key1 = "value1", key2 = 42 },

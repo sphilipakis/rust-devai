@@ -131,12 +131,13 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_cmd;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
 	async fn test_lua_cmd_exec_echo_single_arg() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
 			return utils.cmd.exec("echo", "hello world")
 		"#;
@@ -153,7 +154,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_echo_multiple_args() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
 			return utils.cmd.exec("echo", {"hello", "world"})
 		"#;
@@ -170,7 +171,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_invalid_command_pcall() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
 			local ok, err = pcall(function()
 				return utils.cmd.exec("nonexistentcommand")
@@ -192,7 +193,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_invalid_command_direct() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"return utils.cmd.exec("nonexistentcommand")"#;
 
 		let Err(err) = eval_lua(&lua, script) else {

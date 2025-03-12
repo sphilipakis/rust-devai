@@ -51,11 +51,12 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_rust;
 
 	#[tokio::test]
 	async fn test_lua_rust_prune_to_declarations() -> Result<()> {
 		// -- Fixtures
-		let lua = setup_lua(super::init_module, "rust")?;
+		let lua = setup_lua(aip_rust::init_module, "rust")?;
 		let data_script = r#"
 //! Some top comment 
 

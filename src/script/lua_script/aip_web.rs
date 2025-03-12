@@ -226,12 +226,13 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_web;
 	use value_ext::JsonValueExt;
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_web_get_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://phet-dev.colorado.edu/html/build-an-atom/0.0.0-3/simple-text-only-test-page.html"
 return utils.web.get(url)
@@ -252,7 +253,7 @@ return utils.web.get(url)
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_web_post_json_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://httpbin.org/post"
 return utils.web.post(url, {some = "stuff"})
@@ -271,7 +272,7 @@ return utils.web.post(url, {some = "stuff"})
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_web_get_invalid_url() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://this-cannot-go/anywhere-or-can-it.aip"
 return utils.web.get(url)

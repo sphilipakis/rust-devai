@@ -3,7 +3,7 @@ use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::run::RuntimeContext;
 use crate::script::LuaValueExt;
-use crate::script::lua_script::utils_file::support::{
+use crate::script::lua_script::aip_file::support::{
 	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options, process_path_reference,
 };
 use crate::support::{AsStrsExt, files};
@@ -337,6 +337,7 @@ mod tests {
 
 	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
 	use crate::run::Runtime;
+	use crate::script::lua_script::aip_file;
 	use std::path::Path;
 	use value_ext::JsonValueExt as _;
 
@@ -485,7 +486,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_list_glob_abs_with_wild() -> Result<()> {
 		// -- Fixtures
-		let lua = setup_lua(super::super::init_module, "file")?;
+		let lua = setup_lua(aip_file::init_module, "file")?;
 		let dir = Path::new("./tests-data/config");
 		let dir = dir
 			.canonicalize()

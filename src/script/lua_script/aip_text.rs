@@ -426,12 +426,13 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_text;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
 	async fn test_lua_text_split_first_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text")?;
 		// (content, separator, (first, second))
 		let data = [
 			// with matching
@@ -480,7 +481,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_ensure_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text")?;
 		let data = [
 			(
 				"some- ! -path",
@@ -507,7 +508,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text")?;
 		let lua_code = r#"
 local content = [[
 > one
@@ -538,7 +539,7 @@ return {blocks = a, extruded = b}
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_with_first_extrude() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text")?;
 		let lua_code = r#"
 local content = [[
 > one
@@ -570,7 +571,7 @@ return { blocks = a, extruded = b }
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_with_first_no_extrude() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text")?;
 		let lua_code = r#"
 local content = [[
 > one

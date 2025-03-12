@@ -30,11 +30,12 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_hbs;
 
 	#[tokio::test]
 	async fn test_lua_hbs_render_simple() -> Result<()> {
 		// Setup the Lua instance with the hbs module
-		let lua = setup_lua(super::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
 		// Lua script that calls the `utils.hbs.render` function with a simple template
 		let lua_code = r#"
@@ -49,7 +50,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_hbs_render_obj() -> Result<()> {
 		// Setup the Lua instance with the hbs module
-		let lua = setup_lua(super::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
 		// Lua script that calls `utils.hbs.render` with a nested Lua table as data
 		let lua_code = r#"
@@ -64,7 +65,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_hbs_render_list() -> Result<()> {
 		// Setup the Lua instance with the hbs module
-		let lua = setup_lua(super::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
 		// Lua script that calls `utils.hbs.render` with a nested Lua table as data
 		let lua_code = r#"

@@ -47,11 +47,12 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use crate::_test_support::{eval_lua, setup_lua};
+	use crate::script::lua_script::aip_html;
 
 	#[tokio::test]
 	async fn test_lua_html_prune_to_content_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "html")?;
+		let lua = setup_lua(aip_html::init_module, "html")?;
 		let fx_script = r#"
 local html_content = [[
 <!DOCTYPE html>

@@ -139,11 +139,12 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{eval_lua, setup_lua};
+	use crate::script::lua_script::aip_semver;
 
 	#[tokio::test]
 	async fn test_lua_semver_compare_basic() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "semver")?;
+		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		// Test cases: (version1, operator, version2, expected_result)
 		let test_cases = [
@@ -180,7 +181,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_semver_compare_with_prerelease() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "semver")?;
+		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		// Test cases specifically for prerelease version comparison rules
 		let test_cases = [
@@ -214,7 +215,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_semver_parse() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "semver")?;
+		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		let script = r#"
         local result = utils.semver.parse("1.2.3-beta.1+build.123")
@@ -244,7 +245,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_semver_is_prerelease() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "semver")?;
+		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		let test_cases = [
 			("1.2.3", false),
@@ -270,7 +271,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_semver_valid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "semver")?;
+		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		let test_cases = [
 			("1.2.3", true),

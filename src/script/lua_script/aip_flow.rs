@@ -75,13 +75,14 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use crate::_test_support::{eval_lua, setup_lua};
+	use crate::script::lua_script::aip_flow;
 	use serde_json::Value;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
 	async fn test_lua_aipack_before_all_response_simple() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.before_all_response(123)
 		"#;
@@ -101,7 +102,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aipack_skip_with_reason() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.skip("Not applicable")
 		"#;
@@ -121,7 +122,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aipack_skip_without_reason() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.skip()
 		"#;

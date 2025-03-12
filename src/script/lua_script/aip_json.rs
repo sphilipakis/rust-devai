@@ -162,12 +162,13 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, assert_not_contains, eval_lua, setup_lua};
+	use crate::script::lua_script::aip_json;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
 	async fn test_lua_json_parse_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "json")?;
+		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local content = '{"name": "John", "age": 30}'
             return utils.json.parse(content)
@@ -184,7 +185,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_json_parse_invalid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "json")?;
+		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local ok, err = pcall(function()
                 local content = "{invalid_json}"
@@ -214,7 +215,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_json_stringify_pretty() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "json")?;
+		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local obj = {
                 name = "John",
@@ -237,7 +238,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_json_stringify_complex() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "json")?;
+		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local obj = {
                 name = "John",
@@ -267,7 +268,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_json_stringify_to_line() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "json")?;
+		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local obj = {
                 name = "John",
