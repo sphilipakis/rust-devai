@@ -1,7 +1,6 @@
 //! Module about AI support functions.
 
 use crate::Result;
-use crate::support::cred::get_or_prompt_api_key;
 use genai::chat::ChatOptions;
 use genai::resolver::AuthData;
 use genai::{Client, ModelIden};
@@ -26,6 +25,7 @@ pub fn get_genai_client() -> Result<genai::Client> {
 			else {
 				#[cfg(target_os = "macos")]
 				{
+					use crate::support::cred::get_or_prompt_api_key;
 					// TODO: need to pass the model
 					let key = get_or_prompt_api_key(key_name);
 
