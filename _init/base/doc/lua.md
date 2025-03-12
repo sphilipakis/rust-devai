@@ -5,10 +5,9 @@
 **aipack** injects the following modules/variables into the various script stages:
 
 - In all scripts (`# Before All`, `# Data`, `# Output`, `# After All`)
-  - [utils](#utils) - A set of utility functions and submodules.
-  - [aipack](#aipack) - A module to control the aipack flow (e.g., `return aipack.skip("No need to perform this input")`)
+  - [aip](#aip) - A set of utility functions and submodules for convenience and common logic, as well as control flow for the agent executions.
   - [CTX](#ctx) - A set of constants mostly related to the various paths used for this execution (e.g., `CTX.AGENT_FILE_PATH`)
-  <br/>
+    <br/>
 
 - In the `# Before All` stage
   - `inputs` - The list of inputs given to the run command
@@ -49,7 +48,7 @@ For example:
 
 The `utils` top module is comprised of the following submodules.
 
-### utils.file
+### aip.file
 
 See [FileRecord](#filerecord), [FileMeta](#filemeta), [MdSection](#mdsection) for return types.
 
@@ -57,168 +56,168 @@ All relative paths are relative to the workspace directory, which is the parent 
 
 ```lua
 -- Load file text content and return its FileRecord (See below), with `.content`
-local file = utils.file.load("doc/some-file.md")                -- FileRecord
+local file = aip.file.load("doc/some-file.md")                -- FileRecord
 
 -- Save file content (will create directories as needed)
-utils.file.save("doc/some-file.md", "some new content")         -- void (no return for now)
+aip.file.save("doc/some-file.md", "some new content")         -- void (no return for now)
 
 -- Append content to file (create file and directories as needed)
-utils.file.append("doc/some-file.md", "some new content")       -- void (no return for now)
+aip.file.append("doc/some-file.md", "some new content")       -- void (no return for now)
 
 -- List files matching a glob pattern
 --   (file.path will be relative to the aipack workspace directory)
-local all_doc_files = utils.file.list("doc/**/*.md")            -- {FileMeta, ...}
+local all_doc_files = aip.file.list("doc/**/*.md")            -- {FileMeta, ...}
 
 -- List files matching a glob pattern and options (for now only base_dir)
 --   (file.path will be relative to base directory, which is relative to the workspace directory)
-local all_doc_files = utils.file.list("**/*.md", {base_dir = "doc/"})            -- {FileMeta, ...}
+local all_doc_files = aip.file.list("**/*.md", {base_dir = "doc/"})            -- {FileMeta, ...}
 
 -- List files and load their content (or with the options as well)
-local all_files = utils.file.list_load({"doc/**/*.md", "src/**/*.rs"})           -- {FileRecord, ...}
+local all_files = aip.file.list_load({"doc/**/*.md", "src/**/*.rs"})           -- {FileRecord, ...}
 
 -- Get the first file reference matching a glob pattern (or with options as well)
-local first_doc_file = utils.file.first("doc/**/*.md")          -- FileMeta | Nil
+local first_doc_file = aip.file.first("doc/**/*.md")          -- FileMeta | Nil
 
 -- Ensure a file exists by creating it if not found
-local file_meta = utils.file.ensure_exists("./some/file.md", "optional content")
+local file_meta = aip.file.ensure_exists("./some/file.md", "optional content")
                                                                 -- FileMeta
 
 -- Load markdown sections from a file
 -- If the second argument is absent, then all sections will be returned (nested as items as well)
-local sections = utils.file.load_md_sections("doc/readme.md", "# Summary")
+local sections = aip.file.load_md_sections("doc/readme.md", "# Summary")
                                                                  -- {MdSection, ...}
 ```
 
-### utils.path
+### aip.path
 
 All relative paths are relative to the workspace directory, which is the parent directory of the `.aipack/` folder.
 
 ```lua
 -- Check if a path exists
-local exists = utils.path.exists("doc/some-file.md")         -- bool
+local exists = aip.path.exists("doc/some-file.md")         -- bool
 -- Check if a path is a file
-local is_file = utils.path.is_file("doc/some-file.md")       -- bool
+local is_file = aip.path.is_file("doc/some-file.md")       -- bool
 -- Check if a path is a directory
-local is_dir = utils.path.is_dir("doc/")                     -- bool
+local is_dir = aip.path.is_dir("doc/")                     -- bool
 -- Get the parent directory of a path
-local parent_dir = utils.path.parent("doc/some-file.md")     -- string
+local parent_dir = aip.path.parent("doc/some-file.md")     -- string
 -- Split for parent and filename
-local parent_dir, file_name = utils.path.split("path/to/some-file.md") -- parent, file
+local parent_dir, file_name = aip.path.split("path/to/some-file.md") -- parent, file
 -- returns "path/to", "some-file.md"
 -- Join path
-local path = utils.path.join("path", "to", "some-file.md")   -- string
+local path = aip.path.join("path", "to", "some-file.md")   -- string
 -- "path/to/some-file.md"
 ```
 
-### utils.text
+### aip.text
 
 ```lua
-local trimmed = utils.text.trim(content)        -- string
-local trimmed = utils.text.trim_start(content)  -- string
-local trimmed = utils.text.trim_end(content)    -- string
+local trimmed = aip.text.trim(content)        -- string
+local trimmed = aip.text.trim_start(content)  -- string
+local trimmed = aip.text.trim_end(content)    -- string
 
 -- Truncate content to a maximum length
 -- - ellipsis - optional third argument
-local truncated_content = utils.text.truncate(content, 100, "...")        -- string
+local truncated_content = aip.text.truncate(content, 100, "...")        -- string
 
 -- Ensure
 -- - second argument of type `{prefix?: string, suffix?: string}` both optional
 -- - if defined, it will add the prefix and suffix if they are not present
-utils.text.ensure(content, {prefix = "./", suffix = ".md"}) -> string
+aip.text.ensure(content, {prefix = "./", suffix = ".md"}) -> string
 
 -- Ensure content ends with a single newline
-local normalized_content = utils.text.ensure_single_ending_newline(content)
+local normalized_content = aip.text.ensure_single_ending_newline(content)
                                                                            
 
 -- split_first - Split the first occurrence of a separator
 local content = "some first content\n===\nsecond content"
-local first, second = utils.text.split_first(content,"===\n")
+local first, second = aip.text.split_first(content,"===\n")
 -- first  = "some first content\n"
 -- second = "second content"
 -- NOTE: When no match, second is nil.
 --       If matched, but nothing after, second is ""
 
 -- Remove the first line from content
-local content_without_first_line = utils.text.remove_first_line(content)  -- string
+local content_without_first_line = aip.text.remove_first_line(content)  -- string
 -- Remove the last line from content
-local content_without_last_line = utils.text.remove_last_line(content)    -- string
+local content_without_last_line = aip.text.remove_last_line(content)    -- string
 
 -- (Advanced) Replace markers in content with new sections
 --   - Markers for now are in between `<<START>>` and `<<END>>`
-local updated_content = utils.text.replace_markers(content, new_sections) -- string
+local updated_content = aip.text.replace_markers(content, new_sections) -- string
 
 -- Returns blocks of strings for all consecutive lines that match a pattern (starts_with only for now)
 -- Options: {starts_with: string, extrude?: "content", first?: number}
 --     - where `extrude = "content"` will return the remaining content, otehrwise, remain will be nil
 --     - and `first = 2` will return the first 2 blocks, and then the remaining content regardless of matches.
-local line_blocks, remain = utils.text.extract_line_blocks(content: string, options: Options): table, string | nil
+local line_blocks, remain = aip.text.extract_line_blocks(content: string, options: Options): table, string | nil
 ```
 
-### utils.md
+### aip.md
 
 See [MdBlock](#mdblock)
 
 ```lua
 -- Extract all blocks
-utils.md.extract_blocks(md_content: string) -> Vec<MdBlock>
+aip.md.extract_blocks(md_content: string) -> Vec<MdBlock>
 -- Extract blocks for the language 'lang'
-utils.md.extract_blocks(md_content: string, lang: string) -> Vec<MdBlock>
+aip.md.extract_blocks(md_content: string, lang: string) -> Vec<MdBlock>
 -- Extract blocks (with or without language, and extrude: content, which is the remaining content)
-utils.md.extract_blocks(md_content: string, {lang: string, extrude = "content"})
+aip.md.extract_blocks(md_content: string, {lang: string, extrude = "content"})
 -- Extract, parse, and merge the `#!meta`, and return the value and the concatenated remaining text.
-local meta, remain = utils.md.extract_email(md_content: string, {lang: string, extrude = "content"})
+local meta, remain = aip.md.extract_email(md_content: string, {lang: string, extrude = "content"})
 
 -- If content starts with ```, it will remove the first and last ```, and return the content in between
 -- Otherwise, it returns the original content
-local content = utils.md.outer_block_content_or_raw(content) -- string
+local content = aip.md.outer_block_content_or_raw(content) -- string
 
 ```
 
-### utils.json
+### aip.json
 
 ```lua
 -- Parse a JSON string into a table
-local obj = utils.json.parse('{"name": "John", "age": 30}')  -- Object (lua table)
+local obj = aip.json.parse('{"name": "John", "age": 30}')  -- Object (lua table)
 -- Stringify a table into a JSON string
-local json_str = utils.json.stringify(obj)                   -- string
+local json_str = aip.json.stringify(obj)                   -- string
 -- Stringify a table into a single-line JSON string
-local json_line_str = utils.json.stringify_to_line(obj)      -- string
+local json_line_str = aip.json.stringify_to_line(obj)      -- string
 ```
 
-### utils.lua
+### aip.lua
 
 ```lua
 -- Return a pretty string of a lua value
-local dump = utils.lua.dump(some_var)  -- string
+local dump = aip.lua.dump(some_var)  -- string
 print(dump)
 ```
 
-### utils.rust
+### aip.rust
 
 ```lua
--- === utils.rust
+-- === aip.rust
 -- Prune Rust code to keep only function declarations (removes function bodies)
-local result = utils.rust.prune_to_declarations(code)  -- string
+local result = aip.rust.prune_to_declarations(code)  -- string
 ```
 
-### utils.git
+### aip.git
 
 ```lua
 -- Restore a file to its last committed state
-utils.git.restore("src/main.rs")                       -- void
+aip.git.restore("src/main.rs")                       -- void
 ```
 
-### utils.web
+### aip.web
 
 See [WebResponse](#webresponse).
 
 ```lua
 -- Fetch web_response from a URL (see WebResponse object)
-local web_response = utils.web.get("https://example.com")   -- WebResponse
+local web_response = aip.web.get("https://example.com")   -- WebResponse
 -- Return an exception when a web request cannot be executed (e.g., bad URL, remote server not available)
 
 -- Do a post
-local web_response = utils.web.post("https://httpbin.org/post", { some = "stuff"})
+local web_response = aip.web.post("https://httpbin.org/post", { some = "stuff"})
 -- if data is a table, it will be serialized as json, and content_type `application/json`
 -- If data is a string, then, just as is, and `plain/text`
 ```
@@ -238,20 +237,20 @@ The `WebResponse`
 --          otherwise, just a string
 ```
 
-### utils.html
+### aip.html
 
 ```lua
 -- Prune HTML content to remove some empty tags, comments, and such
-local cleaned_html = utils.html.prune_to_content(html_content)  -- string
+local cleaned_html = aip.html.prune_to_content(html_content)  -- string
 ```
 
-### utils.cmd
+### aip.cmd
 
 See [CmdResponse](#cmdresponse)
 
 ```lua
--- Execute a system command utils.cmd.exec(cmd_name, cmd_args)
-local result = utils.cmd.exec("ls", {"-ll", "./**/*.md"})  -- CmdResponse
+-- Execute a system command aip.cmd.exec(cmd_name, cmd_args)
+local result = aip.cmd.exec("ls", {"-ll", "./**/*.md"})  -- CmdResponse
 ```
 
 ### aipack
@@ -341,7 +340,7 @@ This is what `-f "**/some/glob*.*"` would return for each of the inputs.
 ## FileRecord
 
 The `FileRecord` data structure represents the information of a given file plus its text content.
-This is what is returned by `utils.file.load(path)`, for example.
+This is what is returned by `aip.file.load(path)`, for example.
 
 ```lua
 {
@@ -380,7 +379,7 @@ The `MdBlock` is a markdown section with the following representation:
 
 ## CmdResponse
 
-The `CmdResponse` is returned by `utils.cmd.exec`
+The `CmdResponse` is returned by `aip.cmd.exec`
 
 ```lua
 {

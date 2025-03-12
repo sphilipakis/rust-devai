@@ -18,7 +18,7 @@ use std::io::Write;
 /// Load a File Record object with its ontent
 ///
 /// ```lua
-/// local file = utils.file.load("doc/README.md")
+/// local file = aip.file.load("doc/README.md")
 /// -- file.content contains the text content of the file
 /// ```
 ///
@@ -59,7 +59,7 @@ pub(super) fn file_load(
 /// Save a File Content into a path
 ///
 /// ```lua
-/// utils.file.save("doc/README.md", "Some very cool documentation")
+/// aip.file.save("doc/README.md", "Some very cool documentation")
 /// ```
 ///
 /// ### Returns
@@ -89,7 +89,7 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 	write(&path, content)?;
 
 	let rel_path = path.diff(wks_dir).unwrap_or(path);
-	get_hub().publish_sync(format!("-> Lua utils.file.save called on: {}", rel_path));
+	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {}", rel_path));
 
 	Ok(())
 }
@@ -99,7 +99,7 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 /// Append content to a file at a specified path
 ///
 /// ```lua
-/// utils.file.append("doc/README.md", "Appended content to the file")
+/// aip.file.append("doc/README.md", "Appended content to the file")
 /// ```
 ///
 /// ### Returns
@@ -119,7 +119,7 @@ pub(super) fn file_append(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, co
 	file.write_all(content.as_bytes())?;
 
 	// NOTE: Could be too many prints
-	// get_hub().publish_sync(format!("-> Lua utils.file.append called on: {}", rel_path));
+	// get_hub().publish_sync(format!("-> Lua aip.file.append called on: {}", rel_path));
 
 	Ok(())
 }
@@ -129,7 +129,7 @@ pub(super) fn file_append(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, co
 /// Ensure a file exists at the given path, and if not create it with an optional content
 ///
 /// ```lua
-/// utils.file.ensure_exists(path, optional_content) -- FileMeta
+/// aip.file.ensure_exists(path, optional_content) -- FileMeta
 /// ```
 ///
 /// ### Returns
@@ -169,7 +169,7 @@ pub(super) fn file_ensure_exists(
 /// List a set of file reference (no content) for a given glob
 ///
 /// ```lua
-/// let all_doc_file = utils.file.list("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// let all_doc_file = aip.file.list("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
 ///
@@ -210,7 +210,7 @@ pub(super) fn file_list(
 /// List a set of file reference (no content) for a given glob and load them
 ///
 /// ```lua
-/// let all_doc_file = utils.file.list_load("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// let all_doc_file = aip.file.list_load("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
 ///
@@ -253,7 +253,7 @@ pub(super) fn file_list_load(
 /// Return the first FileMeta or Nil
 ///
 /// ```lua
-/// let first_doc_file = utils.file.first("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// let first_doc_file = aip.file.first("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
 ///
@@ -272,7 +272,7 @@ pub(super) fn file_list_load(
 /// To get the file record with .content, do
 ///
 /// ```lua
-/// let file = utils.file.load(file_meta.path)
+/// let file = aip.file.load(file_meta.path)
 /// ```
 pub(super) fn file_first(
 	lua: &Lua,
@@ -347,7 +347,7 @@ mod tests {
 		let fx_path = "./agent-script/agent-hello.aip";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.load("{fx_path}")"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.load("{fx_path}")"#), None).await?;
 
 		// -- Check
 		assert_contains(res.x_get_str("content")?, "from agent-hello.aip");
@@ -363,7 +363,7 @@ mod tests {
 		let fx_path = "ns_b@pack_b_2/main.aip";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.load("{fx_path}")"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.load("{fx_path}")"#), None).await?;
 
 		// -- Check
 		assert_contains(res.x_get_str("content")?, "custom ns_b@pack_b_2 main.aip");
@@ -385,7 +385,7 @@ mod tests {
 
 		// -- Exec
 		let _res = run_reflective_agent(
-			&format!(r#"return utils.file.save("{fx_dest_path}", "{fx_content}");"#),
+			&format!(r#"return aip.file.save("{fx_dest_path}", "{fx_content}");"#),
 			None,
 		)
 		.await?;
@@ -410,7 +410,7 @@ mod tests {
 
 		// -- Exec
 		let _res = run_reflective_agent(
-			&format!(r#"return utils.file.save("{fx_dest_path}", "{fx_content}");"#),
+			&format!(r#"return aip.file.save("{fx_dest_path}", "{fx_content}");"#),
 			None,
 		)
 		.await?;
@@ -434,7 +434,7 @@ mod tests {
 
 		// -- Exec
 		let res = run_reflective_agent(
-			&format!(r#"return utils.file.save("{fx_dest_path}", "{fx_content}");"#),
+			&format!(r#"return aip.file.save("{fx_dest_path}", "{fx_content}");"#),
 			None,
 		)
 		.await;
@@ -453,7 +453,7 @@ mod tests {
 		let glob = "*.*";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.list("{glob}");"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.list("{glob}");"#), None).await?;
 
 		// -- Check
 		let res_paths = to_res_paths(&res);
@@ -471,7 +471,7 @@ mod tests {
 		let glob = "sub-dir-a/**/*.*";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.list("{glob}");"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.list("{glob}");"#), None).await?;
 
 		// -- Check
 		let res_paths = to_res_paths(&res);
@@ -494,7 +494,7 @@ mod tests {
 
 		// This is the rust Path logic
 		let glob = format!("{}/*.*", dir.to_string_lossy());
-		let code = format!(r#"return utils.file.list("{glob}");"#);
+		let code = format!(r#"return aip.file.list("{glob}");"#);
 
 		// -- Exec
 		let _res = eval_lua(&lua, &code)?;
@@ -510,7 +510,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let lua = setup_lua(super::super::init_module, "file")?;
 		let lua_code = r#"
-local files = utils.file.list({"**/*.*"}, {base_dir = "sub-dir-a"})
+local files = aip.file.list({"**/*.*"}, {base_dir = "sub-dir-a"})
 return { files = files }
         "#;
 
@@ -549,7 +549,7 @@ return { files = files }
 		// -- Setup & Fixtures
 		let lua = setup_lua(super::super::init_module, "file")?;
 		let lua_code = r#"
-local files = utils.file.list({"agent-hello-*.aip"}, {base_dir = "sub-dir-a"})
+local files = aip.file.list({"agent-hello-*.aip"}, {base_dir = "sub-dir-a"})
 return { files = files }
         "#;
 
@@ -581,7 +581,7 @@ return { files = files }
 		// -- Exec
 		let res = run_reflective_agent(
 			r#"
-			local files = utils.file.list({"ns_b@pack_b_2/*.*", "no_ns@pack_b_2/main.aip", "**/*.txt"})
+			local files = aip.file.list({"ns_b@pack_b_2/*.*", "no_ns@pack_b_2/main.aip", "**/*.txt"})
 			return files
 			"#,
 			None,
@@ -614,7 +614,7 @@ return { files = files }
 		let glob = "sub-dir-a/**/*-2.*";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.first("{glob}");"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.first("{glob}");"#), None).await?;
 
 		// -- Check
 		// let res_paths = to_res_paths(&res);
@@ -631,7 +631,7 @@ return { files = files }
 		let glob = "sub-dir-a/**/*-not-a-thing.*";
 
 		// -- Exec
-		let res = run_reflective_agent(&format!(r#"return utils.file.first("{glob}")"#), None).await?;
+		let res = run_reflective_agent(&format!(r#"return aip.file.first("{glob}")"#), None).await?;
 
 		// -- Check
 		assert_eq!(res, serde_json::Value::Null, "Should have returned null");

@@ -6,7 +6,7 @@
 //! The `lua` module exposes functions for inspecting and dumping Lua values.
 //!
 //! ### Functions
-//! * `utils.lua.dump(value: any) -> string`
+//! * `aip.lua.dump(value: any) -> string`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -29,7 +29,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 ///
 /// ```lua
 /// -- API Signature
-/// utils.lua.dump(value: any) -> string
+/// aip.lua.dump(value: any) -> string
 /// ```
 ///
 /// Given any Lua value, returns a string that recursively represents tables and their structure.
@@ -38,7 +38,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// ### Example
 /// ```lua
 /// local tbl = { key = "value", nested = { subkey = 42 } }
-/// print(utils.lua.dump(tbl))
+/// print(aip.lua.dump(tbl))
 /// ```
 ///
 /// ### Returns
@@ -108,7 +108,7 @@ local tbl = {
   bool = true,
   num = 3.21
 }
-return utils.lua.dump(tbl)
+return aip.lua.dump(tbl)
 	    "#;
 		let res = eval_lua(&lua, script)?;
 		let res = res.as_str().ok_or("res json value should be of type string")?;

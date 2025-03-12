@@ -5,7 +5,7 @@
 -- === Prep the prompt file
 local prompt_absolute_dir = CTX.WORKSPACE_AIPACK_DIR .. "/.prompt/" .. CTX.PACK_IDENTITY
 local prompt_file_path = prompt_absolute_dir .. "/ask-prompt.md"
-local prompt_file_rel_path = utils.path.diff(prompt_file_path, CTX.WORKSPACE_DIR)
+local prompt_file_rel_path = aip.path.diff(prompt_file_path, CTX.WORKSPACE_DIR)
 
 local placeholder_text = [[
 > Placeholder:
@@ -20,25 +20,25 @@ local placeholder_text = [[
 
 ]]
 
-if not utils.path.exists(prompt_file_path) then
-    utils.file.save(prompt_file_path, placeholder_text)
+if not aip.path.exists(prompt_file_path) then
+    aip.file.save(prompt_file_path, placeholder_text)
 
     -- Open it with VSCode
     -- Call with pcall to prevent failure if the code is not available
     -- TODO: Enhance this part (should notify the user)
-    pcall(utils.cmd.exec,"code", {prompt_file_path} )
+    pcall(aip.cmd.exec,"code", {prompt_file_path} )
 end
 
 -- === Load prompt file
-local prompt_file_content = utils.file.load(prompt_file_path).content
+local prompt_file_content = aip.file.load(prompt_file_path).content
 if not prompt_file_content:find("%S") then
-    utils.file.save(prompt_file_path, placeholder_text)
-    prompt_file_content = utils.file.load(prompt_file_path).content
+    aip.file.save(prompt_file_path, placeholder_text)
+    prompt_file_content = aip.file.load(prompt_file_path).content
 end
 
 -- Note important to split on `====\n` otherwise, the doc can be split. 
-local first_part, second_part = utils.text.split_first(prompt_file_content, "====\n")
-local _line_blocks, prompt_content = utils.text.extract_line_blocks(first_part, {starts_with = ">", extrude = "content"})
+local first_part, second_part = aip.text.split_first(prompt_file_content, "====\n")
+local _line_blocks, prompt_content = aip.text.extract_line_blocks(first_part, {starts_with = ">", extrude = "content"})
 
 print("\n\nOPEN your @ask-aipack prompt file: " .. prompt_file_rel_path .. "\n\n")
 
@@ -46,20 +46,20 @@ if not prompt_content:find("%S") then
     return aipack.skip("Empty prompt. Enter you question and replay")
 end
 
-prompt_content = utils.text.trim(prompt_content)
+prompt_content = aip.text.trim(prompt_content)
 
 -- === Load the knowledge/doc files
 -- The `list_load` function will list the files from the aipack parent directory and load each of them
 -- so, each item is a FileRecord
 local doc_globs = CTX.BASE_AIPACK_DIR .. "/doc/**/*.md"
-local doc_files = utils.file.list_load(doc_globs, {absolute = true})
+local doc_files = aip.file.list_load(doc_globs, {absolute = true})
 print("Including " .. #doc_files .. " documentation files")
 
 -- Agument with the doc path diff
 -- NOTE: Vscode cannot open absolute paths, at least when out of workspace
 --       So, doing relative path with the ../../ does seems to work
 for _, doc_file in ipairs(doc_files) do
-    doc_file.path_diff = utils.path.diff(doc_file.path, prompt_absolute_dir)
+    doc_file.path_diff = aip.path.diff(doc_file.path, prompt_absolute_dir)
 end
 
 -- === Return the data
@@ -128,21 +128,21 @@ local answer = ai_response.content
 -- === Cleanup answer
 -- Sometimes, some models still put the result in a markdown block.
 -- This alleviates some of these issues (when it starts with ```)
-local answer = utils.md.outer_block_content_or_raw(answer)
-local answer = utils.text.trim(answer)
+local answer = aip.md.outer_block_content_or_raw(answer)
+local answer = aip.text.trim(answer)
 
 -- === Rebuild prompt file
-new_content = utils.text.trim_end(data.first_part)
+new_content = aip.text.trim_end(data.first_part)
 new_content = new_content .. "\n\n====\n"
 
 new_content = new_content .. "\n" .. answer .. "\n\n> genai info: " .. ai_response.info
 
 if data.second_part then
-    new_content = new_content .. "\n\n====\n\n" .. utils.text.trim(data.second_part)
+    new_content = new_content .. "\n\n====\n\n" .. aip.text.trim(data.second_part)
 end
 
 -- Save the new content back to the file
-utils.file.save(data.prompt_file_path, new_content)
+aip.file.save(data.prompt_file_path, new_content)
 
 return "core@ask-aipack done"
 

@@ -6,9 +6,9 @@
 //! The `json` module exposes functions to parse and stringify JSON content.
 //!
 //! ### Functions
-//! * `utils.json.parse(content: string) -> table`
-//! * `utils.json.stringify(content: table) -> string`
-//! * `utils.json.stringify_to_line(content: table) -> string`
+//! * `aip.json.parse(content: string) -> table`
+//! * `aip.json.stringify(content: table) -> string`
+//! * `aip.json.stringify_to_line(content: table) -> string`
 
 use crate::run::RuntimeContext;
 use crate::{Error, Result};
@@ -34,7 +34,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 ///
 /// ```lua
 /// -- API Signature
-/// utils.json.parse(content: string) -> table
+/// aip.json.parse(content: string) -> table
 /// ```
 ///
 /// Parse a JSON string into a table that can be used in the Lua script.
@@ -42,7 +42,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// ### Example
 /// ```lua
 /// local json_str = '{"name": "John", "age": 30}'
-/// local obj = utils.json.parse(json_str)
+/// local obj = aip.json.parse(json_str)
 /// print(obj.name) -- prints "John"
 /// ```
 ///
@@ -60,7 +60,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 	match serde_json::from_str::<serde_json::Value>(&content) {
 		Ok(val) => Ok(lua.to_value(&val)?),
-		Err(err) => Err(Error::cc("utils.json.parse failed", err).into()),
+		Err(err) => Err(Error::cc("aip.json.parse failed", err).into()),
 	}
 }
 
@@ -70,7 +70,7 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature  
-/// utils.json.stringify(content: table) -> string
+/// aip.json.stringify(content: table) -> string
 /// ```
 ///
 /// Convert a table into a JSON string with pretty formatting using tab indentation.
@@ -81,7 +81,7 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///     name = "John",
 ///     age = 30
 /// }
-/// local json_str = utils.json.stringify(obj)
+/// local json_str = aip.json.stringify(obj)
 /// -- Result will be:
 /// -- {
 /// --     "name": "John",
@@ -118,7 +118,7 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///
 /// ```lua
 /// -- API Signature
-/// utils.json.stringify_to_line(content: table) -> string
+/// aip.json.stringify_to_line(content: table) -> string
 /// ```
 ///
 /// Convert a table into a single line JSON string.
@@ -129,7 +129,7 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///     name = "John",
 ///     age = 30
 /// }
-/// local json_str = utils.json.stringify_to_line(obj)
+/// local json_str = aip.json.stringify_to_line(obj)
 /// -- Result will be:
 /// -- {"name":"John","age":30}
 /// ```
@@ -149,9 +149,9 @@ fn stringify_to_line(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	match serde_json::to_value(content) {
 		Ok(val) => match serde_json::to_string(&val) {
 			Ok(str) => Ok(str),
-			Err(err) => Err(Error::custom(format!("utils.json.stringify fail to stringify. {}", err)).into()),
+			Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
 		},
-		Err(err) => Err(Error::custom(format!("utils.json.stringify fail to convert value. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to convert value. {}", err)).into()),
 	}
 }
 
@@ -171,7 +171,7 @@ mod tests {
 		let lua = setup_lua(aip_json::init_module, "json")?;
 		let script = r#"
             local content = '{"name": "John", "age": 30}'
-            return utils.json.parse(content)
+            return aip.json.parse(content)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
@@ -189,7 +189,7 @@ mod tests {
 		let script = r#"
             local ok, err = pcall(function()
                 local content = "{invalid_json}"
-                return utils.json.parse(content)
+                return aip.json.parse(content)
             end)
             if ok then
                 return "should not reach here"
@@ -221,7 +221,7 @@ mod tests {
                 name = "John",
                 age = 30
             }
-            return utils.json.stringify(obj)
+            return aip.json.stringify(obj)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
@@ -249,7 +249,7 @@ mod tests {
                 },
                 hobbies = {"reading", "gaming"}
             }
-            return utils.json.stringify(obj)
+            return aip.json.stringify(obj)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
@@ -279,7 +279,7 @@ mod tests {
                 },
                 hobbies = {"reading", "gaming"}
             }
-            return utils.json.stringify_to_line(obj)
+            return aip.json.stringify_to_line(obj)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, script)?;

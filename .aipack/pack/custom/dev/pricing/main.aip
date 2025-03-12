@@ -31,13 +31,13 @@ return aipack.before_all_response({
 local md_path = input.md_path
 local json_path = input.json_path
 
-if utils.path.exists(json_path) then
+if aip.path.exists(json_path) then
     -- return aipack.skip(json_path .. "  already exist")
 end
 
 local rem_url = input.url
 
-if not utils.path.exists(md_path) then 
+if not aip.path.exists(md_path) then 
     local req = {
         jsonrpc = "2.0",
         method = "get_md",
@@ -46,13 +46,13 @@ if not utils.path.exists(md_path) then
     }
 
     -- Yes, it will require to have this mini rpc service (just wrapper on top of puppeteer)
-    local res = utils.web.post("http://localhost:3000/jsonrpc", req)
+    local res = aip.web.post("http://localhost:3000/jsonrpc", req)
 
     local content = res.content.result.content
-    utils.file.save(md_path, content)
+    aip.file.save(md_path, content)
 end
 
-local file = utils.file.load(md_path)
+local file = aip.file.load(md_path)
 
 
 return {
@@ -94,9 +94,9 @@ with following schema
 
 ```lua
 local content = ai_response.content
-content = utils.md.outer_block_content_or_raw(content)
+content = aip.md.outer_block_content_or_raw(content)
 
-utils.file.save(input.json_path, content)
+aip.file.save(input.json_path, content)
 ```
 
 # After All
@@ -105,7 +105,7 @@ utils.file.save(input.json_path, content)
 ```lua
 local p_utils = require("pricing_utils")
 
-local json_path = p_utils.json_all_path
+local json_path = p_aip.json_all_path
 
 local content = "{\n"
 
@@ -113,7 +113,7 @@ local last_idx = #inputs
 
 for k, input in pairs(inputs) do
   local json_path = input.json_path
-  local file_content = utils.file.load(json_path).content
+  local file_content = aip.file.load(json_path).content
   content = content .. "\"" .. input.name .. "\": " .. file_content
   if k == last_idx then 
     content = content .. "\n"
@@ -124,6 +124,6 @@ end
 
 content = content .. "}"
 
-utils.file.save(json_path, content)
+aip.file.save(json_path, content)
 
 ```

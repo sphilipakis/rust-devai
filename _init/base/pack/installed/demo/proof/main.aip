@@ -11,14 +11,14 @@ This agent is for proofreading general text files, such as markdown files.
 ```lua
 -- We can do a git restore of the target file if we have good git commit discipline.
 -- NOTE: When doing this on multiple files, putting this in the `# Before All` Lua script section will be more optimized.
--- utils.git.restore(input.path)
+-- aip.git.restore(input.path)
 
 -- Notes:
 --   - input: This is the FileMeta (with .path, .name, .stem, .ext) for each file matching the -f glob.
 --   - file::load(input.path) will return a FileRecord, including .content for the file's content.
 --   - In Lua, to return a dictionary/object, use the notation `{ name = value, … }`.
 
-local file = utils.file.load(input.path)
+local file = aip.file.load(input.path)
 
 -- If the string is only whitespace, then it is empty, so skip.
 if not file.content:find("%S") then
@@ -57,10 +57,10 @@ You are a proofreading expert in English.
 local content = ai_response.content
 
 -- Note: It is also nice to normalize files with a single ending empty line.
-content = utils.text.ensure_single_ending_newline(content)
+content = aip.text.ensure_single_ending_newline(content)
 
 -- Example of how to save to the same file
-utils.file.save(data.file.path, content);
+aip.file.save(data.file.path, content);
 
 -- This will be printed by aipack if it is a string
 return "File processed: " .. data.file.path

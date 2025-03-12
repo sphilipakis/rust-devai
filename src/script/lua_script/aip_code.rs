@@ -4,7 +4,7 @@
 //! This module exposes functions that process code formatting.
 //!
 //! #### Functions
-//! * `utils.code.comment_line(lang_ext: string, comment_content: string) -> string`
+//! * `aip.code.comment_line(lang_ext: string, comment_content: string) -> string`
 //!    - Creates a single line comment in the appropriate style based on the language extension.
 //!    - Supported extensions:
 //!       - "lua", "sql": uses `-- ...`
@@ -41,7 +41,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &crate::run::RuntimeContext) -> 
 ///
 /// For example, in Lua:
 /// ```lua
-/// local comment = utils.code.comment_line("rs", "This is a rust comment")
+/// local comment = aip.code.comment_line("rs", "This is a rust comment")
 /// -- comment will be: "// This is a rust comment"
 /// ```
 fn comment_line(_lua: &Lua, (lang_ext, comment_content): (String, String)) -> mlua::Result<String> {
@@ -83,7 +83,7 @@ mod tests {
 
 		// -- Exec & Check
 		for (lang, content, expected) in test_cases.iter() {
-			let script = format!("return utils.code.comment_line({:?}, {:?})", lang, content);
+			let script = format!("return aip.code.comment_line({:?}, {:?})", lang, content);
 			let res = eval_lua(&lua, &script)?;
 			let res_str = res.as_str().ok_or("Expected a string result")?;
 			assert_eq!(

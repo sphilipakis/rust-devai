@@ -4,7 +4,7 @@ use crate::script::process_lua_eval_result;
 use mlua::{Lua, Table};
 use serde_json::Value;
 
-/// Sets up a Lua instance with both functions registered under `utils.` utils_name.
+/// Sets up a Lua instance with both functions registered under `aip.` aip_name.
 pub fn setup_lua<F>(init_fn: F, utils_name: &str) -> Result<Lua>
 where
 	F: FnOnce(&Lua, &RuntimeContext) -> Result<Table>,

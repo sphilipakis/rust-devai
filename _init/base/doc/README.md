@@ -35,7 +35,7 @@ aipack run ./my-agents/first-agent.aip -f "./README.md"
 -- Input is what was given by the command line (when -f, this will be the file metadata)
 
 return {
-    file = utils.file.load(input.path)
+    file = aip.file.load(input.path)
 }
 ```
 
@@ -59,13 +59,13 @@ Here is the content of the file to proofread:
 -- Here, we can take the ai_response.content and do some final processing.
 -- For example:
 -- Here, we remove the eventual top markdown block. In certain cases, this might be useful.
-local content = utils.md.outer_block_content_or_raw(ai_response.content)
+local content = aip.md.outer_block_content_or_raw(ai_response.content)
 -- For code, it is nice to ensure it ends with one and only one new line.
-content = utils.text.ensure_single_ending_newline(content)
+content = aip.text.ensure_single_ending_newline(content)
 -- More processing....
 
 -- input.path is the same as data.file.path, so we can use either
-utils.file.save(input.path, content)
+aip.file.save(input.path, content)
 
 return "This will be printed in the terminal if it's a string"
 

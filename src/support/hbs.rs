@@ -37,8 +37,8 @@ mod tests {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let script = r#"
-        local file1 = utils.file.load("file-01.txt")
-        local file2 = utils.file.load("agent-script/agent-before-all.aip")
+        local file1 = aip.file.load("file-01.txt")
+        local file2 = aip.file.load("agent-script/agent-before-all.aip")
         return {file1,file2}  -- Return an array of File structs
     "#;
 		let tmpl = r#"

@@ -6,22 +6,22 @@
 //! This module exposes functions that process text.
 //!
 //! ### Functions
-//! * `utils.text.escape_decode(content: string): string`
-//! * `utils.text.escape_decode_if_needed(content: string): string`
-//! * `utils.text.split_first(content: string, sep: string): (string, string|nil)`
-//! * `utils.text.remove_first_line(content: string): string`
-//! * `utils.text.remove_first_lines(content: string, n: int): string`
-//! * `utils.text.remove_last_line(content: string): string`
-//! * `utils.text.remove_last_lines(content: string, n: int): string`
-//! * `utils.text.trim(content: string): string`
-//! * `utils.text.trim_start(content: string): string`
-//! * `utils.text.trim_end(content: string): string`
-//! * `utils.text.truncate(content: string, max_len: int): string`
-//! * `utils.text.truncate(content: string, max_len: int, ellipsis: string): string`
-//! * `utils.text.replace_markers(content: string, new_sections: array): string`
-//! * `utils.text.ensure(content: string, opt: table): string`
-//! * `utils.text.ensure_single_ending_newline(content: string): string`
-//! * `utils.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
+//! * `aip.text.escape_decode(content: string): string`
+//! * `aip.text.escape_decode_if_needed(content: string): string`
+//! * `aip.text.split_first(content: string, sep: string): (string, string|nil)`
+//! * `aip.text.remove_first_line(content: string): string`
+//! * `aip.text.remove_first_lines(content: string, n: int): string`
+//! * `aip.text.remove_last_line(content: string): string`
+//! * `aip.text.remove_last_lines(content: string, n: int): string`
+//! * `aip.text.trim(content: string): string`
+//! * `aip.text.trim_start(content: string): string`
+//! * `aip.text.trim_end(content: string): string`
+//! * `aip.text.truncate(content: string, max_len: int): string`
+//! * `aip.text.truncate(content: string, max_len: int, ellipsis: string): string`
+//! * `aip.text.replace_markers(content: string, new_sections: array): string`
+//! * `aip.text.ensure(content: string, opt: table): string`
+//! * `aip.text.ensure_single_ending_newline(content: string): string`
+//! * `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -94,7 +94,7 @@ impl FromLua for EnsureOptions {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.text.ensure(content: string, {prefix? = string, suffix? = string}) -- string
+/// aip.text.ensure(content: string, {prefix? = string, suffix? = string}) -- string
 /// ```
 ///
 /// Ensure the content start and/or end with the text given in the second argument dictionary.
@@ -163,7 +163,7 @@ fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<Str
 /// ## Luas Documentaiton
 /// ```lua
 /// local content = "some first content\n===\nsecond content"
-/// local first, second = utils.text.split_first(content,"===")
+/// local first, second = aip.text.split_first(content,"===")
 /// -- first  = "some first content\n"
 /// -- second = "\nsecond content"
 /// -- NOTE: When no match, second is nil.
@@ -352,7 +352,7 @@ fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 
 /// ## Lua Documentation
 /// ```lua
-/// local blocks, extruded = utils.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = number })
+/// local blocks, extruded = aip.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = number })
 /// ```
 ///
 /// Extracts line blocks from `content` using the given options. The options table
@@ -366,7 +366,7 @@ fn extract_line_blocks(lua: &Lua, (content, options): (String, Table)) -> mlua::
 	let starts_with: Option<String> = options.get("starts_with")?;
 	let Some(starts_with) = starts_with else {
 		return Err(crate::Error::custom(
-			r#"utils.text.extract_line_blocks requires to options with {starts_with = ".."} "#,
+			r#"aip.text.extract_line_blocks requires to options with {starts_with = ".."} "#,
 		)
 		.into());
 	};
@@ -450,7 +450,7 @@ mod tests {
 		for (content, sep, expected) in data {
 			let script = format!(
 				r#"
-			local first, second = utils.text.split_first({content:?}, "{sep}")
+			local first, second = aip.text.split_first({content:?}, "{sep}")
 			return {{first, second}}
 			"#
 			);
@@ -495,7 +495,7 @@ mod tests {
 
 		for (content, arg, expected) in data {
 			// -- Exec
-			let script = format!("return utils.text.ensure(\"{content}\", {arg})");
+			let script = format!("return aip.text.ensure(\"{content}\", {arg})");
 
 			// -- Check
 			let res = eval_lua(&lua, &script)?;
@@ -517,7 +517,7 @@ Some line A
 > 3
 The end
 ]]
-local a, b = utils.text.extract_line_blocks(content, { starts_with = ">", extrude = "content" })
+local a, b = aip.text.extract_line_blocks(content, { starts_with = ">", extrude = "content" })
 return {blocks = a, extruded = b}
 		"#;
 
@@ -550,7 +550,7 @@ line2
 > four
 line3
 ]]
-local a, b = utils.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = 2 })
+local a, b = aip.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = 2 })
 return { blocks = a, extruded = b }
 		"#;
 
@@ -582,7 +582,7 @@ line2
 > four
 line3
 ]]
-local a, b = utils.text.extract_line_blocks(content, { starts_with = ">", first = 2 })
+local a, b = aip.text.extract_line_blocks(content, { starts_with = ">", first = 2 })
 return { blocks = a, extruded = b }
 		"#;
 

@@ -6,7 +6,7 @@
 //! The `git` module exposes functions for performing Git operations.
 //!
 //! ### Functions
-//! * `utils.git.restore(path: string) -> string | table`
+//! * `aip.git.restore(path: string) -> string | table`
 
 use crate::hub::get_hub;
 use crate::run::RuntimeContext;
@@ -28,7 +28,7 @@ pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table>
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.git.restore(path: string) -> string | table
+/// aip.git.restore(path: string) -> string | table
 /// ```
 /// Executes a `git restore` command in the workspace directory using the given file path.
 ///
@@ -40,7 +40,7 @@ pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table>
 ///
 /// ### Example
 /// ```lua
-/// local result = utils.git.restore("src/main.rs")
+/// local result = aip.git.restore("src/main.rs")
 /// print(result)
 /// ```
 fn git_restore(lua: &Lua, ctx: &RuntimeContext, path: String) -> mlua::Result<Value> {

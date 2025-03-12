@@ -12,7 +12,7 @@
 
 - `!` lua - added the 'utils' to the 'aip' (which might be the new name for base aip utils). For now, they just alias to the same utilities set
 - `.` @craft/text - minor prompt update
-- `+` lua - add utils.semver.compare and more
+- `+` lua - add aip.semver.compare and more
 - `.` add CTX.AIPACK_VERSION
 - `.` .aip format - removed legacy config, added 'user' as alias of 'instruction'
 - `>` refactor tui
@@ -67,7 +67,7 @@
 
 - `*` readme - NOTICE about AIPACK migration
 - `.` rust - update to 2024 edition, rust-version 1.85
-- `^` lua - utils.text.extract_line_blocks error handling when options.starts_with is missing
+- `^` lua - aip.text.extract_line_blocks error handling when options.starts_with is missing
 - `^` agent - coder - fine tune prompt & move the initial doc below the ====
 
 ## 2025-02-22 - [v0.5.11](https://github.com/jeremychone/rust-devai/compare/v0.5.9...v0.5.11)
@@ -103,7 +103,7 @@ IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix.
 - `^` BIG - lua - big error reporting update (inline code line with issue)
 - `-` FIX - init - fix to avoid recreating default .lua file on each init (when exists)
 - `-` FIX - auth - made keyring only for mac (as it is supposed to be for now)
-- `+` NEW - lua - add utils.text.split_first(content, sep)
+- `+` NEW - lua - add aip.text.split_first(content, sep)
 - `-` lua - fix input not being 'nil' when it is not specified (now it is nil)
 - `^` lua - functions optimization and fixes.
 - `.` doc - fix doc/lua for CTX
@@ -139,10 +139,10 @@ Thanks to [Kees Jongenburger](https://github.com/keesj) for reporting
          See [#23](https://github.com/jeremychone/rust-devai/issues/23)
          Use `0.5.3` and above
 
-- `+` lua - add `utils.file.ensure_exists(path, optional_content)`
+- `+` lua - add `aip.file.ensure_exists(path, optional_content)`
 - `+` version - added `.devai/verion.txt` to force update doc on version change.
 - `.` doc - remove ; in lua code
-- `+` lua - add `utils.text.ensure(content, {prefix, suffix})`
+- `+` lua - add `aip.text.ensure(content, {prefix, suffix})`
 
 ## 2024-12-08 - `0.5.1`
 

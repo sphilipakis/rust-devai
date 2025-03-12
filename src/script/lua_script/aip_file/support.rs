@@ -151,7 +151,7 @@ pub fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Re
 	let workspace_path = dir_context.resolve_path("".into(), PathResolver::WksDir)?;
 
 	// if options, try to resolve the options.base_dir
-	let base_dir = get_value_prop_as_string(options, "base_dir", "utils.file... options fail")?;
+	let base_dir = get_value_prop_as_string(options, "base_dir", "aip.file... options fail")?;
 
 	let base_dir = match base_dir {
 		Some(base_dir) => {

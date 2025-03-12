@@ -28,7 +28,7 @@ local prompt_file = p_utils.prep_prompt_file(input, {
     add_separator = true
 })
 
-local prompt_file_rel_path = utils.path.diff(prompt_file.path, CTX.WORKSPACE_DIR)
+local prompt_file_rel_path = aip.path.diff(prompt_file.path, CTX.WORKSPACE_DIR)
 if #prompt_file_rel_path == 0 then
     prompt_file_rel_path = prompt_file.path
 end
@@ -88,15 +88,15 @@ local preamble = "" -- This will be the eventual instruction with the separator
 local ai_content = ai_response.content
 
 if data.content_inst then
-    local content_inst = utils.text.trim_end(data.content_inst)
+    local content_inst = aip.text.trim_end(data.content_inst)
     preamble = content_inst .. "\n\n====\n\n"
-    ai_content = utils.text.trim_start(ai_content)
+    ai_content = aip.text.trim_start(ai_content)
 end
 
 local content = preamble .. ai_content
 
 -- Save to the same file
-utils.file.save(data.path, content);
+aip.file.save(data.path, content);
 
 -- This will be printed by aipack if it is a string
 return "File crafted: " .. data.path

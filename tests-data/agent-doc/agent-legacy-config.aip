@@ -15,7 +15,7 @@ input_concurrency = 8
 -- Some scripts that load the data
 -- Will have access to the command line args after command name
 
-local src_builder_file = utils.file.load("./src/client/builder.rs")
+local src_builder_file = aip.file.load("./src/client/builder.rs")
 -- src_builder_file.name: "builder.rs"
 -- src_builder_file.path: "./src/client/builder.rs"
 -- src_builder_file.content: ".... content of the file ...."

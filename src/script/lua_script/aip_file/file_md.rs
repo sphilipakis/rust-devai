@@ -9,7 +9,7 @@ use mlua::{IntoLua, Lua, Value};
 /// Return the first FileMeta or Nil
 ///
 /// ```lua
-/// let all_summary_section = utils.file.list("doc/readme.md", "# Summary");
+/// let all_summary_section = aip.file.list("doc/readme.md", "# Summary");
 /// ```
 ///
 /// ### Returns
@@ -73,7 +73,7 @@ mod tests {
 
 		// -- Exec
 		let mut res = run_reflective_agent(
-			&format!(r##"return utils.file.load_md_sections("{fx_path}", {{"# Heading 1   "}})"##),
+			&format!(r##"return aip.file.load_md_sections("{fx_path}", {{"# Heading 1   "}})"##),
 			None,
 		)
 		.await?;
@@ -110,11 +110,7 @@ mod tests {
 		let fx_path = "other/md-sections.md";
 
 		// -- Exec
-		let res = run_reflective_agent(
-			&format!(r##"return utils.file.load_md_split_first("{fx_path}")"##),
-			None,
-		)
-		.await?;
+		let res = run_reflective_agent(&format!(r##"return aip.file.load_md_split_first("{fx_path}")"##), None).await?;
 
 		// -- Check
 		// check before

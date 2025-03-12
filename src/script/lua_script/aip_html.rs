@@ -6,7 +6,7 @@
 //! This module exposes functions that process HTML content.
 //!
 //! ### Functions
-//! * `utils.html.prune_to_content(html_content: string) -> string`
+//! * `aip.html.prune_to_content(html_content: string) -> string`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -33,7 +33,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// - Attributes except for `class`, `aria-label`, and `href`.
 ///
 /// ```lua
-/// local cleaned_html = utils.html.prune_to_content(html_content)
+/// local cleaned_html = aip.html.prune_to_content(html_content)
 /// ```
 ///
 fn prune_to_content_lua(_lua: &Lua, html_content: String) -> mlua::Result<String> {
@@ -67,7 +67,7 @@ local html_content = [[
 </body>
 </html>
 ]]
-return utils.html.prune_to_content(html_content)
+return aip.html.prune_to_content(html_content)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, fx_script)?;

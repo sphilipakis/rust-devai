@@ -6,10 +6,10 @@
 //! This module exposes functions for semantic versioning operations.
 //!
 //! ### Functions
-//! * `utils.semver.compare(version1: string, operator: string, version2: string): boolean`
-//! * `utils.semver.parse(version: string): table`
-//! * `utils.semver.is_prerelease(version: string): boolean`
-//! * `utils.semver.valid(version: string): boolean`
+//! * `aip.semver.compare(version1: string, operator: string, version2: string): boolean`
+//! * `aip.semver.parse(version: string): table`
+//! * `aip.semver.is_prerelease(version: string): boolean`
+//! * `aip.semver.valid(version: string): boolean`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -29,7 +29,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.semver.compare(version1: string, operator: string, version2: string) -> boolean
+/// aip.semver.compare(version1: string, operator: string, version2: string) -> boolean
 /// ```
 ///
 /// Compares two version strings using the specified operator.
@@ -45,10 +45,10 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 ///
 /// Examples:
 /// ```lua
-/// utils.semver.compare("1.2.3", ">", "1.2.0") -- true
-/// utils.semver.compare("1.2.3", "<", "1.3.0") -- true
-/// utils.semver.compare("0.6.7-WIP", "<", "0.6.8") -- true
-/// utils.semver.compare("0.6.7-WIP", "!=", "0.6.7") -- true
+/// aip.semver.compare("1.2.3", ">", "1.2.0") -- true
+/// aip.semver.compare("1.2.3", "<", "1.3.0") -- true
+/// aip.semver.compare("0.6.7-WIP", "<", "0.6.8") -- true
+/// aip.semver.compare("0.6.7-WIP", "!=", "0.6.7") -- true
 /// ```
 fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String)) -> mlua::Result<bool> {
 	let v1 =
@@ -72,7 +72,7 @@ fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String))
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.semver.parse(version: string) -> table
+/// aip.semver.parse(version: string) -> table
 /// ```
 ///
 /// Parses a version string into its components.
@@ -108,7 +108,7 @@ fn parse(_lua: &Lua, version: String) -> mlua::Result<Table> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.semver.is_prerelease(version: string) -> boolean
+/// aip.semver.is_prerelease(version: string) -> boolean
 /// ```
 ///
 /// Returns true if the version is a prerelease (has a prerelease component).
@@ -121,7 +121,7 @@ fn is_prerelease(_lua: &Lua, version: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.semver.valid(version: string) -> boolean
+/// aip.semver.valid(version: string) -> boolean
 /// ```
 ///
 /// Returns true if the version string is a valid semantic version.
@@ -166,7 +166,7 @@ mod tests {
 		];
 
 		for (v1, op, v2, expected) in test_cases {
-			let script = format!(r#"return utils.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
+			let script = format!(r#"return aip.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
@@ -200,7 +200,7 @@ mod tests {
 		];
 
 		for (v1, op, v2, expected) in test_cases {
-			let script = format!(r#"return utils.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
+			let script = format!(r#"return aip.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
@@ -218,7 +218,7 @@ mod tests {
 		let lua = setup_lua(aip_semver::init_module, "semver")?;
 
 		let script = r#"
-        local result = utils.semver.parse("1.2.3-beta.1+build.123")
+        local result = aip.semver.parse("1.2.3-beta.1+build.123")
         return {
             major = result.major,
             minor = result.minor,
@@ -256,7 +256,7 @@ mod tests {
 		];
 
 		for (version, expected) in test_cases {
-			let script = format!(r#"return utils.semver.is_prerelease("{}")"#, version);
+			let script = format!(r#"return aip.semver.is_prerelease("{}")"#, version);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
@@ -283,7 +283,7 @@ mod tests {
 		];
 
 		for (version, expected) in test_cases {
-			let script = format!(r#"return utils.semver.valid("{}")"#, version);
+			let script = format!(r#"return aip.semver.valid("{}")"#, version);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,

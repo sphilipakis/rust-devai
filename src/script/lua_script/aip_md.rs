@@ -5,10 +5,10 @@
 //! processing LLM responses.
 //!
 //! ### Functions
-//! * `utils.md.extract_blocks(md_content: string, lang?: string) -> Vec<MdBlock>`
-//! * `utils.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}) -> Vec<MdBlock>, extruded_content`
-//! * `utils.md.extract_meta(md_content) -> Table, String`
-//! * `utils.md.outer_block_content_or_raw(md_content: string) -> string`
+//! * `aip.md.extract_blocks(md_content: string, lang?: string) -> Vec<MdBlock>`
+//! * `aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}) -> Vec<MdBlock>, extruded_content`
+//! * `aip.md.extract_meta(md_content) -> Table, String`
+//! * `aip.md.outer_block_content_or_raw(md_content: string) -> string`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -34,11 +34,11 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// ## Lua Documentation
 /// ```lua
 /// -- Extract all blocks
-/// utils.md.extract_blocks(md_content: string) -> Vec<MdBlock>
+/// aip.md.extract_blocks(md_content: string) -> Vec<MdBlock>
 /// -- Extract blocks for the language 'lang'
-/// utils.md.extract_blocks(md_content: string, lang: string) -> Vec<MdBlock>
+/// aip.md.extract_blocks(md_content: string, lang: string) -> Vec<MdBlock>
 /// -- Extract blocks (with or without language, and extrude: content, which the remaining content)
-/// utils.md.extract_blocks(md_content: String, {lang: string, extrude: "content"})
+/// aip.md.extract_blocks(md_content: String, {lang: string, extrude: "content"})
 /// ```
 ///
 /// Return the list of markdown blocks that match a given lang_name.
@@ -100,7 +100,7 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 
 /// ## Lua Documentation
 /// ```lua
-/// let meta, remain = utils.md.extract_meta(md_content: string) -> table, string
+/// let meta, remain = aip.md.extract_meta(md_content: string) -> table, string
 /// ```
 ///
 /// Extracts the meta blocks, parses/merges their values, and also returns the remaining concatenated content.
@@ -114,7 +114,7 @@ fn extract_meta(lua: &Lua, md_content: String) -> mlua::Result<MultiValue> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.md.outer_block_content_or_raw(md_content: string) -> string
+/// aip.md.outer_block_content_or_raw(md_content: string) -> string
 /// ```
 ///
 /// Without fully parsing the markdown, this function will remove the first and last
@@ -144,8 +144,8 @@ mod tests {
 		// -- Setup & Fixtures
 		// NOTE: the [[ ]] for multi line in lua breaks with the ``` for code block, so, reading files.
 		let fx_script = r#"
-local file = utils.file.load("agent-script/agent-before-all-inputs-gen.aip")
-return utils.md.extract_blocks(file.content, {lang = "lua"})
+local file = aip.file.load("agent-script/agent-before-all-inputs-gen.aip")
+return aip.md.extract_blocks(file.content, {lang = "lua"})
 		"#;
 
 		// -- Exec
@@ -179,7 +179,7 @@ content = content .. "\n```lua\n--some lua \n```\n"
 content = content .. "and other block\n\n```rust\n//! some rust block \n```\n"
 content = content .. "The end"
 
-local blocks, extruded_content = utils.md.extract_blocks(content, {lang = "lua", extrude = "content"})
+local blocks, extruded_content = aip.md.extract_blocks(content, {lang = "lua", extrude = "content"})
 return {
 		blocks = blocks,
 		extruded_content = extruded_content
@@ -221,7 +221,7 @@ content = content .. "\n```lua\n--some lua \n```\n"
 content = content .. "and other block\n\n```rust\n//! some rust block \n```\n"
 content = content .. "The end"
 
-local blocks, extruded_content = utils.md.extract_blocks(content, {extrude = "content"})
+local blocks, extruded_content = aip.md.extract_blocks(content, {extrude = "content"})
 return {
 		blocks = blocks,
 		extruded_content = extruded_content
@@ -277,7 +277,7 @@ num = 123
 ```
 And this is the end
 ]]
-local meta, remain = utils.md.extract_meta(content)
+local meta, remain = aip.md.extract_meta(content)
 return {
    meta   = meta,
 	 remain = remain
@@ -319,7 +319,7 @@ fn main() {
 }
 ]] .. "```"
 
-return utils.md.outer_block_content_or_raw(content)
+return aip.md.outer_block_content_or_raw(content)
 		"#;
 
 		// -- Exec
@@ -336,7 +336,7 @@ return utils.md.outer_block_content_or_raw(content)
 local content = [[Just some plain
 text without any code blocks]]
 
-return utils.md.outer_block_content_or_raw(content)
+return aip.md.outer_block_content_or_raw(content)
 		"#;
 
 		let res_raw = run_reflective_agent(fx_script_raw, None).await?;

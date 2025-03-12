@@ -16,9 +16,9 @@ Then, we can rust this one as `aip run dev@pricing/genrs`
 
 local p_utils = require("pricing_utils")
 
-local json_content = utils.file.load(p_utils.json_all_path).content
+local json_content = aip.file.load(p_aip.json_all_path).content
 
-local data_rs = utils.file.load("src/pricing/data.rs")
+local data_rs = aip.file.load("src/pricing/data.rs")
 
 return {
     json_content = json_content,
@@ -53,9 +53,9 @@ Just give back the `data.rs` file content in a rust makdown code block.
 
 ```lua 
 local content = ai_response.content
-content = utils.md.outer_block_content_or_raw(content)
+content = aip.md.outer_block_content_or_raw(content)
 
-utils.file.save("src/pricing/data.rs", content)
+aip.file.save("src/pricing/data.rs", content)
 
 return "Data saved to src/pricing/data.rs"
 

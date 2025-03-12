@@ -10,7 +10,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.hbs.render(content: string, data: any) -> string
+/// aip.hbs.render(content: string, data: any) -> string
 /// ```
 ///
 /// Renders a Handlebars template using the provided data.
@@ -37,9 +37,9 @@ mod tests {
 		// Setup the Lua instance with the hbs module
 		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
-		// Lua script that calls the `utils.hbs.render` function with a simple template
+		// Lua script that calls the `aip.hbs.render` function with a simple template
 		let lua_code = r#"
-            local result = utils.hbs.render("Hello, {{name}}!", {name = "World"})
+            local result = aip.hbs.render("Hello, {{name}}!", {name = "World"})
             return result
 		"#;
 		let res = eval_lua(&lua, lua_code)?;
@@ -52,9 +52,9 @@ mod tests {
 		// Setup the Lua instance with the hbs module
 		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
-		// Lua script that calls `utils.hbs.render` with a nested Lua table as data
+		// Lua script that calls `aip.hbs.render` with a nested Lua table as data
 		let lua_code = r#"
-            local result = utils.hbs.render("ID: {{id}}, Nested: {{nested.value}}", {id = 42, nested = {value = "test"}})
+            local result = aip.hbs.render("ID: {{id}}, Nested: {{nested.value}}", {id = 42, nested = {value = "test"}})
             return result
 		"#;
 		let res = eval_lua(&lua, lua_code)?;
@@ -67,7 +67,7 @@ mod tests {
 		// Setup the Lua instance with the hbs module
 		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
 
-		// Lua script that calls `utils.hbs.render` with a nested Lua table as data
+		// Lua script that calls `aip.hbs.render` with a nested Lua table as data
 		let lua_code = r#"
 local data = {
     name  = "Jen Donavan",
@@ -86,7 +86,7 @@ Your tasks today:
 Have a good day (after you completed this tasks)
 ]]
 
-local content = utils.hbs.render(template, data)
+local content = aip.hbs.render(template, data)
 
 return content
 		"#;

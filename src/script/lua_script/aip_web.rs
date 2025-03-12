@@ -6,7 +6,7 @@
 //! This module exposes functions that process text.
 //!
 //! ### Functions
-//! * `utils.web.get(url: string) -> string`
+//! * `aip.web.get(url: string) -> string`
 
 use crate::hub::get_hub;
 use crate::run::RuntimeContext;
@@ -31,7 +31,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// ## Lua Documentation
 ///
 /// ```lua
-/// local web_response = utils.web.get("https://google.com")
+/// local web_response = aip.web.get("https://google.com")
 /// ```
 ///
 /// For Success, the WebResponse is
@@ -60,7 +60,7 @@ fn web_get(lua: &Lua, url: String) -> mlua::Result<Value> {
 				Ok(response) => get_lua_response_value(lua, response, &url).await,
 				Err(err) => Err(crate::Error::Lua(format!(
 					"\
-Fail to do utils.web.get for url: {url}
+Fail to do aip.web.get for url: {url}
 Cause: {err}"
 				))
 				.into()),
@@ -82,10 +82,10 @@ Cause: {err}"
 ///
 /// ```lua
 /// -- POST with plain text
-/// local web_response = utils.web.post("https://example.com/api", "plain text data")
+/// local web_response = aip.web.post("https://example.com/api", "plain text data")
 ///
 /// -- POST with JSON data
-/// local web_response = utils.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+/// local web_response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
 /// ```
 ///
 /// For Success, the WebResponse is
@@ -142,7 +142,7 @@ fn web_post(lua: &Lua, url: String, data: Value) -> mlua::Result<Value> {
 				Ok(response) => get_lua_response_value(lua, response, &url).await,
 				Err(err) => Err(crate::Error::Lua(format!(
 					"\
-Fail to do utils.web.post for url: {url}
+Fail to do aip.web.post for url: {url}
 Cause: {err}"
 				))
 				.into()),
@@ -235,7 +235,7 @@ mod tests {
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://phet-dev.colorado.edu/html/build-an-atom/0.0.0-3/simple-text-only-test-page.html"
-return utils.web.get(url)
+return aip.web.get(url)
 		"#;
 
 		// -- Exec
@@ -256,7 +256,7 @@ return utils.web.get(url)
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://httpbin.org/post"
-return utils.web.post(url, {some = "stuff"})
+return aip.web.post(url, {some = "stuff"})
 		"#;
 
 		// -- Exec
@@ -275,7 +275,7 @@ return utils.web.post(url, {some = "stuff"})
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
 local url = "https://this-cannot-go/anywhere-or-can-it.aip"
-return utils.web.get(url)
+return aip.web.get(url)
 		"#;
 
 		// -- Exec
@@ -286,7 +286,7 @@ return utils.web.get(url)
 
 		// -- Check
 		let err_str = err.to_string();
-		assert_contains(&err_str, "Fail to do utils.web.get");
+		assert_contains(&err_str, "Fail to do aip.web.get");
 		assert_contains(&err_str, "https://this-cannot-go/anywhere-or-can-it.aip");
 
 		Ok(())

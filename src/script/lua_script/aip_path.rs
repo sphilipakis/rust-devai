@@ -6,17 +6,17 @@
 //! The `path` module exposes functions used to interact with file paths.
 //!
 //! ### Functions
-//! * `utils.path.exists(path: string) -> bool`
-//! * `utils.path.is_file(path: string) -> bool`
-//! * `utils.path.is_dir(path: string) -> bool`
-//! * `utils.path.diff(file_path: string, base_path: string) -> string`
-//! * `utils.path.parent(path: string) -> string | nil`
-//! * `utils.path.join(path: string) -> string | nil` (default non os normalized)
-//! * `utils.path.join_os_normalized(path: string) -> string | nil` (windows style if start with like C:)
-//! * `utils.path.join_os_non_normalized(path: string) -> string | nil` (default, as user specified)
-//! * `utils.path.split(path: string) -> parent, filename`
+//! * `aip.path.exists(path: string) -> bool`
+//! * `aip.path.is_file(path: string) -> bool`
+//! * `aip.path.is_dir(path: string) -> bool`
+//! * `aip.path.diff(file_path: string, base_path: string) -> string`
+//! * `aip.path.parent(path: string) -> string | nil`
+//! * `aip.path.join(path: string) -> string | nil` (default non os normalized)
+//! * `aip.path.join_os_normalized(path: string) -> string | nil` (windows style if start with like C:)
+//! * `aip.path.join_os_non_normalized(path: string) -> string | nil` (default, as user specified)
+//! * `aip.path.split(path: string) -> parent, filename`
 //!
-//! NOTE 1: Currently, `utils.path.join` uses `utils.path.join_os_non_normalized`. This might change in the future.
+//! NOTE 1: Currently, `aip.path.join` uses `aip.path.join_os_non_normalized`. This might change in the future.
 //!
 //! NOTE 2: The reason why normalized is prefixed with `_os_`
 //!         is because there is another type of normalization that removes the "../".
@@ -79,7 +79,7 @@ pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table>
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.split(path: string) -> parent, filename
+/// aip.path.split(path: string) -> parent, filename
 /// ```
 ///
 /// Split path into parent, filename.
@@ -97,7 +97,7 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.exists(path: string) -> bool
+/// aip.path.exists(path: string) -> bool
 /// ```
 ///
 /// Checks if the specified path exists.
@@ -108,7 +108,7 @@ fn path_exists(ctx: &RuntimeContext, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.is_file(path: string) -> bool
+/// aip.path.is_file(path: string) -> bool
 /// ```
 ///
 /// Checks if the specified path is a file.
@@ -119,7 +119,7 @@ fn path_is_file(ctx: &RuntimeContext, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.diff(file_path: string, base_path: string, ) -> string
+/// aip.path.diff(file_path: string, base_path: string, ) -> string
 /// ```
 ///
 /// Do a diff between two path, giving the relative path
@@ -134,7 +134,7 @@ fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.is_dir(path: string) -> bool
+/// aip.path.is_dir(path: string) -> bool
 /// ```
 ///
 /// Checks if the specified path is a directory.
@@ -145,7 +145,7 @@ fn path_is_dir(ctx: &RuntimeContext, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.parent(path: string) -> string | nil
+/// aip.path.parent(path: string) -> string | nil
 /// ```
 ///
 /// Returns the parent directory of the specified path, or nil if there is no parent.
@@ -161,14 +161,14 @@ fn path_parent(path: String) -> mlua::Result<Option<String>> {
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.path.join(path: string) -> string | nil
+/// aip.path.join(path: string) -> string | nil
 ///
 /// -- Table example:
 /// local paths = {"folder", "subfolder", "file.txt"}
-/// local full_path = utils.path.join(paths)
+/// local full_path = aip.path.join(paths)
 ///
 /// -- Arg example:
-/// local full_path = utils.path.join("folder", "subfolder", "file.txt")
+/// local full_path = aip.path.join("folder", "subfolder", "file.txt")
 ///
 /// ```
 ///
@@ -297,7 +297,7 @@ mod tests {
 
 		// -- Exec & Check
 		for path in paths {
-			let code = format!(r#"return utils.path.exists("{path}")"#);
+			let code = format!(r#"return aip.path.exists("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(res.as_bool().ok_or("Result should be a bool")?, "'{path}' should exist");
 		}
@@ -311,7 +311,7 @@ mod tests {
 		let paths = &["./no file .rs", "some/no-file.md", "./s do/", "no-dir/at/all"];
 
 		for path in paths {
-			let code = format!(r#"return utils.path.exists("{path}")"#);
+			let code = format!(r#"return aip.path.exists("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(
 				!res.as_bool().ok_or("Result should be a bool")?,
@@ -334,7 +334,7 @@ mod tests {
 		];
 
 		for path in paths {
-			let code = format!(r#"return utils.path.is_file("{path}")"#);
+			let code = format!(r#"return aip.path.is_file("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(
 				res.as_bool().ok_or("Result should be a bool")?,
@@ -351,7 +351,7 @@ mod tests {
 		let paths = &["./no-file", "no-file.txt", "sub-dir-a/"];
 
 		for path in paths {
-			let code = format!(r#"return utils.path.is_file("{path}")"#);
+			let code = format!(r#"return aip.path.is_file("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(
 				!res.as_bool().ok_or("Result should be a bool")?,
@@ -368,7 +368,7 @@ mod tests {
 		let paths = &["./sub-dir-a", "sub-dir-a", "./sub-dir-a/.."];
 
 		for path in paths {
-			let code = format!(r#"return utils.path.is_dir("{path}")"#);
+			let code = format!(r#"return aip.path.is_dir("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(
 				res.as_bool().ok_or("Result should be a bool")?,
@@ -392,7 +392,7 @@ mod tests {
 		];
 
 		for path in paths {
-			let code = format!(r#"return utils.path.is_dir("{path}")"#);
+			let code = format!(r#"return aip.path.is_dir("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			assert!(
 				!res.as_bool().ok_or("Result should be a bool")?,
@@ -418,7 +418,7 @@ mod tests {
 		];
 
 		for (path, expected) in paths {
-			let code = format!(r#"return utils.path.parent("{path}")"#);
+			let code = format!(r#"return aip.path.parent("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
 			let result = res.as_str().ok_or("Should be a string")?;
 			assert_eq!(result, *expected, "Parent mismatch for path: {path}");
@@ -442,7 +442,7 @@ mod tests {
 		for (path, expected_parent, expected_filename) in paths {
 			let code = format!(
 				r#"
-                    local parent, filename = utils.path.split("{path}")
+                    local parent, filename = aip.path.split("{path}")
                     return {{ parent, filename }}
                 "#
 			);
@@ -514,7 +514,7 @@ mod tests {
 		];
 
 		for (input, expected) in cases {
-			let code = format!("return utils.path.{}({})", join_fn_name, input);
+			let code = format!("return aip.path.{}({})", join_fn_name, input);
 			let result: String = lua.load(&code).eval()?;
 			assert_eq!(result, expected, "Non-normalized failed for input: {}", input);
 		}
@@ -548,7 +548,7 @@ mod tests {
 		];
 
 		for (input, expected) in cases {
-			let code = format!("return utils.path.{}({})", join_fn_name, input);
+			let code = format!("return aip.path.{}({})", join_fn_name, input);
 			let result: String = lua.load(&code).eval()?;
 			assert_eq!(result, expected, "Normalized failed for input: {}", input);
 		}
@@ -579,7 +579,7 @@ mod tests {
 		];
 
 		for (lua_table, expected_path) in cases {
-			let code = format!(r#"return utils.path.{}({})"#, join_fn_name, lua_table);
+			let code = format!(r#"return aip.path.{}({})"#, join_fn_name, lua_table);
 			let res = eval_lua(&lua, &code)?;
 			let result_path = res.as_str().ok_or("Should return a string")?;
 			assert_eq!(

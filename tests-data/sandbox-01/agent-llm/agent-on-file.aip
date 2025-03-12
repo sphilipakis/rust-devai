@@ -1,7 +1,7 @@
 # Data
 
 ```lua
-local file = utils.file.load(input.path);
+local file = aip.file.load(input.path);
 
 -- return the file (with .name, .path, .content)
 return { file = file }
@@ -18,7 +18,7 @@ Correct english in the comments of the rust content below, while preserving ever
 # Output
 
 ```lua
-local rust_code = utils.md.extract_blocks(ai_response.content, "rust")[0];
+local rust_code = aip.md.extract_blocks(ai_response.content, "rust")[0];
 -- file::save(data.file.path, rust_code); // do not save, otherwise, cwt run forever
 
 return {data_path  =  data.file.path, 

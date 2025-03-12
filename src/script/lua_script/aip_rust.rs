@@ -6,7 +6,7 @@
 //! The `rust` module exposes functions used to process Rust code.
 //!
 //! ### Functions
-//! * `utils.rust.prune_to_declarations(code: string) -> string`
+//! * `aip.rust.prune_to_declarations(code: string) -> string`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -25,7 +25,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 
 /// ## Lua Documentation
 /// ```lua
-/// utils.rust.prune_to_declarations(code: string) -> string
+/// aip.rust.prune_to_declarations(code: string) -> string
 /// ```
 ///
 /// Trims Rust code to keep only function declarations by replacing function bodies with `{ ... }`.
@@ -34,7 +34,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// Example:
 /// ```lua
 /// local code = "fn add(a: i32, b: i32) -> i32 { a + b }"
-/// local result = utils.rust.prune_to_declarations(code)
+/// local result = aip.rust.prune_to_declarations(code)
 /// -- result will be: "fn add(a: i32, b: i32) -> i32 { ... }"
 /// ```
 fn prune_to_declarations(lua: &Lua, code: String) -> mlua::Result<Value> {
@@ -75,7 +75,7 @@ fn some_normal() {
 }	 
 		"#;
 		// -- Exec
-		let script = format!("return utils.rust.prune_to_declarations({:?})", data_script);
+		let script = format!("return aip.rust.prune_to_declarations({:?})", data_script);
 		let res = eval_lua(&lua, &script)?;
 		// -- Check
 		let res = res.as_str().ok_or("Should be str")?;

@@ -6,7 +6,7 @@
 //! The `cmd` module exposes functions to execute system commands.
 //!
 //! ### Functions
-//! * `utils.cmd.exec(cmd_name: string, args?: string | table) -> {stdout: string, stderr: string, exit: number}`
+//! * `aip.cmd.exec(cmd_name: string, args?: string | table) -> {stdout: string, stderr: string, exit: number}`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -30,7 +30,7 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 ///
 /// ```lua
 /// -- API Signature
-/// utils.cmd.exec(cmd_name: string, args?: string | table) -> CmdResponse
+/// aip.cmd.exec(cmd_name: string, args?: string | table) -> CmdResponse
 /// ```
 ///
 /// The command will be executed using the system shell. Arguments can be provided as a single string
@@ -39,10 +39,10 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 /// ### Example
 /// ```lua
 /// -- Single string argument
-/// local result = utils.cmd.exec("echo", "hello world")
+/// local result = aip.cmd.exec("echo", "hello world")
 ///
 /// -- Table of arguments
-/// local result = utils.cmd.exec("ls", {"-l", "-a"})
+/// local result = aip.cmd.exec("ls", {"-l", "-a"})
 /// ```
 ///
 /// ### Returns (CmdResponse)
@@ -139,7 +139,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
-			return utils.cmd.exec("echo", "hello world")
+			return aip.cmd.exec("echo", "hello world")
 		"#;
 		let res = eval_lua(&lua, script)?;
 
@@ -156,7 +156,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
-			return utils.cmd.exec("echo", {"hello", "world"})
+			return aip.cmd.exec("echo", {"hello", "world"})
 		"#;
 		let res = eval_lua(&lua, script)?;
 
@@ -174,7 +174,7 @@ mod tests {
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
 			local ok, err = pcall(function()
-				return utils.cmd.exec("nonexistentcommand")
+				return aip.cmd.exec("nonexistentcommand")
 			end)
 			return err -- to trigger the error on the rust side
 		"#;
@@ -194,7 +194,7 @@ mod tests {
 	async fn test_lua_cmd_exec_invalid_command_direct() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
-		let script = r#"return utils.cmd.exec("nonexistentcommand")"#;
+		let script = r#"return aip.cmd.exec("nonexistentcommand")"#;
 
 		let Err(err) = eval_lua(&lua, script) else {
 			return Err("Should have returned an error".into());

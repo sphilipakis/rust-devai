@@ -96,7 +96,7 @@ pub fn get_value_prop_as_string(
 			Ok(Some(string.to_string_lossy()))
 		}
 		Some(_other) => {
-			Err(crate::Error::custom("utils.file... options.base_dir must be of type string is present").into())
+			Err(crate::Error::custom("aip.file... options.base_dir must be of type string is present").into())
 		}
 		None => Ok(None),
 	}
