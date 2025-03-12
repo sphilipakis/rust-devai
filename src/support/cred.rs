@@ -1,3 +1,4 @@
+#![allow(unused)] // because of some mac os only (will clean later)
 use crate::Result;
 use crossterm::cursor::MoveTo;
 use crossterm::terminal::ClearType;
