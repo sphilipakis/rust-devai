@@ -1,6 +1,18 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-12 - [v0.6.9]()
+
+- `!` Lua module rename - Now `aip...` rather than `utils...` (backward compatibility preserved)
+- `!` Lua module rename - Now `aip.flow` rather than `aipack.` (backward compatibility preserved)
+- `-` Fix price_it (when pricing was missing for claude sonnet)
+- `+` BIG ONE - Now supports `namespace@pack_name/some/**/*.*` for all `aip.file..` load, list, and such.
+- `^` Lua - `file.save` now has a workspace guard (cannot save outside of the workspace for now). Might allow force flag later.
+- `*` FIX v0.6.8 compile error ([#56 aipack install fail (v0.6.8)](https://github.com/aipack-ai/aipack/issues/56)).
+
+
 ## 2025-03-10 - [v0.6.8](https://github.com/jeremychone/rust-devai/compare/v0.6.7...v0.6.8)
+
+BIG ERROR - This won't compile; some files are missing. Use v0.6.9.
 
 - `+` agent - added support for Prompt PartOptions, e.g., cache = true
 - `*` First pass at Anthropic Caching support
