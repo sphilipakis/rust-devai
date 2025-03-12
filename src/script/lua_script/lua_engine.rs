@@ -16,10 +16,17 @@ impl LuaEngine {
 		let lua = Lua::new();
 
 		// -- init utils (now under 'aip' namespace, and kept the 'utils')
-		init_utils(&lua, &runtime_context)?;
+		init_aip(&lua, &runtime_context)?;
+
+		// -- backward compatibility "<=0.6.8"
+		let globals = lua.globals();
+		if let Ok(flow) = globals.get::<Table>("aip").and_then(|v| v.get::<Table>("flow")) {
+			// TODO: will need to integrate trace or something like it
+			let _ = globals.set("aipack", flow);
+		}
 
 		// -- init aipack (TODO: ths will need to be below the 'aip' namespace, once we find good submodule space)
-		super::utils_aipack::init_module(&lua, &runtime_context)?;
+		super::utils_flow::init_module(&lua, &runtime_context)?;
 
 		// -- Init print
 		init_print(&lua)?;
@@ -158,7 +165,7 @@ macro_rules! init_and_set {
 }
 
 /// Module builders
-fn init_utils(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
+fn init_aip(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
 	// Note: using `lua_vm` to not conflict with the `lua` in the init_and_set that will get expanded as `lua` variable.
 	let table = lua_vm.create_table()?;
 
@@ -167,6 +174,7 @@ fn init_utils(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
 		lua_vm,
 		runtime_context,
 		// -- The lua module names that refers to utils_...
+		flow,
 		file,
 		git,
 		web,

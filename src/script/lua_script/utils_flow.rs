@@ -1,13 +1,10 @@
-//! Defines the `aipack` module for Lua.
-//!
-//! ---
-//!
 //! ## Lua Documentation
-//! The `utils.aipack` module exposes functions for generating structured responses for the aipack runtime.
+//! The `aip.flow` module allows controlling the flow of AIPACK agent execution.
+//! The flow functions are designed to be returned so that the Agent Executor can act appropriately.
 //!
 //! ### Functions
-//! * `utils.aipack.before_all_response(data: any) -> table`
-//! * `utils.aipack.skip(reason?: string) -> table`
+//! - `aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table`
+//! - `aip.flow.skip(reason?: string) -> table`
 
 use crate::Result;
 use crate::run::RuntimeContext;
@@ -22,12 +19,6 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 	let skip_fn = lua.create_function(aipack_skip)?;
 	table.set("skip", skip_fn)?;
 
-	let globals = lua.globals();
-	globals.set("aipack", &table)?;
-
-	// NOTE: For this one, we do not really need for now to return,
-	//       but to have consistent with setup_lua
-
 	Ok(table)
 }
 
@@ -39,18 +30,9 @@ pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table
 ///
 /// ```lua
 /// -- API Signature
-/// utils.aipack.before_all_response(data: any) -> table
+/// aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table
 /// ```
 ///
-/// Returns a table with the following structure:
-/// ```lua
-/// {
-///   _aipack_ = {
-///     kind = "BeforeAllResponse",
-///     data = <data passed to function>
-///   }
-/// }
-/// ```
 fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "BeforeAllResponse")?;
@@ -67,18 +49,9 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// utils.aipack.skip(reason?: string) -> table
+/// aip.flow.skip(reason?: string) -> table
 /// ```
 ///
-/// Returns a table with the following structure:
-/// ```lua
-/// {
-///   _aipack_ = {
-///     kind = "Skip",
-///     data = { reason = <reason passed to function, can be nil> }
-///   }
-/// }
-/// ```
 fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 	let data = lua.create_table()?;
 	data.set("reason", reason)?;
@@ -108,9 +81,9 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aipack_before_all_response_simple() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "aipack")?;
+		let lua = setup_lua(super::init_module, "flow")?;
 		let script = r#"
-			return aipack.before_all_response(123)
+			return aip.flow.before_all_response(123)
 		"#;
 
 		// -- Exec
@@ -128,9 +101,9 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aipack_skip_with_reason() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "aipack")?;
+		let lua = setup_lua(super::init_module, "flow")?;
 		let script = r#"
-			return aipack.skip("Not applicable")
+			return aip.flow.skip("Not applicable")
 		"#;
 
 		// -- Exec
@@ -148,9 +121,9 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aipack_skip_without_reason() -> Result<()> {
 		// -- Setup
-		let lua = setup_lua(super::init_module, "aipack")?;
+		let lua = setup_lua(super::init_module, "flow")?;
 		let script = r#"
-			return aipack.skip()
+			return aip.flow.skip()
 		"#;
 
 		// -- Exec

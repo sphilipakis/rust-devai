@@ -13,11 +13,13 @@ where
 
 	let lua = Lua::new();
 	let globals = lua.globals();
-	let utils = lua.create_table().unwrap();
+	let aip = lua.create_table()?;
 
 	let path_table = init_fn(&lua, &runtime.context())?;
-	utils.set(utils_name, path_table).unwrap();
-	globals.set("utils", utils).unwrap();
+	aip.set(utils_name, path_table)?;
+	globals.set("aip", &aip)?;
+	// For backward compatiblity
+	globals.set("utils", aip)?;
 
 	Ok(lua)
 }
