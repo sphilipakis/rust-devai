@@ -1,4 +1,4 @@
-use crate::pricing::data::PROVIDERS;
+use crate::pricing::data::{ModelPricing, PROVIDERS};
 use genai::chat::Usage;
 
 /// Calculates the price for a given provider type, model name, and usage.
@@ -15,7 +15,16 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
 
 	// Find the model within the provider (longest start_with)
-	let model = provider.models.iter().find(|m| m.name.starts_with(model_name))?;
+	let mut model: Option<&ModelPricing> = None;
+	for m in provider.models.iter() {
+		if model_name.starts_with(m.name) {
+			let current_len = model.map(|m| m.name.len()).unwrap_or(0);
+			if current_len < m.name.len() {
+				model = Some(m)
+			}
+		}
+	}
+	let model = model?;
 
 	// Extract token counts from usage
 	let prompt_tokens = usage.prompt_tokens.unwrap_or(0) as f64;
