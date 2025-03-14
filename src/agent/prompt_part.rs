@@ -7,7 +7,7 @@ use serde::Deserialize;
 pub struct PromptPart {
 	pub kind: PartKind,
 	pub content: String,
-	pub options: Option<PartOptions>,
+	pub options_str: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -48,35 +48,36 @@ impl From<&PartKind> for ChatRole {
 
 // region:    --- Parsers
 
-/// Extract and parse options from a header string.
-///
-/// Examples:
-/// - "user `cache = true`" -> PartOptions { cache: true }
-/// - "system  " -> PartOptions::default()
-/// - "user" -> PartOptions::default()
-pub fn get_prompt_part_options(header: &str) -> Result<Option<PartOptions>> {
-	// Check if there's a backtick in the header
-	let options_str = if let Some((_, toml_part)) = regex_captures!(r"`([^`]+)`", header) {
-		// Extract the content between backticks
-		let toml_content = toml_part.trim();
-
-		// Add surrounding curly braces if not present
-		let toml_content = if toml_content.starts_with('{') && toml_content.ends_with('}') {
-			toml_content.to_string()
-		} else {
-			format!("{{{}}}", toml_content)
-		};
-
-		format!("value = {toml_content}")
+pub fn get_prompt_part_options_str(header: &str) -> Result<Option<String>> {
+	if let Some((_, toml_part)) = regex_captures!(r"`([^`]+)`", header) {
+		Ok(Some(toml_part.to_string()))
 	} else {
-		// No backtick found, return default options
+		Ok(None)
+	}
+}
+
+/// Parse options from a header string.
+/// - toml format
+/// - assume single line.
+/// - Will add the `{ }` if not present
+pub fn parse_prompt_part_options(content: &str) -> Result<Option<PartOptions>> {
+	if content.trim().is_empty() {
 		return Ok(None);
+	}
+	// Check if there's a backtick in the header
+	// Add surrounding curly braces if not present
+	let options_str = if content.starts_with('{') && content.ends_with('}') {
+		content.to_string()
+	} else {
+		format!("{{{}}}", content)
 	};
+
+	let options_str = format!("value = {options_str}");
 
 	// Parse the TOML string into PartOptions
 	let mut root: toml::Value = toml::from_str(&options_str).map_err(|err| {
 		Error::custom(format!(
-			"Prompt header '{header}' invalid format format is invalid. Cause: {err}"
+			"Prompt header options '{content}' invalid format format. Cause: {err}"
 		))
 	})?;
 
@@ -93,7 +94,7 @@ pub fn get_prompt_part_options(header: &str) -> Result<Option<PartOptions>> {
 
 	let options: PartOptions = value.try_into().map_err(|err| {
 		Error::custom(format!(
-			"Prompt header '{header}' invalid format format is invalid. Cause: {err}"
+			"Prompt header '{content}' invalid format format is invalid. Cause: {err}"
 		))
 	})?;
 
@@ -128,25 +129,24 @@ mod tests {
 	#[test]
 	fn test_agent_prompt_part_parse_options() -> Result<()> {
 		// Test with no options
-		let options = get_prompt_part_options("user")?;
+		let options = parse_prompt_part_options("")?;
 		assert!(options.is_none(), "should hava no options");
 
 		// Test with options
-		let options = get_prompt_part_options("user `cache = true`")?;
+		let options = parse_prompt_part_options("cache = true")?;
 		let options = options.ok_or("Should have options")?;
 		assert!(options.cache);
 
 		// Test with spaces
-		let options = get_prompt_part_options("system  `cache = false`")?.ok_or("Should have options")?;
+		let options = parse_prompt_part_options("cache = false")?.ok_or("Should have options")?;
 		assert!(!options.cache);
 
 		// Test with already wrapped in braces
-		let options = get_prompt_part_options("user `{cache = true}`")?.ok_or("Should have options")?;
+		let options = parse_prompt_part_options("{cache = true}")?.ok_or("Should have options")?;
 		assert!(options.cache);
 
 		// Test with future extensions
-		let options =
-			get_prompt_part_options("user `cache = true, concurrency = 123`")?.ok_or("Should have options")?;
+		let options = parse_prompt_part_options("cache = true, concurrency = 123")?.ok_or("Should have options")?;
 		assert!(options.cache);
 		// When we add concurrency field to PartOptions, we could check it here
 

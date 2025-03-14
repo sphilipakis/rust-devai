@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::agent::{Agent, PromptPart};
+use crate::agent::{Agent, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
 use crate::pricing::price_it;
 use crate::run::AiResponse;
@@ -115,11 +115,19 @@ pub async fn run_agent_input(
 	let mut chat_messages: Vec<ChatMessage> = Vec::new();
 	let data_scope = serde_json::to_value(data_scope)?;
 	for prompt_part in agent.prompt_parts() {
-		let PromptPart { kind, content, options } = prompt_part;
+		let PromptPart {
+			kind,
+			content,
+			options_str,
+		} = prompt_part;
 
 		let content = hbs_render(content, &data_scope)?;
 		// For now, only add if not empty
 		if !content.trim().is_empty() {
+			let options = match options_str {
+				Some(s) => parse_prompt_part_options(s)?,
+				None => None,
+			};
 			let options = if options.as_ref().map(|v| v.cache).unwrap_or(false) {
 				Some(CacheControl::Ephemeral.into())
 			} else {

@@ -1,9 +1,7 @@
 use crate::Result;
 use crate::agent::agent_options::AgentOptions;
 use crate::agent::agent_ref::AgentRef;
-use crate::agent::{
-	Agent, AgentInner, PartKind, PartOptions, PromptPart, get_prompt_part_kind, get_prompt_part_options,
-};
+use crate::agent::{Agent, AgentInner, PartKind, PromptPart, get_prompt_part_kind, get_prompt_part_options_str};
 use crate::support::md::InBlockState;
 use crate::support::tomls::parse_toml;
 use genai::ModelName;
@@ -126,11 +124,11 @@ impl AgentDoc {
 				} else if let Some(part_kind) = get_prompt_part_kind(&header_lower) {
 					capture_mode = CaptureMode::PromptPart;
 					// TODO: will need to pass full case header in case we take string values in part options
-					let part_options = get_prompt_part_options(&header_lower)?;
+					let part_options_str = get_prompt_part_options_str(&header_lower)?;
 					// we finalize the previous part if present
 					finalize_current_prompt_part(&mut current_part, &mut prompt_parts);
 					// then, we create the new current_part
-					current_part = Some(CurrentPromptPart(part_kind, part_options, Vec::new()));
+					current_part = Some(CurrentPromptPart(part_kind, part_options_str, Vec::new()));
 				} else {
 					// Stop processing current section if new top-level header
 					capture_mode = CaptureMode::None;
@@ -141,9 +139,9 @@ impl AgentDoc {
 			// Check for code block markers with either 3 or 4 backticks
 			let is_toml_block_start = line.starts_with("```toml") || line.starts_with("````toml");
 			let is_lua_block_start = line.starts_with("```lua") || line.starts_with("````lua");
-			let is_block_end = (line == "```" || line == "````") && 
-				(current_backticks == 3 && line.starts_with("```") || 
-				 current_backticks == 4 && line.starts_with("````"));
+			let is_block_end = (line == "```" || line == "````")
+				&& (current_backticks == 3 && line.starts_with("```")
+					|| current_backticks == 4 && line.starts_with("````"));
 
 			// Track the number of backticks used for the current block
 			if is_toml_block_start || is_lua_block_start {
@@ -307,20 +305,24 @@ impl AgentDoc {
 // region:    --- Support
 
 /// Type of the function below and the `into_agent_inner` lexer
-/// (PartKind, PartOptions, Content)
-struct CurrentPromptPart<'a>(PartKind, Option<PartOptions>, Vec<&'a str>);
+/// (PartKind, PartOptionsStr, Content)
+struct CurrentPromptPart<'a>(PartKind, Option<String>, Vec<&'a str>);
 
 /// Finalize a eventual current_part
 fn finalize_current_prompt_part(current_part: &mut Option<CurrentPromptPart<'_>>, prompt_parts: &mut Vec<PromptPart>) {
 	if let Some(current_part) = current_part.take() {
 		// to have the last line
 		let kind = current_part.0;
-		let options = current_part.1;
+		let options_str = current_part.1;
 		let mut content = current_part.2;
 		content.push("");
 		let content = content.join("\n");
 
-		let part = PromptPart { kind, options, content };
+		let part = PromptPart {
+			kind,
+			options_str,
+			content,
+		};
 		prompt_parts.push(part);
 	}
 }

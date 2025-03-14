@@ -1,10 +1,10 @@
 //! HTML Utilities
+use crate::support::html_rcdom::{Handle, NodeData, RcDom, SerializableHandle};
 use crate::{Error, Result};
 use html5ever::driver::ParseOpts;
 use html5ever::parse_document;
 use html5ever::serialize::SerializeOpts;
 use html5ever::tendril::TendrilSink;
-use markup5ever_rcdom::{Handle, NodeData, RcDom, SerializableHandle};
 
 /// unescape code (sometime chatgpt encode the < and such)
 pub fn decode_html_entities(content: &str) -> String {
