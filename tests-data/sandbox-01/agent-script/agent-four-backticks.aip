@@ -1,0 +1,5 @@
+# Output
+
+````lua
+return "Hello '" .. input .. "' from agent-four-backticks.aip"
+````

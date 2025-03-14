@@ -106,6 +106,7 @@ impl AgentDoc {
 		//       So, here we do one path, and capture what we need, exactly the way we need it
 
 		let mut block_state = InBlockState::Out;
+		let mut current_backticks = 0; // Track current block's backtick count (3 or 4)
 
 		for line in self.raw_content.lines() {
 			block_state = block_state.compute_new(line);
@@ -137,19 +138,33 @@ impl AgentDoc {
 				continue;
 			}
 
+			// Check for code block markers with either 3 or 4 backticks
+			let is_toml_block_start = line.starts_with("```toml") || line.starts_with("````toml");
+			let is_lua_block_start = line.starts_with("```lua") || line.starts_with("````lua");
+			let is_block_end = (line == "```" || line == "````") && 
+				(current_backticks == 3 && line.starts_with("```") || 
+				 current_backticks == 4 && line.starts_with("````"));
+
+			// Track the number of backticks used for the current block
+			if is_toml_block_start || is_lua_block_start {
+				current_backticks = if line.starts_with("````") { 4 } else { 3 };
+			} else if is_block_end {
+				current_backticks = 0;
+			}
+
 			match capture_mode {
 				CaptureMode::None => {}
 
 				// -- Options
 				CaptureMode::OptionsSection => {
-					if line.starts_with("```toml") {
+					if is_toml_block_start {
 						capture_mode = CaptureMode::OptionsTomlBlock;
 						continue;
 					}
 				}
 
 				CaptureMode::OptionsTomlBlock => {
-					if line.starts_with("```") {
+					if is_block_end {
 						capture_mode = CaptureMode::None;
 						continue;
 					} else {
@@ -159,13 +174,13 @@ impl AgentDoc {
 
 				// -- Before All
 				CaptureMode::BeforeAllSection => {
-					if line.starts_with("```lua") {
+					if is_lua_block_start {
 						capture_mode = CaptureMode::BeforeAllCodeBlock;
 						continue;
 					}
 				}
 				CaptureMode::BeforeAllCodeBlock => {
-					if line.starts_with("```") {
+					if is_block_end {
 						capture_mode = CaptureMode::None;
 						continue;
 					} else {
@@ -175,13 +190,13 @@ impl AgentDoc {
 
 				// -- Data
 				CaptureMode::DataSection => {
-					if line.starts_with("```lua") {
+					if is_lua_block_start {
 						capture_mode = CaptureMode::DataCodeBlock;
 						continue;
 					}
 				}
 				CaptureMode::DataCodeBlock => {
-					if line.starts_with("```") {
+					if is_block_end {
 						capture_mode = CaptureMode::None;
 						continue;
 					} else {
@@ -201,13 +216,13 @@ impl AgentDoc {
 
 				// -- Output
 				CaptureMode::OutputSection => {
-					if line.starts_with("```lua") {
+					if is_lua_block_start {
 						capture_mode = CaptureMode::OutputCodeBlock;
 						continue;
 					}
 				}
 				CaptureMode::OutputCodeBlock => {
-					if line.starts_with("```") {
+					if is_block_end {
 						capture_mode = CaptureMode::None;
 						continue;
 					} else {
@@ -217,13 +232,13 @@ impl AgentDoc {
 
 				// -- After All
 				CaptureMode::AfterAllSection => {
-					if line.starts_with("```lua") {
+					if is_lua_block_start {
 						capture_mode = CaptureMode::AfterAllCodeBlock;
 						continue;
 					}
 				}
 				CaptureMode::AfterAllCodeBlock => {
-					if line.starts_with("```") {
+					if is_block_end {
 						capture_mode = CaptureMode::None;
 						continue;
 					} else {

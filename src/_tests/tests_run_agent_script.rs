@@ -25,6 +25,24 @@ async fn test_run_agent_script_hello_ok() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_run_agent_script_four_backticks_ok() -> Result<()> {
+	// -- Setup & Fixtures
+	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let agent = load_test_agent("./agent-script/agent-four-backticks.aip", &runtime)?;
+
+	// -- Execute
+	let res = run_test_agent_with_input(&runtime, &agent, "input-four-backticks").await?;
+
+	// -- Check
+	assert_eq!(
+		res.as_str().ok_or("Should have output result")?,
+		"Hello 'input-four-backticks' from agent-four-backticks.aip"
+	);
+
+	Ok(())
+}
+
+#[tokio::test]
 async fn test_run_agent_script_require_lua() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_sandbox_01()?;
