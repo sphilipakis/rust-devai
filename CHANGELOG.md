@@ -1,6 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2025-03-12 - [v0.6.9](https://github.com/jeremychone/rust-devai/compare/v0.6.9...v0.6.10)
+## 2025-03-14 - [v0.6.10](https://github.com/jeremychone/rust-devai/compare/v0.6.9...v0.6.10)
+
+- `-` compile issue - fix compile issue from html5ever patch update and markup5ever_rcdom
+- `>` prompt_part - prep work to support dynamic (at hbs render time) prompt part options
+- `^` agent - now support four backticks (as well as the three) for the toml/lua code blocks
+
+## 2025-03-12 - [v0.6.9](https://github.com/jeremychone/rust-devai/compare/v0.6.8...v0.6.9)
 
 - `!` Lua module rename - Now `aip...` rather than `utils...` (backward compatibility preserved)
 - `!` Lua module rename - Now `aip.flow` rather than `aipack.` (backward compatibility preserved)
