@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2025-03-12 - [v0.6.9]()
+## 2025-03-12 - [v0.6.9](https://github.com/jeremychone/rust-devai/compare/v0.6.9...v0.6.10)
 
 - `!` Lua module rename - Now `aip...` rather than `utils...` (backward compatibility preserved)
 - `!` Lua module rename - Now `aip.flow` rather than `aipack.` (backward compatibility preserved)
