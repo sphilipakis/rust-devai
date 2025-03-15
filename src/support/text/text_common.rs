@@ -52,6 +52,19 @@ pub fn ensure(s: &str, ensure_inst: EnsureOptions) -> Cow<str> {
 }
 // endregion: --- Ensure
 
+/// And efficient way to remove the first line.
+/// Returns: (first_line, remain), and empty string none
+/// Note: Good when big content, and the remain will not require new allocation
+pub fn extract_first_line(mut content: String) -> (String, String) {
+	if let Some(pos) = content.find('\n') {
+		let remainder = content.split_off(pos + 1); // Moves remainder to a new String, avoids shifting
+		(content, remainder)
+	} else {
+		// No newline, return whole string as first line, empty remainder
+		(content, String::new())
+	}
+}
+
 pub fn truncate_with_ellipsis<'a>(s: &'a str, max_len: usize, ellipsis: &str) -> Cow<'a, str> {
 	if s.len() > max_len {
 		let truncated = &s[..max_len];
@@ -244,6 +257,39 @@ And more content-03
 		if res.is_ok() {
 			return Err("Should have fail replace_markers because wrong content".into());
 		}
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_text_extract_first_line() -> Result<()> {
+		// -- Test case 1: String with multiple lines
+		let content = "First line\nSecond line\nThird line".to_string();
+		let (first, remainder) = extract_first_line(content);
+
+		assert_eq!(first, "First line\n");
+		assert_eq!(remainder, "Second line\nThird line");
+
+		// -- Test case 2: String with only one line with newline
+		let content = "Single line\n".to_string();
+		let (first, remainder) = extract_first_line(content);
+
+		assert_eq!(first, "Single line\n");
+		assert_eq!(remainder, "");
+
+		// -- Test case 3: String with only one line without newline
+		let content = "No newline".to_string();
+		let (first, remainder) = extract_first_line(content);
+
+		assert_eq!(first, "No newline");
+		assert_eq!(remainder, "");
+
+		// -- Test case 4: Empty string
+		let content = "".to_string();
+		let (first, remainder) = extract_first_line(content);
+
+		assert_eq!(first, "");
+		assert_eq!(remainder, "");
 
 		Ok(())
 	}

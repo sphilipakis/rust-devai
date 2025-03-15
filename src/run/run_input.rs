@@ -7,9 +7,10 @@ use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions, Runtime};
 use crate::script::{AipackCustom, FromValue};
 use crate::support::hbs::hbs_render;
-use crate::support::text::{format_duration, format_num};
+use crate::support::text::{self, format_duration, format_num};
 use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, Usage};
 use serde_json::Value;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use tokio::time::Instant;
 
@@ -121,12 +122,31 @@ pub async fn run_agent_input(
 			options_str,
 		} = prompt_part;
 
-		let content = hbs_render(content, &data_scope)?;
+		// Note: If we have an options_str, then add it as the first line
+		//       this way it can take advantage of being rendered
+		//       and then, we will extract it later
+		let (options_line, content) = if let Some(options_str) = options_str {
+			(true, Cow::Owned(format!("{}\n{}", options_str, content)))
+		} else {
+			(false, Cow::Borrowed(content))
+		};
+
+		let rendered_content = hbs_render(content.as_str(), &data_scope)?;
+
+		// If options_line, then we extract it
+		let (options_str, rendered_content) = if options_line {
+			text::extract_first_line(rendered_content)
+		} else {
+			(String::new(), rendered_content)
+		};
+		let options_str = options_str.trim();
+
 		// For now, only add if not empty
-		if !content.trim().is_empty() {
-			let options = match options_str {
-				Some(s) => parse_prompt_part_options(s)?,
-				None => None,
+		if !rendered_content.trim().is_empty() {
+			let options = if !options_str.is_empty() {
+				parse_prompt_part_options(options_str)?
+			} else {
+				None
 			};
 			let options = if options.as_ref().map(|v| v.cache).unwrap_or(false) {
 				Some(CacheControl::Ephemeral.into())
@@ -135,7 +155,7 @@ pub async fn run_agent_input(
 			};
 			chat_messages.push(ChatMessage {
 				role: kind.into(),
-				content: content.into(),
+				content: rendered_content.into(),
 				options,
 			})
 		}
