@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2025-03-18 - [v0.6.11](https://github.com/jeremychone/rust-devai/compare/v0.6.10...v0.6.11)
+## 2025-03-16 - [v0.6.11](https://github.com/jeremychone/rust-devai/compare/v0.6.10...v0.6.11)
 
 - `-` fix html5ever 0.29.2 yank compile issue
 - `^` PromptPart options now evaluated at hbs render time
