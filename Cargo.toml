@@ -40,11 +40,15 @@ html-escape = "0.2"
 # -- HTML Parsing
 # Note: markup5ever_rcdom often have incompatibility with html5ever
 #       so, we copied the code into html_rcdom.rs for now
-# markup5ever_rcdom = "0.3.0"
-# Note: Here we are locking all of these versions as they sometimes break compatibility even on patch updates.
-html5ever = "=0.29.2"
+# markup5ever_rcdom = "=0.5.0-unofficial"
+#
+# Note: html5ever introduced incompatibility with `0.29.2`, which was fixed here, but then, was yanked. 
+#       then, html5ever "=0.29.1" requires "=0.14.1", which is important for our the rcdom
+# html5ever = "=0.29.1"
 tendril = "=0.4.3"
-markup5ever = "=0.15.0"
+html5ever = "=0.29.1"
+# markup5ever has to be "markup5ever" `=0.14.1`
+markup5ever = "=0.14.1"
 # -- Template & Scripting
 mlua = { version = "0.10.1", features = ["lua54", "vendored", "async", "send", "serialize"] }
 handlebars = "6"
