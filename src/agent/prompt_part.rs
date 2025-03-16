@@ -75,9 +75,14 @@ pub fn parse_prompt_part_options(content: &str) -> Result<Option<PartOptions>> {
 	let options_str = format!("value = {options_str}");
 
 	// Parse the TOML string into PartOptions
-	let mut root: toml::Value = toml::from_str(&options_str).map_err(|err| {
+	let mut root: toml::Value = toml::from_str(&options_str).map_err(|_| {
 		Error::custom(format!(
-			"Prompt header options '{content}' invalid format format. Cause: {err}"
+			r#"Prompt header options `{content}` format is invalid.
+If set, it can only be `cache = true` or `cache = false`.
+For example '# User `cache = true`'
+If you used handlebars for some dynamic value `cache = data.should_cache_context`,
+   make sure you use 'data.' and that the value `should_cache_context` is returned from your '# Data' Lua section.
+"#
 		))
 	})?;
 
