@@ -37,7 +37,7 @@ impl RunCommandOptions {
 		self.inner.on_inputs.as_ref().map(|v| v.iter().map(|s| s.as_str()).collect())
 	}
 
-	pub fn base_run_config(&self) -> &RunBaseOptions {
+	pub fn base_run_options(&self) -> &RunBaseOptions {
 		&self.inner.base_run_options
 	}
 }

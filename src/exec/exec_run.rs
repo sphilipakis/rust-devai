@@ -49,7 +49,7 @@ pub async fn exec_run(run_args: RunArgs, dir_context: DirContext) -> Result<Arc<
 	let redo_ctx: Arc<RunRedoCtx> = exec_run_first(run_args, dir_context).await?.into();
 
 	// -- If watch, we start the watch (will be spawned and return immediately)
-	if redo_ctx.run_options.base_run_config().watch() {
+	if redo_ctx.run_options.base_run_options().watch() {
 		exec_run_watch(redo_ctx.clone());
 	}
 
@@ -67,7 +67,7 @@ pub async fn exec_run_first(run_args: RunArgs, dir_context: DirContext) -> Resul
 
 	let run_options = RunCommandOptions::new(run_args)?;
 
-	if run_options.base_run_config().open() {
+	if run_options.base_run_options().open() {
 		open_vscode(agent.file_path()).await;
 	}
 
@@ -200,7 +200,7 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 		runtime,
 		agent.clone(),
 		inputs,
-		run_command_options.base_run_config(),
+		run_command_options.base_run_options(),
 		false,
 	)
 	.await?;

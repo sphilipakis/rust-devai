@@ -51,6 +51,7 @@ async fn test_installer_impl_local_file_simple() -> Result<()> {
 	Ok(())
 }
 
+// TODO: This fails sometime. Probably a race condition. Needs to investigate.
 #[tokio::test]
 async fn test_installer_impl_local_version_above_err() -> Result<()> {
 	// -- Setup & Fixtures
@@ -117,6 +118,7 @@ version = "0.1.0"
 	Ok(())
 }
 
+// TODO: This fails sometime. Probably a race condition. Needs to investigate.
 #[tokio::test]
 async fn test_installer_impl_invalid_prerelease_err() -> Result<()> {
 	// -- Setup & Fixtures

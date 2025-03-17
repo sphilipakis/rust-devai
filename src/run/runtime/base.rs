@@ -4,6 +4,8 @@ use crate::run::{RuntimeContext, get_genai_client};
 use crate::script::LuaEngine;
 use genai::Client;
 
+/// The runtime that holds the RuntimeContext, which in turn holds the genai_client and dir_context.
+/// Note: This will evolve over time, but right now, all states are in the RuntimeContext (which is clone efficient).
 #[derive(Clone)]
 pub struct Runtime {
 	context: RuntimeContext,
@@ -11,6 +13,8 @@ pub struct Runtime {
 
 /// Constructors
 impl Runtime {
+	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
+	/// This is called when the cli start a command
 	pub fn new(dir_context: DirContext) -> Result<Self> {
 		// Note: Make the type explicit for clarity
 		let client = get_genai_client()?;
@@ -20,6 +24,12 @@ impl Runtime {
 		let runtime = Self { context };
 
 		Ok(runtime)
+	}
+
+	/// Create a new Runtime from a RuntimeContext
+	/// This is called we have a RuntimeContext and need to call run (e.g., aip.agent.run(...))
+	pub fn from_runtime_context(context: RuntimeContext) -> Self {
+		Self { context }
 	}
 }
 

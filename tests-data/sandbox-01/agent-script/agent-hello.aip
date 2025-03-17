@@ -1,5 +1,6 @@
 # Output
 
 ```lua
-return "Hello '" .. input .. "' from agent-hello.aip"
+local msg =  "Hello '" .. input .. "' from agent-hello.aip"
+return  "Hello '" .. input .. "' from agent-hello.aip - options.model = " .. options.model
 ```

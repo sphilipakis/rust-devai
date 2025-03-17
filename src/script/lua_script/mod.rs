@@ -1,5 +1,6 @@
 // region:    --- Modules
 
+mod aip_agent;
 mod aip_cmd;
 mod aip_code;
 mod aip_file;
@@ -22,7 +23,6 @@ mod lua_value_ext;
 pub use lua_engine::*;
 pub use lua_value_ext::*;
 
-#[cfg(test)]
 pub use helpers::*;
 
 // endregion: --- Modules

@@ -23,19 +23,6 @@ pub fn process_lua_eval_result(_lua: &Lua, res: mlua::Result<Value>, script: &st
 	Ok(res)
 }
 
-/// Convert a json value to a lua value.
-///
-/// IMPORTANT: Use this to covert JSON Value to Lua Value, as the default mlua to_value,
-///            converts serde_json::Value::Null to Lua user data, and not mlua::Value::Nil,
-///            and we want it for aipack.
-pub fn serde_to_lua_value(lua: &Lua, val: serde_json::Value) -> Result<Value> {
-	let res = match val {
-		serde_json::Value::Null => Value::Nil,
-		other => lua.to_value(&other)?,
-	};
-	Ok(res)
-}
-
 // Return a Vec<String> from a lua Value which can be String or Array of strings
 pub fn to_vec_of_strings(value: Value, err_prefix: &'static str) -> mlua::Result<Vec<String>> {
 	match value {
@@ -115,3 +102,33 @@ impl IntoLua for W<String> {
 }
 
 // endregion: --- mlua::Value utils
+
+// region:    --- Lua/Json Helpers
+
+/// Convert a json value to a lua value.
+///
+/// IMPORTANT: Use this to covert JSON Value to Lua Value, as the default mlua to_value,
+///            converts serde_json::Value::Null to Lua user data, and not mlua::Value::Nil,
+///            and we want it for aipack.
+pub fn serde_value_to_lua_value(lua: &Lua, val: serde_json::Value) -> Result<Value> {
+	let res = match val {
+		serde_json::Value::Null => Value::Nil,
+		other => lua.to_value(&other)?,
+	};
+	Ok(res)
+}
+
+pub fn serde_values_to_lua_values(lua: &Lua, values: Vec<serde_json::Value>) -> Result<Vec<Value>> {
+	values.into_iter().map(|val| serde_value_to_lua_value(lua, val)).collect()
+}
+
+/// Convenient function to take lua value to serde value
+///
+/// NOTE: The app should use this one rather to call serde_json::to_value directly
+///       This way we can normalize the behavior and error and such.
+pub fn lua_value_to_serde_value(lua_value: Value) -> Result<serde_json::Value> {
+	let value = serde_json::to_value(lua_value)?;
+	Ok(value)
+}
+
+// endregion: --- Lua/Json Helpers

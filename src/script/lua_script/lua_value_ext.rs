@@ -5,6 +5,9 @@ use mlua::Value;
 /// TODO: Will need to handle the case where the found value is not of correct type. Probably should return `Result<Option<>>`
 #[allow(unused)]
 pub trait LuaValueExt {
+	/// Return the Lua value for a key.
+	/// NOTE: Will return None if value is Nil
+	fn x_get_value(&self, key: &str) -> Option<Value>;
 	fn x_get_string(&self, key: &str) -> Option<String>;
 	fn x_get_bool(&self, key: &str) -> Option<bool>;
 	fn x_get_i64(&self, key: &str) -> Option<i64>;
@@ -12,6 +15,12 @@ pub trait LuaValueExt {
 }
 
 impl LuaValueExt for Value {
+	fn x_get_value(&self, key: &str) -> Option<Value> {
+		let table = self.as_table()?;
+		let val = table.get::<Value>(key).ok()?;
+		if val.is_nil() { None } else { Some(val) }
+	}
+
 	fn x_get_string(&self, key: &str) -> Option<String> {
 		let table = self.as_table()?;
 		let val = table.get::<Value>(key).ok()?;
@@ -42,6 +51,9 @@ impl LuaValueExt for Value {
 }
 
 impl LuaValueExt for Option<Value> {
+	fn x_get_value(&self, key: &str) -> Option<Value> {
+		self.as_ref()?.x_get_value(key)
+	}
 	fn x_get_string(&self, key: &str) -> Option<String> {
 		self.as_ref()?.x_get_string(key)
 	}

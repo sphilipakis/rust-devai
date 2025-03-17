@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::RuntimeContext;
-use crate::script::lua_script::helpers::{process_lua_eval_result, serde_to_lua_value};
+use crate::script::lua_script::helpers::{process_lua_eval_result, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -71,7 +71,7 @@ impl LuaEngine {
 	///            converts serde_json::Value::Null to Lua user data, and not mlua::Value::Nil,
 	///            and we want it for aipack.
 	pub fn serde_to_lua_value(&self, val: serde_json::Value) -> Result<Value> {
-		serde_to_lua_value(&self.lua, val)
+		serde_value_to_lua_value(&self.lua, val)
 	}
 
 	/// Just passthrough for into_lua
@@ -188,7 +188,8 @@ fn init_aip(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
 		lua,
 		code,
 		hbs,
-		semver
+		semver,
+		agent
 	);
 
 	let globals = lua_vm.globals();

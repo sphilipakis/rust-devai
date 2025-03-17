@@ -4,8 +4,9 @@ use crate::hub::get_hub;
 use crate::run::literals::Literals;
 use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
 use crate::run::{RunBaseOptions, Runtime};
-use crate::script::{AipackCustom, BeforeAllResponse, FromValue};
+use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
 use crate::{Error, Result};
+use mlua::IntoLua;
 use serde::Serialize;
 use serde_json::Value;
 use simple_fs::SPath;
@@ -13,26 +14,6 @@ use tokio::task::JoinSet;
 use value_ext::JsonValueExt;
 
 const DEFAULT_CONCURRENCY: usize = 1;
-
-#[derive(Debug, Serialize, Default)]
-pub struct RunCommandResponse {
-	pub outputs: Option<Vec<Value>>,
-	pub after_all: Option<Value>,
-}
-
-/// Return the display path
-/// - If .aipack/ or relative to workspace, then, relatively to workspace
-/// - If ~/.aipack-base/ then, absolute path
-fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> {
-	let file_path = SPath::new(file_path);
-
-	if file_path.as_str().contains(".aipack-base") {
-		Ok(file_path)
-	} else {
-		let spath = file_path.try_diff(dir_context.wks_dir())?;
-		Ok(spath)
-	}
-}
 
 pub async fn run_command_agent(
 	runtime: &Runtime,
@@ -317,6 +298,48 @@ async fn run_command_agent_input(
 
 	Ok(run_response)
 }
+
+// region:    --- RunCommandResponse
+
+/// The response returned by a Run Command call.
+/// TODO: Need to check why `outputs` is optional.
+///       We might want to have an array of Null if no output or nil was returned (to keep in sync with inputs).
+#[derive(Debug, Serialize, Default)]
+pub struct RunCommandResponse {
+	pub outputs: Option<Vec<Value>>,
+	pub after_all: Option<Value>,
+}
+
+impl IntoLua for RunCommandResponse {
+	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+		let table = lua.create_table()?;
+		let outputs = self.outputs.map(|v| serde_values_to_lua_values(lua, v)).transpose()?;
+		let after_all = self.after_all.map(|v| serde_value_to_lua_value(lua, v)).transpose()?;
+		table.set("outputs", outputs)?;
+		table.set("after_all", after_all)?;
+		Ok(mlua::Value::Table(table))
+	}
+}
+
+// endregion: --- RunCommandResponse
+
+// region:    --- Support
+
+/// Return the display path
+/// - If .aipack/ or relative to workspace, then, relatively to workspace
+/// - If ~/.aipack-base/ then, absolute path
+fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> {
+	let file_path = SPath::new(file_path);
+
+	if file_path.as_str().contains(".aipack-base") {
+		Ok(file_path)
+	} else {
+		let spath = file_path.try_diff(dir_context.wks_dir())?;
+		Ok(spath)
+	}
+}
+
+// endregion: --- Support
 
 /// Workaround to expose the run_command_agent_input only for test.
 #[cfg(test)]

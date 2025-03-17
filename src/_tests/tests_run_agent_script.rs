@@ -16,9 +16,9 @@ async fn test_run_agent_script_hello_ok() -> Result<()> {
 
 	// -- Check
 	// Note here '' because input is null
-	assert_eq!(
+	assert_contains(
 		res.as_str().ok_or("Should have output result")?,
-		"Hello 'input-01' from agent-hello.aip"
+		"Hello 'input-01' from agent-hello.aip",
 	);
 
 	Ok(())
