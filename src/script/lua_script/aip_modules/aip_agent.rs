@@ -1,9 +1,8 @@
-use crate::agent::{AgentOptions, find_agent};
+use crate::agent::find_agent;
+use crate::exec::RunAgentParams;
 use crate::run::{RunBaseOptions, Runtime, RuntimeContext, run_command_agent};
-use crate::script::{LuaValueExt, lua_value_to_serde_value};
 use crate::{Error, Result};
 use mlua::{FromLua, IntoLua, Lua, Table, Value};
-use serde_json::Value as JsonValue;
 
 pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table> {
 	let table = lua.create_table()?;
@@ -51,8 +50,9 @@ pub fn aip_agent_run(
 	run_options: Option<Value>,
 ) -> mlua::Result<Value> {
 	// -- parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
+	//TODO: Needs to give a resposne_oneshot below
 	let options = run_options
-		.map(|opt| LuaAgentRunOptions::from_lua(opt, lua))
+		.map(|opt| RunAgentParams::new(opt, lua, None))
 		.transpose()?
 		.unwrap_or_default();
 	// Normalize inputs to JsonValue format
@@ -90,38 +90,6 @@ pub fn aip_agent_run(
 	let run_command_response = result.into_lua(lua)?;
 
 	Ok(run_command_response)
-}
-
-/// Options for the agent run function
-#[derive(Debug, Default)]
-pub struct LuaAgentRunOptions {
-	/// Inputs to pass to the agent
-	pub inputs: Option<Vec<JsonValue>>,
-
-	/// TODO: need to implement agent options override
-	pub agent_options: Option<AgentOptions>,
-}
-
-impl FromLua for LuaAgentRunOptions {
-	fn from_lua(value: Value, lua: &Lua) -> mlua::Result<Self> {
-		let inputs = value.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
-
-		let inputs = match inputs {
-			Some(JsonValue::Array(values)) => Some(values),
-			None => None,
-			_ => {
-				return Err(crate::Error::custom(
-					"The 'inputs' `aip.agent.run(agent_name, {inputs: ..})` must be a Lua array",
-				)
-				.into());
-			}
-		};
-		let agent_options = value
-			.x_get_value("options")
-			.map(|o| AgentOptions::from_lua(o, lua))
-			.transpose()?;
-		Ok(Self { inputs, agent_options })
-	}
 }
 
 // region:    --- Tests

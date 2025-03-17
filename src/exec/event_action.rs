@@ -3,6 +3,7 @@
 //!       but this will eventual change to have it's own
 
 use crate::cli::{InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs};
+use crate::exec::RunAgentParams;
 
 /// Executor Action Event that needs to be performed
 ///
@@ -33,9 +34,9 @@ pub enum ExecActionEvent {
 	OpenAgent,
 
 	// -- Agent Commands
-	// RunAgent(RunAgentParams),
+	RunAgent(RunAgentParams),
 
-	// -- Lua Commands
+	// -- To be deprecated or redesigned
 	/// Eventually will get deprecated
 	#[allow(unused)]
 	CmdNewAgent(NewArgs),

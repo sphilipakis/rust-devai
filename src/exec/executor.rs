@@ -82,6 +82,7 @@ impl Executor {
 			hub.publish(ExecStatusEvent::StartExec).await;
 
 			match cmd {
+				// -- Cli Action Events
 				ExecActionEvent::CmdInit(init_args) => {
 					init_wks(init_args.path.as_deref(), true).await?;
 					init_base(false).await?;
@@ -132,6 +133,12 @@ impl Executor {
 					if let Some(agent_file_path) = self.get_agent_file_path() {
 						open_vscode(agent_file_path).await
 					}
+				}
+
+				// -- Agent Commands
+				ExecActionEvent::RunAgent(run_agent_params) => {
+					//
+					todo!()
 				}
 			}
 

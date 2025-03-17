@@ -25,7 +25,6 @@ pub async fn handle_hub_event(
 
 		HubEvent::Executor(exec_event) => {
 			if let (ExecStatusEvent::RunEnd, true) = (exec_event, interactive) {
-				// safer_println("\n[ r ]: Redo   |   [ q ]: Quit", interactive);
 				tui_elem::print_bottom_bar();
 			}
 		}

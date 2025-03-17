@@ -8,8 +8,7 @@ mod run_command;
 mod run_options;
 mod runtime;
 
-use ai_response::*;
-
+pub use ai_response::*;
 pub use genai_client::*;
 pub use run_command::*;
 pub use run_options::*;

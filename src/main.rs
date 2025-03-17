@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
 	// -- Start executor
 	let mut executor = Executor::new();
 	let executor_tx = executor.command_tx();
-	// TODO: Probably want to move the spwn inside executor.start
+	// TODO: Probably want to move the spawn inside executor.start
 	tokio::spawn(async move {
 		if let Err(err) = executor.start().await {
 			let hub = get_hub();
