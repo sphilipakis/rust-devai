@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::exec::ExecCommand;
+use crate::exec::ExecActionEvent;
 use crate::hub::get_hub;
 use crossterm::terminal::ClearType;
 use crossterm::{cursor, execute, terminal};
@@ -30,7 +30,7 @@ pub fn safer_println(msg: &str, interactive: bool) {
 	}
 }
 
-pub async fn send_to_executor(exec_tx: &mpsc::Sender<ExecCommand>, exec_cmd: ExecCommand) {
+pub async fn send_to_executor(exec_tx: &mpsc::Sender<ExecActionEvent>, exec_cmd: ExecActionEvent) {
 	// clear_last_n_lines(1);
 	if let Err(err) = exec_tx.send(exec_cmd).await {
 		get_hub()

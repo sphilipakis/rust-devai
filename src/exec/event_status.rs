@@ -7,7 +7,7 @@ use derive_more::derive::Display;
 /// NOTE: This is not sent to the executor.command_tx is they are not commands,
 ///       but status events.
 #[derive(Debug, Clone, Display)]
-pub enum ExecEvent {
+pub enum ExecStatusEvent {
 	/// Start an exec command like run,  init, ...
 	/// Get triggers for all executor event
 	StartExec,

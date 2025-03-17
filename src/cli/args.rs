@@ -1,4 +1,4 @@
-use crate::exec::ExecCommand;
+use crate::exec::ExecActionEvent;
 use clap::{Parser, Subcommand, command};
 
 /// Simple program to greet a person
@@ -163,16 +163,16 @@ pub struct InitArgs {
 
 // region:    --- From CliCommand to ExecCommand
 
-impl From<CliCommand> for ExecCommand {
+impl From<CliCommand> for ExecActionEvent {
 	fn from(cli_cmd: CliCommand) -> Self {
 		match cli_cmd {
-			CliCommand::Init(init_args) => ExecCommand::Init(init_args),
-			CliCommand::InitBase => ExecCommand::InitBase,
-			CliCommand::Run(run_args) => ExecCommand::RunCommandAgent(run_args),
+			CliCommand::Init(init_args) => ExecActionEvent::CmdInit(init_args),
+			CliCommand::InitBase => ExecActionEvent::CmdInitBase,
+			CliCommand::Run(run_args) => ExecActionEvent::CmdRun(run_args),
 			// CliCommand::New(new_args) => ExecCommand::NewCommandAgent(new_args),
-			CliCommand::List(list_args) => ExecCommand::List(list_args),
-			CliCommand::Pack(pack_args) => ExecCommand::Pack(pack_args),
-			CliCommand::Install(install_args) => ExecCommand::Install(install_args),
+			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),
+			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
+			CliCommand::Install(install_args) => ExecActionEvent::CmdInstall(install_args),
 		}
 	}
 }

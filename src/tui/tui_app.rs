@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::cli::CliArgs;
-use crate::exec::{ExecCommand, ExecEvent};
+use crate::exec::{ExecActionEvent, ExecStatusEvent};
 use crate::hub::{HubEvent, get_hub};
 use crate::tui::hub_event_handler::handle_hub_event;
 use crate::tui::in_reader::InReader;
@@ -15,19 +15,19 @@ use tokio::sync::{mpsc, oneshot};
 /// Note: Right now the quick channel is a watch, but might be better to be a mpsc.
 #[derive(Debug)]
 pub struct TuiApp {
-	executor_tx: mpsc::Sender<ExecCommand>,
+	executor_tx: mpsc::Sender<ExecActionEvent>,
 }
 
 /// Constructor
 impl TuiApp {
-	pub fn new(executor_tx: mpsc::Sender<ExecCommand>) -> Self {
+	pub fn new(executor_tx: mpsc::Sender<ExecActionEvent>) -> Self {
 		Self { executor_tx }
 	}
 }
 
 /// Getters
 impl TuiApp {
-	fn executor_tx(&self) -> mpsc::Sender<ExecCommand> {
+	fn executor_tx(&self) -> mpsc::Sender<ExecActionEvent> {
 		self.executor_tx.clone()
 	}
 }
@@ -92,7 +92,7 @@ impl TuiApp {
 						KeyCode::Char('r') => {
 							// clear_last_n_lines(1);
 							safer_println("\n-- R pressed - Redo\n", interactive);
-							send_to_executor(&exec_tx, ExecCommand::Redo).await;
+							send_to_executor(&exec_tx, ExecActionEvent::Redo).await;
 						}
 
 						// -- Quit
@@ -101,7 +101,7 @@ impl TuiApp {
 						// -- Open agent
 						KeyCode::Char('a') => {
 							// clear_last_n_lines(1);
-							send_to_executor(&exec_tx, ExecCommand::OpenAgent).await;
+							send_to_executor(&exec_tx, ExecActionEvent::OpenAgent).await;
 						}
 
 						// -- Ctrl c
@@ -156,7 +156,7 @@ impl TuiApp {
 	/// Note: This function is designed to spawn it's on work and return the oneshot described above,
 	///       so that it does not block the async caller.
 	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<oneshot::Receiver<()>> {
-		let exec_cmd: ExecCommand = cli_args.cmd.into();
+		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
 		let executor_tx = self.executor_tx();
 
 		let (done_tx, done_rx) = oneshot::channel();
@@ -177,7 +177,7 @@ impl TuiApp {
 			if let Ok(hub_event) = hub_rx.recv().await {
 				match (hub_event, interactive) {
 					(HubEvent::Quit, _) => break,
-					(HubEvent::Executor(ExecEvent::EndExec), false) => break,
+					(HubEvent::Executor(ExecStatusEvent::EndExec), false) => break,
 					_ => (),
 				}
 			}

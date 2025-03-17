@@ -2,9 +2,9 @@
 //! Will create it's own queue and listen to ExecCommand events.
 
 use crate::agent::Agent;
-use crate::exec::exec_command::ExecCommand;
+use crate::exec::event_action::ExecActionEvent;
 use crate::exec::support::open_vscode;
-use crate::exec::{ExecEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo};
+use crate::exec::{ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo};
 use crate::hub::get_hub;
 use crate::init::{init_base, init_wks};
 use crate::{Error, Result};
@@ -37,9 +37,9 @@ impl RedoCtx {
 
 pub struct Executor {
 	/// The receiver that this executor will itreate on "start"
-	command_rx: Receiver<ExecCommand>,
+	command_rx: Receiver<ExecActionEvent>,
 	/// Sender that gets cloned for parts that want to send events
-	command_tx: Sender<ExecCommand>,
+	command_tx: Sender<ExecActionEvent>,
 
 	current_redo_ctx: Option<RedoCtx>,
 }
@@ -58,7 +58,7 @@ impl Executor {
 
 /// Getter
 impl Executor {
-	pub fn command_tx(&self) -> Sender<ExecCommand> {
+	pub fn command_tx(&self) -> Sender<ExecActionEvent> {
 		self.command_tx.clone()
 	}
 
@@ -79,39 +79,43 @@ impl Executor {
 				break;
 			};
 
-			hub.publish(ExecEvent::StartExec).await;
+			hub.publish(ExecStatusEvent::StartExec).await;
 
 			match cmd {
-				ExecCommand::Init(init_args) => {
+				ExecActionEvent::CmdInit(init_args) => {
 					init_wks(init_args.path.as_deref(), true).await?;
 					init_base(false).await?;
 				}
-				ExecCommand::InitBase => {
+				ExecActionEvent::CmdInitBase => {
 					init_base(true).await?;
 				}
-				ExecCommand::NewCommandAgent(new_args) => {
+				// TODO: need to rethink this action
+				ExecActionEvent::CmdNewAgent(new_args) => {
 					exec_new(new_args, init_wks(None, false).await?).await?;
 				}
-				ExecCommand::List(list_args) => exec_list(init_wks(None, false).await?, list_args).await?,
+				ExecActionEvent::CmdList(list_args) => exec_list(init_wks(None, false).await?, list_args).await?,
 
-				ExecCommand::Pack(pack_args) => exec_pack(&pack_args).await?,
+				ExecActionEvent::CmdPack(pack_args) => exec_pack(&pack_args).await?,
 
-				ExecCommand::Install(install_args) => exec_install(init_wks(None, false).await?, install_args).await?,
-
-				ExecCommand::RunCommandAgent(run_args) => {
-					hub.publish(ExecEvent::RunStart).await;
-					let redo = exec_run(run_args, init_wks(None, false).await?).await?;
-					self.current_redo_ctx = Some(redo.into());
-					hub.publish(ExecEvent::RunEnd).await;
+				ExecActionEvent::CmdInstall(install_args) => {
+					exec_install(init_wks(None, false).await?, install_args).await?
 				}
 
-				ExecCommand::Redo => {
+				ExecActionEvent::CmdRun(run_args) => {
+					hub.publish(ExecStatusEvent::RunStart).await;
+					let redo = exec_run(run_args, init_wks(None, false).await?).await?;
+					self.current_redo_ctx = Some(redo.into());
+					hub.publish(ExecStatusEvent::RunEnd).await;
+				}
+
+				// -- Interactive Events
+				ExecActionEvent::Redo => {
 					let Some(redo_ctx) = self.current_redo_ctx.as_ref() else {
 						hub.publish(Error::custom("No redo available to be performed")).await;
 						continue;
 					};
 
-					hub.publish(ExecEvent::RunStart).await;
+					hub.publish(ExecStatusEvent::RunStart).await;
 					match redo_ctx {
 						RedoCtx::RunRedoCtx(redo_ctx) => {
 							// if sucessul, we recapture the redo_ctx to have the latest agent.
@@ -120,10 +124,10 @@ impl Executor {
 							}
 						}
 					}
-					hub.publish(ExecEvent::RunEnd).await;
+					hub.publish(ExecStatusEvent::RunEnd).await;
 				}
 
-				ExecCommand::OpenAgent => {
+				ExecActionEvent::OpenAgent => {
 					//
 					if let Some(agent_file_path) = self.get_agent_file_path() {
 						open_vscode(agent_file_path).await
@@ -131,7 +135,7 @@ impl Executor {
 				}
 			}
 
-			hub.publish(ExecEvent::EndExec).await;
+			hub.publish(ExecStatusEvent::EndExec).await;
 		}
 
 		Ok(())

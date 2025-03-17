@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::exec::ExecEvent;
+use crate::exec::ExecStatusEvent;
 use crate::tui::PrintEvent;
 use derive_more::derive::From;
 use std::sync::Arc;
@@ -22,7 +22,7 @@ pub enum HubEvent {
 		error: Arc<Error>,
 	},
 	#[from]
-	Executor(ExecEvent),
+	Executor(ExecStatusEvent),
 
 	// -- Sent by the lua engine "print override"
 	LuaPrint(Arc<str>),

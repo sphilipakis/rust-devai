@@ -48,10 +48,10 @@ pub fn aip_agent_run(
 	lua: &Lua,
 	runtime_ctx: &RuntimeContext,
 	agent_name: String,
-	options: Option<Value>,
+	run_options: Option<Value>,
 ) -> mlua::Result<Value> {
 	// -- parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
-	let options = options
+	let options = run_options
 		.map(|opt| LuaAgentRunOptions::from_lua(opt, lua))
 		.transpose()?
 		.unwrap_or_default();
