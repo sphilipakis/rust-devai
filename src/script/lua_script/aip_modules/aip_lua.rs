@@ -9,10 +9,10 @@
 //! * `aip.lua.dump(value: any) -> string`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use mlua::{Lua, Table, Value};
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let dump_lua = lua.create_function(dump)?;

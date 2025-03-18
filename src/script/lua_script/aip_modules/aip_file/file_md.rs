@@ -1,5 +1,5 @@
 use crate::dir_context::PathResolver;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::script::lua_script::helpers::to_vec_of_strings;
 use crate::support::md::MdSectionIter;
 use mlua::{IntoLua, Lua, Value};
@@ -25,7 +25,7 @@ use mlua::{IntoLua, Lua, Value};
 ///
 pub(super) fn file_load_md_sections(
 	lua: &Lua,
-	ctx: &RuntimeContext,
+	ctx: &Runtime,
 	path: String,
 	headings: Option<Value>,
 ) -> mlua::Result<Value> {
@@ -46,7 +46,7 @@ pub(super) fn file_load_md_sections(
 	Ok(res)
 }
 
-pub(super) fn file_load_md_split_first(lua: &Lua, ctx: &RuntimeContext, path: String) -> mlua::Result<Value> {
+pub(super) fn file_load_md_split_first(lua: &Lua, ctx: &Runtime, path: String) -> mlua::Result<Value> {
 	let path = ctx.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
 
 	let mut sec_iter = MdSectionIter::from_path(path, None)?;

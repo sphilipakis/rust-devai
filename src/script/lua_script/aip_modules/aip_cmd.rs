@@ -9,12 +9,12 @@
 //! * `aip.cmd.exec(cmd_name: string, args?: string | table) -> {stdout: string, stderr: string, exit: number}`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::script::lua_script::helpers::to_vec_of_strings;
 use mlua::{Lua, Table, Value};
 use std::process::Command;
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let exec_fn = lua.create_function(cmd_exec)?;

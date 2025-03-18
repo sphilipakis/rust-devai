@@ -24,7 +24,7 @@
 //! * `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::script::lua_script::DEFAULT_MARKERS;
 use crate::script::lua_script::helpers::to_vec_of_strings;
 use crate::support::Extrude;
@@ -34,7 +34,7 @@ use crate::support::text::{LineBlockIter, LineBlockIterOptions};
 use mlua::{FromLua, Lua, MultiValue, String as LuaString, Table, Value};
 use std::borrow::Cow;
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	table.set("escape_decode", lua.create_function(escape_decode)?)?;
@@ -100,8 +100,8 @@ impl FromLua for EnsureOptions {
 /// Ensure the content start and/or end with the text given in the second argument dictionary.
 ///
 /// This function is useful for code normalization.
-fn ensure(lua: &Lua, (content, inst): (String, Value)) -> mlua::Result<String> {
-	let inst = EnsureOptions::from_lua(inst, lua)?;
+fn ensure(_lua: &Lua, (content, inst): (String, Value)) -> mlua::Result<String> {
+	let inst = EnsureOptions::from_lua(inst, _lua)?;
 	let res = crate::support::text::ensure(&content, inst);
 	let res = res.to_string();
 	Ok(res)
@@ -170,7 +170,7 @@ fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<Str
 /// --       If match, but nothing after, second is ""
 /// ```
 /// NOTE: For optimization, this will use LuaString to avoid converting Lua String to Rust String and back
-fn split_first(lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Result<MultiValue> {
+fn split_first(_lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Result<MultiValue> {
 	// Convert LuaStrings to Rust strings
 	let content_str = content.to_str()?;
 	let sep_str = sep.to_str()?;
@@ -183,8 +183,8 @@ fn split_first(lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Resul
 
 		// Convert parts back to Lua strings and return as MultiValue
 		Ok(MultiValue::from_vec(vec![
-			Value::String(lua.create_string(first_part)?),
-			Value::String(lua.create_string(second_part)?),
+			Value::String(_lua.create_string(first_part)?),
+			Value::String(_lua.create_string(second_part)?),
 		]))
 	} else {
 		// Return the content as the first value and nil as the second
@@ -196,33 +196,33 @@ fn split_first(lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Resul
 
 // region:    --- Trim
 
-fn trim(lua: &Lua, content: LuaString) -> mlua::Result<Value> {
+fn trim(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
 	let trimmed = original_str.trim();
 	if trimmed.len() == original_str.len() {
 		Ok(Value::String(content))
 	} else {
-		lua.create_string(trimmed).map(Value::String)
+		_lua.create_string(trimmed).map(Value::String)
 	}
 }
 
-fn trim_end(lua: &Lua, content: LuaString) -> mlua::Result<Value> {
+fn trim_end(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
 	let trimmed = original_str.trim_end();
 	if trimmed.len() == original_str.len() {
 		Ok(Value::String(content))
 	} else {
-		lua.create_string(trimmed).map(Value::String)
+		_lua.create_string(trimmed).map(Value::String)
 	}
 }
 
-fn trim_start(lua: &Lua, content: LuaString) -> mlua::Result<Value> {
+fn trim_start(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
 	let trimmed = original_str.trim_start();
 	if trimmed.len() == original_str.len() {
 		Ok(Value::String(content))
 	} else {
-		lua.create_string(trimmed).map(Value::String)
+		_lua.create_string(trimmed).map(Value::String)
 	}
 }
 
@@ -362,7 +362,7 @@ fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 /// of blocks returned by performing that many `next()` iterations. If `extrude` is set to "content",
 /// the remaining lines (after extracting the specified number of blocks) are captured via `collect_remains`.
 /// If the `extrude` option is not set, the extruded content is returned as `nil`.
-fn extract_line_blocks(lua: &Lua, (content, options): (String, Table)) -> mlua::Result<MultiValue> {
+fn extract_line_blocks(_lua: &Lua, (content, options): (String, Table)) -> mlua::Result<MultiValue> {
 	let starts_with: Option<String> = options.get("starts_with")?;
 	let Some(starts_with) = starts_with else {
 		return Err(crate::Error::custom(
@@ -402,14 +402,14 @@ fn extract_line_blocks(lua: &Lua, (content, options): (String, Table)) -> mlua::
 		iterator.collect_blocks_and_extruded_content()
 	};
 
-	let blocks_table = lua.create_table()?;
+	let blocks_table = _lua.create_table()?;
 	for block in blocks.iter() {
 		// Use table.push so that the returned Lua table is an array-like table.
 		blocks_table.push(block.as_str())?;
 	}
 
 	let extruded_value = if return_extrude {
-		Value::String(lua.create_string(&extruded_content)?)
+		Value::String(_lua.create_string(&extruded_content)?)
 	} else {
 		Value::Nil
 	};

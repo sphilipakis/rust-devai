@@ -12,7 +12,7 @@ use std::str::FromStr;
 ///
 /// Returns (base_path, globs)
 pub fn base_dir_and_globs(
-	ctx: &crate::runtime::RuntimeContext,
+	ctx: &crate::runtime::Runtime,
 	include_globs: Value,
 	options: Option<&Value>,
 ) -> Result<(SPath, Vec<String>)> {

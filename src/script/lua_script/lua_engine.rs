@@ -1,22 +1,22 @@
 use crate::Result;
 use crate::hub::{HubEvent, get_hub};
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::script::lua_script::helpers::{process_lua_eval_result, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
 	lua: Lua,
 	#[allow(unused)]
-	runtime_context: RuntimeContext,
+	runtime: Runtime,
 }
 
 /// Constructors
 impl LuaEngine {
-	pub fn new(runtime_context: RuntimeContext) -> Result<Self> {
+	pub fn new(runtime: Runtime) -> Result<Self> {
 		let lua = Lua::new();
 
 		// -- init utils (now under 'aip' namespace, and kept the 'utils')
-		init_aip(&lua, &runtime_context)?;
+		init_aip(&lua, &runtime)?;
 
 		// -- backward compatibility "<=0.6.8"
 		let globals = lua.globals();
@@ -26,13 +26,13 @@ impl LuaEngine {
 		}
 
 		// -- init aipack (TODO: ths will need to be below the 'aip' namespace, once we find good submodule space)
-		super::aip_flow::init_module(&lua, &runtime_context)?;
+		// super::aip_flow::init_module(&lua, &runtime)?;
 
 		// -- Init print
 		init_print(&lua)?;
 
 		// -- Build and return
-		let engine = LuaEngine { lua, runtime_context };
+		let engine = LuaEngine { lua, runtime };
 
 		Ok(engine)
 	}
@@ -150,14 +150,14 @@ fn init_print(lua: &Lua) -> Result<()> {
 /// Just a convenient macro to init/set the lua modules
 /// Will generate the code below for the name 'git'
 /// ```rust
-/// let git = utils_git::init_module(lua, runtime_context)?;
+/// let git = utils_git::init_module(lua, runtime)?;
 /// table.set("git", git)
 /// ```
 macro_rules! init_and_set {
-    ($table:expr, $lua:expr, $runtime_context:expr, $($name:ident),*) => {
+    ($table:expr, $lua:expr, $runtime:expr, $($name:ident),*) => {
         paste::paste! {
             $(
-                let $name = super::[<aip_ $name>]::init_module($lua, $runtime_context)?;
+                let $name = super::[<aip_ $name>]::init_module($lua, $runtime)?;
                 $table.set(stringify!($name), $name)?;
             )*
         }
@@ -165,31 +165,13 @@ macro_rules! init_and_set {
 }
 
 /// Module builders
-fn init_aip(lua_vm: &Lua, runtime_context: &RuntimeContext) -> Result<()> {
+fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 	// Note: using `lua_vm` to not conflict with the `lua` in the init_and_set that will get expanded as `lua` variable.
 	let table = lua_vm.create_table()?;
 
 	init_and_set!(
-		table,
-		lua_vm,
-		runtime_context,
-		// -- The lua module names that refers to utils_...
-		flow,
-		file,
-		git,
-		web,
-		text,
-		rust,
-		path,
-		md,
-		json,
-		html,
-		cmd,
-		lua,
-		code,
-		hbs,
-		semver,
-		agent
+		table, lua_vm, runtime, // -- The lua module names that refers to utils_...
+		flow, file, git, web, text, rust, path, md, json, html, cmd, lua, code, hbs, semver, agent
 	);
 
 	let globals = lua_vm.globals();
@@ -217,7 +199,7 @@ mod tests {
 	async fn test_lua_engine_eval_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
-		let engine = LuaEngine::new(runtime.context().clone())?;
+		let engine = LuaEngine::new(runtime.clone())?;
 		let fx_script = r#"
 local square_root = math.sqrt(25)
 return "Hello " .. my_name .. " - " .. square_root		

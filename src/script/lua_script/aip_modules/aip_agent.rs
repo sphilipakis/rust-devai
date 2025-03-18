@@ -1,16 +1,16 @@
 use crate::agent::find_agent;
 use crate::exec::RunAgentParams;
 use crate::run::{RunBaseOptions, run_command_agent};
-use crate::runtime::{Runtime, RuntimeContext};
+use crate::runtime::Runtime;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 
-pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
-	let ctx = runtime_context.clone();
+	let rt = runtime.clone();
 	let agent_run = lua.create_function(move |lua, (agent_name, options): (String, Option<Value>)| {
-		aip_agent_run(lua, &ctx, agent_name, options)
+		aip_agent_run(lua, &rt, agent_name, options)
 	})?;
 
 	table.set("run", agent_run)?;
@@ -46,7 +46,7 @@ pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table>
 ///
 pub fn aip_agent_run(
 	lua: &Lua,
-	runtime_ctx: &RuntimeContext,
+	runtime: &Runtime,
 	agent_name: String,
 	run_options: Option<Value>,
 ) -> mlua::Result<Value> {
@@ -65,7 +65,7 @@ pub fn aip_agent_run(
 	// TODO: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
 
 	// Find and build the agent
-	let agent = find_agent(&agent_name, runtime_ctx.dir_context())
+	let agent = find_agent(&agent_name, runtime.dir_context())
 		.map_err(|e| Error::custom(format!("Failed to find agent '{}': {}", agent_name, e)))?;
 
 	// -- If we had a agent options, need to overrid the agent options.
@@ -77,13 +77,11 @@ pub fn aip_agent_run(
 	// -- Build the environment
 	let run_base_options = RunBaseOptions::default();
 
-	// Create a new "shadow runtime" with the same runtime_ctx
-	let runtime = Runtime::from_runtime_context(runtime_ctx.clone());
-
+	// TODO: Change that to call the runtime executor_sender().send.. ExecutorActionEvent::AgentRun...
 	// Execute the tokio runtime blocking to run the command agent
 	let result = tokio::task::block_in_place(|| {
 		tokio::runtime::Handle::current()
-			.block_on(async { run_command_agent(&runtime, agent, inputs, &run_base_options, true).await })
+			.block_on(async { run_command_agent(runtime, agent, inputs, &run_base_options, true).await })
 	})
 	.map_err(|e| Error::custom(format!("Failed to run agent '{}': {}", agent_name, e)))?;
 

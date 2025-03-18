@@ -12,11 +12,11 @@
 //! * `aip.semver.valid(version: string): boolean`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use mlua::{Lua, Table, Value};
 use semver::Version;
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	table.set("compare", lua.create_function(compare)?)?;

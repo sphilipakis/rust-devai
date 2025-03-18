@@ -26,50 +26,51 @@ impl FromStr for PartialPackRef {
 	fn from_str(s: &str) -> Result<Self> {
 		// Split by @ to get namespace and the rest
 		let parts: Vec<&str> = s.split('@').collect();
-		
+
 		match parts.len() {
 			1 => {
 				// No namespace, just package name (and possibly sub_path)
 				let name_and_path: Vec<&str> = parts[0].split('/').collect();
 				let name = name_and_path[0].to_string();
-				
+
 				let sub_path = if name_and_path.len() > 1 {
 					let path = name_and_path[1..].join("/");
 					if path.is_empty() { None } else { Some(path) }
 				} else {
 					None
 				};
-				
+
 				Ok(PartialPackRef {
 					namespace: None,
 					name,
 					sub_path,
 				})
-			},
+			}
 			2 => {
 				// Has namespace: namespace@name/sub_path
 				let namespace = parts[0].to_string();
-				
+
 				// Split the second part by / to get name and sub_path
 				let name_and_path: Vec<&str> = parts[1].split('/').collect();
 				let name = name_and_path[0].to_string();
-				
+
 				let sub_path = if name_and_path.len() > 1 {
 					let path = name_and_path[1..].join("/");
 					if path.is_empty() { None } else { Some(path) }
 				} else {
 					None
 				};
-				
+
 				Ok(PartialPackRef {
 					namespace: Some(namespace),
 					name,
 					sub_path,
 				})
-			},
-			_ => {
-				Err(Error::custom(format!("Invalid pack reference format: {}. Expected format is [namespace@]name[/sub_path]", s)))
 			}
+			_ => Err(Error::custom(format!(
+				"Invalid pack reference format: {}. Expected format is [namespace@]name[/sub_path]",
+				s
+			))),
 		}
 	}
 }

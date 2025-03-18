@@ -9,11 +9,11 @@
 //! * `aip.rust.prune_to_declarations(code: string) -> string`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::support::code::run_prune_to_declarations;
 use mlua::{Lua, Table, Value};
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let prune_fn = lua.create_function(prune_to_declarations)?;

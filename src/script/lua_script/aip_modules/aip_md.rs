@@ -11,13 +11,13 @@
 //! * `aip.md.outer_block_content_or_raw(md_content: string) -> string`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::support::md::{self};
 use crate::support::{Extrude, W};
 use crate::types::MdBlock;
 use mlua::{IntoLua, Lua, LuaSerdeExt, MultiValue, Table, Value};
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let extract_blocks_fn = lua.create_function(extract_blocks)?;

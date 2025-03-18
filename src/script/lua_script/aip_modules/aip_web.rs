@@ -9,14 +9,14 @@
 //! * `aip.web.get(url: string) -> string`
 
 use crate::hub::get_hub;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::support::StrExt as _;
 use crate::{Error, Result};
 use mlua::{Lua, LuaSerdeExt, Table, Value};
 use reqwest::redirect::Policy;
 use reqwest::{Client, Response, header};
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let web_get_fn = lua.create_function(move |lua, (url,): (String,)| web_get(lua, url))?;

@@ -7,10 +7,10 @@
 //! - `aip.flow.skip(reason?: string) -> table`
 
 use crate::Result;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use mlua::{Lua, Table, Value};
 
-pub fn init_module(lua: &Lua, _runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let before_all_response_fn = lua.create_function(aipack_before_all_response)?;
@@ -68,7 +68,7 @@ fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 
 // endregion: --- Lua Functions
 
-// region:    --- Section
+// region:    --- Tests
 
 #[cfg(test)]
 mod tests {
@@ -79,9 +79,9 @@ mod tests {
 	use serde_json::Value;
 	use value_ext::JsonValueExt as _;
 
-	#[tokio::test]
-	async fn test_lua_aipack_before_all_response_simple() -> Result<()> {
-		// -- Setup
+	#[test]
+	fn test_script_lua_aip_flow_before_all_response_simple() -> Result<()> {
+		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.before_all_response(123)
@@ -99,9 +99,9 @@ mod tests {
 		Ok(())
 	}
 
-	#[tokio::test]
-	async fn test_lua_aipack_skip_with_reason() -> Result<()> {
-		// -- Setup
+	#[test]
+	fn test_script_lua_aip_flow_skip_with_reason() -> Result<()> {
+		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.skip("Not applicable")
@@ -119,9 +119,9 @@ mod tests {
 		Ok(())
 	}
 
-	#[tokio::test]
-	async fn test_lua_aipack_skip_without_reason() -> Result<()> {
-		// -- Setup
+	#[test]
+	fn test_script_lua_aip_flow_skip_without_reason() -> Result<()> {
+		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
 			return aip.flow.skip()
@@ -142,4 +142,4 @@ mod tests {
 	}
 }
 
-// endregion: --- Section
+// endregion: --- Tests

@@ -9,14 +9,14 @@
 //! * `aip.git.restore(path: string) -> string | table`
 
 use crate::hub::get_hub;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 
-pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
-	let ctx = runtime_context.clone();
+	let ctx = runtime.clone();
 	let git_restore_fn = lua.create_function(move |lua, (path,): (String,)| git_restore(lua, &ctx, path))?;
 
 	table.set("restore", git_restore_fn)?;
@@ -43,7 +43,7 @@ pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table>
 /// local result = aip.git.restore("src/main.rs")
 /// print(result)
 /// ```
-fn git_restore(lua: &Lua, ctx: &RuntimeContext, path: String) -> mlua::Result<Value> {
+fn git_restore(lua: &Lua, ctx: &Runtime, path: String) -> mlua::Result<Value> {
 	let output = std::process::Command::new("git")
 		.current_dir(ctx.dir_context().wks_dir())
 		.arg("restore")

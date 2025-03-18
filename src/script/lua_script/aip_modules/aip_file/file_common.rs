@@ -1,7 +1,7 @@
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
-use crate::runtime::RuntimeContext;
+use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use crate::script::lua_script::aip_file::support::{
 	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options, process_path_reference,
@@ -39,7 +39,7 @@ use std::io::Write;
 ///
 pub(super) fn file_load(
 	lua: &Lua,
-	ctx: &RuntimeContext,
+	ctx: &Runtime,
 	rel_path: String,
 	options: Option<Value>,
 ) -> mlua::Result<mlua::Value> {
@@ -66,7 +66,7 @@ pub(super) fn file_load(
 ///
 /// Does not return anything
 ///
-pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, content: String) -> mlua::Result<()> {
+pub(super) fn file_save(_lua: &Lua, ctx: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let rel_path = SPath::new(rel_path);
 	let path = ctx.dir_context().resolve_path(rel_path, PathResolver::WksDir)?;
 	let dir_context = ctx.dir_context();
@@ -106,7 +106,7 @@ pub(super) fn file_save(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, cont
 ///
 /// Does not return anything
 ///
-pub(super) fn file_append(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, content: String) -> mlua::Result<()> {
+pub(super) fn file_append(_lua: &Lua, ctx: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let path = ctx.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
 	ensure_file_dir(&path).map_err(Error::from)?;
 
@@ -138,7 +138,7 @@ pub(super) fn file_append(_lua: &Lua, ctx: &RuntimeContext, rel_path: String, co
 ///
 pub(super) fn file_ensure_exists(
 	lua: &Lua,
-	ctx: &RuntimeContext,
+	ctx: &Runtime,
 	path: String,
 	content: Option<String>,
 	options: Option<EnsureExistsOptions>,
@@ -187,12 +187,7 @@ pub(super) fn file_ensure_exists(
 ///
 /// To get the content of files, needs iterate and load each
 ///
-pub(super) fn file_list(
-	lua: &Lua,
-	ctx: &RuntimeContext,
-	include_globs: Value,
-	options: Option<Value>,
-) -> mlua::Result<Value> {
+pub(super) fn file_list(lua: &Lua, ctx: &Runtime, include_globs: Value, options: Option<Value>) -> mlua::Result<Value> {
 	let (base_path, include_globs) = base_dir_and_globs(ctx, include_globs, options.as_ref())?;
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
@@ -231,7 +226,7 @@ pub(super) fn file_list(
 ///
 pub(super) fn file_list_load(
 	lua: &Lua,
-	ctx: &RuntimeContext,
+	ctx: &Runtime,
 	include_globs: Value,
 	options: Option<Value>,
 ) -> mlua::Result<Value> {
@@ -276,7 +271,7 @@ pub(super) fn file_list_load(
 /// ```
 pub(super) fn file_first(
 	lua: &Lua,
-	ctx: &RuntimeContext,
+	ctx: &Runtime,
 	include_globs: Value,
 	options: Option<Value>,
 ) -> mlua::Result<Value> {

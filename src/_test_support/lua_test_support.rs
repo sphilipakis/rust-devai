@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::runtime::{Runtime, RuntimeContext};
+use crate::runtime::Runtime;
 use crate::script::process_lua_eval_result;
 use mlua::{Lua, Table};
 use serde_json::Value;
@@ -7,7 +7,7 @@ use serde_json::Value;
 /// Sets up a Lua instance with both functions registered under `aip.` aip_name.
 pub fn setup_lua<F>(init_fn: F, utils_name: &str) -> Result<Lua>
 where
-	F: FnOnce(&Lua, &RuntimeContext) -> Result<Table>,
+	F: FnOnce(&Lua, &Runtime) -> Result<Table>,
 {
 	let runtime = Runtime::new_test_runtime_sandbox_01()?;
 
@@ -15,7 +15,7 @@ where
 	let globals = lua.globals();
 	let aip = lua.create_table()?;
 
-	let path_table = init_fn(&lua, &runtime.context())?;
+	let path_table = init_fn(&lua, &runtime)?;
 	aip.set(utils_name, path_table)?;
 	globals.set("aip", &aip)?;
 	// For backward compatiblity

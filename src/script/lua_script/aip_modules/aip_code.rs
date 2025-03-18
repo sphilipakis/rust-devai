@@ -18,7 +18,7 @@
 use crate::Result;
 use mlua::{Lua, Table};
 
-pub fn init_module(lua: &Lua, _runtime_context: &crate::runtime::RuntimeContext) -> Result<Table> {
+pub fn init_module(lua: &Lua, _runtime: &crate::runtime::Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	table.set("comment_line", lua.create_function(comment_line)?)?;

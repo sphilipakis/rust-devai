@@ -1,15 +1,18 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::run::get_genai_client;
-use crate::runtime::RuntimeContext;
+use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
+use std::sync::Arc;
 
-/// The runtime that holds the RuntimeContext, which in turn holds the genai_client and dir_context.
-/// Note: This will evolve over time, but right now, all states are in the RuntimeContext (which is clone efficient).
+/// The runtime that holds the RuntimeInner (under Arc) with the genai client and dir_context
+/// This type is made to be cloned when passed to different part of the system.
+///
+/// Note: Should not create new Runtimes except for test. Just clone the one available.
 #[derive(Clone)]
 pub struct Runtime {
-	context: RuntimeContext,
+	inner: Arc<RuntimeInner>,
 }
 
 /// Constructors
@@ -20,17 +23,11 @@ impl Runtime {
 		// Note: Make the type explicit for clarity
 		let client = get_genai_client()?;
 
-		let context = RuntimeContext::new(dir_context, client);
+		let inner = RuntimeInner::new(dir_context, client);
 
-		let runtime = Self { context };
+		let runtime = Self { inner: Arc::new(inner) };
 
 		Ok(runtime)
-	}
-
-	/// Create a new Runtime from a RuntimeContext
-	/// This is called we have a RuntimeContext and need to call run (e.g., aip.agent.run(...))
-	pub fn from_runtime_context(context: RuntimeContext) -> Self {
-		Self { context }
 	}
 }
 
@@ -39,23 +36,18 @@ impl Runtime {
 ///       Later, we might have an optmized reuse strategy of lua engines (but need to be cautious as not multi-threaded)
 impl Runtime {
 	pub fn new_lua_engine(&self) -> Result<LuaEngine> {
-		LuaEngine::new(self.context.clone())
+		LuaEngine::new(self.clone())
 	}
 }
 
 /// Getters
 impl Runtime {
-	#[allow(unused)]
-	pub fn context(&self) -> RuntimeContext {
-		self.context.clone()
-	}
-
 	pub fn genai_client(&self) -> &Client {
-		self.context.genai_client()
+		self.inner.genai_client()
 	}
 
 	pub fn dir_context(&self) -> &DirContext {
-		self.context.dir_context()
+		self.inner.dir_context()
 	}
 }
 
