@@ -1,15 +1,10 @@
 use crate::Result;
-use crate::exec::{ExecActionEvent, ExecStatusEvent};
+use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::HubEvent;
-use crate::tui::support::{safer_println, send_to_executor};
+use crate::tui::support::safer_println;
 use crate::tui::{handle_print, tui_elem};
-use tokio::sync::mpsc;
 
-pub async fn handle_hub_event(
-	event: HubEvent,
-	exec_tx: &mpsc::Sender<ExecActionEvent>,
-	interactive: bool,
-) -> Result<()> {
+pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, interactive: bool) -> Result<()> {
 	match event {
 		HubEvent::Message(msg) => {
 			safer_println(&format!("{msg}"), interactive);
@@ -28,7 +23,7 @@ pub async fn handle_hub_event(
 				tui_elem::print_bottom_bar();
 			}
 		}
-		HubEvent::DoExecRedo => send_to_executor(exec_tx, ExecActionEvent::Redo).await,
+		HubEvent::DoExecRedo => exec_sender.send(ExecActionEvent::Redo).await,
 		HubEvent::Quit => {
 			// Nothing to do for now
 		}

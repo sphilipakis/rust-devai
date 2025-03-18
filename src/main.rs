@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
 
 	// -- Start executor
 	let mut executor = Executor::new();
-	let executor_tx = executor.command_tx();
+	let exec_sender = executor.sender();
 	// TODO: Probably want to move the spawn inside executor.start
 	tokio::spawn(async move {
 		if let Err(err) = executor.start().await {
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
 	});
 
 	// -- Start UI
-	let tui = TuiApp::new(executor_tx);
+	let tui = TuiApp::new(exec_sender);
 	// This will wait until all done
 	tui.start_with_args(args).await?;
 

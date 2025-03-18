@@ -15,7 +15,7 @@ use crate::exec::RunAgentParams;
 /// - The agent commands (when Lua is asking to execute an agent agent)
 ///
 /// NOTE: This is not the `ExecStateEvent` which is sent to the hub.
-#[derive(Debug)]
+#[derive(Debug, strum::IntoStaticStr)]
 pub enum ExecActionEvent {
 	// -- CLI Commands
 	/// This will init the workspace with `.aipack/`

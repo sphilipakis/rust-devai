@@ -1,34 +1,34 @@
 use crate::Result;
 use crate::cli::CliArgs;
-use crate::exec::{ExecActionEvent, ExecStatusEvent};
+use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::{HubEvent, get_hub};
 use crate::tui::hub_event_handler::handle_hub_event;
 use crate::tui::in_reader::InReader;
-use crate::tui::support::{safer_println, send_to_executor};
+use crate::tui::support::safer_println;
 use crossterm::cursor::MoveUp;
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{Clear, ClearType};
 use tokio::sync::broadcast::Receiver;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::oneshot;
 
 /// Note: Right now the quick channel is a watch, but might be better to be a mpsc.
 #[derive(Debug)]
 pub struct TuiApp {
-	executor_tx: mpsc::Sender<ExecActionEvent>,
+	executor_sender: ExecutorSender,
 }
 
 /// Constructor
 impl TuiApp {
-	pub fn new(executor_tx: mpsc::Sender<ExecActionEvent>) -> Self {
-		Self { executor_tx }
+	pub fn new(executor_sender: ExecutorSender) -> Self {
+		Self { executor_sender }
 	}
 }
 
 /// Getters
 impl TuiApp {
-	fn executor_tx(&self) -> mpsc::Sender<ExecActionEvent> {
-		self.executor_tx.clone()
+	fn executor_sender(&self) -> ExecutorSender {
+		self.executor_sender.clone()
 	}
 }
 
@@ -82,7 +82,7 @@ impl TuiApp {
 			let (in_reader, in_rx) = InReader::new_and_rx();
 			in_reader.start();
 
-			let exec_tx = self.executor_tx();
+			let exec_sender = self.executor_sender();
 
 			tokio::spawn(async move {
 				let hub = get_hub();
@@ -92,7 +92,7 @@ impl TuiApp {
 						KeyCode::Char('r') => {
 							// clear_last_n_lines(1);
 							safer_println("\n-- R pressed - Redo\n", interactive);
-							send_to_executor(&exec_tx, ExecActionEvent::Redo).await;
+							exec_sender.send(ExecActionEvent::Redo).await;
 						}
 
 						// -- Quit
@@ -101,7 +101,7 @@ impl TuiApp {
 						// -- Open agent
 						KeyCode::Char('a') => {
 							// clear_last_n_lines(1);
-							send_to_executor(&exec_tx, ExecActionEvent::OpenAgent).await;
+							exec_sender.send(ExecActionEvent::OpenAgent).await;
 						}
 
 						// -- Ctrl c
@@ -122,7 +122,7 @@ impl TuiApp {
 	/// The hub events are typically to be displayed to the user one way or another
 	/// For now, we just print most of tose event content.
 	fn handle_hub_event(&self, interactive: bool) {
-		let exec_tx = self.executor_tx();
+		let exec_sender = self.executor_sender();
 
 		tokio::spawn(async move {
 			let mut rx = get_hub().subscriber();
@@ -131,7 +131,7 @@ impl TuiApp {
 				let evt_res = rx.recv().await;
 				match evt_res {
 					Ok(event) => {
-						if let Err(err) = handle_hub_event(event, &exec_tx, interactive).await {
+						if let Err(err) = handle_hub_event(event, &exec_sender, interactive).await {
 							println!("Tui ERROR while handling handle_hub_event. Cause {err}")
 						}
 					}
@@ -157,7 +157,7 @@ impl TuiApp {
 	///       so that it does not block the async caller.
 	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<oneshot::Receiver<()>> {
 		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
-		let executor_tx = self.executor_tx();
+		let executor_tx = self.executor_sender();
 
 		let (done_tx, done_rx) = oneshot::channel();
 		tokio::spawn(async move {
@@ -195,7 +195,7 @@ impl TuiApp {
 fn clear_last_n_lines(n: u16) {
 	let mut stdout = std::io::stdout();
 	// Move cursor up two lines.
-	execute!(stdout, MoveUp(n)).expect("Cannot MoveUp Cursort");
+	execute!(stdout, MoveUp(n)).expect("Cannot MoveUp Cursor");
 
 	// Clear the current line (two times to remove two lines).
 	for _ in 0..n {

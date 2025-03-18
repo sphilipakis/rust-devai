@@ -12,45 +12,25 @@ use derive_more::derive::From;
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender, channel};
 
-// region:    --- RedoCtx
-
-#[derive(From)]
-enum RedoCtx {
-	RunRedoCtx(Arc<RunRedoCtx>),
-}
-
-impl From<RunRedoCtx> for RedoCtx {
-	fn from(run_redo_ctx: RunRedoCtx) -> Self {
-		RedoCtx::RunRedoCtx(run_redo_ctx.into())
-	}
-}
-
-impl RedoCtx {
-	pub fn get_agent(&self) -> Option<&Agent> {
-		match self {
-			RedoCtx::RunRedoCtx(redo_ctx) => Some(redo_ctx.agent()),
-		}
-	}
-}
-
-// endregion: --- RedoCtx
-
 pub struct Executor {
 	/// The receiver that this executor will itreate on "start"
-	command_rx: Receiver<ExecActionEvent>,
+	action_rx: Receiver<ExecActionEvent>,
 	/// Sender that gets cloned for parts that want to send events
-	command_tx: Sender<ExecActionEvent>,
+	action_sender: ExecutorSender,
 
+	/// For now, the executor keep the last redoCtx state
+	/// Note: This might change to a stack, not sure yet.
+	///       For the current feature, this is enough.
 	current_redo_ctx: Option<RedoCtx>,
 }
 
 /// Contructor
 impl Executor {
 	pub fn new() -> Self {
-		let (_tx, rx) = channel(100);
+		let (tx, rx) = channel(100);
 		Executor {
-			command_rx: rx,
-			command_tx: _tx,
+			action_rx: rx,
+			action_sender: ExecutorSender::new(tx),
 			current_redo_ctx: None,
 		}
 	}
@@ -58,8 +38,8 @@ impl Executor {
 
 /// Getter
 impl Executor {
-	pub fn command_tx(&self) -> Sender<ExecActionEvent> {
-		self.command_tx.clone()
+	pub fn sender(&self) -> ExecutorSender {
+		self.action_sender.clone()
 	}
 
 	/// Return the latest agent file_path that was executed
@@ -74,7 +54,7 @@ impl Executor {
 		let hub = get_hub();
 
 		loop {
-			let Some(cmd) = self.command_rx.recv().await else {
+			let Some(cmd) = self.action_rx.recv().await else {
 				println!("!!!! Aipack Executor: Channel closed");
 				break;
 			};
@@ -149,3 +129,55 @@ impl Executor {
 		Ok(())
 	}
 }
+
+// region:    --- RedoCtx
+
+#[derive(From)]
+enum RedoCtx {
+	RunRedoCtx(Arc<RunRedoCtx>),
+}
+
+impl From<RunRedoCtx> for RedoCtx {
+	fn from(run_redo_ctx: RunRedoCtx) -> Self {
+		RedoCtx::RunRedoCtx(run_redo_ctx.into())
+	}
+}
+
+impl RedoCtx {
+	pub fn get_agent(&self) -> Option<&Agent> {
+		match self {
+			RedoCtx::RunRedoCtx(redo_ctx) => Some(redo_ctx.agent()),
+		}
+	}
+}
+
+// endregion: --- RedoCtx
+
+// region:    --- ExecutorSender
+
+/// The Executor Sender is a wrapper over `Sender<ExecActionEvent>` and some domain specific functions
+/// It is acquired from the `Executor` with `sender()` or from `Runtime` with `executor_sender()`
+#[derive(Debug, Clone)]
+pub struct ExecutorSender {
+	tx: Sender<ExecActionEvent>,
+}
+
+impl ExecutorSender {
+	/// Create a new executor sender
+	/// Note: This is private to this module as Runtime and others will clone ExecutorSender to get a new one
+	///       as they need to point to the same receiver
+	fn new(tx: Sender<ExecActionEvent>) -> Self {
+		ExecutorSender { tx }
+	}
+
+	pub async fn send(&self, event: ExecActionEvent) {
+		let event_name: &'static str = (&event).into();
+		if let Err(err) = self.tx.send(event).await {
+			get_hub()
+				.publish(Error::cc(format!("Fail to send action event {}", event_name), err))
+				.await;
+		};
+	}
+}
+
+// endregion: --- ExecutorSender
