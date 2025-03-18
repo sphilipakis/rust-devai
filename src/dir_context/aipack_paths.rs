@@ -240,7 +240,7 @@ mod tests {
 
 	use super::*;
 	use crate::_test_support::{SANDBOX_01_WKS_DIR, assert_ends_with};
-	use crate::run::Runtime;
+	use crate::runtime::Runtime;
 
 	#[test]
 	fn test_aipack_dir_simple() -> Result<()> {

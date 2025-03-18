@@ -9,7 +9,7 @@
 //! * `aip.rust.prune_to_declarations(code: string) -> string`
 
 use crate::Result;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::support::code::run_prune_to_declarations;
 use mlua::{Lua, Table, Value};
 

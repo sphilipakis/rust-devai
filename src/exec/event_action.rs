@@ -34,6 +34,7 @@ pub enum ExecActionEvent {
 	OpenAgent,
 
 	// -- Agent Commands
+	#[allow(unused)]
 	RunAgent(RunAgentParams),
 
 	// -- To be deprecated or redesigned

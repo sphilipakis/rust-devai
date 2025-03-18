@@ -12,7 +12,7 @@
 //! * `aip.semver.valid(version: string): boolean`
 
 use crate::Result;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use mlua::{Lua, Table, Value};
 use semver::Version;
 

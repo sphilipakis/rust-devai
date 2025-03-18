@@ -28,7 +28,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::assert_contains;
-	use crate::run::Runtime;
+	use crate::runtime::Runtime;
 	use crate::support::hbs::hbs_render;
 	use serde_json::json;
 

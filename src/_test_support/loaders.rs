@@ -1,7 +1,7 @@
 use crate::_test_support::default_agent_config_for_test;
 use crate::Result;
 use crate::agent::{Agent, AgentDoc, AgentRef, find_agent};
-use crate::run::Runtime;
+use crate::runtime::Runtime;
 
 /// Load a Agent form a content.
 /// - `path` is just to be used as a path for the agent. Not used to load the content.

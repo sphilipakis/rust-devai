@@ -24,7 +24,7 @@
 
 use crate::Result;
 use crate::dir_context::PathResolver;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use mlua::{Lua, MultiValue, Table};
 use mlua::{Value, Variadic};
 use simple_fs::SPath;

@@ -139,7 +139,7 @@ mod tests {
 
 	use super::*;
 	use crate::_test_support::assert_contains;
-	use crate::run::Runtime;
+	use crate::runtime::Runtime;
 	use crate::support::AsStrsExt;
 	use crate::support::paths::path_last_components;
 

@@ -14,6 +14,7 @@ pub struct RunAgentParams {
 	pub agent_options: Option<AgentOptions>,
 
 	/// The response oneshot with the AiResponse
+	#[allow(unused)]
 	pub response_shot: Option<oneshot::Sender<AiResponse>>,
 }
 

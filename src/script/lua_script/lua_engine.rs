@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::hub::{HubEvent, get_hub};
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::script::lua_script::helpers::{process_lua_eval_result, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
 
@@ -210,7 +210,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::run::Runtime;
+	use crate::runtime::Runtime;
 
 	/// Test if custom scope and global lua utils `math` work.
 	#[tokio::test]

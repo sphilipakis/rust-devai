@@ -24,7 +24,7 @@
 //! * `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
 
 use crate::Result;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::script::lua_script::DEFAULT_MARKERS;
 use crate::script::lua_script::helpers::to_vec_of_strings;
 use crate::support::Extrude;

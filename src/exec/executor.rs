@@ -136,6 +136,7 @@ impl Executor {
 				}
 
 				// -- Agent Commands
+				#[allow(unused)]
 				ExecActionEvent::RunAgent(run_agent_params) => {
 					//
 					todo!()

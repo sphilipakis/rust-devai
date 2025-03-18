@@ -1,8 +1,9 @@
 use crate::agent::find_agent;
 use crate::exec::RunAgentParams;
-use crate::run::{RunBaseOptions, Runtime, RuntimeContext, run_command_agent};
+use crate::run::{RunBaseOptions, run_command_agent};
+use crate::runtime::{Runtime, RuntimeContext};
 use crate::{Error, Result};
-use mlua::{FromLua, IntoLua, Lua, Table, Value};
+use mlua::{IntoLua, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime_context: &RuntimeContext) -> Result<Table> {
 	let table = lua.create_table()?;

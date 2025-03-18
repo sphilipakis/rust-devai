@@ -11,7 +11,7 @@
 //! * `aip.md.outer_block_content_or_raw(md_content: string) -> string`
 
 use crate::Result;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::support::md::{self};
 use crate::support::{Extrude, W};
 use crate::types::MdBlock;

@@ -12,7 +12,7 @@ use std::str::FromStr;
 ///
 /// Returns (base_path, globs)
 pub fn base_dir_and_globs(
-	ctx: &crate::run::RuntimeContext,
+	ctx: &crate::runtime::RuntimeContext,
 	include_globs: Value,
 	options: Option<&Value>,
 ) -> Result<(SPath, Vec<String>)> {
@@ -273,7 +273,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::assert_contains;
-	use crate::run::Runtime;
+	use crate::runtime::Runtime;
 	use crate::script::lua_script::aip_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
 

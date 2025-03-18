@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::dir_context::DirContext;
-use crate::run::{RuntimeContext, get_genai_client};
+use crate::run::get_genai_client;
+use crate::runtime::RuntimeContext;
 use crate::script::LuaEngine;
 use genai::Client;
 

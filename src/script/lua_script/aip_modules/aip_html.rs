@@ -9,7 +9,7 @@
 //! * `aip.html.prune_to_content(html_content: string) -> string`
 
 use crate::Result;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::support::html::prune_to_content;
 use mlua::{Lua, Table};
 

@@ -9,6 +9,7 @@ mod exec_cmd_run;
 mod params;
 mod support;
 
+#[allow(unused)]
 use exec_agent_run::*;
 use exec_cmd_install::*;
 use exec_cmd_list::*;

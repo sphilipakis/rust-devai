@@ -10,7 +10,7 @@
 //! * `aip.json.stringify(content: table) -> string`
 //! * `aip.json.stringify_to_line(content: table) -> string`
 
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::{Error, Result};
 use mlua::{Lua, LuaSerdeExt, Table, Value};
 

@@ -9,7 +9,7 @@
 //! * `aip.git.restore(path: string) -> string | table`
 
 use crate::hub::get_hub;
-use crate::run::RuntimeContext;
+use crate::runtime::RuntimeContext;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 
