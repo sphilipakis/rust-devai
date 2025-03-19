@@ -277,8 +277,8 @@ mod tests {
 	use crate::script::lua_script::aip_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
 
-	#[test]
-	fn test_lua_file_support_process_pack_references() -> Result<()> {
+	#[tokio::test]
+	async fn test_lua_file_support_process_pack_references() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let dir_context = runtime.dir_context();
@@ -300,8 +300,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_lua_file_support_process_path_reference() -> Result<()> {
+	#[tokio::test]
+	async fn test_lua_file_support_process_path_reference() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let dir_context = runtime.dir_context();

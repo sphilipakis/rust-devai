@@ -7,6 +7,7 @@ use crate::exec::support::open_vscode;
 use crate::exec::{ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo};
 use crate::hub::get_hub;
 use crate::init::{init_base, init_wks};
+use crate::runtime::Runtime;
 use crate::{Error, Result};
 use derive_more::derive::From;
 use std::sync::Arc;
@@ -84,7 +85,11 @@ impl Executor {
 
 				ExecActionEvent::CmdRun(run_args) => {
 					hub.publish(ExecStatusEvent::RunStart).await;
-					let redo = exec_run(run_args, init_wks(None, false).await?).await?;
+					let dir_ctx = init_wks(None, false).await?;
+					// NOTE: For now, we create the runtime here. But we need to think more about the Runtime / Executor relationship.
+					let exec_sender = self.sender();
+					let runtime = Runtime::new(dir_ctx, exec_sender)?;
+					let redo = exec_run(run_args, runtime).await?;
 					self.current_redo_ctx = Some(redo.into());
 					hub.publish(ExecStatusEvent::RunEnd).await;
 				}

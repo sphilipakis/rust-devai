@@ -132,8 +132,8 @@ mod tests {
 
 	// region:    --- find_agent
 
-	#[test]
-	fn test_agent_locator_find_agent_ns_with_ns_pack_repo_wks() -> Result<()> {
+	#[tokio::test]
+	async fn test_agent_locator_find_agent_ns_with_ns_pack_repo_wks() -> Result<()> {
 		// -- Setup & Fixtures
 		// agent name, file_path contains
 		let data = &[
@@ -177,8 +177,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_agent_locator_find_agent_ns_with_ns_pack_repo_base_custom() -> Result<()> {
+	#[tokio::test]
+	async fn test_agent_locator_find_agent_ns_with_ns_pack_repo_base_custom() -> Result<()> {
 		// -- Setup & Fixtures
 		// agent name, file_path contains
 		let data = &[
@@ -200,8 +200,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_agent_locator_find_agent_local_path() -> Result<()> {
+	#[tokio::test]
+	async fn test_agent_locator_find_agent_local_path() -> Result<()> {
 		// -- Setup & Fixtures
 		// agent name, file_path contains
 		let data = &[

@@ -65,8 +65,8 @@ mod tests {
 
 	use crate::_test_support::{eval_lua, setup_lua};
 
-	#[test]
-	fn test_code_comment_line_simple() -> Result<()> {
+	#[tokio::test]
+	async fn test_code_comment_line_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(super::init_module, "code")?;
 		// Define test cases as tuples: (language extension, comment content, expected result)

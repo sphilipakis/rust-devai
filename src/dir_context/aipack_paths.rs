@@ -242,8 +242,8 @@ mod tests {
 	use crate::_test_support::{SANDBOX_01_WKS_DIR, assert_ends_with};
 	use crate::runtime::Runtime;
 
-	#[test]
-	fn test_aipack_dir_simple() -> Result<()> {
+	#[tokio::test]
+	async fn test_aipack_dir_simple() -> Result<()> {
 		// -- Exec
 		let aipack_paths = AipackPaths::from_wks_dir(SANDBOX_01_WKS_DIR)?;
 
@@ -257,8 +257,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_get_pack_dirs() -> Result<()> {
+	#[tokio::test]
+	async fn test_get_pack_dirs() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let aipack_paths = runtime.dir_context().aipack_paths();

@@ -145,8 +145,8 @@ mod tests {
 
 	/// Note - In this tests, we do not use the PackDir::pretty() to not have to change those test if pretty changes.
 
-	#[test]
-	fn test_pack_dir_find_pack_dirs_all() -> Result<()> {
+	#[tokio::test]
+	async fn test_pack_dir_find_pack_dirs_all() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![
@@ -172,8 +172,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_pack_dir_find_pack_dirs_ns() -> Result<()> {
+	#[tokio::test]
+	async fn test_pack_dir_find_pack_dirs_ns() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![
@@ -196,8 +196,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_pack_dir_find_pack_dirs_pack_name() -> Result<()> {
+	#[tokio::test]
+	async fn test_pack_dir_find_pack_dirs_pack_name() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![

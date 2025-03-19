@@ -463,21 +463,21 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_lua_path_join_default() -> Result<()> {
-		common_test_lua_path_join_non_os_normalized("join")?;
+	#[tokio::test]
+	async fn test_lua_path_join_default() -> Result<()> {
+		common_test_lua_path_join_non_os_normalized("join").await?;
 		Ok(())
 	}
 
-	#[test]
-	fn test_lua_path_join_os_non_normalized() -> Result<()> {
-		common_test_lua_path_join_non_os_normalized("join_os_non_normalized")?;
+	#[tokio::test]
+	async fn test_lua_path_join_os_non_normalized() -> Result<()> {
+		common_test_lua_path_join_non_os_normalized("join_os_non_normalized").await?;
 		Ok(())
 	}
 
-	#[test]
-	fn test_lua_path_join_os_normalized_lua_engine() -> Result<()> {
-		common_test_lua_path_join_os_normalized_lua_engine("join_os_normalized")?;
+	#[tokio::test]
+	async fn test_lua_path_join_os_normalized_lua_engine() -> Result<()> {
+		common_test_lua_path_join_os_normalized_lua_engine("join_os_normalized").await?;
 		Ok(())
 	}
 
@@ -489,7 +489,7 @@ mod tests {
 
 	// region:    --- Tests Support
 
-	fn common_test_lua_path_join_non_os_normalized(join_fn_name: &str) -> Result<()> {
+	async fn common_test_lua_path_join_non_os_normalized(join_fn_name: &str) -> Result<()> {
 		let lua = setup_lua(super::init_module, "path")?;
 		use std::path::PathBuf;
 		let mut expected1 = PathBuf::new();
@@ -521,7 +521,7 @@ mod tests {
 		Ok(())
 	}
 
-	fn common_test_lua_path_join_os_normalized_lua_engine(join_fn_name: &str) -> Result<()> {
+	async fn common_test_lua_path_join_os_normalized_lua_engine(join_fn_name: &str) -> Result<()> {
 		let lua = setup_lua(super::init_module, "path")?;
 		let sep = MAIN_SEPARATOR;
 		let cases = vec![

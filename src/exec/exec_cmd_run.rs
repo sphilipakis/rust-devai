@@ -1,8 +1,7 @@
 use super::support::open_vscode;
 use crate::agent::{Agent, find_agent};
 use crate::cli::RunArgs;
-use crate::dir_context::DirContext;
-use crate::hub::{HubEvent, get_hub}; // Importing get_hub
+use crate::hub::{HubEvent, get_hub};
 use crate::run::RunCommandOptions;
 use crate::run::run_command_agent;
 use crate::runtime::Runtime;
@@ -41,13 +40,13 @@ impl RunRedoCtx {
 
 /// Exec for the Run command
 /// Might do a single run or a watch
-pub async fn exec_run(run_args: RunArgs, dir_context: DirContext) -> Result<Arc<RunRedoCtx>> {
+pub async fn exec_run(run_args: RunArgs, runtime: Runtime) -> Result<Arc<RunRedoCtx>> {
 	// NOTE - This is important to avoid hanging when performing a run that requires a .aipack initialization
 	// TODO - Might need to find a better place to put this, or change the way the initialization and run are orchestrated
 	tokio::task::yield_now().await;
 
 	// -- First exec
-	let redo_ctx: Arc<RunRedoCtx> = exec_run_first(run_args, dir_context).await?.into();
+	let redo_ctx: Arc<RunRedoCtx> = exec_run_first(run_args, runtime).await?.into();
 
 	// -- If watch, we start the watch (will be spawned and return immediately)
 	if redo_ctx.run_options.base_run_options().watch() {
@@ -57,12 +56,10 @@ pub async fn exec_run(run_args: RunArgs, dir_context: DirContext) -> Result<Arc<
 	Ok(redo_ctx)
 }
 
-pub async fn exec_run_first(run_args: RunArgs, dir_context: DirContext) -> Result<RunRedoCtx> {
+pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRedoCtx> {
 	let hub = get_hub();
 
 	let cmd_agent_name = &run_args.cmd_agent_name;
-
-	let runtime = Runtime::new(dir_context)?;
 
 	let agent = find_agent(cmd_agent_name, runtime.dir_context())?;
 

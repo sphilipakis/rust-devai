@@ -6,8 +6,8 @@ use std::fs;
 
 pub type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
-#[test]
-fn test_packer_impl_pack_simple() -> Result<()> {
+#[tokio::test]
+async fn test_packer_impl_pack_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
 	let dir_context = runtime.dir_context();

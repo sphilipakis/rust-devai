@@ -56,6 +56,9 @@ pub fn aip_agent_run(
 		.map(|opt| RunAgentParams::new(opt, lua, None))
 		.transpose()?
 		.unwrap_or_default();
+
+	// let exec_sender = runtime
+
 	// Normalize inputs to JsonValue format
 	let inputs = options.inputs;
 	let agent_options = options.agent_options;

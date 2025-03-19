@@ -79,8 +79,8 @@ mod tests {
 	use serde_json::Value;
 	use value_ext::JsonValueExt as _;
 
-	#[test]
-	fn test_script_lua_aip_flow_before_all_response_simple() -> Result<()> {
+	#[tokio::test]
+	async fn test_script_lua_aip_flow_before_all_response_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
@@ -99,8 +99,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_script_lua_aip_flow_skip_with_reason() -> Result<()> {
+	#[tokio::test]
+	async fn test_script_lua_aip_flow_skip_with_reason() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"
@@ -119,8 +119,8 @@ mod tests {
 		Ok(())
 	}
 
-	#[test]
-	fn test_script_lua_aip_flow_skip_without_reason() -> Result<()> {
+	#[tokio::test]
+	async fn test_script_lua_aip_flow_skip_without_reason() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_flow::init_module, "flow")?;
 		let script = r#"

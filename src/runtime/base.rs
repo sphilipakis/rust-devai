@@ -1,5 +1,6 @@
 use crate::Result;
 use crate::dir_context::DirContext;
+use crate::exec::ExecutorSender;
 use crate::run::get_genai_client;
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
@@ -19,11 +20,11 @@ pub struct Runtime {
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
-	pub fn new(dir_context: DirContext) -> Result<Self> {
+	pub fn new(dir_context: DirContext, exec_sender: ExecutorSender) -> Result<Self> {
 		// Note: Make the type explicit for clarity
 		let client = get_genai_client()?;
 
-		let inner = RuntimeInner::new(dir_context, client);
+		let inner = RuntimeInner::new(dir_context, client, exec_sender);
 
 		let runtime = Self { inner: Arc::new(inner) };
 
@@ -49,6 +50,10 @@ impl Runtime {
 	pub fn dir_context(&self) -> &DirContext {
 		self.inner.dir_context()
 	}
+
+	pub fn executor_sender(&self) -> ExecutorSender {
+		self.inner.executor_sender()
+	}
 }
 
 // region:    --- Tests Support
@@ -57,6 +62,8 @@ mod tests_support {
 	use super::*;
 	use crate::_test_support::{SANDBOX_01_BASE_AIPACK_DIR, SANDBOX_01_WKS_DIR, gen_test_dir_path};
 	use crate::dir_context::AipackPaths;
+	use crate::exec::Executor;
+	use crate::hub::{HubEvent, get_hub};
 	use simple_fs::{SPath, ensure_dir};
 
 	impl Runtime {
@@ -73,7 +80,7 @@ mod tests_support {
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 
-			Self::new(dir_context)
+			Self::new_test_runtime(dir_context)
 		}
 
 		/// This dir is relative to `./tests-data/.tmp`
@@ -96,7 +103,20 @@ mod tests_support {
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 
-			Self::new(dir_context)
+			Self::new_test_runtime(dir_context)
+		}
+
+		fn new_test_runtime(dir_context: DirContext) -> Result<Self> {
+			let mut executor = Executor::new();
+			let exec_sender = executor.sender();
+			tokio::spawn(async move {
+				if let Err(err) = executor.start().await {
+					let hub = get_hub();
+					hub.publish(HubEvent::Error { error: err.into() }).await;
+					hub.publish(HubEvent::Quit).await;
+				}
+			});
+			Self::new(dir_context, exec_sender)
 		}
 	}
 }

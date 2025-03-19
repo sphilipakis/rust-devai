@@ -134,6 +134,8 @@ fn parse_version(version: &str) -> Result<Version> {
 	Ok(version)
 }
 
+// region:    --- Tests
+
 #[cfg(test)]
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
@@ -296,3 +298,5 @@ mod tests {
 		Ok(())
 	}
 }
+
+// endregion: --- Tests
