@@ -39,7 +39,8 @@ pub fn get_genai_client() -> Result<genai::Client> {
 				}
 				#[cfg(not(target_os = "macos"))]
 				{
-					let msg = format!("Environment variable '{key_name}' make sure to set it for this terminal.");
+					let msg =
+						format!("Environment variable '{key_name}' missing. Make sure to set it for this terminal.");
 					Err(genai::resolver::Error::Custom(msg.to_string()))
 				}
 			}
