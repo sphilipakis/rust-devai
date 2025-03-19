@@ -25,7 +25,7 @@ use mlua::{IntoLua, Lua, Value};
 ///
 pub(super) fn file_load_md_sections(
 	lua: &Lua,
-	ctx: &Runtime,
+	runtime: &Runtime,
 	path: String,
 	headings: Option<Value>,
 ) -> mlua::Result<Value> {
@@ -37,7 +37,7 @@ pub(super) fn file_load_md_sections(
 		vec.iter().map(|s| s.as_str()).collect::<Vec<&str>>()
 	});
 
-	let path = ctx.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
+	let path = runtime.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
 
 	let sec_iter = MdSectionIter::from_path(path, headings.as_deref())?;
 	let sections = sec_iter.collect::<Vec<_>>();
@@ -46,8 +46,8 @@ pub(super) fn file_load_md_sections(
 	Ok(res)
 }
 
-pub(super) fn file_load_md_split_first(lua: &Lua, ctx: &Runtime, path: String) -> mlua::Result<Value> {
-	let path = ctx.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
+pub(super) fn file_load_md_split_first(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
+	let path = runtime.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
 
 	let mut sec_iter = MdSectionIter::from_path(path, None)?;
 	let split_first = sec_iter.split_first();

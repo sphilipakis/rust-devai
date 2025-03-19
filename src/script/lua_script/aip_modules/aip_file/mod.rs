@@ -18,55 +18,55 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	// -- load
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_load_fn =
-		lua.create_function(move |lua, (path, options): (String, Option<Value>)| file_load(lua, &ctx, path, options))?;
+		lua.create_function(move |lua, (path, options): (String, Option<Value>)| file_load(lua, &rt, path, options))?;
 
 	// -- save
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_save_fn =
-		lua.create_function(move |lua, (path, content): (String, String)| file_save(lua, &ctx, path, content))?;
+		lua.create_function(move |lua, (path, content): (String, String)| file_save(lua, &rt, path, content))?;
 
 	// -- append
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_append_fn =
-		lua.create_function(move |lua, (path, content): (String, String)| file_append(lua, &ctx, path, content))?;
+		lua.create_function(move |lua, (path, content): (String, String)| file_append(lua, &rt, path, content))?;
 
 	// -- ensure_exists
 	// (md_content, lang_name): (String, Option<String>)
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_ensure_exists_fn = lua.create_function(
 		move |lua, (path, content, options): (String, Option<String>, Option<EnsureExistsOptions>)| {
-			file_ensure_exists(lua, &ctx, path, content, options)
+			file_ensure_exists(lua, &rt, path, content, options)
 		},
 	)?;
 
 	// -- list
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_list_fn =
-		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_list(lua, &ctx, globs, options))?;
+		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_list(lua, &rt, globs, options))?;
 
 	// -- list_load
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_list_load_fn = lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| {
-		file_list_load(lua, &ctx, globs, options)
+		file_list_load(lua, &rt, globs, options)
 	})?;
 
 	// -- first
-	let ctx = runtime.clone();
-	let file_first_fn = lua
-		.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_first(lua, &ctx, globs, options))?;
+	let rt = runtime.clone();
+	let file_first_fn =
+		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_first(lua, &rt, globs, options))?;
 
 	// -- load_md_sections
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_load_md_sections_fn = lua.create_function(move |lua, (path, headings): (String, Option<Value>)| {
-		file_load_md_sections(lua, &ctx, path, headings)
+		file_load_md_sections(lua, &rt, path, headings)
 	})?;
 
 	// -- load_md_split_first
-	let ctx = runtime.clone();
+	let rt = runtime.clone();
 	let file_load_md_split_first_fn =
-		lua.create_function(move |lua, (path,): (String,)| file_load_md_split_first(lua, &ctx, path))?;
+		lua.create_function(move |lua, (path,): (String,)| file_load_md_split_first(lua, &rt, path))?;
 
 	// -- All all function to the module
 	table.set("load", file_load_fn)?;

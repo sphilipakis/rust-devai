@@ -38,16 +38,16 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_split_fn = lua.create_function(path_split)?;
 
 	// -- exists
-	let ctx = runtime.clone();
-	let path_exists_fn = lua.create_function(move |_lua, path: String| path_exists(&ctx, path))?;
+	let rt = runtime.clone();
+	let path_exists_fn = lua.create_function(move |_lua, path: String| path_exists(&rt, path))?;
 
 	// -- is_file
-	let ctx = runtime.clone();
-	let path_is_file_fn = lua.create_function(move |_lua, path: String| path_is_file(&ctx, path))?;
+	let rt = runtime.clone();
+	let path_is_file_fn = lua.create_function(move |_lua, path: String| path_is_file(&rt, path))?;
 
 	// -- is_dir
-	let ctx = runtime.clone();
-	let path_is_dir_fn = lua.create_function(move |_lua, path: String| path_is_dir(&ctx, path))?;
+	let rt = runtime.clone();
+	let path_is_dir_fn = lua.create_function(move |_lua, path: String| path_is_dir(&rt, path))?;
 
 	// -- diff
 	let path_diff_fn =
@@ -101,8 +101,8 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 /// ```
 ///
 /// Checks if the specified path exists.
-fn path_exists(ctx: &Runtime, path: String) -> mlua::Result<bool> {
-	let path = ctx.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
+fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
+	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.exists())
 }
 
@@ -112,8 +112,8 @@ fn path_exists(ctx: &Runtime, path: String) -> mlua::Result<bool> {
 /// ```
 ///
 /// Checks if the specified path is a file.
-fn path_is_file(ctx: &Runtime, path: String) -> mlua::Result<bool> {
-	let path = ctx.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
+fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
+	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_file())
 }
 
@@ -138,8 +138,8 @@ fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 /// ```
 ///
 /// Checks if the specified path is a directory.
-fn path_is_dir(ctx: &Runtime, path: String) -> mlua::Result<bool> {
-	let path = ctx.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
+fn path_is_dir(runtime: &Runtime, path: String) -> mlua::Result<bool> {
+	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_dir())
 }
 

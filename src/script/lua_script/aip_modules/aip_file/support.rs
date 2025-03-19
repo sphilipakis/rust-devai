@@ -12,15 +12,15 @@ use std::str::FromStr;
 ///
 /// Returns (base_path, globs)
 pub fn base_dir_and_globs(
-	ctx: &crate::runtime::Runtime,
+	runtime: &crate::runtime::Runtime,
 	include_globs: Value,
 	options: Option<&Value>,
 ) -> Result<(SPath, Vec<String>)> {
 	let globs: Vec<String> = to_vec_of_strings(include_globs, "file::file_list globs argument")?;
-	let base_dir = compute_base_dir(ctx.dir_context(), options)?;
+	let base_dir = compute_base_dir(runtime.dir_context(), options)?;
 
 	// Process any pack references in the globs
-	let processed_globs = process_pack_references(ctx.dir_context(), globs)?;
+	let processed_globs = process_pack_references(runtime.dir_context(), globs)?;
 
 	Ok((base_dir, processed_globs))
 }
