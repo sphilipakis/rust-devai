@@ -37,7 +37,7 @@ pub struct Executor {
 	/// Note: This might change to a stack, not sure yet.
 	///       For the current feature, this is enough.
 	current_redo_ctx: Arc<Mutex<Option<RedoCtx>>>,
-    
+
 	/// Tracks the number of active execution actions
 	/// Used to send StartExec and EndExec events only when needed
 	active_actions: Arc<AtomicUsize>,
@@ -74,15 +74,21 @@ impl Executor {
 	}
 
 	async fn set_current_redo_ctx(&self, redo_ctx: RedoCtx) {
-		*self.current_redo_ctx.lock().await = Some(redo_ctx);
+		let mut guard = self.current_redo_ctx.lock().await;
+		*guard = Some(redo_ctx);
 	}
-    
+
+	async fn take_current_redo_ctx(&self) -> Option<RedoCtx> {
+		let mut guard = self.current_redo_ctx.lock().await;
+		guard.take()
+	}
+
 	/// Increment active actions counter and return if this is the first action
 	fn increment_actions(&self) -> bool {
 		let prev_count = self.active_actions.fetch_add(1, Ordering::SeqCst);
 		prev_count == 0
 	}
-    
+
 	/// Decrement active actions counter and return if this was the last action
 	fn decrement_actions(&self) -> bool {
 		let prev_count = self.active_actions.fetch_sub(1, Ordering::SeqCst);
@@ -120,7 +126,7 @@ impl Executor {
 
 	async fn perform_action(&self, action: ExecActionEvent) -> Result<()> {
 		let hub = get_hub();
-        
+
 		// Only send StartExec if this is the first action
 		let is_first_action = self.increment_actions();
 		if is_first_action {
@@ -161,12 +167,13 @@ impl Executor {
 
 			// -- Interactive Events
 			ExecActionEvent::Redo => {
-				if let Some(redo_ctx) = self.current_redo_ctx.lock().await.as_ref() {
+				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
 					match redo_ctx {
 						RedoCtx::RunRedoCtx(redo_ctx) => {
+							let redo_ctx = exec_run_redo(&redo_ctx).await;
 							// if sucessul, we recapture the redo_ctx to have the latest agent.
-							if let Some(redo_ctx) = exec_run_redo(redo_ctx).await {
+							if let Some(redo_ctx) = redo_ctx {
 								self.set_current_redo_ctx(redo_ctx.into()).await;
 							}
 						}
@@ -174,7 +181,6 @@ impl Executor {
 				} else {
 					hub.publish(Error::custom("No redo available to be performed")).await;
 				}
-
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
@@ -192,7 +198,7 @@ impl Executor {
 				}
 			}
 		}
-        
+
 		// Only send EndExec if this is the last action
 		let is_last_action = self.decrement_actions();
 		if is_last_action {
