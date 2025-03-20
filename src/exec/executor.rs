@@ -14,6 +14,7 @@ use derive_more::derive::From;
 use flume::{Receiver, Sender};
 use simple_fs::SPath;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::Mutex;
 
 /// The executor executes all actions of the system.
@@ -36,6 +37,10 @@ pub struct Executor {
 	/// Note: This might change to a stack, not sure yet.
 	///       For the current feature, this is enough.
 	current_redo_ctx: Arc<Mutex<Option<RedoCtx>>>,
+    
+	/// Tracks the number of active execution actions
+	/// Used to send StartExec and EndExec events only when needed
+	active_actions: Arc<AtomicUsize>,
 }
 
 /// Contructor
@@ -46,6 +51,7 @@ impl Executor {
 			action_rx: rx,
 			action_sender: ExecutorSender::new(tx),
 			current_redo_ctx: Default::default(),
+			active_actions: Arc::new(AtomicUsize::new(0)),
 		}
 	}
 }
@@ -69,6 +75,18 @@ impl Executor {
 
 	async fn set_current_redo_ctx(&self, redo_ctx: RedoCtx) {
 		*self.current_redo_ctx.lock().await = Some(redo_ctx);
+	}
+    
+	/// Increment active actions counter and return if this is the first action
+	fn increment_actions(&self) -> bool {
+		let prev_count = self.active_actions.fetch_add(1, Ordering::SeqCst);
+		prev_count == 0
+	}
+    
+	/// Decrement active actions counter and return if this was the last action
+	fn decrement_actions(&self) -> bool {
+		let prev_count = self.active_actions.fetch_sub(1, Ordering::SeqCst);
+		prev_count == 1
 	}
 }
 
@@ -102,8 +120,12 @@ impl Executor {
 
 	async fn perform_action(&self, action: ExecActionEvent) -> Result<()> {
 		let hub = get_hub();
-
-		hub.publish(ExecStatusEvent::StartExec).await;
+        
+		// Only send StartExec if this is the first action
+		let is_first_action = self.increment_actions();
+		if is_first_action {
+			hub.publish(ExecStatusEvent::StartExec).await;
+		}
 
 		match action {
 			// -- Cli Action Events
@@ -170,8 +192,12 @@ impl Executor {
 				}
 			}
 		}
-
-		hub.publish(ExecStatusEvent::EndExec).await;
+        
+		// Only send EndExec if this is the last action
+		let is_last_action = self.decrement_actions();
+		if is_last_action {
+			hub.publish(ExecStatusEvent::EndExec).await;
+		}
 
 		Ok(())
 	}
