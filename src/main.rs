@@ -38,10 +38,11 @@ async fn main() -> Result<()> {
 	let args = CliArgs::parse(); // Will fail early, but that’s okay.
 
 	// -- Start executor
-	let mut executor = Executor::new();
+	let executor = Executor::new();
 	let exec_sender = executor.sender();
 	// TODO: Probably want to move the spawn inside executor.start
 	tokio::spawn(async move {
+		// NOTE: This will consume the excecutor (make sure to get exec_sender before start)
 		if let Err(err) = executor.start().await {
 			let hub = get_hub();
 			hub.publish(HubEvent::Error { error: err.into() }).await;

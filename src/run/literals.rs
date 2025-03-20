@@ -2,7 +2,6 @@ use crate::Result;
 use crate::agent::{Agent, AgentRef};
 use crate::dir_context::DirContext;
 use crate::script::LuaEngine;
-use simple_fs::SPath;
 use std::sync::Arc;
 
 /// TODO: Will need to put the Vec in Arc, since this clone what a bit
@@ -21,8 +20,6 @@ impl Literals {
 		let mut store = Vec::new();
 
 		let agent_path = dir_context.current_dir().join(agent.file_path());
-		// Add back the './' prefix to follow convention of being relative to workspace_dir
-		let agent_path = SPath::new(format!("./{agent_path}"));
 
 		let agent_dir = agent_path
 			.parent()

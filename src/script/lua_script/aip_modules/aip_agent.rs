@@ -1,8 +1,8 @@
-use crate::agent::find_agent;
+use crate::Result;
 use crate::exec::RunAgentParams;
-use crate::run::{RunBaseOptions, run_command_agent};
+use crate::run::RunAgentResponse;
 use crate::runtime::Runtime;
-use crate::{Error, Result};
+use crate::support::event::oneshot;
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -52,44 +52,32 @@ pub fn aip_agent_run(
 ) -> mlua::Result<Value> {
 	// -- parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
 	//TODO: Needs to give a resposne_oneshot below
-	let options = run_options
-		.map(|opt| RunAgentParams::new(opt, lua, None))
-		.transpose()?
-		.unwrap_or_default();
-
-	// let exec_sender = runtime
-
-	// Normalize inputs to JsonValue format
-	let inputs = options.inputs;
-	let agent_options = options.agent_options;
-
-	// -- Find agent and build run base options
-	// NOTE: For now, do not pass through the caller baseOptions.
-	// TODO: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
-
-	// Find and build the agent
-	let agent = find_agent(&agent_name, runtime.dir_context())
-		.map_err(|e| Error::custom(format!("Failed to find agent '{}': {}", agent_name, e)))?;
-
-	// -- If we had a agent options, need to overrid the agent options.
-	let agent = match agent_options {
-		Some(agent_options) => agent.new_merge(agent_options)?,
-		None => agent,
+	let (tx, rx) = oneshot::<RunAgentResponse>();
+	let run_agent_params = match run_options {
+		Some(run_options) => {
+			RunAgentParams::new_from_lua_params(runtime.clone(), agent_name, Some(tx), run_options, lua)?
+		}
+		None => RunAgentParams::new_no_inputs(runtime.clone(), agent_name, Some(tx)),
 	};
 
-	// -- Build the environment
-	let run_base_options = RunBaseOptions::default();
+	let exec_sender = runtime.executor_sender();
+	// Important to spawn off the send to make sure we do not have deadlock since we are in a sync.
+	tokio::task::block_in_place(|| {
+		let rt = tokio::runtime::Handle::try_current();
+		match rt {
+			Ok(rt) => rt.block_on(async {
+				exec_sender.send(run_agent_params.into()).await;
+			}),
 
-	// TODO: Change that to call the runtime executor_sender().send.. ExecutorActionEvent::AgentRun...
-	// Execute the tokio runtime blocking to run the command agent
-	let result = tokio::task::block_in_place(|| {
-		tokio::runtime::Handle::current()
-			.block_on(async { run_command_agent(runtime, agent, inputs, &run_base_options, true).await })
-	})
-	.map_err(|e| Error::custom(format!("Failed to run agent '{}': {}", agent_name, e)))?;
+			// NOTE: Here per design, we do not return error or break, as it is just for logging
+			Err(err) => println!("AIPACK INTERNAL ERROR - no current tokio handle - {err}"),
+		}
+	});
+
+	let run_agent_response = rx.recv()?;
 
 	// Process the result
-	let run_command_response = result.into_lua(lua)?;
+	let run_command_response = run_agent_response.into_lua(lua)?;
 
 	Ok(run_command_response)
 }

@@ -3,6 +3,7 @@
 
 use crate::agent::Agent;
 use crate::exec::event_action::ExecActionEvent;
+use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::support::open_vscode;
 use crate::exec::{ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo};
 use crate::hub::get_hub;
@@ -10,9 +11,21 @@ use crate::init::{init_base, init_wks};
 use crate::runtime::Runtime;
 use crate::{Error, Result};
 use derive_more::derive::From;
+use flume::{Receiver, Sender};
+use simple_fs::SPath;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender, channel};
+use tokio::sync::Mutex;
 
+/// The executor executes all actions of the system.
+/// There are three types of action sources:
+/// - CLI command     - The original command line that performs the first job, e.g., `aip run my-agent`
+/// - CLI interactive - When the user interacts with the CLI, e.g., pressing `r` for redo
+/// - Agent logic     - When the agent calls some agent action, e.g., `aip.agent.run("my-agent")`
+///
+/// Other parts of the system can get the `ExecutorSender` and clone it to communicate with the executor.
+///
+/// The executor is designed to execute multiple actions at the same time. It keeps some states (currently just the RedoCtx)
+/// so that commands like "Redo" can be performed.
 pub struct Executor {
 	/// The receiver that this executor will itreate on "start"
 	action_rx: Receiver<ExecActionEvent>,
@@ -22,114 +35,143 @@ pub struct Executor {
 	/// For now, the executor keep the last redoCtx state
 	/// Note: This might change to a stack, not sure yet.
 	///       For the current feature, this is enough.
-	current_redo_ctx: Option<RedoCtx>,
+	current_redo_ctx: Arc<Mutex<Option<RedoCtx>>>,
 }
 
 /// Contructor
 impl Executor {
 	pub fn new() -> Self {
-		let (tx, rx) = channel(100);
+		let (tx, rx) = flume::unbounded();
 		Executor {
 			action_rx: rx,
 			action_sender: ExecutorSender::new(tx),
-			current_redo_ctx: None,
+			current_redo_ctx: Default::default(),
 		}
 	}
 }
 
-/// Getter
+/// Getter & Setters
 impl Executor {
 	pub fn sender(&self) -> ExecutorSender {
 		self.action_sender.clone()
 	}
 
 	/// Return the latest agent file_path that was executed
-	fn get_agent_file_path(&self) -> Option<&str> {
-		Some(self.current_redo_ctx.as_ref()?.get_agent()?.file_path())
+	async fn get_agent_file_path(&self) -> Option<SPath> {
+		let redo_ctx = self.current_redo_ctx.lock().await;
+		let path = redo_ctx
+			.as_ref()
+			.and_then(|r| r.get_agent())
+			.map(|a| a.file_path())
+			.map(SPath::new);
+		path
+	}
+
+	async fn set_current_redo_ctx(&self, redo_ctx: RedoCtx) {
+		*self.current_redo_ctx.lock().await = Some(redo_ctx);
 	}
 }
 
 /// Runner
 impl Executor {
-	pub async fn start(&mut self) -> Result<()> {
-		let hub = get_hub();
+	pub async fn start(self) -> Result<()> {
+		let executor = Arc::new(self);
 
 		loop {
-			let Some(cmd) = self.action_rx.recv().await else {
+			let Ok(action) = executor.action_rx.recv_async().await else {
 				println!("!!!! Aipack Executor: Channel closed");
 				break;
 			};
 
-			hub.publish(ExecStatusEvent::StartExec).await;
+			let xt = executor.clone();
 
-			match cmd {
-				// -- Cli Action Events
-				ExecActionEvent::CmdInit(init_args) => {
-					init_wks(init_args.path.as_deref(), true).await?;
-					init_base(false).await?;
+			let action_str = action.as_str();
+			// Spawn a new async task for each action
+
+			tokio::spawn(async move {
+				if let Err(err) = xt.perform_action(action).await {
+					get_hub()
+						.publish(format!("Fail to perform action '{action_str}'. Cause: {err}"))
+						.await;
 				}
-				ExecActionEvent::CmdInitBase => {
-					init_base(true).await?;
-				}
-				// TODO: need to rethink this action
-				ExecActionEvent::CmdNewAgent(new_args) => {
-					exec_new(new_args, init_wks(None, false).await?).await?;
-				}
-				ExecActionEvent::CmdList(list_args) => exec_list(init_wks(None, false).await?, list_args).await?,
+			});
+		}
 
-				ExecActionEvent::CmdPack(pack_args) => exec_pack(&pack_args).await?,
+		Ok(())
+	}
 
-				ExecActionEvent::CmdInstall(install_args) => {
-					exec_install(init_wks(None, false).await?, install_args).await?
-				}
+	async fn perform_action(&self, action: ExecActionEvent) -> Result<()> {
+		let hub = get_hub();
 
-				ExecActionEvent::CmdRun(run_args) => {
-					hub.publish(ExecStatusEvent::RunStart).await;
-					let dir_ctx = init_wks(None, false).await?;
-					// NOTE: For now, we create the runtime here. But we need to think more about the Runtime / Executor relationship.
-					let exec_sender = self.sender();
-					let runtime = Runtime::new(dir_ctx, exec_sender)?;
-					let redo = exec_run(run_args, runtime).await?;
-					self.current_redo_ctx = Some(redo.into());
-					hub.publish(ExecStatusEvent::RunEnd).await;
-				}
+		hub.publish(ExecStatusEvent::StartExec).await;
 
-				// -- Interactive Events
-				ExecActionEvent::Redo => {
-					let Some(redo_ctx) = self.current_redo_ctx.as_ref() else {
-						hub.publish(Error::custom("No redo available to be performed")).await;
-						continue;
-					};
+		match action {
+			// -- Cli Action Events
+			ExecActionEvent::CmdInit(init_args) => {
+				init_wks(init_args.path.as_deref(), true).await?;
+				init_base(false).await?;
+			}
+			ExecActionEvent::CmdInitBase => {
+				init_base(true).await?;
+			}
+			// TODO: need to rethink this action
+			ExecActionEvent::CmdNewAgent(new_args) => {
+				exec_new(new_args, init_wks(None, false).await?).await?;
+			}
+			ExecActionEvent::CmdList(list_args) => exec_list(init_wks(None, false).await?, list_args).await?,
 
+			ExecActionEvent::CmdPack(pack_args) => exec_pack(&pack_args).await?,
+
+			ExecActionEvent::CmdInstall(install_args) => {
+				exec_install(init_wks(None, false).await?, install_args).await?
+			}
+
+			ExecActionEvent::CmdRun(run_args) => {
+				hub.publish(ExecStatusEvent::RunStart).await;
+				let dir_ctx = init_wks(None, false).await?;
+				// NOTE: For now, we create the runtime here. But we need to think more about the Runtime / Executor relationship.
+				let exec_sender = self.sender();
+				let runtime = Runtime::new(dir_ctx, exec_sender)?;
+				let redo = exec_run(run_args, runtime).await?;
+				self.set_current_redo_ctx(redo.into()).await;
+				hub.publish(ExecStatusEvent::RunEnd).await;
+			}
+
+			// -- Interactive Events
+			ExecActionEvent::Redo => {
+				if let Some(redo_ctx) = self.current_redo_ctx.lock().await.as_ref() {
 					hub.publish(ExecStatusEvent::RunStart).await;
 					match redo_ctx {
 						RedoCtx::RunRedoCtx(redo_ctx) => {
 							// if sucessul, we recapture the redo_ctx to have the latest agent.
 							if let Some(redo_ctx) = exec_run_redo(redo_ctx).await {
-								self.current_redo_ctx = Some(redo_ctx.into())
+								self.set_current_redo_ctx(redo_ctx.into()).await;
 							}
 						}
 					}
-					hub.publish(ExecStatusEvent::RunEnd).await;
+				} else {
+					hub.publish(Error::custom("No redo available to be performed")).await;
 				}
 
-				ExecActionEvent::OpenAgent => {
-					//
-					if let Some(agent_file_path) = self.get_agent_file_path() {
-						open_vscode(agent_file_path).await
-					}
-				}
+				hub.publish(ExecStatusEvent::RunEnd).await;
+			}
 
-				// -- Agent Commands
-				#[allow(unused)]
-				ExecActionEvent::RunAgent(run_agent_params) => {
-					//
-					todo!()
+			ExecActionEvent::OpenAgent => {
+				//
+				if let Some(agent_file_path) = self.get_agent_file_path().await {
+					open_vscode(agent_file_path).await
 				}
 			}
 
-			hub.publish(ExecStatusEvent::EndExec).await;
+			// -- Agent Commands
+			ExecActionEvent::RunAgent(run_agent_params) => {
+				if let Err(err) = exec_run_agent(run_agent_params).await {
+					hub.publish(Error::cc("Fail to run agent", err)).await;
+				}
+			}
 		}
+
+		hub.publish(ExecStatusEvent::EndExec).await;
 
 		Ok(())
 	}
@@ -176,10 +218,10 @@ impl ExecutorSender {
 	}
 
 	pub async fn send(&self, event: ExecActionEvent) {
-		let event_name: &'static str = (&event).into();
-		if let Err(err) = self.tx.send(event).await {
+		let event_str: &'static str = (&event).into();
+		if let Err(err) = self.tx.send_async(event).await {
 			get_hub()
-				.publish(Error::cc(format!("Fail to send action event {}", event_name), err))
+				.publish(Error::cc(format!("Fail to send action event {}", event_str), err))
 				.await;
 		};
 	}

@@ -22,7 +22,7 @@ pub async fn run_command_agent(
 	inputs: Option<Vec<Value>>,
 	run_base_options: &RunBaseOptions,
 	return_output_values: bool,
-) -> Result<RunCommandResponse> {
+) -> Result<RunAgentResponse> {
 	let hub = get_hub();
 	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
 
@@ -62,7 +62,7 @@ pub async fn run_command_agent(
 				let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
 				hub.publish(format!("-! Aipack Skip inputs at Before All section{reason_msg}"))
 					.await;
-				return Ok(RunCommandResponse::default());
+				return Ok(RunAgentResponse::default());
 			}
 
 			// it is before_all_response, so, we eventually override the inputs
@@ -263,7 +263,7 @@ pub async fn run_command_agent(
 
 	hub.publish(format!("\n======= COMPLETED: {}", agent.name())).await;
 
-	Ok(RunCommandResponse { after_all, outputs })
+	Ok(RunAgentResponse { after_all, outputs })
 }
 
 /// Run the command agent input for the run_command_agent_inputs
@@ -306,12 +306,12 @@ async fn run_command_agent_input(
 /// TODO: Need to check why `outputs` is optional.
 ///       We might want to have an array of Null if no output or nil was returned (to keep in sync with inputs).
 #[derive(Debug, Serialize, Default)]
-pub struct RunCommandResponse {
+pub struct RunAgentResponse {
 	pub outputs: Option<Vec<Value>>,
 	pub after_all: Option<Value>,
 }
 
-impl IntoLua for RunCommandResponse {
+impl IntoLua for RunAgentResponse {
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
 		let outputs = self.outputs.map(|v| serde_values_to_lua_values(lua, v)).transpose()?;

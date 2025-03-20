@@ -4,6 +4,7 @@
 
 use crate::cli::{InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs};
 use crate::exec::RunAgentParams;
+use derive_more::From;
 
 /// Executor Action Event that needs to be performed
 ///
@@ -15,7 +16,7 @@ use crate::exec::RunAgentParams;
 /// - The agent commands (when Lua is asking to execute an agent agent)
 ///
 /// NOTE: This is not the `ExecStateEvent` which is sent to the hub.
-#[derive(Debug, strum::IntoStaticStr)]
+#[derive(Debug, strum::IntoStaticStr, From)]
 pub enum ExecActionEvent {
 	// -- CLI Commands
 	/// This will init the workspace with `.aipack/`
@@ -34,11 +35,18 @@ pub enum ExecActionEvent {
 	OpenAgent,
 
 	// -- Agent Commands
-	#[allow(unused)]
+	#[from]
 	RunAgent(RunAgentParams),
 
 	// -- To be deprecated or redesigned
 	/// Eventually will get deprecated
 	#[allow(unused)]
 	CmdNewAgent(NewArgs),
+}
+
+impl ExecActionEvent {
+	pub fn as_str(&self) -> &'static str {
+		// thanks to strum::IntoStaticStr
+		self.into()
+	}
 }

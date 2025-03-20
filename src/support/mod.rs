@@ -12,6 +12,7 @@ pub use str_ext::*;
 
 pub mod code;
 pub mod cred;
+pub mod event;
 pub mod files;
 pub mod hbs;
 pub mod html;

@@ -96,6 +96,9 @@ pub enum Error {
 
 	// -- Externals auto froms
 	#[from]
+	FlumeRecv(flume::RecvError),
+	FlumeSend(String),
+	#[from]
 	Serde(serde_json::Error),
 	#[from]
 	Toml(toml::de::Error),

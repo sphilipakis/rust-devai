@@ -11,7 +11,7 @@ use std::sync::Arc;
 /// This type is made to be cloned when passed to different part of the system.
 ///
 /// Note: Should not create new Runtimes except for test. Just clone the one available.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Runtime {
 	inner: Arc<RuntimeInner>,
 }
@@ -107,7 +107,7 @@ mod tests_support {
 		}
 
 		fn new_test_runtime(dir_context: DirContext) -> Result<Self> {
-			let mut executor = Executor::new();
+			let executor = Executor::new();
 			let exec_sender = executor.sender();
 			tokio::spawn(async move {
 				if let Err(err) = executor.start().await {

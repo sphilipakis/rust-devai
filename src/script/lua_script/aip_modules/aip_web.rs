@@ -255,7 +255,7 @@ return aip.web.get(url)
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
-local url = "https://httpbin.org/post"
+local url = "https://postman-echo.com/post"
 return aip.web.post(url, {some = "stuff"})
 		"#;
 

@@ -2,7 +2,7 @@ use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
 use genai::Client;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RuntimeInner {
 	dir_context: DirContext,
 	genai_client: Client,
