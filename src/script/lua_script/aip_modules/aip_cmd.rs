@@ -3,10 +3,12 @@
 //! ---
 //!
 //! ## Lua documentation
+//!
 //! The `cmd` module exposes functions to execute system commands.
 //!
 //! ### Functions
-//! * `aip.cmd.exec(cmd_name: string, args?: string | table) -> {stdout: string, stderr: string, exit: number}`
+//!
+//! - `aip.cmd.exec(cmd_name: string, args?: string | list): {stdout: string, stderr: string, exit: number}`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -30,13 +32,14 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.cmd.exec(cmd_name: string, args?: string | table) -> CmdResponse
+/// aip.cmd.exec(cmd_name: string, args?: string | list): CmdResponse
 /// ```
 ///
 /// The command will be executed using the system shell. Arguments can be provided as a single string
 /// or a table of strings.
 ///
 /// ### Example
+///
 /// ```lua
 /// -- Single string argument
 /// local result = aip.cmd.exec("echo", "hello world")
@@ -45,26 +48,26 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// local result = aip.cmd.exec("ls", {"-l", "-a"})
 /// ```
 ///
-/// ### Returns (CmdResponse)
+/// ### Return (CmdResponse)
 ///
 /// Returns when the command executes successfully (exit code 0).
 ///
-/// ```lua
+/// ```ts
 /// {
-///   stdout = string,  -- Standard output from the command
-///   stderr = string,  -- Standard error from the command
-///   exit   = number   -- Exit code (0 for success)
+///   stdout: string,  // Standard output from the command
+///   stderr: string,  // Standard error from the command
+///   exit:   number   // Exit code (0 for success)
 /// }
 /// ```
 ///
 /// ### Error
 ///
-/// ```lua
+/// ```ts
 /// {
-///   stdout = string | nil,  -- Standard output if available
-///   stderr = string | nil,  -- Standard error if available
-///   exit   = number | nil,  -- Exit code if available
-///   error  = string        -- Error message from command execution
+///   stdout: string | nil,  // Standard output if available
+///   stderr: string | nil,  // Standard error if available
+///   exit:   number | nil,  // Exit code if available
+///   error : string         // Error message from command execution
 /// }
 /// ```
 fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Result<Value> {
