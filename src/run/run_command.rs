@@ -24,7 +24,6 @@ pub async fn run_command_agent(
 	return_output_values: bool,
 ) -> Result<RunAgentResponse> {
 	let hub = get_hub();
-	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
 
 	let literals = Literals::from_dir_context_and_agent_path(runtime.dir_context(), &agent)?;
 
@@ -147,6 +146,9 @@ pub async fn run_command_agent(
 	// -- Run the inputs
 	let mut join_set = JoinSet::new();
 	let mut in_progress = 0;
+
+	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
+
 	for (input_idx, input) in inputs.clone().into_iter().enumerate() {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();

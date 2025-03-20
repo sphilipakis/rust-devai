@@ -55,7 +55,6 @@ impl RunAgentInputResponse {
 ///
 /// Note 1: For now, this will create a new Lua engine.
 ///         This is likely to stay as it creates a strong segregation between input execution
-#[allow(clippy::too_many_arguments)]
 pub async fn run_agent_input(
 	runtime: &Runtime,
 	agent: &Agent,
