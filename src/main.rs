@@ -26,7 +26,6 @@ use crate::hub::{HubEvent, get_hub};
 use crate::tui::TuiApp;
 use clap::{Parser, crate_version};
 use error::{Error, Result};
-use std::time::Duration;
 
 pub static VERSION: &str = crate_version!();
 
@@ -60,8 +59,8 @@ async fn main() -> Result<()> {
 	// Note: This will allow the hub message to drain.
 	//       This is a short-term trick before we get the whole TUI app.
 	// Note: Might have a more reliable way.
-	tokio::time::sleep(Duration::from_millis(100)).await;
-	println!("\n     ---- Until next time, happy coding! ----");
+	// tokio::time::sleep(Duration::from_millis(100)).await;
+	println!("\n---- Until next time, happy coding! ----");
 
 	Ok(())
 }

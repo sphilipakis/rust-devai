@@ -11,7 +11,6 @@ use simple_fs::{SPath, read_to_string};
 
 pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
 	let partial_agent_ref = PartialAgentRef::new(name);
-	println!("->> FIND AGENT {name}");
 
 	let base_options = load_and_merge_configs_agent_options(dir_context)?;
 
