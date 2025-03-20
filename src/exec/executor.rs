@@ -170,11 +170,14 @@ impl Executor {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
 					match redo_ctx {
-						RedoCtx::RunRedoCtx(redo_ctx) => {
-							let redo_ctx = exec_run_redo(&redo_ctx).await;
-							// if sucessul, we recapture the redo_ctx to have the latest agent.
-							if let Some(redo_ctx) = redo_ctx {
+						RedoCtx::RunRedoCtx(redo_ctx_orig) => {
+							// if sucessull, we recapture the redo_ctx to have the latest agent.
+							if let Some(redo_ctx) = exec_run_redo(&redo_ctx_orig).await {
 								self.set_current_redo_ctx(redo_ctx.into()).await;
+							}
+							// if fail, we set the old one to make sure it can be retried
+							else {
+								self.set_current_redo_ctx(redo_ctx_orig.into()).await;
 							}
 						}
 					}
