@@ -1,15 +1,17 @@
-//! Defines the `semver` module, used in the lua engine
+//! Defines the `semver` module, used in the lua engine.
 //!
 //! ---
 //!
 //! ## Lua documentation
+//!
 //! This module exposes functions for semantic versioning operations.
 //!
 //! ### Functions
-//! * `aip.semver.compare(version1: string, operator: string, version2: string): boolean`
-//! * `aip.semver.parse(version: string): table`
-//! * `aip.semver.is_prerelease(version: string): boolean`
-//! * `aip.semver.valid(version: string): boolean`
+//!
+//! - `aip.semver.compare(version1: string, operator: string, version2: string): boolean`
+//! - `aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil}`
+//! - `aip.semver.is_prerelease(version: string): boolean`
+//! - `aip.semver.valid(version: string): boolean`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -28,28 +30,43 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.semver.compare(version1: string, operator: string, version2: string) -> boolean
-/// ```
 ///
 /// Compares two version strings using the specified operator.
-/// Valid operators: "<", "<=", "=", "==", ">=", ">", "!=", "~=".
 ///
-/// Special rules for comparing versions:
+/// ```lua
+/// -- API Signature
+/// aip.semver.compare(version1: string, operator: string, version2: string): boolean
+/// ```
+///
+/// ### Arguments
+///
+/// - `version1: string`: The first version string.
+/// - `operator: string`: The comparison operator ("<", "<=", "=", "==", ">=", ">", "!=", "~=").
+/// - `version2: string`: The second version string.
+///
+/// ### Special Rules
+///
 /// - If versions have different major/minor/patch but either has prerelease/build,
 ///   only the major/minor/patch is compared (ignoring prerelease/build).
 /// - If both versions have the same major/minor/patch, prerelease versions are
 ///   considered less than non-prerelease versions.
 ///
-/// Returns true if the comparison is true, false otherwise.
+/// ### Returns
 ///
-/// Examples:
+/// `boolean`: `true` if the comparison is true, `false` otherwise.
+///
+/// ### Example
+///
 /// ```lua
 /// aip.semver.compare("1.2.3", ">", "1.2.0") -- true
 /// aip.semver.compare("1.2.3", "<", "1.3.0") -- true
 /// aip.semver.compare("0.6.7-WIP", "<", "0.6.8") -- true
 /// aip.semver.compare("0.6.7-WIP", "!=", "0.6.7") -- true
 /// ```
+///
+/// ### Error
+///
+/// Returns an error if the operator is invalid or if the versions are invalid.
 fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String)) -> mlua::Result<bool> {
 	let v1 =
 		parse_version(&version1).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version1, e)))?;
@@ -71,17 +88,31 @@ fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String))
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.semver.parse(version: string) -> table
-/// ```
 ///
 /// Parses a version string into its components.
+///
+/// ```lua
+/// -- API Signature
+/// aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil}
+/// ```
+///
+/// ### Arguments
+///
+/// - `version: string`: The version string to parse.
+///
+/// ### Returns
+///
 /// Returns a table with the following fields:
-/// - major: number
-/// - minor: number
-/// - patch: number
-/// - prerelease: string or nil
-/// - build: string or nil
+///
+/// - `major: number`: The major version number.
+/// - `minor: number`: The minor version number.
+/// - `patch: number`: The patch version number.
+/// - `prerelease: string | nil`: The prerelease string, or `nil` if not present.
+/// - `build: string | nil`: The build string, or `nil` if not present.
+///
+/// ### Error
+///
+/// Returns an error if the version string is invalid.
 fn parse(_lua: &Lua, version: String) -> mlua::Result<Table> {
 	let v =
 		parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version, e)))?;
@@ -107,11 +138,25 @@ fn parse(_lua: &Lua, version: String) -> mlua::Result<Table> {
 }
 
 /// ## Lua Documentation
+///
+/// Returns `true` if the version is a prerelease (has a prerelease component).
+///
 /// ```lua
-/// aip.semver.is_prerelease(version: string) -> boolean
+/// -- API Signature
+/// aip.semver.is_prerelease(version: string): boolean
 /// ```
 ///
-/// Returns true if the version is a prerelease (has a prerelease component).
+/// ### Arguments
+///
+/// - `version: string`: The version string to check.
+///
+/// ### Returns
+///
+/// `boolean`: `true` if the version is a prerelease, `false` otherwise.
+///
+/// ### Error
+///
+/// Returns an error if the version string is invalid.
 fn is_prerelease(_lua: &Lua, version: String) -> mlua::Result<bool> {
 	let v =
 		parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version, e)))?;
@@ -120,11 +165,21 @@ fn is_prerelease(_lua: &Lua, version: String) -> mlua::Result<bool> {
 }
 
 /// ## Lua Documentation
+///
+/// Returns `true` if the version string is a valid semantic version.
+///
 /// ```lua
-/// aip.semver.valid(version: string) -> boolean
+/// -- API Signature
+/// aip.semver.valid(version: string): boolean
 /// ```
 ///
-/// Returns true if the version string is a valid semantic version.
+/// ### Arguments
+///
+/// - `version: string`: The version string to check.
+///
+/// ### Returns
+///
+/// `boolean`: `true` if the version string is valid, `false` otherwise.
 fn valid(_lua: &Lua, version: String) -> mlua::Result<bool> {
 	Ok(parse_version(&version).is_ok())
 }

@@ -6,7 +6,8 @@
 //! The `rust` module exposes functions used to process Rust code.
 //!
 //! ### Functions
-//! * `aip.rust.prune_to_declarations(code: string) -> string`
+//!
+//! - `aip.rust.prune_to_declarations(code: string) -> string`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -24,18 +25,40 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 }
 
 /// ## Lua Documentation
+///
+/// Prunes Rust code to retain only function declarations.
+///
 /// ```lua
-/// aip.rust.prune_to_declarations(code: string) -> string
+/// -- API Signature
+/// aip.rust.prune_to_declarations(code: string): string
 /// ```
 ///
-/// Trims Rust code to keep only function declarations by replacing function bodies with `{ ... }`.
-/// Preserves comments, whitespace, and non-function code structures.
+/// Replaces function bodies with `{ ... }`, preserving comments, whitespace, and non-function code structures.
 ///
-/// Example:
+/// ### Arguments
+///
+/// - `code: string`: The Rust code to prune.
+///
+/// ### Example
+///
 /// ```lua
 /// local code = "fn add(a: i32, b: i32) -> i32 { a + b }"
 /// local result = aip.rust.prune_to_declarations(code)
 /// -- result will be: "fn add(a: i32, b: i32) -> i32 { ... }"
+/// ```
+///
+/// ### Returns
+///
+/// `string`: The pruned Rust code.
+///
+/// ### Error
+///
+/// Returns an error if the pruning process fails.
+///
+/// ```ts
+/// {
+///   error : string         // Error message from rust code
+/// }
 /// ```
 fn prune_to_declarations(lua: &Lua, code: String) -> mlua::Result<Value> {
 	match run_prune_to_declarations(&code) {

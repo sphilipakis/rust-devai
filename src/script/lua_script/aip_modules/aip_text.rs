@@ -1,27 +1,29 @@
-//! Defines the `text` module, used in the lua engine
+//! Defines the `text` module, used in the lua engine.
 //!
 //! ---
 //!
 //! ## Lua documentation
+//!
 //! This module exposes functions that process text.
 //!
 //! ### Functions
-//! * `aip.text.escape_decode(content: string): string`
-//! * `aip.text.escape_decode_if_needed(content: string): string`
-//! * `aip.text.split_first(content: string, sep: string): (string, string|nil)`
-//! * `aip.text.remove_first_line(content: string): string`
-//! * `aip.text.remove_first_lines(content: string, n: int): string`
-//! * `aip.text.remove_last_line(content: string): string`
-//! * `aip.text.remove_last_lines(content: string, n: int): string`
-//! * `aip.text.trim(content: string): string`
-//! * `aip.text.trim_start(content: string): string`
-//! * `aip.text.trim_end(content: string): string`
-//! * `aip.text.truncate(content: string, max_len: int): string`
-//! * `aip.text.truncate(content: string, max_len: int, ellipsis: string): string`
-//! * `aip.text.replace_markers(content: string, new_sections: array): string`
-//! * `aip.text.ensure(content: string, opt: table): string`
-//! * `aip.text.ensure_single_ending_newline(content: string): string`
-//! * `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
+//!
+//! - `aip.text.escape_decode(content: string): string`
+//! - `aip.text.escape_decode_if_needed(content: string): string`
+//! - `aip.text.split_first(content: string, sep: string): (string, string|nil)`
+//! - `aip.text.remove_first_line(content: string): string`
+//! - `aip.text.remove_first_lines(content: string, n: int): string`
+//! - `aip.text.remove_last_line(content: string): string`
+//! - `aip.text.remove_last_lines(content: string, n: int): string`
+//! - `aip.text.trim(content: string): string`
+//! - `aip.text.trim_start(content: string): string`
+//! - `aip.text.trim_end(content: string): string`
+//! - `aip.text.truncate(content: string, max_len: int): string`
+//! - `aip.text.truncate(content: string, max_len: int, ellipsis: string): string`
+//! - `aip.text.replace_markers(content: string, new_sections: array): string`
+//! - `aip.text.ensure(content: string, opt: table): string`
+//! - `aip.text.ensure_single_ending_newline(content: string): string`
+//! - `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -93,13 +95,24 @@ impl FromLua for EnsureOptions {
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.text.ensure(content: string, {prefix? = string, suffix? = string}) -- string
-/// ```
 ///
 /// Ensure the content start and/or end with the text given in the second argument dictionary.
 ///
+/// ```lua
+/// -- API Signature
+/// aip.text.ensure(content: string, {prefix? = string, suffix? = string}): string
+/// ```
+///
 /// This function is useful for code normalization.
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to ensure.
+/// - `options: table`: A table with optional `prefix` and `suffix` keys.
+///
+/// ### Returns
+///
+/// The ensured string.
 fn ensure(_lua: &Lua, (content, inst): (String, Value)) -> mlua::Result<String> {
 	let inst = EnsureOptions::from_lua(inst, _lua)?;
 	let res = crate::support::text::ensure(&content, inst);
@@ -108,14 +121,24 @@ fn ensure(_lua: &Lua, (content, inst): (String, Value)) -> mlua::Result<String> 
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// text.ensure_single_ending_newline(content: string) -> string
-/// ```
 ///
 /// Ensures that `content` ends with a single newline character.
 /// If `content` is empty, it returns a newline character.
 ///
+/// ```lua
+/// -- API Signature
+/// aip.text.ensure_single_ending_newline(content: string): string
+/// ```
+///
 /// This function is useful for code normalization.
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+///
+/// ### Returns
+///
+/// The string with a single ending newline.
 fn ensure_single_ending_newline(_lua: &Lua, content: String) -> mlua::Result<String> {
 	Ok(crate::support::text::ensure_single_ending_newline(content))
 }
@@ -125,12 +148,23 @@ fn ensure_single_ending_newline(_lua: &Lua, content: String) -> mlua::Result<Str
 // region:    --- Transform
 
 /// ## Lua Documentation
-/// ```lua
-/// text.replace_markers(content: string, new_sections: array) -> string
-/// ```
 ///
 /// Replaces markers in `content` with corresponding sections from `new_sections`.
 /// Each section in `new_sections` can be a string or a map containing a `.content` string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.replace_markers(content: string, new_sections: array): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content containing markers to replace.
+/// - `new_sections: array`: An array of strings to replace the markers.
+///
+/// ### Returns
+///
+/// The string with markers replaced by the corresponding sections.
 fn replace_markers_with_default_parkers(_lua: &Lua, (content, new_sections): (String, Value)) -> mlua::Result<String> {
 	let sections = to_vec_of_strings(new_sections, "new_sections")?;
 	let sections: Vec<&str> = sections.iter().map(|s| s.as_str()).collect();
@@ -139,15 +173,27 @@ fn replace_markers_with_default_parkers(_lua: &Lua, (content, new_sections): (St
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// text.truncate(content: string, max_len: int, ellipsis?: string) -> string
-/// ```
 ///
 /// Returns `content` truncated to a maximum length of `max_len`.
 /// If the content exceeds `max_len`, it appends the optional `ellipsis` string to indicate truncation.
 /// If `ellipsis` is not provided, no additional characters are added after truncation.
 ///
+/// ```lua
+/// -- API Signature
+/// aip.text.truncate(content: string, max_len: int, ellipsis?: string): string
+/// ```
+///
 /// This function is useful for limiting the length of text output while preserving meaningful context.
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to truncate.
+/// - `max_len: int`: The maximum length of the truncated string.
+/// - `ellipsis: string` (optional): The string to append if truncation occurs.
+///
+/// ### Returns
+///
+/// The truncated string.
 fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<String>)) -> mlua::Result<String> {
 	let ellipsis = ellipsis.unwrap_or_default();
 	match truncate_with_ellipsis(&content, max_len, &ellipsis) {
@@ -160,7 +206,15 @@ fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<Str
 
 // region:    --- Split
 
-/// ## Luas Documentaiton
+/// ## Lua Documentation
+///
+/// Splits a string into two parts based on the first occurrence of a separator.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.split_first(content: string, sep: string): (string, string|nil)
+/// ```
+///
 /// ```lua
 /// local content = "some first content\n===\nsecond content"
 /// local first, second = aip.text.split_first(content,"===")
@@ -169,7 +223,17 @@ fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<Str
 /// -- NOTE: When no match, second is nil.
 /// --       If match, but nothing after, second is ""
 /// ```
+///
 /// NOTE: For optimization, this will use LuaString to avoid converting Lua String to Rust String and back
+///
+/// ### Arguments
+///
+/// - `content: string`: The string to split.
+/// - `sep: string`: The separator string.
+///
+/// ### Returns
+///
+/// A tuple containing the first part and the second part (or nil if no match).
 fn split_first(_lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Result<MultiValue> {
 	// Convert LuaStrings to Rust strings
 	let content_str = content.to_str()?;
@@ -196,6 +260,22 @@ fn split_first(_lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Resu
 
 // region:    --- Trim
 
+/// ## Lua Documentation
+///
+/// Trims leading and trailing whitespace from a string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.trim(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The string to trim.
+///
+/// ### Returns
+///
+/// The trimmed string.
 fn trim(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
 	let trimmed = original_str.trim();
@@ -206,9 +286,25 @@ fn trim(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	}
 }
 
-fn trim_end(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
+/// ## Lua Documentation
+///
+/// Trims leading whitespace from a string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.trim_start(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The string to trim.
+///
+/// ### Returns
+///
+/// The trimmed string.
+fn trim_start(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
-	let trimmed = original_str.trim_end();
+	let trimmed = original_str.trim_start();
 	if trimmed.len() == original_str.len() {
 		Ok(Value::String(content))
 	} else {
@@ -216,9 +312,25 @@ fn trim_end(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	}
 }
 
-fn trim_start(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
+/// ## Lua Documentation
+///
+/// Trims trailing whitespace from a string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.trim_end(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The string to trim.
+///
+/// ### Returns
+///
+/// The trimmed string.
+fn trim_end(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 	let original_str = content.to_str()?;
-	let trimmed = original_str.trim_start();
+	let trimmed = original_str.trim_end();
 	if trimmed.len() == original_str.len() {
 		Ok(Value::String(content))
 	} else {
@@ -230,22 +342,43 @@ fn trim_start(_lua: &Lua, content: LuaString) -> mlua::Result<Value> {
 
 // region:    --- Remove
 
-///  ## Lua Documentation
-/// ```lua
-/// text.remove_first_line(content: string) -> string
-/// ```
+/// ## Lua Documentation
 ///
 /// Returns `content` with the first line removed.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.remove_first_line(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+///
+/// ### Returns
+///
+/// The string with the first line removed.
 fn remove_first_line(_lua: &Lua, content: String) -> mlua::Result<String> {
 	Ok(remove_first_lines_impl(&content, 1).to_string())
 }
 
-///  ## Lua Documentation
-/// ```lua
-/// text.remove_first_lines(content: string, n: int) -> string
-/// ```
+/// ## Lua Documentation
 ///
 /// Returns `content` with the first `n` lines removed.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.remove_first_lines(content: string, n: int): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+/// - `n: int`: The number of lines to remove.
+///
+/// ### Returns
+///
+/// The string with the first `n` lines removed.
 fn remove_first_lines(_lua: &Lua, (content, num_of_lines): (String, i64)) -> mlua::Result<String> {
 	Ok(remove_first_lines_impl(&content, num_of_lines as usize).to_string())
 }
@@ -271,22 +404,43 @@ fn remove_first_lines_impl(content: &str, num_of_lines: usize) -> &str {
 	&content[start_idx..]
 }
 
-///  ## Lua Documentation
-/// ```lua
-/// text.remove_last_line(content: string) -> string
-/// ```
+/// ## Lua Documentation
 ///
 /// Returns `content` with the last line removed.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.remove_last_line(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+///
+/// ### Returns
+///
+/// The string with the last line removed.
 fn remove_last_line(_lua: &Lua, content: String) -> mlua::Result<String> {
 	Ok(remove_last_lines_impl(&content, 1).to_string())
 }
 
-///  ## Lua Documentation
-/// ```lua
-/// text.remove_last_lines(content: string, n: int) -> string
-/// ```
+/// ## Lua Documentation
 ///
 /// Returns `content` with the last `n` lines removed.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.remove_last_lines(content: string, n: int): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+/// - `n: int`: The number of lines to remove.
+///
+/// ### Returns
+///
+/// The string with the last `n` lines removed.
 fn remove_last_lines(_lua: &Lua, (content, num_of_lines): (String, i64)) -> mlua::Result<String> {
 	Ok(remove_last_lines_impl(&content, num_of_lines as usize).to_string())
 }
@@ -317,16 +471,26 @@ fn remove_last_lines_impl(content: &str, num_of_lines: usize) -> &str {
 // region:    --- Escape Fns
 
 /// ## Lua Documentation
-/// ```lua
-/// text.escape_decode_if_needed(content: string) -> string
-/// ```
 ///
 /// Only escape if needed. Right now, the test only tests `&lt;`.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.escape_decode_if_needed(content: string): string
+/// ```
 ///
 /// Some LLMs HTML-encode their responses. This function returns `content`
 /// after selectively decoding certain HTML tags.
 ///
 /// Right now, the only tag that gets decoded is `&lt;`.
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+///
+/// ### Returns
+///
+/// The HTML-decoded string.
 fn escape_decode_if_needed(_lua: &Lua, content: String) -> mlua::Result<String> {
 	if !content.contains("&lt;") {
 		Ok(content)
@@ -336,12 +500,22 @@ fn escape_decode_if_needed(_lua: &Lua, content: String) -> mlua::Result<String> 
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// text.escape_decode(content: string) -> string
-/// ```
 ///
 /// Some LLMs HTML-encode their responses. This function returns `content`,
 /// HTML-decoded.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.escape_decode(content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to process.
+///
+/// ### Returns
+///
+/// The HTML-decoded string.
 fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 	Ok(decode_html_entities(&content))
 }
@@ -351,17 +525,33 @@ fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 // region: --- Extract Line Blocks
 
 /// ## Lua Documentation
-/// ```lua
-/// local blocks, extruded = aip.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = number })
-/// ```
 ///
 /// Extracts line blocks from `content` using the given options. The options table
 /// must include a required `starts_with` field.
+///
+/// ```lua
+/// -- API Signature
+/// local blocks, extruded = aip.text.extract_line_blocks(content, { starts_with = ">", extrude = "content", first = number })
+/// ```
 ///
 /// Optionally, you can provide a `first` field as a number, which limits the number
 /// of blocks returned by performing that many `next()` iterations. If `extrude` is set to "content",
 /// the remaining lines (after extracting the specified number of blocks) are captured via `collect_remains`.
 /// If the `extrude` option is not set, the extruded content is returned as `nil`.
+///
+/// ### Arguments
+///
+/// - `content: string`: The content to extract line blocks from.
+/// - `options: table`: A table with the following keys:
+///   - `starts_with: string` (required): The prefix that indicates the start of a line block.
+///   - `extrude: "content"` (optional): If set to `"content"`, the remaining content after extracting the blocks is returned.
+///   - `first: number` (optional): Limits the number of blocks returned.
+///
+/// ### Returns
+///
+/// A tuple containing:
+///   - `blocks: table`: A table containing the extracted line blocks.
+///   - `extruded: string | nil`: The remaining content after extracting the blocks, if `extrude` is set to `"content"`. Otherwise, `nil`.
 fn extract_line_blocks(_lua: &Lua, (content, options): (String, Table)) -> mlua::Result<MultiValue> {
 	let starts_with: Option<String> = options.get("starts_with")?;
 	let Some(starts_with) = starts_with else {

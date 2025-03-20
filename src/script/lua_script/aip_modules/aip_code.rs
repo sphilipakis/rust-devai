@@ -1,19 +1,14 @@
 //! Defines the `code` module, used in the lua engine.
 //!
-//! ### Lua Documentation
-//! This module exposes functions that process code formatting.
+//! ---
 //!
-//! #### Functions
-//! * `aip.code.comment_line(lang_ext: string, comment_content: string) -> string`
-//!    - Creates a single line comment in the appropriate style based on the language extension.
-//!    - Supported extensions:
-//!       - "lua", "sql": uses `-- ...`
-//!       - "html": uses `<!-- ... -->`
-//!       - "css", "pcss": uses `/* ... */`
-//!       - "py": uses `# ...`
-//!       - Fallback: uses `// ...`
+//! ## Lua documentation
 //!
-//! The returned string does not include a trailing newline.
+//! The `code` module exposes functions that process code formatting.
+//!
+//! ### Functions
+//!
+//! - `aip.code.comment_line(lang_ext: string, comment_content: string): string`
 
 use crate::Result;
 use mlua::{Lua, Table};
@@ -26,23 +21,32 @@ pub fn init_module(lua: &Lua, _runtime: &crate::runtime::Runtime) -> Result<Tabl
 	Ok(table)
 }
 
+/// ## Lua Documentation
+///
 /// Creates a comment line based on the language extension and the given comment content.
 ///
-/// # Arguments
-///
-/// * `lang_ext` - A string slice representing the file extension or language identifier (e.g., "rs", "lua", "py").
-/// * `comment_content` - The content that should be commented.
-///
-/// # Returns
-///
-/// A string representing the commented line without a trailing newline.
-///
-/// # Examples
-///
-/// For example, in Lua:
 /// ```lua
-/// local comment = aip.code.comment_line("rs", "This is a rust comment")
-/// -- comment will be: "// This is a rust comment"
+/// -- API Signature
+/// aip.code.comment_line(lang_ext: string, comment_content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `lang_ext: string`: A string representing the file extension or language identifier (e.g., "rs", "lua", "py").
+/// - `comment_content: string`: The content that should be commented.
+///
+/// ### Returns
+///
+/// Returns a string representing the commented line without a trailing newline.
+///
+/// ```ts
+/// string  // A string representing the commented line without a trailing newline.
+/// ```
+///
+/// ### Error
+///
+/// ```ts
+/// string // Error message if any error occurs during string formatting.
 /// ```
 fn comment_line(_lua: &Lua, (lang_ext, comment_content): (String, String)) -> mlua::Result<String> {
 	// Normalize the language extension by trimming and converting to lowercase.

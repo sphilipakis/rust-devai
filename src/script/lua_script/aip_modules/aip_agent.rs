@@ -1,3 +1,15 @@
+//! Defines the `aip_agent` module, used in the lua engine.
+//!
+//! ---
+//!
+//! ## Lua documentation
+//!
+//! The `aip_agent` module exposes functions to run other agents from within a Lua script.
+//!
+//! ### Functions
+//!
+//! - `aip.agent.run(agent_name: string, options?: table): any`
+
 use crate::Result;
 use crate::exec::RunAgentParams;
 use crate::run::RunAgentResponse;
@@ -20,13 +32,27 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Run another agent and get its response
+/// Runs another agent and returns its response.
 ///
 /// ```lua
-/// -- Run an agent with a single input
+/// -- API Signature
+/// aip.agent.run(agent_name: string, options?: table): any
+/// ```
+///
+/// ### Arguments
+///
+/// - `agent_name: string`: The name of the agent to run.
+/// - `options?: table`: An optional table containing input data and agent options.
+///   - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
+///   - `options?: table`: Agent-specific options.
+///
+/// #### Input Examples:
+///
+/// ```lua
+/// -- Run an agent with a single string input
 /// local response = aip.agent.run("agent-name", { inputs = "hello" })
 ///
-/// -- Run an agent with multiple inputs
+/// -- Run an agent with multiple string inputs
 /// local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
 ///
 /// -- Run an agent with structured inputs
@@ -40,10 +66,14 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ### Returns
 ///
-/// Returns the result of the agent execution, which will depend on the agent's output.
-/// If the agent produces an AI response, it will return the AI response object.
-/// If the agent has an output script, it will return the output from that script.
+/// The result of the agent execution. The type of the returned value depends on the agent's output:
 ///
+/// - If the agent produces an AI response, it returns the AI response object.
+/// - If the agent has an output script, it returns the output from that script.
+///
+/// ### Error
+///
+/// Returns an error if the agent fails to run or if there are issues with the input parameters.
 pub fn aip_agent_run(
 	lua: &Lua,
 	runtime: &Runtime,

@@ -1,3 +1,16 @@
+//! Defines the `file_md` module, used in the lua engine.
+//!
+//! ---
+//!
+//! ## Lua documentation
+//!
+//! The `file_md` module exposes functions to load and parse markdown files.
+//!
+//! ### Functions
+//!
+//! - `aip.file.load_md_sections(path: string, headings?: string | list): list`
+//! - `aip.file.load_md_split_first(path: string): {before: string, first: {content: string, heading: {content: string, level: number, name: string}}, after: string}`
+
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::lua_script::helpers::to_vec_of_strings;
@@ -6,23 +19,44 @@ use mlua::{IntoLua, Lua, Value};
 
 /// ## Lua Documentation
 ///
-/// Return the first FileMeta or Nil
+/// Load markdown sections from a file, optionally filtering by headings.
 ///
 /// ```lua
-/// let all_summary_section = aip.file.list("doc/readme.md", "# Summary");
+/// -- API Signature
+/// aip.file.load_md_sections(path: string, headings?: string | list): list
 /// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: Path to the markdown file.
+/// - `headings?: string | list`: Optional string or list of strings representing the headings to filter by.
 ///
 /// ### Returns
 ///
-/// ```lua
+/// ```ts
 /// -- Array/Table of MdSection
 /// {
-///   content = "Content of the section",
-///   -- heading is optional
-///   heading = {content = "# Summary", level = 1, name = "Summary"},
+///   content: string,    // Content of the section
+///   heading?: {         // Heading information (optional)
+///     content: string,  // Heading content
+///     level: number,    // Heading level (e.g., 1 for #, 2 for ##)
+///     name: string      // Heading name
+///   }
 /// }
 /// ```
 ///
+/// ### Example
+///
+/// ```lua
+/// -- Load all sections from a file
+/// local all_sections = aip.file.load_md_sections("doc/readme.md")
+///
+/// -- Load only sections with the heading "# Summary"
+/// local summary_section = aip.file.load_md_sections("doc/readme.md", "# Summary")
+///
+/// -- Load sections with multiple headings
+/// local sections = aip.file.load_md_sections("doc/readme.md", {"# Summary", "## Details"})
+/// ```
 pub(super) fn file_load_md_sections(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -46,6 +80,44 @@ pub(super) fn file_load_md_sections(
 	Ok(res)
 }
 
+/// ## Lua Documentation
+///
+/// Splits a markdown file into three parts: content before the first heading, the first heading and its content, and the rest of the file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.load_md_split_first(path: string): {before: string, first: {content: string, heading: {content: string, level: number, name: string}}, after: string}
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: Path to the markdown file.
+///
+/// ### Returns
+///
+/// ```ts
+/// {
+///   before: string,       // Content before the first heading
+///   first: {              // Information about the first section
+///     content: string,    // Content of the first section
+///     heading: {          // Heading of the first section
+///       content: string,  // Heading content
+///       level: number,    // Heading level (e.g., 1 for #, 2 for ##)
+///       name: string      // Heading name
+///     }
+///   },
+///   after: string         // Content after the first section
+/// }
+/// ```
+///
+/// ### Example
+///
+/// ```lua
+/// local split = aip.file.load_md_split_first("doc/readme.md")
+/// print(split.before)        -- Content before the first heading
+/// print(split.first.content) -- Content of the first section
+/// print(split.after)         -- Content after the first section
+/// ```
 pub(super) fn file_load_md_split_first(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
 	let path = runtime.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
 

@@ -3,10 +3,13 @@
 //! ---
 //!
 //! ## Lua documentation
-//! This module exposes functions that process text.
+//!
+//! The `web` module exposes functions to make HTTP requests.
 //!
 //! ### Functions
-//! * `aip.web.get(url: string) -> string`
+//!
+//! - `aip.web.get(url: string): WebResponse`
+//! - `aip.web.post(url: string, data: string | table): WebResponse`
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
@@ -30,23 +33,43 @@ pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
+/// Makes an HTTP GET request to the specified URL.
+///
 /// ```lua
-/// local web_response = aip.web.get("https://google.com")
+/// -- API Signature
+/// aip.web.get(url: string): WebResponse
 /// ```
 ///
-/// For Success, the WebResponse is
-/// ```lua
+/// ### Arguments
+///
+/// - `url: string`: The URL to make the GET request to.
+///
+/// ### Returns (WebResponse)
+///
+/// Returns a table containing the response information.
+///
+/// ```ts
 /// {
-///  success = bool,
-///  status = number,
-///  url = string,
-///  content = string,
+///   success: boolean, // Indicates if the request was successful (status code 2xx)
+///   status: number,   // The HTTP status code of the response
+///   url: string,      // The URL that was requested
+///   content: string    // The content of the response as a string
 /// }
 /// ```
 ///
-/// Note will not throw error if status is not 2xx,
-/// but will throw error if the web request cannot be made.
+/// If the response content type is `application/json`, the `content` field will be a Lua table.
 ///
+/// ### Example
+///
+/// ```lua
+/// local response = aip.web.get("https://google.com")
+/// print(response.status) -- 200
+/// print(response.content) -- HTML content of Google's homepage
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the web request cannot be made (e.g., invalid URL, network error).  Does not throw an error for non-2xx status codes. Check the `success` field in the `WebResponse`.
 fn web_get(lua: &Lua, url: String) -> mlua::Result<Value> {
 	let rt = tokio::runtime::Handle::try_current().map_err(Error::TokioTryCurrent)?;
 	let res: mlua::Result<Value> = tokio::task::block_in_place(|| {
@@ -80,28 +103,44 @@ Cause: {err}"
 
 /// ## Lua Documentation
 ///
-/// ```lua
-/// -- POST with plain text
-/// local web_response = aip.web.post("https://example.com/api", "plain text data")
+/// Makes an HTTP POST request to the specified URL with the given data.
 ///
-/// -- POST with JSON data
-/// local web_response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+/// ```lua
+/// -- API Signature
+/// aip.web.post(url: string, data: string | table): WebResponse
 /// ```
 ///
-/// For Success, the WebResponse is
-/// ```lua
+/// ### Arguments
+///
+/// - `url: string`: The URL to make the POST request to.
+/// - `data: string | table`: The data to send in the request body.  If a string is provided, the `Content-Type` header will be set to `plain/text`. If a table is provided, the `Content-Type` header will be set to `application/json` and the table will be serialized as JSON.
+///
+/// ### Returns (WebResponse)
+///
+/// Returns a table containing the response information.
+///
+/// ```ts
 /// {
-///  success = bool,
-///  status = number,
-///  url = string,
-///  -- If respose content-type is application/json, content will be a table (Value). Otherwise, it will be a string.
-///  content = string or table,
+///   success: boolean, // Indicates if the request was successful (status code 2xx)
+///   status: number,   // The HTTP status code of the response
+///   url: string,      // The URL that was requested
+///   content: string | table    // The content of the response. If the response content type is `application/json`, the `content` field will be a Lua table. Otherwise, it will be a string.
 /// }
 /// ```
 ///
-/// Note will not throw error if status is not 2xx,
-/// but will throw error if the web request cannot be made.
+/// ### Example
 ///
+/// ```lua
+/// -- POST with plain text
+/// local response = aip.web.post("https://example.com/api", "plain text data")
+///
+/// -- POST with JSON data
+/// local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the web request cannot be made (e.g., invalid URL, network error, data serialization error). Does not throw an error for non-2xx status codes. Check the `success` field in the `WebResponse`.
 fn web_post(lua: &Lua, url: String, data: Value) -> mlua::Result<Value> {
 	let rt = tokio::runtime::Handle::try_current().map_err(Error::TokioTryCurrent)?;
 	let res: mlua::Result<Value> = tokio::task::block_in_place(|| {

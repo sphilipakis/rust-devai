@@ -1,3 +1,21 @@
+//! Defines common helper functions for the `aip.file` Lua module.
+//!
+//! ---
+//!
+//! ## Lua documentation
+//!
+//! The `aip.file` module exposes functions to interact with the file system.
+//!
+//! ### Functions
+//!
+//! - `aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord`
+//! - `aip.file.save(rel_path: string, content: string)`
+//! - `aip.file.append(rel_path: string, content: string)`
+//! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileMeta`
+//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileMeta>`
+//! - `aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>`
+//! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileMeta | nil`
+
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
@@ -22,20 +40,27 @@ use std::io::Write;
 /// -- file.content contains the text content of the file
 /// ```
 ///
+/// ### Arguments
+///
+/// - `rel_path: string` - The relative path to the file.
+/// - `options?: {base_dir: string}` - Optional table with `base_dir` key to specify the base directory.
+///
 /// ### Returns
 ///
-///
-/// ```lua
+/// ```ts
 /// -- FileRecord
 /// {
-///   path    = "doc/README.md",
-///   content = "... text content of the file ...",
-///   name    = "README.md",
-///   stem    = "README",
-///   ext     = "md",
+///   path    : string,  -- The path to the file
+///   content : string,  -- The text content of the file
+///   name    : string,  -- The name of the file
+///   stem    : string,  -- The stem of the file (name without extension)
+///   ext     : string,  -- The extension of the file
 /// }
 /// ```
 ///
+/// ### Error
+///
+/// Returns an error if the file does not exist or cannot be read.
 ///
 pub(super) fn file_load(
 	lua: &Lua,
@@ -62,9 +87,18 @@ pub(super) fn file_load(
 /// aip.file.save("doc/README.md", "Some very cool documentation")
 /// ```
 ///
+/// ### Arguments
+///
+/// - `rel_path: string` - The relative path to the file.
+/// - `content: string`  - The content to write to the file.
+///
 /// ### Returns
 ///
 /// Does not return anything
+///
+/// ### Error
+///
+/// Returns an error if the file cannot be written, or if trying to save outside of workspace.
 ///
 pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let rel_path = SPath::new(rel_path);
@@ -102,9 +136,18 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 /// aip.file.append("doc/README.md", "Appended content to the file")
 /// ```
 ///
+/// ### Arguments
+///
+/// - `rel_path: string` - The relative path to the file.
+/// - `content: string`  - The content to append to the file.
+///
 /// ### Returns
 ///
 /// Does not return anything
+///
+/// ### Error
+///
+/// Returns an error if the file cannot be opened or written to.
 ///
 pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let path = runtime.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
@@ -129,12 +172,30 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 /// Ensure a file exists at the given path, and if not create it with an optional content
 ///
 /// ```lua
-/// aip.file.ensure_exists(path, optional_content) -- FileMeta
+/// aip.file.ensure_exists(path, optional_content, options) -- FileMeta
 /// ```
+///
+/// ### Arguments
+///
+/// - `path: string` - The relative path to the file.
+/// - `content?: string` - Optional content to write to the file if it does not exist.
+/// - `options?: {content_when_empty: boolean}` - Optional flags to set content only if the file is empty.
 ///
 /// ### Returns
 ///
-/// Does not return anything
+/// ```ts
+/// -- FileMeta
+/// {
+///   path : string,  -- The path to the file
+///   name : string,  -- The name of the file
+///   stem : string,  -- The stem of the file (name without extension)
+///   ext  : string   -- The extension of the file
+/// }
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the file cannot be created or written to.
 ///
 pub(super) fn file_ensure_exists(
 	lua: &Lua,
@@ -172,20 +233,28 @@ pub(super) fn file_ensure_exists(
 /// let all_doc_file = aip.file.list("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
+/// ### Arguments
+///
+/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
+/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
 ///
 /// ### Returns
 ///
-/// ```lua
+/// ```ts
 /// -- An array/table of FileMeta
 /// {
-///   path    = "doc/README.md",
-///   name    = "README.md",
-///   stem    = "README",
-///   ext     = "md"
+///   path : string,  -- The path to the file
+///   name : string,  -- The name of the file
+///   stem : string,  -- The stem of the file (name without extension)
+///   ext  : string   -- The extension of the file
 /// }
 /// ```
 ///
 /// To get the content of files, needs iterate and load each
+///
+/// ### Error
+///
+/// Returns an error if the glob pattern is invalid or the files cannot be listed.
 ///
 pub(super) fn file_list(
 	lua: &Lua,
@@ -213,21 +282,27 @@ pub(super) fn file_list(
 /// let all_doc_file = aip.file.list_load("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
+/// ### Arguments
+///
+/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
+/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
 ///
 /// ### Returns
 ///
-/// ```lua
+/// ```ts
 /// -- An array/table of FileRecord
 /// {
-///   path    = "doc/README.md",
-///   name    = "README.md",
-///   stem    = "README",
-///   ext     = "md",
-///   content = "..."
+///   path    : string,  -- The path to the file
+///   name    : string,  -- The name of the file
+///   stem    : string,  -- The stem of the file (name without extension)
+///   ext     : string,  -- The extension of the file
+///   content : string   -- The content of the file
 /// }
 /// ```
 ///
-/// To get the content of files, needs iterate and load each
+/// ### Error
+///
+/// Returns an error if the glob pattern is invalid or the files cannot be listed or loaded.
 ///
 pub(super) fn file_list_load(
 	lua: &Lua,
@@ -256,16 +331,20 @@ pub(super) fn file_list_load(
 /// let first_doc_file = aip.file.first("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
 /// ```
 ///
+/// ### Arguments
+///
+/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
+/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
 ///
 /// ### Returns
 ///
-/// ```lua
+/// ```ts
 /// -- FileMeta or Nil
 /// {
-///   path    = "doc/README.md",
-///   name    = "README.md",
-///   stem    = "README",
-///   ext     = "md",
+///   path : string,  -- The path to the file
+///   name : string,  -- The name of the file
+///   stem : string,  -- The stem of the file (name without extension)
+///   ext  : string   -- The extension of the file
 /// }
 /// ```
 ///
@@ -274,6 +353,11 @@ pub(super) fn file_list_load(
 /// ```lua
 /// let file = aip.file.load(file_meta.path)
 /// ```
+///
+/// ### Error
+///
+/// Returns an error if the glob pattern is invalid or the files cannot be listed.
+///
 pub(super) fn file_first(
 	lua: &Lua,
 	runtime: &Runtime,

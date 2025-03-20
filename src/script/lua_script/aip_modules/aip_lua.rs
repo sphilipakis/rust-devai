@@ -6,7 +6,8 @@
 //! The `lua` module exposes functions for inspecting and dumping Lua values.
 //!
 //! ### Functions
-//! * `aip.lua.dump(value: any) -> string`
+//!
+//! - `aip.lua.dump(value: any) -> string`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -29,26 +30,38 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.lua.dump(value: any) -> string
+/// aip.lua.dump(value: any): string
 /// ```
 ///
 /// Given any Lua value, returns a string that recursively represents tables and their structure.
 /// Useful for debugging and logging purposes.
 ///
 /// ### Example
+///
 /// ```lua
 /// local tbl = { key = "value", nested = { subkey = 42 } }
 /// print(aip.lua.dump(tbl))
 /// ```
 ///
+/// ### Arguments
+///
+/// - `value`: The Lua value to be dumped.
+///
 /// ### Returns
 ///
 /// A string representation of the Lua value.
 ///
-/// ### Exception
+/// ```ts
+/// string
+/// ```
+///
+/// ### Error
 ///
 /// If the conversion fails, an error message is returned.
 ///
+/// ```ts
+/// string
+/// ```
 pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 	fn dump_value(_lua: &Lua, value: Value, indent: usize) -> mlua::Result<String> {
 		let indent_str = "  ".repeat(indent);

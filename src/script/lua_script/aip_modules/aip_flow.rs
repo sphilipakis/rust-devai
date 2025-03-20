@@ -1,8 +1,14 @@
+//! Defines the `aip_flow` module, used in the lua engine.
+//!
+//! ---
+//!
 //! ## Lua Documentation
+//!
 //! The `aip.flow` module allows controlling the flow of AIPACK agent execution.
 //! The flow functions are designed to be returned so that the Agent Executor can act appropriately.
 //!
 //! ### Functions
+//!
 //! - `aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table`
 //! - `aip.flow.skip(reason?: string) -> table`
 
@@ -33,6 +39,28 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table
 /// ```
 ///
+/// ### Arguments
+///
+/// - `data: table` Table containing the inputs and options.
+///   - `inputs: any[]` An array of inputs to override.
+///   - `options: AgentOptions` Agent options.
+///
+/// ### Returns
+///
+/// Returns a Lua table with the structure:
+///
+/// ```ts
+/// {
+///   _aipack_: {
+///     kind: "BeforeAllResponse",
+///     data: any
+///   }
+/// }
+/// ```
+///
+/// ### Error
+///
+/// This function does not directly return any errors. Errors might occur during the creation of lua table.
 fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "BeforeAllResponse")?;
@@ -52,6 +80,28 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 /// aip.flow.skip(reason?: string) -> table
 /// ```
 ///
+/// ### Arguments
+///
+/// - `reason: string (optional)`:  The reason for skipping the input cycle.
+///
+/// ### Returns
+///
+/// Returns a Lua table with the structure:
+///
+/// ```ts
+/// {
+///   _aipack_: {
+///     kind: "Skip",
+///     data: {
+///       reason: string | nil
+///     }
+///   }
+/// }
+/// ```
+///
+/// ### Error
+///
+/// This function does not directly return any errors. Errors might occur during the creation of lua table.
 fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 	let data = lua.create_table()?;
 	data.set("reason", reason)?;

@@ -6,15 +6,16 @@
 //! The `path` module exposes functions used to interact with file paths.
 //!
 //! ### Functions
-//! * `aip.path.exists(path: string) -> bool`
-//! * `aip.path.is_file(path: string) -> bool`
-//! * `aip.path.is_dir(path: string) -> bool`
-//! * `aip.path.diff(file_path: string, base_path: string) -> string`
-//! * `aip.path.parent(path: string) -> string | nil`
-//! * `aip.path.join(path: string) -> string | nil` (default non os normalized)
-//! * `aip.path.join_os_normalized(path: string) -> string | nil` (windows style if start with like C:)
-//! * `aip.path.join_os_non_normalized(path: string) -> string | nil` (default, as user specified)
-//! * `aip.path.split(path: string) -> parent, filename`
+//!
+//! - `aip.path.exists(path: string) -> bool`
+//! - `aip.path.is_file(path: string) -> bool`
+//! - `aip.path.is_dir(path: string) -> bool`
+//! - `aip.path.diff(file_path: string, base_path: string) -> string`
+//! - `aip.path.parent(path: string) -> string | nil`
+//! - `aip.path.join(path: string) -> string | nil` (default non os normalized)
+//! - `aip.path.join_os_normalized(path: string) -> string | nil` (windows style if start with like C:)
+//! - `aip.path.join_os_non_normalized(path: string) -> string | nil` (default, as user specified)
+//! - `aip.path.split(path: string) -> parent, filename`
 //!
 //! NOTE 1: Currently, `aip.path.join` uses `aip.path.join_os_non_normalized`. This might change in the future.
 //!
@@ -78,11 +79,28 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 // region:    --- Lua Functions
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.split(path: string) -> parent, filename
-/// ```
 ///
 /// Split path into parent, filename.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.split(path: string): string, string
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to split.
+///
+/// ### Returns
+///
+/// Returns the parent and filename of the path.
+///
+/// ```ts
+/// {
+///   parent: string,
+///   filename: string
+/// }
+/// ```
 fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 	let path = SPath::from(path);
 
@@ -96,33 +114,64 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.exists(path: string) -> bool
-/// ```
 ///
 /// Checks if the specified path exists.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.exists(path: string): boolean
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to check.
+///
+/// ### Returns
+///
+/// Returns `true` if the path exists, `false` otherwise.
 fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.exists())
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.is_file(path: string) -> bool
-/// ```
 ///
 /// Checks if the specified path is a file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.is_file(path: string): boolean
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to check.
+///
+/// ### Returns
+///
+/// Returns `true` if the path is a file, `false` otherwise.
 fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_file())
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.diff(file_path: string, base_path: string, ) -> string
-/// ```
 ///
 /// Do a diff between two path, giving the relative path
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.diff(file_path: string, base_path: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `file_path: string`: The file path.
+/// - `base_path: string`: The base path.
+///
+/// ### Returns
+///
+/// Returns the relative path from the base path to the file path.
 fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 	let file_path = SPath::from(file_path);
 	let base_path = SPath::from(base_path);
@@ -133,22 +182,42 @@ fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.is_dir(path: string) -> bool
-/// ```
 ///
 /// Checks if the specified path is a directory.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.is_dir(path: string): boolean
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to check.
+///
+/// ### Returns
+///
+/// Returns `true` if the path is a directory, `false` otherwise.
 fn path_is_dir(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_dir())
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.parent(path: string) -> string | nil
-/// ```
 ///
 /// Returns the parent directory of the specified path, or nil if there is no parent.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.parent(path: string): string | nil
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to get the parent directory from.
+///
+/// ### Returns
+///
+/// Returns the parent directory of the path, or `nil` if the path has no parent.
 fn path_parent(path: String) -> mlua::Result<Option<String>> {
 	match Path::new(&path).parent() {
 		Some(parent) => match parent.to_str() {
@@ -160,19 +229,32 @@ fn path_parent(path: String) -> mlua::Result<Option<String>> {
 }
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.path.join(path: string) -> string | nil
 ///
+/// Returns the path, with paths joined without OS normalization.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.join(paths: string | table): string | nil
+/// ```
+///
+/// ### Arguments
+///
+/// - `paths: string | table`: A string or a table of strings representing the paths to join.
+///
+/// ### Example
+///
+/// ```lua
 /// -- Table example:
 /// local paths = {"folder", "subfolder", "file.txt"}
 /// local full_path = aip.path.join(paths)
 ///
 /// -- Arg example:
 /// local full_path = aip.path.join("folder", "subfolder", "file.txt")
-///
 /// ```
 ///
-/// Returns the path, with paths joined without OS normalization.
+/// ### Returns
+///
+/// Returns the joined path as a string, or `nil` if no paths are provided.
 pub fn path_join_non_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Value> {
 	let mut path_buf = PathBuf::new();
 	if paths.is_empty() {
@@ -195,13 +277,22 @@ pub fn path_join_non_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::R
 	Ok(Value::String(lua.create_string(path_buf.to_string_lossy().as_ref())?))
 }
 
+/// ## Lua Documentation
+///
 /// Joins path components with OS normalization.
 ///
-/// This version first gathers nonempty strings then “normalizes” each component by trimming
-/// extra leading and trailing slashes. If the first component looks like a Windows path
-/// (i.e., its second character is a colon, e.g., "C:", or it starts with a backslash),
-/// then the join is done using backslashes (and any forward slashes in the components are converted to backslashes).
-/// Otherwise, the platform’s native separator is used.
+/// ```lua
+/// -- API Signature
+/// aip.path.join_os_normalized(paths: string | table): string | nil
+/// ```
+///
+/// ### Arguments
+///
+/// - `paths: string | table`: A string or a table of strings representing the paths to join.
+///
+/// ### Returns
+///
+/// Returns the joined path as a string with OS normalization, or `nil` if no paths are provided.
 pub fn path_join_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Value> {
 	let mut comps = Vec::new();
 	if paths.is_empty() {

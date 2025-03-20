@@ -1,14 +1,18 @@
 //! Defines the `md` module, used in the lua engine.
 //!
-//! ## Lua Documentation
+//! ---
+//!
+//! ## Lua documentation
+//!
 //! The `md` module exposes functions that process markdown content. Useful for
 //! processing LLM responses.
 //!
 //! ### Functions
-//! * `aip.md.extract_blocks(md_content: string, lang?: string) -> Vec<MdBlock>`
-//! * `aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}) -> Vec<MdBlock>, extruded_content`
-//! * `aip.md.extract_meta(md_content) -> Table, String`
-//! * `aip.md.outer_block_content_or_raw(md_content: string) -> string`
+//!
+//! - `aip.md.extract_blocks(md_content: string, lang?: string) -> Vec<MdBlock>`
+//! - `aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}) -> Vec<MdBlock>, extruded_content`
+//! - `aip.md.extract_meta(md_content) -> Table, String`
+//! - `aip.md.outer_block_content_or_raw(md_content: string) -> string`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -32,16 +36,45 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 }
 
 /// ## Lua Documentation
+///
+/// Extracts markdown blocks from a string, optionally filtering by language or extracting remaining content.
+///
 /// ```lua
-/// -- Extract all blocks
-/// aip.md.extract_blocks(md_content: string) -> Vec<MdBlock>
-/// -- Extract blocks for the language 'lang'
-/// aip.md.extract_blocks(md_content: string, lang: string) -> Vec<MdBlock>
-/// -- Extract blocks (with or without language, and extrude: content, which the remaining content)
-/// aip.md.extract_blocks(md_content: String, {lang: string, extrude: "content"})
+/// -- API Signatures
+/// aip.md.extract_blocks(md_content: string): Vec<MdBlock>
+/// aip.md.extract_blocks(md_content: string, lang: string): Vec<MdBlock>
+/// aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): Vec<MdBlock>, string
 /// ```
 ///
-/// Return the list of markdown blocks that match a given lang_name.
+/// ### Arguments
+///
+/// - `md_content: string`: The markdown content to process.
+/// - `options: string | table (optional)`:
+///   - If a string, it's treated as the language filter.
+///   - If a table:
+///     - `lang: string (optional)`:  Filters blocks by this language.
+///     - `extrude: "content" (optional)`:  If present, extracts the content outside the blocks.
+///
+/// ### Returns
+///
+/// When `extrude = "content"` is not specified:
+///
+/// ```ts
+/// MdBlock[]
+/// ```
+///
+/// When `extrude = "content"` is specified:
+///
+/// ```ts
+/// [MdBlock[], string]
+/// ```
+///
+/// - `MdBlock[]`: A list of markdown blocks matching the specified criteria.
+/// - `string`: The content of the markdown outside of the extracted blocks.
+///
+/// ### Error
+///
+/// Returns an error if the `extrude` option is not equal to `"content"`.
 fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> mlua::Result<MultiValue> {
 	let (lang, extrude): (Option<String>, Option<Extrude>) = match options {
 		// if options is of type string, then, just lang name
@@ -99,12 +132,26 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 }
 
 /// ## Lua Documentation
+///
+/// Extracts meta blocks from markdown content and returns a table of the merged meta values and the remaining content.
+///
 /// ```lua
-/// let meta, remain = aip.md.extract_meta(md_content: string) -> table, string
+/// -- API Signature
+/// aip.md.extract_meta(md_content: string): Table, string
 /// ```
 ///
-/// Extracts the meta blocks, parses/merges their values, and also returns the remaining concatenated content.
+/// ### Arguments
 ///
+/// - `md_content: string`: The markdown content to process.
+///
+/// ### Returns
+///
+/// ```ts
+/// [Table, string]
+/// ```
+///
+/// - `Table`:  A Lua table containing the merged meta values from the meta blocks.
+/// - `string`: The remaining content of the markdown after removing the meta blocks.
 fn extract_meta(lua: &Lua, md_content: String) -> mlua::Result<MultiValue> {
 	let (value, remain) = md::extract_meta(&md_content)?;
 	let lua_value = lua.to_value(&value)?;
@@ -113,14 +160,28 @@ fn extract_meta(lua: &Lua, md_content: String) -> mlua::Result<MultiValue> {
 }
 
 /// ## Lua Documentation
+///
+/// Extracts the content within the outermost code block, or returns the raw content if no such block exists.
+///
 /// ```lua
-/// aip.md.outer_block_content_or_raw(md_content: string) -> string
+/// -- API Signature
+/// aip.md.outer_block_content_or_raw(md_content: string): string
 /// ```
 ///
-/// Without fully parsing the markdown, this function will remove the first and last
-/// code block (triple back tick), only if the first line is a ` ``` `
+/// ### Arguments
 ///
-/// If it does not start with a ` ``` ` raw content will be returned.
+/// - `md_content: string`: The markdown content to process.
+///
+/// ### Returns
+///
+/// ```ts
+/// string
+/// ```
+///
+/// Returns the content within the outer code block if it exists; otherwise, returns the original markdown content.
+///
+/// If the markdown starts with a code block (```), this function removes the first and last
+/// code block (triple back tick). If it does not start with a code block, the raw content is returned.
 ///
 /// > Note: This is useful in the GenAI context because often LLMs return a top block (e.g., markdown, Rust)
 /// >       And while it is better to try to handle this with the prompt, gpt-4o-mini or other models still put in markdown block

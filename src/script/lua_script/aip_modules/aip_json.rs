@@ -6,9 +6,10 @@
 //! The `json` module exposes functions to parse and stringify JSON content.
 //!
 //! ### Functions
-//! * `aip.json.parse(content: string) -> table`
-//! * `aip.json.stringify(content: table) -> string`
-//! * `aip.json.stringify_to_line(content: table) -> string`
+//!
+//! - `aip.json.parse(content: string) -> table`
+//! - `aip.json.stringify(content: table) -> string`
+//! - `aip.json.stringify_to_line(content: table) -> string`
 
 use crate::runtime::Runtime;
 use crate::{Error, Result};
@@ -34,12 +35,13 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.json.parse(content: string) -> table
+/// aip.json.parse(content: string): table
 /// ```
 ///
 /// Parse a JSON string into a table that can be used in the Lua script.
 ///
 /// ### Example
+///
 /// ```lua
 /// local json_str = '{"name": "John", "age": 30}'
 /// local obj = aip.json.parse(json_str)
@@ -50,11 +52,11 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// Returns a table representing the parsed JSON.
 ///
-/// ### Exception
+/// ### Error
 ///
-/// ```lua
+/// ```ts
 /// {
-///   error = string  -- Error message from JSON parsing
+///   error: string  // Error message from JSON parsing
 /// }
 /// ```
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
@@ -69,13 +71,14 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// Stringify a table into a JSON string with pretty formatting.
 ///
 /// ```lua
-/// -- API Signature  
-/// aip.json.stringify(content: table) -> string
+/// -- API Signature
+/// aip.json.stringify(content: table): string
 /// ```
 ///
 /// Convert a table into a JSON string with pretty formatting using tab indentation.
 ///
 /// ### Example
+///
 /// ```lua
 /// local obj = {
 ///     name = "John",
@@ -93,11 +96,11 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///
 /// Returns a formatted JSON string.
 ///
-/// ### Exception
+/// ### Error
 ///
-/// ```lua
+/// ```ts
 /// {
-///   error = string  -- Error message from JSON stringification
+///   error: string  // Error message from JSON stringification
 /// }
 /// ```
 fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
@@ -118,12 +121,13 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.json.stringify_to_line(content: table) -> string
+/// aip.json.stringify_to_line(content: table): string
 /// ```
 ///
 /// Convert a table into a single line JSON string.
 ///
 /// ### Example
+///
 /// ```lua
 /// local obj = {
 ///     name = "John",
@@ -138,11 +142,11 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///
 /// Returns a single line JSON string.
 ///
-/// ### Exception
+/// ### Error
 ///
-/// ```lua
+/// ```ts
 /// {
-///   error = string  -- Error message from JSON stringification
+///   error: string  // Error message from JSON stringification
 /// }
 /// ```
 fn stringify_to_line(_lua: &Lua, content: Value) -> mlua::Result<String> {

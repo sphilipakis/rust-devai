@@ -1,12 +1,14 @@
-//! Defines the `html` module, used in the lua engine
+//! Defines the `html` module, used in the lua engine.
 //!
 //! ---
 //!
 //! ## Lua documentation
+//!
 //! This module exposes functions that process HTML content.
 //!
 //! ### Functions
-//! * `aip.html.prune_to_content(html_content: string) -> string`
+//!
+//! - `aip.html.prune_to_content(html_content: string) -> string`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -33,9 +35,27 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// - Attributes except for `class`, `aria-label`, and `href`.
 ///
 /// ```lua
+/// -- API Signature
+/// aip.html.prune_to_content(html_content: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `html_content: string`: The HTML content to be pruned.
+///
+/// ### Returns
+///
+/// `string`: The cleaned HTML content.
+///
+/// ### Example
+///
+/// ```lua
 /// local cleaned_html = aip.html.prune_to_content(html_content)
 /// ```
 ///
+/// ### Error
+///
+/// Returns an error if the HTML content fails to be pruned.
 fn prune_to_content_lua(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 	prune_to_content(html_content)
 		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))

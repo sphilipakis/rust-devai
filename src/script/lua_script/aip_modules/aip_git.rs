@@ -3,10 +3,12 @@
 //! ---
 //!
 //! ## Lua Documentation
+//!
 //! The `git` module exposes functions for performing Git operations.
 //!
 //! ### Functions
-//! * `aip.git.restore(path: string) -> string | table`
+//!
+//! - `aip.git.restore(path: string): string`
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
@@ -27,22 +29,32 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 // region: --- Lua Functions
 
 /// ## Lua Documentation
-/// ```lua
-/// aip.git.restore(path: string) -> string | table
-/// ```
+///
 /// Executes a `git restore` command in the workspace directory using the given file path.
 ///
+/// ```lua
+/// -- API Signature
+/// aip.git.restore(path: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The file path to restore.
+///
 /// ### Returns
+///
 /// Returns the standard output as a string if the command is successful.
 ///
-/// ### Exception
-/// Throws an error if the command's stderr output is not empty.
-///
 /// ### Example
+///
 /// ```lua
 /// local result = aip.git.restore("src/main.rs")
 /// print(result)
 /// ```
+///
+/// ### Error
+///
+/// Throws an error if the command's stderr output is not empty.
 fn git_restore(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
 	let output = std::process::Command::new("git")
 		.current_dir(runtime.dir_context().wks_dir())
@@ -63,4 +75,3 @@ fn git_restore(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value
 }
 
 // endregion: --- Lua Functions
-
