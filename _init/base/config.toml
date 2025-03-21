@@ -30,7 +30,7 @@ input_concurrency = 2
 # Note: It is important to have `model_aliases` as a property of `default_options` as shown below.
 #
 [default_options.model_aliases]
-top      = "claude-3-7-sonnet-latest"
+pro      = "claude-3-7-sonnet-latest"
 claude   = "claude-3-7-sonnet-latest"
 high     = "o3-mini-high"
 med      = "o3-mini"

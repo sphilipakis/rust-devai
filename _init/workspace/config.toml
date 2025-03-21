@@ -31,7 +31,7 @@
 # However, you can change or add the mapping for this workspace
 #
 # [default_options.model_aliases]
-# top      = "claude-3-7-sonnet-latest"
+# pro      = "claude-3-7-sonnet-latest"
 # claude   = "claude-3-7-sonnet-latest"
 # high     = "o3-mini-high"
 # med      = "o3-mini"
