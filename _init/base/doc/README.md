@@ -22,7 +22,7 @@ The main **aipack** concept is to minimize the friction of creating and running 
 
 ```sh
 # Run the ./first-agent.aip on all files ending with "**/*.md"
-aipack run ./my-agents/first-agent.aip -f "./README.md"
+aip run ./my-agents/first-agent.aip -f "./README.md"
 ```
 
 `./my-agents/my-first-agent.aip`
@@ -152,7 +152,7 @@ Here is a full description of the complete flow:
 
 ## Usage
 
-Usage: `aipack run proof-rs-comments -f "./src/main.rs"`
+Usage: `aip run proof-rs-comments -f "./src/main.rs"`
 
 (or use any glob like `-f "./src/**/*.rs"`)
 
@@ -170,28 +170,28 @@ Usage: `aipack run proof-rs-comments -f "./src/main.rs"`
     - Here are the environment variable names per provider: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `COHERE_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`.
     - On Mac, if the environment variable is not present, it will attempt to prompt and get/save it from the keychain under the aipack group.
 
-## `aipack` command arguments
+## `aip` command arguments
 
 ```sh
 # Will create/update the .aip/ settings folder (not required, automatically runs on "run")
-aipack init
+aip init
 
 # Will execute the proof-rs-comments.md from `.aip/customs/` or `.aip/defaults/` on 
 # any file matching `./**/mod.rs` (those will become 'inputs' in the data section)
-aipack run proof-rs-comments -f mod.rs
+aip run proof-rs-comments -f mod.rs
 
 # Verbose mode will print in the console what is sent to the AI, the AI response, and the output returned if it's string-like
-aipack run proof-rs-comments -f mod.rs --verbose 
+aip run proof-rs-comments -f mod.rs --verbose 
 
 # Verbose and watch mode. Every time proof-rs-comments is updated, it will run it again
-aipack run proof-rs-comments -f main.rs -v -w
+aip run proof-rs-comments -f main.rs -v -w
 
 # Will perform the verbose, watch, but in dry mode request, will print only the rendered instruction
-aipack run proof-rs-comments -f main.rs -v -w --dry req
+aip run proof-rs-comments -f main.rs -v -w --dry req
 
 # Will perform the verbose, watch, but in dry mode response, will print rendered instruction, AI response
 # and will NOT execute the data
-aipack run proof-rs-comments -f main.rs -v -w --dry res
+aip run proof-rs-comments -f main.rs -v -w --dry res
 
 # Happy coding!
 ```
@@ -227,11 +227,10 @@ aipack run proof-rs-comments -f main.rs -v -w --dry res
 On `aipack run` or `aipack init`, a `.aip/config.toml` will be created with the following:
 
 ```toml
-[genai]
+[default_options]
 # Required (any model rust genai crate supports).
 model = "gpt-4o-mini" 
 
-[runtime]
 # Defaults to 1 if absent. A great way to increase speed when using remote AI services.
 input_concurrency = 1 
 ```
