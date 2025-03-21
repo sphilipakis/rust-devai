@@ -1,5 +1,16 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-20 - [v0.6.12](https://github.com/jeremychone/rust-devai/compare/v0.6.11...v0.6.12)
+
+- `+` NEW - Now can **call agent within agents** `aip.agent.run(agent_name, {inputs?, options?})`
+- `-` agent - fix parse issue with not matching backticks on prompt sections
+- `.` doc - Relatively big update of the lua.md & lua-api.md (in `~/aipack-base/doc/`)
+- `-` run - fix input_concurrency in before_all getting ignored
+- `>` refactor - Runtime & Executor
+- `>` refactor aip_modules code layout
+- `^` error msg - Enhance parse_prompt_part_options error message
+- `.` update test_lua_semver_compare_basic
+
 ## 2025-03-16 - [v0.6.11](https://github.com/jeremychone/rust-devai/compare/v0.6.10...v0.6.11)
 
 - `-` fix html5ever 0.29.2 yank compile issue
