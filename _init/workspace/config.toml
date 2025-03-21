@@ -1,23 +1,43 @@
+# This `.aipack/config.toml` file overrides the base `~/.aipack-base/config.toml`.
+# Any property from the base config.toml can be overridden here for this workspace (the workspace is the parent directory of this .aipack/ directory).
+
 [default_options]
 
 # `model` is required (any model supported by the Rust genai crate)
 #         By default, it is set in the `~/.aipack-base/config.toml`, but it can be overridden here,
 #         as with any other properties.
-# e.g.,    
+# e.g.,
 #          Ollama: "llama3.3:70b", "llama3.1:8b", "llama3.2:3b", "deepseek-r1:8b", "deepseek-coder-v2:16b" (or any locally installed Ollama)
 #            Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
 #             xAI: "grok-beta"
 #        DeepSeek: "deepseek-chat", "deepseek-reasoner" (from deepseek.com)
-#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b" 
+#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b"
 #       Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
 #          OpenAI: "o3-mini", "o3-mini-high", "o3-mini-low", "gpt-4o", "gpt-4o-mini"
+#
 # model = "gpt-4o-mini" # or an alias below (e.g., "fast", "claude")
 
-# Temperature (by default unset)
+# Temperature - by default unset
+#
 # temperature = 0.0
 
-# How many inputs can be processed at the same time (Defaults to 1 if absent)
+# Concurrency - How many inputs can be processed at the same time
+# (Set to 2 in the default ~/.aipack-base/config.toml if absent)
+#
 # input_concurrency = 6
 
-# Add or override model aliases
-# model_aliases = { "r1" = "deepseek-reasoner" }
+# Model Aliases - or override model aliases
+# The ones below are already configured in the ~/.aipack-base/config.toml
+# However, you can change or add the mapping for this workspace
+#
+# [default_options.model_aliases]
+# top      = "claude-3-7-sonnet-latest"
+# claude   = "claude-3-7-sonnet-latest"
+# high     = "o3-mini-high"
+# med      = "o3-mini"
+# low      = "o3-mini-low"
+# standard = "gpt-4o"
+# cheap    = "gpt-4o-mini"
+# flash    = "gemini-2.0-flash"
+# fast     = "gemini-2.0-flash"
+# r1       = "deepseek-reasoner"
