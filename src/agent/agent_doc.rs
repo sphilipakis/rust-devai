@@ -64,6 +64,11 @@ impl CaptureMode {
 				| CaptureMode::AfterAllCodeBlock
 		)
 	}
+
+	/// Check if in a prompt part mode
+	fn is_prompt_part(&self) -> bool {
+		matches!(self, CaptureMode::PromptPart)
+	}
 }
 
 // endregion: --- Capture State
@@ -107,9 +112,16 @@ impl AgentDoc {
 		let mut current_backticks = 0; // Track current block's backtick count (3 or 4)
 
 		for line in self.raw_content.lines() {
-			block_state = block_state.compute_new(line);
+			// Only update block state and check for backticks when not in prompt part mode
+			if !capture_mode.is_prompt_part() {
+				block_state = block_state.compute_new(line);
+			}
+
 			// If heading we decide the capture mode
-			if block_state.is_out() && line.starts_with('#') && !line.starts_with("##") {
+			if (capture_mode.is_prompt_part() || block_state.is_out())
+				&& line.starts_with('#')
+				&& !line.starts_with("##")
+			{
 				let header_lower = line[1..].trim().to_lowercase();
 				if header_lower == "options" {
 					capture_mode = CaptureMode::OptionsSection;
@@ -136,112 +148,113 @@ impl AgentDoc {
 				continue;
 			}
 
-			// Check for code block markers with either 3 or 4 backticks
-			let is_toml_block_start = line.starts_with("```toml") || line.starts_with("````toml");
-			let is_lua_block_start = line.starts_with("```lua") || line.starts_with("````lua");
-			let is_block_end = (line == "```" || line == "````")
-				&& (current_backticks == 3 && line.starts_with("```")
-					|| current_backticks == 4 && line.starts_with("````"));
+			// Only process code block markers for non-prompt part sections
+			if !capture_mode.is_prompt_part() {
+				// Check for code block markers with either 3 or 4 backticks
+				let is_toml_block_start = line.starts_with("```toml") || line.starts_with("````toml");
+				let is_lua_block_start = line.starts_with("```lua") || line.starts_with("````lua");
+				let is_block_end = (line == "```" || line == "````")
+					&& (current_backticks == 3 && line.starts_with("```")
+						|| current_backticks == 4 && line.starts_with("````"));
 
-			// Track the number of backticks used for the current block
-			if is_toml_block_start || is_lua_block_start {
-				current_backticks = if line.starts_with("````") { 4 } else { 3 };
-			} else if is_block_end {
-				current_backticks = 0;
-			}
-
-			match capture_mode {
-				CaptureMode::None => {}
-
-				// -- Options
-				CaptureMode::OptionsSection => {
-					if is_toml_block_start {
-						capture_mode = CaptureMode::OptionsTomlBlock;
-						continue;
-					}
+				// Track the number of backticks used for the current block
+				if is_toml_block_start || is_lua_block_start {
+					current_backticks = if line.starts_with("````") { 4 } else { 3 };
+				} else if is_block_end {
+					current_backticks = 0;
 				}
 
-				CaptureMode::OptionsTomlBlock => {
-					if is_block_end {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut options_toml, line);
-					}
-				}
+				match capture_mode {
+					CaptureMode::None => {}
 
-				// -- Before All
-				CaptureMode::BeforeAllSection => {
-					if is_lua_block_start {
-						capture_mode = CaptureMode::BeforeAllCodeBlock;
-						continue;
+					// -- Options
+					CaptureMode::OptionsSection => {
+						if is_toml_block_start {
+							capture_mode = CaptureMode::OptionsTomlBlock;
+							continue;
+						}
 					}
-				}
-				CaptureMode::BeforeAllCodeBlock => {
-					if is_block_end {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut before_all_script, line);
-					}
-				}
 
-				// -- Data
-				CaptureMode::DataSection => {
-					if is_lua_block_start {
-						capture_mode = CaptureMode::DataCodeBlock;
-						continue;
+					CaptureMode::OptionsTomlBlock => {
+						if is_block_end {
+							capture_mode = CaptureMode::None;
+							continue;
+						} else {
+							push_line(&mut options_toml, line);
+						}
 					}
-				}
-				CaptureMode::DataCodeBlock => {
-					if is_block_end {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut data_script, line);
-					}
-				}
 
-				// -- Pompt Part
-				CaptureMode::PromptPart => {
-					if let Some(current_part) = &mut current_part {
-						current_part.2.push(line);
-					} else {
-						// This should not happen, as the current_part should be been created when we enterred the section
-						// TODO: Need to capture warning if we reach this point.
+					// -- Before All
+					CaptureMode::BeforeAllSection => {
+						if is_lua_block_start {
+							capture_mode = CaptureMode::BeforeAllCodeBlock;
+							continue;
+						}
 					}
-				}
+					CaptureMode::BeforeAllCodeBlock => {
+						if is_block_end {
+							capture_mode = CaptureMode::None;
+							continue;
+						} else {
+							push_line(&mut before_all_script, line);
+						}
+					}
 
-				// -- Output
-				CaptureMode::OutputSection => {
-					if is_lua_block_start {
-						capture_mode = CaptureMode::OutputCodeBlock;
-						continue;
+					// -- Data
+					CaptureMode::DataSection => {
+						if is_lua_block_start {
+							capture_mode = CaptureMode::DataCodeBlock;
+							continue;
+						}
 					}
-				}
-				CaptureMode::OutputCodeBlock => {
-					if is_block_end {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut output_script, line);
+					CaptureMode::DataCodeBlock => {
+						if is_block_end {
+							capture_mode = CaptureMode::None;
+							continue;
+						} else {
+							push_line(&mut data_script, line);
+						}
 					}
-				}
 
-				// -- After All
-				CaptureMode::AfterAllSection => {
-					if is_lua_block_start {
-						capture_mode = CaptureMode::AfterAllCodeBlock;
-						continue;
+					// -- Output
+					CaptureMode::OutputSection => {
+						if is_lua_block_start {
+							capture_mode = CaptureMode::OutputCodeBlock;
+							continue;
+						}
 					}
+					CaptureMode::OutputCodeBlock => {
+						if is_block_end {
+							capture_mode = CaptureMode::None;
+							continue;
+						} else {
+							push_line(&mut output_script, line);
+						}
+					}
+
+					// -- After All
+					CaptureMode::AfterAllSection => {
+						if is_lua_block_start {
+							capture_mode = CaptureMode::AfterAllCodeBlock;
+							continue;
+						}
+					}
+					CaptureMode::AfterAllCodeBlock => {
+						if is_block_end {
+							capture_mode = CaptureMode::None;
+							continue;
+						} else {
+							push_line(&mut after_all_script, line);
+						}
+					}
+
+					// For PromptPart, we handle it separately below
+					CaptureMode::PromptPart => {}
 				}
-				CaptureMode::AfterAllCodeBlock => {
-					if is_block_end {
-						capture_mode = CaptureMode::None;
-						continue;
-					} else {
-						push_line(&mut after_all_script, line);
-					}
+			} else {
+				// For PromptPart, simply collect all lines as content
+				if let Some(current_part) = &mut current_part {
+					current_part.2.push(line);
 				}
 			}
 		}
@@ -342,3 +355,36 @@ fn buffer_to_string(content: Vec<&str>) -> Option<String> {
 }
 
 // endregion: --- Support
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+
+	use super::*;
+	use serde_json::json;
+
+	#[tokio::test]
+	async fn test_agent_doc_not_so_good_parse() -> Result<()> {
+		// -- Setup & Fixtures
+		let path = "tests-data/sandbox-01/agent-script/agent-not-so-good.aip";
+		let agent_doc = AgentDoc::from_file(path)?;
+		let agent_ref = AgentRef::LocalPath("tests-data/sandbox-01/agent-script/agent-not-so-good.aip".into());
+		let agent = agent_doc.into_agent(
+			"mock-agent",
+			agent_ref,
+			AgentOptions::from_options_value(json!({"model": "mockmodel"}))?,
+		)?;
+
+		// -- Exec
+
+		// -- Check
+		assert!(agent.output_script().is_some(), "Output script should be present");
+		assert_eq!(agent.output_script().unwrap().trim(), "return data.one");
+
+		Ok(())
+	}
+}
+
+// endregion: --- Tests
