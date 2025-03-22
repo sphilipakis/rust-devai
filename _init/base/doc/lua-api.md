@@ -1215,3 +1215,4 @@ The `cmd` module exposes functions to execute system commands.
   lang: string,     // Language of the block (e.g., "lua", "rust", etc.)
   info: string      // Additional info (e.g., "mermaid", etc.)
 }
+```

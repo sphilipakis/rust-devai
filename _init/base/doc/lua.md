@@ -48,6 +48,13 @@ For example:
   - `some_fun(name: string, options?: {...}): table, string | nil`
     - This means that the function will return a value of type table, and then a string or nil.
 
+## Important Lua considerations and best practices
+
+- The scripting model is designed to return data from one stage to another (for example, returning data in the `# Before All`, `# Data`, or `# Output` stages).
+- However, it is not possible to return functions from one stage to another.
+- As a best practice, the `# Before All` stage, when needing to operate on multiple files, should only get the list of files and not load them. The `# Data` stage should handle loading the files to allow effective concurrency when set.
+- The `# Before All` stage is a good place to prepare common files and return common paths.
+- It is possible to use Lua `require` to include files located in the `lua/` folder of the agent file (the `.aip` file).
 
 ## CTX
 
@@ -77,23 +84,58 @@ All Lua scripts get the `CTX` table in scope to get the path of the runtime and 
 
 The `aip.flow` Lua modules are special functions that allow customizing the execution flow of an agent.
 
-For example,
 
-In a `# Before All` Lua code block
+### Before All possible returns
+
+#### Returning simple value
+
+When a `# Before All` section returns a value, it will be accessible via the `before_all` global in the other lua sections. 
+
+For example
+
+````md
+
+# Before All
 
 ```lua
--- To reshape the inputs and even the agent options with those data, and we can still return the `before_all` data if desired.
+return {some = "value"}
+```
+
+# Data 
+
+```lua
+
+print("Before All .some " .. before_all.some)
+
+```
+
+````
+
+and `before_all` will also be accessible in the `# Output` and `# After All` Lua code blocks. 
+
+#### Returning aip.flow.before_all_response
+
+The `# Before All` section can take control of the inputs and even agent options, by returning a `aip.flow.before_all_response({inputs? = {..list..}, options = {..object..}})`
+
+For example
+
+````md
+# Before All
+
+```lua
+-- some logic
+
+-- Here has access to `inputs` array if passed
+
+-- `before_all` is optional, and will be accessible as `before_all` global in other sections.
+-- `inputs` is optional, but must be a list if present. This allows to reshape the inputs.
+-- `options` is optional, and must be a dict with optionally .model, .input_concurrency, .model_aliases (dict), and what is in the default_options of config
 return aip.flow.before_all_response({
-    before_all = "Some before all data",
-    inputs = {"one", "two", "three", 4, "five"},
-    options: {model: "o3-mini-high"}
+  before_all = { some = "value"}
+  inputs     = ["one", "two", "three"],
+  options    = {model = "o3-mini-low", input_concurrency = 2}
 })
+
 ```
 
-In a `# Before All` or `# Data` code block, doing
-
-```lua
--- Will stop and "skip" the current execution
-aipack.skip("File already contains the documentation")
-```
-
+````

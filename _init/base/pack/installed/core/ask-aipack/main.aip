@@ -1,27 +1,17 @@
-# Data
+# Before All
 
 ```lua
+local a_utils = require("ask_utils")
 
 -- === Prep the prompt file
 local prompt_absolute_dir = CTX.WORKSPACE_AIPACK_DIR .. "/.prompt/" .. CTX.PACK_IDENTITY
 local prompt_file_path = prompt_absolute_dir .. "/ask-prompt.md"
 local prompt_file_rel_path = aip.path.diff(prompt_file_path, CTX.WORKSPACE_DIR)
 
-local placeholder_text = [[
-> Placeholder:
->    - Ask your question above the ==== separator
->    - and `aip run core@ask-aipack`
->    - or **Replay** in the terminal if already running
->    - Answers will appear below, in markdown sections
->    - You can remove those lines starting with >, 
->    - they are not included in the prompt
-
-====
-
-]]
+local prompt_template = a_utils.template()
 
 if not aip.path.exists(prompt_file_path) then
-    aip.file.save(prompt_file_path, placeholder_text)
+    aip.file.save(prompt_file_path, prompt_template)
 
     -- Open it with VSCode
     -- Call with pcall to prevent failure if the code is not available
@@ -32,13 +22,19 @@ end
 -- === Load prompt file
 local prompt_file_content = aip.file.load(prompt_file_path).content
 if not prompt_file_content:find("%S") then
-    aip.file.save(prompt_file_path, placeholder_text)
+    aip.file.save(prompt_file_path, prompt_template)
     prompt_file_content = aip.file.load(prompt_file_path).content
 end
 
+-- === Prep prompt_content
 -- Note important to split on `====\n` otherwise, the doc can be split. 
 local first_part, second_part = aip.text.split_first(prompt_file_content, "====\n")
-local _line_blocks, prompt_content = aip.text.extract_line_blocks(first_part, {starts_with = ">", extrude = "content"})
+-- extract the eventual #!meta params
+local meta, inst = aip.md.extract_meta(first_part)
+-- extract the eventual ">" lines
+local _line_blocks, prompt_content = aip.text.extract_line_blocks(inst, {starts_with = ">", extrude = "content"})
+-- Teram 
+prompt_content = aip.text.trim(prompt_content)
 
 print("\n\nOPEN your @ask-aipack prompt file: " .. prompt_file_rel_path .. "\n\n")
 
@@ -46,8 +42,31 @@ if not prompt_content:find("%S") then
     return aipack.skip("Empty prompt. Enter you question and replay")
 end
 
-prompt_content = aip.text.trim(prompt_content)
+-- == Compute the agent options
+local options = {}
+options.model             = meta.model
+options.temperature       = meta.temperature
+options.model_aliases     = meta.model_aliases
+options.input_concurrency = meta.input_concurrency
 
+return aip.flow.before_all_response({
+    inputs     = Nil, -- no need for inputs for this agent, so make sure none
+    options    = options,
+    before_all = {
+        first_part          = first_part,
+        second_part         = second_part,
+        prompt_content      = prompt_content,
+        prompt_file_path    = prompt_file_path,
+
+        prompt_absolute_dir = prompt_absolute_dir, 
+    }
+})
+
+```
+
+# Data
+
+```lua
 -- === Load the knowledge/doc files
 -- The `list_load` function will list the files from the aipack parent directory and load each of them
 -- so, each item is a FileRecord
@@ -59,16 +78,16 @@ print("Including " .. #doc_files .. " documentation files")
 -- NOTE: Vscode cannot open absolute paths, at least when out of workspace
 --       So, doing relative path with the ../../ does seems to work
 for _, doc_file in ipairs(doc_files) do
-    doc_file.path_diff = aip.path.diff(doc_file.path, prompt_absolute_dir)
+    doc_file.path_diff = aip.path.diff(doc_file.path, before_all.prompt_absolute_dir)
 end
 
 -- === Return the data
 
 return {
-    first_part       = first_part,
-    second_part      = second_part,
-    prompt_content   = prompt_content,
-    prompt_file_path = prompt_file_path,
+    first_part       = before_all.first_part,
+    second_part      = before_all.second_part,
+    prompt_content   = before_all.prompt_content,
+    prompt_file_path = before_all.prompt_file_path,
     doc_files        = doc_files
 }
 ```
@@ -96,7 +115,7 @@ Here are some documentation files, separated with `=== ../../path/to/document.md
 - Format the answer this way:
 
 ```
-# QUESTION: _user_question_
+## QUESTION: _user_question_
 
 _answer_
 ```
@@ -111,8 +130,15 @@ _answer_
 - Remember, a `.aipack` file is a markdown file, so when giving aipack examples, do not surround the aipack stages example with a markdown code block. Just put them in lines.
 - When giving the reference to the doc file, just hgive the path given in the prompt, with the format `[doc/file_name](file_path)`. Do not escale the / of the filepath. Leave them as is. 
 
+Very important, when giving back an `.aip` markdown, put it in a **four** backtics md code block, so that the three backtick for the lua code block inside works nicely. 
 
-# Instruction
+# User
+
+Before we start, when giving back an agent (e.g., `.aip`) markdown, put it in a **four** backticks markdown code block with lang `md`, so that the three backticks for the Lua code block inside this content works nicely.
+
+After that, show a `sh` block with the example of the command I need to run.
+
+# User
 
 Here is the user question:
 
@@ -126,9 +152,6 @@ Here is the user question:
 local answer = ai_response.content
 
 -- === Cleanup answer
--- Sometimes, some models still put the result in a markdown block.
--- This alleviates some of these issues (when it starts with ```)
-local answer = aip.md.outer_block_content_or_raw(answer)
 local answer = aip.text.trim(answer)
 
 -- === Rebuild prompt file
