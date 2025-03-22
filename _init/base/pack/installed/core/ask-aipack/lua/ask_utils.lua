@@ -3,7 +3,10 @@ function template()
   return [[
 ```toml
 #!meta parametric block
-# model = "o3-mini-low"
+
+model_aliases = {pro = "claude-3-7-sonnet-latest", high = "o3-mini-high", low = "o3-mini-low", cheap = "gpt-4o-mini", fast = "gemini-2.0-flash"}
+
+model = "fast"
 ```
 
 ====

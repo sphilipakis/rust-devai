@@ -46,9 +46,9 @@ html-escape = "0.2"
 #       then, html5ever "=0.29.1" requires "=0.14.1", which is important for our the rcdom
 # html5ever = "=0.29.1"
 tendril = "=0.4.3"
-html5ever = "=0.29.1"
+html5ever = "=0.30"
 # markup5ever has to be "markup5ever" `=0.14.1`
-markup5ever = "=0.14.1"
+markup5ever = "=0.15"
 # -- Template & Scripting
 mlua = { version = "0.10.1", features = ["lua54", "vendored", "send", "serialize"] }
 handlebars = "6"
