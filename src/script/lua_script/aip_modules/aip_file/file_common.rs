@@ -170,6 +170,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 /// ## Lua Documentation
 ///
 /// Ensure a file exists at the given path, and if not create it with an optional content
+/// (only to be used for file, do not use for directory)
 ///
 /// ```lua
 /// aip.file.ensure_exists(path, optional_content, options) -- FileMeta

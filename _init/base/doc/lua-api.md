@@ -32,7 +32,8 @@ local all_files = aip.file.list_load({"doc/**/*.md", "src/**/*.rs"}) -- {FileRec
 -- Get the first file reference matching a glob pattern
 local first_doc_file = aip.file.first("doc/**/*.md")          -- FileMeta | nil
 
--- Ensure a file exists by creating it if not found
+-- Ensure a file exists by creating it if not found 
+-- Directories do not need to be ensured, they are created automatically on `aip.file.save` or `aip.file.append`
 local file_meta = aip.file.ensure_exists("./some/file.md", "optional content") -- FileMeta
 
 -- Load markdown sections from a file
@@ -139,11 +140,13 @@ Returns an error if the file cannot be opened or written to.
 ### aip.file.ensure_exists
 
 ```lua
--- API Signature
+-- API Signature DO NOT USE
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileMeta
 ```
 
-Ensure a file exists at the given path, and if not create it with an optional content.
+Ensure a file exists at the given path, and if not create it with an optional content. However, do not use for directory. 
+
+Directories do not need to be ensured, they are created automatically on `aip.file.save` or `aip.file.append`
 
 **Arguments**
 
