@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-21 - [v0.6.13](https://github.com/jeremychone/rust-devai/compare/v0.6.12...v0.6.13)
+
+- `^` @ask-aipack - Fixes and improvements
+- `^` run - now init-base if aipack version is not the same
+
 ## 2025-03-20 - [v0.6.12](https://github.com/jeremychone/rust-devai/compare/v0.6.11...v0.6.12)
 
 - `+` NEW - Now can **call agent within agents** `aip.agent.run(agent_name, {inputs?, options?})`
