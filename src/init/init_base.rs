@@ -20,6 +20,11 @@ pub async fn init_base(force: bool) -> Result<()> {
 		new = true;
 	}
 
+	// -- Determine version
+	let is_new_version = check_is_new_version(&base_dir).await?;
+	// if new version, then, force update
+	let force = is_new_version || force;
+
 	if new {
 		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", base_dir))
 			.await;
@@ -28,10 +33,9 @@ pub async fn init_base(force: bool) -> Result<()> {
 			.await;
 	}
 
-	// -- Determine version
-	let is_new_version = check_is_new_version(&base_dir).await?;
-	// if new version, then, force update
-	let force = is_new_version || force;
+	if is_new_version {
+		hub.publish("(needed because new aipack version)").await;
+	}
 
 	// -- Create the config file (only if not present)
 	// Note: For now, "config.toml" is not force, no matter what

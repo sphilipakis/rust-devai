@@ -156,6 +156,9 @@ impl Executor {
 
 			ExecActionEvent::CmdRun(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
+				// Here we init base if version changed. This was we make sure doc and all work as expected
+				init_base(false).await?;
+				// NOTE: We might want to change this at some point and not require a Workspace to run (since now we have the base)
 				let dir_ctx = init_wks(None, false).await?;
 				// NOTE: For now, we create the runtime here. But we need to think more about the Runtime / Executor relationship.
 				let exec_sender = self.sender();

@@ -41,8 +41,7 @@ impl RunRedoCtx {
 /// Exec for the Run command
 /// Might do a single run or a watch
 pub async fn exec_run(run_args: RunArgs, runtime: Runtime) -> Result<Arc<RunRedoCtx>> {
-	// NOTE - This is important to avoid hanging when performing a run that requires a .aipack initialization
-	// TODO - Might need to find a better place to put this, or change the way the initialization and run are orchestrated
+	// NOTE - We might be able to remove this now. Will test later.
 	tokio::task::yield_now().await;
 
 	// -- First exec
