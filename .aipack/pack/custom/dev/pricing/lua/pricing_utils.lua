@@ -1,4 +1,4 @@
-local base_dir     = ".ai-pricing"
+local base_dir     = "data/models-pricing"
 
 return {
   base_dir      = base_dir,

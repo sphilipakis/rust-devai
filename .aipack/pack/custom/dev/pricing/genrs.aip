@@ -16,7 +16,7 @@ Then, we can rust this one as `aip run dev@pricing/genrs`
 
 local p_utils = require("pricing_utils")
 
-local json_content = aip.file.load(p_aip.json_all_path).content
+local json_content = aip.file.load(p_utils.json_all_path).content
 
 local data_rs = aip.file.load("src/pricing/data.rs")
 
@@ -44,7 +44,9 @@ Here is the `data.rs` file to update
 Important, we have to keep the `data.rs` types as is, just update the values. Keep the whitepsaces too. 
 
 Some rules, 
-    - for openai model, when the name is prefix `openai-` you can remove it from the model name. 
+- for openai model, when the name is prefix `openai-` you can remove it from the model name. 
+- Ignore "preview" models
+- Only change what needs to be changed.
 
 Just give back the `data.rs` file content in a rust makdown code block. 
 
