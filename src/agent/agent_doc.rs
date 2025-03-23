@@ -109,19 +109,15 @@ impl AgentDoc {
 		//       So, here we do one path, and capture what we need, exactly the way we need it
 
 		let mut block_state = InBlockState::Out;
-		let mut current_backticks = 0; // Track current block's backtick count (3 or 4)
 
 		for line in self.raw_content.lines() {
-			// Only update block state and check for backticks when not in prompt part mode
-			if !capture_mode.is_prompt_part() {
-				block_state = block_state.compute_new(line);
-			}
-
-			// If heading we decide the capture mode
-			if (capture_mode.is_prompt_part() || block_state.is_out())
-				&& line.starts_with('#')
-				&& !line.starts_with("##")
-			{
+			// Update block state regardless of capture mode
+			let old_block_state = block_state;
+			block_state = block_state.compute_new(line);
+			
+			// If heading we decide the capture mode, but only if we're not inside a code block
+			// or if we're not in prompt part mode
+			if block_state.is_out() && line.starts_with('#') && !line.starts_with("##") {
 				let header_lower = line[1..].trim().to_lowercase();
 				if header_lower == "options" {
 					capture_mode = CaptureMode::OptionsSection;
@@ -141,6 +137,12 @@ impl AgentDoc {
 					finalize_current_prompt_part(&mut current_part, &mut prompt_parts);
 					// then, we create the new current_part
 					current_part = Some(CurrentPromptPart(part_kind, part_options_str, Vec::new()));
+				} else if capture_mode.is_prompt_part() && !block_state.is_out() {
+					// If we're in a prompt part and inside a code block,
+					// we should not process this as a section change
+					if let Some(current_part) = &mut current_part {
+						current_part.2.push(line);
+					}
 				} else {
 					// Stop processing current section if new top-level header
 					capture_mode = CaptureMode::None;
@@ -148,113 +150,95 @@ impl AgentDoc {
 				continue;
 			}
 
-			// Only process code block markers for non-prompt part sections
-			if !capture_mode.is_prompt_part() {
-				// Check for code block markers with either 3 or 4 backticks
-				let is_toml_block_start = line.starts_with("```toml") || line.starts_with("````toml");
-				let is_lua_block_start = line.starts_with("```lua") || line.starts_with("````lua");
-				let is_block_end = (line == "```" || line == "````")
-					&& (current_backticks == 3 && line.starts_with("```")
-						|| current_backticks == 4 && line.starts_with("````"));
+			// Handle content based on current capture mode
+			match capture_mode {
+				CaptureMode::None => {}
 
-				// Track the number of backticks used for the current block
-				if is_toml_block_start || is_lua_block_start {
-					current_backticks = if line.starts_with("````") { 4 } else { 3 };
-				} else if is_block_end {
-					current_backticks = 0;
+				// -- Prompt Parts (handle separately)
+				CaptureMode::PromptPart => {
+					if let Some(current_part) = &mut current_part {
+						current_part.2.push(line);
+					}
 				}
 
-				match capture_mode {
-					CaptureMode::None => {}
-
-					// -- Options
-					CaptureMode::OptionsSection => {
-						if is_toml_block_start {
-							capture_mode = CaptureMode::OptionsTomlBlock;
-							continue;
-						}
+				// -- Options
+				CaptureMode::OptionsSection => {
+					if (line.starts_with("```toml") || line.starts_with("````toml")) && old_block_state.is_out() {
+						capture_mode = CaptureMode::OptionsTomlBlock;
+						continue;
 					}
-
-					CaptureMode::OptionsTomlBlock => {
-						if is_block_end {
-							capture_mode = CaptureMode::None;
-							continue;
-						} else {
-							push_line(&mut options_toml, line);
-						}
-					}
-
-					// -- Before All
-					CaptureMode::BeforeAllSection => {
-						if is_lua_block_start {
-							capture_mode = CaptureMode::BeforeAllCodeBlock;
-							continue;
-						}
-					}
-					CaptureMode::BeforeAllCodeBlock => {
-						if is_block_end {
-							capture_mode = CaptureMode::None;
-							continue;
-						} else {
-							push_line(&mut before_all_script, line);
-						}
-					}
-
-					// -- Data
-					CaptureMode::DataSection => {
-						if is_lua_block_start {
-							capture_mode = CaptureMode::DataCodeBlock;
-							continue;
-						}
-					}
-					CaptureMode::DataCodeBlock => {
-						if is_block_end {
-							capture_mode = CaptureMode::None;
-							continue;
-						} else {
-							push_line(&mut data_script, line);
-						}
-					}
-
-					// -- Output
-					CaptureMode::OutputSection => {
-						if is_lua_block_start {
-							capture_mode = CaptureMode::OutputCodeBlock;
-							continue;
-						}
-					}
-					CaptureMode::OutputCodeBlock => {
-						if is_block_end {
-							capture_mode = CaptureMode::None;
-							continue;
-						} else {
-							push_line(&mut output_script, line);
-						}
-					}
-
-					// -- After All
-					CaptureMode::AfterAllSection => {
-						if is_lua_block_start {
-							capture_mode = CaptureMode::AfterAllCodeBlock;
-							continue;
-						}
-					}
-					CaptureMode::AfterAllCodeBlock => {
-						if is_block_end {
-							capture_mode = CaptureMode::None;
-							continue;
-						} else {
-							push_line(&mut after_all_script, line);
-						}
-					}
-
-					// For PromptPart, we handle it separately below
-					CaptureMode::PromptPart => {}
 				}
-			} else {
-				// For PromptPart, simply collect all lines as content
-				if let Some(current_part) = &mut current_part {
-					current_part.2.push(line);
+				CaptureMode::OptionsTomlBlock => {
+					if line.starts_with("```") && block_state.is_out() && !old_block_state.is_out() {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut options_toml, line);
+					}
+				}
+
+				// -- Before All
+				CaptureMode::BeforeAllSection => {
+					if (line.starts_with("```lua") || line.starts_with("````lua")) && old_block_state.is_out() {
+						capture_mode = CaptureMode::BeforeAllCodeBlock;
+						continue;
+					}
+				}
+				CaptureMode::BeforeAllCodeBlock => {
+					if line.starts_with("```") && block_state.is_out() && !old_block_state.is_out() {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut before_all_script, line);
+					}
+				}
+
+				// -- Data
+				CaptureMode::DataSection => {
+					if (line.starts_with("```lua") || line.starts_with("````lua")) && old_block_state.is_out() {
+						capture_mode = CaptureMode::DataCodeBlock;
+						continue;
+					}
+				}
+				CaptureMode::DataCodeBlock => {
+					if line.starts_with("```") && block_state.is_out() && !old_block_state.is_out() {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut data_script, line);
+					}
+				}
+
+				// -- Output
+				CaptureMode::OutputSection => {
+					if (line.starts_with("```lua") || line.starts_with("````lua")) && old_block_state.is_out() {
+						capture_mode = CaptureMode::OutputCodeBlock;
+						continue;
+					}
+				}
+				CaptureMode::OutputCodeBlock => {
+					if line.starts_with("```") && block_state.is_out() && !old_block_state.is_out() {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut output_script, line);
+					}
+				}
+
+				// -- After All
+				CaptureMode::AfterAllSection => {
+					if (line.starts_with("```lua") || line.starts_with("````lua")) && old_block_state.is_out() {
+						capture_mode = CaptureMode::AfterAllCodeBlock;
+						continue;
+					}
+				}
+				CaptureMode::AfterAllCodeBlock => {
+					if line.starts_with("```") && block_state.is_out() && !old_block_state.is_out() {
+						capture_mode = CaptureMode::None;
+						continue;
+					} else {
+						push_line(&mut after_all_script, line);
+					}
 				}
 			}
 		}
