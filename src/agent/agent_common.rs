@@ -136,6 +136,45 @@ impl Agent {
 	}
 }
 
+// Some test implementations
+#[cfg(test)]
+mod for_test {
+	use super::*;
+	use crate::agent::AgentDoc;
+	use serde_json::json;
+
+	impl Agent {
+		/// Create a mock agent from content only
+		pub fn mock_from_content(content: &str) -> Result<Agent> {
+			let agent_file_name = "mock-agent.aip";
+			let agent_ref = AgentRef::LocalPath(agent_file_name.into());
+			let doc = AgentDoc::from_content(agent_file_name, content)?;
+			let agent = doc.into_agent(
+				"mock-agent",
+				agent_ref,
+				AgentOptions::from_options_value(json!({"model": "mock-model"}))?,
+			)?;
+			Ok(agent)
+		}
+
+		/// Create a mod agent from file
+		#[allow(unused)]
+		pub fn mock_from_file(path: &str) -> Result<Agent> {
+			let agent_doc = AgentDoc::from_file(path)?;
+			let agent_ref = AgentRef::LocalPath(path.into());
+			let spath = SPath::new(path);
+
+			let agent = agent_doc.into_agent(
+				spath.stem(),
+				agent_ref,
+				AgentOptions::from_options_value(json!({"model": "mock-model"}))?,
+			)?;
+
+			Ok(agent)
+		}
+	}
+}
+
 // region:    --- AgentInner
 
 /// AgentInner is ok to be public to allow user-code to build Agent simply.
@@ -166,3 +205,7 @@ pub(super) struct AgentInner {
 }
 
 // endregion: --- AgentInner
+
+#[cfg(test)]
+#[path = "../_tests/tests_agent_parse.rs"]
+mod tests_agent_parse;
