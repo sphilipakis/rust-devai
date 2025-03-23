@@ -75,6 +75,14 @@ pub async fn run_command_agent(
 				options,
 			},
 
+			// if it is another AipackCustom, we throw error
+			FromValue::AipackCustom(other) => {
+				return Err(Error::custom(format!(
+					"Aipack custom '{}' not supported at the Before All stage",
+					other.as_ref()
+				)));
+			}
+
 			// just plane value
 			FromValue::OriginalValue(value) => BeforeAllResponse {
 				inputs,
@@ -93,7 +101,6 @@ pub async fn run_command_agent(
 	// Normalize the inputs, so, if empty, we have one input of value Value::Null
 	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
 	// The default of
-	let before_all = before_all.unwrap_or_default();
 	let agent: Agent = match options_to_merge {
 		Some(options_to_merge) => {
 			let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
@@ -102,6 +109,7 @@ pub async fn run_command_agent(
 		}
 		None => agent,
 	};
+	let before_all = before_all.unwrap_or_default();
 
 	// -- Print the run info
 	let genai_info = get_genai_info(&agent);

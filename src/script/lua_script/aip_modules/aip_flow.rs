@@ -19,6 +19,9 @@ use mlua::{Lua, Table, Value};
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
+	let data_response_fn = lua.create_function(aipack_data_response)?;
+	table.set("data_response", data_response_fn)?;
+
 	let before_all_response_fn = lua.create_function(aipack_before_all_response)?;
 	table.set("before_all_response", before_all_response_fn)?;
 
@@ -32,28 +35,29 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Returns a response that overrides inputs.
+/// Customsize the aipack execution flow at the 'Before All' stage.
+///
 ///
 /// ```lua
 /// -- API Signature
-/// aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table
+/// aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions, before_all?: any}) -> table
 /// ```
 ///
 /// ### Arguments
 ///
-/// - `data: table` Table containing the inputs and options.
-///   - `inputs: any[]` An array of inputs to override.
-///   - `options: AgentOptions` Agent options.
+/// - inputs     - Must be a list if present
+/// - options    - The partial AgentOptions (.e.g, model, input_concurrency, model_aliases)
+/// - before_all - what could have been simply returned if not needed to override any inputs or options
 ///
 /// ### Returns
 ///
-/// Returns a Lua table with the structure:
+/// Returns a Lua table with the structure. This return value does not need to be used. It's for AIPACK internal execution flow logic.
 ///
 /// ```ts
 /// {
 ///   _aipack_: {
 ///     kind: "BeforeAllResponse",
-///     data: any
+///     data: BeforeAllResponse
 ///   }
 /// }
 /// ```
@@ -64,6 +68,47 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "BeforeAllResponse")?;
+	inner.set("data", data)?;
+	let outer = lua.create_table()?;
+	outer.set("_aipack_", inner)?;
+
+	Ok(Value::Table(outer))
+}
+
+/// ## Lua Documentation
+///
+/// Customsize the aipack execution flow at the 'Data' stage.
+///
+/// ```lua
+/// -- API Signature
+/// aip.flow.data_response(data: {input:? any, options?: AgentOptions}) -> table
+/// ```
+///
+/// ### Arguments
+///
+/// - input      - Can be nil, or any value. If absent, the original input will be passed
+/// - options    - The partial AgentOptions (.e.g, model, input_concurrency, model_aliases)
+/// - data       - what could have been simply returned if not needed to override any inputs or options
+///
+/// ### Returns
+///
+/// Returns a Lua table with the structure. This return value does not need to be used. It's for AIPACK internal execution flow logic.
+///
+/// ```ts
+/// {
+///   _aipack_: {
+///     kind: "BeforeAllResponse",
+///     data: BeforeAllResponse
+///   }
+/// }
+/// ```
+///
+/// ### Error
+///
+/// This function does not directly return any errors. Errors might occur during the creation of lua table.
+fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
+	let inner = lua.create_table()?;
+	inner.set("kind", "DataResponse")?;
 	inner.set("data", data)?;
 	let outer = lua.create_table()?;
 	outer.set("_aipack_", inner)?;

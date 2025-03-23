@@ -1,7 +1,6 @@
-# Config
+# Options
 
 ```toml
-[genai]
 model = "test_model_for_demo"
 ```
 

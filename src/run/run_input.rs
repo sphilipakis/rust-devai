@@ -1,12 +1,12 @@
 use crate::Result;
-use crate::agent::{Agent, PromptPart, parse_prompt_part_options};
+use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
 use crate::pricing::price_it;
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::script::{AipackCustom, FromValue};
+use crate::script::{AipackCustom, DataResponse, FromValue};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_num};
 use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, Usage};
@@ -14,6 +14,7 @@ use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tokio::time::Instant;
+use value_ext::JsonValueExt;
 
 // region:    --- RunAgentInputResponse
 
@@ -80,34 +81,65 @@ pub async fn run_agent_input(
 	let agent_dir_str = agent_dir.as_str();
 
 	// -- Execute data
-	let data = if let Some(data_script) = agent.data_script().as_ref() {
+	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
 		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir_str]))?;
-		serde_json::to_value(lua_value)?
+		let data_res = serde_json::to_value(lua_value)?;
+
+		// skip input if aipack action is sent
+		match AipackCustom::from_value(data_res)? {
+			// If it is not a AipackCustom the data is the orginal value
+			FromValue::OriginalValue(data) => DataResponse {
+				data: Some(data),
+				input: Some(input),
+				..Default::default()
+			},
+
+			// If we have a skip, we can skip
+			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
+				let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
+
+				hub.publish(format!("-! Aipack Skip input at Data stage: {label}{reason_txt}"))
+					.await;
+				return Ok(None);
+			}
+
+			FromValue::AipackCustom(AipackCustom::DataResponse(DataResponse {
+				input: input_ov,
+				data,
+				options,
+			})) => DataResponse {
+				input: input_ov.or(Some(input)),
+				data,
+				options,
+			},
+
+			FromValue::AipackCustom(other) => {
+				return Err(format!(
+					"-! Aipack Custom '{}' is not supported at the Data stage",
+					other.as_ref()
+				)
+				.into());
+			}
+		}
 	} else {
-		Value::Null
+		DataResponse {
+			input: Some(input),
+			data: None,
+			options: None,
+		}
 	};
 
-	// skip input if aipack action is sent
-	let data = match AipackCustom::from_value(data)? {
-		// If it is not a AipackCustom the data is the orginal value
-		FromValue::OriginalValue(data) => data,
+	// -- Normalize the context
+	let input = input.unwrap_or(Value::Null);
+	let data = data.unwrap_or(Value::Null);
 
-		// If we have a skip, we can skip
-		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-			let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
-
-			hub.publish(format!("-! Aipack Skip input at Data stage: {label}{reason_txt}"))
-				.await;
-			return Ok(None);
-		}
-
-		FromValue::AipackCustom(other) => {
-			return Err(format!(
-				"-! Aipack Custom '{}' is not supported at the Data stage",
-				other.as_ref()
-			)
-			.into());
-		}
+	// here we use cow, not not clone the agent if no options
+	let agent: Cow<Agent> = if let Some(options_to_merge) = options {
+		let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
+		let options_ov = agent.options_as_ref().merge_new(options_to_merge)?;
+		Cow::Owned(agent.new_merge(options_ov)?)
+	} else {
+		Cow::Borrowed(agent)
 	};
 
 	let data_scope = HashMap::from([("data".to_string(), data.clone())]);

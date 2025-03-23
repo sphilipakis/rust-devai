@@ -61,7 +61,50 @@ async fn test_run_agent_script_require_lua() -> Result<()> {
 /// NOTE: For now disable the HubCapture test see below
 ///
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn test_run_agent_script_before_all_simple() -> Result<()> {
+async fn test_run_agent_script_data_response_full_ov() -> Result<()> {
+	// -- Setup & Fixtures
+	let content = r#"
+# Data
+```lua
+return aip.flow.data_response({
+	input   = "new input",
+  data    = "hello",
+	options = { model = "another-model"}
+})
+```
+# Output
+```lua
+return {
+  input   = input,
+	data    = data,
+	options = options,
+}
+```
+	"#;
+	let agent = Agent::mock_from_content(content)?;
+	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+
+	// -- Execute
+	let on_path = SPath::new("./some-random/file.txt");
+	let path_ref = FileMeta::from(on_path);
+	let inputs = vec![serde_json::to_value(path_ref)?];
+
+	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
+
+	// -- Check
+	let outputs = res.outputs.ok_or("Should have output values")?;
+	let output = outputs.first().expect("should have one output");
+	assert_eq!(output.x_get_str("data")?, "hello");
+	assert_eq!(output.x_get_str("input")?, "new input");
+	assert_eq!(output.x_get_str("/options/model")?, "another-model");
+
+	Ok(())
+}
+
+/// NOTE: For now disable the HubCapture test see below
+///
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_sandbox_01()?;
 	let agent = load_test_agent("./agent-script/agent-before-all.aip", &runtime)?;

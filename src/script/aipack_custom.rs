@@ -5,11 +5,24 @@ use value_ext::JsonValueExt;
 /// Custom data that can be returned by the lua script for special actions
 #[derive(Debug, strum::AsRefStr)]
 pub enum AipackCustom {
-	/// Will
-	Skip {
-		reason: Option<String>,
-	},
+	/// Will skip the current execution flow
+	/// This can be returned in BeforeAll and Data stage
+	Skip { reason: Option<String> },
+
+	/// Customize the data response
+	/// Can only be returned from the Data stage
+	DataResponse(DataResponse),
+
+	/// Customize the before_all response
+	/// Can only be returned from the BeforeAll stage
 	BeforeAllResponse(BeforeAllResponse),
+}
+
+#[derive(Debug, Default)]
+pub struct DataResponse {
+	pub input: Option<Value>,
+	pub data: Option<Value>,
+	pub options: Option<Value>,
 }
 
 #[derive(Debug, Default)]
@@ -66,9 +79,13 @@ impl AipackCustom {
 		if kind == "Skip" {
 			let reason: Option<String> = value.x_get("/_aipack_/data/reason").ok();
 			Ok(FromValue::AipackCustom(Self::Skip { reason }))
+		} else if kind == "DataResponse" {
+			let custom_data: Option<Value> = value.x_get("/_aipack_/data").ok();
+			let data_response = parse_data_response(custom_data)?;
+			Ok(FromValue::AipackCustom(AipackCustom::DataResponse(data_response)))
 		} else if kind == "BeforeAllResponse" {
 			let custom_data: Option<Value> = value.x_get("/_aipack_/data").ok();
-			let before_all_response = extract_inputs_and_before_all(custom_data)?;
+			let before_all_response = parse_before_all_response(custom_data)?;
 			Ok(FromValue::AipackCustom(AipackCustom::BeforeAllResponse(
 				before_all_response,
 			)))
@@ -81,12 +98,13 @@ impl AipackCustom {
 // region:    --- Support
 
 /// extract, (inputs, before_all_data, options)
-fn extract_inputs_and_before_all(custom_data: Option<Value>) -> Result<BeforeAllResponse> {
+fn parse_before_all_response(custom_data: Option<Value>) -> Result<BeforeAllResponse> {
 	let Some(custom_data) = custom_data else {
 		return Ok(BeforeAllResponse::default());
 	};
 
-	const ERROR_CAUSE: &str = "aipack::before_all_response(data), can only have `.input` and `.before_all`)";
+	const ERROR_CAUSE: &str =
+		"aip.flow.before_all_response(arg) - 'arg' can only have `.inputs`, `.options`, `.before_all`)";
 
 	let before_all_response = match custom_data {
 		Value::Object(mut obj) => {
@@ -101,7 +119,8 @@ fn extract_inputs_and_before_all(custom_data: Option<Value>) -> Result<BeforeAll
 				Some(Value::Null) => None,
 				Some(_) => {
 					return Err(Error::BeforeAllFailWrongReturn {
-						cause: "aipack::before_all_response data .inputs must be an Null or an Array".to_string(),
+						cause: "aip.flow.before_all_response(arg) - 'arg.inputs` must be an nil or an array"
+							.to_string(),
 					});
 				}
 				None => None,
@@ -120,6 +139,34 @@ fn extract_inputs_and_before_all(custom_data: Option<Value>) -> Result<BeforeAll
 			}
 		}
 		_ => BeforeAllResponse::default(),
+	};
+
+	Ok(before_all_response)
+}
+
+/// extract, (input, options)
+fn parse_data_response(custom_data: Option<Value>) -> Result<DataResponse> {
+	let Some(custom_data) = custom_data else {
+		return Ok(DataResponse::default());
+	};
+
+	const ERROR_CAUSE: &str = "aip.flow.data_response(arg) argumen can can only have `.input`, `.options`)";
+
+	let before_all_response = match custom_data {
+		Value::Object(mut obj) => {
+			let input = obj.remove("input");
+			let data = obj.remove("data");
+			let options = obj.remove("options");
+
+			let keys: Vec<String> = obj.keys().map(|k| k.to_string()).collect();
+			if !keys.is_empty() {
+				return Err(Error::BeforeAllFailWrongReturn {
+					cause: format!("{ERROR_CAUSE}. But also contained: {}", keys.join(", ")),
+				});
+			}
+			DataResponse { input, data, options }
+		}
+		_ => DataResponse::default(),
 	};
 
 	Ok(before_all_response)
