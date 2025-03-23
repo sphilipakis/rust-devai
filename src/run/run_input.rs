@@ -103,6 +103,7 @@ pub async fn run_agent_input(
 				return Ok(None);
 			}
 
+			// We have a `return aip.flow.data_response(...)``
 			FromValue::AipackCustom(AipackCustom::DataResponse(DataResponse {
 				input: input_ov,
 				data,
@@ -132,7 +133,6 @@ pub async fn run_agent_input(
 	// -- Normalize the context
 	let input = input.unwrap_or(Value::Null);
 	let data = data.unwrap_or(Value::Null);
-
 	// here we use cow, not not clone the agent if no options
 	let agent: Cow<Agent> = if let Some(options_to_merge) = options {
 		let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
@@ -142,7 +142,12 @@ pub async fn run_agent_input(
 		Cow::Borrowed(agent)
 	};
 
-	let data_scope = HashMap::from([("data".to_string(), data.clone())]);
+	let data_scope = HashMap::from([
+		// The hbs scope data
+		// Note: for now, we do not add the before all
+		("data".to_string(), data.clone()),
+		("input".to_string(), input.clone()),
+	]);
 
 	// -- Execute genai if we have an instruction
 	let mut chat_messages: Vec<ChatMessage> = Vec::new();
