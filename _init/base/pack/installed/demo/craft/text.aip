@@ -34,7 +34,6 @@ end
 print("\nOPEN your demo@craft/text prompt file: " .. prompt_file_rel_path .. "\n\n")
 
 
-
 -- Split the content
 local first_part, content = p_utils.prep_inst_and_content(prompt_file.content, "====", {content_is_default = true})
 
@@ -45,20 +44,30 @@ if first_part ~= nil then
     meta, inst = aip.md.extract_meta(first_part)
 end
 
+local options = nil
+if meta then
+  options = {}
+  options.model_aliases = meta.model_aliases
+  options.model         = meta.model
+end
+
 local should_skip = p_utils.should_skip(inst, content)
 if should_skip ~= nil then
     return should_skip
 end
 
-
--- Return the processed data
-return {
+local data = {
     first_part = first_part,
     content    = content,
     inst       = inst,
     path       = prompt_file.path,
-    
 }
+
+-- Return the processed data
+return aip.flow.data_response({
+    data    = data,
+    options = options,
+})
 ```
 
 # System
