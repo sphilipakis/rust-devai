@@ -34,8 +34,16 @@ end
 print("\nOPEN your demo@craft/text prompt file: " .. prompt_file_rel_path .. "\n\n")
 
 
+
 -- Split the content
-local inst, content = p_utils.prep_inst_and_content(prompt_file.content, "====", {content_is_default = true})
+local first_part, content = p_utils.prep_inst_and_content(prompt_file.content, "====", {content_is_default = true})
+
+local meta = nil
+local inst = nil
+if first_part ~= nil then
+    -- extract the eventual #!meta params
+    meta, inst = aip.md.extract_meta(first_part)
+end
 
 local should_skip = p_utils.should_skip(inst, content)
 if should_skip ~= nil then
@@ -45,9 +53,11 @@ end
 
 -- Return the processed data
 return {
-    path      = prompt_file.path,
-    content   = content,
-    content_inst = inst,
+    first_part = first_part,
+    content    = content,
+    inst       = inst,
+    path       = prompt_file.path,
+    
 }
 ```
 
@@ -59,19 +69,21 @@ Your goal is to proofread the English of the document the user is giving you.
 - For code, don't change the HTML code, layout, or any structural aspect of the document.
 - Don't wrap the answer in a markdown code block or give an explanation.
 - Do not need to add bullet points, but when there are some uses  `-`
-- Only when it looks like a tweet with some hashtags, then don't rephrase or re-layout unless necessary, as it's for a short tweet.
-- The user might give some instructions as well; these will be marked with `== Start User Instructions` ... `== End User Instruction`
+- Only when it looks like a tweet with some hashtags, then don't rephrase or remove/add lines, as it's for a short tweet.
+- The user might give some instructions as well; these will be marked with `<USER-INSTRUCTION>` Tag
+- The user content is inside the `<CONTENT>` tag
 
 # Instruction
 
-{{#if data.content_inst}}
-=== Here are the additional user instructions
-{{data.content_inst}}}
+{{#if data.inst}}
+<USER-INSTRUCTION>
+{{data.inst}}}
+</USER-INSTRUCTION>
 {{/if}}
 
-=== Here is the content to work on: 
-
+<CONTENT>
 {{data.content}}
+</CONTENT>
 
 
 # Output
@@ -80,8 +92,8 @@ Your goal is to proofread the English of the document the user is giving you.
 local preamble = "" -- This will be the eventual instruction with a separator
 local ai_content = ai_response.content
 
-if data.content_inst then
-    local content_inst = aip.text.trim_end(data.content_inst)
+if data.first_part then
+    local content_inst = aip.text.trim_end(data.first_part)
     preamble = content_inst .. "\n\n====\n\n"
     ai_content = aip.text.trim_start(ai_content)
 end
