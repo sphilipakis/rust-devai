@@ -60,7 +60,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 
 	let cmd_agent_name = &run_args.cmd_agent_name;
 
-	let agent = find_agent(cmd_agent_name, runtime.dir_context())?;
+	let agent = find_agent(cmd_agent_name, runtime.dir_context(), None)?;
 
 	let run_options = RunCommandOptions::new(run_args)?;
 
@@ -92,7 +92,7 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 	} = run_redo_ctx;
 
 	// make sure to reload the agent
-	let agent = match find_agent(agent.name(), runtime.dir_context()) {
+	let agent = match find_agent(agent.name(), runtime.dir_context(), None) {
 		Ok(agent) => agent,
 		Err(err) => {
 			hub.publish(err).await;

@@ -1,0 +1,8 @@
+# Output
+
+```lua
+local res = aip.agent.run("agent-hello", { inputs = {"me"} })
+return {
+    res = res.outputs[1]
+}
+```

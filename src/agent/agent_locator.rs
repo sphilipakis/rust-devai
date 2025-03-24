@@ -9,15 +9,27 @@ use crate::support::tomls::parse_toml;
 use crate::{Error, Result};
 use simple_fs::{SPath, read_to_string};
 
-pub fn find_agent(name: &str, dir_context: &DirContext) -> Result<Agent> {
+/// Find an agent by it's name, dir_context, and eventual base_dir
+/// Note - When base_dir, it means that this will be the relative path to look for this agent if relative
+///        This is used for the aip.agent.run, to make sure we are relative to the caller agent
+pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>) -> Result<Agent> {
 	let partial_agent_ref = PartialAgentRef::new(name);
 
+	// Merge the workspace and base agent options
 	let base_options = load_and_merge_configs_agent_options(dir_context)?;
 
 	let agent = match partial_agent_ref {
 		// -- If local path, we try to find the .aip and run it
 		PartialAgentRef::LocalPath(local_path) => {
-			let path = dir_context.resolve_path((&local_path).into(), PathResolver::CurrentDir)?;
+			let path = SPath::new(&local_path);
+			let path = if path.is_absolute() {
+				path
+			} else {
+				match base_dir {
+					Some(base_dir) => base_dir.join(&path),
+					None => dir_context.resolve_path(path, PathResolver::CurrentDir)?,
+				}
+			};
 			let possible_paths = possible_aip_paths(path.clone(), false);
 			let found_path = possible_paths.into_iter().find(|p| p.exists()).ok_or_else(|| {
 				Error::custom(format!(
@@ -167,7 +179,7 @@ mod tests {
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context)?;
+			let agent = find_agent(name, dir_context, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);
@@ -190,7 +202,7 @@ mod tests {
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context)?;
+			let agent = find_agent(name, dir_context, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);
@@ -215,7 +227,7 @@ mod tests {
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context)?;
+			let agent = find_agent(name, dir_context, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);

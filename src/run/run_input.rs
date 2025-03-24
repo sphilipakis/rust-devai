@@ -69,12 +69,13 @@ pub async fn run_agent_input(
 	let client = runtime.genai_client();
 
 	// -- Build the scope
-	// Fix me: Probably need to get the engine from the arg
-	let lua_engine = runtime.new_lua_engine()?;
+	// Note: Probably way to optimize the number of lua engine we create
+	//       However, nice to be they are fully scoped.
+	let lua_engine = runtime.new_lua_engine_with_ctx(literals)?;
+
 	let lua_scope = lua_engine.create_table()?;
 	lua_scope.set("input", lua_engine.serde_to_lua_value(input.clone())?)?;
 	lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all_result.clone())?)?;
-	lua_scope.set("CTX", literals.to_lua(&lua_engine)?)?;
 	lua_scope.set("options", agent.options_as_ref())?;
 
 	let agent_dir = agent.file_dir()?;
@@ -300,13 +301,13 @@ pub async fn run_agent_input(
 
 	// -- Exec output
 	let res = if let Some(output_script) = agent.output_script() {
-		let lua_engine = runtime.new_lua_engine()?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(literals)?;
+
 		let lua_scope = lua_engine.create_table()?;
 		lua_scope.set("input", lua_engine.serde_to_lua_value(input)?)?;
 		lua_scope.set("data", lua_engine.serde_to_lua_value(data)?)?;
 		lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all_result)?)?;
 		lua_scope.set("ai_response", ai_response)?;
-		lua_scope.set("CTX", literals.to_lua(&lua_engine)?)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
 		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent_dir_str]))?;

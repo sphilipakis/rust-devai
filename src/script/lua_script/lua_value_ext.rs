@@ -1,4 +1,4 @@
-use mlua::Value;
+use mlua::{Table, Value};
 
 /// Convenient Lua Value extension
 ///
@@ -68,5 +68,36 @@ impl LuaValueExt for Option<Value> {
 
 	fn x_get_f64(&self, key: &str) -> Option<f64> {
 		self.as_ref()?.x_get_f64(key)
+	}
+}
+
+impl LuaValueExt for Table {
+	fn x_get_value(&self, key: &str) -> Option<Value> {
+		let val = self.get::<Value>(key).ok()?;
+		if val.is_nil() { None } else { Some(val) }
+	}
+
+	fn x_get_string(&self, key: &str) -> Option<String> {
+		let val = self.get::<Value>(key).ok()?;
+		let val = val.as_str()?;
+		Some(val.to_string())
+	}
+
+	fn x_get_bool(&self, key: &str) -> Option<bool> {
+		let val = self.get::<Value>(key).ok()?;
+		let val = val.as_boolean()?;
+		Some(val)
+	}
+
+	fn x_get_i64(&self, key: &str) -> Option<i64> {
+		let val = self.get::<Value>(key).ok()?;
+		let val = val.as_i64()?;
+		Some(val)
+	}
+
+	fn x_get_f64(&self, key: &str) -> Option<f64> {
+		let val = self.get::<Value>(key).ok()?;
+		let val = val.as_f64()?;
+		Some(val)
 	}
 }

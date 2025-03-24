@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
-use crate::run::get_genai_client;
+use crate::run::{Literals, get_genai_client};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
@@ -36,7 +36,12 @@ impl Runtime {
 /// NOTE: For now, we do not keep any Lau engine in the Runtime, but just create new ones.
 ///       Later, we might have an optmized reuse strategy of lua engines (but need to be cautious as not multi-threaded)
 impl Runtime {
-	pub fn new_lua_engine(&self) -> Result<LuaEngine> {
+	pub fn new_lua_engine_with_ctx(&self, ctx: &Literals) -> Result<LuaEngine> {
+		LuaEngine::new_with_ctx(self.clone(), ctx)
+	}
+
+	#[cfg(test)]
+	pub fn new_lua_engine_without_ctx_test_only(&self) -> Result<LuaEngine> {
 		LuaEngine::new(self.clone())
 	}
 }

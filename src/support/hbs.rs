@@ -49,7 +49,7 @@ The files are:
 		"#;
 
 		// -- Exec
-		let lua_engine = runtime.new_lua_engine()?;
+		let lua_engine = runtime.new_lua_engine_without_ctx_test_only()?;
 		let data = lua_engine.eval(script, None, None)?;
 		let data = serde_json::to_value(data)?;
 		let value = json!({

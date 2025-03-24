@@ -119,11 +119,11 @@ return {
 
 		// -- Check
 		assert_ends_with(res.x_get_str("WORKSPACE_DIR")?, "tests-data/sandbox-01");
-		assert_eq!(res.x_get_str("AGENT_FILE_NAME")?, "reflective-agent.aip");
-		assert_eq!(res.x_get_str("AGENT_FILE_STEM")?, "reflective-agent");
+		assert_eq!(res.x_get_str("AGENT_FILE_NAME")?, "mock-reflective-agent.aip");
+		assert_eq!(res.x_get_str("AGENT_FILE_STEM")?, "mock-reflective-agent");
 		assert_ends_with(res.x_get_str("WORKSPACE_AIPACK_DIR")?, "tests-data/sandbox-01/.aipack");
 		assert_ends_with(res.x_get_str("BASE_AIPACK_DIR")?, "tests-data/.aipack-base");
-		assert_ends_with(res.x_get_str("AGENT_FILE_PATH")?, "mock/reflective-agent.aip");
+		assert_ends_with(res.x_get_str("AGENT_FILE_PATH")?, "mock-reflective-agent.aip");
 
 		Ok(())
 	}

@@ -9,6 +9,7 @@ mod run_options;
 
 pub use ai_response::*;
 pub use genai_client::*;
+pub use literals::Literals;
 pub use run_command::*;
 pub use run_options::*;
 

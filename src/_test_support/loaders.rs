@@ -13,7 +13,7 @@ pub fn load_inline_agent(path: &str, content: impl Into<String>) -> Result<Agent
 }
 
 pub fn load_test_agent(name: &str, runtime: &Runtime) -> Result<Agent> {
-	find_agent(name, runtime.dir_context())
+	find_agent(name, runtime.dir_context(), None)
 }
 
 /// Will create and agent where the `# Output` refect the return of the `# Data`
@@ -22,7 +22,7 @@ pub fn load_test_agent(name: &str, runtime: &Runtime) -> Result<Agent> {
 /// NOTE: This is a in memory agent, with a fake path
 pub fn load_reflective_agent(data_lua_code: &str) -> Result<Agent> {
 	load_inline_agent(
-		"./mock/reflective-agent.aip",
+		"mock-reflective-agent.aip",
 		format!(
 			r#"
 # Data

@@ -1,5 +1,6 @@
 use crate::Result;
 use crate::hub::{HubEvent, get_hub};
+use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::lua_script::helpers::{process_lua_eval_result, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
@@ -34,6 +35,15 @@ impl LuaEngine {
 		// -- Build and return
 		let engine = LuaEngine { lua, runtime };
 
+		Ok(engine)
+	}
+
+	pub fn new_with_ctx(runtime: Runtime, ctx: &Literals) -> Result<Self> {
+		let engine = LuaEngine::new(runtime)?;
+		let lua = &engine.lua;
+		let globals = lua.globals();
+		let ctx = ctx.to_lua(&engine)?;
+		globals.set("CTX", ctx)?;
 		Ok(engine)
 	}
 }

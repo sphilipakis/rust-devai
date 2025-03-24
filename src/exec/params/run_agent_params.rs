@@ -1,14 +1,18 @@
+use crate::Result;
 use crate::agent::AgentOptions;
 use crate::run::RunAgentResponse;
 use crate::runtime::Runtime;
 use crate::script::{LuaValueExt as _, lua_value_to_serde_value};
 use crate::support::event::OneShotTx;
 use mlua::{FromLua, Lua};
+use simple_fs::SPath;
 
 /// Options for the agent run function
 #[derive(Debug)]
 pub struct RunAgentParams {
 	pub runtime: Runtime,
+
+	pub agent_dir: Option<SPath>,
 
 	pub agent_name: String,
 
@@ -19,18 +23,20 @@ pub struct RunAgentParams {
 	pub agent_options: Option<AgentOptions>,
 
 	/// The response oneshot with the RunAgentResponse
-	pub response_shot: Option<OneShotTx<RunAgentResponse>>,
+	pub response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
 }
 
 impl RunAgentParams {
 	/// Create an simple RunAgentParams with just the Runtime and agent name / path.
 	pub fn new_no_inputs(
 		runtime: Runtime,
+		agent_dir: Option<SPath>,
 		agent_name: impl Into<String>,
-		response_shot: Option<OneShotTx<RunAgentResponse>>,
+		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
 	) -> Self {
 		Self {
 			runtime,
+			agent_dir,
 			agent_name: agent_name.into(),
 			response_shot,
 			inputs: None,
@@ -40,8 +46,9 @@ impl RunAgentParams {
 
 	pub fn new_from_lua_params(
 		runtime: Runtime,
+		agent_dir: Option<SPath>,
 		agent_name: impl Into<String>,
-		response_shot: Option<OneShotTx<RunAgentResponse>>,
+		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
 		params: mlua::Value,
 		lua: &Lua,
 	) -> mlua::Result<Self> {
@@ -66,6 +73,7 @@ impl RunAgentParams {
 
 		Ok(Self {
 			runtime,
+			agent_dir,
 			agent_name: agent_name.into(),
 			inputs,
 			agent_options,
