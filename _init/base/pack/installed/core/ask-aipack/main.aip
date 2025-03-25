@@ -115,13 +115,13 @@ Here are some documentation files, separated with `=== ../../path/to/document.md
 - Format the answer the way shown in the <ANSWER-FORMAT> tag (but without the encompassing markdown code block or tag)
 
 <ANSWER-FORMAT>
-## QUESTION: user_question_sumarized
+## QUESTION: user_question_summarized
 
 _answer_
 </ANSWER-FORMAT>
 
 - When using bullet point, use the `-` character
-- For the `user_question_sumarized` text, if the question is short, put it there; if it is long or contains special characters, summarize the question and put it there.
+- For the `user_question_summarized` text, if the question is short, put it there; if it is long or contains special characters, summarize the question and put it there.
 - For the `# Instruction` and `# System`, the content is just normal markdown, not in a markdown code block, except when putting some code, where it is appropriate to put them in the appropriate code block.
 - If it is appropriate, do not hesitate to use bullet points to help clarify and conciseness.
 - When the user asks to generate a stage of an aip file, do not wrap it with a `lua` code block, just `# stage_name` and then put the Lua code in the `lua` code block.
