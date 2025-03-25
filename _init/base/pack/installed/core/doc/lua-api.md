@@ -1,6 +1,6 @@
 # API Documentation
 
-The `aip` top module is comprised of the following submodules.
+The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.lua, aip.flow, and aip.cmd.
 
 > Note: All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
@@ -1167,6 +1167,112 @@ print(aip.lua.dump(tbl))
 **Error**
 
 If the conversion fails, an error message is returned.
+
+## aip.flow
+
+Flow control functions for the AIPACK agent execution flow.
+
+The `aip.flow` module allows controlling the flow of AIPACK agent execution. The flow functions are designed to be returned so that the Agent Executor can act appropriately.
+
+### aip.flow.before_all_response
+
+```lua
+-- API Signature
+aip.flow.before_all_response(data: {inputs?: any[], options?: AgentOptions, before_all?: any}) -> table
+```
+
+Customizes the AIPACK execution flow at the "Before All" stage.
+
+Arguments:
+- data: A table that may include:
+  - inputs (optional): A list of values.
+  - options (optional): Partial AgentOptions (e.g., model, input_concurrency, model_aliases).
+  - before_all (optional): A value that, if not overridden, would have been returned by default.
+
+Returns:
+A Lua table with the structure:
+```ts
+{
+  _aipack_: {
+    kind: "BeforeAllResponse",
+    data: any
+  }
+}
+```
+
+Example:
+```lua
+local response = aip.flow.before_all_response({ inputs = {1, 2, 3}, options = { model = "gpt-4" } })
+```
+
+Error:
+Returns an error if the internal Lua table creation fails.
+
+### aip.flow.data_response
+
+```lua
+-- API Signature
+aip.flow.data_response(data: {input?: any, options?: AgentOptions}) -> table
+```
+
+Customizes the AIPACK execution flow at the "Data" stage.
+
+Arguments:
+- data: A table that may include:
+  - input (optional): The input value. If nil, the original input is passed.
+  - options (optional): Partial AgentOptions (e.g., model, input_concurrency, model_aliases).
+
+Returns:
+A Lua table with the structure:
+```ts
+{
+  _aipack_: {
+    kind: "DataResponse",
+    data: any
+  }
+}
+```
+
+Example:
+```lua
+local response = aip.flow.data_response({ input = "sample input", options = { model = "gpt-3" } })
+```
+
+Error:
+Returns an error if table creation fails.
+
+### aip.flow.skip
+
+```lua
+-- API Signature
+aip.flow.skip(reason?: string) -> table
+```
+
+Returns a response indicating a skip action for the input cycle.
+
+Arguments:
+- reason (optional): A string providing the reason for skipping the input cycle.
+
+Returns:
+A Lua table with the structure:
+```ts
+{
+  _aipack_: {
+    kind: "Skip",
+    data: {
+      reason: string | nil
+    }
+  }
+}
+```
+
+Example:
+```lua
+local response = aip.flow.skip("Not applicable")
+```
+
+Error:
+Returns an error if the internal Lua table creation fails.
 
 ## aip.cmd
 
