@@ -70,7 +70,7 @@ return aip.flow.before_all_response({
 -- === Load the knowledge/doc files
 -- The `list_load` function will list the files from the aipack parent directory and load each of them
 -- so, each item is a FileRecord
-local doc_globs = CTX.BASE_AIPACK_DIR .. "/doc/**/*.md"
+local doc_globs = {"core@doc/**/*.md"}
 local doc_files = aip.file.list_load(doc_globs, {absolute = true})
 print("Including " .. #doc_files .. " documentation files")
 
@@ -112,16 +112,16 @@ Here are some documentation files, separated with `=== ../../path/to/document.md
 
 - When the user asks a question, provide the answer.
 - Give me the file path of where the answer was found.
-- Format the answer this way:
+- Format the answer this way (but without the encompassing markdown code block, obviously)
 
 ```
-## QUESTION: _user_question_
+## QUESTION: user_question_sumarized
 
 _answer_
 ```
 
 - When using bullet point, use the `-` character
-- For the `_user_question_` text, if the question is short, put it there; if it is long or contains special characters, summarize the question and put it there.
+- For the `user_question_sumarized` text, if the question is short, put it there; if it is long or contains special characters, summarize the question and put it there.
 - For the `# Instruction` and `# System`, the content is just normal markdown, not in a markdown code block, except when putting some code, where it is appropriate to put them in the appropriate code block.
 - If it is appropriate, do not hesitate to use bullet points to help clarify and conciseness.
 - When the user asks to generate a stage of an aip file, do not wrap it with a `lua` code block, just `# stage_name` and then put the Lua code in the `lua` code block.

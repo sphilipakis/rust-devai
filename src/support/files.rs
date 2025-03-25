@@ -1,6 +1,7 @@
 use crate::{Error, Result};
 use simple_fs::SPath;
 use std::env;
+use std::fmt::format;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -107,6 +108,37 @@ fn is_buff_empty(buff: &[u8]) -> bool {
 	s.chars().all(|c| c.is_whitespace())
 }
 
+/// Will do a safer delete, moving to trash if possible
+/// returns true if it was deleted (if not exists, return false)
+/// error if not a file
+pub fn safer_delete_file(path: &SPath) -> Result<bool> {
+	if !path.exists() {
+		return Ok(false);
+	}
+	if !path.is_file() {
+		return Err(format!("Path '{path}' is not a file. Cannot delete with safer_delete_file.").into());
+	}
+
+	trash::delete(path).map_err(|err| format!("Cannot delete file '{path}'. Cause: {err}"))?;
+
+	Ok(true)
+}
+
+/// Will do a safer delete, moving to trash if possible
+/// returns true if it was deleted (if not exists, return false)
+/// error if not a file
+pub fn safer_delete_dir(path: &SPath) -> Result<bool> {
+	if !path.exists() {
+		return Ok(false);
+	}
+	if !path.is_dir() {
+		return Err(format!("Path '{path}' is not a directory. Cannot delete with safer_delete_dir.").into());
+	}
+
+	trash::delete(path).map_err(|err| format!("Cannot delete dir '{path}'. Cause: {err}"))?;
+
+	Ok(true)
+}
 // region:    --- Tests
 
 #[cfg(test)]

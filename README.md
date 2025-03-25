@@ -169,11 +169,11 @@ A single **aipack** file may comprise any of the following stages.
 
 - `# Before All` / `# After All` can be considered as the **map**/**reduce** of the agent, and these will be run before and after the input processing.
 
-[more info on stages](_init/base/doc/README.md#complete-stages-description)
+[more info on stages](_init/base/pack/installed/core/doc/README.md)README.md#complete-stages-description)
 
-## [aipack doc](_init/doc/README.md)
+## [aipack doc](_init/base/pack/installed/core/doc/README.md)
 
-See the aipack documentation at **[_init/doc/README.md](_init/base/doc/README.md)** (With [Lua modules doc](_init/base/doc/lua.md))
+See the aipack documentation at **[_init/doc/README.md](_init/base/pack/installed/core/doc/README.md)** (With [Lua modules doc](_init/base/pack/installed/core/doc/lua.md))
 
 You can also run the `ask-aipack` agent.
 

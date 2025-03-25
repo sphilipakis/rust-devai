@@ -3,6 +3,7 @@ use crate::dir_context::aipack_base_dir;
 use crate::hub::get_hub;
 use crate::init::assets;
 use crate::support::AsStrsExt;
+use crate::support::files::safer_delete_dir;
 use simple_fs::{SPath, ensure_dir};
 use std::fs::write;
 use std::io::BufRead;
@@ -35,6 +36,10 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	if is_new_version {
 		hub.publish("(needed because new aipack version)").await;
+	}
+
+	if force {
+		clean_legacy_base_content(&base_dir).await?;
 	}
 
 	// -- Create the config file (only if not present)
@@ -97,4 +102,30 @@ If there is no match with the current version, this file will be recreated, and 
 	}
 
 	Ok(is_new)
+}
+
+async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {
+	if !aipack_base_dir.as_str().contains(".aipack-base") {
+		return Err(format!(
+			"This dir '{aipack_base_dir}' does not see to be a aipack base dir, cannot clean legacy content"
+		)
+		.into());
+	}
+
+	let mut change = false;
+
+	// -- clean the old ~aipack-base/doc
+	let doc_path = aipack_base_dir.join("doc");
+	if doc_path.exists() {
+		let is_delete = safer_delete_dir(&doc_path)?;
+		if is_delete {
+			get_hub()
+				.publish("-> legacy '~/.aipack-base/doc' dir deleted (now part of 'core@doc')".to_string())
+				.await;
+		}
+
+		change |= is_delete;
+	}
+
+	Ok(change)
 }
