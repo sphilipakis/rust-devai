@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-25 - [v0.6.14](https://github.com/jeremychone/rust-devai/compare/v0.6.13...v0.6.14)
+
+- `+` agent - add aip.flow.data_response({input?, data?, options?}) - Now can override model, input at Data stage
+- `^` doc lua - add aip.agent, aip.flow
+- `^` ask-aipack - update to take core@doc, and tune prompt
+- `*` doc - move aipack do to core@doc
+- `!` aip.agent.run - now agent path is relative to the caller agent
+- `^` agent prompt part - now have 'input' in hbs context
+- `^` demo@text - tune prompt, and prep to allow agent options meta
+- `-` agent parse - fix issues when prompt part has a code block with level one heading
+- `^` models-pricing - update data and agent
+
 ## 2025-03-21 - [v0.6.13](https://github.com/jeremychone/rust-devai/compare/v0.6.12...v0.6.13)
 
 - `^` @ask-aipack - Fixes and improvements
