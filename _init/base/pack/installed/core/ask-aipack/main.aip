@@ -112,13 +112,13 @@ Here are some documentation files, separated with `=== ../../path/to/document.md
 
 - When the user asks a question, provide the answer.
 - Give me the file path of where the answer was found.
-- Format the answer this way (but without the encompassing markdown code block, obviously)
+- Format the answer the way shown in the <ANSWER-FORMAT> tag (but without the encompassing markdown code block or tag)
 
-```
+<ANSWER-FORMAT>
 ## QUESTION: user_question_sumarized
 
 _answer_
-```
+</ANSWER-FORMAT>
 
 - When using bullet point, use the `-` character
 - For the `user_question_sumarized` text, if the question is short, put it there; if it is long or contains special characters, summarize the question and put it there.
@@ -130,7 +130,17 @@ _answer_
 - Remember, a `.aipack` file is a markdown file, so when giving aipack examples, do not surround the aipack stages example with a markdown code block. Just put them in lines.
 - When giving the reference to the doc file, just hgive the path given in the prompt, with the format `[doc/file_name](file_path)`. Do not escale the / of the filepath. Leave them as is. 
 
-Very important, when giving back an `.aip` markdown, put it in a **four** backtics md code block, so that the three backtick for the lua code block inside works nicely. 
+Very important, 
+- Do not wrap the whole answer in some markdown code block, just give the as when giving back an `.aip` markdown, put it in a **four** backtics md code block, with `md` as the language (since .aip are markdown files) so that the three backtick for the lua code block inside works nicely. 
+So, like this: 
+
+````md
+# Data 
+```lua
+-- some lua
+```
+...
+````
 
 # User
 

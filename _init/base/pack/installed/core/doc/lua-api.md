@@ -1,6 +1,6 @@
 # API Documentation
 
-The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.lua, aip.flow, and aip.cmd.
+The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.lua, aip.agent, aip.flow, and aip.cmd.
 
 > Note: All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
@@ -1168,6 +1168,55 @@ print(aip.lua.dump(tbl))
 
 If the conversion fails, an error message is returned.
 
+## aip.agent
+
+Agent execution functions for running other agents from within a Lua script.
+
+### aip.agent.run
+
+```lua
+-- API Signature
+aip.agent.run(agent_name: string, options?: table): any
+```
+
+Runs another agent and returns its response.
+
+**Arguments**
+
+- `agent_name: string`: The name of the agent to run.
+- `options?: table`: An optional table containing input data and agent options.
+  - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
+  - `options?: table`: Agent-specific options.
+
+**Returns**
+
+The result of the agent execution. The type of the returned value depends on the agent's output:
+- If the agent produces an AI response, it returns the AI response object.
+- If the agent has an output script, it returns the output from that script.
+
+**Example**
+
+```lua
+-- Run an agent with a single string input
+local response = aip.agent.run("agent-name", { inputs = "hello" })
+
+-- Run an agent with multiple string inputs
+local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
+
+-- Run an agent with structured inputs
+local response = aip.agent.run("agent-name", {
+  inputs = {
+    { path = "file1.txt", content = "..." },
+    { path = "file2.txt", content = "..." }
+  },
+  options = { model = "super-fast" }
+})
+```
+
+**Error**
+
+Returns an error if the agent fails to run or if there are issues with the input parameters.
+
 ## aip.flow
 
 Flow control functions for the AIPACK agent execution flow.
@@ -1296,9 +1345,9 @@ The `cmd` module exposes functions to execute system commands.
 
 ```ts
 {
-  path : string,  // The path to the file
-  name : string,  // The name of the file
-  stem : string,  // The stem of the file (name without extension)
+  path : string,  // The path to the file,
+  name : string,  // The name of the file,
+  stem : string,  // The stem of the file (name without extension),
   ext  : string   // The extension of the file
 }
 ```
@@ -1307,10 +1356,10 @@ The `cmd` module exposes functions to execute system commands.
 
 ```ts
 {
-  content: string,    // Content of the section
-  heading?: {         // Heading information (optional)
-    content: string,  // Heading content
-    level: number,    // Heading level (e.g., 1 for #, 2 for ##)
+  content: string,    // Content of the section,
+  heading?: {         // Heading information (optional),
+    content: string,  // Heading content,
+    level: number,    // Heading level (e.g., 1 for #, 2 for ##),
     name: string      // Heading name
   }
 }
@@ -1320,8 +1369,8 @@ The `cmd` module exposes functions to execute system commands.
 
 ```ts
 {
-  content: string,  // Content of the block (without the backticks)
-  lang: string,     // Language of the block (e.g., "lua", "rust", etc.)
+  content: string,  // Content of the block (without the backticks),
+  lang: string,     // Language of the block (e.g., "lua", "rust", etc.),
   info: string      // Additional info (e.g., "mermaid", etc.)
 }
 ```
