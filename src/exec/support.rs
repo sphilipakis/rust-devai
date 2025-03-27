@@ -1,7 +1,34 @@
 use crate::Error;
 use crate::hub::get_hub;
+use std::collections::HashSet;
 use std::path::Path;
 use std::process::Command;
+
+/// List of common API key environment variables to check.
+pub const KEY_ENV_VARS: &[&str] = &[
+	"OPENAI_API_KEY",
+	"ANTHROPIC_API_KEY",
+	"GEMINI_API_KEY",
+	"XAI_API_KEY",
+	"DEEPSEEK_API_KEY",
+	"GROQ_API_KEY",
+	"COHERE_API_KEY",
+];
+
+/// Checks the environment for a predefined list of API keys
+/// and returns a set containing the names of the keys that are set and non-empty.
+pub fn get_available_api_keys() -> HashSet<String> {
+	let mut available_keys = HashSet::new();
+	for &key in KEY_ENV_VARS {
+		match std::env::var(key) {
+			Ok(val) if !val.trim().is_empty() => {
+				available_keys.insert(key.to_string());
+			}
+			_ => (), // Key not set or empty
+		}
+	}
+	available_keys
+}
 
 /// Attempt to open a path via vscode
 /// NOTE: VSCode will do the right thing when the user have multiple vscode open
@@ -34,3 +61,4 @@ pub async fn open_vscode(path: impl AsRef<Path>) {
 		}
 	}
 }
+

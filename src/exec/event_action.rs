@@ -2,7 +2,7 @@
 //! Note: For now, the content of the variant of the ExecCommand often contain the CliArgs,
 //!       but this will eventual change to have it's own
 
-use crate::cli::{InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs};
+use crate::cli::{CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs};
 use crate::exec::RunAgentParams;
 use derive_more::From;
 
@@ -29,6 +29,8 @@ pub enum ExecActionEvent {
 	CmdList(ListArgs),
 	CmdPack(PackArgs),
 	CmdInstall(InstallArgs),
+	/// Check for API keys in the environment
+	CmdCheckKeys(CheckKeysArgs),
 
 	// -- Interactive Commands
 	Redo,
@@ -50,3 +52,4 @@ impl ExecActionEvent {
 		self.into()
 	}
 }
+

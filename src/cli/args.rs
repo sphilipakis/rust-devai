@@ -42,6 +42,10 @@ pub enum CliCommand {
 
 	/// Install an aipack file
 	Install(InstallArgs),
+
+	/// Check available API keys in the environment
+	#[command(name = "check-keys", about = "Check available API keys in the environment")]
+	CheckKeys(CheckKeysArgs),
 }
 
 /// Custom function
@@ -58,6 +62,7 @@ impl CliCommand {
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
+			CliCommand::CheckKeys(_) => false, // Non-interactive
 		}
 	}
 }
@@ -126,7 +131,7 @@ pub struct InstallArgs {
 	pub aipack_ref: String,
 }
 
-/// Arguments for the `run` subcommand
+/// Arguments for the `list` subcommand
 #[derive(Parser, Debug)]
 pub struct ListArgs {
 	/// A complete or partial aipack reference
@@ -141,7 +146,7 @@ pub struct ListArgs {
 }
 
 /// DISABLED FOR NOW
-/// Arguments for the `run` subcommand
+/// Arguments for the `new` subcommand
 #[derive(Parser, Debug)]
 pub struct NewArgs {
 	pub agent_path: String,
@@ -152,12 +157,17 @@ pub struct NewArgs {
 	pub open: bool,
 }
 
+/// Arguments for the `init` subcommand
 #[derive(Parser, Debug)]
 pub struct InitArgs {
 	/// The optional path of were to init the .aipack (relative to current directory)
 	/// If not given, aipack will find the closest .aipack/ or create one at current directory
 	pub path: Option<String>,
 }
+
+/// Arguments for the `check-keys` subcommand
+#[derive(Parser, Debug)]
+pub struct CheckKeysArgs {}
 
 // endregion: --- Sub Command Args
 
@@ -173,6 +183,7 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
 			CliCommand::Install(install_args) => ExecActionEvent::CmdInstall(install_args),
+			CliCommand::CheckKeys(args) => ExecActionEvent::CmdCheckKeys(args),
 		}
 	}
 }

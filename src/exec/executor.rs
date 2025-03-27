@@ -5,7 +5,10 @@ use crate::agent::Agent;
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::support::open_vscode;
-use crate::exec::{ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo};
+use crate::exec::{
+	exec_check_keys, ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run,
+	exec_run_redo,
+};
 use crate::hub::get_hub;
 use crate::init::{init_base, init_wks};
 use crate::runtime::Runtime;
@@ -166,6 +169,11 @@ impl Executor {
 				let redo = exec_run(run_args, runtime).await?;
 				self.set_current_redo_ctx(redo.into()).await;
 				hub.publish(ExecStatusEvent::RunEnd).await;
+			}
+
+			ExecActionEvent::CmdCheckKeys(args) => {
+				// Does not require dir_context or runtime
+				exec_check_keys(args).await?;
 			}
 
 			// -- Interactive Events
