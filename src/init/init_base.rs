@@ -26,20 +26,19 @@ pub async fn init_base(force: bool) -> Result<()> {
 	// if new version, then, force update
 	let force = is_new_version || force;
 
+	if force {
+		clean_legacy_base_content(&base_dir).await?;
+	}
+
 	if new {
 		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", base_dir))
 			.await;
-	} else {
+	} else if force {
 		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", base_dir))
 			.await;
-	}
-
-	if is_new_version {
-		hub.publish("(needed because new aipack version)").await;
-	}
-
-	if force {
-		clean_legacy_base_content(&base_dir).await?;
+		if is_new_version {
+			hub.publish("(needed because new aipack version)").await;
+		}
 	}
 
 	// -- Create the config file (only if not present)
@@ -60,7 +59,9 @@ pub async fn init_base(force: bool) -> Result<()> {
 	assets::update_files("base", &base_dir, &pack_paths.x_as_strs(), force).await?;
 
 	// -- Display message
-	hub.publish("=== DONE\n").await;
+	if new || force {
+		hub.publish("=== DONE\n").await;
+	}
 
 	Ok(())
 }
