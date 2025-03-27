@@ -35,7 +35,7 @@ print("\nOPEN your demo@craft/text prompt file: " .. prompt_file_rel_path .. "\n
 
 
 -- Split the content
-local first_part, content = p_utils.prep_inst_and_content(prompt_file.content, "====", {content_is_default = true})
+local first_part, content = p_utils.prep_inst_and_content(prompt_file.content, "====\n", {content_is_default = true})
 
 local meta = nil
 local inst = nil
