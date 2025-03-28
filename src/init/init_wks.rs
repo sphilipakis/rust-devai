@@ -68,7 +68,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 	ensure_dir(wks_aipack_dir.path())?;
 
 	// -- Create the config file
-	let config_path = aipack_dir.get_wks_config_toml_path()?;
+	let config_path = aipack_dir.get_aipack_wks_dir().get_config_toml_path()?;
 
 	if !config_path.exists() {
 		let config_zfile = assets::extract_workspace_config_toml_zfile()?;

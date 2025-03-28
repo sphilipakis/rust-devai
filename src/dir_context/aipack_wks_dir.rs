@@ -1,5 +1,5 @@
-use crate::dir_context::path_consts::AIPACK_DIR_NAME;
 use crate::Result;
+use crate::dir_context::path_consts::{AIPACK_DIR_NAME, CONFIG_FILE_NAME, PACK_CUSTOM};
 use camino::Utf8PathBuf;
 use simple_fs::SPath;
 use std::ops::Deref;
@@ -31,6 +31,18 @@ impl AipackWksDir {
 	pub fn path(&self) -> &SPath {
 		&self.path
 	}
+
+	// region:    --- Path Getters
+	pub fn get_config_toml_path(&self) -> Result<SPath> {
+		let path = self.join(CONFIG_FILE_NAME);
+		Ok(path)
+	}
+
+	pub fn get_pack_custom_dir(&self) -> Result<SPath> {
+		let dir = self.join(PACK_CUSTOM);
+		Ok(dir)
+	}
+	// endregion: --- Path Getters
 }
 
 /// Path-through methods to SPath

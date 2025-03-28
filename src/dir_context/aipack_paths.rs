@@ -24,6 +24,12 @@ pub struct AipackPaths {
 	aipack_base_dir: AipackBaseDir,
 }
 
+impl AipackPaths {
+	pub fn get_aipack_wks_dir(&self) -> &AipackWksDir {
+		&self.aipack_wks_dir
+	}
+}
+
 /// Constructor
 impl AipackPaths {
 	pub fn from_wks_dir(wks_path: impl AsRef<Path>) -> Result<Self> {
@@ -132,21 +138,14 @@ impl PackRepo {
 /// Get compute path/s
 impl AipackPaths {
 	// region:    --- Workspace Files & Dirs
-	pub fn get_wks_config_toml_path(&self) -> Result<SPath> {
-		let path = self.aipack_wks_dir.join(CONFIG_FILE_NAME);
-		Ok(path)
-	}
+	// NOTE: get_wks_config_toml_path moved to AipackWksDir as get_config_toml_path
+	// NOTE: get_wks_pack_custom_dir moved to AipackWksDir as get_pack_custom_dir
 
-	// TOOD: PRobably to return paths of wks, and base
+	/// Returns the paths to the base config and workspace config TOML files.
 	pub fn get_wks_config_toml_paths(&self) -> Result<Vec<SPath>> {
-		let wks_config_path = self.get_wks_config_toml_path()?;
+		let wks_config_path = self.aipack_wks_dir.get_config_toml_path()?;
 		let base_config_path = self.aipack_base_dir.join(CONFIG_FILE_NAME);
 		Ok(vec![base_config_path, wks_config_path])
-	}
-
-	pub fn get_wks_pack_custom_dir(&self) -> Result<SPath> {
-		let dir = self.aipack_wks_dir.join(PACK_CUSTOM);
-		Ok(dir)
 	}
 	// endregion: --- Workspace Files & Dirs
 
@@ -179,7 +178,7 @@ impl AipackPaths {
 		let mut dirs = Vec::new();
 
 		// 1. Workspace custom directory: .aipack/pack/custom
-		let wks_custom = self.get_wks_pack_custom_dir()?;
+		let wks_custom = self.aipack_wks_dir.get_pack_custom_dir()?;
 		if wks_custom.exists() {
 			dirs.push(PackRepo::new(RepoKind::WksCustom, wks_custom));
 		}
@@ -236,12 +235,23 @@ mod tests {
 		// -- Exec
 		let aipack_paths = AipackPaths::from_wks_dir(SANDBOX_01_WKS_DIR)?;
 
-		// -- Check
-		// check longer, because shouuld be absolute path
+		// -- Check paths from get_wks_config_toml_paths
+		let config_paths = aipack_paths.get_wks_config_toml_paths()?;
+		assert_eq!(config_paths.len(), 2);
+		// Base config
 		assert_ends_with(
-			aipack_paths.get_wks_config_toml_paths()?[1].as_str(),
-			"tests-data/sandbox-01/.aipack/config.toml",
+			config_paths[0].as_str(),
+			".aipack-base/config.toml", // Adjusted assertion
 		);
+		// Workspace config
+		assert_ends_with(config_paths[1].as_str(), "tests-data/sandbox-01/.aipack/config.toml");
+
+		// -- Check paths from get_pack_repo_dirs (which uses the moved methods internally)
+		let pack_dirs = aipack_paths.get_pack_repo_dirs()?;
+		assert_eq!(pack_dirs.len(), 3);
+		assert_ends_with(pack_dirs[0].path().as_str(), ".aipack/pack/custom"); // Check wks custom path
+		assert_ends_with(pack_dirs[1].path().as_str(), ".aipack-base/pack/custom"); // Check base custom path
+		assert_ends_with(pack_dirs[2].path().as_str(), ".aipack-base/pack/installed"); // Check base installed path
 
 		Ok(())
 	}
