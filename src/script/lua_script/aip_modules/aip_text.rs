@@ -545,7 +545,7 @@ fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 /// - `options: table`: A table with the following keys:
 ///   - `starts_with: string` (required): The prefix that indicates the start of a line block.
 ///   - `extrude: "content"` (optional): If set to `"content"`, the remaining content after extracting the blocks is returned.
-///   - `first: number` (optional): Limits the number of blocks returned.
+///   - `first: number` (optional): Limits the number of blocks returned (the rest will be treated as the remaining content)
 ///
 /// ### Returns
 ///
