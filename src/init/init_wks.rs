@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::dir_context::{AipackPaths, DirContext, find_wks_dir};
+use crate::dir_context::{AipackPaths, AipackWksDir, DirContext, find_wks_dir};
 use crate::hub::get_hub;
 use crate::init::assets;
 use crate::support::files::current_dir;
@@ -22,10 +22,14 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 
 	let wks_dir = wks_dir.canonicalize()?;
 
-	let aipack_dir = AipackPaths::from_wks_dir(&wks_dir)?;
+	let aipack_paths = AipackPaths::from_wks_dir(&wks_dir)?;
+
+	let aipack_wks_dir = aipack_paths
+		.aipack_wks_dir()
+		.ok_or_else(|| format!("Cannot Initialize Workspace because .aipack/ folder was not computed for {wks_dir}"))?;
 
 	// -- Display the heading
-	if aipack_dir.aipack_wks_dir().exists() {
+	if aipack_wks_dir.exists() {
 		if show_info_always {
 			hub.publish("\n=== Initializing .aipack/").await;
 			hub.publish(format!(
@@ -44,14 +48,14 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 	}
 
 	// -- Init or refresh
-	create_or_refresh_wks_files(&aipack_dir).await?;
+	create_or_refresh_wks_files(aipack_wks_dir).await?;
 
 	if show_info_always {
 		hub.publish("=== DONE\n").await;
 	}
 
 	// -- Return
-	let dir_context = DirContext::new(aipack_dir)?;
+	let dir_context = DirContext::new(aipack_paths)?;
 
 	Ok(dir_context)
 }
@@ -59,16 +63,13 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 /// Create or refresh missing files in a aipack directory
 /// - create `.aipack/config.toml` if not present.
 /// - ensure `.aipack/pack/custom/` to show use how to create per workspace agent pack
-async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
+async fn create_or_refresh_wks_files(aipack_wks_dir: &AipackWksDir) -> Result<()> {
 	let hub = get_hub();
 
-	let wks_dir = aipack_dir.wks_dir();
-	let wks_aipack_dir = aipack_dir.aipack_wks_dir();
-
-	ensure_dir(wks_aipack_dir.path())?;
+	ensure_dir(aipack_wks_dir.path())?;
 
 	// -- Create the config file
-	let config_path = aipack_dir.get_aipack_wks_dir().get_config_toml_path()?;
+	let config_path = aipack_wks_dir.get_config_toml_path()?;
 
 	if !config_path.exists() {
 		let config_zfile = assets::extract_workspace_config_toml_zfile()?;
@@ -76,7 +77,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 		hub.publish(format!(
 			"-> {:<18} '{}'",
 			"Create config file",
-			config_path.try_diff(wks_dir)?
+			config_path.try_diff(aipack_wks_dir.parent().ok_or("Should have parent dir")?)?
 		))
 		.await;
 	}

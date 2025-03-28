@@ -22,7 +22,7 @@ impl AipackWksDir {
 	/// * `Result<Self>` - The `AipackWksDir` instance.
 	///
 	/// NOTE: This does not test if the `.aipack` directory exists.
-	pub fn new(wks_dir: &SPath) -> Result<Self> {
+	pub fn new_from_wks_dir(wks_dir: &SPath) -> Result<Self> {
 		// Assume wks_dir is already absolute and canonicalized.
 		let aipack_wks_path = wks_dir.join(AIPACK_DIR_NAME);
 		Ok(Self { path: aipack_wks_path })

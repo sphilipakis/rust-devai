@@ -66,7 +66,7 @@ impl Runtime {
 mod tests_support {
 	use super::*;
 	use crate::_test_support::{SANDBOX_01_BASE_AIPACK_DIR, SANDBOX_01_WKS_DIR, gen_test_dir_path};
-	use crate::dir_context::{AipackBaseDir, AipackPaths};
+	use crate::dir_context::{AipackBaseDir, AipackPaths, AipackWksDir};
 	use crate::exec::Executor;
 	use crate::hub::{HubEvent, get_hub};
 	use simple_fs::{SPath, ensure_dir};
@@ -77,12 +77,12 @@ mod tests_support {
 			let current_dir = SPath::new(SANDBOX_01_WKS_DIR).canonicalize()?;
 			let current_dir = SPath::new(current_dir);
 
-			let wks_aipack_dir = current_dir.join(".aipack");
+			let wks_dir = current_dir.clone();
 
 			let aipack_base_dir = SPath::new(SANDBOX_01_BASE_AIPACK_DIR).canonicalize()?;
 			let aipack_base_dir = AipackBaseDir::new_for_test(aipack_base_dir)?;
 
-			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(aipack_base_dir, wks_aipack_dir)?;
+			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(aipack_base_dir, wks_dir)?;
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 
@@ -91,21 +91,23 @@ mod tests_support {
 
 		/// This dir is relative to `./tests-data/.tmp`
 		pub fn new_test_runtime_for_temp_dir() -> Result<Self> {
-			let current_dir = gen_test_dir_path();
+			let test_dir = gen_test_dir_path();
 			// should not be the case with the above case, but just as a double check
-			if current_dir.path().is_absolute() {
-				return Err(format!("temp dir cannot be absolute. Was '{current_dir}' ").into());
+			if test_dir.path().is_absolute() {
+				return Err(format!("temp dir cannot be absolute. Was '{test_dir}' ").into());
 			}
-			ensure_dir(&current_dir)?;
-			let current_dir = current_dir.canonicalize()?;
+			ensure_dir(&test_dir)?;
+			let current_dir = test_dir.canonicalize()?;
+
+			let wks_dir = current_dir.clone();
 
 			// TODO: Probably do an base init for tose guys.
-			let wks_aipack_dir = current_dir.join(".aipack");
-			ensure_dir(&wks_aipack_dir)?;
+
+			ensure_dir(wks_dir.path())?;
 			let base_aipack_dir = AipackBaseDir::new_for_test(current_dir.join(".aipack-base"))?;
 			ensure_dir(&*base_aipack_dir)?;
 
-			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(base_aipack_dir, wks_aipack_dir)?;
+			let aipack_paths = AipackPaths::from_aipack_base_and_wks_dirs(base_aipack_dir, wks_dir)?;
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 

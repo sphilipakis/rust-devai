@@ -49,9 +49,12 @@ impl Literals {
 		}
 
 		// -- Workspace / base dirs
+		// NOTE: We have to think about support the lack of workspace_dir
 		store.push(("WORKSPACE_DIR", dir_context.wks_dir().to_string()));
 		// Those are the absolute path for `~/.aipack-base/` and `.aipack/`
-		store.push(("WORKSPACE_AIPACK_DIR", aipack_paths.aipack_wks_dir().to_string()));
+		if let Some(aipack_wks_dir) = aipack_paths.aipack_wks_dir() {
+			store.push(("WORKSPACE_AIPACK_DIR", aipack_wks_dir.to_string()));
+		}
 		store.push(("BASE_AIPACK_DIR", aipack_paths.aipack_base_dir().to_string()));
 
 		// -- Agent Information
