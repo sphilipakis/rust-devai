@@ -489,7 +489,7 @@ mod tests {
 		let dir_context = runtime.dir_context();
 		let fx_dest_path = dir_context
 			.aipack_paths()
-			.base_aipack_dir()
+			.aipack_base_dir()
 			.join(".tmp/test_lua_file_save_ok_in_base.md");
 		let fx_content = "hello from test_lua_file_save_ok_in_base";
 

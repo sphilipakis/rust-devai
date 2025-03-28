@@ -72,7 +72,7 @@ impl DirContext {
 			match mode {
 				PathResolver::CurrentDir => self.current_dir.join(path),
 				PathResolver::WksDir => self.wks_dir().join(path),
-				PathResolver::AipackDir => self.aipack_paths().wks_aipack_dir().join(path),
+				PathResolver::AipackDir => self.aipack_paths().aipack_wks_dir().join(path),
 			}
 		};
 

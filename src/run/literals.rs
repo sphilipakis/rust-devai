@@ -51,8 +51,8 @@ impl Literals {
 		// -- Workspace / base dirs
 		store.push(("WORKSPACE_DIR", dir_context.wks_dir().to_string()));
 		// Those are the absolute path for `~/.aipack-base/` and `.aipack/`
-		store.push(("WORKSPACE_AIPACK_DIR", aipack_paths.wks_aipack_dir().to_string()));
-		store.push(("BASE_AIPACK_DIR", aipack_paths.base_aipack_dir().to_string()));
+		store.push(("WORKSPACE_AIPACK_DIR", aipack_paths.aipack_wks_dir().to_string()));
+		store.push(("BASE_AIPACK_DIR", aipack_paths.aipack_base_dir().to_string()));
 
 		// -- Agent Information
 		store.push(("AGENT_NAME", agent.name().to_string()));

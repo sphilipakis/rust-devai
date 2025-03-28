@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::dir_context::aipack_base_dir;
+use crate::dir_context::AipackBaseDir;
 use crate::hub::get_hub;
 use crate::init::assets;
 use crate::support::AsStrsExt;
@@ -16,8 +16,8 @@ pub async fn init_base(force: bool) -> Result<()> {
 	let mut new = false;
 	// -- Create the missing folders
 
-	let base_dir = aipack_base_dir()?;
-	if ensure_dir(&base_dir)? {
+	let base_dir = AipackBaseDir::new()?;
+	if ensure_dir(base_dir.path())? {
 		new = true;
 	}
 
@@ -31,10 +31,10 @@ pub async fn init_base(force: bool) -> Result<()> {
 	}
 
 	if new {
-		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", base_dir))
+		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", &*base_dir))
 			.await;
 	} else if force {
-		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", base_dir))
+		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", &*base_dir))
 			.await;
 		if is_new_version {
 			hub.publish("(needed because new aipack version)").await;

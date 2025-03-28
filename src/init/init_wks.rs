@@ -25,7 +25,7 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 	let aipack_dir = AipackPaths::from_wks_dir(&wks_dir)?;
 
 	// -- Display the heading
-	if aipack_dir.wks_aipack_dir().exists() {
+	if aipack_dir.aipack_wks_dir().exists() {
 		if show_info_always {
 			hub.publish("\n=== Initializing .aipack/").await;
 			hub.publish(format!(
@@ -63,7 +63,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 	let hub = get_hub();
 
 	let wks_dir = aipack_dir.wks_dir();
-	let wks_aipack_dir = aipack_dir.wks_aipack_dir();
+	let wks_aipack_dir = aipack_dir.aipack_wks_dir();
 
 	ensure_dir(wks_aipack_dir)?;
 
