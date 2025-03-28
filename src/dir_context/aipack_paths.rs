@@ -1,7 +1,7 @@
 use super::path_consts::PACK_INSTALLED;
 use super::path_consts::{AIPACK_BASE, AIPACK_DIR_NAME, CONFIG_FILE_NAME, PACK_CUSTOM};
-use crate::dir_context::AipackBaseDir;
 use crate::dir_context::path_consts::PACK_DOWNLOAD;
+use crate::dir_context::{AipackBaseDir, AipackWksDir};
 use crate::{Error, Result};
 use home::home_dir;
 use simple_fs::SPath;
@@ -18,7 +18,7 @@ pub struct AipackPaths {
 	wks_dir: SPath,
 
 	/// This is absolute path of the `.aipack/`
-	aipack_wks_dir: SPath,
+	aipack_wks_dir: AipackWksDir,
 
 	/// This is absolute path of `~/.aipack-base/`
 	aipack_base_dir: AipackBaseDir,
@@ -45,12 +45,9 @@ impl AipackPaths {
 		let wks_dir = SPath::from_std_path(wks_path)?;
 
 		// -- Compute the aipack_wks_dir
-		// TODO: Needs to define if we have to check if it exists
-		//       We want to explore if we can work without workspace, just with the base
-		let aipack_wks_dir = wks_dir.join(AIPACK_DIR_NAME);
+		let aipack_wks_dir = AipackWksDir::new(&wks_dir)?;
 
 		// -- Compute the aipack_base_dir
-		// TODO: Probably need to check that the path exist
 		let aipack_base_dir = AipackBaseDir::new()?;
 
 		Ok(Self {
@@ -64,11 +61,14 @@ impl AipackPaths {
 #[cfg(test)]
 impl AipackPaths {
 	/// For test use the: DirContext::new_test_runtime_sandbox_01() which will use this to create the mock aipack_paths
-	pub fn from_aipack_base_and_wks_dirs(base_aipack_dir: AipackBaseDir, wks_aipack_dir: SPath) -> Result<Self> {
-		let wks_dir = wks_aipack_dir.parent().ok_or("Should have partent wks_dir (it's for test)")?;
+	pub fn from_aipack_base_and_wks_dirs(base_aipack_dir: AipackBaseDir, wks_aipack_dir_path: SPath) -> Result<Self> {
+		let wks_dir = wks_aipack_dir_path
+			.parent()
+			.ok_or("Should have parent wks_dir (it's for test)")?;
+		let aipack_wks_dir = AipackWksDir::new_for_test(wks_aipack_dir_path)?;
 		Ok(AipackPaths {
 			wks_dir,
-			aipack_wks_dir: wks_aipack_dir,
+			aipack_wks_dir,
 			aipack_base_dir: base_aipack_dir,
 		})
 	}
@@ -80,7 +80,7 @@ impl AipackPaths {
 		&self.wks_dir
 	}
 
-	pub fn aipack_wks_dir(&self) -> &SPath {
+	pub fn aipack_wks_dir(&self) -> &AipackWksDir {
 		&self.aipack_wks_dir
 	}
 
@@ -205,11 +205,15 @@ pub fn find_wks_dir(from_dir: SPath) -> Result<Option<SPath>> {
 	let mut tmp_dir: Option<SPath> = Some(from_dir);
 
 	while let Some(parent_dir) = tmp_dir {
-		let wks_dir = AipackPaths::from_wks_dir(&parent_dir)?;
-
-		if wks_dir.aipack_wks_dir().exists() {
-			return Ok(Some(parent_dir));
+		// Note: This constructs AipackPaths just to check existence.
+		// This might involve canonicalization, which could be optimized if performance becomes an issue.
+		if let Ok(aipack_paths) = AipackPaths::from_wks_dir(&parent_dir) {
+			if aipack_paths.aipack_wks_dir().exists() {
+				return Ok(Some(parent_dir));
+			}
 		}
+		// If AipackPaths::from_wks_dir failed (e.g., path doesn't exist, canonicalization issue),
+		// we should still proceed to the parent.
 
 		tmp_dir = parent_dir.parent();
 	}
@@ -259,6 +263,8 @@ mod tests {
 
 		Ok(())
 	}
+
+	// TODO: Add test for find_wks_dir
 }
 
 // endregion: --- Tests

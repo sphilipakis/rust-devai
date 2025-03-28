@@ -65,7 +65,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 	let wks_dir = aipack_dir.wks_dir();
 	let wks_aipack_dir = aipack_dir.aipack_wks_dir();
 
-	ensure_dir(wks_aipack_dir)?;
+	ensure_dir(wks_aipack_dir.path())?;
 
 	// -- Create the config file
 	let config_path = aipack_dir.get_wks_config_toml_path()?;
