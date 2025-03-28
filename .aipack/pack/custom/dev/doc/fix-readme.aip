@@ -1,0 +1,76 @@
+# Description
+
+This is a very simple custom agent, that fix the core/dock readmen and the main readme. 
+
+This will mature overtime. 
+
+# Options
+
+```toml
+model = "gpro"
+```
+
+# Before All
+
+```lua
+
+return aip.flow.before_all_response({
+  inputs  = {"_init/base/pack/installed/core/doc/README.md", "README.md"},
+  options = {input_concurrency = 1}
+})
+
+
+```
+
+# Data
+
+```lua
+-- Load the content of the file provided as input
+local file = aip.file.load(input)
+
+-- Return the file content for the instruction stage
+return {
+  file = file
+}
+```
+
+# System
+
+You are an expert technical writer. Your task is to proofread the provided documentation content.
+- Correct grammar and spelling mistakes when needed. 
+- Improve clarity and flow where possible, but do not change just for change sake. Only when needed. 
+- Maintain the original meaning and technical accuracy.
+- Preserve the markdown formatting.
+- In toml or code block, do not break key/value alignments if present (the `=` should be aligned when appropriate)
+- If the content is already correct and well-written, return it as is without modification.
+
+Do not add any preamble or wrap the document in a markdown code block, just the content of the updated file. 
+
+# Instruction
+
+Proofread the following documentation content:
+
+<FILE-CONTENT>
+{{data.file.content}}
+</FILE-CONTENT>
+
+Return only the corrected content, maintaining the original markdown structure.
+
+# Output
+
+```lua
+-- Get the raw AI response content
+local content = ai_response.content
+
+-- Remove potential outer markdown code blocks often added by LLMs
+-- content = aip.md.outer_block_content_or_raw(content)
+
+-- Ensure the content ends with a single newline for consistency
+content = aip.text.ensure_single_ending_newline(content)
+
+-- Save the corrected content back to the original file
+aip.file.save(data.file.path, content)
+
+-- Return a confirmation message (optional)
+return "Proofread and saved: " .. data.file.path
+```
