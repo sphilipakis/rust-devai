@@ -19,7 +19,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 <img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
 
-- [Video: jc@coder Pack Demo ](https://www.youtube.com/watch?v=-xFd00rrfLk&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [Video: jc@coder (now pro@coder) Pack Demo ](https://www.youtube.com/watch?v=-xFd00rrfLk&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: AIPACK Introduction](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [AIPACK Substack at news.aipack.ai](https://news.aipack.ai)
@@ -74,10 +74,10 @@ aip run core@ask-aipack
 
 ```
 
-**jc@coder**
+**pro@coder**
 
-- You can install `jc@coder` with `aip install jc@coder`, and then
-- Run it with `aip run jc@coder` or `aip run @coder` if you don't have any other `@coder` pack in a different namespace.
+- You can install `pro@coder` with `aip install pro@coder`, and then
+- Run it with `aip run pro@coder` or `aip run @coder` if you don't have any other `@coder` pack in a different namespace.
 
 This is the agent I use every day for my production coding.
 

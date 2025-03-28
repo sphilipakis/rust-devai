@@ -19,12 +19,12 @@ impl PartialAgentRef {
 	///
 	/// If the input string contains '@':
 	///   - It is parsed into a PackRef.
-	///   - Example: "jc@coder" will be parsed as PackRef {
+	///   - Example: "pro@coder" will be parsed as PackRef {
 	///           namespace: Some("jc"),
 	///           pack_name: "coder",
 	///           sub_path: None
 	///       }
-	///   - If a subpath is provided (e.g., "jc@coder/explain"), the sub_path field is set.
+	///   - If a subpath is provided (e.g., "pro@coder/explain"), the sub_path field is set.
 	///
 	/// If the input string does not contain '@':
 	///   - It is treated as a local file path.
@@ -117,7 +117,7 @@ mod tests {
 	#[test]
 	fn test_agent_ref_new_packref_without_subpath() -> Result<()> {
 		// -- Setup & Fixtures
-		let input = "jc@coder";
+		let input = "pro@coder";
 
 		// -- Exec
 		let agent_ref = PartialAgentRef::new(input);
@@ -125,7 +125,7 @@ mod tests {
 		// -- Check
 		match agent_ref {
 			PartialAgentRef::PackRef(ref pack_ref) => {
-				assert_eq!(pack_ref.namespace.as_deref(), Some("jc"), "Namespace should be 'jc'.");
+				assert_eq!(pack_ref.namespace.as_deref(), Some("pro"), "Namespace should be 'pro'.");
 				assert_eq!(pack_ref.name, "coder", "Pack name should be 'coder'.");
 				assert!(pack_ref.sub_path.is_none(), "Sub path should be None.");
 			}

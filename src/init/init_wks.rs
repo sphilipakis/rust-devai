@@ -82,7 +82,7 @@ async fn create_or_refresh_wks_files(aipack_dir: &AipackPaths) -> Result<()> {
 	}
 
 	// NOTE: Currently, we do not create the workspace .aipack/pack/custom directory because users can use their own paths to run agents.
-	//       Eventually, we might support installing packs in the workspace using `aip install jc@coder --workspace`.
+	//       Eventually, we might support installing packs in the workspace using `aip install pro@coder --workspace`.
 	//       These will be placed in `.aipack/pack/installed/` and will take precedence over the base custom & installed packs.
 
 	// NOTE: For now, the workspace .aipack/pack/custom/ directory is still added to the pack resolution, which is beneficial for advanced users.

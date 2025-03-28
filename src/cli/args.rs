@@ -136,7 +136,7 @@ pub struct InstallArgs {
 pub struct ListArgs {
 	/// A complete or partial aipack reference
 	/// (optional)
-	/// e.g., `jc@coder` or `jc@` or `@coder`
+	/// e.g., `pro@coder` or `jc@` or `@coder`
 	pub pack_ref: Option<String>,
 
 	/// Open the .aipack file, and the target file if exists.

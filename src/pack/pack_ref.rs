@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 /// PartialPackRef represents a resource reference to a pack resource.
 /// It has not be resolved yet
-/// For example, a string like "jc@coder/explain" will be parsed into:
+/// For example, a string like "pro@coder/explain" will be parsed into:
 ///     - namespace: "jc" (may be omitted)
 ///     - pack_name: "coder"
 ///     - sub_path: Some("explain/stuff")
