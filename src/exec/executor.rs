@@ -6,11 +6,10 @@ use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::support::open_vscode;
 use crate::exec::{
-	exec_check_keys, ExecStatusEvent, RunRedoCtx, exec_install, exec_list, exec_new, exec_pack, exec_run,
-	exec_run_redo,
+	ExecStatusEvent, RunRedoCtx, exec_check_keys, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo,
 };
 use crate::hub::get_hub;
-use crate::init::{init_base, init_wks};
+use crate::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::runtime::Runtime;
 use crate::{Error, Result};
 use derive_more::derive::From;
@@ -149,14 +148,17 @@ impl Executor {
 			ExecActionEvent::CmdNewAgent(new_args) => {
 				exec_new(new_args, init_wks(None, false).await?).await?;
 			}
-			ExecActionEvent::CmdList(list_args) => exec_list(init_wks(None, false).await?, list_args).await?,
+			ExecActionEvent::CmdList(list_args) => {
+				exec_list(init_base_and_dir_context(false).await?, list_args).await?
+			}
 
 			ExecActionEvent::CmdPack(pack_args) => exec_pack(&pack_args).await?,
 
 			ExecActionEvent::CmdInstall(install_args) => {
-				exec_install(init_wks(None, false).await?, install_args).await?
+				exec_install(init_base_and_dir_context(false).await?, install_args).await?
 			}
 
+			// TODO: Might want to not initialize the workspace here, and let the user know. Not sure.
 			ExecActionEvent::CmdRun(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
 				// Here we init base if version changed. This was we make sure doc and all work as expected

@@ -106,7 +106,7 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 	let dir_context = runtime.dir_context();
 	ensure_file_dir(&path).map_err(Error::from)?;
 
-	let wks_dir = dir_context.wks_dir();
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
 
 	if let Some(rel_path) = path.diff(wks_dir) {
 		if rel_path.as_str().starts_with("..") {
@@ -465,7 +465,10 @@ mod tests {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let dir_context = runtime.dir_context();
-		let fx_dest_path = dir_context.wks_dir().join(".tmp/test_lua_file_save_simple_ok.md");
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_simple_ok.md");
 		let fx_content = "hello from test_file_save_simple_ok";
 
 		// -- Exec
@@ -514,7 +517,10 @@ mod tests {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let dir_context = runtime.dir_context();
-		let fx_dest_path = dir_context.wks_dir().join("../.tmp/test_lua_file_save_err_out_workspace.md");
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join("../.tmp/test_lua_file_save_err_out_workspace.md");
 		let fx_content = "hello from test_lua_file_save_err_out_workspace";
 
 		// -- Exec

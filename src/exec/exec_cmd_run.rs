@@ -177,12 +177,15 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 		let files = list_files("./", Some(&on_file_globs), None)?;
 
 		// -- Second, normalize the path relative to workspace_dir
-		let workspace_dir = runtime.dir_context().aipack_paths().wks_dir();
+		let wks_dir = runtime.dir_context().aipack_paths().wks_dir()
+								  // TODO: Eventually needs to support running agent without workspace
+		              .ok_or("Cannot do an 'aip run ...' as no workspace was found.\nDo a 'aip init' in your project folder to initialize a '.aipack/' folder.")?;
+
 		let files: Vec<SPath> = files
 			.into_iter()
 			.filter_map(|file| {
 				let absolute_file = file.canonicalize().ok()?;
-				let absolute_file = absolute_file.try_diff(workspace_dir).ok()?;
+				let absolute_file = absolute_file.try_diff(wks_dir).ok()?;
 				Some(absolute_file)
 			})
 			.collect();

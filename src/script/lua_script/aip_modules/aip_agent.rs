@@ -162,7 +162,11 @@ mod tests {
 	async fn test_lua_agent_run_relative() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
-		let agent_file = runtime.dir_context().wks_dir().join("agent-script/agent-calling-hello.aip");
+		let agent_file = runtime
+			.dir_context()
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join("agent-script/agent-calling-hello.aip");
 		let agent = Agent::mock_from_file(agent_file.as_str())?;
 
 		// -- Exec

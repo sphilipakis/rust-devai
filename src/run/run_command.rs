@@ -343,7 +343,10 @@ fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> 
 	if file_path.as_str().contains(".aipack-base") {
 		Ok(file_path)
 	} else {
-		let spath = file_path.try_diff(dir_context.wks_dir())?;
+		let spath = match dir_context.wks_dir() {
+			Some(wks_dir) => file_path.try_diff(wks_dir)?,
+			None => file_path,
+		};
 		Ok(spath)
 	}
 }

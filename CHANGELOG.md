@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-03-28 - [v0.6.15](https://github.com/jeremychone/rust-devai/compare/v0.6.14...v0.6.15)
+
+- `*` install, pack, list - now does not init workspace
+- `+` cli - add 'aip check-keys'
+- `>` dir_context - lot of internal refactoring
+- `.` doc update extract_line_blocks rust doc
+- `.` clean jc@coder to pro@coder
+- `.` doc - first pass at updated core/doc/README.md
+- `.` init-base - fix print
+- `.` demo@craft/text - fix the ==== issue
+
 ## 2025-03-25 - [v0.6.14](https://github.com/jeremychone/rust-devai/compare/v0.6.13...v0.6.14)
 
 - `+` agent - add aip.flow.data_response({input?, data?, options?}) - Now can override model, input at Data stage
@@ -176,7 +188,6 @@ IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix.
 - `.` minor code refactor
 - `.` lua_engine - minor refactor
 - `.` clippy clean
-
 
 ## 2024-12-12 - `0.5.3`
 

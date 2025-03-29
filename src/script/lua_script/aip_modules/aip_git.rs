@@ -56,8 +56,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// Throws an error if the command's stderr output is not empty.
 fn git_restore(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
+	let current_dir = runtime
+		.dir_context()
+		.try_wks_dir_with_err_ctx("aip.git.restore requires a aipack workspace setup")?;
 	let output = std::process::Command::new("git")
-		.current_dir(runtime.dir_context().wks_dir())
+		.current_dir(current_dir)
 		.arg("restore")
 		.arg(&path)
 		.output()

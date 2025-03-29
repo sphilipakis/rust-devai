@@ -2,6 +2,7 @@ use super::path_consts::PACK_INSTALLED;
 use super::path_consts::{AIPACK_BASE, AIPACK_DIR_NAME, CONFIG_FILE_NAME, PACK_CUSTOM};
 use crate::dir_context::path_consts::PACK_DOWNLOAD;
 use crate::dir_context::{AipackBaseDir, AipackWksDir};
+use crate::support::files::current_dir;
 use crate::{Error, Result};
 use home::home_dir;
 use simple_fs::SPath;
@@ -14,7 +15,7 @@ use std::path::Path;
 pub struct AipackPaths {
 	/// The path to the parent workspace_dir. Can be relative, to working dir for example.
 	/// NOTE: Even if `.aipack` does not exist, `wks_dir` represents the potential workspace root.
-	wks_dir: SPath,
+	wks_dir: Option<SPath>,
 
 	/// This is absolute path of the `.aipack/` if it exists.
 	aipack_wks_dir: Option<AipackWksDir>,
@@ -33,6 +34,23 @@ impl AipackPaths {
 
 /// Constructor
 impl AipackPaths {
+	/// Will try to find the wks_dir, if not, will be none.
+	/// Will create the path for the `~/.aipack-base` but won't fail if not exists
+	pub fn new() -> Result<Self> {
+		let wks_dir = find_wks_dir(current_dir()?)?;
+		match wks_dir {
+			Some(wks_dir) => Self::from_wks_dir(wks_dir),
+			None => {
+				let aipack_base_dir = AipackBaseDir::new()?;
+				Ok(Self {
+					wks_dir: None,
+					aipack_wks_dir: None,
+					aipack_base_dir,
+				})
+			}
+		}
+	}
+
 	/// Creates AipackPaths from a potential workspace directory path.
 	/// It determines if a `.aipack` directory exists within the given path.
 	pub fn from_wks_dir(wks_path: impl AsRef<Path>) -> Result<Self> {
@@ -62,7 +80,7 @@ impl AipackPaths {
 		let aipack_base_dir = AipackBaseDir::new()?;
 
 		Ok(Self {
-			wks_dir,
+			wks_dir: Some(wks_dir),
 			aipack_wks_dir,
 			aipack_base_dir,
 		})
@@ -81,7 +99,7 @@ impl AipackPaths {
 
 		// AipackWksDir is now passed directly as an option
 		Ok(AipackPaths {
-			wks_dir,
+			wks_dir: Some(wks_dir),
 			aipack_wks_dir: Some(aipack_wks_dir),
 			aipack_base_dir: base_aipack_dir,
 		})
@@ -95,8 +113,8 @@ impl AipackPaths {
 
 /// Getters
 impl AipackPaths {
-	pub fn wks_dir(&self) -> &SPath {
-		&self.wks_dir
+	pub fn wks_dir(&self) -> Option<&SPath> {
+		self.wks_dir.as_ref()
 	}
 
 	// `aipack_wks_dir` getter is defined above near the struct definition.
@@ -267,7 +285,13 @@ mod tests {
 		let aipack_paths = AipackPaths::from_wks_dir(SANDBOX_01_WKS_DIR)?;
 
 		// -- Check wks_dir and aipack_wks_dir
-		assert!(aipack_paths.wks_dir().as_str().contains("sandbox-01"));
+		assert!(
+			aipack_paths
+				.wks_dir()
+				.ok_or("Should have wks_dir")?
+				.as_str()
+				.contains("sandbox-01")
+		);
 		assert!(aipack_paths.aipack_wks_dir().is_some());
 		assert_ends_with(aipack_paths.aipack_wks_dir().unwrap().as_str(), "sandbox-01/.aipack");
 

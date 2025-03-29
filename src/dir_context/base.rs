@@ -58,8 +58,18 @@ impl DirContext {
 		&self.aipack_paths
 	}
 
-	pub fn wks_dir(&self) -> &SPath {
+	pub fn wks_dir(&self) -> Option<&SPath> {
 		self.aipack_paths().wks_dir()
+	}
+
+	/// Ge the wks_dir and if none, return an Error
+	pub fn try_wks_dir_with_err_ctx(&self, ctx_msg: &str) -> Result<&SPath> {
+		self.aipack_paths().wks_dir().ok_or_else(|| {
+			format!(
+				"{ctx_msg}. Cause: No Workspace available.\nDo a 'aip init' in your project root folder to set the '.aipack/' workspace marker folder"
+			)
+			.into()
+		})
 	}
 }
 
@@ -71,7 +81,12 @@ impl DirContext {
 		} else {
 			match mode {
 				PathResolver::CurrentDir => Some(self.current_dir()),
-				PathResolver::WksDir => Some(self.wks_dir()),
+				PathResolver::WksDir => {
+					let wks_dir = self.try_wks_dir_with_err_ctx(&format!(
+						"Cannot resolve '{path}' for workspace, because no workspace are available"
+					))?;
+					Some(wks_dir)
+				}
 				PathResolver::AipackDir => {
 					// Get the optional AipackWksDir reference
 					match self.aipack_paths().aipack_wks_dir() {
@@ -79,7 +94,9 @@ impl DirContext {
 						None => {
 							return Err(Error::custom(format!(
 								"Cannot resolve path relative to '.aipack' directory because it was not found in workspace '{}'",
-								self.wks_dir().as_str()
+								self.wks_dir()
+									.map(|p| p.to_string())
+									.unwrap_or_else(|| "no workspace found".to_string())
 							)));
 						}
 					}

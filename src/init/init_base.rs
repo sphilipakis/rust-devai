@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::dir_context::AipackBaseDir;
+use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext, find_wks_dir};
 use crate::hub::get_hub;
 use crate::init::assets;
 use crate::support::AsStrsExt;
@@ -7,6 +7,16 @@ use crate::support::files::safer_delete_dir;
 use simple_fs::{SPath, ensure_dir};
 use std::fs::write;
 use std::io::BufRead;
+
+/// Init the aipack base if needed,
+/// and return a DirContext without wks dir (even if present)
+/// NOTE: This is just for the commands that do not requires wks
+pub async fn init_base_and_dir_context(force: bool) -> Result<DirContext> {
+	init_base(force).await?;
+	let aipack_paths = AipackPaths::new()?;
+	let dir_context = DirContext::new(aipack_paths)?;
+	Ok(dir_context)
+}
 
 /// `force` - except for `config.toml`
 pub async fn init_base(force: bool) -> Result<()> {
