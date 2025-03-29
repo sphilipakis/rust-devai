@@ -1,5 +1,9 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-03-29 - [v0.6.16](https://github.com/jeremychone/rust-devai/compare/v0.6.15...v0.6.16)
+
+- `.` run input - change the way model print and ai_response.info to include provider model name
+- `.` craft/text - tune the prompt to not echo content tag and follow better user instruction
 
 ## 2025-03-28 - [v0.6.15](https://github.com/jeremychone/rust-devai/compare/v0.6.14...v0.6.15)
 
