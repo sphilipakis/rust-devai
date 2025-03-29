@@ -9,6 +9,7 @@ use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_num};
+use genai::ModelIden;
 use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, Usage};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -234,6 +235,9 @@ pub async fn run_agent_input(
 			.exec_chat(model_resolved, chat_req, Some(agent.genai_chat_options()))
 			.await?;
 		let duration = start.elapsed();
+
+		// region:    --- First Info Part
+
 		let duration_msg = format!("Duration: {}", format_duration(duration));
 		// this is for the duration in second with 3 digit for milli (for the AI Response)
 		let duration_sec = duration.as_secs_f64(); // Convert to f64
@@ -249,39 +253,42 @@ pub async fn run_agent_input(
 		let usage_msg = format_usage(&chat_res.usage);
 		info = format!("{info} | {usage_msg}");
 
-		hub.publish(format!("<- ai_response content received - {info}")).await;
+		// endregion: --- First Info Part
 
-		let chat_res_mode_iden = chat_res.model_iden.clone();
+		hub.publish(format!(
+			"<- ai_response content received - {} | {info}",
+			chat_res.provider_model_iden.model_name
+		))
+		.await;
+
 		let ChatResponse {
 			content,
 			reasoning_content,
 			usage,
+			model_iden: res_model_iden,
+			provider_model_iden: res_provider_model_iden,
 			..
 		} = chat_res;
 
 		let ai_response_content = content.and_then(|c| c.text_into_string());
 		let ai_response_reasoning_content = reasoning_content;
 
+		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden);
 		if run_base_options.verbose() {
 			hub.publish(format!(
-				"\n-- AI Output (model: {} | adapter: {})\n\n{}\n",
-				chat_res_mode_iden.model_name,
-				chat_res_mode_iden.adapter_kind,
+				"\n-- AI Output ({model_info})\n\n{}\n",
 				ai_response_content.as_deref().unwrap_or_default()
 			))
 			.await;
 		}
 
-		let info = format!(
-			"{info} | Model: {} | Adapter: {}",
-			chat_res_mode_iden.model_name, chat_res_mode_iden.adapter_kind,
-		);
+		let info = format!("{info} | {model_info}",);
 
 		Some(AiResponse {
 			content: ai_response_content,
 			reasoning_content: ai_response_reasoning_content,
-			model_name: chat_res_mode_iden.model_name,
-			adapter_kind: chat_res_mode_iden.adapter_kind,
+			model_name: res_model_iden.model_name,
+			adapter_kind: res_model_iden.adapter_kind,
 			duration_sec,
 			price_usd,
 			usage,
@@ -329,6 +336,22 @@ fn get_price(chat_res: &ChatResponse) -> Option<f64> {
 	price_it(provider, model_name, &chat_res.usage)
 }
 
+/// Model: gemini-2.0-flash | Adapter: Gemini
+fn format_model(agent: &Agent, res_model_iden: &ModelIden, res_provider_model_iden: &ModelIden) -> String {
+	let model_iden = agent.model_resolved();
+	let model_txt: Cow<str> = if *res_model_iden.model_name != *res_provider_model_iden.model_name {
+		Cow::Owned(format!(
+			"{} ({})",
+			res_model_iden.model_name, res_provider_model_iden.model_name
+		))
+	} else {
+		Cow::Borrowed(&*res_model_iden.model_name)
+	};
+
+	format!("Model: {model_txt} | Adapter: {}", res_model_iden.adapter_kind,)
+}
+
+/// Format the `Prompt Tokens: 2,070 | Completion Tokens: 131`
 fn format_usage(usage: &Usage) -> String {
 	let mut buff = String::new();
 
