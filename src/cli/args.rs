@@ -46,6 +46,10 @@ pub enum CliCommand {
 	/// Check available API keys in the environment
 	#[command(name = "check-keys", about = "Check available API keys in the environment")]
 	CheckKeys(CheckKeysArgs),
+
+	/// Self management commands (e.g., setup, update)
+	#[command(name = "self", about = "Manage the aip CLI itself")]
+	Xelf(XelfArgs),
 }
 
 /// Custom function
@@ -63,6 +67,7 @@ impl CliCommand {
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
 			CliCommand::CheckKeys(_) => false, // Non-interactive
+			CliCommand::Xelf(_) => false,      // Non-interactive
 		}
 	}
 }
@@ -169,6 +174,25 @@ pub struct InitArgs {
 #[derive(Parser, Debug)]
 pub struct CheckKeysArgs {}
 
+/// Arguments for the `self` subcommand
+#[derive(Parser, Debug)]
+pub struct XelfArgs {
+	#[command(subcommand)]
+	pub cmd: XelfCommand,
+}
+
+/// Subcommands for the `self` command
+#[derive(Subcommand, Debug)]
+pub enum XelfCommand {
+	/// Perform initial setup for the aip CLI environment
+	Setup(XelfSetupArgs),
+	// Later: Update(XelfUpdateArgs),
+}
+
+/// Arguments for the `self setup` subcommand
+#[derive(Parser, Debug)]
+pub struct XelfSetupArgs {}
+
 // endregion: --- Sub Command Args
 
 // region:    --- From CliCommand to ExecCommand
@@ -184,8 +208,16 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
 			CliCommand::Install(install_args) => ExecActionEvent::CmdInstall(install_args),
 			CliCommand::CheckKeys(args) => ExecActionEvent::CmdCheckKeys(args),
+			CliCommand::Xelf(xelf_args) => {
+				// Map Xelf subcommands to specific ExecActionEvent variants
+				match xelf_args.cmd {
+					XelfCommand::Setup(args) => ExecActionEvent::CmdXelfSetup(args),
+					// Later: XelfCommand::Update(args) => ExecActionEvent::CmdXelfUpdate(args),
+				}
+			}
 		}
 	}
 }
 
 // endregion: --- From CliCommand to ExecCommand
+

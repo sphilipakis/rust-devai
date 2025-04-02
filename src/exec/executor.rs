@@ -7,6 +7,7 @@ use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::support::open_vscode;
 use crate::exec::{
 	ExecStatusEvent, RunRedoCtx, exec_check_keys, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo,
+	exec_xelf_setup, // Added import
 };
 use crate::hub::get_hub;
 use crate::init::{init_base, init_base_and_dir_context, init_wks};
@@ -178,6 +179,11 @@ impl Executor {
 				exec_check_keys(args).await?;
 			}
 
+			ExecActionEvent::CmdXelfSetup(args) => {
+				// Does not require dir_context or runtime (for now)
+				exec_xelf_setup(args).await?;
+			}
+
 			// -- Interactive Events
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
@@ -276,3 +282,4 @@ impl ExecutorSender {
 }
 
 // endregion: --- ExecutorSender
+

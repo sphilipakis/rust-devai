@@ -7,6 +7,7 @@ mod exec_cmd_list;
 mod exec_cmd_new;
 mod exec_cmd_pack;
 mod exec_cmd_run;
+mod exec_cmd_xelf;
 mod params;
 mod support;
 
@@ -18,6 +19,8 @@ use exec_cmd_list::*;
 use exec_cmd_new::*;
 use exec_cmd_pack::*;
 use exec_cmd_run::*;
+use exec_cmd_xelf::*;
+use exec_cmd_xelf::*; // Added import
 
 mod event_action;
 mod event_status;
@@ -29,4 +32,3 @@ pub use executor::*;
 pub use params::*;
 
 // endregion: --- Modules
-
