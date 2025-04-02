@@ -15,7 +15,6 @@ use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tokio::time::Instant;
-use value_ext::JsonValueExt;
 
 // region:    --- RunAgentInputResponse
 
@@ -337,8 +336,9 @@ fn get_price(chat_res: &ChatResponse) -> Option<f64> {
 }
 
 /// Model: gemini-2.0-flash | Adapter: Gemini
-fn format_model(agent: &Agent, res_model_iden: &ModelIden, res_provider_model_iden: &ModelIden) -> String {
-	let model_iden = agent.model_resolved();
+/// TODO: Might want to use the agent model somehow
+fn format_model(_agent: &Agent, res_model_iden: &ModelIden, res_provider_model_iden: &ModelIden) -> String {
+	// let model_iden = agent.model_resolved();
 	let model_txt: Cow<str> = if *res_model_iden.model_name != *res_provider_model_iden.model_name {
 		Cow::Owned(format!(
 			"{} ({})",

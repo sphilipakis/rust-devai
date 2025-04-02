@@ -1,0 +1,11 @@
+#!/bin/sh
+# .aipack-base shell setup (mimicking rustup env)
+# affix colons on either side of $PATH to simplify matching
+case ":${PATH}:" in
+    *:"$HOME/.aipack-base/bin":*)
+        ;;
+    *)
+        # note - last or first. For now, we got with first.
+        export PATH="$HOME/.aipack-base/bin:$PATH"
+        ;;
+esac

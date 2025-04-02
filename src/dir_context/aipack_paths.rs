@@ -1,10 +1,9 @@
 use super::path_consts::PACK_INSTALLED;
-use super::path_consts::{AIPACK_BASE, AIPACK_DIR_NAME, CONFIG_FILE_NAME, PACK_CUSTOM};
+use super::path_consts::{CONFIG_FILE_NAME, PACK_CUSTOM};
 use crate::dir_context::path_consts::PACK_DOWNLOAD;
 use crate::dir_context::{AipackBaseDir, AipackWksDir};
 use crate::support::files::current_dir;
 use crate::{Error, Result};
-use home::home_dir;
 use simple_fs::SPath;
 use std::path::Path;
 

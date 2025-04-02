@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext, find_wks_dir};
+use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext};
 use crate::hub::get_hub;
 use crate::init::assets;
 use crate::support::AsStrsExt;

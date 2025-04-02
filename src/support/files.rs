@@ -1,7 +1,6 @@
 use crate::{Error, Result};
 use simple_fs::SPath;
 use std::env;
-use std::fmt::format;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -111,6 +110,7 @@ fn is_buff_empty(buff: &[u8]) -> bool {
 /// Will do a safer delete, moving to trash if possible
 /// returns true if it was deleted (if not exists, return false)
 /// error if not a file
+#[allow(unused)]
 pub fn safer_delete_file(path: &SPath) -> Result<bool> {
 	if !path.exists() {
 		return Ok(false);

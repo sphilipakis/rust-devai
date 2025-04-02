@@ -66,7 +66,7 @@ impl Runtime {
 mod tests_support {
 	use super::*;
 	use crate::_test_support::{SANDBOX_01_BASE_AIPACK_DIR, SANDBOX_01_WKS_DIR, gen_test_dir_path};
-	use crate::dir_context::{AipackBaseDir, AipackPaths, AipackWksDir};
+	use crate::dir_context::{AipackBaseDir, AipackPaths};
 	use crate::exec::Executor;
 	use crate::hub::{HubEvent, get_hub};
 	use simple_fs::{SPath, ensure_dir};
