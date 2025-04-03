@@ -73,6 +73,14 @@ fn list_base_file_paths_start_with(prefix: &str) -> Result<Vec<String>> {
 
 // endregion: --- Base ZFiles
 
+// region:    --- Setup Files
+
+pub fn extract_setup_aip_env_sh_zfile() -> Result<ZFile> {
+	extract_zfile("_setup", "aip-env.sh")
+}
+
+// endregion: --- Setup Files
+
 // region:    --- Support
 
 /// Update all of the files in a dest_dir base on the pre_path (workspace or base)
