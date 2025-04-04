@@ -30,10 +30,10 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		hub.publish(format!("-> {:<18} '{}'", "Create dir", bin_dir)).await;
 	}
 
-	// -- Extract and copy aip-env.sh
-	// Note: Assuming the zip file contains the path "_setup/aip-env.sh" directly at the root.
+	// -- Extract and copy aip-env
+	// Note: Assuming the zip file contains the path "_setup/aip-env" directly at the root.
 	let env_script_zfile = extract_setup_aip_env_sh_zfile()?;
-	let target_env_script_path = bin_dir.join("aip-env.sh");
+	let target_env_script_path = bin_dir.join("aip-env");
 	fs::write(&target_env_script_path, env_script_zfile.content)?;
 	hub.publish(format!("-> {:<18} '{}'", "Create script", target_env_script_path))
 		.await;

@@ -76,7 +76,7 @@ fn list_base_file_paths_start_with(prefix: &str) -> Result<Vec<String>> {
 // region:    --- Setup Files
 
 pub fn extract_setup_aip_env_sh_zfile() -> Result<ZFile> {
-	extract_zfile("_setup", "aip-env.sh")
+	extract_zfile("_setup", "aip-env")
 }
 
 // endregion: --- Setup Files
