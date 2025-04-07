@@ -41,8 +41,15 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	};
 
 	// Calculate price (convert from per million tokens to actual price)
-	// NOTE: For now, hack the * 1.25 for cache_creation_tokens (which is Anthropic rules, and this is only anthropic data)
-	let price = (cached_tokens * model.input_cached / 1_000_000.0)
+	// price_input_cached is either the input_cached priced if not 0, or default to the input_normal
+	let price_input_cached = if model.input_cached > 0. {
+		model.input_cached
+	} else {
+		// if the input_cached price is <= 0, then, assume no input_chated price
+		model.input_normal
+	};
+	// NOTE: For now, for cache_creation_tokens assume * 1.25 for cache_creation_tokens (which is Anthropic rules, and this is only anthropic data)
+	let price = (cached_tokens * price_input_cached / 1_000_000.0)
 		+ (cache_creation_tokens * 1.25 * model.input_normal / 1_000_000.0)
 		+ (prompt_tokens * model.input_normal / 1_000_000.0)
 		+ (completion_tokens * model.output / 1_000_000.0);
