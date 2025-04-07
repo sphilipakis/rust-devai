@@ -13,6 +13,13 @@ pub fn current_dir() -> Result<SPath> {
 	Ok(dir)
 }
 
+/// Return the absolute path of the home dir
+pub fn home_dir() -> Result<SPath> {
+	let home_dir = home::home_dir().ok_or("No Home Dir found")?;
+	let home_dir: SPath = SPath::from_std_path_buf(home_dir)?;
+	Ok(home_dir)
+}
+
 /// Lists directories under the base_dir up to the specified depth.
 ///
 /// # Parameters

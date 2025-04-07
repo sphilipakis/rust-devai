@@ -19,6 +19,7 @@ pub mod html;
 pub mod html_rcdom;
 pub mod jsons;
 pub mod md;
+pub mod os;
 pub mod paths;
 pub mod text;
 pub mod tomls;

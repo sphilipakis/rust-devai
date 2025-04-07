@@ -97,3 +97,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	hub.publish("\n==== 'self setup' completed ====\n").await;
 	Ok(())
 }
+
+// region:    --- aip-env check & set
+
+// endregion: --- aip-env check & set
