@@ -219,7 +219,7 @@ async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(S
 		}
 
 		// Extract the filename from the URL
-		let url_path = url.split('/').last().unwrap_or("unknown.aipack");
+		let url_path = url.split('/').next_back().unwrap_or("unknown.aipack");
 		let filename = url_path.replace(' ', "-");
 
 		// Create a timestamped filename using the time crate

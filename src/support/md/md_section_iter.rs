@@ -36,7 +36,7 @@ impl SectionPattern {
 /// IMPORTANT:
 /// - When filter: [] (empty), the No Filter mode will return every section as a new item, regardless if they are nested.
 /// - When filter: [...] is not empty, it will respect the hierarchy, meaning the "# Heading 1"
-///                 will include the descendant heading and content as string content.
+///   will include the descendant heading and content as string content.
 /// - When a filter item is an empty string, it means only the top content, before any heading, and in this case, subheadings are not captured.
 pub struct MdSectionIter<'a> {
 	// -- Iterator data

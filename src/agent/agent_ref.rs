@@ -19,11 +19,14 @@ impl PartialAgentRef {
 	///
 	/// If the input string contains '@':
 	///   - It is parsed into a PackRef.
-	///   - Example: "pro@coder" will be parsed as PackRef {
-	///           namespace: Some("jc"),
-	///           pack_name: "coder",
-	///           sub_path: None
-	///       }
+	///   - Example: "pro@coder" will be parsed as
+	/// ```
+	/// PackRef {
+	///     namespace: Some("jc"),
+	///     pack_name: "coder",
+	///     sub_path: None
+	/// }
+	///````
 	///   - If a subpath is provided (e.g., "pro@coder/explain"), the sub_path field is set.
 	///
 	/// If the input string does not contain '@':

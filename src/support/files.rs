@@ -26,7 +26,7 @@ pub fn home_dir() -> Result<SPath> {
 /// - `base_dir`: The base directory to start listing from
 /// - `depth`: Maximum directory depth to traverse (0 means just the base_dir)
 /// - `only_leaf`: If true, only returns directories exactly at the specified depth.
-///                (Callers can pass true to use the default behavior.)
+///   (Callers can pass true to use the default behavior.)
 ///
 /// # Returns
 /// A vector of PathBuf for the directories that match the criteria
