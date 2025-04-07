@@ -114,7 +114,7 @@ impl AgentDoc {
 			// Update block state regardless of capture mode
 			let old_block_state = block_state;
 			block_state = block_state.compute_new(line);
-			
+
 			// If heading we decide the capture mode, but only if we're not inside a code block
 			// or if we're not in prompt part mode
 			if block_state.is_out() && line.starts_with('#') && !line.starts_with("##") {

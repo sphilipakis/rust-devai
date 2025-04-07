@@ -61,4 +61,3 @@ pub async fn open_vscode(path: impl AsRef<Path>) {
 		}
 	}
 }
-

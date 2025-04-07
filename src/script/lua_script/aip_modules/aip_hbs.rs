@@ -10,8 +10,8 @@
 //!
 //! - `aip.hbs.render(content: string, data: any): string`
 
-use crate::runtime::Runtime;
 use crate::Result;
+use crate::runtime::Runtime;
 use mlua::{Lua, Table, Value};
 
 /// Initializes the `hbs` Lua module.

@@ -12,4 +12,3 @@ pub enum PrintEvent {
 		available_keys: HashSet<String>,
 	},
 }
-

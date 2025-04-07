@@ -6,7 +6,15 @@ use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::support::open_vscode;
 use crate::exec::{
-	ExecStatusEvent, RunRedoCtx, exec_check_keys, exec_install, exec_list, exec_new, exec_pack, exec_run, exec_run_redo,
+	ExecStatusEvent,
+	RunRedoCtx,
+	exec_check_keys,
+	exec_install,
+	exec_list,
+	exec_new,
+	exec_pack,
+	exec_run,
+	exec_run_redo,
 	exec_xelf_setup, // Added import
 };
 use crate::hub::get_hub;
@@ -282,4 +290,3 @@ impl ExecutorSender {
 }
 
 // endregion: --- ExecutorSender
-

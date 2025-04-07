@@ -4,7 +4,7 @@ use crossterm::{
 	style::{Color, Print, ResetColor, SetForegroundColor},
 };
 use std::collections::HashSet;
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 
 /// Prints the status of API keys, indicating which are available and which are missing.
 pub fn print_api_keys(all_keys: &[&str], available_keys: &HashSet<String>) -> Result<()> {
