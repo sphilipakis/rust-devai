@@ -16,33 +16,33 @@ pub struct Provider {
 const OPENAI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "o1",
-		input_cached: 7.50,
-		input_normal: 15.00,
-		output: 60.00,
+		input_cached: 7.5,
+		input_normal: 15.0,
+		output: 60.0,
 	},
 	ModelPricing {
 		name: "o3-mini",
 		input_cached: 0.55,
-		input_normal: 1.10,
-		output: 4.40,
+		input_normal: 1.1,
+		output: 4.4,
 	},
 	ModelPricing {
 		name: "gpt-4-5",
-		input_cached: 37.50,
-		input_normal: 75.00,
-		output: 150.00,
+		input_cached: 37.5,
+		input_normal: 75.0,
+		output: 150.0,
 	},
 	ModelPricing {
 		name: "gpt-4o",
 		input_cached: 1.25,
-		input_normal: 2.50,
-		output: 10.00,
+		input_normal: 2.5,
+		output: 10.0,
 	},
 	ModelPricing {
 		name: "gpt-4o-mini",
 		input_cached: 0.075,
-		input_normal: 0.150,
-		output: 0.600,
+		input_normal: 0.15,
+		output: 0.6,
 	},
 ];
 
@@ -78,12 +78,6 @@ const GROQ_MODELS: &[ModelPricing] = &[
 		output: 0.79,
 	},
 	ModelPricing {
-		name: "qwen-qwq-32b-(preview)-128k",
-		input_cached: 0.0,
-		input_normal: 0.29,
-		output: 0.39,
-	},
-	ModelPricing {
 		name: "mistral-saba-24b",
 		input_cached: 0.0,
 		input_normal: 0.79,
@@ -94,6 +88,12 @@ const GROQ_MODELS: &[ModelPricing] = &[
 		input_cached: 0.0,
 		input_normal: 0.59,
 		output: 0.79,
+	},
+	ModelPricing {
+		name: "llama-3.1-8b-instant-128k",
+		input_cached: 0.0,
+		input_normal: 0.05,
+		output: 0.08,
 	},
 	ModelPricing {
 		name: "llama-3-70b-8k",
@@ -116,14 +116,14 @@ const GROQ_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "gemma-2-9b-8k",
 		input_cached: 0.0,
-		input_normal: 0.20,
-		output: 0.20,
+		input_normal: 0.2,
+		output: 0.2,
 	},
 	ModelPricing {
 		name: "llama-guard-3-8b-8k",
 		input_cached: 0.0,
-		input_normal: 0.20,
-		output: 0.20,
+		input_normal: 0.2,
+		output: 0.2,
 	},
 	ModelPricing {
 		name: "llama-3.3-70b-specdec-8k",
@@ -141,16 +141,22 @@ const GROQ: Provider = Provider {
 // Define Gemini pricing
 const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "gemini-2.5-pro",
+		input_cached: 0.0,
+		input_normal: 1.25,
+		output: 10.0,
+	},
+	ModelPricing {
 		name: "gemini-2.0-flash",
 		input_cached: 0.025,
-		input_normal: 0.10,
-		output: 0.40,
+		input_normal: 0.1,
+		output: 0.4,
 	},
 	ModelPricing {
 		name: "gemini-2.0-flash-lite",
 		input_cached: 0.0,
 		input_normal: 0.075,
-		output: 0.30,
+		output: 0.3,
 	},
 	ModelPricing {
 		name: "imagen-3",
@@ -168,7 +174,7 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		name: "gemini-1.5-flash",
 		input_cached: 0.01875,
 		input_normal: 0.075,
-		output: 0.30,
+		output: 0.3,
 	},
 	ModelPricing {
 		name: "gemini-1.5-flash-8b",
@@ -178,9 +184,9 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 	},
 	ModelPricing {
 		name: "gemini-1.5-pro",
-		input_cached: 0.3125,
+		input_cached: 0.0,
 		input_normal: 1.25,
-		output: 5.00,
+		output: 5.0,
 	},
 	ModelPricing {
 		name: "text-embedding-004",
@@ -201,7 +207,7 @@ const DEEPSEEK_MODELS: &[ModelPricing] = &[
 		name: "deepseek-chat",
 		input_cached: 0.07,
 		input_normal: 0.27,
-		output: 1.10,
+		output: 1.1,
 	},
 	ModelPricing {
 		name: "deepseek-reasoner",
@@ -220,27 +226,27 @@ const DEEPSEEK: Provider = Provider {
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "claude-3-7-sonnet",
-		input_cached: 0.30,
-		input_normal: 3.00,
-		output: 15.00,
+		input_cached: 0.3,
+		input_normal: 3.0,
+		output: 15.0,
 	},
 	ModelPricing {
 		name: "claude-3-5-haiku",
 		input_cached: 0.08,
-		input_normal: 0.80,
-		output: 4.00,
+		input_normal: 0.8,
+		output: 4.0,
 	},
 	ModelPricing {
 		name: "claude-3-opus",
-		input_cached: 1.50,
-		input_normal: 15.00,
-		output: 75.00,
+		input_cached: 1.5,
+		input_normal: 15.0,
+		output: 75.0,
 	},
 	ModelPricing {
 		name: "claude-3-5-sonnet",
-		input_cached: 0.30,
-		input_normal: 3.00,
-		output: 15.00,
+		input_cached: 0.3,
+		input_normal: 3.0,
+		output: 15.0,
 	},
 	ModelPricing {
 		name: "claude-3-haiku",

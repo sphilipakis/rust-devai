@@ -13,11 +13,11 @@ local p_utils = require("pricing_utils")
 local base_dir = p_utils.base_dir
 
 local inputs = {
-   {name = "openai",    url = "https://openai.com/api/pricing/"},
-   {name = "groq",      url = "https://groq.com/pricing/"},
-   {name = "gemini",    url = "https://ai.google.dev/pricing#2_0flash"},
-   {name = "deepseek",  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", url = "https://www.anthropic.com/pricing#anthropic-api"}
+   {name = "openai",    do_json = false, url = "https://openai.com/api/pricing/"},
+   {name = "groq",      do_json = false, url = "https://groq.com/pricing/"},
+   {name = "gemini",    do_json = true, url = "https://ai.google.dev/pricing#2_0flash"},
+   {name = "deepseek",  do_json = false, url = "https://api-docs.deepseek.com/quick_start/pricing"},
+   {name = "anthropic", do_json = false, url = "https://www.anthropic.com/pricing#anthropic-api"}
 }
 
 -- Agument inputs
@@ -37,8 +37,8 @@ return aipack.before_all_response({
 local md_path = input.md_path
 local json_path = input.json_path
 
-if aip.path.exists(json_path) then
-    -- return aipack.skip(json_path .. "  already exist")
+if not input.do_json  then
+    return aipack.skip("" .. input.name .. " marked as do_json = false, so skipping")
 end
 
 local rem_url = input.url
@@ -79,6 +79,7 @@ From this content:
 - For Anthropic, the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic, when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
+- For gemini model names make sure no space, replace with `-`
 - For deepseek model, ignore the discound price
 - For OpenAI, model name `.` should be replaced by `-`
 - For OpenAI Models, remove the `openai-` prefix from the model name
