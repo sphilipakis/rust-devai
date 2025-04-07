@@ -5,6 +5,9 @@ use crate::dir_context::AipackBaseDir;
 use crate::hub::get_hub;
 use crate::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::init::init_base;
+use crate::support::files;
+use crate::support::os;
+use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs; // Import fs for copy and write
 
@@ -73,6 +76,13 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	))
 	.await;
 
+	// -- Check the env
+	// if let Some(home_sh_env_path) = os::get_os_env_file_path() {
+	// 	if home_sh_env_path.exists() {
+	// 		let content = read_to_string(home_sh_env_path)?;
+	// 		if ()
+	// 	}
+	// }
 	// Instructions for user
 	let bin_dir = bin_dir.as_str();
 	let path_to_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());

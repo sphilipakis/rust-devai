@@ -1,6 +1,6 @@
 use crate::Error;
 use crate::exec::ExecStatusEvent;
-use crate::tui::PrintEvent;
+use crate::tui::{PrintEvent, PromptParams};
 use derive_more::derive::From;
 use std::sync::Arc;
 
@@ -28,6 +28,8 @@ pub enum HubEvent {
 	LuaPrint(Arc<str>),
 
 	Print(Arc<PrintEvent>),
+
+	// Prompt(PromptParams),
 
 	// -- Action event
 	// for now, the watches send and event to the hub,

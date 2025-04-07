@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::HubEvent;
+use crate::tui::prompter::prompt;
 use crate::tui::support::safer_println;
 use crate::tui::{handle_print, tui_elem};
 
@@ -18,6 +19,7 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, int
 
 		HubEvent::Print(print_event) => handle_print(print_event, interactive),
 
+		// HubEvent::Prompt(params) => prompt(params).await?,
 		HubEvent::Executor(exec_event) => {
 			if let (ExecStatusEvent::RunEnd, true) = (exec_event, interactive) {
 				tui_elem::print_bottom_bar();
