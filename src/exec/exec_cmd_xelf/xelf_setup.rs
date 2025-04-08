@@ -1,4 +1,3 @@
-use crate::Error; // Import Error type
 use crate::Result;
 use crate::cli::XelfSetupArgs;
 use crate::dir_context::AipackBaseDir;
@@ -13,6 +12,7 @@ use crate::support::os::is_mac;
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
+use std::fs::remove_file;
 use std::fs::write;
 use std::os::unix::fs::PermissionsExt as _; // Import fs for copy and write
 
@@ -33,15 +33,15 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	.await;
 
 	// -- Create the bin directory
-	let bin_dir = aipack_base_dir.join(BIN_DIR);
-	if ensure_dir(&bin_dir)? {
-		hub.publish(format!("-> {:<18} '{}'", "Create dir", bin_dir)).await;
+	let base_bin_dir = aipack_base_dir.join(BIN_DIR);
+	if ensure_dir(&base_bin_dir)? {
+		hub.publish(format!("-> {:<18} '{}'", "Create dir", base_bin_dir)).await;
 	}
 
 	// -- Extract and copy aip-env
 	// Note: Assuming the zip file contains the path "_setup/aip-env" directly at the root.
 	let env_script_zfile = extract_setup_aip_env_sh_zfile()?;
-	let target_env_script_path = bin_dir.join("aip-env");
+	let target_env_script_path = base_bin_dir.join("aip-env");
 	fs::write(&target_env_script_path, env_script_zfile.content)?;
 	if is_linux() || is_mac() {
 		let mut perms = fs::metadata(&target_env_script_path)?.permissions();
@@ -56,35 +56,29 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	let current_exe_spath = SPath::from_std_path_buf(current_exe)?;
 
 	// Check if already running from within the base bin directory (or subdirs)
-	if current_exe_spath.as_str().starts_with(bin_dir.as_str()) {
-		return Err(Error::custom(format!(
-			"Cannot run 'self setup' from the installation directory ('{}').\nRun it from the downloaded executable's location.",
-			bin_dir
-		)));
-	}
+	let is_current_exe_at_base_bin_dir = current_exe_spath.as_str().starts_with(base_bin_dir.as_str());
 
-	// Check if trying to copy from anywhere within the base dir (less strict than above)
-	if current_exe_spath.as_str().starts_with(aipack_base_dir.as_str()) {
+	// If running on the already installed, just warn that it will just udpate the settings
+	let tmp_exe_to_trash = if is_current_exe_at_base_bin_dir {
 		hub.publish(format!(
-			"WARN: Running 'self setup' from within '{}'. This might indicate an unusual setup.",
+			"WARN: Running 'self setup' on installed 'aip' at  '{}'. This will just update the settings (not updat the 'aip' binary)",
 			aipack_base_dir.as_str()
 		))
 		.await;
-		// Decide whether to error out or just warn. Let's warn for now.
-		// return Err(Error::custom(format!(
-		//     "Cannot run 'self setup' from within the aipack base directory ('{}'). Run it from the downloaded executable's location.",
-		//     aipack_base_dir.as_str()
-		// )));
+		None
 	}
-
-	let target_exe_path = bin_dir.join("aip");
-	// Copy the file
-	fs::copy(&current_exe_spath, &target_exe_path)?;
-	hub.publish(format!(
-		"-> {:<18} '{}' to '{}'",
-		"Copy executable", current_exe_spath, target_exe_path
-	))
-	.await;
+	// if running on another aip, then, perform the copy
+	else {
+		let target_exe_path = base_bin_dir.join("aip");
+		// Copy the file
+		fs::copy(&current_exe_spath, &target_exe_path)?;
+		hub.publish(format!(
+			"-> {:<18} '{}' to '{}'",
+			"Copy executable", current_exe_spath, target_exe_path
+		))
+		.await;
+		Some(current_exe_spath)
+	};
 
 	// -- Check & Setup env
 	if let Some(home_sh_env_path) = os::get_os_env_file_path() {
@@ -138,6 +132,17 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		}
 	}
 
+	// -- Eventually remove the current exec
+	// NOTE: Only if there is a `.tar.gz` sibling
+	if let Some(tmp_exe_to_trash) = tmp_exe_to_trash {
+		let gz_sibling = tmp_exe_to_trash.new_sibling(format!("{}.tar.gz", tmp_exe_to_trash.stem()));
+		if gz_sibling.exists() && tmp_exe_to_trash.stem() == "aip" {
+			// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
+			remove_file(&tmp_exe_to_trash)?;
+			hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
+				.await;
+		}
+	}
 	// -- Print final message
 	let path_to_aip_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
 	hub.publish(format!(
