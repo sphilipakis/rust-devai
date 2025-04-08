@@ -19,28 +19,59 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 <img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
 
+- [Video: pro@coder with pro@rust10x Rust best practices](https://www.youtube.com/watch?v=rIAoSf4TWho&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigq)
 - [Video: jc@coder (now pro@coder) Pack Demo ](https://www.youtube.com/watch?v=-xFd00rrfLk&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: AIPACK Introduction](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [AIPACK Substack at news.aipack.ai](https://news.aipack.ai)
 
-### Quick Start
+## Quick Start
 
-**Install**
+> DISCLAIMER: For now, v0.6.x, AIPACK works on **Linux & Mac**, and requires **WSL** on **Windows**.
+>
+> IMPORTANT: **Proper Windows support** is coming sometime in v0.6.x and **definitely by v0.7.x** (around **Second Half of April*).
+
+### Install From Binaries
+
+#### Mac
+
+```sh
+# Mac ARM / Apple Silicon
+curl -O https://repo.aipack.ai/aip-dist/stable/latest/aarch64-apple-darwin/aip.tar.gz && \
+        tar -xvf aip.tar.gz && \
+        ./aip self setup
+
+# Mac x86
+curl -O https://repo.aipack.ai/aip-dist/stable/latest/x86_64-apple-darwin/aip.tar.gz && \
+        tar -xvf aip.tar.gz && \
+        ./aip self setup        
+```
+
+
+#### Linux
+
+```sh
+# Linux x86
+curl -O https://repo.aipack.ai/aip-dist/stable/latest/x86_64-unknown-linux-gnu/aip.tar.gz && \
+        tar -xvf aip.tar.gz && \
+        ./aip self setup
+
+# Linux ARM
+curl -O https://repo.aipack.ai/aip-dist/stable/latest/aarch64-unknown-linux-gnu/aip.tar.gz && \
+        tar -xvf aip.tar.gz && \
+        ./aip self setup
+```
+
+
+### Install from source
 
 For now, installation requires building directly from source via Rust. Works on all major OSes.
 
 - Install Rust: https://www.rust-lang.org/tools/install
 - For now, install with `cargo install aipack`
 
-> **NOTE:** Ironically, while the binary is relatively small (<20MB with batteries included), the build process can take up quite a bit of space. However, Cargo should clean it up afterward.
-> Binaries and installation instructions will be available at https://aipack.ai
 
-> DISCLAIMER: For now, v0.6.x, AIPACK works on **Linux & Mac**, and requires **WSL** on **Windows**.
->
-> IMPORTANT: **Proper Windows support** is coming sometime in v0.6.x and **definitely by v0.7.x** (around **Mid/End of March**).
-
-**Run**
+### Run
 
 ```sh
 # In the terminal, go to your project
@@ -49,11 +80,14 @@ cd /path/to/my/project/
 # Initialize workspace .aipack/ and ~/.aipack-base
 aip init
 
-# Make sure to export the desired API key
-export OPENAI_API_KEY    = "sk...."
-export ANTHROPIC_API_KEY = "...."
-export GEMINI_API_KEY    = "..."
+# Make sure to export the desired API key (no spaces around `=` unix convention)
+export OPENAI_API_KEY="sk...."
+export ANTHROPIC_API_KEY="...."
+export GEMINI_API_KEY="..."
 # For more keys, see below
+
+# Check the keys you setup
+aip check-keys
 
 # To proofread your README.md (namespace: demo, pack_name: proof)
 aip run demo@proof -f ./README.md
@@ -74,7 +108,7 @@ aip run core@ask-aipack
 
 ```
 
-**pro@coder**
+### `pro@coder`
 
 - You can install `pro@coder` with `aip install pro@coder`, and then
 - Run it with `aip run pro@coder` or `aip run @coder` if you don't have any other `@coder` pack in a different namespace.
@@ -96,7 +130,7 @@ GROQ_API_KEY
 COHERE_API_KEY
 ```
 
-### Info
+## More Info
 
 - Website: https://aipack.ai
 
@@ -106,11 +140,15 @@ COHERE_API_KEY
 
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports many top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
-- Top new features: (see full [CHANGELOG](CHANGELOG.md))
-  - **2025-03-02 (v0.6.7) - Fixes and tune-up. Pack install test and other refactoring**
-  - **2025-03-02 (v0.6.4) - Fixes, and now supports the first repo pack `aip install jc@coder`**
-  - **2025-02-28 (v0.6.3) - `aip pack ..`, `aip install local...`, `ai_response.price_usd`, and more**
-  - **2025-02-26 **(v0.6.0)** - BIG UPDATE - to **AIPACK**, now with pack support (e.g., `aip run demo@craft/code`)**
+- Top new features: (see full details [CHANGELOG](CHANGELOG.md))
+  - **2025-04-08 (v0.6.17) - Binaries available (mac/linux), pro@coder, pro@rust10x**
+  - 2025-03-28 - (v0.6.15) - new: `aip check-keys`
+  - 2025-03-25 (v0.6.14) - agent - add `aip.flow.data_response({input?, data?, options?})` (e.g., model override by input)
+  - 2025-03-20 (v0.6.12) - Now can **call agent within agents** `aip.agent.run(agent_name, {inputs?, options?})`
+  - 2025-03-12 (v0.6.9) - Now supports `namespace@pack_name/some/**/*.*` for all `aip.file..`
+  - 2025-03-02 (v0.6.7) - Fixes and tune-up. Pack install test and other refactoring
+  - 2025-02-28 (v0.6.3) - `aip pack ..`, `aip install local...`, `ai_response.price_usd`, and more
+  - 2025-02-26 (v0.6.0) - BIG UPDATE - to **AIPACK**, now with pack support (e.g., `aip run demo@craft/code`)**
   - 2025-02-22 (v0.5.11) - Huge update with parametric agents and coder (more info soon)
   - 2025-01-27 (v0.5.9) - DeepSeek distill models support for Groq and Ollama (local)
   - 2025-01-23 (v0.5.7) - `aipack run craft/text` or `aipack run craft/code` (example of new agent module support)
@@ -120,14 +158,14 @@ COHERE_API_KEY
 - **WINDOWS DISCLAIMER:**
     - This CLI uses a path scheme similar to Mac/Unix-like systems, which might not function correctly in the Windows `cmd.exe` (Command Prompt) or traditional batch files (`.bat`).
     - Full Windows local path support is in development.
-    - **RECOMMENDATION:** Use PowerShell or WSL on Windows. Please log issues if minor changes can improve support for Windows PowerShell/WSL.
+    - **RECOMMENDATION:** Use WSL on Windows. Please log issues if minor changes can improve support for Windows WSL.
 
 - Thanks to
   - **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
   - [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/jeremychone/rust-aipack/pull/30))
   - [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` mode ([#28](https://github.com/jeremychone/rust-aipack/pull/28))
 
-### How it works
+## How it works
 
 - **One Agent** == **One Markdown**
     - An `.aip` agent file is just a **Markdown file** with sections for each stage of the agent's processing.

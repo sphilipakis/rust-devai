@@ -1,5 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-04-08 - [v0.6.17](https://github.com/jeremychone/rust-devai/compare/v0.6.16...v0.6.17)
+
+- `+` self setup - Added setup support that init ~/.apack-base/bin/aip and aip-env
+- `>` tui - work on the Prompt hub event
+- `.` pricing - update pricing-all.json and pricing/data.rs for gemini 2.5 pro
+- `.` more fixes & refactors
+
 ## 2025-03-29 - [v0.6.16](https://github.com/jeremychone/rust-devai/compare/v0.6.15...v0.6.16)
 
 - `.` run input - change the way model print and ai_response.info to include provider model name
