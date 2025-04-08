@@ -29,7 +29,7 @@ pub enum HubEvent {
 
 	Print(Arc<PrintEvent>),
 
-	// Prompt(PromptParams),
+	Prompt(Arc<PromptParams>),
 
 	// -- Action event
 	// for now, the watches send and event to the hub,

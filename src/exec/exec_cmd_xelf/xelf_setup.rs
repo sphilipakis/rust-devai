@@ -3,13 +3,18 @@ use crate::Result;
 use crate::cli::XelfSetupArgs;
 use crate::dir_context::AipackBaseDir;
 use crate::hub::get_hub;
+use crate::hub::hub_prompt;
 use crate::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::init::init_base;
-use crate::support::files;
 use crate::support::os;
+use crate::support::os::current_os;
+use crate::support::os::is_linux;
+use crate::support::os::is_mac;
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
-use std::fs; // Import fs for copy and write
+use std::fs;
+use std::fs::write;
+use std::os::unix::fs::PermissionsExt as _; // Import fs for copy and write
 
 // Because the bin with .aip
 const BIN_DIR: &str = "bin";
@@ -38,6 +43,11 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	let env_script_zfile = extract_setup_aip_env_sh_zfile()?;
 	let target_env_script_path = bin_dir.join("aip-env");
 	fs::write(&target_env_script_path, env_script_zfile.content)?;
+	if is_linux() || is_mac() {
+		let mut perms = fs::metadata(&target_env_script_path)?.permissions();
+		perms.set_mode(0o755); // rwxr-xr-x
+		fs::set_permissions(&target_env_script_path, perms)?;
+	}
 	hub.publish(format!("-> {:<18} '{}'", "Create script", target_env_script_path))
 		.await;
 
@@ -76,30 +86,71 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	))
 	.await;
 
-	// -- Check the env
-	// if let Some(home_sh_env_path) = os::get_os_env_file_path() {
-	// 	if home_sh_env_path.exists() {
-	// 		let content = read_to_string(home_sh_env_path)?;
-	// 		if ()
-	// 	}
-	// }
-	// Instructions for user
-	let bin_dir = bin_dir.as_str();
-	let path_to_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
+	// -- Check & Setup env
+	if let Some(home_sh_env_path) = os::get_os_env_file_path() {
+		if home_sh_env_path.exists() {
+			// -- get the home sh env content or empty string if not
+			// NOTE: This will eventually create the file is not present
+			let content = if home_sh_env_path.exists() {
+				read_to_string(&home_sh_env_path)?
+			} else {
+				"".to_string()
+			};
+
+			if content.contains(".aipack-base") {
+				hub.publish(format!(
+					"-! {:<18} '{home_sh_env_path}' seems to have the .aipack-base path setup. So, skipping further setup.",
+					"Setup PATH"
+				))
+				.await;
+			}
+			// -- Create the file if we have a os_source_line for this OS
+			else if let Some(os_source_line) = os_source_line(&target_env_script_path) {
+				let action_str = if content.is_empty() { "create" } else { "update" };
+
+				let user_response = hub_prompt(
+					hub,
+					format!(
+						"\nDo you want to {action_str} the '{home_sh_env_path}' with the required aipack-base/bin path: Y/n "
+					),
+				)
+				.await?;
+				if user_response.trim() == "Y" {
+					let content = format!("{}\n\n{}\n", content.trim_end(), os_source_line);
+					write(&home_sh_env_path, content)?;
+					hub.publish(format!(
+						"-> {:<18} Added '{os_source_line}' in file '{home_sh_env_path}'",
+						"Setup PATH"
+					))
+					.await;
+				} else {
+					hub.publish(format!(
+						"-! Answer was not 'Y' so skipping updating '{home_sh_env_path}'"
+					))
+					.await;
+				}
+			} else {
+				hub.publish(format!(
+					"-! No source line for the current OS. Skipping updating '{home_sh_env_path}'"
+				))
+				.await;
+			}
+		}
+	}
+
+	// -- Print final message
+	let path_to_aip_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
 	hub.publish(format!(
 		r#"
-  IMPORTANT: Add '{bin_dir}' to your PATH environment. 
-    You can add the "{path_to_env_sh}" in your sh file
-      1)   On Mac: echo '\nsource "{path_to_env_sh}"' >> ~/.zshenv
-      2) On Linux: echo 'source "{path_to_env_sh}"' >> ~/.bashrc
+Setup should be complete now
+  - You need to start a new terminal
+  - Or execute: source "{path_to_aip_env_sh}"
 
-    Then, you can either; 
-      - Start a new terminal
-      - Or execute: source "{path_to_env_sh}"
-
-    Then, check with
-    - Run: which aip
-    - You should see something like "path/to/home/.aipack-base/bin/aip"
+Then, check with
+  - Run: which aip
+  - You should see something like "path/to/home/.aipack-base/bin/aip"
+  - Run: aip -V 
+  - Should print something like "aipack 0.6.17"
 "#
 	))
 	.await;
@@ -109,5 +160,15 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 }
 
 // region:    --- aip-env check & set
+
+fn os_source_line(target_env_script_path: &SPath) -> Option<String> {
+	let path_to_aip_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
+	match current_os() {
+		os::OsType::Mac => Some(format!("source \"{path_to_aip_env_sh}\"")),
+		os::OsType::Linux => Some(format!("source \"{path_to_aip_env_sh}\"")),
+		os::OsType::Windows => None,
+		os::OsType::Unknown => None,
+	}
+}
 
 // endregion: --- aip-env check & set

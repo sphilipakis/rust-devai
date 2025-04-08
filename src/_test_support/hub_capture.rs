@@ -42,6 +42,11 @@ impl HubCapture {
 								content.push_str(&format!("Error: {error}\n"));
 							},
 
+							HubEvent::Prompt(params) => {
+								let mut content = content_clone.lock().await;
+								content.push_str(&format!("prompt: {}\n", params.message));
+							},
+
 							HubEvent::LuaPrint(text) => {
 								let mut content = content_clone.lock().await;
 								content.push_str(&format!("LuaPrint: {text}\n"));

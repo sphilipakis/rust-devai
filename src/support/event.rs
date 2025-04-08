@@ -8,37 +8,33 @@ use flume::{Receiver, bounded};
 /// Creates a true oneshot channel based on Flume
 pub fn oneshot<T>() -> (OneShotTx<T>, OneShotRx<T>) {
 	let (tx, rx) = bounded(1);
-	(OneShotTx { sender: Some(tx) }, OneShotRx { receiver: rx })
+	(OneShotTx { sender: tx }, OneShotRx { receiver: rx })
 }
 
 /// Wrapper for a one-shot sender that enforces single-use behavior
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OneShotTx<T> {
-	sender: Option<flume::Sender<T>>,
+	sender: flume::Sender<T>,
 }
 
 impl<T> OneShotTx<T> {
 	/// Sends a value synchronously and consumes the sender
-	pub fn send(mut self, value: T) -> Result<()> {
-		if let Some(sender) = self.sender.take() {
-			sender
-				.send(value)
-				.map_err(|err| Error::custom(format!("Fail to OneShot send message. Cause: {err}")))?;
-		}
+	pub fn send(&self, value: T) -> Result<()> {
+		self.sender
+			.send(value)
+			.map_err(|err| Error::custom(format!("Fail to OneShot send message. Cause: {err}")))?;
 		Ok(())
 	}
 
 	/// Sends a value asynchronously and consumes the sender
-	pub async fn send_async(mut self, value: T) -> Result<()>
+	pub async fn send_async(&self, value: T) -> Result<()>
 	where
 		T: Send + 'static,
 	{
-		if let Some(sender) = self.sender.take() {
-			sender
-				.send_async(value)
-				.await
-				.map_err(|err| Error::custom(format!("Fail to OneShot send message. Cause: {err}")))?;
-		}
+		self.sender
+			.send_async(value)
+			.await
+			.map_err(|err| Error::custom(format!("Fail to OneShot send message. Cause: {err}")))?;
 		Ok(())
 	}
 }

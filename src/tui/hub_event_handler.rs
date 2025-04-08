@@ -19,7 +19,8 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, int
 
 		HubEvent::Print(print_event) => handle_print(print_event, interactive),
 
-		// HubEvent::Prompt(params) => prompt(params).await?,
+		HubEvent::Prompt(params) => prompt(&params).await?,
+
 		HubEvent::Executor(exec_event) => {
 			if let (ExecStatusEvent::RunEnd, true) = (exec_event, interactive) {
 				tui_elem::print_bottom_bar();

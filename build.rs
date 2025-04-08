@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+use zip::CompressionMethod;
 use zip::write::SimpleFileOptions;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,7 +23,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// 	.compression_method(CompressionMethod::Deflated)
 	// 	.unix_permissions(0o755);
 
-	let options = SimpleFileOptions::default();
+	let options = SimpleFileOptions::default()
+		.compression_method(CompressionMethod::Deflated)
+		.unix_permissions(0o755);
 
 	// Recursively add files from _init directory
 	for entry in WalkDir::new(init_dir) {
