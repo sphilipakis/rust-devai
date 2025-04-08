@@ -40,22 +40,18 @@ humantime = "2.1.0"
 html-escape = "0.2"
 # -- HTML Parsing
 # Note: markup5ever_rcdom often have incompatibility with html5ever
-#       so, we copied the code into html_rcdom.rs for now
-# markup5ever_rcdom = "=0.5.0-unofficial"
-#
-# Note: html5ever introduced incompatibility with `0.29.2`, which was fixed here, but then, was yanked. 
-#       then, html5ever "=0.29.1" requires "=0.14.1", which is important for our the rcdom
-# html5ever = "=0.29.1"
+#       so, we copied the code into html_rcdom.rs for now 
+#       (not using markup5ever_rcdom = "=0.5.0-unofficial")
+# Note: html5ever introduced compatibility can be tricky, so making sure to lock those versions. 
 tendril = "=0.4.3"
-html5ever = "=0.30"
-# markup5ever has to be "markup5ever" `=0.14.1`
-markup5ever = "=0.15"
+html5ever = "=0.31.0"
+markup5ever = "=0.16.0"
 # -- Template & Scripting
 mlua = { version = "0.10.1", features = ["lua54", "vendored", "send", "serialize"] }
 handlebars = "6"
 # -- Cli
 clap =  {version = "4.5.17", features = ["cargo", "derive"]}
-crossterm = { version = "0.28.1", features = ["event-stream"] }
+crossterm = { version = "0.29", features = ["event-stream"] }
 # -- Files
 simple-fs = {version = "0.6.0-rc.3"}
 camino = "1" # trying this lib out
