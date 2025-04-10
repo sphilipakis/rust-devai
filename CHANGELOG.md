@@ -1,5 +1,11 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-04-10 - [v0.6.18](https://github.com/jeremychone/rust-devai/compare/v0.6.17...v0.6.18)
+
+- `.` update to simple-fs 0.6.0-rc.4
+- `.` zip - for common zip (for pack ..) compress with Deflated (most standard)
+- `.` build.rs - use zstd for asset zip/unzip
+
 ## 2025-04-08 - [v0.6.17](https://github.com/jeremychone/rust-devai/compare/v0.6.16...v0.6.17)
 
 - `+` self setup - Added setup support that init ~/.apack-base/bin/aip and aip-env
