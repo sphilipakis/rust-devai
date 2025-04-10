@@ -109,7 +109,7 @@ impl DirContext {
 			None => path, // Path was already absolute
 		};
 
-		let path = final_path.into_normalized();
+		let path = final_path.into_collapsed();
 
 		Ok(path)
 	}
