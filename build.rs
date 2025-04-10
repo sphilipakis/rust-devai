@@ -23,9 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// 	.compression_method(CompressionMethod::Deflated)
 	// 	.unix_permissions(0o755);
 
-	let options = SimpleFileOptions::default()
-		.compression_method(CompressionMethod::Deflated)
-		.unix_permissions(0o755);
+	let options = SimpleFileOptions::default().compression_method(CompressionMethod::Zstd);
 
 	// Recursively add files from _init directory
 	for entry in WalkDir::new(init_dir) {
