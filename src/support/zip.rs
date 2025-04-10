@@ -4,9 +4,9 @@ use simple_fs::SPath;
 use std::fs::{self, File};
 use std::io::{self, Read as _};
 use walkdir::WalkDir;
-use zip::ZipArchive;
 use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
+use zip::{CompressionMethod, ZipArchive};
 
 /// Creates a zip archive from the directory `src_dir` and writes it to `dest_file`.
 ///
@@ -22,8 +22,8 @@ pub fn zip_dir(src_dir: impl AsRef<Utf8Path>, dest_file: impl AsRef<Utf8Path>) -
 	let file = File::create(dest_file.as_std_path())?;
 	let mut zip = ZipWriter::new(file);
 
-	// Set default options with deflate compression.
-	let options = SimpleFileOptions::default();
+	// Set default options with deflated compression (most standard).
+	let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
 	// Walk through the directory.
 	for entry in WalkDir::new(src_dir.as_std_path()) {

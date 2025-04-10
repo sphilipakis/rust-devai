@@ -18,11 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let init_dir = Path::new("_init");
 	let mut buffer = Vec::new();
 
-	// old way
-	// let options = FileOptions::default()
-	// 	.compression_method(CompressionMethod::Deflated)
-	// 	.unix_permissions(0o755);
-
+	// Since for internal use only, zstd is the best suited.
 	let options = SimpleFileOptions::default().compression_method(CompressionMethod::Zstd);
 
 	// Recursively add files from _init directory
