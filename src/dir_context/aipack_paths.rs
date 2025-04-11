@@ -142,6 +142,7 @@ impl RepoKind {
 	}
 }
 
+#[derive(Debug)]
 pub struct PackRepo {
 	pub kind: RepoKind,
 	pub path: SPath,
@@ -275,13 +276,14 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::_test_support::{SANDBOX_01_WKS_DIR, assert_ends_with};
+	use crate::_test_support::assert_ends_with;
 	use crate::runtime::Runtime;
 
 	#[tokio::test]
 	async fn test_aipack_paths_from_wks_dir_exists() -> Result<()> {
 		// -- Exec
-		let aipack_paths = AipackPaths::from_wks_dir(SANDBOX_01_WKS_DIR)?;
+		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let aipack_paths = runtime.dir_context().aipack_paths();
 
 		// -- Check wks_dir and aipack_wks_dir
 		assert!(

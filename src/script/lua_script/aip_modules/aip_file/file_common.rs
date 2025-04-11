@@ -588,7 +588,12 @@ mod tests {
 		let code = format!(r#"return aip.file.list("{glob}");"#);
 
 		// -- Exec
-		let _res = eval_lua(&lua, &code)?;
+		let res = eval_lua(&lua, &code)?;
+		let res = res.as_array().ok_or("Should be array")?;
+
+		assert_eq!(res.len(), 1);
+		let val = res.first().ok_or("Should have one item")?;
+		assert_eq!(val.x_get_str("name")?, "config-current-with-aliases.toml");
 
 		// -- Check
 		// TODO:
