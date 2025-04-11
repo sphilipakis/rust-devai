@@ -7,8 +7,6 @@ use crate::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::init::init_base;
 use crate::support::os;
 use crate::support::os::current_os;
-use crate::support::os::is_linux;
-use crate::support::os::is_mac;
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
@@ -46,7 +44,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	#[cfg(unix)]
 	{
 		use std::os::unix::fs::PermissionsExt as _; // Import fs for copy and write
-		if is_linux() || is_mac() {
+		if os::is_linux() || os::is_mac() {
 			let mut perms = fs::metadata(&target_env_script_path)?.permissions();
 			perms.set_mode(0o755); // rwxr-xr-x
 			fs::set_permissions(&target_env_script_path, perms)?;

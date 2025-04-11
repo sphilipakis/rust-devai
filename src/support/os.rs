@@ -41,14 +41,17 @@ pub fn current_os() -> OsType {
 	}
 }
 
+#[allow(unused)]
 pub fn is_mac() -> bool {
 	cfg!(target_os = "macos")
 }
 
+#[allow(unused)]
 pub fn is_linux() -> bool {
 	cfg!(target_os = "linux")
 }
 
+#[allow(unused)]
 pub fn is_windows() -> bool {
 	cfg!(target_os = "windows")
 }
