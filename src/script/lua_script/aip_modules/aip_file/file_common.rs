@@ -423,6 +423,7 @@ mod tests {
 	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
 	use crate::runtime::Runtime;
 	use crate::script::lua_script::aip_file;
+	use simple_fs::SPath;
 	use std::path::Path;
 	use value_ext::JsonValueExt as _;
 
@@ -578,25 +579,24 @@ mod tests {
 	async fn test_lua_file_list_glob_abs_with_wild() -> Result<()> {
 		// -- Fixtures
 		let lua = setup_lua(aip_file::init_module, "file")?;
-		let dir = Path::new("./tests-data/config");
+		let dir = SPath::new("./tests-data/config");
 		let dir = dir
 			.canonicalize()
 			.map_err(|err| format!("Cannot canonicalize {dir:?} cause: {err}"))?;
 
 		// This is the rust Path logic
-		let glob = format!("{}/*.*", dir.to_string_lossy());
+		let glob = format!("{}/*.*", dir);
 		let code = format!(r#"return aip.file.list("{glob}");"#);
 
 		// -- Exec
 		let res = eval_lua(&lua, &code)?;
+
+		// -- Check
 		let res = res.as_array().ok_or("Should be array")?;
 
 		assert_eq!(res.len(), 1);
 		let val = res.first().ok_or("Should have one item")?;
 		assert_eq!(val.x_get_str("name")?, "config-current-with-aliases.toml");
-
-		// -- Check
-		// TODO:
 
 		Ok(())
 	}
