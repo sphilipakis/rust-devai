@@ -424,7 +424,6 @@ mod tests {
 	use crate::runtime::Runtime;
 	use crate::script::lua_script::aip_file;
 	use simple_fs::SPath;
-	use std::path::Path;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
