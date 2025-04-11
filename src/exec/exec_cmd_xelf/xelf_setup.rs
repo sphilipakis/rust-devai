@@ -14,7 +14,6 @@ use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
 use std::fs::remove_file;
 use std::fs::write;
-use std::os::unix::fs::PermissionsExt as _; // Import fs for copy and write
 
 // Because the bin with .aip
 const BIN_DIR: &str = "bin";
@@ -43,10 +42,15 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	let env_script_zfile = extract_setup_aip_env_sh_zfile()?;
 	let target_env_script_path = base_bin_dir.join("aip-env");
 	fs::write(&target_env_script_path, env_script_zfile.content)?;
-	if is_linux() || is_mac() {
-		let mut perms = fs::metadata(&target_env_script_path)?.permissions();
-		perms.set_mode(0o755); // rwxr-xr-x
-		fs::set_permissions(&target_env_script_path, perms)?;
+
+	#[cfg(unix)]
+	{
+		use std::os::unix::fs::PermissionsExt as _; // Import fs for copy and write
+		if is_linux() || is_mac() {
+			let mut perms = fs::metadata(&target_env_script_path)?.permissions();
+			perms.set_mode(0o755); // rwxr-xr-x
+			fs::set_permissions(&target_env_script_path, perms)?;
+		}
 	}
 	hub.publish(format!("-> {:<18} '{}'", "Create script", target_env_script_path))
 		.await;
