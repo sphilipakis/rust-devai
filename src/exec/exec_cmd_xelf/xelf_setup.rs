@@ -35,6 +35,147 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		hub.publish(format!("-> {:<18} '{}'", "Create dir", base_bin_dir)).await;
 	}
 
+	// -- Copy current executable
+	let current_exe = std::env::current_exe()?;
+	let current_exe_spath = SPath::from_std_path_buf(current_exe)?;
+
+	// Check if already running from within the base bin directory (or subdirs)
+	let is_current_exe_at_base_bin_dir = current_exe_spath.as_str().starts_with(base_bin_dir.as_str());
+
+	// If running on the already installed, just warn that it will just udpate the settings
+	let tmp_exe_to_trash = if is_current_exe_at_base_bin_dir {
+		hub.publish(format!(
+			"WARN: Running 'self setup' on installed 'aip' at  '{}'. This will just update the settings (but not update the 'aip' binary)",
+			aipack_base_dir.as_str()
+		))
+		.await;
+		None
+	}
+	// if running on another aip, then, perform the copy
+	else {
+		let target_exe_path = base_bin_dir.join(current_exe_spath.name());
+		// Copy the file
+		fs::copy(&current_exe_spath, &target_exe_path)?;
+		hub.publish(format!(
+			"-> {:<18} '{}' to '{}'",
+			"Copy executable", current_exe_spath, target_exe_path
+		))
+		.await;
+		Some(current_exe_spath)
+	};
+
+	if os::is_unix() {
+		unix_setup_env(&base_bin_dir).await?;
+	} else {
+		#[cfg(windows)]
+		for_windows::windows_setup_env(&base_bin_dir).await?;
+	}
+
+	// -- Eventually remove the current exec
+	// NOTE: Only if there is a `.tar.gz` sibling
+	if let Some(tmp_exe_to_trash) = tmp_exe_to_trash {
+		let gz_sibling = tmp_exe_to_trash.new_sibling(format!("{}.tar.gz", tmp_exe_to_trash.stem()));
+		if gz_sibling.exists() && tmp_exe_to_trash.stem() == "aip" {
+			// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
+			remove_file(&tmp_exe_to_trash)?;
+			hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
+				.await;
+		}
+	}
+
+	hub.publish("\n==== 'self setup' completed ====\n").await;
+	Ok(())
+}
+
+// region:    --- Window Setup
+
+#[cfg(windows)]
+mod for_windows {
+	use super::*;
+
+	use std::process::Command;
+
+	async fn windows_setup_env(base_bin_dir: &SPath) -> Result<()> {
+		let hub = get_hub();
+
+		// Get current user PATH
+		let current_path = std::env::var("PATH").unwrap_or_default();
+
+		// Check if path is already present (case-insensitive on Windows)
+		let found_path = current_path.split(';').find(|p| p.contains(".aipack-base"));
+
+		if let Some(found_path) = found_path {
+			hub.publish(format!(".aipack-base path already setup. ({found_path})")).await;
+			return Ok(());
+		}
+
+		let new_path = base_bin_dir.as_str().replace("/", "\\");
+
+		let user_response = hub_prompt(
+			hub,
+			format!("\nDo you want to add '{new_path}' to your shell PATH?: Y/n "),
+		)
+		.await?;
+
+		if user_response.trim() != "Y" {
+			hub.publish(format!(
+				r#"-! Answer was not 'Y' so skipping updating environment path.
+   Make sure to add '{new_path}' in your system path.
+	 Then, you can run: aip -V
+	 To check the version of aipack"#
+			))
+			.await;
+			return Ok(());
+		}
+
+		// Append new path
+
+		let updated_path = format!("{};{}", current_path.trim_end_matches(';'), new_path);
+		#[cfg(windows)]
+		{
+			use std::os::windows::process::CommandExt;
+			// Set it permanently in user environment variables
+			Command::new("powershell")
+				.args([
+					"-NoProfile",
+					"-Command",
+					&format!(
+						"[Environment]::SetEnvironmentVariable('Path', '{}', 'User')",
+						updated_path.replace("'", "''") // escape single quotes
+					),
+				])
+				.creation_flags(0x08000000) // CREATE_NO_WINDOW
+				.status()?; // Run and wait
+		}
+
+		hub.publish(format!(
+			"-> Added to shell path (with [Environment]::SetEnvironmentVariable('Path'): '{new_path}'"
+		))
+		.await;
+
+		hub.publish(format!(
+			r#"
+Setup should be complete now
+  - You need to start a new terminal
+
+Then, check with
+  - Run: aip -V 
+  - Should print something like "aipack 0.6.18"
+"#
+		))
+		.await;
+
+		Ok(())
+	}
+}
+
+// endregion: --- Window Setup
+
+// region:    --- Unix Setup
+
+async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
+	let hub = get_hub();
+
 	// -- Extract and copy aip-env
 	// Note: Assuming the zip file contains the path "_setup/aip-env" directly at the root.
 	let env_script_zfile = extract_setup_aip_env_sh_zfile()?;
@@ -52,35 +193,6 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	}
 	hub.publish(format!("-> {:<18} '{}'", "Create script", target_env_script_path))
 		.await;
-
-	// -- Copy current executable
-	let current_exe = std::env::current_exe()?;
-	let current_exe_spath = SPath::from_std_path_buf(current_exe)?;
-
-	// Check if already running from within the base bin directory (or subdirs)
-	let is_current_exe_at_base_bin_dir = current_exe_spath.as_str().starts_with(base_bin_dir.as_str());
-
-	// If running on the already installed, just warn that it will just udpate the settings
-	let tmp_exe_to_trash = if is_current_exe_at_base_bin_dir {
-		hub.publish(format!(
-			"WARN: Running 'self setup' on installed 'aip' at  '{}'. This will just update the settings (not updat the 'aip' binary)",
-			aipack_base_dir.as_str()
-		))
-		.await;
-		None
-	}
-	// if running on another aip, then, perform the copy
-	else {
-		let target_exe_path = base_bin_dir.join("aip");
-		// Copy the file
-		fs::copy(&current_exe_spath, &target_exe_path)?;
-		hub.publish(format!(
-			"-> {:<18} '{}' to '{}'",
-			"Copy executable", current_exe_spath, target_exe_path
-		))
-		.await;
-		Some(current_exe_spath)
-	};
 
 	// -- Check & Setup env
 	if let Some(home_sh_env_path) = os::get_os_env_file_path() {
@@ -134,17 +246,6 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		}
 	}
 
-	// -- Eventually remove the current exec
-	// NOTE: Only if there is a `.tar.gz` sibling
-	if let Some(tmp_exe_to_trash) = tmp_exe_to_trash {
-		let gz_sibling = tmp_exe_to_trash.new_sibling(format!("{}.tar.gz", tmp_exe_to_trash.stem()));
-		if gz_sibling.exists() && tmp_exe_to_trash.stem() == "aip" {
-			// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
-			remove_file(&tmp_exe_to_trash)?;
-			hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
-				.await;
-		}
-	}
 	// -- Print final message
 	let path_to_aip_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
 	hub.publish(format!(
@@ -162,9 +263,9 @@ Then, check with
 	))
 	.await;
 
-	hub.publish("\n==== 'self setup' completed ====\n").await;
 	Ok(())
 }
+// endregion: --- Unix Setup
 
 // region:    --- aip-env check & set
 
