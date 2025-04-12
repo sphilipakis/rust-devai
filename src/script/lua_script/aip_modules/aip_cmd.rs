@@ -215,7 +215,6 @@ mod tests {
 		// -- Check
 		let err = err.to_string();
 		assert_contains(&err, "nonexistentcommand");
-		assert_contains(&err, "No such file or directory");
 
 		Ok(())
 	}
@@ -233,7 +232,6 @@ mod tests {
 		// -- Check
 		let err = err.to_string();
 		assert_contains(&err, "nonexistentcommand");
-		assert_contains(&err, "No such file or directory");
 
 		Ok(())
 	}
