@@ -107,7 +107,7 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 			run_options: run_options.clone(),
 		}),
 		Err(err) => {
-			hub.publish(Error::cc("Error while Replay", err)).await;
+			hub.publish(err).await;
 			None
 		}
 	}

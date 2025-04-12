@@ -82,24 +82,4 @@ $env:OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'
 	}
 }
 
-pub fn get_set_api_key_message_for_env_name(env_name: &str) -> String {
-	match current_os() {
-		OsType::Mac | OsType::Linux | OsType::Unknown => {
-			format!(
-				r#"You can set environment variable like: 
-
-export {env_name}="YOUR_{env_name}_VALUE_HERE"
-		"#
-			)
-		}
-		OsType::Windows => {
-			format!(
-				r#"You can set environment variable like (Assuming PowerShell): 
-
-$env:{env_name} = 'YOUR_{env_name}_VALUE_HERE'
-		"#
-			)
-		}
-	}
-}
 // endregion: --- Messages

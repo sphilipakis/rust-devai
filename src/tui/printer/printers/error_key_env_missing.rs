@@ -1,3 +1,4 @@
+use crate::support::os::{OsType, current_os};
 use crossterm::{
 	cursor::MoveToColumn,
 	execute,
@@ -13,6 +14,7 @@ pub fn print_key_env_missing(missing_env_name: &str, model_iden: &ModelIden, _in
 
 	let model_name: &str = &model_iden.model_name;
 	let provider_name: &str = model_iden.adapter_kind.as_str();
+	let os_set_env_line = os_set_env_line(missing_env_name);
 
 	execute!(
 		stdout,
@@ -69,15 +71,19 @@ pub fn print_key_env_missing(missing_env_name: &str, model_iden: &ModelIden, _in
 		MoveToColumn(0),
 		ResetColor,
 		SetForegroundColor(Color::Green),
-		Print(format!(
-			"export {}=\"YOUR_{}_VALUE_HERE\"\n",
-			missing_env_name, missing_env_name
-		)),
-		Print("\n"),
+		Print(os_set_env_line),
+		Print("\n\n"),
 		Clear(ClearType::CurrentLine),
 		MoveToColumn(0),
 		SetForegroundColor(Color::Red),
 		Print("========================\n"),
 		ResetColor,
 	);
+}
+
+pub fn os_set_env_line(env_name: &str) -> String {
+	match current_os() {
+		OsType::Mac | OsType::Linux | OsType::Unknown => format!(r#"export {env_name}="YOUR_{env_name}_VALUE_HERE""#),
+		OsType::Windows => format!(r#"$env:{env_name} = 'YOUR_{env_name}_VALUE_HERE'"#),
+	}
 }
