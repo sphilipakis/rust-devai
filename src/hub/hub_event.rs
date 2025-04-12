@@ -18,9 +18,11 @@ use std::sync::Arc;
 #[derive(Debug, Clone, From)]
 pub enum HubEvent {
 	Message(Arc<str>),
+
 	Error {
 		error: Arc<Error>,
 	},
+
 	#[from]
 	Executor(ExecStatusEvent),
 

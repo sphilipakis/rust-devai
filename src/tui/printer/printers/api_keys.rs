@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Result, support::os, tui::support::safer_println};
 use crossterm::{
 	execute,
 	style::{Color, Print, ResetColor, SetForegroundColor},
@@ -51,8 +51,12 @@ pub fn print_api_keys(all_keys: &[&str], available_keys: &HashSet<String>) -> Re
 		}
 	}
 
-	writeln!(stdout)?; // Add a final newline for better spacing in the terminal
-	stdout.flush()?; // Ensure everything is printed
+	writeln!(stdout)?;
+	stdout.flush()?;
+
+	let help_message = os::get_set_api_key_message();
+
+	safer_println(help_message, false);
 
 	Ok(())
 }

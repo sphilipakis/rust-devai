@@ -70,7 +70,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 
 	match do_run(&run_options, &runtime, &agent).await {
 		Ok(_) => (),
-		Err(err) => hub.publish(format!("ERROR: {}", err)).await,
+		Err(err) => hub.publish(err).await,
 	};
 
 	Ok(RunRedoCtx {

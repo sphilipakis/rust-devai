@@ -1,9 +1,9 @@
-use crate::Result;
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::HubEvent;
 use crate::tui::prompter::prompt;
 use crate::tui::support::safer_println;
-use crate::tui::{handle_print, tui_elem};
+use crate::tui::{PrintEvent, handle_print, tui_elem};
+use crate::{Error, Result};
 
 pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, interactive: bool) -> Result<()> {
 	match event {
@@ -11,9 +11,17 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, int
 			safer_println(&format!("{msg}"), interactive);
 		}
 
-		HubEvent::Error { error } => {
-			safer_println(&format!("Error: {error}"), interactive);
-		}
+		HubEvent::Error { error } => match &*error {
+			Error::GenAIEnvKeyMissing { model_iden, env_name } => handle_print(
+				PrintEvent::ApiKeyEnvMissing {
+					model_iden: model_iden.clone(),
+					env_name: env_name.to_string(),
+				}
+				.into(),
+				interactive,
+			),
+			other => safer_println(&format!("\nError: {other}"), interactive),
+		},
 
 		HubEvent::LuaPrint(text) => safer_println(&text, interactive),
 

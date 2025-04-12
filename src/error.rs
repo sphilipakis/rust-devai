@@ -1,5 +1,6 @@
 use derive_more::From;
 use derive_more::derive::Display;
+use genai::ModelIden;
 use tokio::runtime::TryCurrentError;
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -65,6 +66,14 @@ pub enum Error {
 		cause: String,
 	},
 
+	// -- Genai
+	GenAIEnvKeyMissing {
+		model_iden: ModelIden,
+		env_name: String,
+	},
+	#[display("{}", _0.c_display())]
+	GenAI(genai::Error),
+
 	// -- TokioSync
 	TokioTryCurrent(TryCurrentError),
 
@@ -107,9 +116,6 @@ pub enum Error {
 	#[from]
 	Handlebars(handlebars::RenderError),
 	#[from]
-	#[display("{}", _0.c_display())]
-	GenAI(genai::Error),
-	#[from]
 	SimpleFs(simple_fs::Error),
 	#[from]
 	Keyring(keyring::Error),
@@ -127,6 +133,27 @@ pub enum Error {
 
 	#[display("Error: {_0}\n\tCause: {_1}")]
 	CustomAndCause(String, String),
+}
+
+impl From<genai::Error> for Error {
+	fn from(genai_error: genai::Error) -> Self {
+		match genai_error {
+			genai::Error::Resolver {
+				model_iden,
+				resolver_error,
+			} => {
+				if let genai::resolver::Error::ApiKeyEnvNotFound { env_name } = resolver_error {
+					Error::GenAIEnvKeyMissing { model_iden, env_name }
+				} else {
+					Error::GenAI(genai::Error::Resolver {
+						model_iden,
+						resolver_error,
+					})
+				}
+			}
+			other => Error::GenAI(other),
+		}
+	}
 }
 
 // region:    --- Custom display
@@ -214,7 +241,16 @@ impl CustomDisplay for genai::Error {
 			genai::Error::Resolver {
 				model_iden,
 				resolver_error,
-			} => format!("Resolver error in model '{:?}': {}.", model_iden, resolver_error),
+			} => {
+				let cause = match resolver_error {
+					genai::resolver::Error::Custom(cause) => cause.to_string(),
+					_ => resolver_error.to_string(),
+				};
+				format!(
+					"Cannot connect to model '{}' for provider '{}'.\nCause: {}",
+					model_iden.model_name, model_iden.adapter_kind, cause
+				)
+			}
 
 			genai::Error::EventSourceClone(cannot_clone_request_error) => {
 				format!("Failed to clone event source request: {}.", cannot_clone_request_error)

@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
-use crate::run::{Literals, get_genai_client};
+use crate::run::{Literals, new_genai_client};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
@@ -22,7 +22,7 @@ impl Runtime {
 	/// This is called when the cli start a command
 	pub fn new(dir_context: DirContext, exec_sender: ExecutorSender) -> Result<Self> {
 		// Note: Make the type explicit for clarity
-		let client = get_genai_client()?;
+		let client = new_genai_client()?;
 
 		let inner = RuntimeInner::new(dir_context, client, exec_sender);
 

@@ -62,3 +62,44 @@ pub fn is_windows() -> bool {
 }
 
 // endregion: --- General Os Type
+
+// region:    --- Messages
+
+pub fn get_set_api_key_message() -> &'static str {
+	match current_os() {
+		OsType::Mac | OsType::Linux | OsType::Unknown => {
+			r#"You can set environment variable like: 
+
+export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE"
+		"#
+		}
+		OsType::Windows => {
+			r#"You can set environment variable like (Assuming PowerShell): 
+
+$env:OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'
+		"#
+		}
+	}
+}
+
+pub fn get_set_api_key_message_for_env_name(env_name: &str) -> String {
+	match current_os() {
+		OsType::Mac | OsType::Linux | OsType::Unknown => {
+			format!(
+				r#"You can set environment variable like: 
+
+export {env_name}="YOUR_{env_name}_VALUE_HERE"
+		"#
+			)
+		}
+		OsType::Windows => {
+			format!(
+				r#"You can set environment variable like (Assuming PowerShell): 
+
+$env:{env_name} = 'YOUR_{env_name}_VALUE_HERE'
+		"#
+			)
+		}
+	}
+}
+// endregion: --- Messages
