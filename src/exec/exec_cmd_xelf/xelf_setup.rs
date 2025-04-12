@@ -129,31 +129,9 @@ mod for_windows {
 		}
 
 		// Append new path
+		add_new_path(&new_path).await?;
 
-		let updated_path = format!("{};{}", new_path, current_path.trim_end_matches(';') );
-		#[cfg(windows)]
-		{
-			use std::os::windows::process::CommandExt;
-			// Set it permanently in user environment variables
-			Command::new("powershell")
-				.args([
-					"-NoProfile",
-					"-Command",
-					&format!(
-						"[Environment]::SetEnvironmentVariable('Path', '{}', 'User')",
-						updated_path.replace("'", "''") // escape single quotes
-					),
-				])
-				.creation_flags(0x08000000) // CREATE_NO_WINDOW
-				.status()?; // Run and wait
-		}
-
-		hub.publish(format!(
-			"-> Added to shell path (with [Environment]::SetEnvironmentVariable('Path'): '{new_path}'"
-		))
-		.await;
-
-		hub.publish(format!(
+		hub.publish(
 			r#"
 Setup should be complete now
   - You need to start a new terminal
@@ -163,11 +141,50 @@ Setup should be complete now
 Then, check with
   - Run: aip -V 
   - Should print something like "aipack 0.6.18"
-"#
+"#,
+		)
+		.await;
+
+		Ok(())
+	}
+
+	async fn add_new_path(new_path: &str) -> Result<()> {
+		let hub = get_hub();
+
+		let current_user_path = exec_powershell(r#"[Environment]::GetEnvironmentVariable("Path", "User")"#)?;
+		let current_user_path = current_user_path.trim();
+
+		let updated_path = format!("{};{}", current_user_path.trim_end_matches(';'), new_path);
+		let power_set_path_cmd = &format!(
+			"[Environment]::SetEnvironmentVariable('Path', '{}', 'User')",
+			updated_path.replace("'", "''") // escape single quotes
+		);
+		exec_powershell(power_set_path_cmd)?;
+
+		hub.publish(format!(
+			"-> Added to shell path (with [Environment]::SetEnvironmentVariable('Path'): '{new_path}'"
 		))
 		.await;
 
 		Ok(())
+	}
+
+	fn exec_powershell(power_cmd: &str) -> Result<String> {
+		let mut cmd = Command::new("powershell");
+		cmd.args(["-NoProfile", "-Command", power_cmd]);
+
+		#[cfg(windows)]
+		cmd.creation_flags(0x08000000); // create no window
+
+		let output = cmd.output()?;
+
+		if output.status.success() {
+			let stdout = String::from_utf8_lossy(&output.stdout);
+			Ok(stdout.trim().to_string())
+		} else {
+			let stderr = String::from_utf8_lossy(&output.stderr);
+			Err(format!("Cannot execute command '{power_cmd}'. Cause: {stderr}").into())
+		}
 	}
 }
 
