@@ -423,7 +423,9 @@ mod tests {
 	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
 	use crate::runtime::Runtime;
 	use crate::script::lua_script::aip_file;
+	use serde_json::Value;
 	use simple_fs::SPath;
+	use std::collections::HashMap;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
@@ -621,20 +623,18 @@ return { files = files }
 
 		assert_eq!(files.len(), 3, ".files.len() should be 3");
 
+		// NOTE We cannot assume the orders as different OSes might have different orders.
+		let file_by_name: HashMap<&str, &Value> =
+			files.iter().map(|v| (v.x_get_str("name").unwrap_or_default(), v)).collect();
+
 		// NOTE: Here we assume the order will be deterministic and the same across OSes (tested on Mac).
 		//       This logic might need to be changed, or actually, the list might need to have a fixed order.
-		assert_eq!(
-			"main.aip",
-			files.first().ok_or("Should have a least one file")?.x_get_str("name")?
-		);
-		assert_eq!(
-			"agent-hello-3.aip",
-			files.get(1).ok_or("Should have a least two file")?.x_get_str("name")?
-		);
-		assert_eq!(
-			"agent-hello-2.aip",
-			files.get(2).ok_or("Should have a least two file")?.x_get_str("name")?
-		);
+		let file = file_by_name.get("main.aip").ok_or("Should have 'main.aip'")?;
+		assert_eq!(file.x_get_str("path")?, "sub-sub-dir/main.aip");
+		let file = file_by_name.get("agent-hello-3.aip").ok_or("Should have 'agent-hello-3.aip'")?;
+		assert_eq!(file.x_get_str("path")?, "sub-sub-dir/agent-hello-3.aip");
+		let file = file_by_name.get("agent-hello-2.aip").ok_or("Should have 'agent-hello-2.aip'")?;
+		assert_eq!(file.x_get_str("path")?, "agent-hello-2.aip");
 
 		Ok(())
 	}
