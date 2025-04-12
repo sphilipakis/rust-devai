@@ -23,6 +23,12 @@ pub fn new_genai_client() -> Result<genai::Client> {
 			}
 			// -- Otherwise, get it with keyring
 			else {
+				// NOTE: For now, we are disabling Mac keychain support.
+				//       Apple seems to have deprecated this and is promoting passwords,
+				//       which do not appear to be supported by keyring.
+				//
+				// NOTE: We might bring this feature back, but with a settings in the config or somewhere
+				//
 				// #[cfg(target_os = "macos")]
 				// {
 				// 	use crate::support::cred::get_or_prompt_api_key;
