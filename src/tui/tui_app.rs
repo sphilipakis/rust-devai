@@ -6,7 +6,7 @@ use crate::tui::hub_event_handler::handle_hub_event;
 use crate::tui::in_reader::InReader;
 use crate::tui::support::safer_println;
 use crossterm::cursor::MoveUp;
-use crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{Clear, ClearType};
 use tokio::sync::broadcast::Receiver;
@@ -91,21 +91,32 @@ impl TuiApp {
 						// -- Redo
 						KeyCode::Char('r') => {
 							// clear_last_n_lines(1);
-							safer_println("\n-- R pressed - Redo\n", interactive);
-							exec_sender.send(ExecActionEvent::Redo).await;
+							if key_event.kind == KeyEventKind::Press {
+								safer_println("\n-- R pressed - Redo\n", interactive);
+								exec_sender.send(ExecActionEvent::Redo).await;
+							}
 						}
 
 						// -- Quit
-						KeyCode::Char('q') => hub.publish(HubEvent::Quit).await,
+						KeyCode::Char('q') => {
+							if key_event.kind == KeyEventKind::Press {
+								hub.publish(HubEvent::Quit).await
+							}
+						}
 
 						// -- Open agent
 						KeyCode::Char('a') => {
 							// clear_last_n_lines(1);
-							exec_sender.send(ExecActionEvent::OpenAgent).await;
+							if key_event.kind == KeyEventKind::Press {
+								exec_sender.send(ExecActionEvent::OpenAgent).await;
+							}
 						}
 
 						// -- Ctrl c
-						KeyCode::Char('c') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
+						KeyCode::Char('c')
+							if key_event.modifiers.contains(KeyModifiers::CONTROL)
+								&& key_event.kind == KeyEventKind::Press =>
+						{
 							hub.publish(HubEvent::Quit).await;
 						}
 
