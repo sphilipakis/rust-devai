@@ -38,6 +38,8 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// The command will be executed using the system shell. Arguments can be provided as a single string
 /// or a table of strings.
 ///
+/// Note: To maximize compatiblity on windows, the command will be wrapped with `cmd /C cmd_name args..`
+///
 /// ### Example
 ///
 /// ```lua
@@ -71,13 +73,9 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// }
 /// ```
 fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Result<Value> {
-	let mut command = Command::new(&cmd_name);
+	let args = args.map(|args| to_vec_of_strings(args, "command args")).transpose()?;
 
-	// Handle optional arguments
-	if let Some(args) = args {
-		let args = to_vec_of_strings(args, "command args")?;
-		command.args(args);
-	}
+	let mut command = cross_command(&cmd_name, args)?;
 
 	match command.output() {
 		Ok(output) => {
@@ -126,6 +124,35 @@ Cause:\n{err}"
 		}
 	}
 }
+
+// region:    --- Support
+
+/// Create a command, and make it a `cmd /C cmd_name args..` for windows
+fn cross_command(cmd_name: &str, args: Option<Vec<String>>) -> Result<Command> {
+	let command = if cfg!(windows) {
+		let full_cmd = if let Some(args) = args {
+			// Quote arguments if needed and join
+			let joined = args.join(" ");
+			format!("{cmd_name} {joined}")
+		} else {
+			cmd_name.to_string()
+		};
+
+		let mut cmd = Command::new("cmd");
+		cmd.args(["/C", &full_cmd]);
+		cmd
+	} else {
+		let mut cmd = Command::new(cmd_name);
+		if let Some(args) = args {
+			cmd.args(args);
+		}
+
+		cmd
+	};
+
+	Ok(command)
+}
+// endregion: --- Support
 
 // region:    --- Tests
 
