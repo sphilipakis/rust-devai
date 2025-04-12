@@ -95,7 +95,7 @@ mod for_windows {
 
 	use std::process::Command;
 
-	async fn windows_setup_env(base_bin_dir: &SPath) -> Result<()> {
+	pub async fn windows_setup_env(base_bin_dir: &SPath) -> Result<()> {
 		let hub = get_hub();
 
 		// Get current user PATH
@@ -130,7 +130,7 @@ mod for_windows {
 
 		// Append new path
 
-		let updated_path = format!("{};{}", current_path.trim_end_matches(';'), new_path);
+		let updated_path = format!("{};{}", new_path, current_path.trim_end_matches(';') );
 		#[cfg(windows)]
 		{
 			use std::os::windows::process::CommandExt;
@@ -157,6 +157,8 @@ mod for_windows {
 			r#"
 Setup should be complete now
   - You need to start a new terminal
+  - If you are in VSCode, it has to be restarted for the new Path to take effect
+    (restart the VSCode terminal is not enough :(
 
 Then, check with
   - Run: aip -V 
