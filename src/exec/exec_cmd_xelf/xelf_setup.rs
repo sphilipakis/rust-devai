@@ -95,6 +95,9 @@ mod for_windows {
 
 	use std::process::Command;
 
+	#[cfg(windows)]
+	use std::os::windows::process::CommandExt;
+
 	pub async fn windows_setup_env(base_bin_dir: &SPath) -> Result<()> {
 		let hub = get_hub();
 
