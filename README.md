@@ -8,9 +8,10 @@
 
 # AIPACK - Run, Build, and Share AI Packs
 
-Check out the site: https://aipack.ai for more information and links.
+Check out the site: https://aipack.ai for more information and links, [AIPACK News & Blog Posts](https://news.aipack.ai/archive)
 
 Open-source Agentic Runtime to run, build, and share AI Packs.
+
 - Supports **all** major AI providers and models.
 - Efficient and small (**< 20MB**), with **zero** dependencies.
 - Built in **Rust** using Lua for embedded scripting (small and efficient).
