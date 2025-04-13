@@ -1,5 +1,5 @@
 use crate::tui::PrintEvent;
-use crate::tui::printer::printers::{self, print_key_env_missing};
+use crate::tui::printer::printers::{self, print_error_generic, print_key_env_missing};
 use std::sync::Arc;
 
 pub fn handle_print(print_event: Arc<PrintEvent>, interactive: bool) {
@@ -23,5 +23,8 @@ pub fn handle_print(print_event: Arc<PrintEvent>, interactive: bool) {
 		PrintEvent::ApiKeyEnvMissing { model_iden, env_name } => {
 			print_key_env_missing(env_name, model_iden, interactive)
 		}
+
+		// Print Generic error
+		PrintEvent::GenericErrorMsg(msg) => print_error_generic(msg, interactive),
 	}
 }

@@ -17,4 +17,6 @@ pub enum PrintEvent {
 		model_iden: ModelIden,
 		env_name: String,
 	},
+
+	GenericErrorMsg(String),
 }

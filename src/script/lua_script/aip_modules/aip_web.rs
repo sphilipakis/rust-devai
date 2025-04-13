@@ -81,7 +81,7 @@ fn web_get(lua: &Lua, url: String) -> mlua::Result<Value> {
 
 			let res: mlua::Result<Value> = match client.get(&url).send().await {
 				Ok(response) => get_lua_response_value(lua, response, &url).await,
-				Err(err) => Err(crate::Error::Lua(format!(
+				Err(err) => Err(crate::Error::custom(format!(
 					"\
 Fail to do aip.web.get for url: {url}
 Cause: {err}"
@@ -179,7 +179,7 @@ fn web_post(lua: &Lua, url: String, data: Value) -> mlua::Result<Value> {
 
 			let res: mlua::Result<Value> = match request_builder.send().await {
 				Ok(response) => get_lua_response_value(lua, response, &url).await,
-				Err(err) => Err(crate::Error::Lua(format!(
+				Err(err) => Err(crate::Error::custom(format!(
 					"\
 Fail to do aip.web.post for url: {url}
 Cause: {err}"

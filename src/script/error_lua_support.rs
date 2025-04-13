@@ -21,7 +21,7 @@ impl Error {
 				buff.push(format!("Other lua error:\n{}", item));
 			}
 		}
-		Error::Lua(buff.join("\n"))
+		Error::custom(buff.join("\n"))
 	}
 }
 
@@ -77,7 +77,7 @@ impl From<&mlua::Error> for Error {
 		}
 		let msg = buff.join("\n");
 		// Note: here is Self::lua, it gets a stackoverflow
-		Self::Lua(msg)
+		Self::custom(msg)
 	}
 }
 

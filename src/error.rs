@@ -6,7 +6,7 @@ use tokio::runtime::TryCurrentError;
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, From, Display)]
-#[display("{self:?}")]
+#[display("{self}")]
 pub enum Error {
 	// -- Cli Command
 	#[display("Command Agent not found at: {_0}")]
@@ -78,9 +78,6 @@ pub enum Error {
 	TokioTryCurrent(TryCurrentError),
 
 	// -- Externals / custom
-	#[display("LUA ERROR - {_0}")]
-	Lua(String),
-
 	Zip {
 		zip_file: String,
 		cause: String,
@@ -110,6 +107,7 @@ pub enum Error {
 	#[from]
 	Serde(serde_json::Error),
 	#[from]
+	#[display("{_0}")]
 	Toml(toml::de::Error),
 	#[from]
 	JsonValueExt(value_ext::JsonValueExtError),

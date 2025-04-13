@@ -20,7 +20,7 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, int
 				.into(),
 				interactive,
 			),
-			other => safer_println(&format!("\nError: {other}"), interactive),
+			other => handle_print(PrintEvent::GenericErrorMsg(other.to_string()).into(), interactive),
 		},
 
 		HubEvent::LuaPrint(text) => safer_println(&text, interactive),

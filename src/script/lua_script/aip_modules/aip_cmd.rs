@@ -98,7 +98,7 @@ fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Resul
 					.map(|a| a.to_str().unwrap_or_default())
 					.collect::<Vec<&str>>();
 				let args = args.join(" ");
-				Err(crate::Error::Lua(format!(
+				Err(crate::Error::custom(format!(
 					"\
 Fail to execute: {cmd} {args}
 stdout:\n{stdout}\n
@@ -115,7 +115,7 @@ exit code: {exit_code}\n"
 				.map(|a| a.to_str().unwrap_or_default())
 				.collect::<Vec<&str>>();
 			let args = args.join(" ");
-			Err(crate::Error::Lua(format!(
+			Err(crate::Error::custom(format!(
 				"\
 Fail to execute: {cmd} {args}
 Cause:\n{err}"

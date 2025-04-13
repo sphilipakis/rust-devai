@@ -63,7 +63,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 fn prune_to_declarations(lua: &Lua, code: String) -> mlua::Result<Value> {
 	match run_prune_to_declarations(&code) {
 		Ok(result) => Ok(Value::String(lua.create_string(&result)?)),
-		Err(err) => Err(crate::Error::Lua(format!("Failed to prune Rust code: {}", err)).into()),
+		Err(err) => Err(crate::Error::custom(format!("Failed to prune Rust code: {}", err)).into()),
 	}
 }
 
