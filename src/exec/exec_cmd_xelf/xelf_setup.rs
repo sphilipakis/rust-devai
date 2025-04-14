@@ -149,7 +149,8 @@ mod for_windows {
 		// Append new path
 		add_new_path(&new_path).await?;
 
-		hub.publish(
+		let version = crate::VERSION;
+		hub.publish(format!(
 			r#"
 Setup should be complete now
   - You need to start a new terminal
@@ -158,9 +159,9 @@ Setup should be complete now
 
 Then, check with
   - Run: aip -V 
-  - Should print something like "aipack 0.6.18"
-"#,
-		)
+  - Should print something like "aipack {version}"
+"#
+		))
 		.await;
 
 		Ok(())
@@ -285,6 +286,7 @@ async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 
 	// -- Print final message
 	let path_to_aip_env_sh = format!("$HOME/.aipack-base/bin/{}", target_env_script_path.name());
+	let version = crate::VERSION;
 	hub.publish(format!(
 		r#"
 Setup should be complete now
@@ -295,7 +297,7 @@ Then, check with
   - Run: which aip
   - You should see something like "path/to/home/.aipack-base/bin/aip"
   - Run: aip -V 
-  - Should print something like "aipack 0.6.17"
+  - Should print something like "aipack {version}"
 "#
 	))
 	.await;
