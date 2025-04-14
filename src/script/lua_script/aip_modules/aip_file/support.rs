@@ -250,12 +250,13 @@ pub fn create_file_records(sfiles: Vec<SPath>, base_path: &SPath, absolute: bool
 				let file_record = FileRecord::load(&SPath::from(""), &sfile)?;
 				Ok(file_record)
 			} else {
-				//
-				let diff = sfile.try_diff(base_path)?;
+				// Need to cannonicalize because we need to compute the diff
+				let sfile_abs = sfile.canonicalize()?;
+				let diff = sfile_abs.try_diff(base_path)?;
 				// if the diff goes back from base_path, then, we put the absolute path
 				// TODO: need to double check this
 				let (base_path, rel_path) = if diff.as_str().starts_with("..") {
-					(SPath::from(""), sfile)
+					(SPath::from(""), sfile_abs)
 				} else {
 					(base_path.clone(), diff)
 				};
