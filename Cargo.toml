@@ -1,6 +1,6 @@
 [package]
 name = "aipack"
-version = "0.7.0-rc.3-WIP"
+version = "0.7.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"

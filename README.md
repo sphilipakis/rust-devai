@@ -31,7 +31,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 ### Install From Binaries
 
-Mac, Linux, Windows, ARM & x64 platforms are supported. See blow how to install the binaries. 
+Mac, Linux, Windows, ARM & x86 platforms are supported. See blow how to install the binaries. 
 
 _(More info at [aipack.ai/doc/install](https://aipack.ai/doc/install))_
 
@@ -165,7 +165,8 @@ COHERE_API_KEY
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports many top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
 - Top new features: (see full details [CHANGELOG](CHANGELOG.md))
-  - **2025-04-08 (v0.6.17) - Binaries available (mac/linux), pro@coder, pro@rust10x**
+  - **2025-04-13 (v0.7.0) - BIG RELEASE - Windows Support (x86 & Arm), and more**
+  - 2025-04-08 (v0.6.17) - Binaries available (mac/linux), pro@coder, pro@rust10x
   - 2025-03-28 - (v0.6.15) - new: `aip check-keys`
   - 2025-03-25 (v0.6.14) - agent - add `aip.flow.data_response({input?, data?, options?})` (e.g., model override by input)
   - 2025-03-20 (v0.6.12) - Now can **call agent within agents** `aip.agent.run(agent_name, {inputs?, options?})`
@@ -178,11 +179,6 @@ COHERE_API_KEY
   - 2025-01-23 (v0.5.7) - `aipack run craft/text` or `aipack run craft/code` (example of new agent module support)
   - 2025-01-06 (v0.5.4) - DeepSeek `deepseek-chat` support
   - 2024-12-08 (v0.5.1) - Added support for **xAI**
-
-- **WINDOWS DISCLAIMER:**
-    - This CLI uses a path scheme similar to Mac/Unix-like systems, which might not function correctly in the Windows `cmd.exe` (Command Prompt) or traditional batch files (`.bat`).
-    - Full Windows local path support is in development.
-    - **RECOMMENDATION:** Use WSL on Windows. Please log issues if minor changes can improve support for Windows WSL.
 
 ## How it works
 
