@@ -4,6 +4,7 @@
 use crate::agent::Agent;
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
+use crate::exec::exec_cmd_xelf::exec_xelf_update;
 use crate::exec::support::open_vscode;
 use crate::exec::{
 	ExecStatusEvent,
@@ -190,6 +191,11 @@ impl Executor {
 			ExecActionEvent::CmdXelfSetup(args) => {
 				// Does not require dir_context or runtime (for now)
 				exec_xelf_setup(args).await?;
+			}
+
+			ExecActionEvent::CmdXelfUpdate(args) => {
+				// Does not require dir_context or runtime (for now)
+				exec_xelf_update(args).await?;
 			}
 
 			// -- Interactive Events

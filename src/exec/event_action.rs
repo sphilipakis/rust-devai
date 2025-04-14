@@ -2,7 +2,9 @@
 //! Note: For now, the content of the variant of the ExecCommand often contain the CliArgs,
 //!       but this will eventual change to have it's own
 
-use crate::cli::{CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs};
+use crate::cli::{
+	CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs, XelfUpdateArgs,
+};
 use crate::exec::RunAgentParams;
 use derive_more::From;
 
@@ -33,7 +35,8 @@ pub enum ExecActionEvent {
 	CmdCheckKeys(CheckKeysArgs),
 	/// Perform `self setup` action
 	CmdXelfSetup(XelfSetupArgs),
-	// Later: CmdXelfUpdate(XelfUpdateArgs),
+	/// Preform `self update`
+	CmdXelfUpdate(XelfUpdateArgs),
 
 	// -- Interactive Commands
 	Redo,

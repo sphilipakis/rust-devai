@@ -186,12 +186,16 @@ pub struct XelfArgs {
 pub enum XelfCommand {
 	/// Perform initial setup for the aip CLI environment
 	Setup(XelfSetupArgs),
-	// Later: Update(XelfUpdateArgs),
+	Update(XelfUpdateArgs),
 }
 
 /// Arguments for the `self setup` subcommand
 #[derive(Parser, Debug)]
 pub struct XelfSetupArgs {}
+
+/// Arguments for the `self Update` subcommand
+#[derive(Parser, Debug)]
+pub struct XelfUpdateArgs {}
 
 // endregion: --- Sub Command Args
 
@@ -212,7 +216,7 @@ impl From<CliCommand> for ExecActionEvent {
 				// Map Xelf subcommands to specific ExecActionEvent variants
 				match xelf_args.cmd {
 					XelfCommand::Setup(args) => ExecActionEvent::CmdXelfSetup(args),
-					// Later: XelfCommand::Update(args) => ExecActionEvent::CmdXelfUpdate(args),
+					XelfCommand::Update(args) => ExecActionEvent::CmdXelfUpdate(args),
 				}
 			}
 		}

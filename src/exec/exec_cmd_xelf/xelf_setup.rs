@@ -1,4 +1,3 @@
-use crate::support::os::is_windows;
 use crate::Result;
 use crate::cli::XelfSetupArgs;
 use crate::dir_context::AipackBaseDir;
@@ -8,6 +7,7 @@ use crate::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::init::init_base;
 use crate::support::os;
 use crate::support::os::current_os;
+use crate::support::os::is_windows;
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
@@ -77,23 +77,24 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	if let Some(tmp_exe_to_trash) = tmp_exe_to_trash {
 		let gz_sibling = tmp_exe_to_trash.new_sibling(format!("{}.tar.gz", tmp_exe_to_trash.stem()));
 		if gz_sibling.exists() && tmp_exe_to_trash.stem() == "aip" {
-
 			if !is_windows() {
 				// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
 				remove_file(&tmp_exe_to_trash)?;
 				hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
 					.await;
-			} 
+			}
 			// NOTE: Windows cannot delete/write to self executable
-			//        So later, 
+			//        So later,
 			else {
-				hub.publish(r#"
+				hub.publish(
+					r#"
 NOTE: Setup complete, you can remove the 'aip.exe' and `aip.tar.gz' files with:
 Remove-Item .\aip.exe
 Remove-Item .\aip.tar.gz
-(aip.exe has been copied to ~/.aipack-base/bin)"#).await;
+(aip.exe has been copied to ~/.aipack-base/bin)"#,
+				)
+				.await;
 			}
-
 		}
 	}
 
