@@ -10,8 +10,7 @@ To update AIPACK, just install the latest version from
 
 https://aipack.ai/doc/install
 
-(Future versions of AIPACK will support full self-update)
-		"#,
+(Future versions of AIPACK will support full self-update)"#,
 		)
 		.await;
 

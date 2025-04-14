@@ -43,6 +43,7 @@ target/
 # -- Safety net
 dist/
 out/
+*.exe
 
 # Data Files
 *.db3
