@@ -28,11 +28,12 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 ## Quick Start
 
-> DISCLAIMER: For now, v0.6.x, AIPACK works on **Linux & Mac**, and requires **WSL** on **Windows**.
->
-> IMPORTANT: **Proper Windows support** is coming sometime in v0.6.x and **definitely by v0.7.x** (around **Second Half of April*).
 
 ### Install From Binaries
+
+Mac, Linux, Windows, ARM & x64 platforms are supported. See blow how to install the binaries. 
+
+_(More info at [aipack.ai/doc/install](https://aipack.ai/doc/install))_
 
 #### Mac
 
@@ -61,6 +62,21 @@ curl -O https://repo.aipack.ai/aip-dist/stable/latest/x86_64-unknown-linux-gnu/a
 curl -O https://repo.aipack.ai/aip-dist/stable/latest/aarch64-unknown-linux-gnu/aip.tar.gz && \
         tar -xvf aip.tar.gz && \
         ./aip self setup
+```
+
+#### Windows
+
+```sh
+# Windows x86
+Invoke-WebRequest -Uri "https://repo.aipack.ai/aip-dist/stable/latest/x86_64-pc-windows-msvc/aip.tar.gz" -OutFile "aip.tar.gz"
+tar -xvf aip.tar.gz
+.\aip.exe self setup
+     
+
+# Windows ARM
+Invoke-WebRequest -Uri "https://repo.aipack.ai/aip-dist/stable/latest/aarch64-pc-windows-msvc/aip.tar.gz" -OutFile "aip.tar.gz"
+tar -xvf aip.tar.gz
+.\aip.exe self setup
 ```
 
 
@@ -108,6 +124,13 @@ aip run core@ask-aipack
 # The prompt file will be at `.aipack/.prompt/core@ask-aipack/ask-prompt.md`
 
 ```
+
+### Thanks to
+
+-  **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
+-  [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/jeremychone/rust-aipack/pull/30))
+-  [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/jeremychone/rust-aipack/pull/28))
+
 
 ### `pro@coder`
 
@@ -160,11 +183,6 @@ COHERE_API_KEY
     - This CLI uses a path scheme similar to Mac/Unix-like systems, which might not function correctly in the Windows `cmd.exe` (Command Prompt) or traditional batch files (`.bat`).
     - Full Windows local path support is in development.
     - **RECOMMENDATION:** Use WSL on Windows. Please log issues if minor changes can improve support for Windows WSL.
-
-- Thanks to
-  - **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
-  - [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/jeremychone/rust-aipack/pull/30))
-  - [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` mode ([#28](https://github.com/jeremychone/rust-aipack/pull/28))
 
 ## How it works
 

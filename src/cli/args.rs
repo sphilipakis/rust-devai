@@ -59,7 +59,7 @@ impl CliCommand {
 	/// For now, for all Run, the interactive is on by default, regardless if it watch.
 	pub fn is_interactive(&self) -> bool {
 		match self {
-			CliCommand::Run(run_args) => !run_args.not_interactive,
+			CliCommand::Run(run_args) => !run_args.single_shot,
 			CliCommand::Init(_) => false,
 			CliCommand::InitBase => false,
 			// CliCommand::New(_) => false,
@@ -110,9 +110,10 @@ pub struct RunArgs {
 	#[arg(long = "dry", value_parser = ["req", "res"])]
 	pub dry_mode: Option<String>,
 
-	/// Non-interactive mode (one-shot execution)
-	#[arg(long = "not-interactive", alias = "ni")]
-	pub not_interactive: bool,
+	/// Single Shot execution (e.g., non-interactive).
+	/// (Was the `--ni` or `--non-interactive` in v0.6.x)
+	#[arg(short = 's', long = "single-shot", alias = "ni")]
+	pub single_shot: bool,
 }
 
 /// Arguments for the `pack` subcommand
