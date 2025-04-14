@@ -1,6 +1,6 @@
 # API Documentation
 
-The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.lua, aip.agent, aip.flow, and aip.cmd.
+The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.web, aip.lua, aip.agent, aip.flow, and aip.cmd.
 
 > Note: All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
@@ -1129,6 +1129,113 @@ Returns a single line JSON string.
   error: string  // Error message from JSON stringification
 }
 ```
+
+## aip.web
+
+HTTP request functions for making HTTP GET and POST requests.
+
+```lua
+-- HTTP GET request
+local response = aip.web.get("https://google.com")  -- WebResponse
+
+-- HTTP POST request with plain text
+local response = aip.web.post("https://example.com/api", "plain text data")  -- WebResponse
+
+-- HTTP POST request with JSON data
+local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })  -- WebResponse
+```
+
+> Note: The `WebResponse` is a Lua table with the following structure:
+> ```ts
+> {
+>   success: boolean,   // true if the HTTP status code is 2xx
+>   status: number,     // HTTP status code
+>   url: string,        // The URL requested
+>   content: string | table,  // Response content as a string, or a Lua table if response is JSON
+>   error?: string      // Error message if request was not successful (non-2xx status)
+> }
+> ```
+
+### aip.web.get
+
+```lua
+-- API Signature
+aip.web.get(url: string): WebResponse
+```
+
+Makes an HTTP GET request to the specified URL.
+
+**Arguments**
+
+- `url: string`: The URL to make the GET request to.
+
+**Returns (WebResponse)**
+
+A Lua table with the response data:
+
+```ts
+{
+  success: boolean,   // Indicates if the request was successful (status code 2xx)
+  status: number,     // The HTTP status code of the response
+  url: string,        // The URL that was requested
+  content: string | table,  // The content of the response. For "application/json" responses, this will be a Lua table.
+  error?: string      // Optional error message if not successful
+}
+```
+
+**Example**
+
+```lua
+local response = aip.web.get("https://google.com")
+print(response.status)   -- e.g., 200
+print(response.content)  -- HTML content or JSON-decoded table
+```
+
+**Error**
+
+Returns an error if the web request cannot be made (e.g., invalid URL, network error). Note: Non-2xx HTTP responses do not throw an error; check the `success` field in the returned `WebResponse`.
+
+### aip.web.post
+
+```lua
+-- API Signature
+aip.web.post(url: string, data: string | table): WebResponse
+```
+
+Makes an HTTP POST request to the specified URL with the given data.
+
+**Arguments**
+
+- `url: string`: The URL to make the POST request to.
+- `data: string | table`: The data to send in the request body. If a string, the `Content-Type` header is set to `plain/text`. If a table, the data is serialized to JSON and the header is set to `application/json`.
+
+**Returns (WebResponse)**
+
+A Lua table with the response data:
+
+```ts
+{
+  success: boolean,   // Indicates if the request was successful (status code 2xx)
+  status: number,     // The HTTP status code of the response
+  url: string,        // The URL that was requested
+  content: string | table,  // The response content. For "application/json" responses, this is a Lua table.
+  error?: string      // Optional error message if not successful
+}
+```
+
+**Example**
+
+```lua
+-- POST with plain text
+local response = aip.web.post("https://example.com/api", "plain text data")
+
+-- POST with JSON data
+local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+```
+
+**Error**
+
+Returns an error if the web request cannot be made (e.g., invalid URL, network error, or data serialization error). Non-2xx status codes are not treated as errors; check the `success` field in the returned `WebResponse`.
 
 ## aip.lua
 
