@@ -41,6 +41,30 @@ pub fn current_os() -> OsType {
 	}
 }
 
+/// Returns a platform identifier string like "macos-aarch64", "linux-x86_64", "windows-x86_64".
+pub fn get_platform() -> &'static str {
+	// -- Mac
+	if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+		"aarch64-apple-darwin"
+	} else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+		"x86_64-apple-darwin"
+	}
+	// -- Linux
+	else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+		"x86_64-unknown-linux-gnu"
+	} else if cfg!(all(target_os = "linux", target_arch = "aarch64")) {
+		"aarch64-unknown-linux-gnu" // Assuming support for Linux ARM
+	}
+	// -- Windows
+	else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+		"x86_64-pc-windows-msvc"
+	} else if cfg!(all(target_os = "windows", target_arch = "aarch64")) {
+		"aarch64-pc-windows-msvc"
+	} else {
+		"unknown-unknown" // Fallback for unsupported platforms
+	}
+}
+
 #[allow(unused)]
 pub fn is_unix() -> bool {
 	cfg!(target_os = "macos") || cfg!(target_os = "linux")
@@ -68,13 +92,13 @@ pub fn is_windows() -> bool {
 pub fn get_set_api_key_message() -> &'static str {
 	match current_os() {
 		OsType::Mac | OsType::Linux | OsType::Unknown => {
-			r#"You can set environment variable like: 
+			r#"You can set environment variable like:
 
 export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE"
 		"#
 		}
 		OsType::Windows => {
-			r#"You can set environment variable like (Assuming PowerShell): 
+			r#"You can set environment variable like (Assuming PowerShell):
 
 $env:OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'
 		"#
