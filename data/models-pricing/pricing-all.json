@@ -307,34 +307,43 @@
     "models": [
       {
         "input": {
-          "cache_write": null,
-          "cached": 7.5,
-          "normal": 15
+          "cache_write": 2,
+          "cached": 0.5,
+          "normal": 2
         },
-        "name": "o1",
-        "output": 60
+        "name": "gpt-4.1",
+        "output": 8
       },
       {
         "input": {
-          "cache_write": null,
-          "cached": 0.55,
-          "normal": 1.1
+          "cache_write": 0.4,
+          "cached": 0.1,
+          "normal": 0.4
         },
-        "name": "o3-mini",
-        "output": 4.4
+        "name": "gpt-4.1-mini",
+        "output": 1.6
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.1,
+          "cached": 0.025,
+          "normal": 0.1
+        },
+        "name": "gpt-4.1-nano",
+        "output": 0.4
+      },
+      {
+        "input": {
+          "cache_write": 75,
           "cached": 37.5,
           "normal": 75
         },
-        "name": "gpt-4-5",
+        "name": "gpt-4.5-preview",
         "output": 150
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 2.5,
           "cached": 1.25,
           "normal": 2.5
         },
@@ -343,12 +352,111 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.15,
           "cached": 0.075,
           "normal": 0.15
         },
         "name": "gpt-4o-mini",
         "output": 0.6
+      },
+      {
+        "input": {
+          "cache_write": 0.15,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gpt-4o-mini-audio-preview",
+        "output": 0.6
+      },
+      {
+        "input": {
+          "cache_write": 5,
+          "cached": 2.5,
+          "normal": 5
+        },
+        "name": "gpt-4o-realtime-preview",
+        "output": 20
+      },
+      {
+        "input": {
+          "cache_write": 0.6,
+          "cached": 0.3,
+          "normal": 0.6
+        },
+        "name": "gpt-4o-mini-realtime-preview",
+        "output": 2.4
+      },
+      {
+        "input": {
+          "cache_write": 0.15,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gpt-4o-mini-search-preview",
+        "output": 0.6
+      },
+      {
+        "input": {
+          "cache_write": 2.5,
+          "cached": null,
+          "normal": 2.5
+        },
+        "name": "gpt-4o-search-preview",
+        "output": 10
+      },
+      {
+        "input": {
+          "cache_write": 2.5,
+          "cached": null,
+          "normal": 2.5
+        },
+        "name": "gpt-4o-audio-preview",
+        "output": 10
+      },
+      {
+        "input": {
+          "cache_write": 15,
+          "cached": 7.5,
+          "normal": 15
+        },
+        "name": "o1",
+        "output": 60
+      },
+      {
+        "input": {
+          "cache_write": 150,
+          "cached": null,
+          "normal": 150
+        },
+        "name": "o1-pro",
+        "output": 600
+      },
+      {
+        "input": {
+          "cache_write": 1.1,
+          "cached": 0.55,
+          "normal": 1.1
+        },
+        "name": "o3-mini",
+        "output": 4.4
+      },
+      {
+        "input": {
+          "cache_write": 1.1,
+          "cached": 0.55,
+          "normal": 1.1
+        },
+        "name": "o1-mini",
+        "output": 4.4
+      },
+      {
+        "input": {
+          "cache_write": 3,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "computer-use-preview",
+        "output": 12
       }
     ]
   }
