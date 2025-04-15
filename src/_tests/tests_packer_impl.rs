@@ -28,7 +28,7 @@ async fn test_packer_impl_pack_simple() -> Result<()> {
 	// Verify the filename follows the expected pattern
 	let filename = pack_result.pack_file.name();
 	assert!(
-		filename.starts_with("test@test_pack_01-v0-1-0"),
+		filename.starts_with("test@test_pack_01-v0.1.0"),
 		"Unexpected filename: {}",
 		filename
 	);

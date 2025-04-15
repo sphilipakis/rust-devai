@@ -170,30 +170,30 @@ pub fn validate_version_for_install(version: &str) -> Result<()> {
 	Ok(())
 }
 
-/// Normalizes a version string by replacing dots and special characters with hyphens
-/// This is just to write the file names (cosmetic)
-/// and ensuring no consecutive hyphens
-pub fn normalize_version(version: &str) -> String {
-	let mut result = String::new();
-	let mut last_was_hyphen = false;
+// /// Normalizes a version string by replacing dots and special characters with hyphens
+// /// This is just to write the file names (cosmetic)
+// /// and ensuring no consecutive hyphens
+// pub fn normalize_version(version: &str) -> String {
+// 	let mut result = String::new();
+// 	let mut last_was_hyphen = false;
 
-	for c in version.chars() {
-		if c.is_alphanumeric() {
-			result.push(c);
-			last_was_hyphen = false;
-		} else if !last_was_hyphen {
-			result.push('-');
-			last_was_hyphen = true;
-		}
-	}
+// 	for c in version.chars() {
+// 		if c.is_alphanumeric() {
+// 			result.push(c);
+// 			last_was_hyphen = false;
+// 		} else if !last_was_hyphen {
+// 			result.push('-');
+// 			last_was_hyphen = true;
+// 		}
+// 	}
 
-	// Remove trailing hyphen if exists
-	if result.ends_with('-') {
-		result.pop();
-	}
+// 	// Remove trailing hyphen if exists
+// 	if result.ends_with('-') {
+// 		result.pop();
+// 	}
 
-	result
-}
+// 	result
+// }
 
 /// Get the size of a file in bytes
 pub fn get_file_size(file_path: &SPath, reference: &str) -> Result<usize> {
@@ -229,18 +229,18 @@ mod tests {
 	use super::*;
 	use crate::Error;
 
-	#[test]
-	fn test_packer_support_normalize_version_simple() -> Result<()> {
-		assert_eq!(normalize_version("1.0.0"), "1-0-0");
-		assert_eq!(normalize_version("1.0-alpha"), "1-0-alpha");
-		assert_eq!(normalize_version("1.0 beta"), "1-0-beta");
-		assert_eq!(normalize_version("1.0-beta-2"), "1-0-beta-2");
-		assert_eq!(normalize_version("1.0--beta--2"), "1-0-beta-2");
-		assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
-		assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
+	// #[test]
+	// fn test_packer_support_normalize_version_simple() -> Result<()> {
+	// 	assert_eq!(normalize_version("1.0.0"), "1-0-0");
+	// 	assert_eq!(normalize_version("1.0-alpha"), "1-0-alpha");
+	// 	assert_eq!(normalize_version("1.0 beta"), "1-0-beta");
+	// 	assert_eq!(normalize_version("1.0-beta-2"), "1-0-beta-2");
+	// 	assert_eq!(normalize_version("1.0--beta--2"), "1-0-beta-2");
+	// 	assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
+	// 	assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
 
-		Ok(())
-	}
+	// 	Ok(())
+	// }
 
 	#[test]
 	fn test_validate_version_update() -> Result<()> {

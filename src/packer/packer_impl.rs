@@ -2,7 +2,6 @@
 
 use crate::packer::PackToml;
 use crate::packer::pack_toml::parse_validate_pack_toml;
-use crate::packer::support;
 use crate::support::zip;
 use crate::{Error, Result};
 use camino::Utf8Path;
@@ -41,13 +40,10 @@ pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) 
 	let pack_toml = parse_validate_pack_toml(&toml_content, toml_path.as_str())?;
 
 	// Normalize version - replace special characters with hyphens
-	let normalized_version = support::normalize_version(&pack_toml.version);
+	let pack_version = &pack_toml.version;
 
 	// Create the output filename
-	let aipack_filename = format!(
-		"{}@{}-v{}.aipack",
-		pack_toml.namespace, pack_toml.name, normalized_version
-	);
+	let aipack_filename = format!("{}@{}-v{pack_version}.aipack", pack_toml.namespace, pack_toml.name);
 	let aipack_path = dest_dir.join(aipack_filename);
 
 	// Create the destination directory if it doesn't exist
