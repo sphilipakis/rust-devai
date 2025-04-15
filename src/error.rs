@@ -6,7 +6,7 @@ use tokio::runtime::TryCurrentError;
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, From, Display)]
-#[display("{self}")]
+#[display("{self:?}")]
 pub enum Error {
 	// -- Cli Command
 	#[display("Command Agent not found at: {_0}")]
@@ -26,6 +26,7 @@ pub enum Error {
 	},
 
 	// -- Pack
+	#[display("Pack Identity '{origin_path}' is not valid. Cause: {cause}")]
 	InvalidPackIdentity {
 		origin_path: String,
 		cause: &'static str,
@@ -62,11 +63,13 @@ pub enum Error {
 	},
 
 	// -- Run
+	#[display("Before All Lua block did not return a valid structure. Cause: {cause}")]
 	BeforeAllFailWrongReturn {
 		cause: String,
 	},
 
 	// -- Genai
+	#[display("Environment API KEY missing: {env_name}")]
 	GenAIEnvKeyMissing {
 		model_iden: ModelIden,
 		env_name: String,
