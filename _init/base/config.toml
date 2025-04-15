@@ -26,7 +26,8 @@ input_concurrency = 2
 
 # Model Aliases
 # Define your own model aliases for any model/provider you have access to, and they can be used in place of the model name.
-# This can also be overridden or complemented in the `# Options` section of the aipack.
+# This can also be overridden or complemented in the `# Options` section of the aipack, or in the `options` return of before all or data
+#
 # Note: It is important to have `model_aliases` as a property of `default_options` as shown below.
 #
 [default_options.model_aliases]
@@ -35,8 +36,10 @@ claude    = "claude-3-7-sonnet-latest"
 high      = "o3-mini-high"
 med       = "o3-mini"
 low       = "o3-mini-low"
-standard  = "gpt-4o"
-cheap     = "gpt-4o-mini"
+main      = "gpt-4.1"
+mini      = "gpt-4.1-mini"
+cheap     = "gpt-4.1-mini" # Not as cheap as nano, but good quality/price
+nano      = "gpt-4.1-nano"
 flash     = "gemini-2.0-flash"
 fast      = "gemini-2.0-flash"
 r1        = "deepseek-reasoner"
