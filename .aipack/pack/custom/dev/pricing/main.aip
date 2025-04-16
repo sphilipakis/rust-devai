@@ -18,7 +18,8 @@ local inputs = {
    {name = "groq",      do_json = false, url = "https://groq.com/pricing/"},
    {name = "gemini",    do_json = false, url = "https://ai.google.dev/pricing#2_0flash"},
    {name = "deepseek",  do_json = false, url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = false, url = "https://www.anthropic.com/pricing#anthropic-api"}
+   {name = "anthropic", do_json = false, url = "https://www.anthropic.com/pricing#anthropic-api"},
+   {name = "xai",       do_json = true,  url = "NO-PUBLIC-URL-FOR-THIS-ONE"},
 }
 
 -- Agument inputs
@@ -107,6 +108,7 @@ with following schema
         }[]
 }
 ```
+
 
 # Output 
 
