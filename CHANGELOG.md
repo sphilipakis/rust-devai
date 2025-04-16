@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-04-15 - [v0.7.2](https://github.com/jeremychone/rust-devai/compare/v0.7.0...v0.7.2)
+
+- `.` self update - fix self update to print messsage (rather to do incomplete update)
+- `.` pricing - add xai/grok pricing
+- `.` update the base config.toml model aliases with gpt-4.1...
+- `!` pack - keep the version as is in filename (no more replacing the `.` by `-`)
+- `.` error - remove the default display {self}, was creating infinite looop
+- `.` pricing - add pricing for the openai gpt 4.1 family
+- `^` core@doc - add doc for aip.web.*
+- `.` update setup messages
+- `-` aip.file.list_load - fix bug that make the function hang
+
 ## 2025-04-13 - [v0.7.0](https://github.com/jeremychone/rust-devai/compare/v0.6.18...v0.7.0)
 
 - `*` BIG ONE - WINDOWS SUPPORT - x86 & ARM
