@@ -185,7 +185,7 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "imagen-3",
 		input_cached: 0.0,  // Mapped from null
-		input_normal: 0.03, // Updated from 0.0
+		input_normal: 0.03,
 		output: 0.03,
 	},
 	ModelPricing {
@@ -285,4 +285,67 @@ const ANTHROPIC: Provider = Provider {
 	models: ANTHROPIC_MODELS,
 };
 
-pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC];
+// Define XAI pricing
+const XAI_MODELS: &[ModelPricing] = &[
+	ModelPricing {
+		name: "grok-3-mini-fast-beta",
+		input_cached: 0.6,
+		input_normal: 0.6,
+		output: 4.0,
+	},
+	ModelPricing {
+		name: "grok-3-mini-beta",
+		input_cached: 0.3,
+		input_normal: 0.3,
+		output: 0.5,
+	},
+	ModelPricing {
+		name: "grok-3-fast-beta",
+		input_cached: 5.0,
+		input_normal: 5.0,
+		output: 25.0,
+	},
+	ModelPricing {
+		name: "grok-3-beta",
+		input_cached: 3.0,
+		input_normal: 3.0,
+		output: 15.0,
+	},
+	ModelPricing {
+		name: "grok-2-1212",
+		input_cached: 2.0,
+		input_normal: 2.0,
+		output: 10.0,
+	},
+	ModelPricing {
+		name: "grok-2-vision-1212",
+		input_cached: 2.0,
+		input_normal: 2.0,
+		output: 10.0,
+	},
+	ModelPricing {
+		name: "grok-beta",
+		input_cached: 5.0,
+		input_normal: 5.0,
+		output: 15.0,
+	},
+	ModelPricing {
+		name: "grok-vision-beta",
+		input_cached: 5.0,
+		input_normal: 5.0,
+		output: 15.0,
+	},
+	ModelPricing {
+		name: "grok-2-image-1212",
+		input_cached: 0.0, // Mapped from null
+		input_normal: 0.0, // Mapped from null
+		output: 0.07,
+	},
+];
+
+const XAI: Provider = Provider {
+	name: "xai",
+	models: XAI_MODELS,
+};
+
+pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI];
