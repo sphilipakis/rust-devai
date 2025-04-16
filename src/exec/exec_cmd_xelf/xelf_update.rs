@@ -12,25 +12,6 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::process::Command; // Import Command
 
-pub async fn exec_xelf_update(_args: XelfUpdateArgs) -> Result<()> {
-	get_hub()
-		.publish(
-			r#"
-To update AIPACK, just install the latest version from
-
-https://aipack.ai/doc/install
-
-(Future versions of AIPACK will support full self-update)"#,
-		)
-		.await;
-
-	Ok(())
-}
-
-// region:    --- Upcoming code
-
-// NOT FULLY IMPLEMENTED
-
 const LATEST_TOML_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest/latest.toml";
 const DIST_BASE_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest";
 const TMP_UPDATE_DIR_LEAF: &str = "bin/.tmp-update"; // Directory for download and extraction
@@ -45,6 +26,87 @@ struct LatestStable {
 struct LatestTomlData {
 	latest_stable: LatestStable,
 }
+
+pub async fn exec_xelf_update(_args: XelfUpdateArgs) -> Result<()> {
+	let hub = get_hub();
+
+	hub.publish("Checking for the latest AIPACK version...\n").await;
+
+	// -- Fetch latest version info
+	let client = reqwest::Client::new();
+	let resp = client.get(LATEST_TOML_URL).send().await?;
+
+	if !resp.status().is_success() {
+		hub.publish(Error::custom(format!(
+			"Failed to fetch latest version info from {}. Status: {}",
+			LATEST_TOML_URL,
+			resp.status()
+		)))
+		.await;
+		return Ok(());
+	}
+
+	let toml_content = resp.text().await?;
+
+	// -- Parse TOML
+	let latest_data: LatestTomlData = match toml::from_str(&toml_content) {
+		Ok(data) => data,
+		Err(e) => {
+			hub.publish(Error::custom(format!(
+				"Failed to parse latest version TOML from {}. Cause: {}",
+				LATEST_TOML_URL, e
+			)))
+			.await;
+			return Ok(());
+		}
+	};
+
+	let latest_version_str = &latest_data.latest_stable.version;
+	let latest_version = match Version::parse(latest_version_str) {
+		Ok(ver) => ver,
+		Err(e) => {
+			hub.publish(Error::custom(format!(
+				"Failed to parse latest version '{}'. Cause: {}",
+				latest_version_str, e
+			)))
+			.await;
+			return Ok(());
+		}
+	};
+
+	let current_version = match Version::parse(crate::VERSION) {
+		Ok(ver) => ver,
+		Err(e) => {
+			hub.publish(Error::custom(format!(
+				"Failed to parse current version '{}'. Cause: {}",
+				crate::VERSION,
+				e
+			)))
+			.await;
+			return Ok(());
+		}
+	};
+
+	if current_version < latest_version {
+		hub.publish(format!(
+			"You need to update your version.\nYou have version '{}', and the latest version is '{}'.\nGo to {} to update.",
+			current_version, latest_version, "https://aipack.ai/doc/install"
+		))
+		.await;
+	} else {
+		hub.publish(format!(
+			"You have the latest version '{}'. (current latest version '{}')\n\nAll Good, No need to update.",
+			current_version, latest_version,
+		))
+		.await;
+	}
+
+	Ok(())
+}
+
+// region:    --- Upcoming code
+
+// NOT FULLY IMPLEMENTED
 
 pub async fn exec_xelf_update_to_activate(_args: XelfUpdateArgs) -> Result<()> {
 	let hub = get_hub();
@@ -186,3 +248,4 @@ pub async fn exec_xelf_update_to_activate(_args: XelfUpdateArgs) -> Result<()> {
 }
 
 // endregion: --- Upcoming code
+
