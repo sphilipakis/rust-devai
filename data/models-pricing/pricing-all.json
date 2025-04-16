@@ -307,7 +307,7 @@
     "models": [
       {
         "input": {
-          "cache_write": 2,
+          "cache_write": null,
           "cached": 0.5,
           "normal": 2
         },
@@ -316,7 +316,7 @@
       },
       {
         "input": {
-          "cache_write": 0.4,
+          "cache_write": null,
           "cached": 0.1,
           "normal": 0.4
         },
@@ -325,7 +325,7 @@
       },
       {
         "input": {
-          "cache_write": 0.1,
+          "cache_write": null,
           "cached": 0.025,
           "normal": 0.1
         },
@@ -334,7 +334,7 @@
       },
       {
         "input": {
-          "cache_write": 75,
+          "cache_write": null,
           "cached": 37.5,
           "normal": 75
         },
@@ -343,7 +343,7 @@
       },
       {
         "input": {
-          "cache_write": 2.5,
+          "cache_write": null,
           "cached": 1.25,
           "normal": 2.5
         },
@@ -352,7 +352,7 @@
       },
       {
         "input": {
-          "cache_write": 2.5,
+          "cache_write": null,
           "cached": null,
           "normal": 2.5
         },
@@ -361,7 +361,7 @@
       },
       {
         "input": {
-          "cache_write": 5,
+          "cache_write": null,
           "cached": 2.5,
           "normal": 5
         },
@@ -370,7 +370,7 @@
       },
       {
         "input": {
-          "cache_write": 0.15,
+          "cache_write": null,
           "cached": 0.075,
           "normal": 0.15
         },
@@ -379,7 +379,7 @@
       },
       {
         "input": {
-          "cache_write": 0.15,
+          "cache_write": null,
           "cached": null,
           "normal": 0.15
         },
@@ -388,7 +388,7 @@
       },
       {
         "input": {
-          "cache_write": 0.6,
+          "cache_write": null,
           "cached": 0.3,
           "normal": 0.6
         },
@@ -397,34 +397,7 @@
       },
       {
         "input": {
-          "cache_write": 0.15,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "gpt-4o-mini-search-preview",
-        "output": 0.6
-      },
-      {
-        "input": {
-          "cache_write": 2.5,
-          "cached": null,
-          "normal": 2.5
-        },
-        "name": "gpt-4o-search-preview",
-        "output": 10
-      },
-      {
-        "input": {
-          "cache_write": 3,
-          "cached": null,
-          "normal": 3
-        },
-        "name": "computer-use-preview",
-        "output": 12
-      },
-      {
-        "input": {
-          "cache_write": 15,
+          "cache_write": null,
           "cached": 7.5,
           "normal": 15
         },
@@ -433,7 +406,7 @@
       },
       {
         "input": {
-          "cache_write": 150,
+          "cache_write": null,
           "cached": null,
           "normal": 150
         },
@@ -442,7 +415,25 @@
       },
       {
         "input": {
-          "cache_write": 1.1,
+          "cache_write": null,
+          "cached": 2.5,
+          "normal": 10
+        },
+        "name": "o3",
+        "output": 40
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.275,
+          "normal": 1.1
+        },
+        "name": "o4-mini",
+        "output": 4.4
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.55,
           "normal": 1.1
         },
@@ -451,12 +442,39 @@
       },
       {
         "input": {
-          "cache_write": 1.1,
+          "cache_write": null,
           "cached": 0.55,
           "normal": 1.1
         },
         "name": "o1-mini",
         "output": 4.4
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gpt-4o-mini-search-preview",
+        "output": 0.6
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2.5
+        },
+        "name": "gpt-4o-search-preview",
+        "output": 10
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "computer-use-preview",
+        "output": 12
       }
     ]
   },

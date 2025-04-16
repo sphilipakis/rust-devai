@@ -57,6 +57,18 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output: 600.0,
 	},
 	ModelPricing {
+		name: "o3",
+		input_cached: 2.5,
+		input_normal: 10.0,
+		output: 40.0,
+	},
+	ModelPricing {
+		name: "o4-mini",
+		input_cached: 0.275,
+		input_normal: 1.1,
+		output: 4.4,
+	},
+	ModelPricing {
 		name: "o3-mini",
 		input_cached: 0.55,
 		input_normal: 1.1,
