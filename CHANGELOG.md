@@ -1,8 +1,14 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-04-16 - [v0.7.3](https://github.com/jeremychone/rust-devai/compare/v0.7.2...v0.7.3)
+
+- `.` Added support and pricing for OpenAI `o4*` and `o3` models
+- `^` `aip self update` - now check online version
+
 ## 2025-04-15 - [v0.7.2](https://github.com/jeremychone/rust-devai/compare/v0.7.0...v0.7.2)
 
-- `.` self update - fix self update to print messsage (rather to do incomplete update)
+- `.` `aip self update` - fix self update to print messsage (rather to do incomplete update)
 - `.` pricing - add xai/grok pricing
 - `.` update the base config.toml model aliases with gpt-4.1...
 - `!` pack - keep the version as is in filename (no more replacing the `.` by `-`)
