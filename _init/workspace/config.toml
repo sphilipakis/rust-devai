@@ -7,15 +7,15 @@
 #         By default, it is set in the `~/.aipack-base/config.toml`, but it can be overridden here,
 #         as with any other properties.
 # e.g.,
-#          Ollama: "llama3.3:70b", "llama3.1:8b", "llama3.2:3b", "deepseek-r1:8b", "deepseek-coder-v2:16b" (or any locally installed Ollama)
-#            Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
-#             xAI: "grok-beta"
-#        DeepSeek: "deepseek-chat", "deepseek-reasoner" (from deepseek.com)
-#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b"
-#       Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
-#          OpenAI: "o3-mini", "o3-mini-high", "o3-mini-low", "gpt-4o", "gpt-4o-mini"
+#    Ollama: "llama3.3:70b", "llama3.1:8b", "llama3.2:3b", "deepseek-r1:8b", "deepseek-coder-v2:16b" (or any locally installed Ollama)
+#      Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
+#       xAI: "grok-3-beta", "grok-3-fast-beta", "grok-3-mini-beta", "grok-3-mini-fast-beta"
+#  DeepSeek: "deepseek-chat", "deepseek-reasoner" (from deepseek.com)
+#    Gemini: "gemini-2.5-pro-exp-03-25", "gemini-2.0-flash", "gemini-2.0-flash-lite"
+# Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
+#    OpenAI: "o4-mini", "o4-mini-high", "o4-mini-low", "gpt-4.1, "gpt-4.1-mini",  "gpt-4.1-nano"
 #
-# model = "gpt-4o-mini" # or an alias below (e.g., "fast", "claude")
+# model = "gpt-4.1-mini" # or an alias from below (e.g., "flash", "gpro")
 
 # Temperature - by default unset
 #

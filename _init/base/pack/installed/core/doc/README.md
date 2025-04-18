@@ -1,4 +1,3 @@
-```markdown
 ## KEY CONCEPT - ONE Markdown, ONE Agent, Multi Stages
 
 The main **aipack** concept is to minimize the friction of creating and running an agent while providing maximum control over how those agents run and maximizing iteration speed to mature them quickly.
@@ -258,5 +257,4 @@ model = "gpt-4o-mini"
 # Optional concurrency setting for processing inputs. Defaults to 1 if absent.
 # Increasing this can speed up processing, especially with remote AI services.
 input_concurrency = 1
-```
 ```
