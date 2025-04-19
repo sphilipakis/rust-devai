@@ -45,14 +45,16 @@ Important, we have to keep the `data.rs` types as is, just update the values. Ke
 Some very IMPORTANT rules when updateding `data.rs`, 
 
 - for openai model, when the name is prefix `openai-` you can remove it from the model name. 
-- Ignore "preview" models except the `gemini-2.5-pro-preview`
-- Rename `gemini-2.5-pro-preview` to `gemini-2.5-pro`
+- Ignore "preview" models except the `gemini-2.5-pro-preview` and `gemini-2.5-preview`
+- Rename `gemini-2.5-pro-preview` to `gemini-2.5-pro` and `gemini-2.5-flash-preview` to `gemini-2.5-flash`
 - Only change what needs to be changed.
 - Do NOT remove things that are there and present in the json.
 - Do NOT add ANY COMMENT. Comments are not needed in this file. 
 - DO NOT REMOVE COMMENT, DO NOT ADD COMMENT.
 
 Just give back the `data.rs` file content in a rust makdown code block. 
+
+Also, important, do not use code comment to explain what you did. Code comments should should be used to comment code, but not to explain why we did an code update. 
 
 # Output 
 
