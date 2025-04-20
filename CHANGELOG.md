@@ -1,5 +1,9 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-04-20 - [v0.7.5](https://github.com/jeremychone/rust-devai/compare/v0.7.4...v0.7.5)
+
+- `-` pricing calculation - Fix pricing calculation when cache tokens.
+
 ## 2025-04-19 - [v0.7.4](https://github.com/jeremychone/rust-devai/compare/v0.7.3...v0.7.4)
 
 - `^` Windows x86 binary now 64bit (https://aipack.ai)
