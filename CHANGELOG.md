@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-04-19 - [v0.7.4](https://github.com/jeremychone/rust-devai/compare/v0.7.3...v0.7.4)
+
+- `^` Windows x86 binary now 64bit (https://aipack.ai)
+- `^` gemini 2.5* - Support reasoning tokens,and update pricing calculation
+- `.` config.toml - update the config tomls with new models
 
 ## 2025-04-16 - [v0.7.3](https://github.com/jeremychone/rust-devai/compare/v0.7.2...v0.7.3)
 

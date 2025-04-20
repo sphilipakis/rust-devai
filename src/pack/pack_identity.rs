@@ -18,7 +18,6 @@ impl FromStr for PackIdentity {
 
 	fn from_str(s: &str) -> Result<Self> {
 		let parts: Vec<&str> = s.split('@').collect();
-		println!("->> {parts:?}");
 		// Check for valid pattern: name@namespace
 		match (parts.first(), parts.get(1), parts.get(2)) {
 			(Some(namespace), Some(name), None) => {
