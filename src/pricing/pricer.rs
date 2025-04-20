@@ -26,30 +26,26 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	}
 	let model = model?;
 
-	// -- Extract prompt token counts and eventual cached token
-	// All models/providers have decoupled the prompt tokens from the cached count,
-	// meaning that the eventual cached tokens (from `PromptTokensDetails`) are not included in the prompt tokens.
-	// This is how OpenAI, Gemini, and Anthropic seem to work (documentation is sometimes not very explicit).
-	//
-	let prompt_tokens_normal = usage.prompt_tokens.unwrap_or(0) as f64;
-	// Calculate cached vs normal prompt tokens
-	let (cached_tokens, cache_creation_tokens) = match &usage.prompt_tokens_details {
+	// -- Extract prompt related tokens and pricing
+	let prompt_tokens = usage.prompt_tokens.unwrap_or(0) as f64;
+	// Extract cached vs normal prompt tokens
+	let (prompt_tokens_normal, prompt_cached_tokens, prompt_cache_creation_tokens) = match &usage.prompt_tokens_details
+	{
 		Some(details) => {
 			let cached = details.cached_tokens.unwrap_or(0) as f64;
 			let cache_creation_tokens = details.cache_creation_tokens.unwrap_or(0) as f64;
-			(cached, cache_creation_tokens)
+			let normal = prompt_tokens - cached;
+			(normal, cached, cache_creation_tokens)
 		}
-		None => (0.0, 0.0),
+		None => (prompt_tokens, 0.0, 0.0),
 	};
-	// Calculate price (convert from per million tokens to actual price)
-	// price_input_cached is either the input_cached price if Some, or default to the input_normal
-	let price_input_cached = model.input_cached.unwrap_or(model.input_normal);
+	// Extract prompt prices
+	let price_prompt_normal = model.input_normal;
+	let price_prompt_cached = model.input_cached.unwrap_or(price_prompt_normal);
+	// Note:  For now, for cache_creation_tokens assume * 1.25 for cache_creation_tokens (which is Anthropic rules, and this is only anthropic data)
+	let price_prompt_cache_creation = 1.25 * price_prompt_normal;
 
-	// -- Extract completion token counts and eventual
-	// In contrast to cached tokens, the reasoning tokens are included in the completion tokens.
-	// Therefore, to get the "non-reasoning tokens," one needs to calculate `usage.completion_tokens - usage.completion_tokens_details.reasoning_tokens`.
-	// This is how OpenAI, Gemini, and Anthropic seem to work (documentation is sometimes not very explicit).
-	//
+	// -- Extract completion related tokens and pricing
 	let completion_tokens = usage.completion_tokens.unwrap_or(0) as f64;
 	let (completion_tokens_normal, completion_tokens_reasoning) = if let Some(reasoning_tokens) = usage
 		.completion_tokens_details
@@ -60,14 +56,17 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	} else {
 		(completion_tokens, 0.)
 	};
-	let price_output_reasoning = model.output_reasoning.unwrap_or(model.output_normal);
+	let price_completion_normal = model.output_normal;
+	let price_completion_reasoning = model.output_reasoning.unwrap_or(price_completion_normal);
 
-	// NOTE: For now, for cache_creation_tokens assume * 1.25 for cache_creation_tokens (which is Anthropic rules, and this is only anthropic data)
-	let price = (cached_tokens * price_input_cached / 1_000_000.0)
-		+ (cache_creation_tokens * 1.25 * model.input_normal / 1_000_000.0)
-		+ (prompt_tokens_normal * model.input_normal / 1_000_000.0)
-		+ (completion_tokens_normal * model.output_normal / 1_000_000.0)
-		+ (completion_tokens_reasoning * price_output_reasoning / 1_000_000.0);
+	// NOTE:
+	let price = (prompt_tokens_normal * price_prompt_normal)
+		+ (prompt_cached_tokens * price_prompt_cached)
+		+ (prompt_cache_creation_tokens * price_prompt_cache_creation)
+		+ (completion_tokens_normal * price_completion_normal)
+		+ (completion_tokens_reasoning * price_completion_reasoning);
+	// The price are per million tokens
+	let price = price / 1_000_000.0;
 
 	let price = (price * 10_000.0).round() / 10_000.0;
 
