@@ -65,6 +65,7 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 		+ (prompt_cache_creation_tokens * price_prompt_cache_creation)
 		+ (completion_tokens_normal * price_completion_normal)
 		+ (completion_tokens_reasoning * price_completion_reasoning);
+
 	// The price are per million tokens
 	let price = price / 1_000_000.0;
 
