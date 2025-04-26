@@ -17,6 +17,13 @@ use std::fs::write;
 // Because the bin with .aip
 const BIN_DIR: &str = "bin";
 
+// TODO: On Mac/Linux, we need to handle the situation where the `aip` binary is running to avoid issues.
+//       Using `mv` ensures that the running process can continue while the `aip` binary is swapped correctly.
+//       Writing directly to the existing `aip` binary might cause problems.
+// cp aip ~/.aipack-base/bin/aip.tmp
+// chmod 755 ~/.aipack-base/bin/aip.tmp
+// mv  ~/.aipack-base/bin/aip.tmp ~/.aipack-base/bin/aip
+
 /// Executes the `self setup` command.
 pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	// First init the base `~/.aipack-base/`
