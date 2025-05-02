@@ -16,7 +16,6 @@ pub mod event;
 pub mod files;
 pub mod hbs;
 pub mod html;
-pub mod html_rcdom;
 pub mod jsons;
 pub mod md;
 pub mod os;

@@ -36,15 +36,9 @@ aho-corasick = "1.1.3"
 lazy-regex = "3.4.1"
 num-format = "0.4.4"
 humantime = "2.1.0"
+# -- HTML Helpers
 html-escape = "0.2"
-# -- HTML Parsing
-# Note: markup5ever_rcdom often have incompatibility with html5ever
-#       so, we copied the code into html_rcdom.rs for now 
-#       (not using markup5ever_rcdom = "=0.5.0-unofficial")
-# Note: html5ever introduced compatibility can be tricky, so making sure to lock those versions. 
-tendril = "=0.4.3"
-html5ever = "=0.31.0"
-markup5ever = "=0.16.0"
+html-helpers = "0.0.5"
 # -- Template & Scripting
 mlua = { version = "0.10.1", features = ["lua54", "vendored", "send", "serialize"] }
 handlebars = "6"

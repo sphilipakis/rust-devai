@@ -12,7 +12,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::support::html::prune_to_content;
+use crate::support::html::slim;
 use mlua::{Lua, Table};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -57,8 +57,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// Returns an error if the HTML content fails to be pruned.
 fn prune_to_content_lua(_lua: &Lua, html_content: String) -> mlua::Result<String> {
-	prune_to_content(html_content)
-		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
+	slim(html_content).map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
 }
 
 // region:    --- Tests
