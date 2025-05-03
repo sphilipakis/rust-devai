@@ -1,14 +1,16 @@
 //! This module defines the AgentRef enum used to reference an agent either as a local file path
 //! or as a PackRef, which can be parsed from a string using the '@' delimiter.
 
-use crate::pack::{LocalPackRef, PartialPackRef};
+use crate::Result;
+use crate::pack::{LocalPackRef, PackRef};
+use std::str::FromStr;
 
 /// AgentRef represents a reference to an agent.
 /// It can either be a LocalPath (a direct file path) or a PackRef (a parsed representation).
 #[derive(Debug, Clone)]
 pub enum PartialAgentRef {
 	LocalPath(String),
-	PackRef(PartialPackRef),
+	PackRef(PackRef),
 }
 
 /// Constructors
@@ -32,36 +34,15 @@ impl PartialAgentRef {
 	/// If the input string does not contain '@':
 	///   - It is treated as a local file path.
 	///
-	/// TODO: Probably need to use PatialPackRef
-	pub fn new(input: &str) -> Self {
+	pub fn new(input: &str) -> Result<Self> {
 		// Check if the input contains the delimiter '@'
 		if input.contains('@') {
-			// Split the input into namespace and remainder using '@'
-			let parts: Vec<&str> = input.splitn(2, '@').collect();
-			let ns_part = parts[0].trim();
-			let remainder = parts[1].trim();
-
-			// Split the remainder into pack_name and an optional sub_path using '/'
-			let mut rem_parts = remainder.splitn(2, '/');
-			let pack_name = rem_parts.next().unwrap().to_string();
-			let sub_path = rem_parts.next().map(|s| s.to_string());
-
-			// Determine if namespace is provided or empty
-			let namespace = if ns_part.is_empty() {
-				None
-			} else {
-				Some(ns_part.to_string())
-			};
-
+			let partial_pack_ref = PackRef::from_str(input)?;
 			// Return a PackRef wrapped in the AgentRef enum
-			PartialAgentRef::PackRef(PartialPackRef {
-				namespace,
-				name: pack_name,
-				sub_path,
-			})
+			Ok(PartialAgentRef::PackRef(partial_pack_ref))
 		} else {
 			// If no '@' is found, treat the input as a local file path and return it as LocalPath.
-			PartialAgentRef::LocalPath(input.to_string())
+			Ok(PartialAgentRef::LocalPath(input.to_string()))
 		}
 	}
 }
@@ -97,6 +78,7 @@ mod tests {
 	type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 	use super::*;
+	use crate::_test_support::assert_contains;
 
 	#[test]
 	fn test_agent_ref_new_localpath() -> Result<()> {
@@ -104,7 +86,7 @@ mod tests {
 		let input = "path/to/local/file.rs";
 
 		// -- Exec
-		let agent_ref = PartialAgentRef::new(input);
+		let agent_ref = PartialAgentRef::new(input)?;
 
 		// -- Check
 		match agent_ref {
@@ -123,12 +105,12 @@ mod tests {
 		let input = "pro@coder";
 
 		// -- Exec
-		let agent_ref = PartialAgentRef::new(input);
+		let agent_ref = PartialAgentRef::new(input)?;
 
 		// -- Check
 		match agent_ref {
 			PartialAgentRef::PackRef(ref pack_ref) => {
-				assert_eq!(pack_ref.namespace.as_deref(), Some("pro"), "Namespace should be 'pro'.");
+				assert_eq!(pack_ref.namespace, "pro", "Namespace should be 'pro'.");
 				assert_eq!(pack_ref.name, "coder", "Pack name should be 'coder'.");
 				assert!(pack_ref.sub_path.is_none(), "Sub path should be None.");
 			}
@@ -139,27 +121,19 @@ mod tests {
 	}
 
 	#[test]
-	fn test_agent_ref_new_packref_with_subpath() -> Result<()> {
+	fn test_agent_ref_invalid() -> Result<()> {
 		// -- Setup & Fixtures
 		let input = " jc @ coder/example/path ";
 		// note: the input contains spaces which should be trimmed
 
 		// -- Exec
-		let agent_ref = PartialAgentRef::new(input);
+		let err = PartialAgentRef::new(input).err().ok_or("Should return error")?;
 
 		// -- Check
-		match agent_ref {
-			PartialAgentRef::PackRef(ref pack_ref) => {
-				assert_eq!(pack_ref.namespace.as_deref(), Some("jc"), "Namespace should be 'jc'.");
-				assert_eq!(pack_ref.name, "coder", "Pack name should be 'coder'.");
-				assert_eq!(
-					pack_ref.sub_path.as_deref(),
-					Some("example/path"),
-					"Sub path should be 'example/path'."
-				);
-			}
-			_ => panic!("Expected AgentRef::PackRef but got a different variant."),
-		}
+		assert_contains(
+			&err.to_string(),
+			"Pack namespace can only contain alphanumeric characters,",
+		);
 
 		Ok(())
 	}

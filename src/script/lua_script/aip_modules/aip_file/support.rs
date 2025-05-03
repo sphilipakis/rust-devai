@@ -1,7 +1,7 @@
 use crate::Error;
 use crate::Result;
 use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
-use crate::pack::PartialPackRef;
+use crate::pack::PackRef;
 use crate::script::lua_script::helpers::{get_value_prop_as_string, to_vec_of_strings};
 use crate::types::FileRecord;
 use mlua::Value;
@@ -32,12 +32,12 @@ pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<St
 	// Check if the path starts with a potential pack reference
 	if let Some(pack_ref) = extract_pack_reference(path) {
 		// Parse the pack reference
-		if let Ok(partial_pack_ref) = PartialPackRef::from_str(pack_ref) {
+		if let Ok(partial_pack_ref) = PackRef::from_str(pack_ref) {
 			// Try to find the pack directory
-			let namespace = partial_pack_ref.namespace.as_deref();
-			let pack_name = Some(&partial_pack_ref.name);
+			let namespace = Some(partial_pack_ref.namespace.as_str());
+			let pack_name = Some(partial_pack_ref.name.as_str());
 
-			if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name.map(|s| s.as_str())) {
+			if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name) {
 				// Replace the pack reference with the actual path
 				let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
 				let pack_path = pack_dir.path.join(&sub_path);
@@ -71,12 +71,12 @@ pub fn process_pack_references(dir_context: &DirContext, globs: Vec<String>) -> 
 		// Check if the glob starts with a potential pack reference
 		if let Some(pack_ref) = extract_pack_reference(&glob) {
 			// Parse the pack reference
-			if let Ok(partial_pack_ref) = PartialPackRef::from_str(pack_ref) {
+			if let Ok(partial_pack_ref) = PackRef::from_str(pack_ref) {
 				// Try to find the pack directory
-				let namespace = partial_pack_ref.namespace.as_deref();
-				let pack_name = Some(&partial_pack_ref.name);
+				let namespace = Some(partial_pack_ref.namespace.as_str());
+				let pack_name = Some(partial_pack_ref.name.as_str());
 
-				match find_to_run_pack_dir(dir_context, namespace, pack_name.map(|s| s.as_str())) {
+				match find_to_run_pack_dir(dir_context, namespace, pack_name) {
 					Ok(pack_dir) => {
 						// Replace the pack reference with the actual path
 						let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
@@ -157,12 +157,12 @@ pub fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Re
 		Some(base_dir) => {
 			// Check if the base_dir is a pack reference
 			if let Some(pack_ref) = extract_pack_reference(&base_dir) {
-				if let Ok(partial_pack_ref) = PartialPackRef::from_str(pack_ref) {
+				if let Ok(partial_pack_ref) = PackRef::from_str(pack_ref) {
 					// Try to find the pack directory
-					let namespace = partial_pack_ref.namespace.as_deref();
-					let pack_name = Some(&partial_pack_ref.name);
+					let namespace = Some(partial_pack_ref.namespace.as_str());
+					let pack_name = Some(partial_pack_ref.name.as_str());
 
-					if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name.map(|v| v.as_str())) {
+					if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name) {
 						// Get the complete path by joining the pack dir with any sub path
 						let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
 						let remaining_path = base_dir.strip_prefix(pack_ref).unwrap_or("").trim_start_matches('/');

@@ -29,6 +29,16 @@ pub enum Error {
 	#[display("Pack Identity '{origin_path}' is not valid. Cause: {cause}")]
 	InvalidPackIdentity {
 		origin_path: String,
+		cause: String,
+	},
+	#[display("Pack namespace '{namespace}' is not valid. Cause: {cause}")]
+	InvalidNamespace {
+		namespace: String,
+		cause: &'static str,
+	},
+	#[display("Pack Name '{name}' is not valid. Cause: {cause}")]
+	InvalidPackName {
+		name: String,
 		cause: &'static str,
 	},
 

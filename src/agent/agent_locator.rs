@@ -13,7 +13,7 @@ use simple_fs::{SPath, read_to_string};
 /// Note - When base_dir, it means that this will be the relative path to look for this agent if relative
 ///        This is used for the aip.agent.run, to make sure we are relative to the caller agent
 pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>) -> Result<Agent> {
-	let partial_agent_ref = PartialAgentRef::new(name);
+	let partial_agent_ref = PartialAgentRef::new(name)?;
 
 	// Merge the workspace and base agent options
 	let base_options = load_and_merge_configs_agent_options(dir_context)?;
@@ -45,7 +45,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>
 			doc.into_agent(name, agent_ref, base_options)?
 		}
 		PartialAgentRef::PackRef(pack_ref) => {
-			let pack_dir = find_to_run_pack_dir(dir_context, pack_ref.namespace.as_deref(), Some(&pack_ref.name))?;
+			let pack_dir = find_to_run_pack_dir(dir_context, Some(&pack_ref.namespace), Some(&pack_ref.name))?;
 
 			// -- Find the aip path
 			// Note: if it is None, the pack_dir, then, we have the as_dir to avoid do the dir.aip

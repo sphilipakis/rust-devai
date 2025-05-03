@@ -16,14 +16,21 @@ pub struct PackIdentity {
 impl FromStr for PackIdentity {
 	type Err = Error;
 
-	fn from_str(s: &str) -> Result<Self> {
-		let parts: Vec<&str> = s.split('@').collect();
+	fn from_str(full_ref: &str) -> Result<Self> {
+		let parts: Vec<&str> = full_ref.split('@').collect();
 		// Check for valid pattern: name@namespace
 		match (parts.first(), parts.get(1), parts.get(2)) {
 			(Some(namespace), Some(name), None) => {
 				// name@namespace format
-				Self::validate_namespace(namespace)?;
-				Self::validate_name(name)?;
+				Self::validate_namespace(namespace).map_err(|err| Error::InvalidPackIdentity {
+					origin_path: full_ref.to_string(),
+					cause: err.to_string(),
+				})?;
+				Self::validate_name(name).map_err(|err| Error::InvalidPackIdentity {
+					origin_path: full_ref.to_string(),
+					cause: err.to_string(),
+				})?;
+
 				Ok(PackIdentity {
 					namespace: namespace.to_string(),
 					name: name.to_string(),
@@ -32,15 +39,15 @@ impl FromStr for PackIdentity {
 			(Some(_), None, _) => {
 				// Missing @ symbol
 				Err(Error::InvalidPackIdentity {
-					origin_path: s.to_string(),
-					cause: "Missing '@' symbol in pack identity. Format must be 'name@namespace'",
+					origin_path: full_ref.to_string(),
+					cause: "Missing '@' symbol in pack identity. Format must be 'name@namespace'".to_string(),
 				})
 			}
 			_ => {
 				// Too many @ symbols or empty string
 				Err(Error::InvalidPackIdentity {
-					origin_path: s.to_string(),
-					cause: "Too many '@' symbols in pack identity",
+					origin_path: full_ref.to_string(),
+					cause: "Too many '@' symbols in pack identity".to_string(),
 				})
 			}
 		}
@@ -60,8 +67,8 @@ static RGX: &Lazy<Regex> = regex!(r"^[a-zA-Z_][a-zA-Z0-9_-]*$");
 impl PackIdentity {
 	pub fn validate_namespace(namespace: &str) -> Result<()> {
 		if !RGX.is_match(namespace) {
-			return Err(Error::InvalidPackIdentity {
-				origin_path: namespace.to_string(),
+			return Err(Error::InvalidNamespace {
+				namespace: namespace.to_string(),
 				cause: "Pack namespace can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
 			});
 		}
@@ -70,10 +77,16 @@ impl PackIdentity {
 	}
 
 	pub fn validate_name(name: &str) -> Result<()> {
+		if name.trim().is_empty() {
+			return Err(Error::InvalidPackName {
+				name: name.to_string(),
+				cause: "Pack name cannot be empty",
+			});
+		}
 		if !RGX.is_match(name) {
 			return Err(Error::InvalidPackIdentity {
 				origin_path: name.to_string(),
-				cause: "Pack name can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.",
+				cause: "Pack name can only contain alphanumeric characters, hyphens, and underscores, and cannot start with a number.".to_string(),
 			});
 		}
 
