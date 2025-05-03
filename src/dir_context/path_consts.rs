@@ -20,4 +20,6 @@ pub const PACK_CUSTOM: &str = "pack/custom";
 pub const PACK_INSTALLED: &str = "pack/installed";
 pub const PACK_DOWNLOAD: &str = "pack/.download";
 
+pub const SUPPORT_PACK: &str = "support/pack";
+
 // -- New Agent Templates

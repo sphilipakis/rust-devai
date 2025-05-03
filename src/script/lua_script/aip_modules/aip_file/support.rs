@@ -1,6 +1,7 @@
 use crate::Error;
 use crate::Result;
-use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
+use crate::dir_context::resolve_pack_ref_base_path;
+use crate::dir_context::{DirContext, PathResolver, lookup_to_run_pack_dir};
 use crate::pack::PackRef;
 use crate::script::lua_script::helpers::{get_value_prop_as_string, to_vec_of_strings};
 use crate::types::FileRecord;
@@ -27,23 +28,25 @@ pub fn base_dir_and_globs(
 
 /// Processes a single file path to handle pack references
 ///
+/// - If a pack ref (with ..@../..) will process as pack ref
+/// - Otherwise, just return the same path
+///
 /// Converts pack references like "jc@rust10x/common/file.md" to their actual paths
-pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<String> {
+pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<SPath> {
 	// Check if the path starts with a potential pack reference
-	if let Some(pack_ref) = extract_pack_reference(path) {
+	if let Some(pack_ref_str) = extract_pack_reference(path) {
 		// Parse the pack reference
-		if let Ok(partial_pack_ref) = PackRef::from_str(pack_ref) {
+		if let Ok(partial_pack) = PackRef::from_str(pack_ref_str) {
 			// Try to find the pack directory
-			let namespace = Some(partial_pack_ref.namespace.as_str());
-			let pack_name = Some(partial_pack_ref.name.as_str());
 
-			if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name) {
+			// Can be the pack base dir, or the support base dir.
+			if let Ok(base_dir) = resolve_pack_ref_base_path(dir_context, &partial_pack) {
 				// Replace the pack reference with the actual path
-				let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
-				let pack_path = pack_dir.path.join(&sub_path);
+				let sub_path = partial_pack.sub_path.unwrap_or_default();
+				let pack_path = base_dir.join(&sub_path);
 
 				// Get the remaining path (after the pack reference)
-				let remaining_path = path.strip_prefix(pack_ref).unwrap_or("").trim_start_matches('/');
+				let remaining_path = path.strip_prefix(pack_ref_str).unwrap_or("").trim_start_matches('/');
 
 				// Combine the pack path with the remaining path
 				let resolved_path = if remaining_path.is_empty() {
@@ -52,13 +55,13 @@ pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<St
 					pack_path.join(remaining_path).to_string()
 				};
 
-				return Ok(resolved_path);
+				return Ok(resolved_path.into());
 			}
 		}
 	}
 
 	// No pack reference or couldn't resolve, return the original path
-	Ok(path.to_string())
+	Ok(path.into())
 }
 
 /// Processes globs to handle pack references
@@ -76,7 +79,7 @@ pub fn process_pack_references(dir_context: &DirContext, globs: Vec<String>) -> 
 				let namespace = Some(partial_pack_ref.namespace.as_str());
 				let pack_name = Some(partial_pack_ref.name.as_str());
 
-				match find_to_run_pack_dir(dir_context, namespace, pack_name) {
+				match lookup_to_run_pack_dir(dir_context, namespace, pack_name) {
 					Ok(pack_dir) => {
 						// Replace the pack reference with the actual path
 						let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
@@ -162,7 +165,7 @@ pub fn compute_base_dir(dir_context: &DirContext, options: Option<&Value>) -> Re
 					let namespace = Some(partial_pack_ref.namespace.as_str());
 					let pack_name = Some(partial_pack_ref.name.as_str());
 
-					if let Ok(pack_dir) = find_to_run_pack_dir(dir_context, namespace, pack_name) {
+					if let Ok(pack_dir) = lookup_to_run_pack_dir(dir_context, namespace, pack_name) {
 						// Get the complete path by joining the pack dir with any sub path
 						let sub_path = partial_pack_ref.sub_path.unwrap_or_default();
 						let remaining_path = base_dir.strip_prefix(pack_ref).unwrap_or("").trim_start_matches('/');
@@ -312,7 +315,7 @@ mod tests {
 		let res = process_path_reference(dir_context, fx_path)?;
 
 		// -- Check
-		assert_contains(&res, "ns_b/pack_b_2/main.aip");
+		assert_contains(res.as_str(), "ns_b/pack_b_2/main.aip");
 
 		Ok(())
 	}

@@ -1,4 +1,6 @@
 use super::{DirContext, RepoKind};
+use crate::dir_context::path_consts::SUPPORT_PACK;
+use crate::pack::{PackRef, PackRefSubPathScope};
 use crate::support::files::list_dirs;
 use crate::support::paths;
 use crate::{Error, Result};
@@ -42,9 +44,78 @@ impl std::fmt::Display for PackDir {
 	}
 }
 
-pub fn find_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_name: Option<&str>) -> Result<PackDir> {
+/// This resolve the base path (might not exists) of a PackRef
+/// It also support the `support` scheme with `$base` and `$workspace`
+///
+/// The base_pat is the bpas before the `sub_path`
+///
+/// Note: This path might not exists
+///
+/// ## Examples
+///
+/// - `pro@rust10x/guide/base/some.md` `~/.aipack-base/pack/installed/pro/rust10x` (so the dir)
+/// - `pro@rust10x/guide/base/**/*.md` `~/.aipack-base/pack/installed/pro/rust10x` (so the dir)
+/// - `pro@coder$workspace/so/data.md` `.aipack/support/`
+pub fn resolve_pack_ref_base_path(dir_context: &DirContext, pack_ref: &PackRef) -> Result<SPath> {
+	match pack_ref.sub_path_scope {
+		// -- If we have the pack dir,
+		PackRefSubPathScope::PackDir => {
+			// -- Get the base path
+			let pack_dirs = find_pack_dirs(dir_context, pack_ref)?;
+			let Some(pack_dir) = pack_dirs.into_iter().next() else {
+				return Err(Error::custom(format!("Cannot find the base path for {}", pack_ref)));
+			};
+
+			Ok(pack_dir.path)
+		}
+		// -- Support $base
+		PackRefSubPathScope::BaseSupport => {
+			let aipack_base_dir = dir_context.aipack_paths().aipack_base_dir();
+			let path = aipack_base_dir.join(SUPPORT_PACK).join(pack_ref.identity_as_path());
+			Ok(path)
+		}
+		// -- Support $workspace
+		PackRefSubPathScope::WorkspaceSupport => {
+			let wks_dir = dir_context.aipack_paths().aipack_wks_dir().ok_or_else(|| {
+				format!("Cannot load reference support file in workspace for '{pack_ref}' because no workspace")
+			})?;
+			let path = wks_dir.join(SUPPORT_PACK).join(pack_ref.identity_as_path());
+			Ok(path)
+		}
+	}
+}
+
+/// Find all of the pack dirs, in order or precedencese
+pub fn find_pack_dirs(dir_context: &DirContext, pack_ref: &PackRef) -> Result<Vec<PackDir>> {
+	let aipack_paths = dir_context.aipack_paths();
+
+	let repo_dirs = aipack_paths.get_pack_repo_dirs()?;
+
+	let mut pack_dirs = Vec::new();
+
+	for repo_dir in repo_dirs {
+		let ns_dirs = list_dirs(repo_dir.path(), 1, true);
+		let found_ns_dir = ns_dirs.into_iter().find(|ns_dir| ns_dir.name() == pack_ref.namespace);
+		let repo_kind = repo_dir.kind;
+
+		if let Some(ns_dir) = found_ns_dir {
+			let aipack_dirs = list_dirs(&ns_dir, 1, true);
+			let found_pack_dir = aipack_dirs.into_iter().find(|aipack_dir| aipack_dir.name() == pack_ref.name);
+			if let Some(pack_dir_path) = found_pack_dir {
+				// NOTE: Since direct match, just return this one
+				pack_dirs.push(PackDir::new(repo_kind, &pack_ref.name, pack_dir_path));
+				break;
+			}
+		}
+	}
+
+	Ok(pack_dirs)
+}
+
+#[deprecated(note = " We should not use that one anymore ")]
+pub fn lookup_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_name: Option<&str>) -> Result<PackDir> {
 	// -- the the pack dir and reverse it
-	let mut reversed_pack_dir = find_pack_dirs(dir_context, ns, pack_name)?;
+	let mut reversed_pack_dir = lookup_pack_dirs(dir_context, ns, pack_name)?;
 	// So that we get the first last.
 	reversed_pack_dir.reverse();
 
@@ -65,7 +136,7 @@ pub fn find_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_nam
 		for other_pack_dir in reversed_pack_dir {
 			if other_pack_dir.namespace != pack_dir.namespace {
 				// Get the propert list
-				let pack_dirs = find_pack_dirs(dir_context, ns, pack_name)?;
+				let pack_dirs = lookup_pack_dirs(dir_context, ns, pack_name)?;
 				// -- in case > 1, for now, no support
 				return Err(Error::custom(format!(
 					"{pack_ref} matches multiple AI packs across different namespaces.\n\nRun aip run ... with one of the full AI pack references below:\n\n{}\n",
@@ -78,10 +149,13 @@ pub fn find_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_nam
 	Ok(pack_dir)
 }
 
-/// Get the matching pack_dir for this namespace and pack_name
+/// Lookup for pack_irs for optional namspace and pack_name
+///
+/// IMPORTANT: Should be used only for `aip list ...`
+///
 /// - if no namespace, then, will return all of the matching PackDir with this pack_name
 /// - if a namespace, will return only the first matching one (following the custom/installed preferences)
-pub fn find_pack_dirs(dir_context: &DirContext, ns: Option<&str>, pack_name: Option<&str>) -> Result<Vec<PackDir>> {
+pub fn lookup_pack_dirs(dir_context: &DirContext, ns: Option<&str>, pack_name: Option<&str>) -> Result<Vec<PackDir>> {
 	let aipack_paths = dir_context.aipack_paths();
 
 	let repo_dirs = aipack_paths.get_pack_repo_dirs()?;
@@ -146,7 +220,7 @@ mod tests {
 	/// Note - In this tests, we do not use the PackDir::pretty() to not have to change those test if pretty changes.
 
 	#[tokio::test]
-	async fn test_pack_dir_find_pack_dirs_all() -> Result<()> {
+	async fn test_pack_dir_lookup_pack_dirs_all() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![
@@ -160,7 +234,7 @@ mod tests {
 		];
 
 		// -- Exec
-		let pack_dirs = find_pack_dirs(runtime.dir_context(), None, None)?;
+		let pack_dirs = lookup_pack_dirs(runtime.dir_context(), None, None)?;
 
 		// -- Check
 		let pack_dir_refs = pack_dir_into_strs(pack_dirs);
@@ -173,7 +247,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_pack_dir_find_pack_dirs_ns() -> Result<()> {
+	async fn test_pack_dir_lookup_pack_dirs_ns() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![
@@ -184,7 +258,7 @@ mod tests {
 		];
 
 		// -- Exec
-		let pack_dirs = find_pack_dirs(runtime.dir_context(), Some("ns_b"), None)?;
+		let pack_dirs = lookup_pack_dirs(runtime.dir_context(), Some("ns_b"), None)?;
 
 		// -- Check
 		let pack_dir_refs = pack_dir_into_strs(pack_dirs);
@@ -197,7 +271,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_pack_dir_find_pack_dirs_pack_name() -> Result<()> {
+	async fn test_pack_dir_lookup_pack_dirs_pack_name() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let expected = vec![
@@ -206,7 +280,7 @@ mod tests {
 		];
 
 		// -- Exec
-		let pack_dirs = find_pack_dirs(runtime.dir_context(), None, Some("pack_b_1"))?;
+		let pack_dirs = lookup_pack_dirs(runtime.dir_context(), None, Some("pack_b_1"))?;
 
 		// -- Check
 		let pack_dir_refs = pack_dir_into_strs(pack_dirs);

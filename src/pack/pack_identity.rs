@@ -1,5 +1,6 @@
 use crate::{Error, Result};
 use lazy_regex::{Lazy, Regex, regex};
+use simple_fs::SPath;
 use std::str::FromStr;
 
 /// This is a complete Pack Identiy, with namespace, pack_name
@@ -10,6 +11,12 @@ use std::str::FromStr;
 pub struct PackIdentity {
 	pub namespace: String,
 	pub name: String,
+}
+
+impl PackIdentity {
+	pub fn as_path(&self) -> SPath {
+		SPath::new(format!("{}/{}", self.namespace, self.name))
+	}
 }
 
 /// String parser

@@ -445,7 +445,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_file_load_pack_ref() -> Result<()> {
+	async fn test_lua_file_load_pack_ref_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_path = "ns_b@pack_b_2/main.aip";
 
@@ -456,6 +456,50 @@ mod tests {
 		assert_contains(res.x_get_str("content")?, "custom ns_b@pack_b_2 main.aip");
 		assert_contains(res.x_get_str("path")?, "pack_b_2/main.aip");
 		assert_eq!(res.x_get_str("name")?, "main.aip");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_load_pack_ref_base_support() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_path = "ns_b@pack_b_2$base/extra/test.txt";
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.load("{fx_path}")"#), None).await?;
+
+		// -- Check
+		assert_contains(
+			res.x_get_str("content")?,
+			"Some support content - ..@..$base/extra/test.txt",
+		);
+		assert_contains(
+			res.x_get_str("path")?,
+			".aipack-base/support/pack/ns_b/pack_b_2/extra/test.txt",
+		);
+		assert_eq!(res.x_get_str("name")?, "test.txt");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_load_pack_ref_workspace_support() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_path = "ns_a@pack_a_1$workspace/extra/test.txt";
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.load("{fx_path}")"#), None).await?;
+
+		// -- Check
+		assert_contains(
+			res.x_get_str("content")?,
+			"Some support content - ..@..$workspace/extra/test.txt",
+		);
+		assert_contains(
+			res.x_get_str("path")?,
+			".aipack/support/pack/ns_a/pack_a_1/extra/test.txt",
+		);
+		assert_eq!(res.x_get_str("name")?, "test.txt");
 
 		Ok(())
 	}

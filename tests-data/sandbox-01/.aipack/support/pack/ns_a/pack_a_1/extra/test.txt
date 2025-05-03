@@ -1,0 +1,1 @@
+Some support content - ..@..$workspace/extra/test.txt

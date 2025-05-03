@@ -1,4 +1,4 @@
-// region:    --- PartialPackRef
+// region:    --- PackRef
 
 use crate::dir_context::{PackDir, RepoKind};
 use crate::pack::PackIdentity;
@@ -9,12 +9,12 @@ use std::str::FromStr;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub enum PackRefSubPathScope {
 	#[default]
-	BaseInstalled,
+	PackDir,
 	BaseSupport,
 	WorkspaceSupport,
 }
 
-/// PartialPackRef represents a resource reference to a pack resource.
+/// PackRef represents a resource reference to a pack resource.
 /// It has not be resolved yet
 /// For example, a string like "pro@coder/explain" will be parsed into:
 ///     - namespace: Some("pro")
@@ -34,7 +34,14 @@ pub struct PackRef {
 	pub sub_path: Option<String>,
 }
 
-/// Implement the FromStr trait for PartialPackRef to parse string references
+impl PackRef {
+	/// Just return a new SPath `namespace/pack_name`
+	pub fn identity_as_path(&self) -> SPath {
+		SPath::new(format!("{}/{}", self.namespace, self.name))
+	}
+}
+
+/// Implement the FromStr trait for PackRef to parse string references
 impl FromStr for PackRef {
 	type Err = Error;
 
@@ -123,7 +130,7 @@ impl FromStr for PackRef {
 			None => {
 				// No scope specified, validate the whole part as name
 				PackIdentity::validate_name(name_and_scope_part)?;
-				(name_and_scope_part, PackRefSubPathScope::BaseInstalled)
+				(name_and_scope_part, PackRefSubPathScope::PackDir)
 			}
 		};
 
@@ -163,7 +170,7 @@ impl FromStr for PackRef {
 	}
 }
 
-/// Implement the Display trait for PartialPackRef
+/// Implement the Display trait for PackRef
 impl std::fmt::Display for PackRef {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{}@{}", self.namespace, self.name)?;
@@ -171,7 +178,7 @@ impl std::fmt::Display for PackRef {
 		match self.sub_path_scope {
 			PackRefSubPathScope::BaseSupport => write!(f, "$base")?,
 			PackRefSubPathScope::WorkspaceSupport => write!(f, "$workspace")?,
-			PackRefSubPathScope::BaseInstalled => {} // Do nothing for default
+			PackRefSubPathScope::PackDir => {} // Do nothing for default
 		}
 
 		if let Some(sub_path) = &self.sub_path {
@@ -181,7 +188,7 @@ impl std::fmt::Display for PackRef {
 	}
 }
 
-// endregion: --- PartialPackRef
+// endregion: --- PackRef
 
 // region:    --- LocalPackRef
 
@@ -271,19 +278,19 @@ mod tests {
 		// -- Setup & Fixtures
 		let data = [
 			// input, expected_ns, expected_name, expected_scope, expected_sub
-			("pro@coder", "pro", "coder", PackRefSubPathScope::BaseInstalled, None),
+			("pro@coder", "pro", "coder", PackRefSubPathScope::PackDir, None),
 			(
 				"pro@coder/agent.yaml",
 				"pro",
 				"coder",
-				PackRefSubPathScope::BaseInstalled,
+				PackRefSubPathScope::PackDir,
 				Some("agent.yaml"),
 			),
 			(
 				"pro@coder/", // Trailing slash
 				"pro",
 				"coder",
-				PackRefSubPathScope::BaseInstalled,
+				PackRefSubPathScope::PackDir,
 				None,
 			),
 			// With hyphens and underscores
@@ -291,14 +298,14 @@ mod tests {
 				"my-ns@pack_name-123",
 				"my-ns",
 				"pack_name-123",
-				PackRefSubPathScope::BaseInstalled,
+				PackRefSubPathScope::PackDir,
 				None,
 			),
 			(
 				"_ns@_name/_sub-path",
 				"_ns",
 				"_name",
-				PackRefSubPathScope::BaseInstalled,
+				PackRefSubPathScope::PackDir,
 				Some("_sub-path"),
 			),
 			(
