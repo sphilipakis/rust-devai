@@ -116,11 +116,11 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_with_cached() -> Result<()> {
 		// -- Setup & Fixtures
-		let fx_prompt_tokens = 1000;
+		let fx_prompt_normal_tokens = 1000;
 		let fx_completion_tokens = 500;
 		let fx_cached_tokens = 400;
 		let usage = Usage {
-			prompt_tokens: Some(fx_prompt_tokens),
+			prompt_tokens: Some(fx_prompt_normal_tokens + fx_cached_tokens),
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
@@ -136,17 +136,10 @@ mod tests {
 		// -- Check
 		assert!(price.is_some());
 		let price = price.unwrap();
-		// ModelPricing {
-		// 	name: "gpt-4o-mini",
-		// 	input_cached: Some(0.075),
-		// 	input_normal: 0.15,
-		// 	output_normal: 0.6,
-		// 	output_reasoning: None,
-		// },
 
 		// Calculate expected:
 		let cached = fx_cached_tokens as f64 * 0.075 / 1_000_000.0;
-		let prompt = fx_prompt_tokens as f64 * 0.150 / 1_000_000.0;
+		let prompt = fx_prompt_normal_tokens as f64 * 0.150 / 1_000_000.0;
 		let completion = fx_completion_tokens as f64 * 0.6 / 1_000_000.0;
 		let expected = cached + prompt + completion;
 		let expected = (expected * 10_000.0).round() / 10_000.0;
@@ -158,11 +151,11 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_with_cached_no_cached_price() -> Result<()> {
 		// -- Setup & Fixtures
-		let fx_prompt_tokens = 1000;
-		let fx_completion_tokens = 500;
+		let fx_prompt_normal_tokens = 1000;
 		let fx_cached_tokens = 400;
+		let fx_completion_tokens = 500;
 		let usage = Usage {
-			prompt_tokens: Some(fx_prompt_tokens),
+			prompt_tokens: Some(fx_prompt_normal_tokens + fx_cached_tokens),
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
@@ -174,23 +167,15 @@ mod tests {
 
 		// -- Exec
 		// Test with a model that has input_cached: None (e.g., groq model)
-		let price = price_it("groq", "llama-3-70b-8k", &usage);
+		let price = price_it("gemini", "gemini-2.5-pro", &usage);
 
 		// -- Check
-		assert!(price.is_some());
-		let price = price.unwrap();
-		// ModelPricing {
-		// 	name: "llama-3-70b-8k",
-		// 	input_cached: None,
-		// 	input_normal: 0.59,
-		// 	output_normal: 0.79,
-		// 	output_reasoning: None,
-		// },
+		let price = price.ok_or("Should have price")?;
 
 		// Calculate expected: cached tokens should use input_normal price
-		let cached = fx_cached_tokens as f64 * 0.59 / 1_000_000.0;
-		let prompt = fx_prompt_tokens as f64 * 0.59 / 1_000_000.0;
-		let completion = fx_completion_tokens as f64 * 0.79 / 1_000_000.0;
+		let cached = fx_cached_tokens as f64 * 1.25 / 1_000_000.0;
+		let prompt = fx_prompt_normal_tokens as f64 * 1.25 / 1_000_000.0;
+		let completion = fx_completion_tokens as f64 * 10. / 1_000_000.0;
 		let expected = cached + prompt + completion;
 		let expected = (expected * 10_000.0).round() / 10_000.0;
 		assert!((price - expected).abs() < f64::EPSILON);
@@ -201,12 +186,12 @@ mod tests {
 	#[test]
 	fn test_pricing_pricer_price_it_with_cache_creation() -> Result<()> {
 		// -- Setup & Fixtures
-		let fx_prompt_tokens = 1000;
-		let fx_completion_tokens = 500;
+		let fx_prompt_normal_tokens = 1000;
 		let fx_cached_tokens = 400;
+		let fx_completion_tokens = 500;
 		let fx_cache_creation_tokens = 200;
 		let usage = Usage {
-			prompt_tokens: Some(fx_prompt_tokens),
+			prompt_tokens: Some(fx_prompt_normal_tokens + fx_cached_tokens),
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
@@ -223,19 +208,12 @@ mod tests {
 		// -- Check
 		assert!(price.is_some());
 		let price = price.unwrap();
-		// ModelPricing {
-		// 	name: "claude-3-5-sonnet",
-		// 	input_cached: Some(0.3),
-		// 	input_normal: 3.0,
-		// 	output_normal: 15.0,
-		// 	output_reasoning: None,
-		// },
 
 		// Calculate expected:
 		let cached = fx_cached_tokens as f64 * 0.3 / 1_000_000.0;
 		// NOTE: cache_creation uses input_normal * 1.25
 		let cache_creation = fx_cache_creation_tokens as f64 * 1.25 * 3.0 / 1_000_000.0;
-		let prompt = fx_prompt_tokens as f64 * 3.0 / 1_000_000.0;
+		let prompt = fx_prompt_normal_tokens as f64 * 3.0 / 1_000_000.0;
 		let completion = fx_completion_tokens as f64 * 15.0 / 1_000_000.0;
 		let expected = cached + cache_creation + prompt + completion;
 		let expected = (expected * 10_000.0).round() / 10_000.0; // 0.00012 + 0.00075 + 0.003 + 0.0075 = 0.01137 -> 0.0114
