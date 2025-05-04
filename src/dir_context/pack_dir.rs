@@ -112,19 +112,11 @@ pub fn find_pack_dirs(dir_context: &DirContext, pack_ref: &PackRef) -> Result<Ve
 	Ok(pack_dirs)
 }
 
-#[deprecated(note = " We should not use that one anymore ")]
-pub fn lookup_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_name: Option<&str>) -> Result<PackDir> {
+pub fn find_to_run_pack_dir(dir_context: &DirContext, pack_ref: &PackRef) -> Result<PackDir> {
 	// -- the the pack dir and reverse it
-	let mut reversed_pack_dir = lookup_pack_dirs(dir_context, ns, pack_name)?;
+	let mut reversed_pack_dir = find_pack_dirs(dir_context, pack_ref)?;
 	// So that we get the first last.
 	reversed_pack_dir.reverse();
-
-	let pack_ref = match (ns, pack_name) {
-		(Some(ns), Some(pack_name)) => format!("{}@{}", ns, pack_name),
-		(Some(ns), None) => ns.to_string(),
-		(None, Some(pack_name)) => pack_name.to_string(),
-		(None, None) => return Err(Error::custom("Cannot find pack, no reference given")),
-	};
 
 	// -- Get the pack dir
 	let Some(pack_dir) = reversed_pack_dir.pop() else {
@@ -136,7 +128,7 @@ pub fn lookup_to_run_pack_dir(dir_context: &DirContext, ns: Option<&str>, pack_n
 		for other_pack_dir in reversed_pack_dir {
 			if other_pack_dir.namespace != pack_dir.namespace {
 				// Get the propert list
-				let pack_dirs = lookup_pack_dirs(dir_context, ns, pack_name)?;
+				let pack_dirs = find_pack_dirs(dir_context, pack_ref)?;
 				// -- in case > 1, for now, no support
 				return Err(Error::custom(format!(
 					"{pack_ref} matches multiple AI packs across different namespaces.\n\nRun aip run ... with one of the full AI pack references below:\n\n{}\n",

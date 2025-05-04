@@ -3,7 +3,7 @@
 
 use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
-use crate::dir_context::{DirContext, PathResolver, lookup_to_run_pack_dir};
+use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
 use crate::pack::LocalPackRef;
 use crate::support::tomls::parse_toml;
 use crate::{Error, Result};
@@ -45,7 +45,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>
 			doc.into_agent(name, agent_ref, base_options)?
 		}
 		PartialAgentRef::PackRef(pack_ref) => {
-			let pack_dir = lookup_to_run_pack_dir(dir_context, Some(&pack_ref.namespace), Some(&pack_ref.name))?;
+			let pack_dir = find_to_run_pack_dir(dir_context, &pack_ref)?;
 
 			// -- Find the aip path
 			// Note: if it is None, the pack_dir, then, we have the as_dir to avoid do the dir.aip
