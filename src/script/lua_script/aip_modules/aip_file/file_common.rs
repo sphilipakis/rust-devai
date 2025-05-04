@@ -71,7 +71,6 @@ pub(super) fn file_load(
 	let dir_context = runtime.dir_context();
 	let base_path = compute_base_dir(dir_context, options.as_ref())?;
 	let rel_path = process_path_reference(dir_context, &rel_path)?;
-	let rel_path = SPath::new(rel_path);
 
 	let file_record = FileRecord::load(&base_path, &rel_path)?;
 	let res = file_record.into_lua(lua)?;
@@ -101,17 +100,18 @@ pub(super) fn file_load(
 /// Returns an error if the file cannot be written, or if trying to save outside of workspace.
 ///
 pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
-	let rel_path = SPath::new(rel_path);
-	let path = runtime.dir_context().resolve_path(rel_path, PathResolver::WksDir)?;
 	let dir_context = runtime.dir_context();
-	ensure_file_dir(&path).map_err(Error::from)?;
+	let full_path = dir_context.resolve_path((&rel_path).into(), PathResolver::WksDir)?;
 
+	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
 
-	if let Some(rel_path) = path.diff(wks_dir) {
+	// Check that if three is .., it ist still in a .aipack-base
+	// TODO: Would probably need to check that it can only write in it's own support folder
+	if let Some(rel_path) = full_path.diff(wks_dir) {
 		if rel_path.as_str().starts_with("..") {
 			// allow the .aipack-base
-			if !path.as_str().contains(".aipack-base") {
+			if !full_path.as_str().contains(".aipack-base") {
 				return Err(Error::custom(format!(
             "Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
         ))
@@ -120,9 +120,11 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 		}
 	}
 
-	write(&path, content)?;
+	ensure_file_dir(&full_path).map_err(Error::from)?;
 
-	let rel_path = path.diff(wks_dir).unwrap_or(path);
+	write(&full_path, content).map_err(|err| Error::custom(format!("Fail to save file {rel_path}.\nCause {err}")))?;
+
+	let rel_path = full_path.diff(wks_dir).unwrap_or(full_path);
 	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {}", rel_path));
 
 	Ok(())
@@ -206,6 +208,7 @@ pub(super) fn file_ensure_exists(
 	options: Option<EnsureExistsOptions>,
 ) -> mlua::Result<mlua::Value> {
 	let options = options.unwrap_or_default();
+
 	let rel_path = SPath::new(path);
 	let full_path = runtime.dir_context().resolve_path(rel_path.clone(), PathResolver::WksDir)?;
 

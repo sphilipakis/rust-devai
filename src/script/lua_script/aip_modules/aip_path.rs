@@ -42,6 +42,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let path_exists_fn = lua.create_function(move |_lua, path: String| path_exists(&rt, path))?;
 
+	// -- resolve
+	let rt = runtime.clone();
+	let path_resolve_fn = lua.create_function(move |_lua, path: String| path_resolve(&rt, path))?;
+
 	// -- is_file
 	let rt = runtime.clone();
 	let path_is_file_fn = lua.create_function(move |_lua, path: String| path_is_file(&rt, path))?;
@@ -63,6 +67,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_join_fn = lua.create_function(path_join_non_os_normalized)?;
 
 	// -- Add all functions to the module
+	table.set("resolve", path_resolve_fn)?;
 	table.set("exists", path_exists_fn)?;
 	table.set("is_file", path_is_file_fn)?;
 	table.set("is_dir", path_is_dir_fn)?;
@@ -111,6 +116,30 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 		mlua::Value::String(lua.create_string(parent)?),
 		mlua::Value::String(lua.create_string(file_name)?),
 	]))
+}
+
+/// ## Lua Documentation
+///
+/// Resolve and normalize a path
+/// - `some/../path` - `some/path`
+/// - `my@pack/some/file` - Will resolve the path to this pack
+/// - `my@pack$workspace/support/file.txt` will also resolve support path
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.resolve(path: string): boolean
+/// ```
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to check.
+///
+/// ### Returns
+///
+/// Returns `true` if the path exists, `false` otherwise.
+fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
+	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
+	Ok(path.to_string())
 }
 
 /// ## Lua Documentation

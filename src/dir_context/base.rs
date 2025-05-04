@@ -1,7 +1,10 @@
 use super::AipackPaths;
+use crate::dir_context::resolve_pack_ref_base_path;
+use crate::pack::{PackRef, looks_like_pack_ref};
 use crate::support::files::current_dir;
 use crate::{Error, Result};
 use simple_fs::SPath;
+use std::str::FromStr;
 
 #[allow(clippy::enum_variant_names)] // to remove
 pub enum PathResolver {
@@ -75,11 +78,27 @@ impl DirContext {
 
 /// Resolvers
 impl DirContext {
+	/// Resolve a path from this DirContext
+	/// - `mode`
+	///   - For pack_ref path, it will attempt to do a relative to PathResolver variat if possible,
+	///   - For relative path, it will resolve relative to PathResolver variant (CurrentDir, ...)
+	///   - For absolute path it will be ignored
+	///
+	///
 	pub fn resolve_path(&self, path: SPath, mode: PathResolver) -> Result<SPath> {
-		let base_path = if path.path().is_absolute() {
-			None // Path is already absolute, no base needed
-		} else {
-			match mode {
+		// -- Absolute Path
+		let final_path = if path.is_absolute() {
+			path
+		}
+		// -- Pack ref
+		else if looks_like_pack_ref(&path) {
+			let pack_ref = PackRef::from_str(path.as_str())?;
+			let base_path = resolve_pack_ref_base_path(self, &pack_ref)?;
+			pack_ref.sub_path.map(|p| base_path.join(p)).unwrap_or(base_path)
+		}
+		// -- Relative path
+		else {
+			let base_path = match mode {
 				PathResolver::CurrentDir => Some(self.current_dir()),
 				PathResolver::WksDir => {
 					let wks_dir = self.try_wks_dir_with_err_ctx(&format!(
@@ -101,12 +120,11 @@ impl DirContext {
 						}
 					}
 				}
+			};
+			match base_path {
+				Some(base) => base.join(path),
+				None => path, // Path was already absolute
 			}
-		};
-
-		let final_path = match base_path {
-			Some(base) => base.join(path),
-			None => path, // Path was already absolute
 		};
 
 		let path = final_path.into_collapsed();

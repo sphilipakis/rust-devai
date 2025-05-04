@@ -41,11 +41,24 @@ impl PackRef {
 	}
 }
 
+/// Quick test to see if a Path should be a pack_ref (with @)
+/// For now it should be a pack_ref if
+/// - Contains '@'
+/// - And is not absolute or does not start with .
+///
+/// NOTE: The last condition allows to support files with '@'
+pub fn looks_like_pack_ref(path: &SPath) -> bool {
+	let path_str = path.as_str();
+	path_str.contains('@') && !path_str.starts_with(".") && !path.is_absolute()
+}
+
 /// Implement the FromStr trait for PackRef to parse string references
 impl FromStr for PackRef {
 	type Err = Error;
 
 	fn from_str(full_ref: &str) -> Result<Self> {
+		// TODO: Probably chould call looks_like_pack_ref
+
 		let parts: Vec<&str> = full_ref.split('@').collect();
 
 		let (namespace_str, name_and_path_str) = match parts.len() {
