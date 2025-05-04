@@ -31,7 +31,7 @@ pub fn resolve_pack_ref_base_path(dir_context: &DirContext, pack_ref: &PackRef) 
 		// -- Support $base
 		PackRefSubPathScope::BaseSupport => {
 			let aipack_base_dir = dir_context.aipack_paths().aipack_base_dir();
-			let path = aipack_base_dir.join(SUPPORT_PACK).join(pack_ref.identity_as_path());
+			let path = join_support_pack_ref(aipack_base_dir.path(), &pack_ref.identity_as_path());
 			Ok(path)
 		}
 		// -- Support $workspace
@@ -39,8 +39,13 @@ pub fn resolve_pack_ref_base_path(dir_context: &DirContext, pack_ref: &PackRef) 
 			let wks_dir = dir_context.aipack_paths().aipack_wks_dir().ok_or_else(|| {
 				format!("Cannot load reference support file in workspace for '{pack_ref}' because no workspace")
 			})?;
-			let path = wks_dir.join(SUPPORT_PACK).join(pack_ref.identity_as_path());
+			let path = join_support_pack_ref(wks_dir.path(), &pack_ref.identity_as_path());
 			Ok(path)
 		}
 	}
+}
+
+/// aipack_path is the .aipack/ or ~/.aipack-base/ path.
+pub fn join_support_pack_ref(aipack_path: &SPath, identity_path: &SPath) -> SPath {
+	aipack_path.join(SUPPORT_PACK).join(identity_path)
 }

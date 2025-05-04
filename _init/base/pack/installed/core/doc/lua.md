@@ -60,20 +60,23 @@ For example:
 
 All Lua scripts get the `CTX` table in scope to get the path of the runtime and agent.
 
-| Key                      | Value                                     |
-|--------------------------|-------------------------------------------|
-| CTX.WORKSPACE_DIR        | `/absolute/path/to/workspace_dir`         |
-| CTX.WORKSPACE_AIPACK_DIR | `/absolute/path/to/workspace_dir/.aipack` |
-| CTX.BASE_AIPACK_DIR      | `/absolute/path/to/home/.aipack-base`     |
-| CTX.AGENT_NAME           | `my-agent`                                |
-| CTX.AGENT_FILE_PATH      | `/absolute/path/to/my-agent.aip`          |
-| CTX.AGENT_FILE_DIR       | `/absolute/path/to/agent`                 |
-| CTX.AGENT_FILE_NAME      | `my-agent.aip`                            |
-| CTX.AGENT_FILE_STEM      | `my-agent`                                |
-| CTX.PACK_NAMESPACE       | `demo` (when `demo@craft/text`)           |
-| CTX.PACK_NAME            | `craft` (when `demo@craft/text`)          |
-| CTX.PACK_REF             | `demo@craft/text`                         |
-| CTX.PACK_IDENTITY        | `demo@craft` (when `demo@craft/text`)     |
+| Key                            | Value                                             |
+|--------------------------------|---------------------------------------------------|
+| CTX.WORKSPACE_DIR              | `/absolute/path/to/workspace_dir`                 |
+| CTX.WORKSPACE_AIPACK_DIR       | `/absolute/path/to/workspace_dir/.aipack`         |
+| CTX.BASE_AIPACK_DIR            | `/User/john/.aipack-base`                         |
+| CTX.AGENT_NAME                 | `my-agent`                                        |
+| CTX.AGENT_FILE_PATH            | `/absolute/path/to/my-agent.aip`                  |
+| CTX.AGENT_FILE_DIR             | `/absolute/path/to/agent`                         |
+| CTX.AGENT_FILE_NAME            | `my-agent.aip`                                    |
+| CTX.AGENT_FILE_STEM            | `my-agent`                                        |
+| CTX.PACK_NAMESPACE             | `demo` (when `demo@craft/text`)                   |
+| CTX.PACK_NAME                  | `craft` (when `demo@craft/text`)                  |
+| CTX.PACK_REF                   | `demo@craft/text`                                 |
+| CTX.PACK_IDENTITY              | `demo@craft` (when `demo@craft/text`)             |
+| CTX.PACK_WORKSPACE_SUPPORT_DIR | `/workspace/.aipack/support/pack/craft/text`      |
+| CTX.PACK_BASE_SUPPORT_DIR      | `/User/john/.aipack-base/support/pack/craft/text` |
+
 
 - All paths are absolute.
 - `CTX.PACK..` are nil if the agent was not referenced with a pack path (i.e., with a "@").

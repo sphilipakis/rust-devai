@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::agent::{Agent, AgentRef};
-use crate::dir_context::DirContext;
+use crate::dir_context::{DirContext, join_support_pack_ref};
 use crate::script::LuaEngine;
 use std::sync::Arc;
 
@@ -46,6 +46,16 @@ impl Literals {
 
 			// This will be the absolute path of `demo@craft`
 			store.push(("PACK_DIR", pack_ref.pack_dir.to_string()));
+
+			let identity_path = &pack_ref.identity().identity_as_path();
+
+			if let Some(aipack_wks_dir) = dir_context.aipack_paths().aipack_wks_dir() {
+				let path = join_support_pack_ref(aipack_wks_dir.path(), identity_path).to_string();
+				store.push(("PACK_WORKSPACE_SUPPORT_DIR", path.to_string()));
+			}
+
+			let pack_support_base = join_support_pack_ref(aipack_paths.aipack_base_dir().path(), identity_path);
+			store.push(("PACK_BASE_SUPPORT_DIR", pack_support_base.to_string()));
 		}
 
 		// -- Workspace / base dirs
@@ -53,10 +63,11 @@ impl Literals {
 		if let Some(wks_dir) = dir_context.wks_dir() {
 			store.push(("WORKSPACE_DIR", wks_dir.to_string()));
 		}
-		// Those are the absolute path for `~/.aipack-base/` and `.aipack/`
+		// Those are the absolute path for  and `.aipack/`
 		if let Some(aipack_wks_dir) = aipack_paths.aipack_wks_dir() {
 			store.push(("WORKSPACE_AIPACK_DIR", aipack_wks_dir.to_string()));
 		}
+		// `~/.aipack-base/`
 		store.push(("BASE_AIPACK_DIR", aipack_paths.aipack_base_dir().to_string()));
 
 		// -- Agent Information
@@ -109,13 +120,16 @@ mod tests {
 	async fn test_run_literals_aipack_dir() -> Result<()> {
 		let script = r#"
 return {
-	  WORKSPACE_DIR         = CTX.WORKSPACE_DIR,
-		WORKSPACE_AIPACK_DIR  = CTX.WORKSPACE_AIPACK_DIR,
-		BASE_AIPACK_DIR       = CTX.BASE_AIPACK_DIR,
-		AGENT_FILE_NAME       = CTX.AGENT_FILE_NAME,
-		AGENT_FILE_PATH       = CTX.AGENT_FILE_PATH,
-		AGENT_FILE_DIR        = CTX.AGENT_FILE_DIR,
-		AGENT_FILE_STEM       = CTX.AGENT_FILE_STEM,
+	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
+		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
+		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
+		AGENT_FILE_NAME             = CTX.AGENT_FILE_NAME,
+		AGENT_FILE_PATH             = CTX.AGENT_FILE_PATH,
+		AGENT_FILE_DIR              = CTX.AGENT_FILE_DIR,
+		AGENT_FILE_STEM             = CTX.AGENT_FILE_STEM,
+		-- those should be absent in the json, because nul in this case
+		PACK_BASE_SUPPORT_DIR       = CTX.PACK_BASE_SUPPORT_DIR,
+		PACK_WORKSPACE_SUPPORT_DIR  = CTX.PACK_WORKSPACE_SUPPORT_DIR,
 }
 		"#;
 
