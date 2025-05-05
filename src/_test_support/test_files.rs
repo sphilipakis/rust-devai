@@ -1,9 +1,12 @@
 use super::Result;
-use simple_fs::SPath;
+use simple_fs::{SPath, ensure_file_dir};
 use std::fs;
 use time::OffsetDateTime;
 
 const TEST_TMP_DIR: &str = "./tests-data/.tmp";
+
+const TEST_SANDBOX_01_REL_TMP_DIR: &str = ".tmp";
+const SANDBOX_01_DIR: &str = "./tests-data/sandbox-01/";
 
 /// Generate a unique directory name inside tests-data/.tmp/ using pseudo unique enough name
 /// This is just the dir name, like `test-3412341234-323432`, no path
@@ -20,6 +23,47 @@ pub fn gen_test_dir_path() -> SPath {
 pub fn gen_tmp_test_path(path: &str) -> SPath {
 	SPath::new(TEST_TMP_DIR).join(path)
 }
+
+// region:    --- Sandbox 01 Test files
+
+/// Generate a temp file for sandbox_01 and
+/// returns path RELATIVE TO TEST_SANDBOX_01_REL_TMP_DIR
+pub fn gen_sandbox_01_temp_file_path(name: &str) -> SPath {
+	// Suffi sufficient for test directories
+	let now = OffsetDateTime::now_utc();
+	let path = format!("test-{}-{}-{name}", now.unix_timestamp(), now.microsecond());
+
+	SPath::new(TEST_SANDBOX_01_REL_TMP_DIR).join(path)
+}
+
+/// Generate a temp file for sandbox_01 and
+/// returns path RELATIVE TO TEST_SANDBOX_01_REL_TMP_DIR
+pub fn create_sanbox_01_tmp_file(name: &str, content: &str) -> Result<SPath> {
+	let file_path = gen_sandbox_01_temp_file_path(name);
+	let full_path = SPath::new(SANDBOX_01_DIR).join(&file_path);
+
+	ensure_file_dir(&full_path)?;
+	fs::write(&full_path, content)?;
+
+	Ok(file_path)
+}
+
+/// Clean a tempa filepath relative to TEST_SANDBOX_01_REL_TMP_DIR
+pub fn clean_sanbox_01_tmp_file(file_path: SPath) -> Result<()> {
+	let full_path = SPath::new(SANDBOX_01_DIR).join(&file_path);
+	if !full_path.as_str().contains("tests-data/sandbox-01/.tmp") {
+		return Err(format!(
+			"Fail to 'clean_sanbox_01_tmp_file'.\nCause: path '{full_path}' does not look save to delete"
+		)
+		.into());
+	}
+	if full_path.exists() {
+		fs::remove_file(full_path)?;
+	}
+	Ok(())
+}
+
+// endregion: --- Sandbox 01 Test files
 
 /// Saves the given content to the specified path.
 /// Ensures that the parent directory exists before saving.

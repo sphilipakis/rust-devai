@@ -1,0 +1,4 @@
+{"name": "item1", "value": 10}
+{"name": "item2", "value": 20, "active": true}
+
+{"name": "item3", "value": null, "tags": ["a", "b"]}
