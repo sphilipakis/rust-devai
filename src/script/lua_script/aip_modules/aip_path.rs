@@ -3,19 +3,20 @@
 //! ---
 //!
 //! ## Lua documentation
-//! The `path` module exposes functions used to interact with file paths.
+//! The `aip.path` module exposes functions used to interact with file paths.
 //!
 //! ### Functions
 //!
-//! - `aip.path.exists(path: string) -> bool`
-//! - `aip.path.is_file(path: string) -> bool`
-//! - `aip.path.is_dir(path: string) -> bool`
-//! - `aip.path.diff(file_path: string, base_path: string) -> string`
-//! - `aip.path.parent(path: string) -> string | nil`
-//! - `aip.path.join(path: string) -> string | nil` (default non os normalized)
-//! - `aip.path.join_os_normalized(path: string) -> string | nil` (windows style if start with like C:)
-//! - `aip.path.join_os_non_normalized(path: string) -> string | nil` (default, as user specified)
-//! - `aip.path.split(path: string) -> parent, filename`
+//! - `aip.path.split(path: string): parent: string, filename: string`
+//! - `aip.path.resolve(path: string): string`
+//! - `aip.path.exists(path: string): boolean`
+//! - `aip.path.is_file(path: string): boolean`
+//! - `aip.path.is_dir(path: string): boolean`
+//! - `aip.path.diff(file_path: string, base_path: string): string`
+//! - `aip.path.parent(path: string): string | nil`
+//! - `aip.path.join(paths: string | table): string | nil` (default non os normalized)
+//! - `aip.path.join_os_normalized(paths: string | table): string | nil` (windows style if start with like C:)
+//! - `aip.path.join_os_non_normalized(paths: string | table): string | nil` (default, as user specified)
 //!
 //! NOTE 1: Currently, `aip.path.join` uses `aip.path.join_os_non_normalized`. This might change in the future.
 //!
@@ -89,8 +90,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.path.split(path: string): string, string
+/// aip.path.split(path: string): parent: string, filename: string
 /// ```
+///
+/// Splits the given path into its parent directory component and its filename component.
 ///
 /// ### Arguments
 ///
@@ -98,14 +101,29 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ### Returns
 ///
-/// Returns the parent and filename of the path.
+/// Returns two strings: the parent directory path and the filename. Returns empty strings
+/// if the path has no parent or no filename, respectively (e.g., splitting "." returns "", ".").
 ///
-/// ```ts
-/// {
-///   parent: string,
-///   filename: string
-/// }
+/// ```lua
+/// -- Example output
+/// local parent, filename = "some/path", "file.txt"
 /// ```
+///
+/// ### Example
+///
+/// ```lua
+/// local parent, filename = aip.path.split("folder/file.txt")
+/// print(parent)   -- Output: "folder"
+/// print(filename) -- Output: "file.txt"
+///
+/// local parent, filename = aip.path.split("justafile.md")
+/// print(parent)   -- Output: ""
+/// print(filename) -- Output: "justafile.md"
+/// ```
+///
+/// ### Error
+///
+/// This function does not typically error, returning empty strings for components that do not exist.
 fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 	let path = SPath::from(path);
 
@@ -120,23 +138,44 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 
 /// ## Lua Documentation
 ///
-/// Resolve and normalize a path
-/// - `some/../path` - `some/path`
-/// - `my@pack/some/file` - Will resolve the path to this pack
-/// - `my@pack$workspace/support/file.txt` will also resolve support path
+/// Resolves and normalizes a path relative to the workspace.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.path.resolve(path: string): boolean
+/// aip.path.resolve(path: string): string
 /// ```
+///
+/// Resolves and normalizes the given path string. This handles relative paths (`.`, `..`),
+/// absolute paths, and special aipack pack references (`ns@pack/`, `ns@pack$base/`, `ns@pack$workspace/`).
+/// The resulting path is normalized (e.g., `some/../path` becomes `some/path`).
 ///
 /// ### Arguments
 ///
-/// - `path: string`: The path to check.
+/// - `path: string`: The path string to resolve and normalize. It can be a relative path, an absolute path, or an aipack pack reference.
 ///
 /// ### Returns
 ///
-/// Returns `true` if the path exists, `false` otherwise.
+/// - `string`: The resolved and normalized path as a string. This path is usually absolute after resolution.
+///
+/// ### Example
+///
+/// ```lua
+/// local resolved_path = aip.path.resolve("./agent-script/../agent-script/agent-hello.aip")
+/// print(resolved_path) -- Output: "/path/to/workspace/agent-script/agent-hello.aip" (example)
+///
+/// local resolved_pack_path = aip.path.resolve("ns@pack/some/file.txt")
+/// print(resolved_pack_path) -- Output: "/path/to/aipack-base/packs/ns/pack/some/file.txt" (example)
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.to_string())
@@ -151,13 +190,38 @@ fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
 /// aip.path.exists(path: string): boolean
 /// ```
 ///
+/// Checks if the file or directory specified by `path` exists. The path is resolved relative to the workspace root.
+/// Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
+///
 /// ### Arguments
 ///
-/// - `path: string`: The path to check.
+/// - `path: string`: The path string to check for existence. Can be relative, absolute, or a pack reference.
 ///
 /// ### Returns
 ///
-/// Returns `true` if the path exists, `false` otherwise.
+/// - `boolean`: Returns `true` if a file or directory exists at the specified path, `false` otherwise.
+///
+/// ### Example
+///
+/// ```lua
+/// if aip.path.exists("README.md") then
+///   print("README.md exists.")
+/// end
+///
+/// if aip.path.exists("ns@pack/main.aip") then
+///   print("Pack main agent exists.")
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.exists())
@@ -165,20 +229,45 @@ fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 ///
-/// Checks if the specified path is a file.
+/// Checks if the specified path points to a file.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.path.is_file(path: string): boolean
 /// ```
 ///
+/// Checks if the entity at the specified `path` is a file. The path is resolved relative to the workspace root.
+/// Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
+///
 /// ### Arguments
 ///
-/// - `path: string`: The path to check.
+/// - `path: string`: The path string to check. Can be relative, absolute, or a pack reference.
 ///
 /// ### Returns
 ///
-/// Returns `true` if the path is a file, `false` otherwise.
+/// - `boolean`: Returns `true` if the path points to an existing file, `false` otherwise.
+///
+/// ### Example
+///
+/// ```lua
+/// if aip.path.is_file("config.toml") then
+///   print("config.toml is a file.")
+/// end
+///
+/// if aip.path.is_file("src/") then
+///   print("src/ is a file.") -- This will print false
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_file())
@@ -186,21 +275,44 @@ fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 ///
-/// Do a diff between two path, giving the relative path
+/// Computes the relative path from `base_path` to `file_path`.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.path.diff(file_path: string, base_path: string): string
 /// ```
 ///
+/// Calculates the relative path string that navigates from the `base_path` to the `file_path`.
+/// Both paths can be absolute or relative.
+///
 /// ### Arguments
 ///
-/// - `file_path: string`: The file path.
-/// - `base_path: string`: The base path.
+/// - `file_path: string`: The target path.
+/// - `base_path: string`: The starting path.
 ///
 /// ### Returns
 ///
-/// Returns the relative path from the base path to the file path.
+/// - `string`: The relative path string from `base_path` to `file_path`. Returns an empty string if the paths are the same or if a relative path cannot be easily computed (e.g., on different drives on Windows).
+///
+/// ### Example
+///
+/// ```lua
+/// print(aip.path.diff("/a/b/c/file.txt", "/a/b/")) -- Output: "c/file.txt"
+/// print(aip.path.diff("/a/b/", "/a/b/c/file.txt")) -- Output: "../.."
+/// print(aip.path.diff("/a/b/c", "/a/d/e"))      -- Output: "../../b/c" (example, depends on OS)
+/// print(aip.path.diff("folder/file.txt", "folder")) -- Output: "file.txt"
+/// print(aip.path.diff("folder/file.txt", "folder/file.txt")) -- Output: ""
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the paths are invalid or cannot be processed.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 	let file_path = SPath::from(file_path);
 	let base_path = SPath::from(base_path);
@@ -212,20 +324,45 @@ fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 
 /// ## Lua Documentation
 ///
-/// Checks if the specified path is a directory.
+/// Checks if the specified path points to a directory.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.path.is_dir(path: string): boolean
 /// ```
 ///
+/// Checks if the entity at the specified `path` is a directory. The path is resolved relative to the workspace root.
+/// Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
+///
 /// ### Arguments
 ///
-/// - `path: string`: The path to check.
+/// - `path: string`: The path string to check. Can be relative, absolute, or a pack reference.
 ///
 /// ### Returns
 ///
-/// Returns `true` if the path is a directory, `false` otherwise.
+/// - `boolean`: Returns `true` if the path points to an existing directory, `false` otherwise.
+///
+/// ### Example
+///
+/// ```lua
+/// if aip.path.is_dir("src/") then
+///   print("src/ is a directory.")
+/// end
+///
+/// if aip.path.is_dir("config.toml") then
+///   print("config.toml is a directory.") -- This will print false
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn path_is_dir(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime.dir_context().resolve_path((&path).into(), PathResolver::WksDir)?;
 	Ok(path.is_dir())
@@ -233,20 +370,34 @@ fn path_is_dir(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 
 /// ## Lua Documentation
 ///
-/// Returns the parent directory of the specified path, or nil if there is no parent.
+/// Returns the parent directory path of the specified path.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.path.parent(path: string): string | nil
 /// ```
 ///
+/// Gets the parent directory component of the given path string.
+///
 /// ### Arguments
 ///
-/// - `path: string`: The path to get the parent directory from.
+/// - `path: string`: The path string.
 ///
 /// ### Returns
 ///
-/// Returns the parent directory of the path, or `nil` if the path has no parent.
+/// - `string | nil`: Returns the parent directory path as a string. Returns `nil` if the path has no parent (e.g., ".", "/", "C:/").
+///
+/// ### Example
+///
+/// ```lua
+/// print(aip.path.parent("some/path/file.txt")) -- Output: "some/path"
+/// print(aip.path.parent("/root/file"))         -- Output: "/root"
+/// print(aip.path.parent("."))                  -- Output: nil
+/// ```
+///
+/// ### Error
+///
+/// This function does not typically error.
 fn path_parent(path: String) -> mlua::Result<Option<String>> {
 	match Path::new(&path).parent() {
 		Some(parent) => match parent.to_str() {
@@ -266,24 +417,40 @@ fn path_parent(path: String) -> mlua::Result<Option<String>> {
 /// aip.path.join(paths: string | table): string | nil
 /// ```
 ///
+/// Joins one or more path components into a single path string. This function does *not* perform OS-specific normalization of separators (e.g., always uses `/` or `\` as provided) or resolve `.` or `..` components. This is the default behavior for `aip.path.join`.
+///
 /// ### Arguments
 ///
-/// - `paths: string | table`: A string or a table of strings representing the paths to join.
+/// - `paths: string | table`: Can be:
+///   - A series of string arguments representing path components.
+///   - A Lua table (list) of strings representing path components.
 ///
 /// ### Example
 ///
 /// ```lua
-/// -- Table example:
-/// local paths = {"folder", "subfolder", "file.txt"}
-/// local full_path = aip.path.join(paths)
+/// -- Using multiple arguments:
+/// local full_path1 = aip.path.join("folder\\", "subfolder/", "file.txt")
+/// print(full_path1) -- Output: "folder\\/subfolder/file.txt" (example, depends on simple-fs behavior)
 ///
-/// -- Arg example:
-/// local full_path = aip.path.join("folder", "subfolder", "file.txt")
+/// -- Using a table (list):
+/// local paths_list = {"data", "raw", "input.csv"}
+/// local full_path2 = aip.path.join(paths_list)
+/// print(full_path2) -- Output: "data/raw/input.csv" (example, depends on simple-fs behavior)
 /// ```
 ///
 /// ### Returns
 ///
-/// Returns the joined path as a string, or `nil` if no paths are provided.
+/// - `string | nil`: Returns the joined path as a string. Returns `nil` if no path components are provided.
+///
+/// ### Error
+///
+/// Returns an error if arguments are not strings or a table of strings.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub fn path_join_non_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Value> {
 	let mut path_buf = PathBuf::new();
 	if paths.is_empty() {
@@ -315,13 +482,40 @@ pub fn path_join_non_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::R
 /// aip.path.join_os_normalized(paths: string | table): string | nil
 /// ```
 ///
+/// Joins one or more path components into a single path string, using the operating system's preferred path separator (`/` on Unix-like systems, `\` on Windows) and handling leading/trailing separators on components. Does *not* resolve `.` or `..` components.
+///
 /// ### Arguments
 ///
-/// - `paths: string | table`: A string or a table of strings representing the paths to join.
+/// - `paths: string | table`: Can be:
+///   - A series of string arguments representing path components.
+///   - A Lua table (list) of strings representing path components.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Using multiple arguments (Unix-like OS):
+/// local full_path1 = aip.path.join_os_normalized("folder\\", "subfolder/", "file.txt")
+/// print(full_path1) -- Output: "folder/subfolder/file.txt"
+///
+/// -- Using a table (list) (Windows OS):
+/// local paths_list = {"C:/Users", "Admin", "Documents/file.txt"}
+/// local full_path2 = aip.path.join_os_normalized(paths_list)
+/// print(full_path2) -- Output: "C:\Users\Admin\Documents\file.txt"
+/// ```
 ///
 /// ### Returns
 ///
-/// Returns the joined path as a string with OS normalization, or `nil` if no paths are provided.
+/// - `string | nil`: Returns the joined path as a string, normalized for the operating system. Returns `nil` if no path components are provided.
+///
+/// ### Error
+///
+/// Returns an error if arguments are not strings or a table of strings.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub fn path_join_os_normalized(lua: &Lua, paths: Variadic<Value>) -> mlua::Result<Value> {
 	let mut comps = Vec::new();
 	if paths.is_empty() {

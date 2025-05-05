@@ -23,7 +23,7 @@
 //! - `aip.text.replace_markers(content: string, new_sections: array): string`
 //! - `aip.text.ensure(content: string, opt: table): string`
 //! - `aip.text.ensure_single_ending_newline(content: string): string`
-//! - `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): table, string | nil`
+//! - `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (table, string | nil)`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -157,6 +157,8 @@ fn ensure_single_ending_newline(_lua: &Lua, content: String) -> mlua::Result<Str
 /// aip.text.replace_markers(content: string, new_sections: array): string
 /// ```
 ///
+/// Assumes the markers are `<<START>>` and `<<END>>`.
+///
 /// ### Arguments
 ///
 /// - `content: string`: The content containing markers to replace.
@@ -234,6 +236,10 @@ fn truncate(_lua: &Lua, (content, max_len, ellipsis): (String, usize, Option<Str
 /// ### Returns
 ///
 /// A tuple containing the first part and the second part (or nil if no match).
+///
+/// ```ts
+/// [string, string | nil]
+/// ```
 fn split_first(_lua: &Lua, (content, sep): (LuaString, LuaString)) -> mlua::Result<MultiValue> {
 	// Convert LuaStrings to Rust strings
 	let content_str = content.to_str()?;
@@ -550,8 +556,12 @@ fn escape_decode(_lua: &Lua, content: String) -> mlua::Result<String> {
 /// ### Returns
 ///
 /// A tuple containing:
-///   - `blocks: table`: A table containing the extracted line blocks.
+///   - `blocks: table`: A Lua table (array-like) where each element is a string representing a line block.
 ///   - `extruded: string | nil`: The remaining content after extracting the blocks, if `extrude` is set to `"content"`. Otherwise, `nil`.
+///
+/// ```ts
+/// [string[], string | nil]
+/// ```
 fn extract_line_blocks(_lua: &Lua, (content, options): (String, Table)) -> mlua::Result<MultiValue> {
 	let starts_with: Option<String> = options.get("starts_with")?;
 	let Some(starts_with) = starts_with else {

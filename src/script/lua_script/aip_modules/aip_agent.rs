@@ -1,10 +1,13 @@
 //! Defines the `aip_agent` module, used in the lua engine.
 //!
+//! This module provides functionalities to execute other agents from within the current Lua script,
+//! allowing for complex workflows and modular agent design.
+//!
 //! ---
 //!
 //! ## Lua documentation
 //!
-//! The `aip_agent` module exposes functions to run other agents from within a Lua script.
+//! The `aip.agent` module exposes functions to run other agents from within a Lua script.
 //!
 //! ### Functions
 //!
@@ -41,12 +44,19 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 /// aip.agent.run(agent_name: string, options?: table): any
 /// ```
 ///
+/// Executes the agent specified by `agent_name`. The function waits for the called agent
+/// to complete and returns its result. This allows for chaining agents together.
+///
 /// ### Arguments
 ///
-/// - `agent_name: string`: The name of the agent to run.
+/// - `agent_name: string`: The name of the agent to run. This can be a relative path
+///   (e.g., `"../my-other-agent.aip"`) or a fully qualified pack reference
+///   (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
+///   from the directory of the calling agent.
 /// - `options?: table`: An optional table containing input data and agent options.
 ///   - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
-///   - `options?: table`: Agent-specific options.
+///   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
+///     execution environment and can override settings defined in the called agent's `.aip` file.
 ///
 /// #### Input Examples:
 ///
@@ -57,7 +67,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 /// -- Run an agent with multiple string inputs
 /// local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
 ///
-/// -- Run an agent with structured inputs
+/// -- Run an agent with structured inputs (e.g., file records)
 /// local response = aip.agent.run("agent-name", {
 ///   inputs = {
 ///     { path = "file1.txt", content = "..." },
@@ -70,12 +80,32 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// The result of the agent execution. The type of the returned value depends on the agent's output:
 ///
-/// - If the agent produces an AI response, it returns the AI response object.
-/// - If the agent has an output script, it returns the output from that script.
+/// - If the agent produces an AI response without a specific output script, it returns a table representing the `AiResponse` object.
+/// - If the agent has an output script, it returns the value returned by that output script.
+///
+/// ```ts
+/// // Example structure of a returned AiResponse object (if no output script)
+/// {
+///   action: string, // e.g., "PrintToConsole", "WriteFiles"
+///   outputs: any,   // Depends on the action/output
+///   options: table  // Options used during the run
+///   // ... other properties from AiResponse
+/// }
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the agent fails to run or if there are issues with the input parameters.
+/// Returns an error if:
+/// - The `agent_name` is invalid or the agent file cannot be located/loaded.
+/// - The options table contains invalid parameters.
+/// - The execution of the called agent fails.
+/// - An internal communication error occurs while waiting for the agent's result.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub fn aip_agent_run(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -84,8 +114,7 @@ pub fn aip_agent_run(
 ) -> mlua::Result<Value> {
 	let agent_dir = get_agent_dir_from_lua(lua);
 
-	// -- parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
-	//TODO: Needs to give a resposne_oneshot below
+	// -- Parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
 	let (tx, rx) = oneshot::<Result<RunAgentResponse>>();
 	let run_agent_params = match run_options {
 		Some(run_options) => {
@@ -95,12 +124,13 @@ pub fn aip_agent_run(
 	};
 
 	let exec_sender = runtime.executor_sender();
-	// Important to spawn off the send to make sure we do not have deadlock since we are in a sync.
+	// Important to spawn off the send to make sure we do not have deadlock since we are in a sync context.
 	tokio::task::block_in_place(|| {
 		let rt = tokio::runtime::Handle::try_current();
 		match rt {
 			Ok(rt) => rt.block_on(async {
-				exec_sender.send(run_agent_params.into()).await;
+				// Non-blocking send to the executor task
+				let _ = exec_sender.send(run_agent_params.into()).await;
 			}),
 
 			// NOTE: Here per design, we do not return error or break, as it is just for logging
@@ -108,9 +138,10 @@ pub fn aip_agent_run(
 		}
 	});
 
+	// -- Wait for the result
 	let run_agent_response = rx.recv()?;
 
-	// Process the result
+	// -- Process the result
 	let run_agent_response = run_agent_response?;
 	let run_command_response = run_agent_response.into_lua(lua)?;
 
@@ -119,11 +150,14 @@ pub fn aip_agent_run(
 
 // region:    --- Support
 
+/// Helper function to get the calling agent's directory from the Lua CTX global.
 fn get_agent_dir_from_lua(lua: &Lua) -> Option<SPath> {
-	let ctx = lua.globals().x_get_value("CTX")?;
-	let agent = ctx.x_get_string("AGENT_FILE_DIR")?;
-	Some(agent.into())
+	lua.globals()
+		.x_get_value("CTX")?
+		.x_get_string("AGENT_FILE_DIR")
+		.map(|s| s.into())
 }
+
 // endregion: --- Support
 
 // region:    --- Tests
@@ -138,7 +172,7 @@ mod tests {
 	use value_ext::JsonValueExt;
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_agent_run_simple() -> Result<()> {
+	async fn test_script_lua_script_aip_modules_aip_agent_run_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let script = r#"
             local result = aip.agent.run("agent-script/agent-hello-world")
@@ -159,7 +193,7 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_agent_run_relative() -> Result<()> {
+	async fn test_script_lua_script_aip_modules_aip_agent_run_relative() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let agent_file = runtime
@@ -180,7 +214,7 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_agent_run_with_input() -> Result<()> {
+	async fn test_script_lua_script_aip_modules_aip_agent_run_with_input() -> Result<()> {
 		// -- Setup & Fixtures
 		// Note: the agent is relative to sandbox-01/ because the run_reflective_agent mock agent is at the base
 		let script = r#"
@@ -202,10 +236,10 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_agent_run_with_options() -> Result<()> {
+	async fn test_script_lua_script_aip_modules_aip_agent_run_with_options() -> Result<()> {
 		// -- Setup & Fixtures
 		let script = r#"
-            local result = aip.agent.run("agent-script/agent-hello", 
+            local result = aip.agent.run("agent-script/agent-hello",
                { inputs =  {"John"},
                  options = {model = "super-fast"}
                }

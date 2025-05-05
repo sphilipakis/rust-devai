@@ -56,6 +56,12 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// ### Error
 ///
 /// Returns an error if the HTML content fails to be pruned.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 fn prune_to_content_lua(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 	slim(html_content).map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
 }

@@ -35,42 +35,58 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// aip.cmd.exec(cmd_name: string, args?: string | list): CmdResponse
 /// ```
 ///
-/// The command will be executed using the system shell. Arguments can be provided as a single string
+/// Executes the specified command using the system shell. Arguments can be provided as a single string
 /// or a table of strings.
 ///
-/// Note: To maximize compatiblity on windows, the command will be wrapped with `cmd /C cmd_name args..`
+/// On Windows, the command will be wrapped with `cmd /C cmd_name args..` to maximize compatibility.
+///
+/// ### Arguments
+///
+/// - `cmd_name: string` - The name or path of the command to execute.
+/// - `args?: string | list<string>` (optional) - Arguments to pass to the command. Can be a single string
+///   (which might be parsed by the shell) or a Lua list of strings.
+///
+/// ### Return (CmdResponse)
+///
+/// Returns a table representing the command's output and exit code if the command process itself
+/// starts successfully (even if it returns a non-zero exit code from the command).
+///
+/// ```ts
+/// {
+///   stdout: string,  // Standard output captured from the command
+///   stderr: string,  // Standard error captured from the command
+///   exit:   number   // Exit code returned by the command (0 usually indicates success)
+/// }
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the command process cannot be started (e.g., command not found, permissions issue).
+/// Errors from the command itself (non-zero exit code) are captured in the returned `CmdResponse` but
+/// can also be raised as Lua errors if the agent's error handling is configured that way.
+///
+/// ```ts
+/// {
+///   error: string, // Error message from command execution failure
+///   // Fields below might be available depending on the failure point
+///   stdout?: string,
+///   stderr?: string,
+///   exit?: number,
+/// }
+/// ```
 ///
 /// ### Example
 ///
 /// ```lua
 /// -- Single string argument
 /// local result = aip.cmd.exec("echo", "hello world")
+/// print("stdout:", result.stdout)
+/// print("exit:", result.exit)
 ///
 /// -- Table of arguments
 /// local result = aip.cmd.exec("ls", {"-l", "-a"})
-/// ```
-///
-/// ### Return (CmdResponse)
-///
-/// Returns when the command executes successfully (exit code 0).
-///
-/// ```ts
-/// {
-///   stdout: string,  // Standard output from the command
-///   stderr: string,  // Standard error from the command
-///   exit:   number   // Exit code (0 for success)
-/// }
-/// ```
-///
-/// ### Error
-///
-/// ```ts
-/// {
-///   stdout: string | nil,  // Standard output if available
-///   stderr: string | nil,  // Standard error if available
-///   exit:   number | nil,  // Exit code if available
-///   error : string         // Error message from command execution
-/// }
+/// print("stdout:", result.stdout)
+/// print("exit:", result.exit)
 /// ```
 fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Result<Value> {
 	let args = args.map(|args| to_vec_of_strings(args, "command args")).transpose()?;
@@ -88,25 +104,10 @@ fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Resul
 			res.set("stderr", stderr.as_str())?;
 			res.set("exit", exit_code)?;
 
-			if exit_code == 0 {
-				Ok(Value::Table(res))
-			} else {
-				res.set("error", format!("Command exited with non-zero status: {}", exit_code))?;
-				let cmd = command.get_program().to_str().unwrap_or_default();
-				let args = command
-					.get_args()
-					.map(|a| a.to_str().unwrap_or_default())
-					.collect::<Vec<&str>>();
-				let args = args.join(" ");
-				Err(crate::Error::custom(format!(
-					"\
-Fail to execute: {cmd} {args}
-stdout:\n{stdout}\n
-stderr:\n{stderr}\n
-exit code: {exit_code}\n"
-				))
-				.into())
-			}
+			// NOTE: We return the table even on non-zero exit codes as this is the
+			//       expected behavior of the Lua API. The caller can check the `exit` code.
+			//       If the process itself failed to start, that's a different error case.
+			Ok(Value::Table(res))
 		}
 		Err(err) => {
 			let cmd = command.get_program().to_str().unwrap_or_default();
@@ -127,7 +128,7 @@ Cause:\n{err}"
 
 // region:    --- Support
 
-/// Create a command, and make it a `cmd /C cmd_name args..` for windows
+/// Create a command, and make it a `cmd /C cmd_name args..` for windows compatibility.
 fn cross_command(cmd_name: &str, args: Option<Vec<String>>) -> Result<Command> {
 	let command = if cfg!(windows) {
 		let full_cmd = if let Some(args) = args {
@@ -171,6 +172,8 @@ mod tests {
 		let script = r#"
 			return aip.cmd.exec("echo", "hello world")
 		"#;
+
+		// -- Exec
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
@@ -188,6 +191,8 @@ mod tests {
 		let script = r#"
 			return aip.cmd.exec("echo", {"hello", "world"})
 		"#;
+
+		// -- Exec
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
@@ -204,17 +209,21 @@ mod tests {
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"
 			local ok, err = pcall(function()
-				return aip.cmd.exec("nonexistentcommand")
+				aip.cmd.exec("nonexistentcommand")
 			end)
-			return err -- to trigger the error on the rust side
+			return err -- Return the error object to Rust
 		"#;
+
+		// -- Exec & Check
+		// We expect eval_lua to return a Lua error in this case
 		let Err(err) = eval_lua(&lua, script) else {
 			return Err("Should have returned an error".into());
 		};
 
 		// -- Check
-		let err = err.to_string();
-		assert_contains(&err, "nonexistentcommand");
+		let err_str = err.to_string();
+		assert_contains(&err_str, "Fail to execute: nonexistentcommand");
+		assert_contains(&err_str, "Cause:");
 
 		Ok(())
 	}
@@ -225,13 +234,39 @@ mod tests {
 		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
 		let script = r#"return aip.cmd.exec("nonexistentcommand")"#;
 
+		// -- Exec & Check
+		// We expect eval_lua to return a Lua error in this case
 		let Err(err) = eval_lua(&lua, script) else {
 			return Err("Should have returned an error".into());
 		};
 
 		// -- Check
-		let err = err.to_string();
-		assert_contains(&err, "nonexistentcommand");
+		let err_str = err.to_string();
+		assert_contains(&err_str, "Fail to execute: nonexistentcommand");
+		assert_contains(&err_str, "Cause:");
+
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_cmd_exec_non_zero_exit() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		// Command that typically exits with non-zero status (e.g., grep non-existent file)
+		// Using `false` is more portable than `grep non-existent-file`
+		let script = r#"
+			return aip.cmd.exec("false")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		// The Lua function returns the response table even on non-zero exit
+		assert_eq!(res.x_get_str("stdout")?, "");
+		assert_eq!(res.x_get_str("stderr")?, "");
+		assert_ne!(res.x_get_i64("exit")?, 0); // Check that exit code is non-zero
 
 		Ok(())
 	}

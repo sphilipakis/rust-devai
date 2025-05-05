@@ -3,15 +3,24 @@
 //! ---
 //!
 //! ## Lua documentation
-//! The `json` module exposes functions to parse and stringify JSON content.
+//!
+//! The `aip.json` module exposes functions to parse and stringify JSON content.
 //!
 //! ### Functions
 //!
 //! - `aip.json.parse(content: string) -> table`
+//!   Parses a JSON string into a Lua table.
 //! - `aip.json.parse_ndjson(content: string) -> table[]`
+//!   Parses a newline-delimited JSON (NDJSON) string into a list of Lua tables.
 //! - `aip.json.stringify(content: table) -> string`
+//!   Stringifies a Lua table into a compact, single-line JSON string.
 //! - `aip.json.stringify_pretty(content: table) -> string`
+//!   Stringifies a Lua table into a JSON string with pretty formatting (2-space indentation).
 //! - `aip.json.stringify_to_line(content: table) -> string` (deprecated alias for `stringify`)
+//!   Deprecated: Use `aip.json.stringify` instead.
+//!
+//! ---
+//!
 
 use crate::runtime::Runtime;
 use crate::script::lua_value_to_serde_value;
@@ -43,7 +52,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 }
 
 /// ## Lua Documentation
-///
+/// ---
 /// Parse a JSON string into a table.
 ///
 /// ```lua
@@ -53,23 +62,33 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// Parse a JSON string into a table that can be used in the Lua script.
 ///
+/// ### Arguments
+///
+/// - `content: string` - The JSON string to parse.
+///
+/// ### Returns
+///
+/// - `table` - A Lua table representing the parsed JSON structure. The structure
+///   of the table depends on the input JSON. JSON objects become Lua tables,
+///   JSON arrays become Lua lists (tables with integer keys), and JSON primitives
+///   become corresponding Lua primitives (string, number, boolean, nil).
+///
 /// ### Example
 ///
 /// ```lua
 /// local json_str = '{"name": "John", "age": 30}'
 /// local obj = aip.json.parse(json_str)
 /// print(obj.name) -- prints "John"
+/// print(obj.age)  -- prints 30
 /// ```
-///
-/// ### Returns
-///
-/// Returns a table representing the parsed JSON.
 ///
 /// ### Error
 ///
+/// Returns an error if the input string is not valid JSON.
+///
 /// ```ts
 /// {
-///   error: string  // Error message from JSON parsing
+///   error: string  // Error message from JSON parsing, e.g., "aip.json.parse failed. ..."
 /// }
 /// ```
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
@@ -80,7 +99,7 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 }
 
 /// ## Lua Documentation
-///
+/// ---
 /// Parse a newline-delimited JSON (NDJSON) string into an array of tables.
 ///
 /// ```lua
@@ -90,6 +109,16 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///
 /// Parses a string containing multiple JSON objects separated by newlines.
 /// Each line should be a valid JSON object. Empty lines are skipped.
+///
+/// ### Arguments
+///
+/// - `content: string` - The NDJSON string to parse.
+///
+/// ### Returns
+///
+/// - `table[]` - A Lua list (table acting as an array) where each element is a table
+///   representing a parsed JSON object from a line. The structure of each element
+///   depends on the JSON object on that line.
 ///
 /// ### Example
 ///
@@ -105,15 +134,13 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// print(list[2].name) -- prints "Jane"
 /// ```
 ///
-/// ### Returns
-///
-/// Returns a table (acting as an array) where each element is a table representing a parsed JSON object from a line.
-///
 /// ### Error
+///
+/// Returns an error if any line contains invalid JSON.
 ///
 /// ```ts
 /// {
-///   error: string  // Error message if any line fails JSON parsing
+///   error: string  // Error message if any line fails JSON parsing, e.g., "aip.json.parse_ndjson failed. ..."
 /// }
 /// ```
 fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
@@ -129,7 +156,7 @@ fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
 }
 
 /// ## Lua Documentation
-///
+/// ---
 /// Stringify a table into a single line JSON string.
 ///
 /// Good for newline json or compact representation.
@@ -140,6 +167,15 @@ fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// ```
 ///
 /// Convert a table into a single line JSON string.
+///
+/// ### Arguments
+///
+/// - `content: table` - The Lua table to stringify.
+///
+/// ### Returns
+///
+/// - `string` - A string containing the JSON representation of the input table,
+///   without any indentation or extra whitespace (except within string values).
 ///
 /// ### Example
 ///
@@ -153,15 +189,13 @@ fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// -- {"name":"John","age":30}
 /// ```
 ///
-/// ### Returns
-///
-/// Returns a single line JSON string.
-///
 /// ### Error
+///
+/// Returns an error if the input Lua value cannot be serialized into JSON.
 ///
 /// ```ts
 /// {
-///   error: string  // Error message from JSON stringification
+///   error: string  // Error message from JSON stringification, e.g., "aip.json.stringify fail to stringify. ..."
 /// }
 /// ```
 fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
@@ -173,7 +207,7 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 }
 
 /// ## Lua Documentation
-///
+/// ---
 /// Stringify a table into a JSON string with pretty formatting.
 ///
 /// ```lua
@@ -183,6 +217,15 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///
 /// Convert a table into a JSON string with pretty formatting using 2 spaces indentation.
 ///
+/// ### Arguments
+///
+/// - `content: table` - The Lua table to stringify.
+///
+/// ### Returns
+///
+/// - `string` - A string containing the pretty-formatted JSON representation
+///   of the input table, using newlines and 2-space indentation.
+///
 /// ### Example
 ///
 /// ```lua
@@ -191,22 +234,20 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///     age = 30
 /// }
 /// local json_str = aip.json.stringify_pretty(obj)
-/// -- Result will be:
+/// -- Result will be similar to:
 /// -- {
 /// --   "name": "John",
 /// --   "age": 30
 /// -- }
 /// ```
 ///
-/// ### Returns
-///
-/// Returns a formatted JSON string.
-///
 /// ### Error
+///
+/// Returns an error if the input Lua value cannot be serialized into JSON.
 ///
 /// ```ts
 /// {
-///   error: string  // Error message from JSON stringification
+///   error: string  // Error message from JSON stringification, e.g., "aip.json.stringify_pretty fail to stringify. ..."
 /// }
 /// ```
 fn stringify_pretty(_lua: &Lua, content: Value) -> mlua::Result<String> {

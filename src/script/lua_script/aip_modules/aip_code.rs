@@ -1,10 +1,13 @@
-//! Defines the `code` module, used in the lua engine.
+//! Defines the `code` module for the Lua engine.
+//!
+//! This module provides utility functions for processing and formatting code,
+//! particularly for generating commented lines based on language extensions.
 //!
 //! ---
 //!
 //! ## Lua documentation
 //!
-//! The `code` module exposes functions that process code formatting.
+//! The `aip.code` module exposes functions that process code formatting.
 //!
 //! ### Functions
 //!
@@ -30,14 +33,17 @@ pub fn init_module(lua: &Lua, _runtime: &crate::runtime::Runtime) -> Result<Tabl
 /// aip.code.comment_line(lang_ext: string, comment_content: string): string
 /// ```
 ///
+/// Takes a language extension and content string, and returns a formatted comment line
+/// appropriate for that language.
+///
 /// ### Arguments
 ///
-/// - `lang_ext: string`: A string representing the file extension or language identifier (e.g., "rs", "lua", "py").
+/// - `lang_ext: string`: A string representing the file extension or language identifier (e.g., "rs", "lua", "py"). Case-insensitive.
 /// - `comment_content: string`: The content that should be commented.
 ///
 /// ### Returns
 ///
-/// Returns a string representing the commented line without a trailing newline.
+/// - `string`: A string representing the commented line without a trailing newline.
 ///
 /// ```ts
 /// string  // A string representing the commented line without a trailing newline.
@@ -45,8 +51,12 @@ pub fn init_module(lua: &Lua, _runtime: &crate::runtime::Runtime) -> Result<Tabl
 ///
 /// ### Error
 ///
+/// Returns an error if any error occurs during the Lua-Rust conversion or string formatting.
+///
 /// ```ts
-/// string // Error message if any error occurs during string formatting.
+/// {
+///   error: string // Error message
+/// }
 /// ```
 fn comment_line(_lua: &Lua, (lang_ext, comment_content): (String, String)) -> mlua::Result<String> {
 	// Normalize the language extension by trimming and converting to lowercase.
@@ -73,6 +83,7 @@ mod tests {
 	async fn test_code_comment_line_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(super::init_module, "code")?;
+
 		// Define test cases as tuples: (language extension, comment content, expected result)
 		let test_cases = [
 			("rs", "Rust comment", "// Rust comment"),
@@ -83,6 +94,8 @@ mod tests {
 			("pcss", "PCSS comment", "/* PCSS comment */"),
 			("py", "Python comment", "# Python comment"),
 			("js", "JavaScript comment", "// JavaScript comment"),
+			// Test case with leading/trailing whitespace and different casing
+			("  Rs ", "  Another Rust comment  ", "//   Another Rust comment  "),
 		];
 
 		// -- Exec & Check

@@ -2,9 +2,9 @@
 //!
 //! ---
 //!
-//! ## Lua Documentation
+//! ## Lua documentation
 //!
-//! The `git` module exposes functions for performing Git operations.
+//! The `aip.git` module exposes functions for performing Git operations.
 //!
 //! ### Functions
 //!

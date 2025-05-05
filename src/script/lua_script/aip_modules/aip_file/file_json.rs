@@ -22,7 +22,7 @@ use simple_fs::ensure_file_dir;
 
 /// ## Lua Documentation
 ///
-/// Load a file, parse its content as JSON, and return the Lua value.
+/// Load a file, parse its content as JSON, and return the corresponding Lua value.
 ///
 /// ```lua
 /// -- API Signature
@@ -30,7 +30,9 @@ use simple_fs::ensure_file_dir;
 /// ```
 ///
 /// Loads the content of the file specified by `path`, parses it as JSON,
-/// and converts the result into a Lua value (typically a table).
+/// and converts the result into a Lua value (typically a table, but can be
+/// a string, number, boolean, or nil depending on the JSON content).
+/// The path is resolved relative to the workspace root.
 ///
 /// ### Arguments
 ///
@@ -38,7 +40,7 @@ use simple_fs::ensure_file_dir;
 ///
 /// ### Returns
 ///
-/// Returns a Lua value (table, string, number, boolean, nil) representing the parsed JSON content.
+/// - `table | value`: A Lua value representing the parsed JSON content.
 ///
 /// ### Example
 ///
@@ -47,15 +49,22 @@ use simple_fs::ensure_file_dir;
 /// local config = aip.file.load_json("config.json")
 /// print(config.port)    -- Output: 8080
 /// print(config.enabled) -- Output: true
+///
+/// -- Assuming 'data.json' contains ["item1", "item2"]
+/// local data = aip.file.load_json("data.json")
+/// print(data[1]) -- Output: item1
 /// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file cannot be found, read, or if the content is not valid JSON.
+/// Returns an error if:
+/// - The file cannot be found or read.
+/// - The file content is not valid JSON.
+/// - The JSON value cannot be converted to a Lua value.
 ///
 /// ```ts
 /// {
-///   error: string  // Error message (e.g., file not found, JSON parse error)
+///   error: string // Error message (e.g., file not found, JSON parse error)
 /// }
 /// ```
 pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
@@ -77,15 +86,17 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 
 /// ## Lua Documentation
 ///
-/// Load a file containing newline-delimited JSON (NDJSON), parse each line, and return a Lua array (table) of the results.
+/// Load a file containing newline-delimited JSON (NDJSON), parse each line, and return a Lua list (table) of the results.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.file.load_ndjson(path: string): list
 /// ```
 ///
-/// Loads the content of the file specified by `path`, assuming each line is a valid JSON object.
-/// Parses each line and returns a Lua array containing the parsed Lua values. Empty lines are skipped.
+/// Loads the content of the file specified by `path`, assuming each line is a valid JSON object or value.
+/// Parses each non-empty line and returns a Lua list (table indexed from 1) containing the parsed Lua values.
+/// Empty lines or lines containing only whitespace are skipped.
+/// The path is resolved relative to the workspace root.
 ///
 /// ### Arguments
 ///
@@ -93,7 +104,7 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 ///
 /// ### Returns
 ///
-/// Returns a Lua array (table) where each element corresponds to a successfully parsed JSON line from the file.
+/// - `list: table`: A Lua list (table) where each element corresponds to a successfully parsed JSON line from the file.
 ///
 /// ### Example
 ///
@@ -101,20 +112,26 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 /// -- Assuming 'logs.ndjson' contains:
 /// -- {"level": "info", "message": "Service started"}
 /// -- {"level": "warn", "message": "Disk space low"}
+/// -- <empty line>
+/// -- "Simple string value"
 ///
 /// local logs = aip.file.load_ndjson("logs.ndjson")
-/// print(#logs) -- Output: 2
+/// print(#logs) -- Output: 3
 /// print(logs[1].message) -- Output: Service started
 /// print(logs[2].level)   -- Output: warn
+/// print(logs[3])         -- Output: Simple string value
 /// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file cannot be found or read, or if any non-empty line contains invalid JSON.
+/// Returns an error if:
+/// - The file cannot be found or read.
+/// - Any non-empty line contains invalid JSON.
+/// - The parsed JSON values cannot be converted to Lua values.
 ///
 /// ```ts
 /// {
-///   error: string  // Error message (e.g., file not found, JSON parse error on line N)
+///   error: string // Error message (e.g., file not found, JSON parse error on line N)
 /// }
 /// ```
 pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
@@ -137,7 +154,7 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 
 /// ## Lua Documentation
 ///
-/// Convert Lua data to a JSON string and append it as a new line to a file.
+/// Convert a Lua value to a JSON string and append it as a new line to a file.
 ///
 /// ```lua
 /// -- API Signature
@@ -146,43 +163,47 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 ///
 /// Converts the provided Lua `data` (table, string, number, boolean, nil) into a JSON string
 /// and appends this string followed by a newline character (`\n`) to the file specified by `path`.
-/// If the file does not exist, it will be created. If the directory does not exist, it will be created.
+/// The path is resolved relative to the workspace root.
+/// If the file does not exist, it will be created. If the directory structure does not exist, it will be created.
 ///
-/// ### NOTES
+/// ### Notes
 ///
-/// - When a lua value is set to nil `{a = 1, some = nil}` it won't get serialized, so `{a:1}\n`
+/// - Lua `nil` values within tables might be omitted during JSON serialization, e.g., `{a = 1, b = nil}` becomes `{"a":1}`.
 ///
 /// ### Arguments
 ///
 /// - `path: string`: The path to the file where the JSON line should be appended, relative to the workspace root.
-/// - `data: value`: The Lua data to be converted to JSON and appended.
+/// - `data: value`: The Lua data to be converted to JSON and appended. Can be any JSON-serializable Lua type.
 ///
 /// ### Returns
 ///
-/// Does not return anything.
+/// Does not return anything upon success.
 ///
 /// ### Example
 ///
 /// ```lua
 /// aip.file.append_json_line("output.ndjson", {user = "test", score = 100})
-/// aip.file.append_json_line("output.ndjson", {user = "another", score = 95, active = true})
+/// aip.file.append_json_line("output.ndjson", {user = "another", score = 95, active = true, extra = nil})
+/// aip.file.append_json_line("output.ndjson", "Just a string line")
 ///
-/// --[[ content of output.ndjson:
+/// --[[ content of output.ndjson after execution:
 /// {"score":100,"user":"test"}
 /// {"active":true,"score":95,"user":"another"}
+/// "Just a string line"
 /// ]]
 /// ```
 ///
 /// ### Error
 ///
 /// Returns an error if:
-/// - The Lua data cannot be converted to `serde_json::Value`.
-/// - The `serde_json::Value` cannot be serialized to a JSON string.
-/// - The file cannot be opened or written to.
+/// - The Lua `data` cannot be converted to an internal JSON representation.
+/// - The internal representation cannot be serialized to a JSON string.
+/// - The directory structure cannot be created.
+/// - The file cannot be opened for appending or written to (e.g., due to permissions or I/O errors).
 ///
 /// ```ts
 /// {
-///   error: string  // Error message (e.g., conversion error, serialization error, file I/O error)
+///   error: string // Error message (e.g., conversion error, serialization error, file I/O error)
 /// }
 /// ```
 pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
@@ -220,24 +241,25 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 /// aip.file.append_json_lines(path: string, data: list)
 /// ```
 ///
-/// Iterates through the provided Lua `data` list (a table used as an array). For each element,
-/// converts it into a JSON string and appends this string followed by a newline character (`\n`)
-/// to the file specified by `path`. It uses buffering for efficiency.
-/// If the file does not exist, it will be created. If the directory does not exist, it will be created.
+/// Iterates through the provided Lua `data` list (a table intended to be used as an array with sequential integer keys starting from 1).
+/// For each element in the list, converts it into a JSON string and appends this string followed by a newline character (`\n`)
+/// to the file specified by `path`. The path is resolved relative to the workspace root.
+/// This operation uses buffering internally for potentially better performance when appending many lines compared to calling `append_json_line` repeatedly.
+/// If the file does not exist, it will be created. If the directory structure does not exist, it will be created.
 ///
-/// ### NOTES
+/// ### Notes
 ///
-/// - The `data` argument MUST be a Lua table used as a list (array-like with sequential integer keys starting from 1).
-/// - Nil values within the list elements might not be serialized, e.g., `{a = 1, b = nil}` becomes `{"a":1}`.
+/// - The `data` argument MUST be a Lua table used as a list (array-like with sequential integer keys starting from 1). Behavior with non-list tables is undefined.
+/// - Lua `nil` values within table elements might be omitted during JSON serialization, e.g., `{a = 1, b = nil}` becomes `{"a":1}`.
 ///
 /// ### Arguments
 ///
 /// - `path: string`: The path to the file where the JSON lines should be appended, relative to the workspace root.
-/// - `data: list`: The Lua list (table) containing values to be converted to JSON and appended.
+/// - `data: list`: The Lua list (table) containing values to be converted to JSON and appended. Each element can be any JSON-serializable Lua type.
 ///
 /// ### Returns
 ///
-/// Does not return anything.
+/// Does not return anything upon success.
 ///
 /// ### Example
 ///
@@ -245,28 +267,31 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 /// local users = {
 ///   {user = "alice", score = 88},
 ///   {user = "bob", score = 92, active = false},
-///   {user = "charlie", score = 75}
+///   {user = "charlie", score = 75, details = nil},
+///   "Metadata comment" -- Example of non-table element
 /// }
 /// aip.file.append_json_lines("user_scores.ndjson", users)
 ///
-/// --[[ content of user_scores.ndjson:
+/// --[[ content of user_scores.ndjson after execution:
 /// {"score":88,"user":"alice"}
 /// {"active":false,"score":92,"user":"bob"}
 /// {"score":75,"user":"charlie"}
+/// "Metadata comment"
 /// ]]
 /// ```
 ///
 /// ### Error
 ///
 /// Returns an error if:
-/// - The `data` argument is not a Lua table.
-/// - Any element in the list cannot be converted to `serde_json::Value`.
-/// - Any `serde_json::Value` cannot be serialized to a JSON string.
-/// - The file cannot be opened or written to.
+/// - The `data` argument is not a Lua table or cannot be interpreted as a list.
+/// - Any element in the list cannot be converted to an internal JSON representation.
+/// - Any internal representation cannot be serialized to a JSON string.
+/// - The directory structure cannot be created.
+/// - The file cannot be opened for appending or written to (e.g., due to permissions or I/O errors).
 ///
 /// ```ts
 /// {
-///   error: string  // Error message (e.g., data not a table, conversion error, serialization error, file I/O error)
+///   error: string // Error message (e.g., data not a table/list, conversion error, serialization error, file I/O error)
 /// }
 /// ```
 pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {

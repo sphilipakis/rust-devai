@@ -1,10 +1,10 @@
-//! Defines the `hbs` module, used in the lua engine.
+//! Defines the `aip.hbs` module, used in the lua engine.
 //!
 //! ---
 //!
 //! ## Lua documentation
 //!
-//! The `hbs` module exposes functions to render Handlebars templates with data.
+//! The `aip.hbs` module exposes functions to render Handlebars templates with data.
 //!
 //! ### Functions
 //!
@@ -38,7 +38,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// ### Arguments
 ///
 /// - `content: string`: The Handlebars template as a string.
-/// - `data: any`: The data as a Lua value (table, number, string, etc.).
+/// - `data: any`: The data as a Lua value (table, number, string, boolean, nil). Note that function types or userdata are not supported.
 ///
 /// ### Returns
 ///
@@ -48,7 +48,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- Simple example
-/// local rendered_content = aip.hbs.render("Hello, {{name}}!", { name = "World" })
+/// local rendered_content = aip.hbs.render("Hello, {{name}}!", {name = "World"})
 /// print(rendered_content) -- Output: Hello, World!
 ///
 /// -- Example with a list
@@ -148,9 +148,9 @@ local data = {
 }
 
 local template = [[
-Hello {{name}}, 
+Hello {{name}},
 
-Your tasks today: 
+Your tasks today:
 
 {{#each todos}}
 - {{this}}

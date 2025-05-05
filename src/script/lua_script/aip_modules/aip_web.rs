@@ -53,11 +53,9 @@ pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 ///   success: boolean, // Indicates if the request was successful (status code 2xx)
 ///   status: number,   // The HTTP status code of the response
 ///   url: string,      // The URL that was requested
-///   content: string    // The content of the response as a string
+///   content: string | table    // The content of the response. If the response content type is `application/json`, the `content` field will be a Lua table. Otherwise, it will be a string.
 /// }
 /// ```
-///
-/// If the response content type is `application/json`, the `content` field will be a Lua table.
 ///
 /// ### Example
 ///

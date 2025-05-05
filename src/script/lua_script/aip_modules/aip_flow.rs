@@ -9,7 +9,8 @@
 //!
 //! ### Functions
 //!
-//! - `aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions}) -> table`
+//! - `aip.flow.before_all_response(data: BeforeAllData) -> table`
+//! - `aip.flow.data_response(data: DataData) -> table`
 //! - `aip.flow.skip(reason?: string) -> table`
 
 use crate::Result;
@@ -35,31 +36,52 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Customsize the aipack execution flow at the 'Before All' stage.
+/// Customize the aipack execution flow at the 'Before All' stage.
 ///
+/// This function is typically called within the `before_all` block of an agent script
+/// to override the default behavior of passing all initial inputs to the agent.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.flow.before_all_response(data: {inputs:? any[], options?: AgentOptions, before_all?: any}) -> table
+/// aip.flow.before_all_response(data: BeforeAllData) -> table
 /// ```
 ///
 /// ### Arguments
 ///
-/// - inputs     - Must be a list if present
-/// - options    - The partial AgentOptions (.e.g, model, input_concurrency, model_aliases)
-/// - before_all - what could have been simply returned if not needed to override any inputs or options
+/// - `data: table` - A table defining the new inputs and options for the agent execution cycle.
+///   ```ts
+///   type BeforeAllData = {
+///     inputs?: any[],      // Optional. A list of new inputs to use for the agent run cycle. Overrides initial inputs.
+///     options?: AgentOptions // Optional. Partial AgentOptions to override for this run.
+///   } & any // Can also include other arbitrary data fields if needed.
+///   ```
 ///
 /// ### Returns
 ///
-/// Returns a Lua table with the structure. This return value does not need to be used. It's for AIPACK internal execution flow logic.
+/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// This return value does not typically need to be captured or used by the script itself;
+/// it serves as a directive for the AIPACK execution engine.
 ///
 /// ```ts
-/// {
+/// type AipackFlowResponse = {
 ///   _aipack_: {
 ///     kind: "BeforeAllResponse",
-///     data: BeforeAllResponse
+///     data: BeforeAllData // The data table passed as argument
 ///   }
 /// }
+/// ```
+///
+/// ### Example
+///
+/// ```lua
+/// local result = aip.flow.before_all_response({
+///   inputs = {"processed_input_1", "processed_input_2"},
+///   options = {
+///     model = "claude-3-5-sonnet-latest"
+///   },
+///   custom_field = "example" -- Arbitrary data is allowed
+/// })
+/// -- The agent executor will process this result table.
 /// ```
 ///
 /// ### Error
@@ -77,30 +99,52 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 
 /// ## Lua Documentation
 ///
-/// Customsize the aipack execution flow at the 'Data' stage.
+/// Customize the aipack execution flow at the 'Data' stage for a single input.
+///
+/// This function is typically called within the `data` block of an agent script.
+/// It allows overriding the input and/or options for the current input cycle,
+/// or returning additional arbitrary data.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.flow.data_response(data: {input:? any, options?: AgentOptions}) -> table
+/// aip.flow.data_response(data: DataData) -> table
 /// ```
 ///
 /// ### Arguments
 ///
-/// - input      - Can be nil, or any value. If absent, the original input will be passed
-/// - options    - The partial AgentOptions (.e.g, model, input_concurrency, model_aliases)
-/// - data       - what could have been simply returned if not needed to override any inputs or options
+/// - `data: table` - A table defining the new input, options, and/or other data for the current cycle.
+///   ```ts
+///   type DataData = {
+///     input?: any | nil, // Optional. The new input to use for this cycle. If nil, the original input is used.
+///     options?: AgentOptions // Optional. Partial AgentOptions to override for this cycle.
+///   } & any // Can also include other arbitrary data fields (e.g., computed values, flags)
+///   ```
 ///
 /// ### Returns
 ///
-/// Returns a Lua table with the structure. This return value does not need to be used. It's for AIPACK internal execution flow logic.
+/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// This return value does not typically need to be captured or used by the script itself;
+/// it serves as a directive for the AIPACK execution engine.
 ///
 /// ```ts
-/// {
+/// type AipackFlowResponse = {
 ///   _aipack_: {
-///     kind: "BeforeAllResponse",
-///     data: BeforeAllResponse
+///     kind: "DataResponse",
+///     data: DataData // The data table passed as argument
 ///   }
 /// }
+/// ```
+///
+/// ### Example
+///
+/// ```lua
+/// -- Use a transformed input and override the model for this cycle
+/// local result = aip.flow.data_response({
+///   input = transformed_input,
+///   options = { model = "gpt-4o" },
+///   processed = true -- Pass extra data
+/// })
+/// -- The agent executor will process this result table.
 /// ```
 ///
 /// ### Error
@@ -118,7 +162,10 @@ fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 
 /// ## Lua Documentation
 ///
-/// Returns a response indicating a skip action for the input cycle.
+/// Returns a response indicating a skip action for the current input cycle.
+///
+/// This function is typically called within the `data` block of an agent script
+/// to instruct AIPACK to skip processing the current input value and move to the next one.
 ///
 /// ```lua
 /// -- API Signature
@@ -127,21 +174,35 @@ fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 ///
 /// ### Arguments
 ///
-/// - `reason: string (optional)`:  The reason for skipping the input cycle.
+/// - `reason: string (optional)`: An optional string providing the reason for skipping the input cycle.
+///   This reason might be logged or displayed depending on the AIPACK execution context.
 ///
 /// ### Returns
 ///
-/// Returns a Lua table with the structure:
+/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// This return value does not typically need to be captured or used by the script itself;
+/// it serves as a directive for the AIPACK execution engine.
 ///
 /// ```ts
-/// {
+/// type AipackFlowResponse = {
 ///   _aipack_: {
 ///     kind: "Skip",
 ///     data: {
-///       reason: string | nil
+///       reason: string | nil // The optional reason provided
 ///     }
 ///   }
 /// }
+/// ```
+///
+/// ### Example
+///
+/// ```lua
+/// -- Skip processing if the input is nil or empty
+/// if input == nil or input == "" then
+///   return aip.flow.skip("Input is empty")
+/// end
+/// -- Continue processing the input if not skipped
+/// -- ... rest of data block ...
 /// ```
 ///
 /// ### Error

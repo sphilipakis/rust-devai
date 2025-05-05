@@ -36,31 +36,48 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// Given any Lua value, returns a string that recursively represents tables and their structure.
 /// Useful for debugging and logging purposes.
 ///
+/// ### Arguments
+///
+/// - `value`: The Lua value to be dumped. Can be any Lua type (nil, boolean, number, string, table, function, userdata, etc.).
+///
+/// ### Returns
+///
+/// - `string`: A string representation of the Lua value. Table contents are recursively dumped with indentation. Functions, userdata, and threads are represented by placeholder strings.
+///
+/// ```ts
+/// string
+/// ```
+///
 /// ### Example
 ///
 /// ```lua
 /// local tbl = { key = "value", nested = { subkey = 42 } }
 /// print(aip.lua.dump(tbl))
-/// ```
+/// -- Expected output structure (exact indentation/formatting might vary slightly based on internal Lua/dump implementation):
+/// -- {
+/// --   nested = {
+/// --     key1 = "value1",
+/// --     key2 = 42
+/// --   },
+/// --   bool = true,
+/// --   num = 3.21
+/// -- }
 ///
-/// ### Arguments
+/// print(aip.lua.dump("Hello World"))
+/// -- Expected output: "Hello World"
 ///
-/// - `value`: The Lua value to be dumped.
-///
-/// ### Returns
-///
-/// A string representation of the Lua value.
-///
-/// ```ts
-/// string
+/// print(aip.lua.dump(123.45))
+/// -- Expected output: 123.45
 /// ```
 ///
 /// ### Error
 ///
-/// If the conversion fails, an error message is returned.
+/// Returns an error message string if the conversion of a value (like a non-UTF8 string or specific userdata) within the dump process fails.
 ///
 /// ```ts
-/// string
+/// {
+///   error: string // Error message detailing the conversion failure
+/// }
 /// ```
 pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 	fn dump_value(_lua: &Lua, value: Value, indent: usize) -> mlua::Result<String> {
@@ -114,6 +131,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_dump_ok() -> Result<()> {
+		// -- Setup & Fixtures
 		let lua = setup_lua(aip_lua::init_module, "lua")?;
 		let script = r#"
 local tbl = {
@@ -123,8 +141,12 @@ local tbl = {
 }
 return aip.lua.dump(tbl)
 	    "#;
+
+		// -- Exec
 		let res = eval_lua(&lua, script)?;
 		let res = res.as_str().ok_or("res json value should be of type string")?;
+
+		// -- Check
 		assert_contains(res, "bool = true");
 		assert_contains(res, "key1 = \"value1\"");
 		assert_contains(res, "key2 = 42");

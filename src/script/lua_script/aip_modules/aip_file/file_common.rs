@@ -33,26 +33,63 @@ use std::io::Write;
 
 /// ## Lua Documentation
 ///
-/// Load a File Record object with its ontent
+/// Load a File Record object with its content.
 ///
 /// ```lua
-/// local file = aip.file.load("doc/README.md")
-/// -- file.content contains the text content of the file
+/// -- API Signature
+/// aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 /// ```
+///
+/// Loads the file specified by `rel_path` and returns a `FileRecord` object containing
+/// the file's metadata and its content.
 ///
 /// ### Arguments
 ///
-/// - `rel_path: string` - The relative path to the file.
-/// - `options?: {base_dir: string}` - Optional table with `base_dir` key to specify the base directory.
+/// - `rel_path: string` - The path to the file, relative to the `base_dir` or workspace root.
+/// - `options?: table` - An optional table containing:
+///   - `base_dir: string` (optional): The base directory from which `rel_path` is resolved. Defaults to the workspace root. Pack references (e.g., `ns@pack/`) can be used.
 ///
 /// ### Returns
 ///
-/// - [`FileRecord`] - File metadata and `.content`
+/// - `FileRecord: table` - A table representing the file record:
+///   ```ts
+///   {
+///     path : string,             // Relative path used to load the file
+///     name : string,             // File name with extension
+///     stem : string,             // File name without extension
+///     ext  : string,             // File extension
+///     created_epoch_us?: number, // Creation timestamp (microseconds)
+///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     size?: number,             // File size in bytes
+///     content: string            // The text content of the file
+///   }
+///   ```
+///
+/// ### Example
+///
+/// ```lua
+/// local readme = aip.file.load("doc/README.md")
+/// print(readme.path)    -- Output: "doc/README.md"
+/// print(readme.name)    -- Output: "README.md"
+/// print(#readme.content) -- Output: <length of content>
+///
+/// local agent_file = aip.file.load("agent.aip", { base_dir = "ns@pack/" })
+/// print(agent_file.path) -- Output: "agent.aip" (relative to the resolved base_dir)
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file does not exist or cannot be read.
+/// Returns an error if:
+/// - The `base_dir` cannot be resolved (e.g., invalid pack reference).
+/// - The final file path cannot be resolved.
+/// - The file does not exist or cannot be read.
+/// - Metadata cannot be retrieved.
 ///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub(super) fn file_load(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -71,25 +108,52 @@ pub(super) fn file_load(
 
 /// ## Lua Documentation
 ///
-/// Save a File Content into a path
+/// Save string content to a file at the specified path.
 ///
 /// ```lua
-/// aip.file.save("doc/README.md", "Some very cool documentation")
+/// -- API Signature
+/// aip.file.save(rel_path: string, content: string)
 /// ```
+///
+/// Writes the provided `content` string to the file specified by `rel_path`.
+/// The path is resolved relative to the workspace root. If the file exists, it will be overwritten.
+/// If the directory structure does not exist, it will be created.
+///
+/// **Important Security Note:** For security reasons, this function currently restricts saving files
+/// outside the workspace directory (`./`) or the shared base directory (`~/.aipack-base/`).
 ///
 /// ### Arguments
 ///
-/// - `rel_path: string` - The relative path to the file.
-/// - `content: string`  - The content to write to the file.
+/// - `rel_path: string` - The path to the file where the content should be saved, relative to the workspace root.
+/// - `content: string`  - The string content to write to the file.
 ///
 /// ### Returns
 ///
-/// Does not return anything
+/// Does not return anything upon success.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Save documentation to a file in the 'docs' directory
+/// aip.file.save("docs/new_feature.md", "# New Feature\n\nDetails about the feature.")
+///
+/// -- Overwrite an existing file
+/// aip.file.save("config.txt", "new_setting=true")
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file cannot be written, or if trying to save outside of workspace.
+/// Returns an error if:
+/// - The path attempts to write outside the allowed workspace or base directories.
+/// - The directory structure cannot be created.
+/// - The file cannot be written due to permissions or other I/O errors.
+/// - The operation requires a workspace context, but none is found.
 ///
+/// ```ts
+/// {
+///   error: string // Error message (e.g., save file protection, permission denied, ...)
+/// }
+/// ```
 pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path((&rel_path).into(), PathResolver::WksDir)?;
@@ -123,25 +187,49 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 
 /// ## Lua Documentation
 ///
-/// Append content to a file at a specified path
+/// Append string content to a file at the specified path.
 ///
 /// ```lua
-/// aip.file.append("doc/README.md", "Appended content to the file")
+/// -- API Signature
+/// aip.file.append(rel_path: string, content: string)
 /// ```
+///
+/// Appends the provided `content` string to the end of the file specified by `rel_path`.
+/// The path is resolved relative to the workspace root. If the file does not exist, it will be created.
+/// If the directory structure does not exist, it will be created.
 ///
 /// ### Arguments
 ///
-/// - `rel_path: string` - The relative path to the file.
-/// - `content: string`  - The content to append to the file.
+/// - `rel_path: string` - The path to the file where the content should be appended, relative to the workspace root.
+/// - `content: string`  - The string content to append to the file.
 ///
 /// ### Returns
 ///
-/// Does not return anything
+/// Does not return anything upon success.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Append a log entry to a log file
+/// aip.file.append("logs/app.log", "INFO: User logged in.\n")
+///
+/// -- Create a file and append if it doesn't exist
+/// aip.file.append("notes.txt", "- Remember to buy milk.\n")
+/// aip.file.append("notes.txt", "- Finish report.\n")
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file cannot be opened or written to.
+/// Returns an error if:
+/// - The directory structure cannot be created.
+/// - The file cannot be opened for appending (e.g., due to permissions).
+/// - An I/O error occurs during writing.
 ///
+/// ```ts
+/// {
+///   error: string // Error message (e.g., permission denied, I/O error)
+/// }
+/// ```
 pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let path = runtime.dir_context().resolve_path((&rel_path).into(), PathResolver::WksDir)?;
 	ensure_file_dir(&path).map_err(Error::from)?;
@@ -162,27 +250,76 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 
 /// ## Lua Documentation
 ///
-/// Ensure a file exists at the given path, and if not create it with an optional content
-/// (only to be used for file, do not use for directory)
+/// Ensure a file exists at the given path. If it doesn't exist, create it with optional content.
+/// If it exists, optionally overwrite its content if it's currently empty.
 ///
 /// ```lua
-/// aip.file.ensure_exists(path, optional_content, options) -- FileMeta
+/// -- API Signature
+/// aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
 /// ```
+///
+/// Checks if the file at `path` (relative to the workspace root) exists.
+/// - If the file does not exist:
+///   - Creates the necessary directory structure.
+///   - Creates the file.
+///   - Writes the `content` (or an empty string if `content` is nil) to the new file.
+/// - If the file exists:
+///   - Checks if `options.content_when_empty` is true.
+///   - If true, checks if the file is empty (contains only whitespace or is zero-length).
+///   - If the file is empty and `content_when_empty` is true, overwrites the file with `content` (or an empty string if `content` is nil).
+///
+/// This function is intended for files, not directories.
 ///
 /// ### Arguments
 ///
-/// - `path: string` - The relative path to the file.
-/// - `content?: string` - Optional content to write to the file if it does not exist.
-/// - `options?: {content_when_empty: boolean}` - Optional flags to set content only if the file is empty.
+/// - `path: string` - The path to the file, relative to the workspace root.
+/// - `content?: string` (optional) - The content to write to the file if it's created or if it's empty and `content_when_empty` is true. Defaults to an empty string if nil.
+/// - `options?: table` (optional) - A table containing options:
+///   - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file *only if* the file already exists but is empty (contains only whitespace or is zero-length). Defaults to `false`.
 ///
 /// ### Returns
 ///
-/// - [`FileMeta`] (File Metadata without `.content`)
+/// - `FileMeta: table` - Metadata about the file (even if it was just created).
+///   ```ts
+///   {
+///     path : string,             // Relative path used
+///     name : string,             // File name with extension
+///     stem : string,             // File name without extension
+///     ext  : string,             // File extension
+///     created_epoch_us?: number, // Creation timestamp (microseconds)
+///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     size?: number              // File size in bytes
+///   }
+///   ```
+///
+/// ### Example
+///
+/// ```lua
+/// -- Ensure a config file exists, creating it with defaults if needed
+/// local config_content = "-- Default Settings --\nenabled=true"
+/// local file_meta = aip.file.ensure_exists("config/settings.lua", config_content)
+/// print("Ensured file:", file_meta.path)
+///
+/// -- Ensure a log file exists, but don't overwrite if it has content
+/// aip.file.ensure_exists("logs/activity.log")
+///
+/// -- Ensure a placeholder file exists, writing content only if it's empty
+/// local placeholder = "-- TODO: Add content --"
+/// aip.file.ensure_exists("src/module.lua", placeholder, {content_when_empty = true})
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the file cannot be created or written to.
+/// Returns an error if:
+/// - The directory structure cannot be created.
+/// - The file cannot be created or written to (e.g., due to permissions).
+/// - Metadata cannot be retrieved for the file.
 ///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub(super) fn file_ensure_exists(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -214,37 +351,93 @@ pub(super) fn file_ensure_exists(
 
 /// ## Lua Documentation
 ///
-/// List a set of file reference (no content) for a given glob
+/// List file metadata (`FileMeta`) matching glob patterns.
 ///
 /// ```lua
-/// let all_doc_file = aip.file.list("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// -- API Signature
+/// aip.file.list(
+///   include_globs: string | list<string>,
+///   options?: {
+///     base_dir?: string,
+///     absolute?: boolean,
+///     with_meta?: boolean
+///   }
+/// ): list<FileMeta>
 /// ```
+///
+/// Finds files matching the `include_globs` patterns within the specified `base_dir` (or workspace root)
+/// and returns a list of `FileMeta` objects containing information about each file (path, name, timestamps, size, etc.),
+/// but *not* the file content.
 ///
 /// ### Arguments
 ///
-/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
-/// - `options?: {base_dir: string, absolute: boolean, with_meta: boolean}`
-///    - `base_dir` and `absolute` keys.
-///    - `with_meta` (default 'true') if false, will not fetch the file metadata per file `{created_epoch_us, modified_epoch_us, size}``
+/// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
+///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+/// - `options?: table` (optional) - A table containing options:
+///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
+///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
+///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileMeta` objects will be absolute.
+///     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
+///     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
+///   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
+///     (`created_epoch_us`, `modified_epoch_us`, `size`) for each file, potentially improving performance
+///     if only the path information is needed. Defaults to `true`.
 ///
 /// ### Returns
 ///
-/// ```ts
-/// -- An array/table of FileMeta
-/// {
-///   path : string,  -- The path to the file
-///   name : string,  -- The name of the file
-///   stem : string,  -- The stem of the file (name without extension)
-///   ext  : string   -- The extension of the file
-/// }
-/// ```
+/// - `list<FileMeta>: table` - A Lua list (table) where each element is a `FileMeta` table:
+///   ```ts
+///   {
+///     path : string,             // Path (relative to base_dir or absolute)
+///     name : string,             // File name with extension
+///     stem : string,             // File name without extension
+///     ext  : string,             // File extension
+///     created_epoch_us?: number, // Creation timestamp (microseconds, if with_meta=true)
+///     modified_epoch_us?: number,// Modification timestamp (microseconds, if with_meta=true)
+///     size?: number              // File size in bytes (if with_meta=true)
+///   }
+///   ```
+///   The list is empty if no files match the globs.
 ///
-/// To get the content of files, needs iterate and load each
+/// ### Example
+///
+/// ```lua
+/// -- List all Markdown files in the 'docs' directory (relative paths)
+/// local doc_files = aip.file.list("*.md", { base_dir = "docs" })
+/// for _, file in ipairs(doc_files) do
+///   print(file.path) -- e.g., "guide.md", "api.md"
+/// end
+///
+/// -- List all '.aip' files in a specific pack (absolute paths, no detailed meta)
+/// local agent_files = aip.file.list("**/*.aip", {
+///   base_dir = "ns@pack/",
+///   absolute = true,
+///   with_meta = false
+/// })
+/// for _, file in ipairs(agent_files) do
+///   print(file.path) -- e.g., "/path/to/workspace/.aipack/ns/pack/agent1.aip"
+/// end
+///
+/// -- List text and config files from the workspace root
+/// local config_files = aip.file.list({"*.txt", "*.config"})
+/// for _, file in ipairs(config_files) do
+///   print(file.path, file.size) -- e.g., "notes.txt", 1024
+/// end
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the glob pattern is invalid or the files cannot be listed.
+/// Returns an error if:
+/// - `include_globs` is not a string or a list of strings.
+/// - `base_dir` cannot be resolved (e.g., invalid pack reference).
+/// - An error occurs during file system traversal or glob matching.
+/// - Metadata cannot be retrieved (and `with_meta` is true).
 ///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub(super) fn file_list(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -267,26 +460,81 @@ pub(super) fn file_list(
 
 /// ## Lua Documentation
 ///
-/// List a set of file reference (no content) for a given glob and load them
+/// List and load files (`FileRecord`) matching glob patterns.
 ///
 /// ```lua
-/// let all_doc_file = aip.file.list_load("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// -- API Signature
+/// aip.file.list_load(
+///   include_globs: string | list<string>,
+///   options?: {
+///     base_dir?: string,
+///     absolute?: boolean
+///   }
+/// ): list<FileRecord>
 /// ```
+///
+/// Finds files matching the `include_globs` patterns within the specified `base_dir` (or workspace root),
+/// loads the content of each matching file, and returns a list of `FileRecord` objects.
+/// Each `FileRecord` contains both metadata and the file content.
 ///
 /// ### Arguments
 ///
-/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
-/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
-///   - Note: Here, meta will be loaded (so, no `with_meta` for this call)
+/// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
+///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+/// - `options?: table` (optional) - A table containing options:
+///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
+///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
+///   - `absolute?: boolean` (optional): If `true`, the paths used internally and potentially the `path` in the returned `FileRecord`
+///     objects will be absolute. If `false` (default), paths will generally be relative to the `base_dir`.
+///     Note: The exact path stored in `FileRecord.path` depends on internal resolution logic, especially if paths resolve outside `base_dir`.
 ///
 /// ### Returns
 ///
-/// [`FileRecord`] - This function return a FileRecord with the file metadata and content
+/// - `list<FileRecord>: table` - A Lua list (table) where each element is a `FileRecord` table:
+///   ```ts
+///   {
+///     path : string,             // Relative or absolute path used
+///     name : string,             // File name with extension
+///     stem : string,             // File name without extension
+///     ext  : string,             // File extension
+///     created_epoch_us?: number, // Creation timestamp (microseconds)
+///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     size?: number,             // File size in bytes
+///     content: string            // The text content of the file
+///   }
+///   ```
+///   The list is empty if no files match the globs.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Load all Markdown files in the 'docs' directory
+/// local doc_files = aip.file.list_load("*.md", { base_dir = "docs" })
+/// for _, file in ipairs(doc_files) do
+///   print("--- File:", file.path, "---")
+///   print(file.content)
+/// end
+///
+/// -- Load all '.aip' files in a specific pack
+/// local agent_files = aip.file.list_load("**/*.aip", { base_dir = "ns@pack/" })
+/// for _, file in ipairs(agent_files) do
+///   print("Agent Name:", file.stem)
+/// end
+/// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the glob pattern is invalid or the files cannot be listed or loaded.
+/// Returns an error if:
+/// - `include_globs` is not a string or a list of strings.
+/// - `base_dir` cannot be resolved (e.g., invalid pack reference).
+/// - An error occurs during file system traversal or glob matching.
+/// - Any matching file cannot be read or its metadata retrieved.
 ///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub(super) fn file_list_load(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -308,33 +556,83 @@ pub(super) fn file_list_load(
 
 /// ## Lua Documentation
 ///
-/// Return the first FileMeta or Nil
+/// Find the first file matching glob patterns and return its metadata (`FileMeta`).
 ///
 /// ```lua
-/// let first_doc_file = aip.file.first("doc/**/*.md", options: {base_dir?: string, absolute?: bool})
+/// -- API Signature
+/// aip.file.first(
+///   include_globs: string | list<string>,
+///   options?: {
+///     base_dir?: string,
+///     absolute?: boolean
+///   }
+/// ): FileMeta | nil
 /// ```
+///
+/// Searches for files matching the `include_globs` patterns within the specified `base_dir` (or workspace root).
+/// It stops searching as soon as the first matching file is found and returns its `FileMeta` object (metadata only, no content).
+/// If no matching file is found, it returns `nil`.
 ///
 /// ### Arguments
 ///
-/// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
-/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
+/// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
+///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+/// - `options?: table` (optional) - A table containing options:
+///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
+///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
+///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileMeta` object (if found) will be absolute.
+///     If `false` (default), the `path` will be relative to the `base_dir`. Similar to `aip.file.list`, paths outside `base_dir` become absolute.
 ///
 /// ### Returns
 ///
-/// [`FileMeta`] The file meta type (without `.content`)
+/// - `FileMeta: table | nil` - If a matching file is found, returns a `FileMeta` table:
+///   ```ts
+///   {
+///     path : string,             // Path (relative to base_dir or absolute)
+///     name : string,             // File name with extension
+///     stem : string,             // File name without extension
+///     ext  : string,             // File extension
+///     created_epoch_us?: number, // Creation timestamp (microseconds)
+///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     size?: number              // File size in bytes
+///   }
+///   ```
+///   If no matching file is found, returns `nil`.
 ///
-/// ### More Info
-///
-/// To get the file record with .content, do
+/// ### Example
 ///
 /// ```lua
-/// local file = aip.file.load(file_meta.path) -- Return [`FileRecord`]
+/// -- Find the first '.aip' file in a pack
+/// local agent_meta = aip.file.first("*.aip", { base_dir = "ns@pack/" })
+/// if agent_meta then
+///   print("Found agent:", agent_meta.path)
+///   -- To load its content:
+///   -- local agent_file = aip.file.load(agent_meta.path, { base_dir = "ns@pack/" })
+///   -- print(agent_file.content)
+/// else
+///   print("No agent file found in pack.")
+/// end
+///
+/// -- Find any config file in the root
+/// local config_meta = aip.file.first({"*.toml", "*.yaml", "*.json"}, { base_dir = "." })
+/// if config_meta then
+///   print("Config file:", config_meta.name)
+/// end
 /// ```
 ///
 /// ### Error
 ///
-/// Returns an error if the glob pattern is invalid or the files cannot be listed.
+/// Returns an error if:
+/// - `include_globs` is not a string or a list of strings.
+/// - `base_dir` cannot be resolved (e.g., invalid pack reference).
+/// - An error occurs during file system traversal or glob matching *before* the first file is found.
+/// - Metadata cannot be retrieved for the first found file.
 ///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
 pub(super) fn file_first(
 	lua: &Lua,
 	runtime: &Runtime,
