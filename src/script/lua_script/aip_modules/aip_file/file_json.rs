@@ -15,9 +15,10 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::lua_script::serde_value_to_lua_value;
+use crate::support::jsons::parse_ndjson_from_reader;
 use mlua::{Lua, Value};
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 
 /// ## Lua Documentation
 ///
@@ -138,36 +139,9 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 	})?;
 	let reader = BufReader::new(file);
 
-	let mut values: Vec<serde_json::Value> = Vec::new();
-	for (index, line_result) in reader.lines().enumerate() {
-		let line = line_result.map_err(|e| {
-			Error::from(format!(
-				"aip.file.load_ndjson - Failed to read line {} from file '{}'. Cause: {}",
-				index + 1,
-				path,
-				e
-			))
-		})?;
+	let json_value = parse_ndjson_from_reader(reader)
+		.map_err(|err| Error::custom(format!("aip.file.load_ndjson - Failed.\nCause: {err}")))?;
 
-		// Skip empty or whitespace-only lines
-		if line.trim().is_empty() {
-			continue;
-		}
-
-		// Parse the JSON line
-		let json_value: serde_json::Value = serde_json::from_str(&line).map_err(|e| {
-			Error::from(format!(
-				"aip.file.load_ndjson - Failed to parse JSON on line {} in file '{}'. Cause: {}",
-				index + 1,
-				path,
-				e
-			))
-		})?;
-		values.push(json_value);
-	}
-
-	// Convert Vec<serde_json::Value> to Vec<mlua::Value>
-	let json_value = serde_json::Value::Array(values);
 	let lua_values = serde_value_to_lua_value(lua, json_value)?;
 
 	Ok(lua_values)
