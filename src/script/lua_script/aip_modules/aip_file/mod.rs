@@ -1,7 +1,7 @@
 // region:    --- Modules
 
 mod file_common;
-mod file_json; // Added new module
+mod file_json;
 mod file_md;
 mod support;
 
@@ -10,7 +10,7 @@ use crate::runtime::Runtime;
 use crate::script::lua_script::aip_file::file_common::{
 	EnsureExistsOptions, file_append, file_ensure_exists, file_first, file_list, file_list_load, file_load, file_save,
 };
-use crate::script::lua_script::aip_file::file_json::{file_load_json, file_load_ndjson};
+use crate::script::lua_script::aip_file::file_json::{file_append_json_line, file_load_json, file_load_ndjson}; // Added file_append_json_line
 use crate::script::lua_script::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
 use mlua::{Lua, Table, Value};
 
@@ -66,6 +66,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let file_load_ndjson_fn = lua.create_function(move |lua, (path,): (String,)| file_load_ndjson(lua, &rt, path))?;
 
+	// -- append_json_line (New function)
+	let rt = runtime.clone();
+	let file_append_json_line_fn =
+		lua.create_function(move |lua, (path, data): (String, Value)| file_append_json_line(lua, &rt, path, data))?;
+
 	// -- load_md_sections
 	let rt = runtime.clone();
 	let file_load_md_sections_fn = lua.create_function(move |lua, (path, headings): (String, Option<Value>)| {
@@ -87,6 +92,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("first", file_first_fn)?;
 	table.set("load_json", file_load_json_fn)?;
 	table.set("load_ndjson", file_load_ndjson_fn)?;
+	table.set("append_json_line", file_append_json_line_fn)?; // Added new function binding
 	table.set("load_md_sections", file_load_md_sections_fn)?;
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
 

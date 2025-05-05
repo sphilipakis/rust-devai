@@ -1,24 +1,25 @@
-//! Defines the `load_json` and `load_ndjson` functions for the `aip.file` Lua module.
+//! Defines the `load_json`, `load_ndjson`, and `append_json_line` functions for the `aip.file` Lua module.
 //!
 //! ---
 //!
 //! ## Lua documentation for `aip.file.load_json`
 //!
-//! The `aip.file.load_json` function loads a file's content, parses it as JSON, and returns the result as a Lua table/value.
-//!
 //! ### Functions
 //!
 //! - `aip.file.load_json(path: string): table | value`
 //! - `aip.file.load_ndjson(path: string): table`
+//! - `aip.file.append_json_line(path: string, data: value)`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
+use crate::script::lua_script::lua_value_to_serde_value;
 use crate::script::lua_script::serde_value_to_lua_value;
 use crate::support::jsons::parse_ndjson_from_reader;
 use mlua::{Lua, Value};
-use std::fs::File;
-use std::io::BufReader;
+use simple_fs::ensure_file_dir;
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, Write};
 
 /// ## Lua Documentation
 ///
@@ -147,6 +148,98 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 	Ok(lua_values)
 }
 
+/// ## Lua Documentation
+///
+/// Convert Lua data to a JSON string and append it as a new line to a file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.append_json_line(path: string, data: value)
+/// ```
+///
+/// Converts the provided Lua `data` (table, string, number, boolean, nil) into a JSON string
+/// and appends this string followed by a newline character (`\n`) to the file specified by `path`.
+/// If the file does not exist, it will be created. If the directory does not exist, it will be created.
+///
+/// ### NOTES
+///
+/// - When a lua value is set to nil `{a = 1, some = nil}` it won't get serialized, so `{a:1}\n`
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to the file where the JSON line should be appended, relative to the workspace root.
+/// - `data: value`: The Lua data to be converted to JSON and appended.
+///
+/// ### Returns
+///
+/// Does not return anything.
+///
+/// ### Example
+///
+/// ```lua
+/// aip.file.append_json_line("output.ndjson", {user = "test", score = 100})
+/// aip.file.append_json_line("output.ndjson", {user = "another", score = 95, active = true})
+///
+/// --[[ content of output.ndjson:
+/// {"score":100,"user":"test"}
+/// {"active":true,"score":95,"user":"another"}
+/// ]]
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The Lua data cannot be converted to `serde_json::Value`.
+/// - The `serde_json::Value` cannot be serialized to a JSON string.
+/// - The file cannot be opened or written to.
+///
+/// ```ts
+/// {
+///   error: string  // Error message (e.g., conversion error, serialization error, file I/O error)
+/// }
+/// ```
+pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
+	// Resolve the path relative to the workspace directory
+	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+
+	// Convert Lua value to serde_json::Value
+	let json_value = lua_value_to_serde_value(data).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_line - Failed to convert Lua data to JSON for file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+
+	// Serialize serde_json::Value to string
+	let json_string = serde_json::to_string(&json_value).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_line - Failed to serialize JSON data for file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+
+	// Ensure directory exists
+	ensure_file_dir(&full_path).map_err(Error::from)?;
+
+	// Open the file in append mode (create if it doesn't exist)
+	let mut file = OpenOptions::new().append(true).create(true).open(&full_path).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_line - Failed to open or create file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+
+	// Write the JSON string followed by a newline
+	writeln!(file, "{}", json_string).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_line - Failed to write to file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+
+	Ok(())
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -154,8 +247,10 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{
-		assert_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file, run_reflective_agent,
+		assert_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file, gen_sandbox_01_temp_file_path,
+		run_reflective_agent,
 	};
+	use simple_fs::read_to_string;
 	use value_ext::JsonValueExt as _;
 
 	// region:    --- load_json Tests
@@ -372,6 +467,66 @@ invalid json line here
 	}
 
 	// endregion: --- load_ndjson Tests
+
+	// region:    --- append_json_line Tests
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_line_new_file_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fix_file = gen_sandbox_01_temp_file_path("test_lua_file_append_json_line_new_file.ndjson");
+		let fx_path = fix_file.as_str();
+		let fx_data1 = r#"{name = "item1", value = 123}"#;
+		let fx_data2 = r#"{name = "item2", active = true, tags = {"a", "b"}}"#;
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data1})"#), None).await?;
+		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data2})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		assert_eq!(lines.len(), 2, "Should have 2 lines");
+		assert_eq!(lines[0], r#"{"name":"item1","value":123}"#);
+		assert_eq!(lines[1], r#"{"active":true,"name":"item2","tags":["a","b"]}"#);
+
+		// -- Clean
+		clean_sanbox_01_tmp_file(fix_file)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_line_existing_file_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_file_name = "test_lua_file_append_json_line_existing_file.ndjson";
+		let initial_content = r#"{"initial": true}
+"#; // Note the newline
+		let fx_file = create_sanbox_01_tmp_file(fx_file_name, initial_content)?;
+		let fx_path = fx_file.as_str();
+		let fx_data = r#"{appended = "yes", value = nil}"#;
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		assert_eq!(lines.len(), 2, "Should have 2 lines (initial + appended)");
+		assert_eq!(lines[0], r#"{"initial": true}"#);
+		// IMPORTANT: We cannot preserve the "value = nil" as "value = null" as mlua return nil for absent as well
+		assert_eq!(lines[1], r#"{"appended":"yes"}"#);
+
+		// -- Clean
+		clean_sanbox_01_tmp_file(fx_file)?;
+
+		Ok(())
+	}
+
+	// endregion: --- append_json_line Tests
 }
 
 // endregion: --- Tests
