@@ -23,6 +23,8 @@ pub fn lua_value_to_serde_value(lua_value: mlua::Value) -> Result<serde_json::Va
 	Ok(value)
 }
 
+/// Convert a vec of serde_json Value into a vec of Lua Value using serde_value_to_lua_value logic.
 pub fn serde_values_to_lua_values(lua: &Lua, values: Vec<serde_json::Value>) -> Result<Vec<mlua::Value>> {
 	values.into_iter().map(|val| serde_value_to_lua_value(lua, val)).collect()
 }
+
