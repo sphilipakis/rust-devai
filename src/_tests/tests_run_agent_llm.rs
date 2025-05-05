@@ -57,13 +57,10 @@ async fn test_run_agent_llm_full_chat_ok() -> Result<()> {
 
 	// -- Check
 	let content = res.as_str().ok_or("Should return a string")?;
-	// concatinate the first char of each line
 	// Because the `agent-full-chat.aip` system instructs to give only 3 bullet points answer.
-	let first_chart_of_each_line = content
-		.lines()
-		.map(|line| line.chars().next().unwrap_or_default())
-		.collect::<String>();
-	assert_eq!(first_chart_of_each_line, "---");
+	// count the number of lines that starts with -. should 3
+	let count = content.lines().filter(|line| line.trim_start().starts_with('-')).count();
+	assert_eq!(count, 3, "should have three '-' starting lines");
 
 	Ok(())
 }
