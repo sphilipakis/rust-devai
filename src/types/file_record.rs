@@ -19,6 +19,10 @@ pub struct FileRecord {
 	pub ext: String,
 	/// The full text content of the file
 	pub content: String,
+
+	pub created_epoch_us: i64,
+	pub modified_epoch_us: i64,
+	pub size: i64,
 }
 
 /// Constructors
@@ -32,6 +36,7 @@ impl FileRecord {
 
 		let content = read_to_string(full_path).map_err(|err| Error::cc(format!("Fail to read {full_path}"), err))?;
 		let dir = rel_path.parent().map(|p| p.to_string()).unwrap_or_default();
+		let meta = full_path.meta()?;
 
 		Ok(FileRecord {
 			path: rel_path.to_string(),
@@ -40,6 +45,9 @@ impl FileRecord {
 			stem: rel_path.stem().to_string(),
 			ext: rel_path.ext().to_string(),
 			content,
+			created_epoch_us: meta.created_epoch_us,
+			modified_epoch_us: meta.modified_epoch_us,
+			size: meta.size,
 		})
 	}
 }
@@ -49,12 +57,19 @@ impl FileRecord {
 impl IntoLua for FileRecord {
 	fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+
 		table.set("path", self.path)?;
 		table.set("dir", self.dir)?;
 		table.set("name", self.name)?;
 		table.set("stem", self.stem)?;
 		table.set("ext", self.ext)?;
+
+		table.set("created_epoch_us", self.created_epoch_us)?;
+		table.set("modified_epoch_us", self.modified_epoch_us)?;
+		table.set("size", self.size)?;
+
 		table.set("content", self.content)?;
+
 		Ok(mlua::Value::Table(table))
 	}
 }

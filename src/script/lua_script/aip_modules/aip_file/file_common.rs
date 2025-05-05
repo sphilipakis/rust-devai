@@ -12,7 +12,7 @@
 //! - `aip.file.save(rel_path: string, content: string)`
 //! - `aip.file.append(rel_path: string, content: string)`
 //! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileMeta`
-//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileMeta>`
+//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean, with_meta: boolean}): list<FileMeta>`
 //! - `aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>`
 //! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileMeta | nil`
 
@@ -47,16 +47,7 @@ use std::io::Write;
 ///
 /// ### Returns
 ///
-/// ```ts
-/// -- FileRecord
-/// {
-///   path    : string,  -- The path to the file
-///   content : string,  -- The text content of the file
-///   name    : string,  -- The name of the file
-///   stem    : string,  -- The stem of the file (name without extension)
-///   ext     : string,  -- The extension of the file
-/// }
-/// ```
+/// - [`FileRecord`] - File metadata and `.content`
 ///
 /// ### Error
 ///
@@ -186,15 +177,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 ///
 /// ### Returns
 ///
-/// ```ts
-/// -- FileMeta
-/// {
-///   path : string,  -- The path to the file
-///   name : string,  -- The name of the file
-///   stem : string,  -- The stem of the file (name without extension)
-///   ext  : string   -- The extension of the file
-/// }
-/// ```
+/// - [`FileMeta`] (File Metadata without `.content`)
 ///
 /// ### Error
 ///
@@ -224,7 +207,7 @@ pub(super) fn file_ensure_exists(
 		write(full_path, content)?;
 	}
 
-	let file_meta = FileMeta::from(rel_path);
+	let file_meta = FileMeta::new(rel_path, true);
 
 	file_meta.into_lua(lua)
 }
@@ -240,7 +223,9 @@ pub(super) fn file_ensure_exists(
 /// ### Arguments
 ///
 /// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
-/// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
+/// - `options?: {base_dir: string, absolute: boolean, with_meta: boolean}`
+///    - `base_dir` and `absolute` keys.
+///    - `with_meta` (default 'true') if false, will not fetch the file metadata per file `{created_epoch_us, modified_epoch_us, size}``
 ///
 /// ### Returns
 ///
@@ -269,10 +254,12 @@ pub(super) fn file_list(
 	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
+	// Default is true, as we want convenient APIs, and offer user way to optimize it
+	let with_meta = options.x_get_bool("with_meta").unwrap_or(true);
 
 	let sfiles = list_files_with_options(&base_path, &include_globs.x_as_strs(), absolute)?;
 
-	let file_metas: Vec<FileMeta> = sfiles.into_iter().map(FileMeta::from).collect();
+	let file_metas: Vec<FileMeta> = sfiles.into_iter().map(|spath| FileMeta::new(spath, with_meta)).collect();
 	let res = file_metas.into_lua(lua)?;
 
 	Ok(res)
@@ -290,19 +277,11 @@ pub(super) fn file_list(
 ///
 /// - `include_globs: string | list` - A glob pattern or a list of glob patterns to include files.
 /// - `options?: {base_dir: string, absolute: boolean}` - Optional table with `base_dir` and `absolute` keys.
+///   - Note: Here, meta will be loaded (so, no `with_meta` for this call)
 ///
 /// ### Returns
 ///
-/// ```ts
-/// -- An array/table of FileRecord
-/// {
-///   path    : string,  -- The path to the file
-///   name    : string,  -- The name of the file
-///   stem    : string,  -- The stem of the file (name without extension)
-///   ext     : string,  -- The extension of the file
-///   content : string   -- The content of the file
-/// }
-/// ```
+/// [`FileRecord`] - This function return a FileRecord with the file metadata and content
 ///
 /// ### Error
 ///
@@ -342,20 +321,14 @@ pub(super) fn file_list_load(
 ///
 /// ### Returns
 ///
-/// ```ts
-/// -- FileMeta or Nil
-/// {
-///   path : string,  -- The path to the file
-///   name : string,  -- The name of the file
-///   stem : string,  -- The stem of the file (name without extension)
-///   ext  : string   -- The extension of the file
-/// }
-/// ```
+/// [`FileMeta`] The file meta type (without `.content`)
+///
+/// ### More Info
 ///
 /// To get the file record with .content, do
 ///
 /// ```lua
-/// let file = aip.file.load(file_meta.path)
+/// local file = aip.file.load(file_meta.path) -- Return [`FileRecord`]
 /// ```
 ///
 /// ### Error
@@ -391,7 +364,7 @@ pub(super) fn file_first(
 			.map_err(|err| Error::cc("Cannot diff with base_path", err))?
 	};
 
-	let res = FileMeta::from(spath).into_lua(lua)?;
+	let res = FileMeta::new(spath, true).into_lua(lua)?;
 
 	Ok(res)
 }
