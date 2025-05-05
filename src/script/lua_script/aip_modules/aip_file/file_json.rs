@@ -16,13 +16,9 @@ use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::lua_script::lua_value_to_serde_value;
 use crate::script::lua_script::serde_value_to_lua_value;
-use crate::support::jsons::parse_ndjson_from_reader;
+use crate::script::lua_value_list_to_serde_values;
 use mlua::{Lua, Value};
 use simple_fs::ensure_file_dir;
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter, Write};
-
-const JSON_LINES_BUFFER_SIZE: usize = 100;
 
 /// ## Lua Documentation
 ///
@@ -66,18 +62,9 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 	// Resolve the path relative to the workspace directory
 	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
 
-	// Read the file content
-	let content = std::fs::read_to_string(&full_path).map_err(|e| {
+	let json_value = simple_fs::load_json(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.load_json - Failed to read file '{}'. Cause: {}",
-			path, e
-		))
-	})?;
-
-	// Parse the JSON content
-	let json_value: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-		Error::from(format!(
-			"aip.file.load_json - Failed to parse JSON from file '{}'. Cause: {}",
+			"aip.file.load_json - Failed to read json file '{}'.\nCause: {}",
 			path, e
 		))
 	})?;
@@ -134,17 +121,14 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 	// Resolve the path relative to the workspace directory
 	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
 
-	// Open the file
-	let file = File::open(&full_path).map_err(|e| {
+	let json_values = simple_fs::load_ndjson(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.load_ndjson - Failed to open file '{}'. Cause: {}",
+			"aip.file.load_ndjson - Failed to load newline json file '{}'.\nCause: {}",
 			path, e
 		))
 	})?;
-	let reader = BufReader::new(file);
 
-	let json_value = parse_ndjson_from_reader(reader)
-		.map_err(|err| Error::custom(format!("aip.file.load_ndjson - Failed.\nCause: {err}")))?;
+	let json_value = serde_json::Value::Array(json_values);
 
 	let lua_values = serde_value_to_lua_value(lua, json_value)?;
 
@@ -208,15 +192,7 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	// Convert Lua value to serde_json::Value
 	let json_value = lua_value_to_serde_value(data).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_line - Failed to convert Lua data to JSON for file '{}'. Cause: {}",
-			path, e
-		))
-	})?;
-
-	// Serialize serde_json::Value to string
-	let json_string = serde_json::to_string(&json_value).map_err(|e| {
-		Error::from(format!(
-			"aip.file.append_json_line - Failed to serialize JSON data for file '{}'. Cause: {}",
+			"aip.file.append_json_line - Failed to convert Lua data to JSON for file '{}'.\nCause: {}",
 			path, e
 		))
 	})?;
@@ -224,18 +200,10 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	// Ensure directory exists
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
-	// Open the file in append mode (create if it doesn't exist)
-	let mut file = OpenOptions::new().append(true).create(true).open(&full_path).map_err(|e| {
+	// Append using simple_fs
+	simple_fs::append_json_line(full_path, &json_value).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_line - Failed to open or create file '{}'. Cause: {}",
-			path, e
-		))
-	})?;
-
-	// Write the JSON string followed by a newline
-	writeln!(file, "{}", json_string).map_err(|e| {
-		Error::from(format!(
-			"aip.file.append_json_line - Failed to write to file '{}'. Cause: {}",
+			"aip.file.append_json_line - Failed to append json line to  '{}'.\nCause: {}",
 			path, e
 		))
 	})?;
@@ -302,86 +270,26 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 /// }
 /// ```
 pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
-	// -- Validate input type
-	let list = match data {
-		Value::Table(table) => table,
-		other => {
-			return Err(Error::custom(format!(
-				"aip.file.append_json_lines - Expected a Lua table (list) as the second argument, but got {}",
-				other.type_name()
-			))
-			.into());
-		}
-	};
+	// -- Get the json values
+	let json_values = lua_value_list_to_serde_values(data).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_lines - Failed to append json lines to '{}'.\nCause: {}",
+			path, e
+		))
+	})?;
 
 	// -- Resolve path and ensure directory
 	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
-	// -- Setup file writer
-	let file = OpenOptions::new().append(true).create(true).open(&full_path).map_err(|e| {
+	// -- Append using simple_fs
+	simple_fs::append_json_lines(full_path, &json_values).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_lines - Failed to open or create file '{}'. Cause: {}",
-			path, e
-		))
-	})?;
-	let mut writer = BufWriter::new(file);
-	let mut buffer: Vec<String> = Vec::with_capacity(JSON_LINES_BUFFER_SIZE);
-
-	// -- Process list items
-	for item_result in list.sequence_values::<Value>() {
-		let item = item_result?;
-
-		// Convert Lua value to serde_json::Value
-		let json_value = lua_value_to_serde_value(item).map_err(|e| {
-			Error::from(format!(
-				"aip.file.append_json_lines - Failed to convert Lua data item to JSON for file '{}'. Cause: {}",
-				path, e
-			))
-		})?;
-
-		// Serialize serde_json::Value to string
-		let json_string = serde_json::to_string(&json_value).map_err(|e| {
-			Error::from(format!(
-				"aip.file.append_json_lines - Failed to serialize JSON data item for file '{}'. Cause: {}",
-				path, e
-			))
-		})?;
-
-		buffer.push(json_string);
-
-		// Flush buffer if full
-		if buffer.len() >= JSON_LINES_BUFFER_SIZE {
-			flush_buffer(&mut writer, &mut buffer, &path)?;
-		}
-	}
-
-	// -- Flush any remaining items in the buffer
-	if !buffer.is_empty() {
-		flush_buffer(&mut writer, &mut buffer, &path)?;
-	}
-
-	// Ensure all data is written from the BufWriter
-	writer.flush().map_err(|e| {
-		Error::from(format!(
-			"aip.file.append_json_lines - Failed to flush writer for file '{}'. Cause: {}",
+			"aip.file.append_json_lines - Failed to append json line to  '{}'.\nCause: {}",
 			path, e
 		))
 	})?;
 
-	Ok(())
-}
-
-/// Helper function to write the buffer contents to the file.
-fn flush_buffer(writer: &mut BufWriter<File>, buffer: &mut Vec<String>, path: &str) -> mlua::Result<()> {
-	for line in buffer.drain(..) {
-		writeln!(writer, "{}", line).map_err(|e| {
-			Error::from(format!(
-				"aip.file.append_json_lines - Failed to write buffered line to file '{}'. Cause: {}",
-				path, e
-			))
-		})?;
-	}
 	Ok(())
 }
 
@@ -395,7 +303,6 @@ mod tests {
 		assert_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file, gen_sandbox_01_temp_file_path,
 		run_reflective_agent,
 	};
-	use crate::script::lua_script::aip_file::file_json::JSON_LINES_BUFFER_SIZE;
 	use simple_fs::read_to_string;
 	use value_ext::JsonValueExt as _;
 
@@ -445,7 +352,7 @@ mod tests {
 		let Err(err) = res else {
 			panic!("Should have returned an error");
 		};
-		assert_contains(&err.to_string(), "aip.file.load_json - Failed to read file");
+		assert_contains(&err.to_string(), "aip.file.load_json - Failed to read json file");
 		assert_contains(&err.to_string(), "non_existent_file.json");
 
 		Ok(())
@@ -464,8 +371,9 @@ mod tests {
 		let Err(err) = res else {
 			panic!("Should have returned an error");
 		};
-		assert_contains(&err.to_string(), "aip.file.load_json - Failed to parse JSON");
-		assert_contains(&err.to_string(), fx_path);
+		let err = err.to_string();
+		assert_contains(&err, "aip.file.load_json - Failed to read json");
+		assert_contains(&err, fx_path);
 
 		Ok(())
 	}
@@ -525,7 +433,10 @@ mod tests {
 		let Err(err) = res else {
 			panic!("Should have returned an error");
 		};
-		assert_contains(&err.to_string(), "aip.file.load_ndjson - Failed to open file");
+		assert_contains(
+			&err.to_string(),
+			"aip.file.load_ndjson - Failed to load newline json file",
+		);
 		assert_contains(&err.to_string(), "non_existent_file.ndjson");
 
 		Ok(())
@@ -775,7 +686,7 @@ invalid json line here
 		let fx_path = fix_file.as_str();
 		// Create data larger than buffer size
 		let mut lua_list = String::from("{");
-		for i in 0..(JSON_LINES_BUFFER_SIZE + 5) {
+		for i in 0..(100 + 5) {
 			lua_list.push_str(&format!(r#"{{idx = {}, name = "name-{}""#, i, i));
 			// Add a nil value occasionally to test handling
 			if i % 10 == 0 {
@@ -793,20 +704,12 @@ invalid json line here
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
-		assert_eq!(
-			lines.len(),
-			JSON_LINES_BUFFER_SIZE + 5,
-			"Should have correct number of lines"
-		);
+		assert_eq!(lines.len(), 100 + 5, "Should have correct number of lines");
 		// Check first and last lines as a sample
 		assert_eq!(lines[0], r#"{"idx":0,"name":"name-0"}"#); // optional = nil omitted
 		assert_eq!(
 			lines.last().unwrap(),
-			&format!(
-				r#"{{"idx":{},"name":"name-{}"}}"#,
-				JSON_LINES_BUFFER_SIZE + 4,
-				JSON_LINES_BUFFER_SIZE + 4
-			)
+			&format!(r#"{{"idx":{},"name":"name-{}"}}"#, 100 + 4, 100 + 4)
 		);
 
 		// -- Clean
@@ -833,7 +736,7 @@ invalid json line here
 		};
 		assert_contains(
 			&err.to_string(),
-			"aip.file.append_json_lines - Expected a Lua table (list)",
+			"aip.file.append_json_lines - Failed to append json lines",
 		);
 		assert_contains(&err.to_string(), "but got string");
 

@@ -16,9 +16,9 @@
 use crate::runtime::Runtime;
 use crate::script::lua_value_to_serde_value;
 use crate::script::serde_value_to_lua_value;
-use crate::support::jsons::parse_ndjson_from_reader;
 use crate::{Error, Result};
 use mlua::{Lua, Table, Value};
+use simple_fs::parse_ndjson_from_reader;
 use std::io::BufReader;
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -120,6 +120,7 @@ fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
 	let reader = BufReader::new(content.as_bytes());
 	match parse_ndjson_from_reader(reader) {
 		Ok(values) => {
+			let values = serde_json::Value::Array(values);
 			let lua_value = serde_value_to_lua_value(lua, values)?;
 			Ok(lua_value)
 		}
