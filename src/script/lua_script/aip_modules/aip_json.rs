@@ -11,7 +11,7 @@
 //! - `aip.json.parse_ndjson(content: string) -> table[]`
 //! - `aip.json.stringify(content: table) -> string`
 //! - `aip.json.stringify_pretty(content: table) -> string`
-//! - `aip.json.stringify_to_line(content: table) -> string` (alias for `stringify`)
+//! - `aip.json.stringify_to_line(content: table) -> string` (deprecated alias for `stringify`)
 
 use crate::runtime::Runtime;
 use crate::script::lua_value_to_serde_value;
@@ -35,6 +35,8 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	table.set("parse_ndjson", parse_ndjson_fn)?;
 	table.set("stringify", stringify_fn)?;
 	table.set("stringify_pretty", stringify_pretty_fn)?;
+
+	// deprecated, should use stringify
 	table.set("stringify_to_line", stringify_to_line_fn)?;
 
 	Ok(table)
