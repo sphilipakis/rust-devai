@@ -9,7 +9,8 @@
 //!
 //! - `aip.json.parse(content: string) -> table`
 //! - `aip.json.stringify(content: table) -> string`
-//! - `aip.json.stringify_to_line(content: table) -> string`
+//! - `aip.json.stringify_pretty(content: table) -> string`
+//! - `aip.json.stringify_to_line(content: table) -> string` (alias for `stringify`)
 
 use crate::runtime::Runtime;
 use crate::{Error, Result};
@@ -20,10 +21,13 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 	let parse_fn = lua.create_function(move |lua, content: String| parse(lua, content))?;
 	let stringify_fn = lua.create_function(move |lua, content: Value| stringify(lua, content))?;
-	let stringify_to_line_fn = lua.create_function(move |lua, content: Value| stringify_to_line(lua, content))?;
+	let stringify_pretty_fn = lua.create_function(move |lua, content: Value| stringify_pretty(lua, content))?;
+	// stringify_to_line is now an alias for stringify
+	let stringify_to_line_fn = stringify_fn.clone();
 
 	table.set("parse", parse_fn)?;
 	table.set("stringify", stringify_fn)?;
+	table.set("stringify_pretty", stringify_pretty_fn)?;
 	table.set("stringify_to_line", stringify_to_line_fn)?;
 
 	Ok(table)
@@ -62,20 +66,22 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 	match serde_json::from_str::<serde_json::Value>(&content) {
 		Ok(val) => Ok(lua.to_value(&val)?),
-		Err(err) => Err(Error::cc("aip.json.parse failed", err).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.parse failed. {}", err)).into()),
 	}
 }
 
 /// ## Lua Documentation
 ///
-/// Stringify a table into a JSON string with pretty formatting.
+/// Stringify a table into a single line JSON string.
+///
+/// Good for newline json or compact representation.
 ///
 /// ```lua
 /// -- API Signature
 /// aip.json.stringify(content: table): string
 /// ```
 ///
-/// Convert a table into a JSON string with pretty formatting using tab indentation.
+/// Convert a table into a single line JSON string.
 ///
 /// ### Example
 ///
@@ -86,9 +92,53 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// }
 /// local json_str = aip.json.stringify(obj)
 /// -- Result will be:
+/// -- {"name":"John","age":30}
+/// ```
+///
+/// ### Returns
+///
+/// Returns a single line JSON string.
+///
+/// ### Error
+///
+/// ```ts
+/// {
+///   error: string  // Error message from JSON stringification
+/// }
+/// ```
+fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
+	match serde_json::to_value(content) {
+		Ok(val) => match serde_json::to_string(&val) {
+			Ok(str) => Ok(str),
+			Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
+		},
+		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to convert value. {}", err)).into()),
+	}
+}
+
+/// ## Lua Documentation
+///
+/// Stringify a table into a JSON string with pretty formatting.
+///
+/// ```lua
+/// -- API Signature
+/// aip.json.stringify_pretty(content: table): string
+/// ```
+///
+/// Convert a table into a JSON string with pretty formatting using 2 spaces indentation.
+///
+/// ### Example
+///
+/// ```lua
+/// local obj = {
+///     name = "John",
+///     age = 30
+/// }
+/// local json_str = aip.json.stringify_pretty(obj)
+/// -- Result will be:
 /// -- {
-/// --     "name": "John",
-/// --     "age": 30
+/// --   "name": "John",
+/// --   "age": 30
 /// -- }
 /// ```
 ///
@@ -103,21 +153,21 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///   error: string  // Error message from JSON stringification
 /// }
 /// ```
-fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
+fn stringify_pretty(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	match serde_json::to_value(content) {
 		Ok(val) => match serde_json::to_string_pretty(&val) {
 			Ok(str) => Ok(str),
-			Err(err) => Err(Error::custom(format!("Fail to stringify. {}", err)).into()),
+			Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to stringify. {}", err)).into()),
 		},
-		Err(err) => Err(Error::custom(format!("Fail to convert value. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to convert value. {}", err)).into()),
 	}
 }
 
 /// ## Lua Documentation
 ///
-/// Stringify a table into a single line JSON string.
+/// Stringify a table into a single line JSON string. (Alias for `aip.json.stringify`)
 ///
-/// Good for newline json
+/// Good for newline json. Kept for backward compatibility.
 ///
 /// ```lua
 /// -- API Signature
@@ -149,14 +199,9 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 ///   error: string  // Error message from JSON stringification
 /// }
 /// ```
-fn stringify_to_line(_lua: &Lua, content: Value) -> mlua::Result<String> {
-	match serde_json::to_value(content) {
-		Ok(val) => match serde_json::to_string(&val) {
-			Ok(str) => Ok(str),
-			Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
-		},
-		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to convert value. {}", err)).into()),
-	}
+#[allow(dead_code)] // NOTE: This function is technically not called directly in rust, but exposed to lua via `init_module`
+fn stringify_to_line(lua: &Lua, content: Value) -> mlua::Result<String> {
+	stringify(lua, content)
 }
 
 // region:    --- Tests
@@ -217,7 +262,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_script_lua_json_stringify_pretty() -> Result<()> {
+	async fn test_script_lua_json_stringify_pretty_basic() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
 		let script = r#"
@@ -225,7 +270,7 @@ mod tests {
                 name = "John",
                 age = 30
             }
-            return aip.json.stringify(obj)
+            return aip.json.stringify_pretty(obj)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
@@ -240,7 +285,37 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_script_lua_json_stringify_complex() -> Result<()> {
+	async fn test_script_lua_json_stringify_pretty_complex() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let script = r#"
+            local obj = {
+                name = "John",
+                age = 30,
+                address = {
+                    street = "123 Main St",
+                    city = "New York"
+                },
+                hobbies = {"reading", "gaming"}
+            }
+            return aip.json.stringify_pretty(obj)
+        "#;
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+		// -- Check
+		let result = res.as_str().ok_or("Expected string result")?;
+		let parsed: serde_json::Value = serde_json::from_str(result)?;
+		assert_eq!(parsed["name"], "John");
+		assert_eq!(parsed["age"], 30);
+		assert_eq!(parsed["address"]["street"], "123 Main St");
+		assert_eq!(parsed["hobbies"][0], "reading");
+		assert!(result.contains("\n"), "Expected pretty formatting with newlines");
+		assert!(result.contains("  "), "Expected pretty formatting with indentation");
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_lua_json_stringify_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
 		let script = r#"
@@ -259,18 +334,14 @@ mod tests {
 		let res = eval_lua(&lua, script)?;
 		// -- Check
 		let result = res.as_str().ok_or("Expected string result")?;
-		let parsed: serde_json::Value = serde_json::from_str(result)?;
-		assert_eq!(parsed["name"], "John");
-		assert_eq!(parsed["age"], 30);
-		assert_eq!(parsed["address"]["street"], "123 Main St");
-		assert_eq!(parsed["hobbies"][0], "reading");
-		assert!(result.contains("\n"), "Expected pretty formatting with newlines");
-		assert!(result.contains("  "), "Expected pretty formatting with indentation");
+		assert_contains(result, r#""name":"John""#);
+		assert_not_contains(result, "\n");
+		assert_not_contains(result, "  ");
 		Ok(())
 	}
 
 	#[tokio::test]
-	async fn test_script_lua_json_stringify_to_line() -> Result<()> {
+	async fn test_script_lua_json_stringify_to_line_alias() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
 		let script = r#"
@@ -297,3 +368,4 @@ mod tests {
 }
 
 // endregion: --- Tests
+
