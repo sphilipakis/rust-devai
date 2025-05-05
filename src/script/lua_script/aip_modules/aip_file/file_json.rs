@@ -1,14 +1,15 @@
-//! Defines the `load_json`, `load_ndjson`, and `append_json_line` functions for the `aip.file` Lua module.
+//! Defines the `load_json`, `load_ndjson`, `append_json_line`, and `append_json_lines` functions for the `aip.file` Lua module.
 //!
 //! ---
 //!
-//! ## Lua documentation for `aip.file.load_json`
+//! ## Lua documentation for `aip.file` JSON functions
 //!
 //! ### Functions
 //!
 //! - `aip.file.load_json(path: string): table | value`
 //! - `aip.file.load_ndjson(path: string): table`
 //! - `aip.file.append_json_line(path: string, data: value)`
+//! - `aip.file.append_json_lines(path: string, data: list)`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
@@ -19,7 +20,9 @@ use crate::support::jsons::parse_ndjson_from_reader;
 use mlua::{Lua, Value};
 use simple_fs::ensure_file_dir;
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, Write};
+use std::io::{BufReader, BufWriter, Write};
+
+const JSON_LINES_BUFFER_SIZE: usize = 100;
 
 /// ## Lua Documentation
 ///
@@ -240,6 +243,148 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	Ok(())
 }
 
+/// ## Lua Documentation
+///
+/// Convert a Lua list (table) of values to JSON strings and append them as new lines to a file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.append_json_lines(path: string, data: list)
+/// ```
+///
+/// Iterates through the provided Lua `data` list (a table used as an array). For each element,
+/// converts it into a JSON string and appends this string followed by a newline character (`\n`)
+/// to the file specified by `path`. It uses buffering for efficiency.
+/// If the file does not exist, it will be created. If the directory does not exist, it will be created.
+///
+/// ### NOTES
+///
+/// - The `data` argument MUST be a Lua table used as a list (array-like with sequential integer keys starting from 1).
+/// - Nil values within the list elements might not be serialized, e.g., `{a = 1, b = nil}` becomes `{"a":1}`.
+///
+/// ### Arguments
+///
+/// - `path: string`: The path to the file where the JSON lines should be appended, relative to the workspace root.
+/// - `data: list`: The Lua list (table) containing values to be converted to JSON and appended.
+///
+/// ### Returns
+///
+/// Does not return anything.
+///
+/// ### Example
+///
+/// ```lua
+/// local users = {
+///   {user = "alice", score = 88},
+///   {user = "bob", score = 92, active = false},
+///   {user = "charlie", score = 75}
+/// }
+/// aip.file.append_json_lines("user_scores.ndjson", users)
+///
+/// --[[ content of user_scores.ndjson:
+/// {"score":88,"user":"alice"}
+/// {"active":false,"score":92,"user":"bob"}
+/// {"score":75,"user":"charlie"}
+/// ]]
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The `data` argument is not a Lua table.
+/// - Any element in the list cannot be converted to `serde_json::Value`.
+/// - Any `serde_json::Value` cannot be serialized to a JSON string.
+/// - The file cannot be opened or written to.
+///
+/// ```ts
+/// {
+///   error: string  // Error message (e.g., data not a table, conversion error, serialization error, file I/O error)
+/// }
+/// ```
+pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
+	// -- Validate input type
+	let list = match data {
+		Value::Table(table) => table,
+		other => {
+			return Err(Error::custom(format!(
+				"aip.file.append_json_lines - Expected a Lua table (list) as the second argument, but got {}",
+				other.type_name()
+			))
+			.into());
+		}
+	};
+
+	// -- Resolve path and ensure directory
+	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+	ensure_file_dir(&full_path).map_err(Error::from)?;
+
+	// -- Setup file writer
+	let file = OpenOptions::new().append(true).create(true).open(&full_path).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_lines - Failed to open or create file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+	let mut writer = BufWriter::new(file);
+	let mut buffer: Vec<String> = Vec::with_capacity(JSON_LINES_BUFFER_SIZE);
+
+	// -- Process list items
+	for item_result in list.sequence_values::<Value>() {
+		let item = item_result?;
+
+		// Convert Lua value to serde_json::Value
+		let json_value = lua_value_to_serde_value(item).map_err(|e| {
+			Error::from(format!(
+				"aip.file.append_json_lines - Failed to convert Lua data item to JSON for file '{}'. Cause: {}",
+				path, e
+			))
+		})?;
+
+		// Serialize serde_json::Value to string
+		let json_string = serde_json::to_string(&json_value).map_err(|e| {
+			Error::from(format!(
+				"aip.file.append_json_lines - Failed to serialize JSON data item for file '{}'. Cause: {}",
+				path, e
+			))
+		})?;
+
+		buffer.push(json_string);
+
+		// Flush buffer if full
+		if buffer.len() >= JSON_LINES_BUFFER_SIZE {
+			flush_buffer(&mut writer, &mut buffer, &path)?;
+		}
+	}
+
+	// -- Flush any remaining items in the buffer
+	if !buffer.is_empty() {
+		flush_buffer(&mut writer, &mut buffer, &path)?;
+	}
+
+	// Ensure all data is written from the BufWriter
+	writer.flush().map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_json_lines - Failed to flush writer for file '{}'. Cause: {}",
+			path, e
+		))
+	})?;
+
+	Ok(())
+}
+
+/// Helper function to write the buffer contents to the file.
+fn flush_buffer(writer: &mut BufWriter<File>, buffer: &mut Vec<String>, path: &str) -> mlua::Result<()> {
+	for line in buffer.drain(..) {
+		writeln!(writer, "{}", line).map_err(|e| {
+			Error::from(format!(
+				"aip.file.append_json_lines - Failed to write buffered line to file '{}'. Cause: {}",
+				path, e
+			))
+		})?;
+	}
+	Ok(())
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -250,6 +395,7 @@ mod tests {
 		assert_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file, gen_sandbox_01_temp_file_path,
 		run_reflective_agent,
 	};
+	use crate::script::lua_script::aip_file::file_json::JSON_LINES_BUFFER_SIZE;
 	use simple_fs::read_to_string;
 	use value_ext::JsonValueExt as _;
 
@@ -492,7 +638,8 @@ invalid json line here
 		assert_eq!(lines[1], r#"{"active":true,"name":"item2","tags":["a","b"]}"#);
 
 		// -- Clean
-		clean_sanbox_01_tmp_file(fix_file)?;
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fix_file)?;
 
 		Ok(())
 	}
@@ -521,12 +668,183 @@ invalid json line here
 		assert_eq!(lines[1], r#"{"appended":"yes"}"#);
 
 		// -- Clean
-		clean_sanbox_01_tmp_file(fx_file)?;
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fx_file)?;
 
 		Ok(())
 	}
 
 	// endregion: --- append_json_line Tests
+
+	// region:    --- append_json_lines Tests
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_lines_new_file_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fix_file = gen_sandbox_01_temp_file_path("test_lua_file_append_json_lines_new_file.ndjson");
+		let fx_path = fix_file.as_str();
+		let fx_data = r#"
+        {
+            {name = "line1", value = 1},
+            {name = "line2", active = true},
+            {name = "line3", tags = {"c", "d"}, data = nil}
+        }
+        "#;
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		assert_eq!(lines.len(), 3, "Should have 3 lines");
+		assert_eq!(lines[0], r#"{"name":"line1","value":1}"#);
+		assert_eq!(lines[1], r#"{"active":true,"name":"line2"}"#);
+		assert_eq!(lines[2], r#"{"name":"line3","tags":["c","d"]}"#); // Note: data = nil is omitted
+
+		// -- Clean
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fix_file)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_lines_existing_file_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_file_name = "test_lua_file_append_json_lines_existing_file.ndjson";
+		let initial_content = r#"{"initial": true}
+"#; // Note the newline
+		let fx_file = create_sanbox_01_tmp_file(fx_file_name, initial_content)?;
+		let fx_path = fx_file.as_str();
+		let fx_data = r#"
+        {
+            {appended = "yes"},
+            {another = 123}
+        }
+        "#;
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		assert_eq!(lines.len(), 3, "Should have 3 lines (initial + 2 appended)");
+		assert_eq!(lines[0], r#"{"initial": true}"#);
+		assert_eq!(lines[1], r#"{"appended":"yes"}"#);
+		assert_eq!(lines[2], r#"{"another":123}"#);
+
+		// -- Clean
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fx_file)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_lines_empty_list_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fix_file = gen_sandbox_01_temp_file_path("test_lua_file_append_json_lines_empty_list.ndjson");
+		let fx_path = fix_file.as_str();
+		let fx_data = r#"{}"#; // Empty list
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		assert_eq!(content, "", "File should be empty");
+
+		// -- Clean
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fix_file)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_lines_buffering_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fix_file = gen_sandbox_01_temp_file_path("test_lua_file_append_json_lines_buffering.ndjson");
+		let fx_path = fix_file.as_str();
+		// Create data larger than buffer size
+		let mut lua_list = String::from("{");
+		for i in 0..(JSON_LINES_BUFFER_SIZE + 5) {
+			lua_list.push_str(&format!(r#"{{idx = {}, name = "name-{}""#, i, i));
+			// Add a nil value occasionally to test handling
+			if i % 10 == 0 {
+				lua_list.push_str(", optional = nil");
+			}
+			lua_list.push_str("},");
+		}
+		lua_list.push('}');
+
+		// -- Exec
+		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {lua_list})"#), None).await?;
+
+		// -- Check
+		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let content = read_to_string(&full_path)?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		assert_eq!(
+			lines.len(),
+			JSON_LINES_BUFFER_SIZE + 5,
+			"Should have correct number of lines"
+		);
+		// Check first and last lines as a sample
+		assert_eq!(lines[0], r#"{"idx":0,"name":"name-0"}"#); // optional = nil omitted
+		assert_eq!(
+			lines.last().unwrap(),
+			&format!(
+				r#"{{"idx":{},"name":"name-{}"}}"#,
+				JSON_LINES_BUFFER_SIZE + 4,
+				JSON_LINES_BUFFER_SIZE + 4
+			)
+		);
+
+		// -- Clean
+		// comment out cleanup for inspection
+		// clean_sanbox_01_tmp_file(fix_file)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_append_json_lines_err_not_a_table() -> Result<()> {
+		// -- Setup & Fixtures
+		let fix_file = gen_sandbox_01_temp_file_path("test_lua_file_append_json_lines_err_not_table.ndjson");
+		let fx_path = fix_file.as_str();
+		let fx_data = r#""just a string""#; // Not a table
+
+		// -- Exec
+		let result =
+			run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await;
+
+		// -- Check
+		let Err(err) = result else {
+			panic!("Should have returned an error");
+		};
+		assert_contains(
+			&err.to_string(),
+			"aip.file.append_json_lines - Expected a Lua table (list)",
+		);
+		assert_contains(&err.to_string(), "but got string");
+
+		// -- Clean
+		// File might have been created, attempt cleanup
+		let _ = clean_sanbox_01_tmp_file(fix_file);
+
+		Ok(())
+	}
+
+	// endregion: --- append_json_lines Tests
 }
 
 // endregion: --- Tests
