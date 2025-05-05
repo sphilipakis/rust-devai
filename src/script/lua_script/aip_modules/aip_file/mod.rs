@@ -1,6 +1,7 @@
 // region:    --- Modules
 
 mod file_common;
+mod file_json; // Added new module
 mod file_md;
 mod support;
 
@@ -9,6 +10,7 @@ use crate::runtime::Runtime;
 use crate::script::lua_script::aip_file::file_common::{
 	EnsureExistsOptions, file_append, file_ensure_exists, file_first, file_list, file_list_load, file_load, file_save,
 };
+use crate::script::lua_script::aip_file::file_json::file_load_json; // Added import
 use crate::script::lua_script::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
 use mlua::{Lua, Table, Value};
 
@@ -33,7 +35,6 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		lua.create_function(move |lua, (path, content): (String, String)| file_append(lua, &rt, path, content))?;
 
 	// -- ensure_exists
-	// (md_content, lang_name): (String, Option<String>)
 	let rt = runtime.clone();
 	let file_ensure_exists_fn = lua.create_function(
 		move |lua, (path, content, options): (String, Option<String>, Option<EnsureExistsOptions>)| {
@@ -57,6 +58,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_first_fn =
 		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_first(lua, &rt, globs, options))?;
 
+	// -- load_json - Added function
+	let rt = runtime.clone();
+	let file_load_json_fn =
+		lua.create_function(move |lua, (path,): (String,)| file_load_json(lua, &rt, path))?;
+
 	// -- load_md_sections
 	let rt = runtime.clone();
 	let file_load_md_sections_fn = lua.create_function(move |lua, (path, headings): (String, Option<Value>)| {
@@ -68,7 +74,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_load_md_split_first_fn =
 		lua.create_function(move |lua, (path,): (String,)| file_load_md_split_first(lua, &rt, path))?;
 
-	// -- All all function to the module
+	// -- Add all functions to the module
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
 	table.set("append", file_append_fn)?;
@@ -76,8 +82,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("list", file_list_fn)?;
 	table.set("list_load", file_list_load_fn)?;
 	table.set("first", file_first_fn)?;
+	table.set("load_json", file_load_json_fn)?; // Added function binding
 	table.set("load_md_sections", file_load_md_sections_fn)?;
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
 
 	Ok(table)
 }
+
