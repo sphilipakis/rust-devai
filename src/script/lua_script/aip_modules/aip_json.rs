@@ -13,6 +13,7 @@
 //! - `aip.json.stringify_to_line(content: table) -> string` (alias for `stringify`)
 
 use crate::runtime::Runtime;
+use crate::script::lua_value_to_serde_value;
 use crate::{Error, Result};
 use mlua::{Lua, LuaSerdeExt, Table, Value};
 
@@ -107,12 +108,10 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// }
 /// ```
 fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
-	match serde_json::to_value(content) {
-		Ok(val) => match serde_json::to_string(&val) {
-			Ok(str) => Ok(str),
-			Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
-		},
-		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to convert value. {}", err)).into()),
+	let json_value = lua_value_to_serde_value(content)?;
+	match serde_json::to_string(&json_value) {
+		Ok(str) => Ok(str),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
 	}
 }
 
@@ -154,54 +153,11 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 /// }
 /// ```
 fn stringify_pretty(_lua: &Lua, content: Value) -> mlua::Result<String> {
-	match serde_json::to_value(content) {
-		Ok(val) => match serde_json::to_string_pretty(&val) {
-			Ok(str) => Ok(str),
-			Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to stringify. {}", err)).into()),
-		},
-		Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to convert value. {}", err)).into()),
+	let json_value = lua_value_to_serde_value(content)?;
+	match serde_json::to_string_pretty(&json_value) {
+		Ok(str) => Ok(str),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to stringify. {}", err)).into()),
 	}
-}
-
-/// ## Lua Documentation
-///
-/// Stringify a table into a single line JSON string. (Alias for `aip.json.stringify`)
-///
-/// Good for newline json. Kept for backward compatibility.
-///
-/// ```lua
-/// -- API Signature
-/// aip.json.stringify_to_line(content: table): string
-/// ```
-///
-/// Convert a table into a single line JSON string.
-///
-/// ### Example
-///
-/// ```lua
-/// local obj = {
-///     name = "John",
-///     age = 30
-/// }
-/// local json_str = aip.json.stringify_to_line(obj)
-/// -- Result will be:
-/// -- {"name":"John","age":30}
-/// ```
-///
-/// ### Returns
-///
-/// Returns a single line JSON string.
-///
-/// ### Error
-///
-/// ```ts
-/// {
-///   error: string  // Error message from JSON stringification
-/// }
-/// ```
-#[allow(dead_code)] // NOTE: This function is technically not called directly in rust, but exposed to lua via `init_module`
-fn stringify_to_line(lua: &Lua, content: Value) -> mlua::Result<String> {
-	stringify(lua, content)
 }
 
 // region:    --- Tests
@@ -368,4 +324,3 @@ mod tests {
 }
 
 // endregion: --- Tests
-

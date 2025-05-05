@@ -2,7 +2,8 @@ use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::Literals;
 use crate::runtime::Runtime;
-use crate::script::lua_script::helpers::{process_lua_eval_result, serde_value_to_lua_value};
+use crate::script::lua_script::helpers::process_lua_eval_result;
+use crate::script::serde_value_to_lua_value;
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
