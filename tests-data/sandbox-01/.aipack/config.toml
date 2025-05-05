@@ -8,7 +8,7 @@
 #            Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
 #          OpenAI: "o3-mini", "o3-mini-high", "o3-mini-low", "gpt-4o", "gpt-4o-mini"
 #        DeepSeek: "deepseek-chat" "deepseek-reasoner" (from deepseek.com)
-model = "gpt-4o-mini"
+model = "gemini-2.0-flash"
 
 # Temperature (by default unset)
 # temperature = 0.0
