@@ -163,8 +163,7 @@ return aip.html.to_md(html_content)
 		let res = eval_lua(&lua, fx_script)?;
 
 		// -- Check
-		let md_content = res.as_str().unwrap();
-		println!("->>\n{md_content}");
+		let md_content = res.as_str().ok_or("Result should be string")?;
 		let expected_md = "# Title\n\nSome **bold** text.\n\n-   Item 1\n-   Item 2";
 		assert_eq!(md_content, expected_md);
 		Ok(())

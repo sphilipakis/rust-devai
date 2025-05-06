@@ -1,6 +1,6 @@
 use super::path_consts::PACK_INSTALLED;
 use super::path_consts::{CONFIG_FILE_NAME, PACK_CUSTOM};
-use crate::dir_context::path_consts::PACK_DOWNLOAD;
+use crate::dir_context::path_consts::{AIPACK_DIR_NAME, PACK_DOWNLOAD};
 use crate::dir_context::{AipackBaseDir, AipackWksDir};
 use crate::support::files::current_dir;
 use crate::{Error, Result};
@@ -252,14 +252,16 @@ pub fn find_wks_dir(from_dir: SPath) -> Result<Option<SPath>> {
 	let mut current_dir: Option<SPath> = Some(from_dir);
 
 	while let Some(parent_dir) = current_dir {
-		// Try to create AipackPaths based on this parent directory.
-		// This will succeed even if .aipack doesn't exist, but aipack_wks_dir will be None.
-		if let Ok(aipack_paths) = AipackPaths::from_wks_dir(&parent_dir) {
+		if parent_dir.join(AIPACK_DIR_NAME).is_dir() {
+			// Try to create AipackPaths based on this parent directory.
+			// This will succeed even if .aipack doesn't exist, but aipack_wks_dir will be None.
+			let aipack_paths = AipackPaths::from_wks_dir(&parent_dir)?;
 			// Check if the .aipack directory was found for this path.
 			if aipack_paths.aipack_wks_dir().is_some() {
 				return Ok(Some(parent_dir));
 			}
 		}
+
 		// If AipackPaths::from_wks_dir failed (e.g., path doesn't exist, canonicalization issue),
 		// or if .aipack wasn't found, proceed to the parent.
 
