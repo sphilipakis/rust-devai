@@ -3,18 +3,18 @@
 /// Represents a segment of text identified by start and end tags,
 /// potentially including parameters in the start marker.
 ///
-/// Lifetimes ensure that all string slices (`tag_name`, `params`, `content`)
+/// Lifetimes ensure that all string slices (`tag_name`, `attrs_raw`, `content`)
 /// are valid references to the original input string slice provided
 /// to the `TagIterator`.
 #[derive(Debug, PartialEq)]
-pub struct TaggedContent<'a> {
+pub struct TagContent<'a> {
 	/// The name of the tag (e.g., "SOME_MARKER").
 	pub tag_name: &'a str,
 
-	/// Optional parameters string found within the opening tag.
+	/// Optional attributes string found within the opening tag.
 	/// (e.g., `file_path="some/path/file.txt" other="123"`)
 	/// This includes the raw string between the tag name and the closing '>'.
-	pub params: Option<&'a str>,
+	pub attrs_raw: Option<&'a str>,
 
 	/// The content string between the opening and closing tags.
 	pub content: &'a str,
@@ -29,7 +29,7 @@ pub struct TaggedContent<'a> {
 /// An iterator that finds and extracts `TaggedContent` sections from a string slice.
 ///
 /// It searches for pairs of `<TAG_NAME...>` and `</TAG_NAME>` tags.
-pub struct TagBlockIterator<'a> {
+pub struct TagContentIterator<'a> {
 	input: &'a str,
 	tag_name: &'a str,
 	current_pos: usize,
@@ -38,7 +38,7 @@ pub struct TagBlockIterator<'a> {
 	end_tag: String,
 }
 
-impl<'a> TagBlockIterator<'a> {
+impl<'a> TagContentIterator<'a> {
 	/// Creates a new `TagIterator` for the given input string and tag name.
 	///
 	/// # Arguments
@@ -47,7 +47,7 @@ impl<'a> TagBlockIterator<'a> {
 	/// * `tag_name` - The name of the tag to search for (e.g., "SOME_MARKER").
 	#[allow(unused)]
 	pub fn new(input: &'a str, tag_name: &'a str) -> Self {
-		TagBlockIterator {
+		TagContentIterator {
 			input,
 			tag_name,
 			current_pos: 0,
@@ -57,8 +57,8 @@ impl<'a> TagBlockIterator<'a> {
 	}
 }
 
-impl<'a> Iterator for TagBlockIterator<'a> {
-	type Item = TaggedContent<'a>;
+impl<'a> Iterator for TagContentIterator<'a> {
+	type Item = TagContent<'a>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		while self.current_pos < self.input.len() {
@@ -93,8 +93,12 @@ impl<'a> Iterator for TagBlockIterator<'a> {
 			let open_tag_end_idx = self.current_pos + open_tag_end_offset;
 
 			// --- Extract Parameters ---
-			let params_str = &self.input[after_prefix_idx..open_tag_end_idx].trim();
-			let params = if params_str.is_empty() { None } else { Some(*params_str) }; // Make sure to do `*` to have a one &
+			let attrs_raw_str = &self.input[after_prefix_idx..open_tag_end_idx].trim();
+			let attrs_raw = if attrs_raw_str.is_empty() {
+				None
+			} else {
+				Some(*attrs_raw_str)
+			}; // Make sure to do `*` to have a one &
 
 			// --- Find the closing tag ---
 			let search_after_open_tag_idx = open_tag_end_idx + 1;
@@ -119,9 +123,9 @@ impl<'a> Iterator for TagBlockIterator<'a> {
 			self.current_pos = end_idx + 1;
 
 			// --- Return the found item ---
-			return Some(TaggedContent {
+			return Some(TagContent {
 				tag_name: self.tag_name,
-				params,
+				attrs_raw,
 				content,
 				start_idx,
 				end_idx,
@@ -147,15 +151,15 @@ mod tests {
 		let tag_name = "DATA";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 1);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "DATA",
-				params: None,
+				attrs_raw: None,
 				content: "content",
 				start_idx: 10,
 				end_idx: 29,
@@ -166,21 +170,21 @@ mod tests {
 	}
 
 	#[test]
-	fn test_support_text_tag_params() -> Result<()> {
+	fn test_support_text_tag_attrs() -> Result<()> {
 		// -- Setup & Fixtures
 		let text = r#"Before <FILE path="a/b.txt" id=123>File Content</FILE> After"#;
 		let tag_name = "FILE";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 1);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "FILE",
-				params: Some(r#"path="a/b.txt" id=123"#),
+				attrs_raw: Some(r#"path="a/b.txt" id=123"#),
 				content: "File Content",
 				start_idx: 7,
 				end_idx: 53,
@@ -191,21 +195,21 @@ mod tests {
 	}
 
 	#[test]
-	fn test_support_text_tag_params_with_newline() -> Result<()> {
+	fn test_support_text_tag_attrs_with_newline() -> Result<()> {
 		// -- Setup & Fixtures
 		let text = "Before <FILE \npath=\"a/b.txt\"\n id=123>File Content</FILE> After";
 		let tag_name = "FILE";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 1);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "FILE",
-				params: Some("path=\"a/b.txt\"\n id=123"), // Note: .trim() removes leading/trailing whitespace only
+				attrs_raw: Some("path=\"a/b.txt\"\n id=123"), // Note: .trim() removes leading/trailing whitespace only
 				content: "File Content",
 				start_idx: 7,
 				end_idx: 55,
@@ -222,15 +226,15 @@ mod tests {
 		let tag_name = "ITEM";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 2);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "ITEM",
-				params: None,
+				attrs_raw: None,
 				content: "one",
 				start_idx: 6,
 				end_idx: 21,
@@ -238,9 +242,9 @@ mod tests {
 		);
 		assert_eq!(
 			tags[1],
-			TaggedContent {
+			TagContent {
 				tag_name: "ITEM",
-				params: Some("key=val"),
+				attrs_raw: Some("key=val"),
 				content: "two",
 				start_idx: 24, // Corrected from 23 based on error
 				end_idx: 47,   // Corrected from 45 based on error
@@ -257,7 +261,7 @@ mod tests {
 		let tag_name = "MARKER";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert!(tags.is_empty());
@@ -272,15 +276,15 @@ mod tests {
 		let tag_name = "EMPTY";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 1);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "EMPTY",
-				params: None,
+				attrs_raw: None,
 				content: "",
 				start_idx: 0,
 				end_idx: 14,
@@ -298,14 +302,14 @@ mod tests {
 		let tag_name_inner = "INNER";
 
 		// -- Exec Outer
-		let tags_outer: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name_outer).collect();
+		let tags_outer: Vec<TagContent> = TagContentIterator::new(text, tag_name_outer).collect();
 		// -- Check Outer
 		assert_eq!(tags_outer.len(), 1);
 		assert_eq!(
 			tags_outer[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "OUTER",
-				params: None,
+				attrs_raw: None,
 				content: "outer <INNER>inner</INNER> outer",
 				start_idx: 0,
 				end_idx: 46,
@@ -313,14 +317,14 @@ mod tests {
 		);
 
 		// -- Exec Inner
-		let tags_inner: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name_inner).collect();
+		let tags_inner: Vec<TagContent> = TagContentIterator::new(text, tag_name_inner).collect();
 		// -- Check Inner
 		assert_eq!(tags_inner.len(), 1);
 		assert_eq!(
 			tags_inner[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "INNER",
-				params: None,
+				attrs_raw: None,
 				content: "inner",
 				start_idx: 13,
 				end_idx: 32,
@@ -337,7 +341,7 @@ mod tests {
 		let tag_name = "MARKER";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		// The current implementation stops if '>' isn't found for the opening tag.
@@ -353,7 +357,7 @@ mod tests {
 		let tag_name = "MARKER";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		// The current implementation stops if the closing tag isn't found.
@@ -370,14 +374,14 @@ mod tests {
 		let tag_name_end = "END";
 
 		// -- Exec Start
-		let tags_start: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name_start).collect();
+		let tags_start: Vec<TagContent> = TagContentIterator::new(text, tag_name_start).collect();
 		// -- Check Start
 		assert_eq!(tags_start.len(), 1);
 		assert_eq!(
 			tags_start[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "START",
-				params: None,
+				attrs_raw: None,
 				content: "at start",
 				start_idx: 0,
 				end_idx: 22,
@@ -385,14 +389,14 @@ mod tests {
 		);
 
 		// -- Exec End
-		let tags_end: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name_end).collect();
+		let tags_end: Vec<TagContent> = TagContentIterator::new(text, tag_name_end).collect();
 		// -- Check End
 		assert_eq!(tags_end.len(), 1);
 		assert_eq!(
 			tags_end[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "END",
-				params: None,
+				attrs_raw: None,
 				content: "at end",
 				start_idx: 29,
 				end_idx: 45, // Corrected from 46 based on error
@@ -409,7 +413,7 @@ mod tests {
 		let tag_name = "MARKER"; // Searching for MARKER, not MARKERX
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert!(tags.is_empty());
@@ -424,15 +428,15 @@ mod tests {
 		let tag_name = "TAG";
 
 		// -- Exec
-		let tags: Vec<TaggedContent> = TagBlockIterator::new(text, tag_name).collect();
+		let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
 
 		// -- Check
 		assert_eq!(tags.len(), 1);
 		assert_eq!(
 			tags[0],
-			TaggedContent {
+			TagContent {
 				tag_name: "TAG",
-				params: None,
+				attrs_raw: None,
 				content: "real",
 				start_idx: 28,
 				end_idx: 42,
