@@ -1733,15 +1733,15 @@ Returns an error (Lua table `{ error: string }`) if pruning fails.
 Functions for processing HTML content.
 
 **Functions:**
-- `aip.html.prune_to_content(html_content: string): string | {error: string}`
+- `aip.html.slim(html_content: string): string | {error: string}`
 
-### aip.html.prune_to_content
+### aip.html.slim
 
 Strips non-content elements and most attributes from HTML.
 
 ```lua
 -- API Signature
-aip.html.prune_to_content(html_content: string): string | {error: string}
+aip.html.slim(html_content: string): string | {error: string}
 ```
 
 Removes `<script>`, `<link>`, `<style>`, `<svg>`, comments, empty lines, and most attributes (keeps `class`, `aria-label`, `href`).
@@ -1756,7 +1756,7 @@ Removes `<script>`, `<link>`, `<style>`, `<svg>`, comments, empty lines, and mos
 #### Example
 ```lua
 local html = "<script>alert('hi')</script><p class='c' style='color:red'>Hello</p>"
-local cleaned = aip.html.prune_to_content(html)
+local cleaned = aip.html.slim(html)
 -- cleaned might be: "<p class=\"c\">Hello</p>" (exact output may vary)
 ```
 

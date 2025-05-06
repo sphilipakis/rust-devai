@@ -8,17 +8,19 @@
 //!
 //! ### Functions
 //!
-//! - `aip.html.prune_to_content(html_content: string) -> string`
+//! - `aip.html.slim(html_content: string) -> string`
 
-use crate::Result;
 use crate::runtime::Runtime;
-use crate::support::html::slim;
+use crate::{Result, support};
 use mlua::{Lua, Table};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
-	let prune_fn = lua.create_function(prune_to_content_lua)?;
+	let prune_fn = lua.create_function(html_slim)?;
+	table.set("slim", prune_fn.clone())?;
+
+	// deprecated (TODO: need to send a deprecation notice once we have the deprecation)
 	table.set("prune_to_content", prune_fn)?;
 
 	Ok(table)
@@ -36,7 +38,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.html.prune_to_content(html_content: string): string
+/// aip.html.slim(html_content: string): string
 /// ```
 ///
 /// ### Arguments
@@ -50,7 +52,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// ### Example
 ///
 /// ```lua
-/// local cleaned_html = aip.html.prune_to_content(html_content)
+/// local cleaned_html = aip.html.slim(html_content)
 /// ```
 ///
 /// ### Error
@@ -62,8 +64,9 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///   error: string // Error message
 /// }
 /// ```
-fn prune_to_content_lua(_lua: &Lua, html_content: String) -> mlua::Result<String> {
-	slim(html_content).map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
+fn html_slim(_lua: &Lua, html_content: String) -> mlua::Result<String> {
+	support::html::slim(html_content)
+		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
 }
 
 // region:    --- Tests
@@ -75,7 +78,7 @@ mod tests {
 	use crate::script::lua_script::aip_html;
 
 	#[tokio::test]
-	async fn test_lua_html_prune_to_content_ok() -> Result<()> {
+	async fn test_lua_html_slim_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_html::init_module, "html")?;
 		let fx_script = r#"
@@ -92,7 +95,7 @@ local html_content = [[
 </body>
 </html>
 ]]
-return aip.html.prune_to_content(html_content)
+return aip.html.slim(html_content)
         "#;
 		// -- Exec
 		let res = eval_lua(&lua, fx_script)?;
