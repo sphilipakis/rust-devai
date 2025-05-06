@@ -111,6 +111,79 @@ pub fn ensure_single_ending_newline(mut text: String) -> String {
 
 // region:    --- Replace
 
+/// Replaces content sections delimited by specific start and end markers.
+///
+/// This function iterates through the input `content` line by line. It identifies
+/// lines containing the `marker_start` and `marker_end`.
+///
+/// The line containing the `marker_start` and all subsequent lines up to and
+/// including the line containing the corresponding `marker_end` are removed.
+/// The line that contained the `marker_end` is then replaced by the
+/// corresponding element from the `sections` slice.
+///
+/// # Arguments
+///
+/// * `content`: The input string content to process.
+/// * `sections`: A slice of string slices (`&[&str]`) where each element is
+///   the content to be inserted into a marker-delimited section in the output.
+///   The number of elements in `sections` must match the number of marker pairs
+///   found in the `content`.
+/// * `marker_pair`: A tuple containing the start marker string slice (`&str`)
+///   and the end marker string slice (`&str`).
+///
+/// # Errors
+///
+/// Returns an `Err` if:
+///
+/// * A start marker is found when already inside a section (i.e., an unclosed
+///   section).
+/// * An end marker is found when not currently inside a section (i.e., no
+///   matching start marker).
+/// * The number of end markers found does not match the number of sections
+///   provided in the `sections` slice.
+///
+/// # Returns
+///
+/// Returns `Ok(String)` containing the new content with sections replaced,
+/// or an `Err` if any of the error conditions are met.
+///
+/// # Example
+///
+/// ```rust
+/// # use crate::aipack::support::text::text_common::replace_markers;
+/// # type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+/// # fn main() -> Result<()> {
+/// let markers = &("<<START>>", "<<END>>");
+/// let content = r#"
+/// Before section 1
+/// // <<START>> some comment
+/// Content to be replaced 1
+/// // <<END>> some other comment
+/// Between sections
+///    <<START>>
+/// Content to be replaced 2
+///    <<END>>  trailing whitespace
+/// After section 2
+/// "#;
+/// let sections = &["NEW SECTION 1", "NEW SECTION 2"];
+///
+/// let new_content = replace_markers(content, sections, markers)?;
+///
+/// assert!(!new_content.contains("Content to be replaced 1"));
+/// assert!(!new_content.contains("Content to be replaced 2"));
+/// assert!(new_content.contains("NEW SECTION 1"));
+/// assert!(new_content.contains("NEW SECTION 2"));
+/// // The lines containing markers are replaced entirely, including comments and whitespace.
+/// assert!(!new_content.contains("// <<START>>"));
+/// assert!(!new_content.contains("// <<END>>"));
+/// assert!(!new_content.contains(" some comment"));
+/// assert!(!new_content.contains(" some other comment"));
+/// assert!(!new_content.contains("    <<START>>"));
+/// assert!(!new_content.contains("    <<END>>"));
+/// assert!(!new_content.contains(" trailing whitespace"));
+/// # Ok(())
+/// # }
+/// ```
 pub fn replace_markers(content: &str, sections: &[&str], marker_pair: &(&str, &str)) -> Result<String> {
 	let lines = content.lines();
 	let mut section_iter = sections.iter();
@@ -158,20 +231,25 @@ pub fn replace_markers(content: &str, sections: &[&str], marker_pair: &(&str, &s
 
 		// -- add to new_content
 		match state {
-			State::StartMakerLine => (),
-			State::InSection => (),
+			State::StartMakerLine => (), // Skip the start marker line
+			State::InSection => (),      // Skip lines within the section
 			State::EndMarkerLine => {
+				// Replace the end marker line with the section content
 				let section = section_iter.next().ok_or("replace_markers - Not enough matching sections")?;
 				new_content.push(section);
 			}
-			State::OutSection => new_content.push(line),
+			State::OutSection => new_content.push(line), // Keep lines outside sections
 		}
 	}
 
-	// make sure to add a new empty line
+	// make sure to add a new empty line if original ended with one
 	let original_end_with_newline = content.as_bytes().last().map(|&b| b == b'\n').unwrap_or_default();
 	if original_end_with_newline {
 		new_content.push(""); // to have the last empty line on join("\n")
+	}
+
+	if section_iter.next().is_some() {
+		return Err("replace_markers - Not all sections have been used".to_string().into());
 	}
 
 	Ok(new_content.join("\n"))
@@ -230,6 +308,12 @@ And more content-03
 		assert_not_contains(&new_content, "<<END>>");
 		assert_not_contains(&new_content, "inst-01");
 		assert_not_contains(&new_content, "inst-02");
+
+		// Check that the lines with markers were replaced entirely
+		assert_not_contains(&new_content, "// <<START>>");
+		assert_not_contains(&new_content, "// <<END>>");
+		assert_not_contains(&new_content, "<<START>>\n"); // Ensure standalone start marker line is gone
+		assert_not_contains(&new_content, "<<END>>\t\n"); // Ensure standalone end marker line is gone (including trailing whitespace)
 
 		Ok(())
 	}
