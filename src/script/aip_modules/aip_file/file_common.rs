@@ -341,10 +341,10 @@ pub(super) fn file_ensure_exists(
 	// if we have the options.content_when_empty flag, if empty
 	else if options.content_when_empty && files::is_file_empty(&full_path)? {
 		let content = content.unwrap_or_default();
-		write(full_path, content)?;
+		write(&full_path, content)?;
 	}
 
-	let file_meta = FileMeta::new(rel_path, true);
+	let file_meta = FileMeta::new(rel_path, &full_path);
 
 	file_meta.into_lua(lua)
 }
@@ -654,6 +654,8 @@ pub(super) fn file_first(
 		return Ok(Value::Nil);
 	};
 
+	let absolute_path = SPath::from(&sfile);
+
 	let spath = if absolute {
 		sfile.into()
 	} else {
@@ -662,7 +664,7 @@ pub(super) fn file_first(
 			.map_err(|err| Error::cc("Cannot diff with base_path", err))?
 	};
 
-	let res = FileMeta::new(spath, true).into_lua(lua)?;
+	let res = FileMeta::new(spath, &absolute_path).into_lua(lua)?;
 
 	Ok(res)
 }

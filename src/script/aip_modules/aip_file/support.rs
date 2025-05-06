@@ -5,9 +5,11 @@ use crate::dir_context::resolve_pack_ref_base_path;
 use crate::dir_context::{DirContext, PathResolver};
 use crate::pack::PackRef;
 use crate::script::helpers::{get_value_prop_as_string, to_vec_of_strings};
-use crate::types::FileRecord;
-use mlua::Value;
+use crate::types::{DestOptions, FileRecord}; // Added DestOptions
+use mlua::FromLua as _;
+use mlua::{Lua, Value}; // Added Lua
 use simple_fs::{ListOptions, SPath, list_files};
+use std::path::Path; // Added Path
 use std::str::FromStr;
 
 /// Extracts base directory and glob patterns from options
@@ -263,16 +265,76 @@ pub fn create_file_records(sfiles: Vec<SPath>, base_path: &SPath, absolute: bool
 		.collect()
 }
 
+/// Resolves the destination path based on source path and destination options.
+///
+/// Returns a tuple of `(relative_destination_path, full_destination_path)`.
+pub fn resolve_dest_path(
+	lua: &Lua,
+	dir_context: &DirContext,
+	src_rel_path: &SPath,
+	dest_value: Value,
+	target_ext: &str,
+) -> Result<(SPath, SPath)> {
+	let opts: DestOptions = DestOptions::from_lua(dest_value, lua)
+		.map_err(|e| Error::Custom(format!("Failed to parse destination options. Cause: {}", e)))?;
+
+	let rel_dest_path = match opts {
+		DestOptions::Nil => src_rel_path.clone().ensure_extension(target_ext),
+		DestOptions::Path(p) => p,
+		DestOptions::Custom(c) => {
+			let stem = Path::new(src_rel_path.as_str())
+				.file_stem()
+				.and_then(|s| s.to_str())
+				.unwrap_or("");
+
+			let fname = if let Some(name) = c.file_name {
+				name
+			} else if let Some(suf) = c.suffix {
+				if suf.is_empty() {
+					format!("{}.{}", stem, target_ext)
+				} else {
+					format!("{}{}.{}", stem, suf, target_ext)
+				}
+			} else {
+				format!("{}.{}", stem, target_ext)
+			};
+
+			if let Some(base) = c.base_dir {
+				let b = base.as_str();
+				if b.is_empty() {
+					SPath::new(fname)
+				} else {
+					SPath::new(format!("{}/{}", b, fname))
+				}
+			} else {
+				let dir = Path::new(src_rel_path.as_str()).parent().and_then(|p| p.to_str()).unwrap_or("");
+				if dir.is_empty() {
+					SPath::new(fname)
+				} else {
+					SPath::new(format!("{}/{}", dir, fname))
+				}
+			}
+		}
+	};
+
+	let full_dest_path = dir_context.resolve_path(rel_dest_path.clone(), PathResolver::WksDir)?;
+	Ok((rel_dest_path, full_dest_path))
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::assert_contains;
+	use crate::_test_support::{assert_contains, setup_lua};
 	use crate::runtime::Runtime;
-	use crate::script::aip_modules::aip_file::support::{process_pack_references, process_path_reference};
+	use crate::script::aip_modules::aip_file::support::{
+		process_pack_references, process_path_reference, resolve_dest_path,
+	};
 	use crate::support::AsStrsExt;
+	use mlua::Value;
+	use simple_fs::SPath;
 
 	#[tokio::test]
 	async fn test_lua_file_support_process_pack_references() -> Result<()> {

@@ -19,20 +19,48 @@ pub struct FileMeta {
 	size: Option<i64>, // size in bytes
 }
 
+pub struct WithMeta<'a> {
+	full_path: Option<&'a SPath>,
+	with_meta: bool,
+}
+impl From<bool> for WithMeta<'_> {
+	fn from(with_meta: bool) -> Self {
+		WithMeta {
+			full_path: None,
+			with_meta,
+		}
+	}
+}
+impl<'a> From<&'a SPath> for WithMeta<'a> {
+	fn from(full_path: &'a SPath) -> Self {
+		WithMeta {
+			full_path: Some(full_path),
+			with_meta: true,
+		}
+	}
+}
+
 impl FileMeta {
 	/// - with_meta: when true, will attempt to get the file meta. Will ignore if error
-	pub fn new(path: impl Into<SPath>, with_meta: bool) -> Self {
-		let path: SPath = path.into();
-		let meta = path.meta().ok();
-		let mut res = FileMeta::from(path);
-		if with_meta {
-			if let Some(meta) = meta {
+	/// - `base_path` is only use with_meta true to attempt to get the meta
+	pub fn new<'a>(rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
+		let path: SPath = rel_path.into();
+
+		let with_meta: WithMeta = with_meta.into();
+		if with_meta.with_meta {
+			// let full_path = base_path.map(|bp| bp.join(&path)).unwrap_or_else(|| path.clone());
+			let mut res = FileMeta::from(path.clone());
+			let full_path = with_meta.full_path.unwrap_or(&path);
+
+			if let Ok(meta) = full_path.meta() {
 				res.created_epoch_us = Some(meta.created_epoch_us);
 				res.modified_epoch_us = Some(meta.modified_epoch_us);
 				res.size = Some(meta.size);
 			}
+			res
+		} else {
+			FileMeta::from(path)
 		}
-		res
 	}
 }
 

@@ -28,6 +28,8 @@ pub fn gen_tmp_test_path(path: &str) -> SPath {
 
 /// Generate a temp file for sandbox_01 and
 /// returns path RELATIVE TO TEST_SANDBOX_01_REL_TMP_DIR
+///
+/// OTOD: Probably needs to generate a folder
 pub fn gen_sandbox_01_temp_file_path(name: &str) -> SPath {
 	// Suffi sufficient for test directories
 	let now = OffsetDateTime::now_utc();
@@ -46,6 +48,10 @@ pub fn create_sanbox_01_tmp_file(name: &str, content: &str) -> Result<SPath> {
 	fs::write(&full_path, content)?;
 
 	Ok(file_path)
+}
+
+pub fn resolve_sandbox_01_path(rel: &SPath) -> SPath {
+	SPath::new(SANDBOX_01_DIR).join(rel)
 }
 
 /// Clean a tempa filepath relative to TEST_SANDBOX_01_REL_TMP_DIR
