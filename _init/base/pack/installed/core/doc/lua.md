@@ -68,22 +68,29 @@ For example:
 
 All Lua scripts get the `CTX` table in scope, providing context about the current execution environment.
 
-| Key                            | Example Value                                                      | Description                                                          |
-|--------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
-| CTX.WORKSPACE_DIR              | `/Users/dev/my-project`                                            | Absolute path to the workspace directory (containing `.aipack/`).    |
-| CTX.WORKSPACE_AIPACK_DIR       | `/Users/dev/my-project/.aipack`                                    | Absolute path to the `.aipack/` directory in the workspace.          |
-| CTX.BASE_AIPACK_DIR            | `/Users/dev/.aipack-base`                                          | Absolute path to the user's base AIPACK directory.                   |
-| CTX.AGENT_NAME                 | `coder` or `path/to/my-agent.aip`                                  | The name or path used to invoke the agent.                           |
-| CTX.AGENT_FILE_PATH            | `/Users/home/john/.aipack-base/pack/installed/pro/coder/agent.aip` | Absolute path to the resolved agent `.aip` file.                     |
-| CTX.AGENT_FILE_DIR             | `/Users/home/john/.aipack-base/pack/installed/pro/coder`           | Absolute path to the directory containing the agent file.            |
-| CTX.AGENT_FILE_NAME            | `agent.aip`                                                        | The base name of the agent file.                                     |
-| CTX.AGENT_FILE_STEM            | `agent`                                                            | The base name of the agent file without extension.                   |
-| CTX.PACK_NAMESPACE             | `core` (if invoked via `pro@coder`)                                | Namespace of the pack (nil if not run via pack reference).           |
-| CTX.PACK_NAME                  | `pro/coder` (if invoked via `pro@coder`)                           | Name of the pack (nil if not run via pack reference).                |
-| CTX.PACK_REF                   | `pro@coder` (if invoked via `pro@coder`)                           | Full pack reference used (nil if not run via pack reference).        |
-| CTX.PACK_IDENTITY              | `pro@coder`                                                        | Pack identity (namespace@name) (nil if not run via pack ref).        |
-| CTX.PACK_WORKSPACE_SUPPORT_DIR | `/Users/dev/my-project/.aipack/support/pack/pro/coder`             | Workspace-specific support directory for this agent (if applicable). |
-| CTX.PACK_BASE_SUPPORT_DIR      | `/Users/home/john/.aipack-base/support/pack/pro/coder`             | Base support directory for this agent (if applicable).               |
+| Key                      | Example Value                                                            | Description                                                       |
+|--------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------|
+| CTX.WORKSPACE_DIR        | `/Users/dev/my-project`                                                  | Absolute path to the workspace directory (containing `.aipack/`). |
+| CTX.WORKSPACE_AIPACK_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
+| CTX.BASE_AIPACK_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPACK directory.                |
+| CTX.AGENT_NAME           | `my_pack/my-agent` or `path/to/my-agent.aip`                             | The name or path used to invoke the agent.                        |
+| CTX.AGENT_FILE_PATH      | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack/my-agent.aip` | Absolute path to the resolved agent `.aip` file.                  |
+| CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |
+| CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
+| CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
+
+When running a pack. (when no packs, those will be all nil)
+
+For `aip run acme@my_pack/my-agent`
+
+| Key                            | Example Value                                             | Description                                                                       |
+|--------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------|
+| CTX.PACK_NAMESPACE             | `acme`                                                    | Namespace of the pack (nil if not run via pack reference).                        |
+| CTX.PACK_NAME                  | `my_pack`                                                 | Name of the pack (nil if not run via pack reference).                             |
+| CTX.PACK_REF                   | `acme@my_pack/my-agent`                                   | (Nil if not a pack) Full pack reference used (nil if not run via pack reference). |
+| CTX.PACK_IDENTITY              | `acme@my_pack`                                            | Pack identity (namespace@name) (nil if not run via pack ref).                     |
+| CTX.PACK_WORKSPACE_SUPPORT_DIR | `/Users/dev/my-project/.aipack/support/pack/acme/my_pack` | Workspace-specific support directory for this agent (if applicable).              |
+| CTX.PACK_BASE_SUPPORT_DIR      | `/Users/home/john/.aipack-base/support/pack/acme/my_pack` | Base support directory for this agent (if applicable).                            |
 
 
 - All paths are absolute and normalized for the OS.
