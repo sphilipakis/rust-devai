@@ -21,7 +21,7 @@ use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::script::lua_script::aip_file::support::{
+use crate::script::aip_modules::aip_file::support::{
 	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options, process_path_reference,
 };
 use crate::support::{AsStrsExt, files};
@@ -696,7 +696,7 @@ mod tests {
 
 	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
 	use crate::runtime::Runtime;
-	use crate::script::lua_script::aip_file;
+	use crate::script::aip_modules::aip_file;
 	use serde_json::Value;
 	use simple_fs::SPath;
 	use std::collections::HashMap;

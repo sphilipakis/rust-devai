@@ -265,7 +265,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, assert_not_contains, eval_lua, setup_lua};
-	use crate::script::lua_script::aip_modules;
+	use crate::script::aip_modules;
 	use serde_json::json;
 	use value_ext::JsonValueExt as _;
 

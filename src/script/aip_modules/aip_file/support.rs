@@ -4,7 +4,7 @@ use crate::dir_context::find_to_run_pack_dir;
 use crate::dir_context::resolve_pack_ref_base_path;
 use crate::dir_context::{DirContext, PathResolver};
 use crate::pack::PackRef;
-use crate::script::lua_script::helpers::{get_value_prop_as_string, to_vec_of_strings};
+use crate::script::helpers::{get_value_prop_as_string, to_vec_of_strings};
 use crate::types::FileRecord;
 use mlua::Value;
 use simple_fs::{ListOptions, SPath, list_files};
@@ -271,7 +271,7 @@ mod tests {
 
 	use crate::_test_support::assert_contains;
 	use crate::runtime::Runtime;
-	use crate::script::lua_script::aip_file::support::{process_pack_references, process_path_reference};
+	use crate::script::aip_modules::aip_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
 
 	#[tokio::test]

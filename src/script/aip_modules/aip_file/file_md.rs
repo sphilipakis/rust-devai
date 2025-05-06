@@ -13,7 +13,7 @@
 
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::lua_script::helpers::to_vec_of_strings;
+use crate::script::helpers::to_vec_of_strings;
 use crate::support::md::MdSectionIter;
 use mlua::{IntoLua, Lua, Value};
 

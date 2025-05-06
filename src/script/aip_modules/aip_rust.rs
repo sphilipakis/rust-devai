@@ -66,7 +66,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
-	use crate::script::lua_script::aip_rust;
+	use crate::script::aip_modules::aip_rust;
 
 	#[tokio::test]
 	async fn test_lua_rust_prune_to_declarations() -> Result<()> {

@@ -27,8 +27,8 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::lua_script::DEFAULT_MARKERS;
-use crate::script::lua_script::helpers::to_vec_of_strings;
+use crate::script::DEFAULT_MARKERS;
+use crate::script::helpers::to_vec_of_strings;
 use crate::support::Extrude;
 use crate::support::html::decode_html_entities;
 use crate::support::text::{self, EnsureOptions, truncate_with_ellipsis};
@@ -626,7 +626,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
-	use crate::script::lua_script::aip_text;
+	use crate::script::aip_modules::aip_text;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]

@@ -12,7 +12,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::lua_script::helpers::to_vec_of_strings;
+use crate::script::helpers::to_vec_of_strings;
 use mlua::{Lua, Table, Value};
 use std::process::Command;
 
@@ -162,7 +162,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
-	use crate::script::lua_script::aip_cmd;
+	use crate::script::aip_modules::aip_cmd;
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
@@ -244,7 +244,6 @@ mod tests {
 		let err_str = err.to_string();
 		assert_contains(&err_str, "Fail to execute: nonexistentcommand");
 		assert_contains(&err_str, "Cause:");
-
 
 		Ok(())
 	}

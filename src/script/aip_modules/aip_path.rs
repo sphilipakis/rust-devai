@@ -590,7 +590,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{eval_lua, setup_lua};
-	use crate::script::lua_script::aip_path;
+	use crate::script::aip_modules::aip_path;
 	use std::path::MAIN_SEPARATOR;
 
 	#[tokio::test]

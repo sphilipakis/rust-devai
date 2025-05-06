@@ -117,7 +117,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use crate::_test_support::{eval_lua, setup_lua};
-	use crate::script::lua_script::aip_html;
+	use crate::script::aip_modules::aip_html;
 
 	#[tokio::test]
 	async fn test_lua_html_slim_ok() -> Result<()> {

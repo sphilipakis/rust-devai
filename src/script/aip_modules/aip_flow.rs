@@ -231,7 +231,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use crate::_test_support::{eval_lua, setup_lua};
-	use crate::script::lua_script::aip_flow;
+	use crate::script::aip_modules::aip_flow;
 	use serde_json::Value;
 	use value_ext::JsonValueExt as _;
 

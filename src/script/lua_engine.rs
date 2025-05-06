@@ -2,8 +2,8 @@ use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::Literals;
 use crate::runtime::Runtime;
-use crate::script::lua_script::helpers::process_lua_eval_result;
-use crate::script::serde_value_to_lua_value;
+use crate::script::helpers::process_lua_eval_result;
+use crate::script::lua_json::serde_value_to_lua_value;
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -168,7 +168,7 @@ macro_rules! init_and_set {
     ($table:expr, $lua:expr, $runtime:expr, $($name:ident),*) => {
         paste::paste! {
             $(
-                let $name = super::[<aip_ $name>]::init_module($lua, $runtime)?;
+                let $name = super::aip_modules::[<aip_ $name>]::init_module($lua, $runtime)?;
                 $table.set(stringify!($name), $name)?;
             )*
         }
