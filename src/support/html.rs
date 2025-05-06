@@ -24,6 +24,21 @@ pub fn slim(html_content: String) -> Result<String> {
 	Ok(res)
 }
 
+/// Convert an html content into markdown using the Rust `htmd` crate (similar to node turndown.js, much less verbose than html2md)
+pub fn to_md(html_content: String) -> Result<String> {
+	let mut options = htmd::options::Options {
+		bullet_list_marker: htmd::options::BulletListMarker::Dash,
+		..Default::default()
+	};
+	let converter = htmd::HtmlToMarkdown::builder().options(options).build();
+
+	let res = converter
+		.convert(&html_content)
+		.map_err(|err| Error::cc("Cannot conver HTML to Markdown", err))?;
+
+	Ok(res)
+}
+
 pub fn decode_html_entities(content: &str) -> String {
 	html_escape::decode_html_entities(content).to_string()
 }
