@@ -1,6 +1,25 @@
 # API Documentation
 
-The `aip` top module is comprised of the following submodules: aip.file, aip.path, aip.text, aip.md, aip.json, aip.web, aip.lua, aip.agent, aip.flow, and aip.cmd.
+The `aip` top module provides a comprehensive set of functions for interacting with files, paths, text, markdown, JSON, web services, Git, code formatting, semantic versioning, Handlebars templating, command execution, and agent control flow within the AIPACK environment.
+
+The available submodules are:
+- [aip.file](#aipfile): File system operations (load, save, list, append, JSON/MD handling).
+- [aip.path](#aippath): Path manipulation and checking (join, split, resolve, exists, diff).
+- [aip.text](#aiptext): Text processing utilities (trim, split, replace, truncate, escape).
+- [aip.md](#aipmd): Markdown processing (extract blocks, extract metadata).
+- [aip.json](#aipjson): JSON parsing and stringification.
+- [aip.web](#aipweb): HTTP requests (GET, POST).
+- [aip.lua](#aiplua): Lua value inspection.
+- [aip.agent](#aipagent): Running other AIPACK agents.
+- [aip.flow](#aipflow): Controlling agent execution flow.
+- [aip.cmd](#aipcmd): Executing system commands.
+- [aip.semver](#aipsemver): Semantic versioning operations.
+- [aip.rust](#aiprust): Rust code specific processing.
+- [aip.html](#aiphtml): HTML processing utilities.
+- [aip.git](#aipgit): Basic Git operations.
+- [aip.hbs](#aiphbs): Handlebars template rendering.
+- [aip.code](#aipcode): Code commenting utilities.
+
 
 > Note: All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
@@ -8,1476 +27,1952 @@ The `aip` top module is comprised of the following submodules: aip.file, aip.pat
 
 ## aip.file
 
-File manipulation functions for loading, saving, and managing files in the workspace.
+File manipulation functions for loading, saving, listing, and managing files and their content, including specialized functions for JSON and Markdown.
 
-```lua
--- Load file text content and return its FileRecord
-local file = aip.file.load("doc/some-file.md")                -- FileRecord
+**Functions:**
+- `aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord`
+- `aip.file.save(rel_path: string, content: string)`
+- `aip.file.append(rel_path: string, content: string)`
+- `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta`
+- `aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileMeta>`
+- `aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>`
+- `aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileMeta | nil`
+- `aip.file.load_json(path: string): table | value`
+- `aip.file.load_ndjson(path: string): list<table>`
+- `aip.file.append_json_line(path: string, data: value)`
+- `aip.file.append_json_lines(path: string, data: list)`
+- `aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>`
+- `aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}`
 
--- Save file content (will create directories as needed)
-aip.file.save("doc/some-file.md", "some new content")         -- void
-
--- Append content to file (create file and directories as needed)
-aip.file.append("doc/some-file.md", "some new content")       -- void
-
--- List files matching a glob pattern
-local all_doc_files = aip.file.list("doc/**/*.md")            -- {FileMeta, ...}
-
--- List files matching a glob pattern and options
-local all_doc_files = aip.file.list("**/*.md", {base_dir = "doc/"})  -- {FileMeta, ...}
-
--- List files and load their content
-local all_files = aip.file.list_load({"doc/**/*.md", "src/**/*.rs"}) -- {FileRecord, ...}
-
--- Get the first file reference matching a glob pattern
-local first_doc_file = aip.file.first("doc/**/*.md")          -- FileMeta | nil
-
--- Ensure a file exists by creating it if not found 
--- Directories do not need to be ensured, they are created automatically on `aip.file.save` or `aip.file.append`
-local file_meta = aip.file.ensure_exists("./some/file.md", "optional content") -- FileMeta
-
--- Load markdown sections from a file
-local sections = aip.file.load_md_sections("doc/readme.md", "# Summary") -- {MdSection, ...}
-```
-
-> Note: All relative paths are relative to the workspace directory, which is the parent directory of the `.aipack/` folder.
+> Note: All relative paths are relative to the workspace directory (parent of `.aipack/`) unless a `base_dir` option is specified. Pack references (e.g., `ns@pack/`) can be used in paths and `base_dir`.
 
 ### aip.file.load
+
+Load a File Record object with its content.
 
 ```lua
 -- API Signature
 aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 ```
 
-Load a File Record object with its content.
+Loads the file specified by `rel_path` and returns a [FileRecord](#filerecord) object containing the file's metadata and its content.
 
-**Arguments**
+#### Arguments
+- `rel_path: string`: The path to the file, relative to the `base_dir` or workspace root.
+- `options?: table`: An optional table containing:
+  - `base_dir: string` (optional): The base directory from which `rel_path` is resolved. Defaults to the workspace root. Pack references (e.g., `ns@pack/`) can be used.
 
-- `rel_path: string`: The relative path to the file.
-- `options?: {base_dir: string}`: Optional table with `base_dir` key to specify the base directory.
+#### Returns
+- `FileRecord: table`: A [FileRecord](#filerecord) table representing the file.
 
-**Returns**
-
-[FileRecord](#filerecord)
-
-```ts
-{
-  path    : string,  // The path to the file
-  content : string,  // The text content of the file
-  name    : string,  // The name of the file
-  stem    : string,  // The stem of the file (name without extension)
-  ext     : string   // The extension of the file
-}
-```
-
-**Example**
-
+#### Example
 ```lua
-local file = aip.file.load("doc/README.md")
--- file.content contains the text content of the file
+local readme = aip.file.load("doc/README.md")
+print(readme.path)    -- Output: "doc/README.md" (relative path used)
+print(#readme.content) -- Output: <length of content>
 ```
 
-**Error**
-
-Returns an error if the file does not exist or cannot be read.
+#### Error
+Returns an error (Lua table `{ error: string }`) if the file cannot be found, read, or metadata retrieved, or if `base_dir` is invalid.
 
 ### aip.file.save
+
+Save string content to a file at the specified path.
 
 ```lua
 -- API Signature
 aip.file.save(rel_path: string, content: string)
 ```
 
-Save a File Content into a path.
+Writes the `content` string to the file specified by `rel_path`. Overwrites existing files. Creates directories as needed. Restricts saving outside the workspace or shared base directory for security.
 
-**Arguments**
+#### Arguments
+- `rel_path: string`: The path relative to the workspace root.
+- `content: string`: The string content to write.
 
-- `rel_path: string`: The relative path to the file.
-- `content: string`: The content to write to the file.
+#### Returns
+Does not return anything upon success.
 
-**Returns**
-
-Does not return anything.
-
-**Example**
-
+#### Example
 ```lua
-aip.file.save("doc/README.md", "Some very cool documentation")
+aip.file.save("docs/new_feature.md", "# New Feature\n\nDetails.")
 ```
 
-**Error**
-
-Returns an error if the file cannot be written, or if trying to save outside of workspace.
+#### Error
+Returns an error (Lua table `{ error: string }`) on write failure, permission issues, path restrictions, or if no workspace context.
 
 ### aip.file.append
+
+Append string content to a file at the specified path.
 
 ```lua
 -- API Signature
 aip.file.append(rel_path: string, content: string)
 ```
 
-Append content to a file at a specified path.
+Appends `content` to the end of the file at `rel_path`. Creates the file and directories if they don't exist.
 
-**Arguments**
+#### Arguments
+- `rel_path: string`: The path relative to the workspace root.
+- `content: string`: The string content to append.
 
-- `rel_path: string`: The relative path to the file.
-- `content: string`: The content to append to the file.
+#### Returns
+Does not return anything upon success.
 
-**Returns**
-
-Does not return anything.
-
-**Example**
-
+#### Example
 ```lua
-aip.file.append("doc/README.md", "Appended content to the file")
+aip.file.append("logs/app.log", "INFO: User logged in.\n")
 ```
 
-**Error**
-
-Returns an error if the file cannot be opened or written to.
+#### Error
+Returns an error (Lua table `{ error: string }`) on write failure, permission issues, or I/O errors.
 
 ### aip.file.ensure_exists
 
-```lua
--- API Signature DO NOT USE
-aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileMeta
-```
-
-Ensure a file exists at the given path, and if not create it with an optional content. However, do not use for directory. 
-
-Directories do not need to be ensured, they are created automatically on `aip.file.save` or `aip.file.append`
-
-**Arguments**
-
-- `path: string`: The relative path to the file.
-- `content?: string`: Optional content to write to the file if it does not exist.
-- `options?: {content_when_empty: boolean}`: Optional flags to set content only if the file is empty.
-
-**Returns**
-
-[FileMeta](#filemeta)
-
-```ts
-{
-  path : string,  // The path to the file
-  name : string,  // The name of the file
-  stem : string,  // The stem of the file (name without extension)
-  ext  : string   // The extension of the file
-}
-```
-
-**Example**
+Ensure a file exists at the given path, optionally creating it or adding content if empty.
 
 ```lua
-local file_meta = aip.file.ensure_exists("doc/README.md", "Initial content")
+-- API Signature
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
 ```
 
-**Error**
+Checks if the file exists. If not, creates it with `content`. If it exists and `options.content_when_empty` is true and the file is empty (or whitespace only), writes `content`. Intended for files, not directories.
 
-Returns an error if the file cannot be created or written to.
+#### Arguments
+- `path: string`: The path relative to the workspace root.
+- `content?: string` (optional): Content to write. Defaults to empty string.
+- `options?: table` (optional):
+  - `content_when_empty?: boolean` (optional): Write content only if file exists and is empty. Defaults to `false`.
+
+#### Returns
+- `FileMeta: table`: Metadata ([FileMeta](#filemeta)) about the file.
+
+#### Example
+```lua
+-- Create config if needed, with default content
+local default_config = "enabled=true"
+local meta = aip.file.ensure_exists("config.txt", default_config)
+
+-- Ensure log file exists, don't overwrite
+aip.file.ensure_exists("logs/activity.log")
+
+-- Add placeholder only if file is currently empty
+aip.file.ensure_exists("src/module.lua", "-- TODO", {content_when_empty = true})
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) on creation/write failure, permission issues, or metadata retrieval failure.
 
 ### aip.file.list
 
+List file metadata (`FileMeta`) matching glob patterns.
+
 ```lua
 -- API Signature
-aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileMeta>
+aip.file.list(
+  include_globs: string | list<string>,
+  options?: {
+    base_dir?: string,
+    absolute?: boolean,
+    with_meta?: boolean
+  }
+): list<FileMeta>
 ```
 
-List a set of file reference (no content) for a given glob.
+Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileMeta](#filemeta) objects (metadata only, no content).
 
-**Arguments**
+#### Arguments
+- `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
+- `options?: table` (optional):
+  - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
+  - `absolute?: boolean` (optional): Return absolute paths. Default `false` (relative to `base_dir`). Paths outside `base_dir` become absolute.
+  - `with_meta?: boolean` (optional): Skip fetching timestamps/size for performance. Default `true`.
 
-- `include_globs: string | list`: A glob pattern or a list of glob patterns to include files.
-- `options?: {base_dir: string, absolute: boolean}`: Optional table with `base_dir` and `absolute` keys.
+#### Returns
+- `list<FileMeta>: table`: A Lua list of [FileMeta](#filemeta) tables. Empty if no matches.
 
-**Returns**
-
-[FileMeta](#filemeta)
-
-```ts
-// An array/table of FileMeta
-{
-  path : string,  // The path to the file
-  name : string,  // The name of the file
-  stem : string,  // The stem of the file (name without extension)
-  ext  : string   // The extension of the file
-}
-```
-
-**Example**
-
+#### Example
 ```lua
-local all_doc_files = aip.file.list("doc/**/*.md", {base_dir = "src"})
+-- List Markdown files in 'docs' (relative paths)
+local doc_files = aip.file.list("*.md", { base_dir = "docs" })
+for _, file in ipairs(doc_files) do print(file.path) end
+
+-- List all '.aip' in a pack (absolute paths, no detailed meta)
+local agent_files = aip.file.list("**/*.aip", {
+  base_dir = "ns@pack/",
+  absolute = true,
+  with_meta = false
+})
+for _, file in ipairs(agent_files) do print(file.path) end
 ```
 
-**Error**
-
-Returns an error if the glob pattern is invalid or the files cannot be listed.
+#### Error
+Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, glob matching error, or metadata retrieval error (if `with_meta=true`).
 
 ### aip.file.list_load
 
-```lua
--- API Signature
-aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>
-```
-
-List a set of file reference for a given glob and load their content.
-
-**Arguments**
-
-- `include_globs: string | list`: A glob pattern or a list of glob patterns to include files.
-- `options?: {base_dir: string, absolute: boolean}`: Optional table with `base_dir` and `absolute` keys.
-
-**Returns**
-
-[FileRecord](#filerecord)
-
-```ts
-// An array/table of FileRecord
-{
-  path    : string,  // The path to the file
-  name    : string,  // The name of the file
-  stem    : string,  // The stem of the file (name without extension)
-  ext     : string,  // The extension of the file
-  content : string   // The content of the file
-}
-```
-
-**Example**
-
-```lua
-local all_doc_files = aip.file.list_load("doc/**/*.md", {base_dir = "src"})
-```
-
-**Error**
-
-Returns an error if the glob pattern is invalid or the files cannot be listed or loaded.
-
-### aip.file.first
+List and load files (`FileRecord`) matching glob patterns.
 
 ```lua
 -- API Signature
-aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileMeta | nil
+aip.file.list_load(
+  include_globs: string | list<string>,
+  options?: {
+    base_dir?: string,
+    absolute?: boolean
+  }
+): list<FileRecord>
 ```
 
-Return the first FileMeta or nil.
+Finds files matching `include_globs`, loads their content, and returns a list of [FileRecord](#filerecord) objects (metadata and content).
 
-**Arguments**
+#### Arguments
+- `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
+- `options?: table` (optional):
+  - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
+  - `absolute?: boolean` (optional): Use absolute paths internally. Default `false`. Actual path in `FileRecord` may vary.
 
-- `include_globs: string | list`: A glob pattern or a list of glob patterns to include files.
-- `options?: {base_dir: string, absolute: boolean}`: Optional table with `base_dir` and `absolute` keys.
+#### Returns
+- `list<FileRecord>: table`: A Lua list of [FileRecord](#filerecord) tables. Empty if no matches.
 
-**Returns**
-
-[FileMeta](#filemeta) or nil
-
-```ts
-// FileMeta or nil
-{
-  path : string,  // The path to the file
-  name : string,  // The name of the file
-  stem : string,  // The stem of the file (name without extension)
-  ext  : string   // The extension of the file
-}
-```
-
-**Example**
-
+#### Example
 ```lua
-local first_doc_file = aip.file.first("doc/**/*.md", {base_dir = "src"})
-if first_doc_file then
-  local file = aip.file.load(first_doc_file.path)
+-- Load all Markdown files in 'docs'
+local doc_files = aip.file.list_load("*.md", { base_dir = "docs" })
+for _, file in ipairs(doc_files) do
+  print("--- File:", file.path, "---")
+  print(file.content)
 end
 ```
 
-**Error**
+#### Error
+Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, glob matching error, or file read/metadata error.
 
-Returns an error if the glob pattern is invalid or the files cannot be listed.
+### aip.file.first
+
+Find the first file matching glob patterns and return its metadata (`FileMeta`).
+
+```lua
+-- API Signature
+aip.file.first(
+  include_globs: string | list<string>,
+  options?: {
+    base_dir?: string,
+    absolute?: boolean
+  }
+): FileMeta | nil
+```
+
+Searches for files matching `include_globs`, stops at the first match, and returns its [FileMeta](#filemeta) object (metadata only). Returns `nil` if no match.
+
+#### Arguments
+- `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
+- `options?: table` (optional):
+  - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
+  - `absolute?: boolean` (optional): Return absolute path. Default `false` (relative to `base_dir`). Paths outside `base_dir` become absolute.
+
+#### Returns
+- `FileMeta: table | nil`: The [FileMeta](#filemeta) table for the first match, or `nil`.
+
+#### Example
+```lua
+-- Find the first '.aip' file in a pack
+local agent_meta = aip.file.first("*.aip", { base_dir = "ns@pack/" })
+if agent_meta then
+  print("Found agent:", agent_meta.path)
+  -- Load content if needed:
+  -- local agent_file = aip.file.load(agent_meta.path, { base_dir = "ns@pack/" })
+else
+  print("No agent file found in pack.")
+end
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, error during search *before* first match, or metadata retrieval error for the first match.
+
+### aip.file.load_json
+
+Load a file, parse its content as JSON, and return the corresponding Lua value.
+
+```lua
+-- API Signature
+aip.file.load_json(path: string): table | value
+```
+
+Loads the file at `path` (relative to workspace), parses it as JSON, and converts it to a Lua value.
+
+#### Arguments
+- `path: string`: Path to the JSON file, relative to workspace root.
+
+#### Returns
+- `table | value`: Lua value representing the parsed JSON.
+
+#### Example
+```lua
+-- Assuming 'config.json' contains {"port": 8080, "enabled": true}
+local config = aip.file.load_json("config.json")
+print(config.port) -- Output: 8080
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if file not found/read, content is invalid JSON, or conversion fails.
+
+### aip.file.load_ndjson
+
+Load a file containing newline-delimited JSON (NDJSON), parse each line, and return a Lua list (table) of the results.
+
+```lua
+-- API Signature
+aip.file.load_ndjson(path: string): list<table>
+```
+
+Loads the file at `path` (relative to workspace), parses each non-empty line as JSON, and returns a Lua list of the parsed values. Empty lines are skipped.
+
+#### Arguments
+- `path: string`: Path to the NDJSON file, relative to workspace root.
+
+#### Returns
+- `list: table`: Lua list containing parsed values from each line.
+
+#### Example
+```lua
+-- Assuming 'logs.ndjson' contains:
+-- {"level": "info", "msg": "Started"}
+-- {"level": "warn", "msg": "Low space"}
+local logs = aip.file.load_ndjson("logs.ndjson")
+print(#logs) -- Output: 2
+print(logs[1].msg) -- Output: Started
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if file not found/read, any line has invalid JSON, or conversion fails.
+
+### aip.file.append_json_line
+
+Convert a Lua value to a JSON string and append it as a new line to a file.
+
+```lua
+-- API Signature
+aip.file.append_json_line(path: string, data: value)
+```
+
+Converts `data` to JSON and appends it, followed by a newline (`\n`), to the file at `path` (relative to workspace). Creates file/directories if needed.
+
+#### Arguments
+- `path: string`: Path to the target file, relative to workspace root.
+- `data: value`: Lua data (table, string, number, boolean, nil) to append.
+
+#### Returns
+Does not return anything upon success.
+
+#### Example
+```lua
+aip.file.append_json_line("output.ndjson", {user = "test", score = 100})
+-- Appends '{"score":100,"user":"test"}\n' to output.ndjson
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) on conversion/serialization failure, directory creation failure, or file write/permission error.
+
+### aip.file.append_json_lines
+
+Convert a Lua list (table) of values to JSON strings and append them as new lines to a file.
+
+```lua
+-- API Signature
+aip.file.append_json_lines(path: string, data: list)
+```
+
+Iterates through the `data` list, converts each element to JSON, and appends it followed by a newline (`\n`) to the file at `path` (relative to workspace). Creates file/directories if needed. Uses buffering.
+
+#### Arguments
+- `path: string`: Path to the target file, relative to workspace root.
+- `data: list`: Lua list (table with sequential integer keys from 1) of values to append.
+
+#### Returns
+Does not return anything upon success.
+
+#### Example
+```lua
+local users = { {user = "alice"}, {user = "bob"} }
+aip.file.append_json_lines("users.ndjson", users)
+-- Appends '{"user":"alice"}\n{"user":"bob"}\n'
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if `data` is not a list, conversion/serialization fails for any element, directory creation fails, or file write/permission error.
 
 ### aip.file.load_md_sections
 
+Load markdown sections from a file, optionally filtering by specific heading names.
+
 ```lua
 -- API Signature
-aip.file.load_md_sections(path: string, headings?: string | list): list
+aip.file.load_md_sections(
+  path: string,
+  headings?: string | list<string>
+): list<MdSection>
 ```
 
-Load markdown sections from a file, optionally filtering by headings.
+Reads the markdown file at `path` (relative to workspace) and splits it into sections based on headings (`#`). Returns a list of [MdSection](#mdsection) objects. Optionally filters by exact heading `name` (case-sensitive, excluding `#`).
 
-**Arguments**
+#### Arguments
+- `path: string`: Path to the markdown file, relative to workspace root.
+- `headings?: string | list<string>` (optional): Heading name(s) to filter by.
 
-- `path: string`: Path to the markdown file.
-- `headings?: string | list`: Optional string or list of strings representing the headings to filter by.
+#### Returns
+- `list<MdSection>: table`: A Lua list of [MdSection](#mdsection) tables. Includes content before the first heading if no filter applied. Empty if file empty or no matching sections.
 
-**Returns**
-
-[MdSection](#mdsection)
-
-```ts
-// Array/Table of MdSection
-{
-  content: string,    // Content of the section
-  heading?: {         // Heading information (optional)
-    content: string,  // Heading content
-    level: number,    // Heading level (e.g., 1 for #, 2 for ##)
-    name: string      // Heading name
-  }
-}
-```
-
-**Example**
-
+#### Example
 ```lua
--- Load all sections from a file
+-- Load all sections
 local all_sections = aip.file.load_md_sections("doc/readme.md")
 
--- Load only sections with the heading "# Summary"
-local summary_section = aip.file.load_md_sections("doc/readme.md", "# Summary")
+-- Load only the "Summary" section
+local summary_section = aip.file.load_md_sections("doc/readme.md", "Summary")
 
--- Load sections with multiple headings
-local sections = aip.file.load_md_sections("doc/readme.md", {"# Summary", "## Details"})
+-- Load "Summary" and "Conclusion" sections
+local sections = aip.file.load_md_sections("doc/readme.md", {"Summary", "Conclusion"})
 ```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if file not found/read, `headings` invalid, or parsing/conversion error.
 
 ### aip.file.load_md_split_first
 
+Splits a markdown file into three parts based on the *first* heading encountered.
+
 ```lua
 -- API Signature
-aip.file.load_md_split_first(path: string): {before: string, first: {content: string, heading: {content: string, level: number, name: string}}, after: string}
+aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
 ```
 
-Splits a markdown file into three parts: content before the first heading, the first heading and its content, and the rest of the file.
+Reads the file at `path` (relative to workspace) and divides it into: content before the first heading (`before`), the first heading section (`first`), and content from the second heading onwards (`after`).
 
-**Arguments**
+#### Arguments
+- `path: string`: Path to the markdown file, relative to workspace root.
 
-- `path: string`: Path to the markdown file.
+#### Returns
+- `table`: A table containing the three parts:
+  ```ts
+  {
+    before: string,       // Content before first heading.
+    first: MdSection,     // The first [MdSection](#mdsection) (default if no headings).
+    after: string         // Content from second heading onwards.
+  }
+  ```
 
-**Returns**
-
-```ts
-{
-  before: string,       // Content before the first heading
-  first: {              // Information about the first section
-    content: string,    // Content of the first section
-    heading: {          // Heading of the first section
-      content: string,  // Heading content
-      level: number,    // Heading level (e.g., 1 for #, 2 for ##)
-      name: string      // Heading name
-    }
-  },
-  after: string         // Content after the first section
-}
-```
-
-**Example**
-
+#### Example
 ```lua
-local split = aip.file.load_md_split_first("doc/readme.md")
-print(split.before)        -- Content before the first heading
-print(split.first.content) -- Content of the first section
-print(split.after)         -- Content after the first section
+local split = aip.file.load_md_split_first("doc/structure.md")
+print("--- BEFORE ---")
+print(split.before)
+print("--- FIRST Heading Name ---")
+print(split.first.heading.name)
+print("--- AFTER ---")
+print(split.after)
 ```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if file not found/read, or parsing/conversion error.
+
 
 ## aip.path
 
-Functions for path manipulation and checking.
+Functions for path manipulation, checking, and resolution within the AIPACK workspace.
+
+**Functions:**
+- `aip.path.split(path: string): parent: string, filename: string`
+- `aip.path.resolve(path: string): string`
+- `aip.path.exists(path: string): boolean`
+- `aip.path.is_file(path: string): boolean`
+- `aip.path.is_dir(path: string): boolean`
+- `aip.path.diff(file_path: string, base_path: string): string`
+- `aip.path.parent(path: string): string | nil`
+- `aip.path.join(...paths: string): string` (alias for `join_os_non_normalized`)
+- `aip.path.join(paths: table): string` (alias for `join_os_non_normalized`)
+- `aip.path.join_os_normalized(...paths: string): string`
+- `aip.path.join_os_normalized(paths: table): string`
+- `aip.path.join_os_non_normalized(...paths: string): string`
+- `aip.path.join_os_non_normalized(paths: table): string`
+
+> Note: Paths are typically relative to the workspace directory unless otherwise specified or resolved using pack references.
+
+### aip.path.split
+
+Split path into parent directory and filename.
 
 ```lua
--- Check if a path exists
-local exists = aip.path.exists("doc/some-file.md")         -- bool
-
--- Check if a path is a file
-local is_file = aip.path.is_file("doc/some-file.md")       -- bool
-
--- Check if a path is a directory
-local is_dir = aip.path.is_dir("doc/")                     -- bool
-
--- Get the parent directory of a path
-local parent_dir = aip.path.parent("doc/some-file.md")     -- string
-
--- Split for parent and filename
-local parent_dir, file_name = aip.path.split("path/to/some-file.md") -- parent, file
--- returns "path/to", "some-file.md"
-
--- Join path
-local path = aip.path.join("path", "to", "some-file.md")   -- string
--- "path/to/some-file.md"
+-- API Signature
+aip.path.split(path: string): (parent: string, filename: string)
 ```
 
-> Note: All relative paths are relative to the workspace directory, which is the parent directory of the `.aipack/` folder.
+Splits the given path into its parent directory and filename components.
+
+#### Arguments
+- `path: string`: The path to split.
+
+#### Returns
+- `parent: string`: The parent directory path (empty string if no parent).
+- `filename: string`: The filename component (empty string if no filename).
+
+#### Example
+```lua
+local parent, filename = aip.path.split("folder/file.txt")
+print(parent)   -- Output: "folder"
+print(filename) -- Output: "file.txt"
+
+local parent, filename = aip.path.split("justafile.md")
+print(parent)   -- Output: ""
+print(filename) -- Output: "justafile.md"
+```
+
+#### Error
+Does not typically error.
+
+### aip.path.resolve
+
+Resolves and normalizes a path relative to the workspace or pack structure.
+
+```lua
+-- API Signature
+aip.path.resolve(path: string): string
+```
+
+Resolves relative paths (`.`, `..`), absolute paths, and pack references (`ns@pack/`, `ns@pack$base/`, `ns@pack$workspace/`) to a normalized, typically absolute, path.
+
+#### Arguments
+- `path: string`: The path string to resolve.
+
+#### Returns
+- `string`: The resolved and normalized path.
+
+#### Example
+```lua
+local resolved_path = aip.path.resolve("./agent-script/../agent.aip")
+-- Output: /path/to/workspace/agent.aip (example)
+
+local resolved_pack_path = aip.path.resolve("ns@pack/some/file.txt")
+-- Output: /path/to/aipack-base/packs/ns/pack/some/file.txt (example)
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved (e.g., invalid pack reference, invalid format).
 
 ### aip.path.exists
+
+Checks if the specified path exists (file or directory).
 
 ```lua
 -- API Signature
 aip.path.exists(path: string): boolean
 ```
 
-Checks if the specified path exists.
+Checks existence after resolving the path relative to the workspace or pack structure.
 
-**Arguments**
+#### Arguments
+- `path: string`: The path string to check.
 
-- `path: string`: The path to check.
+#### Returns
+- `boolean`: `true` if exists, `false` otherwise.
 
-**Returns**
+#### Example
+```lua
+if aip.path.exists("README.md") then print("Exists") end
+if aip.path.exists("ns@pack/main.aip") then print("Pack agent exists") end
+```
 
-Returns `true` if the path exists, `false` otherwise.
+#### Error
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.is_file
+
+Checks if the specified path points to an existing file.
 
 ```lua
 -- API Signature
 aip.path.is_file(path: string): boolean
 ```
 
-Checks if the specified path is a file.
+Checks after resolving the path relative to the workspace or pack structure.
 
-**Arguments**
+#### Arguments
+- `path: string`: The path string to check.
 
-- `path: string`: The path to check.
+#### Returns
+- `boolean`: `true` if it's an existing file, `false` otherwise.
 
-**Returns**
+#### Example
+```lua
+if aip.path.is_file("config.toml") then print("Is a file") end
+```
 
-Returns `true` if the path is a file, `false` otherwise.
+#### Error
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.is_dir
+
+Checks if the specified path points to an existing directory.
 
 ```lua
 -- API Signature
 aip.path.is_dir(path: string): boolean
 ```
 
-Checks if the specified path is a directory.
+Checks after resolving the path relative to the workspace or pack structure.
 
-**Arguments**
+#### Arguments
+- `path: string`: The path string to check.
 
-- `path: string`: The path to check.
+#### Returns
+- `boolean`: `true` if it's an existing directory, `false` otherwise.
 
-**Returns**
+#### Example
+```lua
+if aip.path.is_dir("src/") then print("Is a directory") end
+```
 
-Returns `true` if the path is a directory, `false` otherwise.
+#### Error
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.diff
+
+Computes the relative path from `base_path` to `file_path`.
 
 ```lua
 -- API Signature
 aip.path.diff(file_path: string, base_path: string): string
 ```
 
-Do a diff between two paths, giving the relative path.
+Calculates the relative path string that navigates from `base_path` to `file_path`.
 
-**Arguments**
+#### Arguments
+- `file_path: string`: The target path.
+- `base_path: string`: The starting path.
 
-- `file_path: string`: The file path.
-- `base_path: string`: The base path.
+#### Returns
+- `string`: The relative path. Empty if paths are the same or cannot be computed (e.g., different drives).
 
-**Returns**
+#### Example
+```lua
+print(aip.path.diff("/a/b/c/file.txt", "/a/b/")) -- Output: "c/file.txt"
+print(aip.path.diff("/a/b/", "/a/b/c/file.txt")) -- Output: "../.."
+print(aip.path.diff("folder/file.txt", "folder")) -- Output: "file.txt"
+```
 
-Returns the relative path from the base path to the file path.
+#### Error
+Returns an error (Lua table `{ error: string }`) if paths are invalid.
 
 ### aip.path.parent
+
+Returns the parent directory path of the specified path.
 
 ```lua
 -- API Signature
 aip.path.parent(path: string): string | nil
 ```
 
-Returns the parent directory of the specified path, or nil if there is no parent.
+Gets the parent directory component.
 
-**Arguments**
+#### Arguments
+- `path: string`: The path string.
 
-- `path: string`: The path to get the parent directory from.
+#### Returns
+- `string | nil`: The parent directory path, or `nil` if no parent (e.g., for ".", "/", "C:/").
 
-**Returns**
+#### Example
+```lua
+print(aip.path.parent("some/path/file.txt")) -- Output: "some/path"
+print(aip.path.parent("."))                  -- Output: nil
+```
 
-Returns the parent directory of the path, or `nil` if the path has no parent.
+#### Error
+Does not typically error.
 
-### aip.path.split
+### aip.path.join (and join_os_non_normalized)
+
+Joins path components without OS-specific normalization (uses separators as provided).
 
 ```lua
--- API Signature
-aip.path.split(path: string): string, string
+-- API Signature (varargs)
+aip.path.join(...paths: string): string
+aip.path.join_os_non_normalized(...paths: string): string
+
+-- API Signature (table)
+aip.path.join(paths: table): string
+aip.path.join_os_non_normalized(paths: table): string
 ```
+`aip.path.join` is currently an alias for `aip.path.join_os_non_normalized`.
 
-Split path into parent, filename.
+Joins path components into a single string, preserving the separators provided. Does not resolve `.` or `..`.
 
-**Arguments**
+#### Arguments
+- `...paths: string`: A variable number of string arguments representing path components.
+- `paths: table`: A Lua list (table) of strings representing path components.
 
-- `path: string`: The path to split.
+#### Returns
+- `string`: The joined path string. Returns empty string if no components provided.
 
-**Returns**
-
-```ts
-{
-  parent: string,
-  filename: string
-}
-```
-
-Returns the parent and filename of the path.
-
-### aip.path.join
-
+#### Example
 ```lua
--- API Signature
-aip.path.join(paths: string | table): string
+-- Varargs
+local p1 = aip.path.join("folder\\", "subfolder/", "file.txt")
+-- Output might be "folder\\/subfolder/file.txt"
+
+-- Table
+local paths = {"data", "raw", "input.csv"}
+local p2 = aip.path.join(paths)
+-- Output might be "data/raw/input.csv"
 ```
 
-Returns the path, with paths joined without OS normalization.
-
-> NOTE: Currently, `aip.path.join` uses `aip.path.join_os_non_normalized`. This might change in the future.
-
-**Arguments**
-
-- `paths: string | table`: A string or a table of strings representing the paths to join.
-
-**Example**
-
-```lua
--- Table example:
-local paths = {"folder", "subfolder", "file.txt"}
-local full_path = aip.path.join(paths)
-
--- Arg example:
-local full_path = aip.path.join("folder", "subfolder", "file.txt")
-```
-
-**Returns**
-
-Returns the joined path as a string.
+#### Error
+Returns an error (Lua table `{ error: string }`) if arguments are not strings or a table of strings.
 
 ### aip.path.join_os_normalized
 
-```lua
--- API Signature
-aip.path.join_os_normalized(paths: string | table): string
-```
-
-Joins path components with OS normalization.
-
-**Arguments**
-
-- `paths: string | table`: A string or a table of strings representing the paths to join.
-
-**Returns**
-
-Returns the joined path as a string with OS normalization.
-
-### aip.path.join_os_non_normalized
+Joins path components with OS-specific normalization (e.g., `/` on Unix, `\` on Windows).
 
 ```lua
--- API Signature
-aip.path.join_os_non_normalized(paths: string | table): string
+-- API Signature (varargs)
+aip.path.join_os_normalized(...paths: string): string
+
+-- API Signature (table)
+aip.path.join_os_normalized(paths: table): string
 ```
 
-Returns the path, with paths joined without OS normalization.
+Joins path components, normalizing separators for the current OS. Does not resolve `.` or `..`.
 
-**Arguments**
+#### Arguments
+- `...paths: string`: A variable number of string arguments representing path components.
+- `paths: table`: A Lua list (table) of strings representing path components.
 
-- `paths: string | table`: A string or a table of strings representing the paths to join.
+#### Returns
+- `string`: The joined path string, normalized for the OS. Returns empty string if no components provided.
 
-**Returns**
+#### Example
+```lua
+-- Varargs (Unix-like OS):
+local p1 = aip.path.join_os_normalized("folder\\", "subfolder/", "file.txt")
+-- Output: "folder/subfolder/file.txt"
 
-Returns the joined path as a string.
+-- Table (Windows OS):
+local paths = {"C:/Users", "Admin", "Documents/file.txt"}
+local p2 = aip.path.join_os_normalized(paths)
+-- Output: "C:\Users\Admin\Documents\file.txt"
+```
 
-> NOTE: The reason why normalized is prefixed with `_os_` is because there is another type of normalization that removes the "../". There are no functions for this yet, but keeping the future open.
+#### Error
+Returns an error (Lua table `{ error: string }`) if arguments are not strings or a table of strings.
+
 
 ## aip.text
 
-Text manipulation functions.
+Text manipulation functions for cleaning, splitting, modifying, and extracting text content.
 
-```lua
-local trimmed = aip.text.trim(content)        -- string
-local trimmed = aip.text.trim_start(content)  -- string
-local trimmed = aip.text.trim_end(content)    -- string
-
--- Truncate content to a maximum length
-local truncated_content = aip.text.truncate(content, 100, "...")  -- string
-
--- Ensure prefix and suffix
-local ensured = aip.text.ensure(content, {prefix = "./", suffix = ".md"})  -- string
-
--- Ensure content ends with a single newline
-local normalized_content = aip.text.ensure_single_ending_newline(content)  -- string
-
--- Split the first occurrence of a separator
-local first, second = aip.text.split_first(content, "===\n")  -- string, string
-
--- Remove the first line from content
-local content_without_first_line = aip.text.remove_first_line(content)  -- string
-
--- Remove the last line from content
-local content_without_last_line = aip.text.remove_last_line(content)  -- string
-
--- Remove the first n lines from content
-local content_without_first_lines = aip.text.remove_first_lines(content, 2)  -- string
-
--- Remove the last n lines from content
-local content_without_last_lines = aip.text.remove_last_lines(content, 2)  -- string
-
--- Replace markers in content with new sections
-local updated_content = aip.text.replace_markers(content, new_sections)  -- string
-
--- Extract line blocks
-local line_blocks, remain = aip.text.extract_line_blocks(content, {starts_with = ">", extrude = "content"})  -- table, string
-```
+**Functions:**
+- `aip.text.escape_decode(content: string): string`
+- `aip.text.escape_decode_if_needed(content: string): string`
+- `aip.text.split_first(content: string, sep: string): (string, string | nil)`
+- `aip.text.remove_first_line(content: string): string`
+- `aip.text.remove_first_lines(content: string, n: number): string`
+- `aip.text.remove_last_line(content: string): string`
+- `aip.text.remove_last_lines(content: string, n: number): string`
+- `aip.text.trim(content: string): string`
+- `aip.text.trim_start(content: string): string`
+- `aip.text.trim_end(content: string): string`
+- `aip.text.truncate(content: string, max_len: number, ellipsis?: string): string`
+- `aip.text.replace_markers(content: string, new_sections: list): string`
+- `aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string`
+- `aip.text.ensure_single_ending_newline(content: string): string`
+- `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)`
 
 ### aip.text.escape_decode
+
+HTML-decodes the entire content string.
 
 ```lua
 -- API Signature
 aip.text.escape_decode(content: string): string
 ```
 
-Some LLMs HTML-encode their responses. This function returns `content`, HTML-decoded.
+Useful for decoding responses from LLMs that might HTML-encode output.
 
-**Arguments**
+#### Arguments
+- `content: string`: The content to HTML-decode.
 
-- `content: string`: The content to process.
-
-**Returns**
-
-The HTML-decoded string.
+#### Returns
+- `string`: The decoded string.
 
 ### aip.text.escape_decode_if_needed
+
+Selectively HTML-decodes content if needed (currently only decodes `&lt;`).
 
 ```lua
 -- API Signature
 aip.text.escape_decode_if_needed(content: string): string
 ```
 
-Only escape if needed. Right now, the test only tests `&lt;`.
+A more conservative version of `escape_decode` for cases where only specific entities need decoding.
 
-Some LLMs HTML-encode their responses. This function returns `content` after selectively decoding certain HTML tags.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
 
-**Returns**
-
-The HTML-decoded string.
+#### Returns
+- `string`: The potentially decoded string.
 
 ### aip.text.split_first
 
-```lua
--- API Signature
-aip.text.split_first(content: string, sep: string): (string, string|nil)
-```
-
 Splits a string into two parts based on the first occurrence of a separator.
 
-**Arguments**
+```lua
+-- API Signature
+aip.text.split_first(content: string, sep: string): (string, string | nil)
+```
 
+#### Arguments
 - `content: string`: The string to split.
 - `sep: string`: The separator string.
 
-**Returns**
+#### Returns
+- `string`: The part before the first separator.
+- `string | nil`: The part after the first separator (nil if separator not found, empty string if separator is at the end).
 
-A tuple containing the first part and the second part (or nil if no match).
-
-**Example**
-
+#### Example
 ```lua
-local content = "some first content\n===\nsecond content"
-local first, second = aip.text.split_first(content,"===\n")
--- first  = "some first content\n"
--- second = "second content"
--- NOTE: When no match, second is nil.
---       If matched, but nothing after, second is ""
+local content = "first part===second part"
+local first, second = aip.text.split_first(content, "===")
+-- first = "first part"
+-- second = "second part"
 ```
 
 ### aip.text.remove_first_line
+
+Removes the first line from the content.
 
 ```lua
 -- API Signature
 aip.text.remove_first_line(content: string): string
 ```
 
-Returns `content` with the first line removed.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
 
-**Returns**
-
-The string with the first line removed.
+#### Returns
+- `string`: The content with the first line removed.
 
 ### aip.text.remove_first_lines
 
+Removes the first `n` lines from the content.
+
 ```lua
 -- API Signature
-aip.text.remove_first_lines(content: string, n: int): string
+aip.text.remove_first_lines(content: string, n: number): string
 ```
 
-Returns `content` with the first `n` lines removed.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
-- `n: int`: The number of lines to remove.
+- `n: number`: The number of lines to remove.
 
-**Returns**
-
-The string with the first `n` lines removed.
+#### Returns
+- `string`: The content with the first `n` lines removed.
 
 ### aip.text.remove_last_line
+
+Removes the last line from the content.
 
 ```lua
 -- API Signature
 aip.text.remove_last_line(content: string): string
 ```
 
-Returns `content` with the last line removed.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
 
-**Returns**
-
-The string with the last line removed.
+#### Returns
+- `string`: The content with the last line removed.
 
 ### aip.text.remove_last_lines
 
+Removes the last `n` lines from the content.
+
 ```lua
 -- API Signature
-aip.text.remove_last_lines(content: string, n: int): string
+aip.text.remove_last_lines(content: string, n: number): string
 ```
 
-Returns `content` with the last `n` lines removed.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
-- `n: int`: The number of lines to remove.
+- `n: number`: The number of lines to remove.
 
-**Returns**
-
-The string with the last `n` lines removed.
+#### Returns
+- `string`: The content with the last `n` lines removed.
 
 ### aip.text.trim
+
+Trims leading and trailing whitespace from a string.
 
 ```lua
 -- API Signature
 aip.text.trim(content: string): string
 ```
 
-Trims leading and trailing whitespace from a string.
-
-**Arguments**
-
+#### Arguments
 - `content: string`: The string to trim.
 
-**Returns**
-
-The trimmed string.
+#### Returns
+- `string`: The trimmed string.
 
 ### aip.text.trim_start
+
+Trims leading whitespace from a string.
 
 ```lua
 -- API Signature
 aip.text.trim_start(content: string): string
 ```
 
-Trims leading whitespace from a string.
+#### Arguments
+- `content: string`: The string to trim.
 
-**Arguments**
-
-- `content: string`: The content to process.
-
-**Returns**
-
-The trimmed string.
+#### Returns
+- `string`: The trimmed string.
 
 ### aip.text.trim_end
+
+Trims trailing whitespace from a string.
 
 ```lua
 -- API Signature
 aip.text.trim_end(content: string): string
 ```
 
-Trims trailing whitespace from a string.
+#### Arguments
+- `content: string`: The string to trim.
 
-**Arguments**
-
-- `content: string`: The content to process.
-
-**Returns**
-
-The trimmed string.
+#### Returns
+- `string`: The trimmed string.
 
 ### aip.text.truncate
 
+Truncates content to a maximum length, optionally adding an ellipsis.
+
 ```lua
 -- API Signature
-aip.text.truncate(content: string, max_len: int, ellipsis?: string): string
+aip.text.truncate(content: string, max_len: number, ellipsis?: string): string
 ```
 
-Returns `content` truncated to a maximum length of `max_len`.
-If the content exceeds `max_len`, it appends the optional `ellipsis` string to indicate truncation.
+If `content` length exceeds `max_len`, truncates and appends `ellipsis` (if provided).
 
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to truncate.
-- `max_len: int`: The maximum length of the truncated string.
-- `ellipsis: string` (optional): The string to append if truncation occurs.
+- `max_len: number`: The maximum length of the result.
+- `ellipsis?: string` (optional): String to append if truncated (e.g., "...").
 
-**Returns**
-
-The truncated string.
+#### Returns
+- `string`: The truncated string.
 
 ### aip.text.replace_markers
 
+Replaces `<<START>>...<<END>>` markers in content with corresponding sections.
+
 ```lua
 -- API Signature
-aip.text.replace_markers(content: string, new_sections: array): string
+aip.text.replace_markers(content: string, new_sections: list): string
 ```
 
-Replaces markers in `content` with corresponding sections from `new_sections`.
-Each section in `new_sections` can be a string or a map containing a `.content` string.
+Replaces occurrences of `<<START>>...<<END>>` blocks sequentially with items from `new_sections`. Items in `new_sections` can be strings or tables with a `.content` field.
 
-**Arguments**
+#### Arguments
+- `content: string`: The content containing `<<START>>...<<END>>` markers.
+- `new_sections: list`: A Lua list of strings or tables to replace the markers.
 
-- `content: string`: The content containing markers to replace.
-- `new_sections: array`: An array of strings to replace the markers.
-
-**Returns**
-
-The string with markers replaced by the corresponding sections.
+#### Returns
+- `string`: The string with markers replaced.
 
 ### aip.text.ensure
+
+Ensures the content starts with `prefix` and/or ends with `suffix`.
 
 ```lua
 -- API Signature
 aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string
 ```
 
-Ensure the content start and/or end with the text given in the second argument dictionary.
+Adds the prefix/suffix only if the content doesn't already start/end with it.
 
-**Arguments**
+#### Arguments
+- `content: string`: The content to process.
+- `options: table`: A table with optional `prefix` and `suffix` string keys.
 
-- `content: string`: The content to ensure.
-- `options: table`: A table with optional `prefix` and `suffix` keys.
-
-**Returns**
-
-The ensured string.
+#### Returns
+- `string`: The ensured string.
 
 ### aip.text.ensure_single_ending_newline
+
+Ensures the content ends with exactly one newline character (`\n`).
 
 ```lua
 -- API Signature
 aip.text.ensure_single_ending_newline(content: string): string
 ```
 
-Ensures that `content` ends with a single newline character.
-If `content` is empty, it returns a newline character.
+Removes trailing whitespace and adds a single newline if needed. Returns `\n` if content is empty. Useful for code normalization.
 
-**Arguments**
-
+#### Arguments
 - `content: string`: The content to process.
 
-**Returns**
-
-The string with a single ending newline.
+#### Returns
+- `string`: The string ending with a single newline.
 
 ### aip.text.extract_line_blocks
 
+Extracts consecutive lines starting with a specific prefix.
+
 ```lua
 -- API Signature
-aip.text.extract_line_blocks(content: string, {starts_with: string, extrude?: "content", first?: number}): table, string | nil
+aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)
 ```
 
-Extracts line blocks from `content` using the given options.
+Extracts blocks of consecutive lines from `content` where each line begins with `options.starts_with`.
 
-**Arguments**
+#### Arguments
+- `content: string`: The content to extract from.
+- `options: table`:
+  - `starts_with: string` (required): The prefix indicating a line block.
+  - `extrude?: "content"` (optional): If set, returns the remaining content after extraction as the second return value.
+  - `first?: number` (optional): Limits the number of blocks extracted. Remaining lines (if any) contribute to the extruded content if `extrude` is set.
 
-- `content: string`: The content to extract line blocks from.
-- `options: table`: A table with the following keys:
-  - `starts_with: string` (required): The prefix that indicates the start of a line block.
-  - `extrude: "content"` (optional): If set to `"content"`, the remaining content after extracting the blocks is returned.
-  - `first: number` (optional): Limits the number of blocks returned.
+#### Returns
+- `list<string>`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix.
+- `string | nil`: The remaining content if `extrude = "content"`, otherwise `nil`.
 
-**Returns**
-
-A tuple containing:
-- `blocks: table`: A table containing the extracted line blocks.
-- `extruded: string | nil`: The remaining content after extracting the blocks, if `extrude` is set to `"content"`. Otherwise, `nil`.
+#### Example
+```lua
+local text = "> Block 1 Line 1\n> Block 1 Line 2\nSome other text\n> Block 2"
+local blocks, remain = aip.text.extract_line_blocks(text, {starts_with = ">", extrude = "content"})
+-- blocks = { "> Block 1 Line 1\n> Block 1 Line 2", "> Block 2" }
+-- remain = "Some other text\n"
+```
 
 ## aip.md
 
-Markdown handling functions.
+Markdown processing functions for extracting structured information like code blocks and metadata.
 
-```lua
--- Extract all blocks
-local blocks = aip.md.extract_blocks(md_content)  -- Vec<MdBlock>
-
--- Extract blocks for specific language
-local blocks = aip.md.extract_blocks(md_content, "lua")  -- Vec<MdBlock>
-
--- Extract blocks with options
-local blocks, content = aip.md.extract_blocks(md_content, {lang = "lua", extrude = "content"})  -- Vec<MdBlock>, string
-
--- Extract, parse, and merge the meta, and return the value and remaining text
-local meta, remain = aip.md.extract_meta(md_content)  -- table, string
-
--- Get content from outer code block or return raw content
-local content = aip.md.outer_block_content_or_raw(content)  -- string
-```
+**Functions:**
+- `aip.md.extract_blocks(md_content: string, options?: string | {lang?: string, extrude?: "content"}): list<MdBlock> | (list<MdBlock>, string)`
+- `aip.md.extract_meta(md_content: string): (table, string)`
+- `aip.md.outer_block_content_or_raw(md_content: string): string`
 
 ### aip.md.extract_blocks
 
+Extracts fenced code blocks from markdown content.
+
 ```lua
 -- API Signatures
-aip.md.extract_blocks(md_content: string): Vec<MdBlock>
-aip.md.extract_blocks(md_content: string, lang: string): Vec<MdBlock>
-aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): Vec<MdBlock>, string
+-- Extract all blocks:
+aip.md.extract_blocks(md_content: string): list<MdBlock>
+-- Extract blocks by language:
+aip.md.extract_blocks(md_content: string, lang: string): list<MdBlock>
+-- Extract blocks and remaining content:
+aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (list<MdBlock>, string)
 ```
 
-Extract code blocks from markdown content.
+Parses `md_content` and extracts fenced code blocks (``` ```).
 
-**Arguments**
+#### Arguments
+- `md_content: string`: The markdown content.
+- `options?: string | table` (optional):
+  - If string: Filter blocks by this language identifier.
+  - If table:
+    - `lang?: string`: Filter by language.
+    - `extrude?: "content"`: If set, also return content outside the extracted blocks.
 
-- `md_content: string`: The markdown content to process.
-- `options: string | table` (optional):
-  - If a string, it's treated as the language filter.
-  - If a table:
-    - `lang: string` (optional): Filters blocks by this language.
-    - `extrude: "content"` (optional): If present, extracts the content outside the blocks.
+#### Returns
+- If `extrude` is not set: `list<MdBlock>`: A Lua list of [MdBlock](#mdblock) objects.
+- If `extrude = "content"`: `(list<MdBlock>, string)`: A tuple containing the list of [MdBlock](#mdblock) objects and the remaining content string.
 
-**Returns**
+#### Example
+```lua
+local md = "```rust\nfn main() {}\n```\nSome text.\n```lua\nprint('hi')\n```"
+local rust_blocks = aip.md.extract_blocks(md, "rust")
+-- rust_blocks = { { content = "fn main() {}", lang = "rust", info = "" } }
 
-When `extrude = "content"` is not specified:
-
-[MdBlock](#mdblock)
-
-```ts
-MdBlock[]
+local lua_blocks, remain = aip.md.extract_blocks(md, {lang = "lua", extrude = "content"})
+-- lua_blocks = { { content = "print('hi')", lang = "lua", info = "" } }
+-- remain = "Some text.\n" (approx.)
 ```
 
-When `extrude = "content"` is specified:
-
-```ts
-[MdBlock[], string]
-```
-
-- `MdBlock[]`: A list of markdown blocks matching the specified criteria.
-- `string`: The content of the markdown outside of the extracted blocks.
-
-**Error**
-
-Returns an error if the `extrude` option is not equal to `"content"`.
+#### Error
+Returns an error (Lua table `{ error: string }`) on invalid options or parsing errors.
 
 ### aip.md.extract_meta
 
+Extracts and merges metadata from `#!meta` TOML blocks.
+
 ```lua
 -- API Signature
-aip.md.extract_meta(md_content: string): Table, string
+aip.md.extract_meta(md_content: string): (table, string)
 ```
 
-Extract, parse, and merge the `#!meta` blocks, and return the value and the concatenated remaining text.
+Finds all ```toml #!meta ... ``` blocks, parses their TOML content, merges them into a single Lua table, and returns the table along with the original content stripped of the meta blocks.
 
-**Arguments**
+#### Arguments
+- `md_content: string`: The markdown content.
 
-- `md_content: string`: The markdown content to process.
+#### Returns
+- `table`: Merged metadata from all `#!meta` blocks.
+- `string`: Original content with meta blocks removed.
 
-**Returns**
-
-```ts
-[Table, string]
+#### Example
+```lua
+local content = "Intro.\n```toml\n#!meta\ntitle=\"T\"\n```\nMain.\n```toml\n#!meta\nauthor=\"A\"\n```"
+local meta, remain = aip.md.extract_meta(content)
+-- meta = { title = "T", author = "A" }
+-- remain = "Intro.\n\nMain.\n" (approx.)
 ```
 
-- `Table`: A Lua table containing the merged meta values from the meta blocks.
-- `string`: The remaining content of the markdown after removing the meta blocks.
+#### Error
+Returns an error (Lua table `{ error: string }`) if any meta block contains invalid TOML.
 
 ### aip.md.outer_block_content_or_raw
+
+Extracts content from the outermost code block, or returns raw content.
 
 ```lua
 -- API Signature
 aip.md.outer_block_content_or_raw(md_content: string): string
 ```
 
-If content starts with ```, it will remove the first and last ```, and return the content in between.
-Otherwise, it returns the original content.
+If `md_content` starts and ends with a fenced code block (```), returns the content inside. Otherwise, returns the original `md_content`. Useful for processing LLM responses.
 
-**Arguments**
+#### Arguments
+- `md_content: string`: The markdown content.
 
-- `md_content: string`: The markdown content to process.
+#### Returns
+- `string`: Content inside the outer block, or the original string.
 
-**Returns**
-
-```ts
-string
+#### Example
+```lua
+local block = "```rust\ncontent\n```"
+local raw = "no block"
+print(aip.md.outer_block_content_or_raw(block)) -- Output: "content\n"
+print(aip.md.outer_block_content_or_raw(raw))   -- Output: "no block"
 ```
-
-Returns the content within the outer code block if it exists; otherwise, returns the original markdown content.
-
-> Note: This is useful in the GenAI context because often LLMs return a top block (e.g., markdown, Rust)
-> And while it is better to try to handle this with the prompt, gpt-4o-mini or other models still put in markdown block
 
 ## aip.json
 
 JSON parsing and stringification functions.
 
-```lua
--- Parse a JSON string into a table
-local obj = aip.json.parse('{"name": "John", "age": 30}')  -- Object (lua table)
-
--- Stringify a table into a JSON string
-local json_str = aip.json.stringify(obj)  -- string
-
--- Stringify a table into a single-line JSON string
-local json_line_str = aip.json.stringify_to_line(obj)  -- string
-```
+**Functions:**
+- `aip.json.parse(content: string): table | value`
+- `aip.json.parse_ndjson(content: string): list<table>`
+- `aip.json.stringify(content: table): string` (Compact, single-line)
+- `aip.json.stringify_pretty(content: table): string` (Formatted with 2-space indent)
+- `aip.json.stringify_to_line(content: table): string` (Deprecated alias for `stringify`)
 
 ### aip.json.parse
 
+Parse a JSON string into a Lua table or value.
+
 ```lua
 -- API Signature
-aip.json.parse(content: string): table
+aip.json.parse(content: string): table | value
 ```
 
-Parse a JSON string into a table that can be used in the Lua script.
+#### Arguments
+- `content: string`: The JSON string to parse.
 
-**Example**
+#### Returns
+- `table | value`: A Lua value representing the parsed JSON.
+
+#### Example
+```lua
+local obj = aip.json.parse('{"name": "John", "age": 30}')
+print(obj.name) -- Output: John
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if `content` is not valid JSON.
+
+### aip.json.parse_ndjson
+
+Parse a newline-delimited JSON (NDJSON) string into a list of tables/values.
 
 ```lua
-local json_str = '{"name": "John", "age": 30}'
-local obj = aip.json.parse(json_str)
-print(obj.name) -- prints "John"
+-- API Signature
+aip.json.parse_ndjson(content: string): list<table>
 ```
 
-**Returns**
+Parses each non-empty line as a separate JSON object/value.
 
-Returns a table representing the parsed JSON.
+#### Arguments
+- `content: string`: The NDJSON string.
 
-**Error**
+#### Returns
+- `list<table>`: A Lua list containing the parsed value from each line.
 
-```ts
-{
-  error: string  // Error message from JSON parsing
-}
+#### Example
+```lua
+local ndjson = '{"id":1}\n{"id":2}'
+local items = aip.json.parse_ndjson(ndjson)
+print(items[1].id) -- Output: 1
+print(items[2].id) -- Output: 2
 ```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if any line contains invalid JSON.
 
 ### aip.json.stringify
+
+Stringify a Lua table/value into a compact, single-line JSON string.
 
 ```lua
 -- API Signature
 aip.json.stringify(content: table): string
 ```
 
-Stringify a table into a JSON string with pretty formatting.
-Convert a table into a JSON string with pretty formatting using tab indentation.
+#### Arguments
+- `content: table`: The Lua table/value to stringify.
 
-**Example**
+#### Returns
+- `string`: A single-line JSON string representation.
+
+#### Example
+```lua
+local obj = {name = "John", age = 30}
+local json_str = aip.json.stringify(obj)
+-- json_str = '{"age":30,"name":"John"}' (order may vary)
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized.
+
+### aip.json.stringify_pretty
+
+Stringify a Lua table/value into a pretty-formatted JSON string (2-space indent).
 
 ```lua
-local obj = {
-    name = "John",
-    age = 30
-}
-local json_str = aip.json.stringify(obj)
--- Result will be:
+-- API Signature
+aip.json.stringify_pretty(content: table): string
+```
+
+#### Arguments
+- `content: table`: The Lua table/value to stringify.
+
+#### Returns
+- `string`: A formatted JSON string with newlines and indentation.
+
+#### Example
+```lua
+local obj = {name = "John", age = 30}
+local json_str = aip.json.stringify_pretty(obj)
+-- json_str =
 -- {
---     "name": "John",
---     "age": 30
--- }
+--   "age": 30,
+--   "name": "John"
+-- } (order may vary)
 ```
 
-**Returns**
+#### Error
+Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized.
 
-Returns a formatted JSON string.
+### aip.json.stringify_to_line (Deprecated)
 
-**Error**
-
-```ts
-{
-  error: string  // Error message from JSON stringification
-}
-```
-
-### aip.json.stringify_to_line
+Deprecated alias for `aip.json.stringify`.
 
 ```lua
 -- API Signature
 aip.json.stringify_to_line(content: table): string
 ```
 
-Stringify a table into a single line JSON string. Good for newline json.
-
-**Example**
-
-```lua
-local obj = {
-    name = "John",
-    age = 30
-}
-local json_str = aip.json.stringify_to_line(obj)
--- Result will be:
--- {"name":"John","age":30}
-```
-
-**Returns**
-
-Returns a single line JSON string.
-
-**Error**
-
-```ts
-{
-  error: string  // Error message from JSON stringification
-}
-```
-
 ## aip.web
 
-HTTP request functions for making HTTP GET and POST requests.
+Functions for making HTTP GET and POST requests.
 
-```lua
--- HTTP GET request
-local response = aip.web.get("https://google.com")  -- WebResponse
-
--- HTTP POST request with plain text
-local response = aip.web.post("https://example.com/api", "plain text data")  -- WebResponse
-
--- HTTP POST request with JSON data
-local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })  -- WebResponse
-```
-
-> Note: The `WebResponse` is a Lua table with the following structure:
-> ```ts
-> {
->   success: boolean,   // true if the HTTP status code is 2xx
->   status: number,     // HTTP status code
->   url: string,        // The URL requested
->   content: string | table,  // Response content as a string, or a Lua table if response is JSON
->   error?: string      // Error message if request was not successful (non-2xx status)
-> }
-> ```
+**Functions:**
+- `aip.web.get(url: string): WebResponse`
+- `aip.web.post(url: string, data: string | table): WebResponse`
 
 ### aip.web.get
+
+Makes an HTTP GET request.
 
 ```lua
 -- API Signature
 aip.web.get(url: string): WebResponse
 ```
 
-Makes an HTTP GET request to the specified URL.
+#### Arguments
+- `url: string`: The URL to request.
 
-**Arguments**
+#### Returns
+- `WebResponse: table`: A [WebResponse](#webresponse) table containing the result.
 
-- `url: string`: The URL to make the GET request to.
-
-**Returns (WebResponse)**
-
-A Lua table with the response data:
-
-```ts
-{
-  success: boolean,   // Indicates if the request was successful (status code 2xx)
-  status: number,     // The HTTP status code of the response
-  url: string,        // The URL that was requested
-  content: string | table,  // The content of the response. For "application/json" responses, this will be a Lua table.
-  error?: string      // Optional error message if not successful
-}
-```
-
-**Example**
-
+#### Example
 ```lua
-local response = aip.web.get("https://google.com")
-print(response.status)   -- e.g., 200
-print(response.content)  -- HTML content or JSON-decoded table
+local response = aip.web.get("https://httpbin.org/get")
+if response.success then
+  print("Status:", response.status)
+  -- response.content might be a string or table (if JSON)
+  print("Content Type:", type(response.content))
+else
+  print("Error:", response.error, "Status:", response.status)
+end
 ```
 
-**Error**
-
-Returns an error if the web request cannot be made (e.g., invalid URL, network error). Note: Non-2xx HTTP responses do not throw an error; check the `success` field in the returned `WebResponse`.
+#### Error
+Returns an error (Lua table `{ error: string }`) if the request cannot be initiated (e.g., network error, invalid URL). Check `response.success` for HTTP-level errors (non-2xx status).
 
 ### aip.web.post
+
+Makes an HTTP POST request.
 
 ```lua
 -- API Signature
 aip.web.post(url: string, data: string | table): WebResponse
 ```
 
-Makes an HTTP POST request to the specified URL with the given data.
+Sends `data` in the request body. If `data` is a string, `Content-Type` is `text/plain`. If `data` is a table, it's serialized to JSON and `Content-Type` is `application/json`.
 
-**Arguments**
+#### Arguments
+- `url: string`: The URL to request.
+- `data: string | table`: Data to send in the body.
 
-- `url: string`: The URL to make the POST request to.
-- `data: string | table`: The data to send in the request body. If a string, the `Content-Type` header is set to `plain/text`. If a table, the data is serialized to JSON and the header is set to `application/json`.
+#### Returns
+- `WebResponse: table`: A [WebResponse](#webresponse) table containing the result.
 
-**Returns (WebResponse)**
-
-A Lua table with the response data:
-
-```ts
-{
-  success: boolean,   // Indicates if the request was successful (status code 2xx)
-  status: number,     // The HTTP status code of the response
-  url: string,        // The URL that was requested
-  content: string | table,  // The response content. For "application/json" responses, this is a Lua table.
-  error?: string      // Optional error message if not successful
-}
-```
-
-**Example**
-
+#### Example
 ```lua
--- POST with plain text
-local response = aip.web.post("https://example.com/api", "plain text data")
+-- POST plain text
+local r1 = aip.web.post("https://httpbin.org/post", "plain text data")
 
--- POST with JSON data
-local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+-- POST JSON
+local r2 = aip.web.post("https://httpbin.org/post", { key = "value", num = 123 })
+if r2.success and type(r2.content) == "table" then
+  print("Received JSON echo:", r2.content.json.key) -- Output: value
+end
 ```
 
-**Error**
+#### Error
+Returns an error (Lua table `{ error: string }`) if the request cannot be initiated or data serialization fails. Check `response.success` for HTTP-level errors.
 
-Returns an error if the web request cannot be made (e.g., invalid URL, network error, or data serialization error). Non-2xx status codes are not treated as errors; check the `success` field in the returned `WebResponse`.
 
 ## aip.lua
 
 Lua value inspection functions.
 
-```lua
--- Return a pretty string of a lua value
-local dump = aip.lua.dump(some_var)  -- string
-print(dump)
-```
+**Functions:**
+- `aip.lua.dump(value: any): string`
 
 ### aip.lua.dump
+
+Dump a Lua value into its string representation.
 
 ```lua
 -- API Signature
 aip.lua.dump(value: any): string
 ```
 
-Dump a Lua value into its string representation.
+Provides a detailed string representation of any Lua value, useful for debugging.
 
-**Arguments**
+#### Arguments
+- `value: any`: The Lua value to dump.
 
-- `value`: The Lua value to be dumped.
+#### Returns
+- `string`: A string representation of the value.
 
-**Returns**
-
-A string representation of the Lua value.
-
-**Example**
-
+#### Example
 ```lua
-local tbl = { key = "value", nested = { subkey = 42 } }
+local tbl = { key = "value", nested = { num = 42 } }
 print(aip.lua.dump(tbl))
+-- Output: Example: table: 0x... { key = "value", nested = table: 0x... { num = 42 } }
 ```
 
-**Error**
+#### Error
+Returns an error (Lua table `{ error: string }`) if the value cannot be converted to string.
 
-If the conversion fails, an error message is returned.
 
 ## aip.agent
 
-Agent execution functions for running other agents from within a Lua script.
+Functions for running other AIPACK agents from within a Lua script.
+
+**Functions:**
+- `aip.agent.run(agent_name: string, options?: table): any`
 
 ### aip.agent.run
+
+Runs another agent and returns its response.
 
 ```lua
 -- API Signature
 aip.agent.run(agent_name: string, options?: table): any
 ```
 
-Runs another agent and returns its response.
+Executes the agent specified by `agent_name` (relative path or pack reference), waits for completion, and returns the result.
 
-**Arguments**
+#### Arguments
+- `agent_name: string`: Name/path of the agent to run (e.g., `"../other.aip"`, `"ns@pack/agent.aip"`).
+- `options?: table` (optional):
+  - `inputs?: string | list | table`: Input data for the called agent.
+  - `options?: table`: Agent-specific options to pass to the called agent, potentially overriding its settings.
 
-- `agent_name: string`: The name of the agent to run.
-- `options?: table`: An optional table containing input data and agent options.
-  - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
-  - `options?: table`: Agent-specific options.
+#### Returns
+- `any`: The result depends on the called agent:
+  - If it produces an AI response without an output script: returns a table representing the `AiResponse`.
+  - If it has an output script: returns the value returned by that script.
 
-**Returns**
-
-The result of the agent execution. The type of the returned value depends on the agent's output:
-- If the agent produces an AI response, it returns the AI response object.
-- If the agent has an output script, it returns the output from that script.
-
-**Example**
-
+#### Example
 ```lua
--- Run an agent with a single string input
-local response = aip.agent.run("agent-name", { inputs = "hello" })
+-- Run agent with single input
+local response1 = aip.agent.run("my-agent.aip", { inputs = "hello" })
 
--- Run an agent with multiple string inputs
-local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
-
--- Run an agent with structured inputs
-local response = aip.agent.run("agent-name", {
-  inputs = {
-    { path = "file1.txt", content = "..." },
-    { path = "file2.txt", content = "..." }
-  },
-  options = { model = "super-fast" }
+-- Run agent with structured inputs and custom options
+local response2 = aip.agent.run("ns@pack/processor.aip", {
+  inputs = { { path = "f1.txt", content = "..." }, { path = "f2.txt", content = "..." } },
+  options = { model = "gpt-4o-mini" }
 })
 ```
 
-**Error**
+#### Error
+Returns an error (Lua table `{ error: string }`) if the agent cannot be found/loaded, options are invalid, execution fails, or internal communication error.
 
-Returns an error if the agent fails to run or if there are issues with the input parameters.
 
 ## aip.flow
 
-Flow control functions for the AIPACK agent execution flow.
+Functions for controlling the AIPACK agent execution flow from within script blocks (`before_all`, `data`).
 
-The `aip.flow` module allows controlling the flow of AIPACK agent execution. The flow functions are designed to be returned so that the Agent Executor can act appropriately.
+**Functions:**
+- `aip.flow.before_all_response(data: {inputs?: list, options?: table}): table`
+- `aip.flow.data_response(data: {input?: any, options?: table}): table`
+- `aip.flow.skip(reason?: string): table`
+
+These functions return special tables that instruct the agent executor how to proceed. They should be the return value of the script block.
 
 ### aip.flow.before_all_response
 
+Customizes execution flow at the 'Before All' stage (in `before_all` script block).
+
 ```lua
 -- API Signature
-aip.flow.before_all_response(data: {inputs?: any[], options?: AgentOptions, before_all?: any}) -> table
+aip.flow.before_all_response(data: {inputs?: list, options?: table, ...}): table
 ```
 
-Customizes the AIPACK execution flow at the "Before All" stage.
+Allows overriding the initial inputs and/or agent options for the entire run cycle.
 
-Arguments:
-- data: A table that may include:
-  - inputs (optional): A list of values.
-  - options (optional): Partial AgentOptions (e.g., model, input_concurrency, model_aliases).
-  - before_all (optional): A value that, if not overridden, would have been returned by default.
+#### Arguments
+- `data: table`:
+  - `inputs?: list`: Optional new list of inputs for the run cycle.
+  - `options?: table`: Optional partial agent options to override.
+  - Can include other arbitrary data fields.
 
-Returns:
-A Lua table with the structure:
-```ts
-{
-  _aipack_: {
-    kind: "BeforeAllResponse",
-    data: any
-  }
-}
-```
+#### Returns
+- `table`: A special table for the executor (e.g., `{ _aipack_ = { kind = "BeforeAllResponse", data = ... } }`).
 
-Example:
+#### Example (in `before_all` block)
 ```lua
-local response = aip.flow.before_all_response({ inputs = {1, 2, 3}, options = { model = "gpt-4" } })
+-- Pre-process inputs and set a specific model
+local processed_inputs = {}
+for _, inp in ipairs(inputs) do table.insert(processed_inputs, "PREFIX_" .. inp) end
+return aip.flow.before_all_response({
+  inputs = processed_inputs,
+  options = { model = "claude-3-5-sonnet-latest" }
+})
 ```
-
-Error:
-Returns an error if the internal Lua table creation fails.
 
 ### aip.flow.data_response
 
+Customizes execution flow at the 'Data' stage for a single input (in `data` script block).
+
 ```lua
 -- API Signature
-aip.flow.data_response(data: {input?: any, options?: AgentOptions}) -> table
+aip.flow.data_response(data: {input?: any, options?: table, ...}): table
 ```
 
-Customizes the AIPACK execution flow at the "Data" stage.
+Allows overriding the input and/or options for the *current* input cycle.
 
-Arguments:
-- data: A table that may include:
-  - input (optional): The input value. If nil, the original input is passed.
-  - options (optional): Partial AgentOptions (e.g., model, input_concurrency, model_aliases).
+#### Arguments
+- `data: table`:
+  - `input?: any`: Optional new input for this cycle. If nil, original input is used.
+  - `options?: table`: Optional partial agent options to override for this cycle.
+  - Can include other arbitrary data fields.
 
-Returns:
-A Lua table with the structure:
-```ts
-{
-  _aipack_: {
-    kind: "DataResponse",
-    data: any
-  }
-}
-```
+#### Returns
+- `table`: A special table for the executor (e.g., `{ _aipack_ = { kind = "DataResponse", data = ... } }`).
 
-Example:
+#### Example (in `data` block)
 ```lua
-local response = aip.flow.data_response({ input = "sample input", options = { model = "gpt-3" } })
+-- Transform input and use a different model for this specific input
+local transformed = input .. "_SUFFIX"
+return aip.flow.data_response({
+  input = transformed,
+  options = { model = "gpt-4o" },
+  processed = true -- Pass extra info
+})
 ```
-
-Error:
-Returns an error if table creation fails.
 
 ### aip.flow.skip
 
+Skips processing the current input cycle (in `data` script block).
+
 ```lua
 -- API Signature
-aip.flow.skip(reason?: string) -> table
+aip.flow.skip(reason?: string): table
 ```
 
-Returns a response indicating a skip action for the input cycle.
+Instructs the executor to skip the current input and move to the next.
 
-Arguments:
-- reason (optional): A string providing the reason for skipping the input cycle.
+#### Arguments
+- `reason?: string` (optional): Reason for skipping (for logging/display).
 
-Returns:
-A Lua table with the structure:
-```ts
-{
-  _aipack_: {
-    kind: "Skip",
-    data: {
-      reason: string | nil
-    }
-  }
-}
-```
+#### Returns
+- `table`: A special table for the executor (e.g., `{ _aipack_ = { kind = "Skip", data = { reason = ... } } }`).
 
-Example:
+#### Example (in `data` block)
 ```lua
-local response = aip.flow.skip("Not applicable")
+if input == nil or input == "" then
+  return aip.flow.skip("Input is empty")
+end
+-- Continue processing otherwise...
+return aip.flow.data_response({ input = input }) -- Pass input through
 ```
-
-Error:
-Returns an error if the internal Lua table creation fails.
 
 ## aip.cmd
 
-The `cmd` module exposes functions to execute system commands.
+Functions for executing system commands.
+
+**Functions:**
+- `aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse`
+
+### aip.cmd.exec
+
+Execute a system command with optional arguments.
+
+```lua
+-- API Signature
+aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse
+```
+
+Executes the command using the system shell. On Windows, wraps with `cmd /C`.
+
+#### Arguments
+- `cmd_name: string`: Command name or path.
+- `args?: string | list<string>` (optional): Arguments as a single string or list of strings.
+
+#### Returns
+- `CmdResponse: table`: A [CmdResponse](#cmdresponse) table with stdout, stderr, and exit code, even if the exit code is non-zero.
+
+#### Example
+```lua
+-- Single string argument
+local r1 = aip.cmd.exec("echo", "hello world")
+print("stdout:", r1.stdout) -- Output: hello world\n (or similar)
+print("exit:", r1.exit)   -- Output: 0
+
+-- Table of arguments
+local r2 = aip.cmd.exec("ls", {"-l", "-a", "nonexistent"})
+print("stderr:", r2.stderr) -- Output: ls: nonexistent: No such file... (or similar)
+print("exit:", r2.exit)   -- Output: non-zero exit code
+```
+
+#### Error
+Returns an error (Lua table `{ error: string, ... }`) only if the process *fails to start* (e.g., command not found, permission issue). Non-zero exit codes from the command itself are captured in the `CmdResponse` and do not cause a Lua error by default.
+
+
+## aip.semver
+
+Functions for semantic versioning (SemVer 2.0.0) operations.
+
+**Functions:**
+- `aip.semver.compare(version1: string, operator: string, version2: string): boolean`
+- `aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil}`
+- `aip.semver.is_prerelease(version: string): boolean`
+- `aip.semver.valid(version: string): boolean`
+
+### aip.semver.compare
+
+Compares two version strings using an operator.
+
+```lua
+-- API Signature
+aip.semver.compare(version1: string, operator: string, version2: string): boolean
+```
+
+Compares versions according to SemVer rules (prerelease < release, build metadata ignored).
+
+#### Arguments
+- `version1: string`: First version string.
+- `operator: string`: Comparison operator (`<`, `<=`, `=`, `==`, `>=`, `>`, `!=`, `~=`).
+- `version2: string`: Second version string.
+
+#### Returns
+- `boolean`: `true` if the comparison holds, `false` otherwise.
+
+#### Example
+```lua
+print(aip.semver.compare("1.2.3", ">", "1.2.0"))     -- Output: true
+print(aip.semver.compare("1.0.0-alpha", "<", "1.0.0")) -- Output: true
+print(aip.semver.compare("1.0.0+build", "==", "1.0.0")) -- Output: true
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if operator is invalid or versions are not valid SemVer strings.
+
+### aip.semver.parse
+
+Parses a version string into its components.
+
+```lua
+-- API Signature
+aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil}
+```
+
+#### Arguments
+- `version: string`: The SemVer string to parse.
+
+#### Returns
+- `table`: A table containing `major`, `minor`, `patch`, `prerelease` (string or nil), and `build` (string or nil) components.
+
+#### Example
+```lua
+local v = aip.semver.parse("1.2.3-beta.1+build.123")
+print(v.major, v.minor, v.patch) -- Output: 1 2 3
+print(v.prerelease)             -- Output: beta.1
+print(v.build)                  -- Output: build.123
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if `version` is not a valid SemVer string.
+
+### aip.semver.is_prerelease
+
+Checks if a version string has a prerelease component.
+
+```lua
+-- API Signature
+aip.semver.is_prerelease(version: string): boolean
+```
+
+#### Arguments
+- `version: string`: The SemVer string to check.
+
+#### Returns
+- `boolean`: `true` if it has a prerelease component (e.g., `-alpha`), `false` otherwise.
+
+#### Example
+```lua
+print(aip.semver.is_prerelease("1.2.3-beta"))      -- Output: true
+print(aip.semver.is_prerelease("1.2.3"))         -- Output: false
+print(aip.semver.is_prerelease("1.0.0+build")) -- Output: false
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if `version` is not a valid SemVer string.
+
+### aip.semver.valid
+
+Checks if a string is a valid SemVer 2.0.0 version.
+
+```lua
+-- API Signature
+aip.semver.valid(version: string): boolean
+```
+
+#### Arguments
+- `version: string`: The string to validate.
+
+#### Returns
+- `boolean`: `true` if valid, `false` otherwise.
+
+#### Example
+```lua
+print(aip.semver.valid("1.2.3"))          -- Output: true
+print(aip.semver.valid("1.2.3-alpha.1"))   -- Output: true
+print(aip.semver.valid("1.0"))           -- Output: false
+print(aip.semver.valid("invalid"))       -- Output: false
+```
+
+
+## aip.rust
+
+Functions for processing Rust code.
+
+**Functions:**
+- `aip.rust.prune_to_declarations(code: string): string | {error: string}`
+
+### aip.rust.prune_to_declarations
+
+Prunes Rust code, replacing function bodies with `{ ... }`.
+
+```lua
+-- API Signature
+aip.rust.prune_to_declarations(code: string): string | {error: string}
+```
+
+Keeps only function signatures, preserving comments and other top-level items.
+
+#### Arguments
+- `code: string`: The Rust code to prune.
+
+#### Returns
+- `string`: The pruned Rust code string on success.
+- `{error: string}`: An error table on failure.
+
+#### Example
+```lua
+local rust_code = "fn greet(name: &str) {\n  println!(\"Hello, {}!\", name);\n}\n\nstruct Data;"
+local pruned = aip.rust.prune_to_declarations(rust_code)
+-- pruned might be: "fn greet(name: &str) { ... }\n\nstruct Data;" (exact spacing may vary)
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if pruning fails.
+
+
+## aip.html
+
+Functions for processing HTML content.
+
+**Functions:**
+- `aip.html.prune_to_content(html_content: string): string | {error: string}`
+
+### aip.html.prune_to_content
+
+Strips non-content elements and most attributes from HTML.
+
+```lua
+-- API Signature
+aip.html.prune_to_content(html_content: string): string | {error: string}
+```
+
+Removes `<script>`, `<link>`, `<style>`, `<svg>`, comments, empty lines, and most attributes (keeps `class`, `aria-label`, `href`).
+
+#### Arguments
+- `html_content: string`: The HTML content string.
+
+#### Returns
+- `string`: The cleaned HTML string on success.
+- `{error: string}`: An error table on failure.
+
+#### Example
+```lua
+local html = "<script>alert('hi')</script><p class='c' style='color:red'>Hello</p>"
+local cleaned = aip.html.prune_to_content(html)
+-- cleaned might be: "<p class=\"c\">Hello</p>" (exact output may vary)
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if pruning fails.
+
+
+## aip.git
+
+Functions for performing basic Git operations in the workspace.
+
+**Functions:**
+- `aip.git.restore(path: string): string | {error: string}`
+
+### aip.git.restore
+
+Executes `git restore <path>` in the workspace directory.
+
+```lua
+-- API Signature
+aip.git.restore(path: string): string | {error: string}
+```
+
+Restores the specified file or directory path to its state from the Git index.
+
+#### Arguments
+- `path: string`: The file or directory path to restore (relative to workspace root).
+
+#### Returns
+- `string`: Standard output from the `git restore` command on success.
+- `{error: string}`: An error table if the command fails (e.g., path not known to Git, stderr output).
+
+#### Example
+```lua
+-- Restore a modified file
+local result = aip.git.restore("src/main.rs")
+-- Check if result is an error table or the stdout string
+if type(result) == "table" and result.error then
+  print("Error restoring:", result.error)
+else
+  print("Restore stdout:", result)
+end
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if the `git restore` command exits with an error or produces output on stderr.
+
+
+## aip.hbs
+
+Functions for rendering Handlebars templates.
+
+**Functions:**
+- `aip.hbs.render(content: string, data: any): string | {error: string}`
+
+### aip.hbs.render
+
+Renders a Handlebars template string with Lua data.
+
+```lua
+-- API Signature
+aip.hbs.render(content: string, data: any): string | {error: string}
+```
+
+Converts Lua `data` to JSON internally and renders the Handlebars `content` template.
+
+#### Arguments
+- `content: string`: The Handlebars template string.
+- `data: any`: Lua data (table, string, number, boolean, nil). Functions/userdata not supported.
+
+#### Returns
+- `string`: The rendered template string on success.
+- `{error: string}`: An error table on failure (data conversion or template rendering).
+
+#### Example
+```lua
+local template = "Hello, {{name}}! You have {{tasks.length}} tasks."
+local data = { name = "User", tasks = {"Task 1", "Task 2"} }
+local rendered = aip.hbs.render(template, data)
+-- rendered = "Hello, User! You have 2 tasks."
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if Lua data cannot be converted to JSON or if Handlebars rendering fails.
+
+
+## aip.code
+
+Utility functions for code formatting and manipulation.
+
+**Functions:**
+- `aip.code.comment_line(lang_ext: string, comment_content: string): string | {error: string}`
+
+### aip.code.comment_line
+
+Creates a single comment line appropriate for a given language extension.
+
+```lua
+-- API Signature
+aip.code.comment_line(lang_ext: string, comment_content: string): string | {error: string}
+```
+
+Formats `comment_content` as a single-line comment based on `lang_ext`.
+
+#### Arguments
+- `lang_ext: string`: File extension or language identifier (e.g., "rs", "lua", "py", "js", "css", "html"). Case-insensitive.
+- `comment_content: string`: The text to put inside the comment.
+
+#### Returns
+- `string`: The formatted comment line (without trailing newline) on success.
+- `{error: string}`: An error table on failure.
+
+#### Example
+```lua
+print(aip.code.comment_line("rs", "TODO: Refactor"))  -- Output: // TODO: Refactor
+print(aip.code.comment_line("py", "Add validation"))  -- Output: # Add validation
+print(aip.code.comment_line("lua", "Fix this later")) -- Output: -- Fix this later
+print(aip.code.comment_line("html", "Main content"))  -- Output: <!-- Main content -->
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) on conversion or formatting issues.
+
 
 ## Common Types
 
+Common data structures returned by or used in API functions.
+
 ### FileRecord
+
+Represents a file with its metadata and content. Returned by `aip.file.load` and `aip.file.list_load`.
 
 ```ts
 {
-  path    : string,  // The path to the file
-  content : string,  // The text content of the file
-  name    : string,  // The name of the file
-  stem    : string,  // The stem of the file (name without extension)
-  ext     : string   // The extension of the file
+  path : string,             // Relative or absolute path used to load/find the file
+  dir: string,               // Parent directory of the path (empty if no parent)
+  name : string,             // File name with extension (e.g., "main.rs")
+  stem : string,             // File name without extension (e.g., "main")
+  ext  : string,             // File extension (e.g., "rs")
+
+  created_epoch_us?: number, // Creation timestamp (microseconds since epoch), optional
+  modified_epoch_us?: number,// Modification timestamp (microseconds), optional
+  size?: number,             // File size in bytes, optional
+
+  content: string            // The text content of the file
 }
 ```
 
 ### FileMeta
 
+Represents file metadata without content. Returned by `aip.file.list` and `aip.file.first`.
+
 ```ts
 {
-  path : string,  // The path to the file,
-  name : string,  // The name of the file,
-  stem : string,  // The stem of the file (name without extension),
-  ext  : string   // The extension of the file
+  path : string,             // Relative or absolute path
+  dir: string,               // Parent directory of the path
+  name : string,             // File name with extension
+  stem : string,             // File name without extension
+  ext  : string,             // File extension
+
+  created_epoch_us?: number, // Creation timestamp (microseconds), optional (if with_meta=true)
+  modified_epoch_us?: number,// Modification timestamp (microseconds), optional (if with_meta=true)
+  size?: number              // File size in bytes, optional (if with_meta=true)
 }
 ```
 
 ### MdSection
 
+Represents a section of a Markdown document, potentially associated with a heading. Returned by `aip.file.load_md_sections` and `aip.file.load_md_split_first`.
+
 ```ts
 {
-  content: string,    // Content of the section,
-  heading?: {         // Heading information (optional),
-    content: string,  // Heading content,
-    level: number,    // Heading level (e.g., 1 for #, 2 for ##),
-    name: string      // Heading name
+  content: string,    // Full content of the section (including heading line and sub-sections)
+  heading?: {         // Present if the section starts with a heading
+    content: string,  // The raw heading line (e.g., "## Section Title")
+    level: number,    // Heading level (1-6)
+    name: string      // Extracted heading name (e.g., "Section Title")
   }
 }
 ```
 
 ### MdBlock
 
+Represents a fenced block (usually code) in Markdown. Returned by `aip.md.extract_blocks`.
+
 ```ts
 {
-  content: string,  // Content of the block (without the backticks),
-  lang: string,     // Language of the block (e.g., "lua", "rust", etc.),
-  info: string      // Additional info (e.g., "mermaid", etc.)
+  content: string,     // Content inside the block (excluding fence lines)
+  lang?: string,        // Language identifier (e.g., "rust", "lua"), optional
+  info: string         // Full info string from the opening fence (e.g., "rust file:main.rs"), optional
+}
+```
+*(Note: Previous documentation mentioned `block_type`, but current implementation seems focused on code blocks and returns `lang` and `info` directly).*
+
+### WebResponse
+
+Represents the result of an HTTP request made by `aip.web.get` or `aip.web.post`.
+
+```ts
+{
+  success: boolean,   // true if HTTP status code is 2xx, false otherwise
+  status: number,     // HTTP status code (e.g., 200, 404, 500)
+  url: string,        // The final URL requested (after redirects)
+  content: string | table, // Response body. Decoded to a Lua table if Content-Type is application/json, otherwise a string.
+  error?: string      // Error message if success is false or if request initiation failed
+}
+```
+
+### CmdResponse
+
+Represents the result of executing a system command via `aip.cmd.exec`.
+
+```ts
+{
+  stdout: string,  // Standard output captured from the command
+  stderr: string,  // Standard error captured from the command
+  exit:   number   // Exit code returned by the command (0 usually indicates success)
 }
 ```
