@@ -17,10 +17,12 @@ mod lua_json;
 mod lua_value_ext;
 
 pub use aipack_custom::*;
-pub use helpers::*;
 pub use lua_engine::*;
 pub use lua_json::*;
 pub use lua_value_ext::LuaValueExt;
+
+#[cfg(test)] // Needed for test only (beside this script module)
+pub use helpers::process_lua_eval_result;
 
 // endregion: --- Modules
 

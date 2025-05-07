@@ -1,3 +1,5 @@
+#![allow(unused)] // for now, as not wired yet
+
 use mlua::IntoLua;
 use serde::Serialize;
 use std::collections::HashMap;

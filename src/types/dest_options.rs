@@ -1,5 +1,5 @@
 use crate::script::LuaValueExt;
-use mlua::{Error, FromLua, Lua, Value};
+use mlua::{FromLua, Lua, Value};
 use simple_fs::SPath;
 
 /// Destination options for the `aip.file.save_html_to_md` API.

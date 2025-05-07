@@ -1,3 +1,5 @@
+#![allow(unused)] // for now, as it is not wired
+
 use crate::support::common::Extrude;
 use crate::support::text::tag::TagContentIterator;
 use crate::types::TagBlock;

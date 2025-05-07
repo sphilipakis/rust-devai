@@ -327,14 +327,10 @@ pub fn resolve_dest_path(
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::{assert_contains, setup_lua};
+	use crate::_test_support::assert_contains;
 	use crate::runtime::Runtime;
-	use crate::script::aip_modules::aip_file::support::{
-		process_pack_references, process_path_reference, resolve_dest_path,
-	};
+	use crate::script::aip_modules::aip_file::support::{process_pack_references, process_path_reference};
 	use crate::support::AsStrsExt;
-	use mlua::Value;
-	use simple_fs::SPath;
 
 	#[tokio::test]
 	async fn test_lua_file_support_process_pack_references() -> Result<()> {

@@ -1,7 +1,7 @@
 //! Tests for the TagBlockIter and its extrude functionality.
 
 use crate::support::Extrude;
-use crate::support::text::tag::TagBlockIter;
+use crate::support::text::TagBlockIter;
 use crate::types::TagBlock; // Make sure TagBlock derives Default, PartialEq, Debug
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
