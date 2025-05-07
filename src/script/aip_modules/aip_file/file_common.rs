@@ -695,7 +695,7 @@ impl FromLua for EnsureExistsOptions {
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, setup_lua};
+	use crate::_test_support::{assert_contains, assert_ends_with, eval_lua, run_reflective_agent, setup_lua};
 	use crate::runtime::Runtime;
 	use crate::script::aip_modules::aip_file;
 	use serde_json::Value;
@@ -1034,6 +1034,36 @@ return { files = files }
 
 		// -- Check
 		assert_eq!(res, serde_json::Value::Null, "Should have returned null");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread")]
+	async fn test_lua_file_check_ctx_tmp_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_content = "Hello tmp content";
+		let fx_path = "my-dir/some-tmp-file.aip";
+		let fx_code = format!(
+			r#"
+local path = CTX.TMP_DIR .. "/{fx_path}"	
+aip.file.save(path,"{fx_content}")
+return {{
+   file    = aip.file.load(path),
+	 session = CTX.SESSION
+}}
+		"#
+		);
+
+		// -- Exec
+		let res = run_reflective_agent(&fx_code, None).await?;
+
+		// -- Check
+		let content = res.x_get_str("/file/content")?;
+		let path = res.x_get_str("/file/path")?;
+		let session = res.x_get_str("session")?;
+
+		assert_eq!(content, fx_content);
+		assert_ends_with(path, &format!(".aipack/session/{session}/tmp/{fx_path}"));
 
 		Ok(())
 	}
