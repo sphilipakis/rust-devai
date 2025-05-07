@@ -1,0 +1,64 @@
+# Options
+
+```toml
+# This will override the config properties set in `.aipack/config.toml` and `~/.aipack-base/config.toml`
+
+model = "mini"
+
+# temperature = 0.0 
+input_concurrency = 6
+```
+
+# Before All
+
+```lua
+
+local new_inputs = aip.file.list("src/script/aip_modules/**/*.*")
+
+-- Could do `return {some = "data"}` and this will be accessible as `before_all`
+-- Or for more control `aip.flow.before_all_response({...})` to reshape the inputs and more
+return aip.flow.before_all_response({
+    inputs     = new_inputs,         -- Reshaping the inputs
+    before_all = { any_data = 123 }, -- Will be accessible as `before_all` variable in following stages
+    -- options = { model = "o4-mini", item_concurrency = 12} -- Can even customize the AI settings
+})
+```
+
+# Data 
+
+```lua
+
+local file = aip.file.load(input.path)
+
+return {
+    src_file = file
+}
+
+-- Remove the "DISABLED" below to send the instruction to AI
+```
+
+# Instruction
+
+Extract the Rust doc of this file, and put them in a big markdown block. 
+
+Each comment block are sepratored by empty line `---` and empty line. 
+
+````rs
+{{data.src_file.content}}
+````
+
+
+# Output 
+
+```lua
+
+local content = aip.md.outer_block_content_or_raw(ai_response.content)
+
+local dest_path = CTX.PACK_IDENTITY .. "$workspace/.doc-for-lua/" .. input.path:gsub("/", "-") .. ".md"
+
+aip.file.save(dest_path, content)
+
+return "Save in " .. dest_path
+
+```
+

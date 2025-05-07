@@ -7,7 +7,7 @@ This will mature overtime.
 # Options
 
 ```toml
-model = "gpro"
+model = "flash-xp"
 ```
 
 # Before All

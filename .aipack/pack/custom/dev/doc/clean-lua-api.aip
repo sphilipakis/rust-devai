@@ -1,0 +1,84 @@
+# Options
+
+```toml
+# This will override the config properties set in `.aipack/config.toml` and `~/.aipack-base/config.toml`
+
+model = "flash-xp"
+
+# temperature = 0.0 
+# input_concurrency = 6
+```
+
+# Data 
+
+```lua
+
+-- `input` can be passed from the command with `-i`
+-- `aip run my-agent.aip -i "My name is John" -i "My name is Jen"`
+-- or pass file(s) (with file or glob)
+-- `aip run my-agent.aip -f "src/*.js"` 
+
+local file = aip.file.load("_init/base/pack/installed/core/doc/lua-api.md")
+
+return {
+    file = file
+}
+
+-- Remove the "DISABLED" below to send instruction to AI
+```
+
+# Instruction
+
+Here is the lua-api file I want you to update
+
+````lua
+{{data.file.content}}
+````
+
+Only clean/update what need to t be change. 
+
+Update instruruction: 
+
+- First, let's remove all mention of `aip.path.join...` if documented, we do not want to expose that (they are removed)
+- Second make sure that when it returns a type or take the type in arguments that defined in the Types, we put there markdown reference to it. (we do not need to re-inline the type)
+So for example this is good: 
+```md
+- `list<FileMeta>: table`: A Lua list of [FileMeta](#filemeta) tables. Empty if no matches.
+```
+- Do not add markdown links inside ticks, they won't link in Markdodown
+NOT THIS
+```md
+- `[FileRecord](#filerecord)`: A [FileRecord](#filerecord) table representing the file.
+```
+BUT THIS
+```md
+- `FileRecord`: A [FileRecord](#filerecord) table representing the file.
+```
+
+But great to make thing linkable when possible
+NOT THIS
+```md
+List file metadata (`FileMeta`) matching glob patterns.
+```
+But this: 
+```md
+List file metadata ([FileMeta](#filemeta)) matching glob patterns.
+```
+
+- Now if the data is not in the type section, do not remove the inline definition.
+
+Clear, and it markdown link to the right secito  of the doc. 
+
+Give back the file content raw, do not wrap it in a Markdown code block. Just the raw file back. 
+
+# Output 
+
+```lua
+
+local content = ai_response.content
+
+aip.file.save(data.file.path, content)
+
+return "updated - " .. data.file.path
+
+```

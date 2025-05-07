@@ -1,0 +1,62 @@
+# Options
+
+```toml
+# This will override the config properties set in `.aipack/config.toml` and `~/.aipack-base/config.toml`
+
+model = "flash-xp"
+
+# temperature = 0.0 
+# input_concurrency = 6
+```
+
+# Data 
+
+```lua
+
+-- `input` can be passed from the command with `-i`
+-- `aip run my-agent.aip -i "My name is John" -i "My name is Jen"`
+-- or pass file(s) (with file or glob)
+-- `aip run my-agent.aip -f "src/*.js"` 
+
+local doc_files    = aip.file.list_load(CTX.PACK_IDENTITY .. "$workspace/.doc-for-lua/*.md")
+local lua_api_file = aip.file.load("_init/base/pack/installed/core/doc/lua-api.md")
+
+return {
+    doc_files    = doc_files,
+    lua_api_file = lua_api_file
+}
+
+-- Remove the "DISABLED" below to send instruction to AI
+```
+
+# Instruction
+
+So, I am going to give you full rust documentaiton of the aip lua apis, and then, the content of the `lua-aip.md` to update
+
+Make sure to update only what is needed in the `lua-aip.md`, and follow the exexiting pattern.
+
+{{#each data.doc_files}}
+<RUST_DOC file_name="{{this.name}}">
+{{this.content}}
+</RUST_DOC>
+{{/each}}
+
+Now, here is the `{{data.lua_api_file.name}}`
+
+````md
+{{data.lua_api_file.content}}
+````
+
+Add what is needed, and return the file content, as is, do not wrap it in mardkown code block. Just the updated file content
+
+
+# Output 
+
+```lua
+local content = ai_response.content
+
+aip.file.save(data.lua_api_file.path, content)
+
+return response
+
+```
