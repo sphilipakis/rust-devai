@@ -65,8 +65,8 @@ impl Runtime {
 		self.inner.session().as_str()
 	}
 
-	pub fn session_uuid(&self) -> Uuid {
-		self.inner.session().uuid()
+	pub fn session(&self) -> &Session {
+		self.inner.session()
 	}
 }
 

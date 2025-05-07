@@ -1039,7 +1039,7 @@ return { files = files }
 	}
 
 	#[tokio::test(flavor = "multi_thread")]
-	async fn test_lua_file_check_ctx_tmp_ok() -> Result<()> {
+	async fn test_lua_file_tmp_with_ctx() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_content = "Hello tmp content";
 		let fx_path = "my-dir/some-tmp-file.aip";
@@ -1063,10 +1063,40 @@ return {{
 		let session = res.x_get_str("session")?;
 
 		assert_eq!(content, fx_content);
-		assert_ends_with(path, &format!(".aipack/session/{session}/tmp/{fx_path}"));
+		assert_ends_with(path, &format!(".aipack/.session/{session}/tmp/{fx_path}"));
 
 		Ok(())
 	}
+
+	// 	#[tokio::test(flavor = "multi_thread")]
+	// 	async fn test_lua_file_tmp_with_var() -> Result<()> {
+	// 		// -- Setup & Fixtures
+	// 		let fx_content = "Hello tmp content";
+	// 		let fx_path = "my-dir/second-tmp-file.aip";
+	// 		let fx_code = format!(
+	// 			r#"
+	// local path = "$tmp/{fx_path}"
+	// aip.file.save(path,"{fx_content}")
+	// return {{
+	//    file    = aip.file.load(path),
+	// 	 session = CTX.SESSION
+	// }}
+	// 		"#
+	// 		);
+
+	// 		// -- Exec
+	// 		let res = run_reflective_agent(&fx_code, None).await?;
+
+	// 		// -- Check
+	// 		let content = res.x_get_str("/file/content")?;
+	// 		let path = res.x_get_str("/file/path")?;
+	// 		let session = res.x_get_str("session")?;
+
+	// 		assert_eq!(content, fx_content);
+	// 		assert_ends_with(path, &format!(".aipack/.session/{session}/tmp/{fx_path}"));
+
+	// 		Ok(())
+	// 	}
 
 	// region:    --- Support for Tests
 

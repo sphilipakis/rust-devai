@@ -2,6 +2,7 @@ use super::path_consts::PACK_INSTALLED;
 use super::path_consts::{CONFIG_FILE_NAME, PACK_CUSTOM};
 use crate::dir_context::path_consts::{AIPACK_DIR_NAME, PACK_DOWNLOAD};
 use crate::dir_context::{AipackBaseDir, AipackWksDir};
+use crate::runtime::Session;
 use crate::support::files::current_dir;
 use crate::{Error, Result};
 use simple_fs::SPath;
@@ -28,6 +29,11 @@ impl AipackPaths {
 	/// Renamed from `get_aipack_wks_dir` for consistency.
 	pub fn aipack_wks_dir(&self) -> Option<&AipackWksDir> {
 		self.aipack_wks_dir.as_ref()
+	}
+
+	pub fn tmp_dir(&self, session: &Session) -> Option<SPath> {
+		self.aipack_wks_dir()
+			.map(|aip_dir| aip_dir.join(format!(".session/{}/tmp", session.as_str())))
 	}
 }
 

@@ -35,6 +35,10 @@ impl Literals {
 
 		store.push(("SESSION", session_str.to_string()));
 
+		if let Some(tmp_dir) = aipack_paths.tmp_dir(runtime.session()) {
+			store.push(("TMP_DIR", tmp_dir.to_string()))
+		}
+
 		// -- AIPACK information
 		store.push(("AIPACK_VERSION", crate::VERSION.to_string()));
 
@@ -72,10 +76,6 @@ impl Literals {
 		// Those are the absolute path for  and `.aipack/`
 		if let Some(aipack_wks_dir) = aipack_paths.aipack_wks_dir() {
 			store.push(("WORKSPACE_AIPACK_DIR", aipack_wks_dir.to_string()));
-
-			// NOTE: For now, temp dir require workspace .aipack, we might think about putting in base when no workspace
-			let session_tmp = aipack_wks_dir.join(format!("session/{session_str}/tmp"));
-			store.push(("TMP_DIR", session_tmp.to_string()))
 		}
 		// `~/.aipack-base/`
 		store.push(("BASE_AIPACK_DIR", aipack_paths.aipack_base_dir().to_string()));
@@ -155,7 +155,7 @@ return {
 		assert_contains(session, "-7"); // v7
 		// check tmp_dir
 		let tmp_dir = res.x_get_str("TMP_DIR")?;
-		assert_ends_with(tmp_dir, &format!(".aipack/session/{session}/tmp"));
+		assert_ends_with(tmp_dir, &format!(".aipack/.session/{session}/tmp"));
 		// check workspace
 		assert_ends_with(res.x_get_str("WORKSPACE_DIR")?, "tests-data/sandbox-01");
 		assert_ends_with(res.x_get_str("WORKSPACE_AIPACK_DIR")?, "tests-data/sandbox-01/.aipack");

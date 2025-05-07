@@ -32,6 +32,7 @@ src/**/*.aip
 !/tests-data/sandbox-01/.aipack/
 !/tests-data/sandbox-01/.aipack/*
 !/tests-data/sandbox-01/.aipack/config.toml
+/tests-data/sandbox-01/.aipack/.*
 
 !/tests-data/.aipack-base
 
