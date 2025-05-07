@@ -24,7 +24,7 @@ pub fn base_dir_and_globs(
 	let base_dir = compute_base_dir(runtime.dir_context(), options)?;
 
 	// Process any pack references in the globs
-	let processed_globs = process_pack_references(runtime.dir_context(), globs)?;
+	let processed_globs = process_path_references(runtime.dir_context(), globs)?;
 
 	Ok((base_dir, processed_globs))
 }
@@ -70,44 +70,12 @@ pub fn process_path_reference(dir_context: &DirContext, path: &str) -> Result<SP
 /// Processes globs to handle pack references
 ///
 /// Converts pack references like "jc@rust10x/common/**/*.md" to their actual paths
-pub fn process_pack_references(dir_context: &DirContext, globs: Vec<String>) -> Result<Vec<String>> {
+pub fn process_path_references(dir_context: &DirContext, globs: Vec<String>) -> Result<Vec<String>> {
 	let mut processed_globs = Vec::with_capacity(globs.len());
 
 	for glob in globs {
-		// Check if the glob starts with a potential pack reference
-		if let Some(pack_ref_str) = extract_pack_reference(&glob) {
-			// Parse the pack reference
-			if let Ok(pack_ref) = PackRef::from_str(pack_ref_str) {
-				match find_to_run_pack_dir(dir_context, &pack_ref) {
-					Ok(pack_dir) => {
-						// Replace the pack reference with the actual path
-						let sub_path = pack_ref.sub_path.unwrap_or_default();
-						let pack_path = pack_dir.path.join(&sub_path);
-
-						// Get the remaining glob pattern (after the pack reference)
-						let remaining_glob = glob.strip_prefix(pack_ref_str).unwrap_or("").trim_start_matches('/');
-
-						// Combine the pack path with the remaining glob pattern
-						let resolved_glob = if remaining_glob.is_empty() {
-							pack_path.to_string()
-						} else {
-							pack_path.join(remaining_glob).to_string()
-						};
-
-						processed_globs.push(resolved_glob);
-					}
-					Err(_) => {
-						// Note: If not found, then, we skip this item
-					}
-				}
-			} else {
-				// Not a valid pack reference format, keep the original glob
-				processed_globs.push(glob);
-			}
-		} else {
-			// No pack reference, keep the original glob
-			processed_globs.push(glob);
-		}
+		let glob = process_path_reference(dir_context, &glob)?;
+		processed_globs.push(glob.to_string());
 	}
 
 	Ok(processed_globs)
@@ -346,7 +314,7 @@ mod tests {
 
 	use crate::_test_support::assert_contains;
 	use crate::runtime::Runtime;
-	use crate::script::aip_modules::aip_file::support::{process_pack_references, process_path_reference};
+	use crate::script::aip_modules::aip_file::support::{process_path_reference, process_path_references};
 	use crate::support::AsStrsExt;
 
 	#[tokio::test]
@@ -360,11 +328,12 @@ mod tests {
 			.collect();
 
 		// -- Exec
-		let res = process_pack_references(dir_context, fx_globs)?;
+		let res = process_path_references(dir_context, fx_globs)?;
 
 		// -- Check
+		// NOTE: Now the process_path_references do not process for existences
 		let res = res.x_as_strs();
-		assert_eq!(res.len(), 2, "Should have two globs");
+		assert_eq!(res.len(), 3, "Should have three globs");
 		let first = res.first().ok_or("Should have first")?;
 		assert_contains(*first, "ns_b/pack_b_2/main.aip");
 		assert_contains(&res, "**/*.txt");

@@ -445,7 +445,6 @@ pub(super) fn file_list(
 	options: Option<Value>,
 ) -> mlua::Result<Value> {
 	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
-
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 	// Default is true, as we want convenient APIs, and offer user way to optimize it
 	let with_meta = options.x_get_bool("with_meta").unwrap_or(true);
@@ -873,6 +872,24 @@ mod tests {
 		assert_eq!(res_paths.len(), 2, "result length");
 		assert_contains(&res_paths, "file-01.txt");
 		assert_contains(&res_paths, "file-02.txt");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_list_support_workspace() -> Result<()> {
+		// -- Fixtures
+		// This is the rust Path logic
+		let glob = "ns_b@pack_b_2$base/**/*.*";
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.list("{glob}");"#), None).await?;
+
+		// -- Check
+		let res = res.as_array().ok_or("Should return an array")?;
+		assert_eq!(res.len(), 1, "result length");
+		let item = res.first().ok_or("Should have one item")?;
+		assert_contains(item.x_get_str("path")?, "extra/test.txt");
 
 		Ok(())
 	}
