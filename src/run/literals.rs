@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::agent::{Agent, AgentRef};
-use crate::dir_context::{DirContext, join_support_pack_ref};
+use crate::dir_context::join_support_pack_ref;
+use crate::runtime::Runtime;
 use crate::script::LuaEngine;
 use std::sync::Arc;
 
@@ -14,8 +15,9 @@ pub struct Literals {
 
 /// Constructors
 impl Literals {
-	pub(super) fn from_dir_context_and_agent_path(dir_context: &DirContext, agent: &Agent) -> Result<Literals> {
+	pub(super) fn from_runtime_and_agent_path(runtime: &Runtime, agent: &Agent) -> Result<Literals> {
 		// let mut literals = Literals::default();
+		let dir_context = runtime.dir_context();
 
 		let mut store = Vec::new();
 
@@ -28,6 +30,10 @@ impl Literals {
 		let aipack_paths = dir_context.aipack_paths();
 
 		store.push(("PWD", dir_context.current_dir().to_string()));
+
+		let session_str = runtime.session_str();
+
+		store.push(("SESSION", session_str.to_string()));
 
 		// -- AIPACK information
 		store.push(("AIPACK_VERSION", crate::VERSION.to_string()));
@@ -66,6 +72,10 @@ impl Literals {
 		// Those are the absolute path for  and `.aipack/`
 		if let Some(aipack_wks_dir) = aipack_paths.aipack_wks_dir() {
 			store.push(("WORKSPACE_AIPACK_DIR", aipack_wks_dir.to_string()));
+
+			// NOTE: For now, temp dir require workspace .aipack, we might think about putting in base when no workspace
+			let session_tmp = aipack_wks_dir.join(format!("session/{session_str}/tmp"));
+			store.push(("TMP_DIR", session_tmp.to_string()))
 		}
 		// `~/.aipack-base/`
 		store.push(("BASE_AIPACK_DIR", aipack_paths.aipack_base_dir().to_string()));
@@ -113,13 +123,15 @@ impl Literals {
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::{assert_ends_with, run_reflective_agent};
+	use crate::_test_support::{assert_contains, assert_ends_with, run_reflective_agent};
 	use value_ext::JsonValueExt;
 
 	#[tokio::test]
 	async fn test_run_literals_aipack_dir() -> Result<()> {
 		let script = r#"
 return {
+		TMP_DIR                     = CTX.TMP_DIR,
+		SESSION                     = CTX.SESSION,
 	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
 		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
 		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
@@ -137,12 +149,22 @@ return {
 		let res = run_reflective_agent(script, None).await?;
 
 		// -- Check
+		// check session
+		let session = res.x_get_str("SESSION")?;
+		assert_eq!(session.len(), 36);
+		assert_contains(session, "-7"); // v7
+		// check tmp_dir
+		let tmp_dir = res.x_get_str("TMP_DIR")?;
+		assert_ends_with(tmp_dir, &format!(".aipack/session/{session}/tmp"));
+		// check workspace
 		assert_ends_with(res.x_get_str("WORKSPACE_DIR")?, "tests-data/sandbox-01");
+		assert_ends_with(res.x_get_str("WORKSPACE_AIPACK_DIR")?, "tests-data/sandbox-01/.aipack");
+		// check agent
 		assert_eq!(res.x_get_str("AGENT_FILE_NAME")?, "mock-reflective-agent.aip");
 		assert_eq!(res.x_get_str("AGENT_FILE_STEM")?, "mock-reflective-agent");
-		assert_ends_with(res.x_get_str("WORKSPACE_AIPACK_DIR")?, "tests-data/sandbox-01/.aipack");
-		assert_ends_with(res.x_get_str("BASE_AIPACK_DIR")?, "tests-data/.aipack-base");
 		assert_ends_with(res.x_get_str("AGENT_FILE_PATH")?, "mock-reflective-agent.aip");
+		// check base
+		assert_ends_with(res.x_get_str("BASE_AIPACK_DIR")?, "tests-data/.aipack-base");
 
 		Ok(())
 	}

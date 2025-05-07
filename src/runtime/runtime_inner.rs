@@ -1,5 +1,6 @@
 use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
+use crate::runtime::Session;
 use genai::Client;
 
 #[derive(Debug, Clone)]
@@ -7,6 +8,7 @@ pub struct RuntimeInner {
 	dir_context: DirContext,
 	genai_client: Client,
 	executor_sender: ExecutorSender,
+	session: Session,
 }
 
 /// Constructors
@@ -16,6 +18,7 @@ impl RuntimeInner {
 			dir_context,
 			genai_client,
 			executor_sender,
+			session: Session::new(),
 		}
 	}
 }
@@ -32,5 +35,9 @@ impl RuntimeInner {
 
 	pub fn executor_sender(&self) -> ExecutorSender {
 		self.executor_sender.clone()
+	}
+
+	pub fn session(&self) -> &Session {
+		&self.session
 	}
 }

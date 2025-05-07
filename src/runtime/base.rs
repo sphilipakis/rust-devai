@@ -6,6 +6,7 @@ use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
 use std::sync::Arc;
+use uuid::Uuid;
 
 /// The runtime that holds the RuntimeInner (under Arc) with the genai client and dir_context
 /// This type is made to be cloned when passed to different part of the system.
@@ -59,7 +60,41 @@ impl Runtime {
 	pub fn executor_sender(&self) -> ExecutorSender {
 		self.inner.executor_sender()
 	}
+
+	pub fn session_str(&self) -> &str {
+		self.inner.session().as_str()
+	}
+
+	pub fn session_uuid(&self) -> Uuid {
+		self.inner.session().uuid()
+	}
 }
+
+// region:    --- Session
+
+#[derive(Debug, Clone)]
+pub struct Session {
+	uuid: Uuid,
+	cached_str: Arc<str>,
+}
+
+impl Session {
+	pub(super) fn new() -> Self {
+		let uuid = Uuid::now_v7();
+		let cached_str = Arc::from(uuid.to_string().as_str());
+		Self { uuid, cached_str }
+	}
+
+	pub fn uuid(&self) -> Uuid {
+		self.uuid
+	}
+
+	pub fn as_str(&self) -> &str {
+		&self.cached_str
+	}
+}
+
+// endregion: --- Session
 
 // region:    --- Tests Support
 #[cfg(test)]

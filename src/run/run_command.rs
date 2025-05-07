@@ -25,7 +25,7 @@ pub async fn run_command_agent(
 ) -> Result<RunAgentResponse> {
 	let hub = get_hub();
 
-	let literals = Literals::from_dir_context_and_agent_path(runtime.dir_context(), &agent)?;
+	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
 
 	// display relative agent path if possible
 	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
@@ -363,7 +363,7 @@ pub async fn run_command_agent_input_for_test(
 	input: impl Serialize,
 	run_base_options: &RunBaseOptions,
 ) -> Result<Option<RunAgentInputResponse>> {
-	let literals = Literals::from_dir_context_and_agent_path(runtime.dir_context(), agent)?;
+	let literals = Literals::from_runtime_and_agent_path(runtime, agent)?;
 
 	run_command_agent_input(
 		input_idx,
