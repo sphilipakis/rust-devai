@@ -95,3 +95,93 @@ pub(super) fn file_save_html_to_md(
 	let meta = FileMeta::new(rel_md, &full_md);
 	meta.into_lua(lua)
 }
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+
+	use crate::_test_support::{
+		assert_contains, assert_not_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file,
+		gen_sandbox_01_temp_file_path, resolve_sandbox_01_path, run_reflective_agent,
+	};
+	use simple_fs::{SPath, read_to_string as sfs_read_to_string};
+	use value_ext::JsonValueExt;
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_md_simple_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_html_content = r#"
+<!DOCTYPE html>
+<html>
+<head><title>Test Page</title></head>
+<body>
+    <h1>Main Title</h1>
+    <p>This is a paragraph with <strong>strong</strong> text and <em>emphasized</em> text.</p>
+    <ul>
+        <li>Item 1</li>
+        <li>Item 2</li>
+    </ul>
+    <a href="https://example.com">A Link</a>
+</body>
+</html>"#;
+		let fx_html_path = create_sanbox_01_tmp_file(
+			"test_script_aip_file_save_html_to_md_simple_ok-input.html",
+			fx_html_content,
+		)?;
+
+		let md_path = fx_html_path.new_sibling("test_script_aip_file_save_html_to_md_simple_ok-input.md");
+
+		// -- Exec
+		let lua_code = format!(r#"return aip.file.save_html_to_md("{}", "{}")"#, fx_html_path, md_path);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		// Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, md_path.as_str());
+		assert_eq!(res.x_get_str("ext")?, "md");
+		assert!(res.x_get_i64("size")? > 0);
+
+		// Check MD content
+		let md_full_path = resolve_sandbox_01_path(&md_path);
+		let md_content = sfs_read_to_string(&md_full_path)?;
+		assert_contains(&md_content, "# Main Title");
+		assert_contains(
+			&md_content,
+			"This is a paragraph with **strong** text and _emphasized_ text.",
+		);
+		assert_contains(&md_content, "-   Item 1");
+		assert_contains(&md_content, "-   Item 2");
+		assert_contains(&md_content, "[A Link](https://example.com)");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(md_full_path)?;
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_md_html_not_found() -> Result<()> {
+		let fx_src_path = gen_sandbox_01_temp_file_path("test_script_aip_file_save_html_to_md_html_not_found.html");
+		let fx_dst_path = gen_sandbox_01_temp_file_path("test_script_aip_file_save_html_to_md_html_not_found.md");
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_md("{}", "{}")"#,
+			fx_src_path, fx_dst_path
+		);
+
+		let Err(res) = run_reflective_agent(&lua_code, None).await else {
+			panic!("Should have returned a error")
+		};
+
+		// -- Check
+		let res = res.to_string();
+		assert_contains(&res, "Failed to read HTML file ");
+
+		Ok(())
+	}
+}
+
+// endregion: --- Tests
