@@ -4,7 +4,7 @@ use crate::init::extract_template_pack_toml_zfile;
 use crate::packer::pack_dir;
 use crate::{Error, Result};
 use aho_corasick::AhoCorasick;
-use camino::Utf8PathBuf;
+use simple_fs::SPath;
 use std::fs;
 use std::io::{self};
 
@@ -13,16 +13,16 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 	let hub = get_hub();
 
 	// Get source directory path
-	let src_dir = Utf8PathBuf::from(&pack_args.dir_path);
+	let src_dir = SPath::from(&pack_args.dir_path);
 	if !src_dir.exists() {
 		return Err(Error::custom(format!("Source directory '{}' does not exist", src_dir)));
 	}
 
 	// Get destination directory (default to current directory if not specified)
 	let dest_dir = if let Some(output_dir) = &pack_args.output_dir {
-		Utf8PathBuf::from(output_dir)
+		SPath::from(output_dir)
 	} else {
-		Utf8PathBuf::from(".")
+		SPath::from(".")
 	};
 
 	// Create output directory if it doesn't exist
@@ -95,7 +95,7 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 }
 
 /// Generates a default pack.toml file from the template
-async fn generate_pack_toml(dir_path: &Utf8PathBuf) -> Result<()> {
+async fn generate_pack_toml(dir_path: &SPath) -> Result<()> {
 	let hub = get_hub();
 
 	// Extract the template pack.toml

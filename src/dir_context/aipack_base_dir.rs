@@ -1,6 +1,5 @@
 use crate::Result;
 use crate::dir_context::path_consts::AIPACK_BASE;
-use camino::Utf8PathBuf;
 use home::home_dir;
 use simple_fs::SPath;
 use std::ops::Deref;
@@ -31,8 +30,8 @@ impl AipackBaseDir {
 	pub fn exists(&self) -> bool {
 		self.path.exists()
 	}
-	pub fn join(&self, leaf_path: impl Into<Utf8PathBuf>) -> SPath {
-		self.path.join(leaf_path)
+	pub fn join(&self, leaf_path: impl Into<SPath>) -> SPath {
+		self.path.join(leaf_path.into())
 	}
 }
 

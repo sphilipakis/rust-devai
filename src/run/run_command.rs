@@ -300,7 +300,7 @@ async fn run_command_agent_input(
 	// if the response value is a String, then, print it
 	if let Some(response_txt) = run_response.as_ref().and_then(|r| r.as_str()) {
 		// let short_text = truncate_with_ellipsis(response_txt, 72);
-		hub.publish(format!("-> Agent Output:\n{response_txt}")).await;
+		hub.publish(format!("-> Agent Output:\n\n{response_txt}\n")).await;
 	}
 
 	hub.publish(format!("==== DONE (input: {})", label)).await;

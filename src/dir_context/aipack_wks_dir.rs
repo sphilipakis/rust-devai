@@ -1,6 +1,5 @@
 use crate::Result;
 use crate::dir_context::path_consts::{AIPACK_DIR_NAME, CONFIG_FILE_NAME, PACK_CUSTOM};
-use camino::Utf8PathBuf;
 use simple_fs::SPath;
 use std::ops::Deref;
 
@@ -50,8 +49,8 @@ impl AipackWksDir {
 	pub fn exists(&self) -> bool {
 		self.path.exists()
 	}
-	pub fn join(&self, leaf_path: impl Into<Utf8PathBuf>) -> SPath {
-		self.path.join(leaf_path)
+	pub fn join(&self, leaf_path: impl Into<SPath>) -> SPath {
+		self.path.join(leaf_path.into())
 	}
 }
 

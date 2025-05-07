@@ -4,7 +4,6 @@ use crate::packer::PackToml;
 use crate::packer::pack_toml::parse_validate_pack_toml;
 use crate::support::zip;
 use crate::{Error, Result};
-use camino::Utf8Path;
 use simple_fs::SPath;
 use std::fs;
 
@@ -25,7 +24,7 @@ pub struct PackDirData {
 /// # Returns
 /// - Ok(PackDirData): If packing is successful, containing the path to the created .aipack file and pack.toml data
 /// - Err(Error): If any error occurs during packing
-pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) -> Result<PackDirData> {
+pub fn pack_dir(pack_dir: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Result<PackDirData> {
 	let pack_dir = pack_dir.as_ref();
 	let dest_dir = dest_dir.as_ref();
 
@@ -55,7 +54,7 @@ pub fn pack_dir(pack_dir: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) 
 	zip::zip_dir(pack_dir, &aipack_path)?;
 
 	Ok(PackDirData {
-		pack_file: aipack_path.into(),
+		pack_file: aipack_path,
 		pack_toml,
 	})
 }

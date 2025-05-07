@@ -1,5 +1,4 @@
 use crate::{Error, Result};
-use camino::Utf8Path;
 use simple_fs::SPath;
 use std::fs::{self, File};
 use std::io::{self, Read as _};
@@ -14,24 +13,24 @@ use zip::{CompressionMethod, ZipArchive};
 /// `dest_file` is the destination file path for the zip archive.
 ///
 /// This function recursively adds files and subdirectories from `src_dir` to the zip archive.
-pub fn zip_dir(src_dir: impl AsRef<Utf8Path>, dest_file: impl AsRef<Utf8Path>) -> Result<()> {
+pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Result<()> {
 	let src_dir = src_dir.as_ref();
 	let dest_file = dest_file.as_ref();
 
 	// Create the destination zip file.
-	let file = File::create(dest_file.as_std_path())?;
+	let file = File::create(dest_file)?;
 	let mut zip = ZipWriter::new(file);
 
 	// Set default options with deflated compression (most standard).
 	let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
 	// Walk through the directory.
-	for entry in WalkDir::new(src_dir.as_std_path()) {
+	for entry in WalkDir::new(src_dir) {
 		let entry = entry.map_err(|err| Error::ZipFail {
 			zip_dir: src_dir.to_string(),
 			cause: format!("Fail to zip directory. Error on entry. Cause {err}"),
 		})?;
-		let Some(path) = Utf8Path::from_path(entry.path()) else {
+		let Ok(path) = SPath::from_std_path(entry.path()) else {
 			continue;
 		};
 
@@ -79,7 +78,7 @@ pub fn zip_dir(src_dir: impl AsRef<Utf8Path>, dest_file: impl AsRef<Utf8Path>) -
 ///
 /// `src_zip` is the path to the zip archive.
 /// `dest_dir` is the destination directory where the contents of the zip will be extracted.
-pub fn unzip_file(src_zip: impl AsRef<Utf8Path>, dest_dir: impl AsRef<Utf8Path>) -> Result<()> {
+pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Result<()> {
 	let src_zip = src_zip.as_ref();
 	let dest_dir = dest_dir.as_ref();
 

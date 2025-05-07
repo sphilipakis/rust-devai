@@ -109,7 +109,7 @@ pub(super) fn validate_names(namespace: &str, name: &str, _toml_path: &str) -> R
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use camino::Utf8PathBuf;
+	use simple_fs::SPath;
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	#[test]
@@ -121,7 +121,7 @@ version = "1.0.0"
 namespace = "test"
 name = "pack"
 "#;
-		let toml_path = Utf8PathBuf::from("dummy/path/pack.toml");
+		let toml_path = SPath::from("dummy/path/pack.toml");
 
 		// -- Exec
 		let pack_toml = parse_validate_pack_toml(valid_toml, toml_path.as_str())?;
@@ -137,7 +137,7 @@ name = "pack"
 	#[test]
 	fn test_packer_pack_toml_validate_missing_fields() -> Result<()> {
 		// -- Setup & Fixtures
-		let toml_path = Utf8PathBuf::from("dummy/path/pack.toml");
+		let toml_path = SPath::from("dummy/path/pack.toml");
 
 		// -- Exec & Check
 		// Missing pack section
