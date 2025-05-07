@@ -81,8 +81,8 @@ pub(super) fn file_save_html_to_md(
 		))
 	})?;
 
-	// -- determine destination paths using the new helper
-	let (rel_md, full_md) = super::support::resolve_dest_path(lua, dir_context, &rel_html, dest, "md")?;
+	// -- determine destination paths using the helper
+	let (rel_md, full_md) = super::support::resolve_dest_path(lua, dir_context, &rel_html, dest, "md", None)?;
 
 	// -- write out and return metadata
 	simple_fs::ensure_file_dir(&full_md).map_err(Error::from)?;
@@ -93,6 +93,96 @@ pub(super) fn file_save_html_to_md(
 	meta.into_lua(lua)
 }
 
+/// ## Lua Documentation
+///
+/// Loads an HTML file, "slims" its content (removes scripts, styles, comments, etc.),
+/// and saves the slimmed HTML content according to `dest` options.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.save_html_to_slim(
+///   html_path: string,
+///   dest?: string | {
+///     base_dir?: string,
+///     file_name?: string,
+///     suffix?: string
+///   }
+/// ): FileMeta
+/// ```
+///
+/// ### Arguments
+///
+/// - `html_path: string`  
+///   Path to the source HTML file, relative to the workspace root.
+///
+/// - `dest: string | table (optional)`  
+///   Destination path or options table for the output `.html` file:
+///
+///   - `nil`: Saves as `[original_name]-slim.html` in the same directory.
+///   - `string`: Path to save the slimmed `.html` file (relative or absolute).
+///   - `table` (`DestOptions`):
+///       - `base_dir?: string`: Base directory for resolving the destination. If provided without `file_name` or `suffix`, the output will be `[original_name].html` in this directory.
+///       - `file_name?: string`: Custom file name for the slimmed HTML output.
+///       - `suffix?: string`: Suffix appended to the source file stem (e.g., `_slimmed`).
+///
+/// ### Returns
+///
+/// - `FileMeta`  
+///   Metadata about the created slimmed HTML file.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Default (saves as original-slim.html):
+/// aip.file.save_html_to_slim("web/page.html")
+/// -- Result: web/page-slim.html
+///
+/// -- Using a custom string path:
+/// aip.file.save_html_to_slim("web/page.html", "output/slim_page.html")
+///
+/// -- Using options table (base_dir, uses original name):
+/// aip.file.save_html_to_slim("web/page.html", { base_dir = "slim_output" })
+/// -- Result: slim_output/page.html
+///
+/// -- Using options table (suffix):
+/// aip.file.save_html_to_slim("web/page.html", { suffix = "_light" })
+/// -- Result: web/page_light.html
+/// ```
+pub(super) fn file_save_html_to_slim(
+	lua: &Lua,
+	runtime: &Runtime,
+	html_path: String,
+	dest: Value,
+) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+
+	// -- resolve and read source
+	let rel_html_src = SPath::new(html_path.clone());
+	let full_html_src = dir_context.resolve_path(rel_html_src.clone(), PathResolver::WksDir)?;
+	let html_content = read_to_string(&full_html_src)
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{}'. Cause: {}", html_path, e)))?;
+
+	// -- slim the HTML content
+	let slim_html_content = crate::support::html::slim(html_content)
+		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{}'. Cause: {}", html_path, e)))?;
+
+	// -- determine destination paths using the helper
+	let (rel_html_dest, full_html_dest) =
+		super::support::resolve_dest_path(lua, dir_context, &rel_html_src, dest, "html", Some("-slim"))?;
+
+	// -- write out and return metadata
+	simple_fs::ensure_file_dir(&full_html_dest).map_err(Error::from)?;
+	write(&full_html_dest, slim_html_content).map_err(|e| {
+		Error::Custom(format!(
+			"Failed to write slimmed HTML file '{}'. Cause: {}",
+			rel_html_dest, e
+		))
+	})?;
+
+	let meta = FileMeta::new(rel_html_dest, &full_html_dest);
+	meta.into_lua(lua)
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -100,20 +190,23 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use crate::_test_support::{
-		assert_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file, gen_sandbox_01_temp_file_path,
-		resolve_sandbox_01_path, run_reflective_agent,
+		assert_contains, assert_not_contains, clean_sanbox_01_tmp_file, create_sanbox_01_tmp_file,
+		gen_sandbox_01_temp_file_path, resolve_sandbox_01_path, run_reflective_agent,
 	};
-	use simple_fs::read_to_string as sfs_read_to_string;
+	use simple_fs::{SPath, read_to_string as sfs_read_to_string};
 	use value_ext::JsonValueExt;
 
-	#[tokio::test]
-	async fn test_script_aip_file_save_html_to_md_simple_ok() -> Result<()> {
-		// -- Setup & Fixtures
-		let fx_html_content = r#"
+	const FX_HTML_CONTENT_FULL: &str = r#"
 <!DOCTYPE html>
 <html>
-<head><title>Test Page</title></head>
+<head>
+    <title>Test Page</title>
+    <script>console.log("script")</script>
+    <style>.body { margin: 0; }</style>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
+    <!-- A comment -->
     <h1>Main Title</h1>
     <p>This is a paragraph with <strong>strong</strong> text and <em>emphasized</em> text.</p>
     <ul>
@@ -121,11 +214,16 @@ mod tests {
         <li>Item 2</li>
     </ul>
     <a href="https://example.com">A Link</a>
+    <svg><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" /></svg>
 </body>
 </html>"#;
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_md_simple_ok() -> Result<()> {
+		// -- Setup & Fixtures
 		let fx_html_path = create_sanbox_01_tmp_file(
 			"test_script_aip_file_save_html_to_md_simple_ok-input.html",
-			fx_html_content,
+			FX_HTML_CONTENT_FULL,
 		)?;
 
 		let md_path = fx_html_path.new_sibling("test_script_aip_file_save_html_to_md_simple_ok-input.md");
@@ -179,6 +277,188 @@ mod tests {
 
 		Ok(())
 	}
+
+	// region:    --- Tests for save_html_to_slim
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_default_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_input_filename = "test_slim_default_input.html";
+		let fx_html_path = create_sanbox_01_tmp_file(fx_input_filename, FX_HTML_CONTENT_FULL)?;
+		let expected_slim_path_rel = fx_html_path.new_sibling(format!("{}-slim.html", fx_html_path.stem()));
+
+		// -- Exec
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{}")"#, fx_html_path);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
+		assert_eq!(res.x_get_str("name")?, expected_slim_path_rel.name());
+		assert_eq!(res.x_get_str("ext")?, "html");
+		assert!(res.x_get_i64("size")? > 0);
+
+		// -- Check slimmed HTML content
+		let slim_full_path = resolve_sandbox_01_path(&expected_slim_path_rel);
+		let slim_content = sfs_read_to_string(&slim_full_path)?;
+		assert_contains(&slim_content, "<h1>Main Title</h1>");
+		assert_contains(
+			&slim_content,
+			"<p>This is a paragraph with <strong>strong</strong> text and <em>emphasized</em> text.</p>",
+		);
+		assert_not_contains(&slim_content, "<script>");
+		assert_not_contains(&slim_content, "<style>");
+		assert_not_contains(&slim_content, "<!-- A comment -->");
+		assert_not_contains(&slim_content, "<link rel=");
+		assert_not_contains(&slim_content, "<svg>");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(slim_full_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_dest_string_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_html_path = create_sanbox_01_tmp_file("test_slim_dest_string_input.html", FX_HTML_CONTENT_FULL)?;
+		let fx_custom_output_path_str = ".tmp/custom_slim_output.html"; // Relative to sandbox_01
+		let expected_slim_path_rel = SPath::new(fx_custom_output_path_str);
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_slim("{}", "{}")"#,
+			fx_html_path, fx_custom_output_path_str
+		);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
+		assert_eq!(res.x_get_str("name")?, "custom_slim_output.html");
+
+		// -- Check content (briefly)
+		let slim_full_path = resolve_sandbox_01_path(&expected_slim_path_rel);
+		let slim_content = sfs_read_to_string(&slim_full_path)?;
+		assert_contains(&slim_content, "<h1>Main Title</h1>");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(slim_full_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_dest_options_base_dir_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_html_path = create_sanbox_01_tmp_file(
+			&format!("{}.html", "test_slim_opts_base_dir_input"),
+			FX_HTML_CONTENT_FULL,
+		)?;
+		let fx_base_dir = ".tmp/output_slim_base"; // Relative to sandbox_01
+		// Expected: original name in new base_dir
+		let expected_slim_path_rel = SPath::new(format!("{}/{}.html", fx_base_dir, fx_html_path.stem()));
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_slim("{}", {{ base_dir = "{}" }})"#,
+			fx_html_path, fx_base_dir
+		);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
+		assert_eq!(res.x_get_str("name")?, format!("{}.html", fx_html_path.stem()));
+
+		// -- Check content
+		let slim_full_path = resolve_sandbox_01_path(&expected_slim_path_rel);
+		let slim_content = sfs_read_to_string(&slim_full_path)?;
+		assert_contains(&slim_content, "<h1>Main Title</h1>");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(slim_full_path)?;
+		// Note: This test creates a directory `.tmp/output_slim_base`.
+		// The `clean_sanbox_01_tmp_file` only removes the file.
+		// For robust cleanup, the directory might need removal if empty or using a more general cleanup.
+		// However, standard test practice often leaves temp dirs for inspection.
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_dest_options_suffix_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_html_path =
+			create_sanbox_01_tmp_file(&format!("{}.html", "test_slim_opts_suffix_input"), FX_HTML_CONTENT_FULL)?;
+		let fx_suffix = "_customslim";
+		let expected_output_filename = format!("{}{}.html", fx_html_path.stem(), fx_suffix);
+		let expected_slim_path_rel = fx_html_path.new_sibling(&expected_output_filename);
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_slim("{}", {{ suffix = "{}" }})"#,
+			fx_html_path, fx_suffix
+		);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
+		assert_eq!(res.x_get_str("name")?, expected_output_filename);
+
+		// -- Check content
+		let slim_full_path = resolve_sandbox_01_path(&expected_slim_path_rel);
+		let slim_content = sfs_read_to_string(&slim_full_path)?;
+		assert_contains(&slim_content, "<h1>Main Title</h1>");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(slim_full_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_dest_options_file_name_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_html_path = create_sanbox_01_tmp_file("test_slim_opts_filename_input.html", FX_HTML_CONTENT_FULL)?;
+		let fx_file_name = "new_slim_name.html";
+		let expected_slim_path_rel = fx_html_path.new_sibling(fx_file_name);
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_slim("{}", {{ file_name = "{}" }})"#,
+			fx_html_path, fx_file_name
+		);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check FileMeta result
+		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
+		assert_eq!(res.x_get_str("name")?, fx_file_name);
+
+		// -- Check content
+		let slim_full_path = resolve_sandbox_01_path(&expected_slim_path_rel);
+		let slim_content = sfs_read_to_string(&slim_full_path)?;
+		assert_contains(&slim_content, "<h1>Main Title</h1>");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(slim_full_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_slim_html_not_found() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_src_path = gen_sandbox_01_temp_file_path("test_slim_html_not_found.html");
+		// No need to specify dest, as it should fail before path resolution.
+
+		// -- Exec
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{}")"#, fx_src_path);
+		let Err(res) = run_reflective_agent(&lua_code, None).await else {
+			panic!("Should have returned an error")
+		};
+
+		// -- Check
+		let res_string = res.to_string();
+		assert_contains(&res_string, "Failed to read HTML file");
+		assert_contains(&res_string, fx_src_path.as_str());
+
+		Ok(())
+	}
+
+	// endregion: --- Tests for save_html_to_slim
 }
 
 // endregion: --- Tests

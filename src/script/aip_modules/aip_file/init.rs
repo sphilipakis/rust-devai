@@ -3,7 +3,7 @@ use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::file_common::{
 	EnsureExistsOptions, file_append, file_ensure_exists, file_first, file_list, file_list_load, file_load, file_save,
 };
-use crate::script::aip_modules::aip_file::file_html::file_save_html_to_md;
+use crate::script::aip_modules::aip_file::file_html::{file_save_html_to_md, file_save_html_to_slim};
 use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
 };
@@ -89,6 +89,12 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		file_save_html_to_md(lua, &rt, html_path, dest_options)
 	})?;
 
+	// -- save_html_to_slim
+	let rt = runtime.clone();
+	let file_save_html_to_slim_fn = lua.create_function(move |lua, (html_path, dest_options): (String, Value)| {
+		file_save_html_to_slim(lua, &rt, html_path, dest_options)
+	})?;
+
 	// -- Add all functions to the module
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
@@ -104,6 +110,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("load_md_sections", file_load_md_sections_fn)?;
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
 	table.set("save_html_to_md", file_save_html_to_md_fn)?;
+	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
 
 	Ok(table)
 }
+

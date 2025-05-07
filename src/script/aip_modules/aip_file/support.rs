@@ -5,11 +5,11 @@ use crate::dir_context::resolve_pack_ref_base_path;
 use crate::dir_context::{DirContext, PathResolver};
 use crate::pack::PackRef;
 use crate::script::helpers::{get_value_prop_as_string, to_vec_of_strings};
-use crate::types::{DestOptions, FileRecord}; // Added DestOptions
+use crate::types::{DestOptions, FileRecord};
 use mlua::FromLua as _;
-use mlua::{Lua, Value}; // Added Lua
+use mlua::{Lua, Value};
 use simple_fs::{ListOptions, SPath, list_files};
-use std::path::Path; // Added Path
+use std::path::Path;
 use std::str::FromStr;
 
 /// Extracts base directory and glob patterns from options
@@ -274,45 +274,62 @@ pub fn resolve_dest_path(
 	src_rel_path: &SPath,
 	dest_value: Value,
 	target_ext: &str,
+	default_stem_suffix: Option<&str>,
 ) -> Result<(SPath, SPath)> {
 	let opts: DestOptions = DestOptions::from_lua(dest_value, lua)
 		.map_err(|e| Error::Custom(format!("Failed to parse destination options. Cause: {}", e)))?;
 
-	let rel_dest_path = match opts {
-		DestOptions::Nil => src_rel_path.clone().ensure_extension(target_ext),
+	let src_stem = Path::new(src_rel_path.as_str())
+		.file_stem()
+		.and_then(|s| s.to_str())
+		.ok_or_else(|| Error::Custom(format!("Source path '{}' has no file stem.", src_rel_path)))?;
+
+	let rel_dest_path: SPath = match opts {
+		DestOptions::Nil => {
+			let effective_stem = if let Some(def_suf) = default_stem_suffix {
+				format!("{}{}", src_stem, def_suf)
+			} else {
+				src_stem.to_string()
+			};
+			let filename_part = format!("{}.{}", effective_stem, target_ext);
+
+			if let Some(parent_dir) = src_rel_path.parent() {
+				parent_dir.join(filename_part)
+			} else {
+				SPath::new(filename_part)
+			}
+		}
 		DestOptions::Path(p) => p,
 		DestOptions::Custom(c) => {
-			let stem = Path::new(src_rel_path.as_str())
-				.file_stem()
-				.and_then(|s| s.to_str())
-				.unwrap_or("");
-
-			let fname = if let Some(name) = c.file_name {
-				name
-			} else if let Some(suf) = c.suffix {
-				if suf.is_empty() {
-					format!("{}.{}", stem, target_ext)
-				} else {
-					format!("{}{}.{}", stem, suf, target_ext)
-				}
+			let filename_part = if let Some(name_opt) = c.file_name {
+				name_opt
 			} else {
-				format!("{}.{}", stem, target_ext)
+				let effective_stem = if let Some(opt_suf) = c.suffix {
+					format!("{}{}", src_stem, opt_suf)
+				} else if let Some(def_suf) = default_stem_suffix {
+					if c.base_dir.is_some() {
+						// If base_dir is specified, default_stem_suffix is ignored as per slim requirement
+						src_stem.to_string()
+					} else {
+						// No base_dir, apply default_stem_suffix
+						format!("{}{}", src_stem, def_suf)
+					}
+				} else {
+					src_stem.to_string()
+				};
+				format!("{}.{}", effective_stem, target_ext)
 			};
 
-			if let Some(base) = c.base_dir {
-				let b = base.as_str();
-				if b.is_empty() {
-					SPath::new(fname)
+			if let Some(base_dir_spath) = c.base_dir {
+				if base_dir_spath.as_str().is_empty() {
+					SPath::new(filename_part)
 				} else {
-					SPath::new(format!("{}/{}", b, fname))
+					base_dir_spath.join(filename_part)
 				}
+			} else if let Some(parent_dir) = src_rel_path.parent() {
+				parent_dir.join(filename_part)
 			} else {
-				let dir = Path::new(src_rel_path.as_str()).parent().and_then(|p| p.to_str()).unwrap_or("");
-				if dir.is_empty() {
-					SPath::new(fname)
-				} else {
-					SPath::new(format!("{}/{}", dir, fname))
-				}
+				SPath::new(filename_part)
 			}
 		}
 	};
