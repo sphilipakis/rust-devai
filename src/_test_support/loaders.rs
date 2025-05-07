@@ -13,7 +13,7 @@ pub fn load_inline_agent(path: &str, content: impl Into<String>) -> Result<Agent
 }
 
 pub fn load_test_agent(name: &str, runtime: &Runtime) -> Result<Agent> {
-	find_agent(name, runtime.dir_context(), None)
+	find_agent(name, runtime, None)
 }
 
 /// Will create and agent where the `# Output` refect the return of the `# Data`

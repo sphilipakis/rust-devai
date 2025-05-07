@@ -19,7 +19,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 	// TODO: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
 
 	// Find and build the agent
-	let agent = find_agent(&agent_name, runtime.dir_context(), agent_dir.as_ref())
+	let agent = find_agent(&agent_name, &runtime, agent_dir.as_ref())
 		.map_err(|e| Error::custom(format!("Failed to find agent '{}': {}", agent_name, e)))?;
 
 	// -- If we had a agent options, need to overrid the agent options.

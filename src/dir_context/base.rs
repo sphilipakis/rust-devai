@@ -1,6 +1,7 @@
 use super::AipackPaths;
 use crate::dir_context::resolve_pack_ref_base_path;
 use crate::pack::{PackRef, looks_like_pack_ref};
+use crate::runtime::Session;
 use crate::support::files::current_dir;
 use crate::{Error, Result};
 use simple_fs::SPath;
@@ -85,10 +86,14 @@ impl DirContext {
 	///   - For absolute path it will be ignored
 	///
 	///
-	pub fn resolve_path(&self, path: SPath, mode: PathResolver) -> Result<SPath> {
+	pub fn resolve_path(&self, session: &Session, path: SPath, mode: PathResolver) -> Result<SPath> {
 		// -- Absolute Path
 		let final_path = if path.is_absolute() {
 			path
+		}
+		// -- if start with '$tmp'
+		else if self.is_tmp_path(&path) {
+			self.resolve_tmp_path(session, &path)?
 		}
 		// -- Pack ref
 		else if looks_like_pack_ref(&path) {
@@ -130,5 +135,23 @@ impl DirContext {
 		let path = final_path.into_collapsed();
 
 		Ok(path)
+	}
+
+	pub fn is_tmp_path(&self, path: &SPath) -> bool {
+		path.starts_with("$tmp")
+	}
+
+	pub fn resolve_tmp_path(&self, session: &Session, orig_path: &SPath) -> Result<SPath> {
+		let path = orig_path
+			.strip_prefix("$tmp")
+			.map_err(|_| Error::cc("Path not not a temp path", orig_path.to_string()))?;
+
+		let Some(base_dir) = self.aipack_paths().tmp_dir(session) else {
+			return Err(Error::custom(format!(
+				"cannot resolve tmp path '{orig_path}'. Cause: No workspace found"
+			)));
+		};
+
+		Ok(base_dir.join(path))
 	}
 }

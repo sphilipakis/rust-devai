@@ -69,7 +69,9 @@ use simple_fs::ensure_file_dir;
 /// ```
 pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
 	// Resolve the path relative to the workspace directory
-	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+	let full_path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir)?;
 
 	let json_value = simple_fs::load_json(full_path).map_err(|e| {
 		Error::from(format!(
@@ -136,7 +138,9 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 /// ```
 pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
 	// Resolve the path relative to the workspace directory
-	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+	let full_path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir)?;
 
 	let json_values = simple_fs::load_ndjson(full_path).map_err(|e| {
 		Error::from(format!(
@@ -208,7 +212,9 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 /// ```
 pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
 	// Resolve the path relative to the workspace directory
-	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+	let full_path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir)?;
 
 	// Convert Lua value to serde_json::Value
 	let json_value = lua_value_to_serde_value(data).map_err(|e| {
@@ -304,7 +310,9 @@ pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String
 	})?;
 
 	// -- Resolve path and ensure directory
-	let full_path = runtime.dir_context().resolve_path(path.clone().into(), PathResolver::WksDir)?;
+	let full_path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir)?;
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	// -- Append using simple_fs

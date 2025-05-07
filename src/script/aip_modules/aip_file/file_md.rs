@@ -50,7 +50,9 @@ pub(super) fn file_load_md_sections(
 		.as_deref()
 		.map(|vec| vec.iter().map(|s| s.as_str()).collect::<Vec<&str>>());
 
-	let path = runtime.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
+	let path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.into(), PathResolver::WksDir)?;
 	let sec_iter = MdSectionIter::from_path(path, headings.as_deref())?;
 	let sections = sec_iter.collect::<Vec<_>>();
 	sections.into_lua(lua)
@@ -65,7 +67,9 @@ pub(super) fn file_load_md_sections(
 /// aip.file.load_md_split_first(path: string): MdSplitFirst
 /// ```
 pub(super) fn file_load_md_split_first(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let path = runtime.dir_context().resolve_path(path.into(), PathResolver::WksDir)?;
+	let path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.into(), PathResolver::WksDir)?;
 	let mut sec_iter = MdSectionIter::from_path(path, None)?;
 	let split_first = sec_iter.split_first();
 	split_first.into_lua(lua)

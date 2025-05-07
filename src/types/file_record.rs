@@ -27,13 +27,7 @@ pub struct FileRecord {
 
 /// Constructors
 impl FileRecord {
-	pub fn load(base_path: &SPath, rel_path: &SPath) -> Result<Self> {
-		let full_path = if rel_path.path().is_absolute() {
-			rel_path
-		} else {
-			&base_path.join(rel_path)
-		};
-
+	pub fn load_from_full_path(full_path: &SPath, rel_path: &SPath) -> Result<Self> {
 		let content = read_to_string(full_path).map_err(|err| Error::cc(format!("Fail to read {full_path}"), err))?;
 		let dir = rel_path.parent().map(|p| p.to_string()).unwrap_or_default();
 		let meta = full_path.meta()?;

@@ -5,6 +5,7 @@ use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
 use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
 use crate::pack::LocalPackRef;
+use crate::runtime::Runtime;
 use crate::support::tomls::parse_toml;
 use crate::{Error, Result};
 use simple_fs::{SPath, read_to_string};
@@ -12,7 +13,9 @@ use simple_fs::{SPath, read_to_string};
 /// Find an agent by it's name, dir_context, and eventual base_dir
 /// Note - When base_dir, it means that this will be the relative path to look for this agent if relative
 ///        This is used for the aip.agent.run, to make sure we are relative to the caller agent
-pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>) -> Result<Agent> {
+pub fn find_agent(name: &str, runtime: &Runtime, base_dir: Option<&SPath>) -> Result<Agent> {
+	let dir_context = runtime.dir_context();
+
 	let partial_agent_ref = PartialAgentRef::new(name)?;
 
 	// Merge the workspace and base agent options
@@ -27,7 +30,7 @@ pub fn find_agent(name: &str, dir_context: &DirContext, base_dir: Option<&SPath>
 			} else {
 				match base_dir {
 					Some(base_dir) => base_dir.join(&path),
-					None => dir_context.resolve_path(path, PathResolver::CurrentDir)?,
+					None => dir_context.resolve_path(runtime.session(), path, PathResolver::CurrentDir)?,
 				}
 			};
 			let possible_paths = possible_aip_paths(path.clone(), false);
@@ -175,11 +178,10 @@ mod tests {
 			),
 		];
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
-		let dir_context = runtime.dir_context();
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context, None)?;
+			let agent = find_agent(name, &runtime, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);
@@ -198,11 +200,10 @@ mod tests {
 			("ns_d@pack_d_1", ".aipack-base/pack/installed/ns_d/pack_d_1/main.aip"),
 		];
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
-		let dir_context = runtime.dir_context();
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context, None)?;
+			let agent = find_agent(name, &runtime, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);
@@ -223,11 +224,10 @@ mod tests {
 			("sub-dir-a/sub-sub-dir", "main.aip"),
 		];
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
-		let dir_context = runtime.dir_context();
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
-			let agent = find_agent(name, dir_context, None)?;
+			let agent = find_agent(name, &runtime, None)?;
 
 			// -- Check
 			assert_eq!(agent.name(), *name);
