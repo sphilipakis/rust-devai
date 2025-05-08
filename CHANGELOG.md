@@ -1,8 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-
-
-## 2025-04-26 - [v0.7.6](https://github.com/jeremychone/rust-devai/compare/v0.7.5...v0.7.6)
+## 2025-05-08 - [v0.7.7](https://github.com/jeremychone/rust-devai/compare/v0.7.6...v0.7.7)
 
 - `+` NEW session & tmp dir - Added `CTX.SESSION`, `CTX.TMP_DIR`, and `$tmp/some/path.txt` alias
 - `+` NEW Base and Workspace support directory for packs with `ns@pack_name$base/some/file.txt` and `ns@pack_name$workspace/some/file.txt` 
