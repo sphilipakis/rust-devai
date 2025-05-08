@@ -78,6 +78,8 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 | CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |
 | CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
 | CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
+| CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
+| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065/tmp`                               | The Session ID of this `aip run ...` until it is terminated       |
 
 When running a pack. (when no packs, those will be all nil)
 
