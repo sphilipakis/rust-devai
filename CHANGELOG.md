@@ -1,5 +1,35 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+
+## 2025-04-26 - [v0.7.6](https://github.com/jeremychone/rust-devai/compare/v0.7.5...v0.7.6)
+
+- `+` NEW session & tmp dir - Added `CTX.SESSION`, `CTX.TMP_DIR`, and `$tmp/some/path.txt` alias
+- `+` NEW Base and Workspace support directory for packs with `ns@pack_name$base/some/file.txt` and `ns@pack_name$workspace/some/file.txt` 
+    - C`TX.PACK_BASE_SUPPORT_DIR` and `CTX.PACK_WORKSPACE_SUPPORT_DIR`
+- `+` NEW `aip.lua.file`
+    - Added `aip.file.save_html_to_slim(html_file_path, dest?)`, 
+    - Added `aip.file.save_html_to_md(html_file_path, dest?)`, 
+    - Added `aip.file.append_json_line(path, data)`
+    - Added `aip.file.append_json_lines(path, [data])`
+    - Added `aip.file.load_ndjson(path)`
+    - Added `aip.file.load_json`
+    - `FileMeta` and `FileRecord` now have created, updated, size metadata
+- `^` `aip.json`
+    - Now `aip.json.stringify(data)` stringify to single line. 
+    - Added `aip.json.stringify_pretty(data)`
+- `+` `aip.html`
+    - Added `aip.html.to_md(html_content)`
+    - Now `aip.html.slim(full_html)` (from deprecated `.prune_to_content(full_html)`)
+- `-` test - fix test_pricing_pricer...
+- `.` _init config.toml update with flash-prev-zero
+- `.` Gemini - Added support for `-zero`, `-low`, `-medium`, `-high` suffixes for reasoning budget
+
+## 2025-04-26 - [v0.7.6](https://github.com/jeremychone/rust-devai/compare/v0.7.5...v0.7.6)
+
+- `-` gemini pricing fix (update to genai 0.2.3 for normalized gemini usage)
+- `-` pricing - fix price calculation to correctly compute prompt price when cache tokens
+
 ## 2025-04-20 - [v0.7.5](https://github.com/jeremychone/rust-devai/compare/v0.7.4...v0.7.5)
 
 - `-` pricing calculation - Fix pricing calculation when cache tokens.

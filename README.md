@@ -28,7 +28,6 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 ## Quick Start
 
-
 ### Install From Binaries
 
 Mac, Linux, Windows, ARM & x86 platforms are supported. See blow how to install the binaries. 
@@ -138,7 +137,6 @@ aip run core@ask-aipack
 - Run it with `aip run pro@coder` or `aip run @coder` if you don't have any other `@coder` pack in a different namespace.
 
 This is the agent I use every day for my production coding.
-
 
 **IMPORTANT 1**: Make sure everything is committed before use (at least while you are learning about aipack).
 
