@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-/// Without parsing the markdown, If the string starts with a  ` ``` ` then it will remove that line and
+/// Without parsing the markdown, If and only if the string starts with a  ` ``` ` then it will remove that line and
 /// the keep the content only until the last ` ```
 ///
 /// # Arguments
@@ -123,6 +123,29 @@ End of the text."
 
 		// -- Exec
 		let result = outer_block_content_or_raw(input);
+
+		// -- Check
+		assert_eq!(result, expected);
+	}
+
+	#[test]
+	fn test_md_outer_block_content_with_text_before() {
+		// -- Fixtures
+		let fx_input = "\
+Text before the code block.
+
+```
+fn with_text_before() {
+    // Missing closing backticks
+}
+		
+```
+";
+
+		let expected = fx_input;
+
+		// -- Exec
+		let result = outer_block_content_or_raw(fx_input);
 
 		// -- Check
 		assert_eq!(result, expected);
