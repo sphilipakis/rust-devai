@@ -2,26 +2,26 @@
 
 Here is the Lua application model and concepts.
 
-The full Lua APIs (`aip.` module) can be found in [lua-api.md](lua-api.md)
+The full Lua APIs (`aip.` module) can be found in [lua-apis](lua-apis)
 
 ## Convention and Flow
 
 **aipack** injects the following modules/variables into the various script stages:
 
 - In all Lua script stages (`# Before All`, `# Data`, `# Output`, `# After All`)
-  - `aip`: The [AIPACK Lua API module](lua-api.md) - A set of utility functions and submodules for convenience, common logic, and control flow.
-  - `CTX`: A table containing [contextual constants](#ctx) like paths and agent info.
+  - `aip`: The [AIPACK Lua API module](lua-apis) - A set of utility functions and submodules for convenience, common logic, and control flow.
+  - `CTX`: A table containing [contextual constants](lua-apis#ctx) like paths and agent info.
     <br/>
 
 - In the `# Before All` stage
   - `inputs`: A Lua list containing all the inputs provided to the agent run command.
-    - When `-f "**/some/glob*.*"` is used, each element in `inputs` will be a [FileMeta](#filemeta) object.
+    - When `-f "**/some/glob*.*"` is used, each element in `inputs` will be a [FileMeta](lua-apis#filemeta) object.
     - When `-i "some string"` is used, each element will be the corresponding string.
     <br/>
 
 - In the `# Data` stage (runs per input)
   - `input`: The individual input item being processed for this cycle.
-    - If from `-f`, it's a [FileMeta](#filemeta) object.
+    - If from `-f`, it's a [FileMeta](lua-apis#filemeta) object.
     - If from `-i`, it's a string.
     - Can be modified by the return value of `# Before All` using `aip.flow.before_all_response`.
   - `before_all`: The data returned by the `# Before All` stage (if any, otherwise `nil`).
@@ -31,7 +31,7 @@ The full Lua APIs (`aip.` module) can be found in [lua-api.md](lua-api.md)
   - `input`: The input item for this cycle (potentially modified by `# Data`).
   - `data`: The data returned by the `# Data` script for this input (if any, otherwise `nil`).
   - `before_all`: The data returned by the `# Before All` stage (if any, otherwise `nil`).
-  - `ai_response`: The [AiResponse](#airesponse) object containing the result from the AI model.
+  - `ai_response`: The [AiResponse](lua-apis#ai-response) object containing the result from the AI model.
   <br/>
 
 - In the `# After All` stage (runs once at the end)
@@ -64,46 +64,11 @@ For example:
     - The `# Before All` stage is suitable for preparing common resources (e.g., ensuring a shared output file exists) and returning common configuration or paths via `before_all`.
 - You can use Lua's `require("my-module")` function to include custom Lua code. Place your `.lua` files in the `lua/` subdirectory relative to your `.aip` agent file (e.g., `my-agent.aip` can `require("utils")` if `lua/utils.lua` exists).
 
-## CTX
-
-All Lua scripts get the `CTX` table in scope, providing context about the current execution environment.
-
-| Key                      | Example Value                                                            | Description                                                       |
-|--------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------|
-| CTX.WORKSPACE_DIR        | `/Users/dev/my-project`                                                  | Absolute path to the workspace directory (containing `.aipack/`). |
-| CTX.WORKSPACE_AIPACK_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
-| CTX.BASE_AIPACK_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPACK directory.                |
-| CTX.AGENT_NAME           | `my_pack/my-agent` or `path/to/my-agent.aip`                             | The name or path used to invoke the agent.                        |
-| CTX.AGENT_FILE_PATH      | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack/my-agent.aip` | Absolute path to the resolved agent `.aip` file.                  |
-| CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |
-| CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
-| CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
-| CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
-| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065/tmp`                               | The Session ID of this `aip run ...` until it is terminated       |
-
-When running a pack. (when no packs, those will be all nil)
-
-For `aip run acme@my_pack/my-agent`
-
-| Key                            | Example Value                                             | Description                                                                       |
-|--------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------|
-| CTX.PACK_IDENTITY              | `acme@my_pack`                                            | Pack identity (namespace@name) (nil if not run via pack ref).                     |
-| CTX.PACK_NAMESPACE             | `acme`                                                    | Namespace of the pack (nil if not run via pack reference).                        |
-| CTX.PACK_NAME                  | `my_pack`                                                 | Name of the pack (nil if not run via pack reference).                             |
-| CTX.PACK_REF                   | `acme@my_pack/my-agent`                                   | (Nil if not a pack) Full pack reference used (nil if not run via pack reference). |
-| CTX.PACK_WORKSPACE_SUPPORT_DIR | `/Users/dev/my-project/.aipack/support/pack/acme/my_pack` | Workspace-specific support directory for this agent (if applicable).              |
-| CTX.PACK_BASE_SUPPORT_DIR      | `/Users/home/john/.aipack-base/support/pack/acme/my_pack` | Base support directory for this agent (if applicable).                            |
-
-
-- All paths are absolute and normalized for the OS.
-- `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
-- The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
-
 ## aip.flow
 
 The `aip.flow` Lua module provides special functions that return structured tables to control the agent's execution flow. These should be used as the `return` value of the corresponding script stage (`# Before All` or `# Data`).
 
-See [aip.flow documentation in lua-api.md](lua-api.md#aipflow) for detailed API signatures.
+See [aip.flow documentation in lua-apis](lua-apis#aipflow) for detailed API signatures.
 
 ### Before All Stage Flow Control
 
@@ -171,74 +136,3 @@ See [aip.flow documentation in lua-api.md](lua-api.md#aipflow) for detailed API 
 
     return { file_content = file.content } -- Proceed normally
     ````
-
-## Common Types
-
-These are simplified descriptions of common Lua tables used in the API. See [Common Types in lua-api.md](lua-api.md#common-types) for full details.
-
-### FileMeta
-
-Metadata about a file, typically provided as `input` when using the `-f` flag.
-
-```ts
-{
-  path : string, // Relative path from where the glob was run
-  dir: string,
-  name : string, // e.g., "main.rs"
-  stem : string, // e.g., "main"
-  ext  : string, // e.g., "rs"
-  // Optional fields like created_epoch_us, modified_epoch_us, size
-}
-```
-
-### FileRecord
-
-File metadata plus its content. Returned by `aip.file.load` and `aip.file.list_load`.
-
-```ts
-{
-  // Includes all FileMeta fields
-  path : string, dir: string, name : string, stem : string, ext  : string,
-  created_epoch_us?: number, modified_epoch_us?: number, size?: number,
-
-  content: string // The file content as a string
-}
-```
-
-### AiResponse
-
-The response from the AI model, passed to the `# Output` stage.
-
-```ts
-{
-  content: string,     // The main text content generated by the AI model
-  model_name: string,  // Identifier of the model used (e.g., "gpt-4o-mini")
-  // Potentially other fields like usage statistics in the future
-}
-```
-
-### WebResponse
-
-Result of `aip.web.get` or `aip.web.post`.
-
-```ts
-{
-  success: boolean,   // true if HTTP status is 2xx
-  status: number,     // HTTP status code
-  url: string,        // Final URL after redirects
-  content: string | table, // Body (parsed as table if JSON response)
-  error?: string      // Error message if success is false
-}
-```
-
-### CmdResponse
-
-Result of `aip.cmd.exec`.
-
-```ts
-{
-  stdout: string,  // Captured standard output
-  stderr: string,  // Captured standard error
-  exit:   number   // Exit code of the command
-}
-```

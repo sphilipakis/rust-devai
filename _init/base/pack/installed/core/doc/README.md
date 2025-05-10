@@ -128,23 +128,23 @@ Here is a full description of the complete flow:
 - **Stage 1**: `# Before All` (lua block) (optional)
     - The `lua` block has the following in scope:
         - `inputs`: A list of all inputs provided to the agent run.
-        - `aip`: The [AIPACK Lua API module](lua-api.md).
+        - `aip`: The [AIPACK Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx) (paths, agent info).
     - It can return:
         - Nothing.
         - Data that will be available as `before_all` in subsequent stages (e.g., `return { some = "data" }`).
-        - Overridden inputs and/or agent options using `return aip.flow.before_all_response({ inputs = {...}, options = {...}, before_all = {...} })`. See [aip.flow.before_all_response](lua-api.md#aipflowbefore_all_response).
+        - Overridden inputs and/or agent options using `return aip.flow.before_all_response({ inputs = {...}, options = {...}, before_all = {...} })`. See [aip.flow.before_all_response](lua-apis#aipflowbefore_all_response).
 - **Stage 2**: `# Data` (lua block) (optional)
     - This stage runs *for each input* item.
     - The `lua` block receives the following variables in scope:
         - `input`: The current input item (string, [FileMeta](lua.md#filemeta), or value from `# Before All`).
         - `before_all`: Data returned from the `# Before All` stage (or `nil`).
-        - `aip`: The [AIPACK Lua API module](lua-api.md).
+        - `aip`: The [AIPACK Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx).
     - It can return:
         - Data that will be available as `data` in subsequent stages for this input.
-        - A special flow control object using `aip.flow.data_response({ data = ..., input = ..., options = ...})` to modify the input or options for this cycle. See [aip.flow.data_response](lua-api.md#aipflowdata_response).
-        - A skip instruction using `aip.flow.skip("reason")` to skip processing this input. See [aip.flow.skip](lua-api.md#aipflowskip).
+        - A special flow control object using `aip.flow.data_response({ data = ..., input = ..., options = ...})` to modify the input or options for this cycle. See [aip.flow.data_response](lua-apis#aipflowdata_response).
+        - A skip instruction using `aip.flow.skip("reason")` to skip processing this input. See [aip.flow.skip](lua-apis#aipflowskip).
 - **Stage 3**: Prompt Stages (`# System`, `# Instruction`, `# Assistant`) (handlebars templates) (optional)
     - The content of these sections is rendered via Handlebars with the following variables in scope:
         - `input`: The current input item (potentially modified by `# Data`).
@@ -157,10 +157,10 @@ Here is a full description of the complete flow:
         - `input`: The current input item.
         - `data`: Data returned by the `# Data` stage for this input (or `nil`).
         - `before_all`: Data returned by the `# Before All` stage (or `nil`).
-        - `ai_response`: Contains the AI's response. See [AiResponse](lua.md#airesponse).
+        - `ai_response`: Contains the AI's response. See [AiResponse](lua-apis#ai-response).
             - `.content`: The text content of the response.
             - `.model_name`: The name of the model used.
-        - `aip`: The [AIPACK Lua API module](lua-api.md).
+        - `aip`: The [AIPACK Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx).
     - It can return data, which will be captured as the `output` for this input item in the `# After All` stage. If not specified, the raw `ai_response.content` is printed to the terminal.
 - **Stage 5**: `# After All` (lua block) (optional)
@@ -169,7 +169,7 @@ Here is a full description of the complete flow:
         - `inputs`: The final list of all inputs processed (potentially modified by `# Before All`).
         - `outputs`: A list containing the return value from the `# Output` stage for each corresponding input (or `nil` if an input was skipped or `# Output` returned nothing).
         - `before_all`: Data returned by the `# Before All` stage (or `nil`).
-        - `aip`: The [AIPACK Lua API module](lua-api.md).
+        - `aip`: The [AIPACK Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx).
         - Note: The `inputs` and `outputs` arrays are kept in sync; `outputs[i]` corresponds to `inputs[i]`.
     - It can return data, which is currently discarded but might be used in the future.

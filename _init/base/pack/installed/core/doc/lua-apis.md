@@ -2,26 +2,76 @@
 
 The `aip` top module provides a comprehensive set of functions for interacting with files, paths, text, markdown, JSON, web services, Lua value inspection, agent control flow, command execution, semantic versioning, Handlebars templating, code formatting, Git, Rust code processing, and HTML processing within the AIPACK environment.
 
-The available submodules are:
-- [aip.file](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
-- [aip.path](#aippath): Path manipulation and checking (split, resolve, exists, diff, parent).
-- [aip.text](#aiptext): Text processing utilities (trim, split, replace, truncate, escape, ensure).
-- [aip.md](#aipmd): Markdown processing (extract blocks, extract metadata).
-- [aip.json](#aipjson): JSON parsing and stringification.
-- [aip.web](#aipweb): HTTP requests (GET, POST).
-- [aip.lua](#aiplua): Lua value inspection.
-- [aip.agent](#aipagent): Running other AIPACK agents.
-- [aip.flow](#aipflow): Controlling agent execution flow.
-- [aip.cmd](#aipcmd): Executing system commands.
-- [aip.semver](#aipsemver): Semantic versioning operations.
-- [aip.rust](#aiprust): Rust code specific processing.
-- [aip.html](#aiphtml): HTML processing utilities.
-- [aip.git](#aipgit): Basic Git operations.
-- [aip.hbs](#aiphbs): Handlebars template rendering.
-- [aip.code](#aipcode): Code commenting utilities.
+#### The available submodules are:
+
+- [`aip.file`](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
+- [`aip.path`](#aippath): Path manipulation and checking (split, resolve, exists, diff, parent).
+- [`aip.text`](#aiptext): Text processing utilities (trim, split, replace, truncate, escape, ensure).
+- [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
+- [`aip.json`](#aipjson): JSON parsing and stringification.
+- [`aip.web`](#aipweb): HTTP requests (GET, POST).
+- [`aip.lua`](#aiplua): Some lua helpers (for now only `.dump(data)`).
+- [`aip.agent`](#aipagent): Running other AIPACK agents.
+- [`aip.flow`](#aipflow): Controlling agent execution flow.
+- [`aip.cmd`](#aipcmd): Executing system commands.
+- [`aip.semver`](#aipsemver): Semantic versioning operations.
+- [`aip.rust`](#aiprust): Rust code specific processing.
+- [`aip.html`](#aiphtml): HTML processing utilities.
+- [`aip.git`](#aipgit): Basic Git operations.
+- [`aip.hbs`](#aiphbs): Handlebars template rendering.
+- [`aip.code`](#aipcode): Code commenting utilities.
+
+#### Common Data Types:
+
+- [`FileMeta`](#filemeta) (for `aip.file..`) (FileMeta + `.content`)
+- [`FileRecord`](#filerecord) (for `aip.file..`) 
+- [`WebResponse`](#webresponse) (for `aip.web..`)
+- [`MdSection`](#mdsection) (for `aip.md..`)
+- [`MdBlock`](#mdsection) (for `aip.md..`)
+- [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
+- [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`
 
 
-> Note: All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
+#### AI Response
+
+An `ai_response` variable will be injected into the scope in the `# Output` Lua code block if an instruction was given and an AI request occurred (otherwise, it will be `nil`).
+
+```ts
+{
+  // The final text response from the AI, if available.
+  content?: string,
+  // A formatted string capturing essential details like usage, price, model, and duration of the request, using the fields below.
+  info: string,
+  // e.g., `gpt-4.1-mini`
+  model_name: string,
+  // e.g., `openai`
+  adapter_kind: AdapterKind,
+  // Token usage details.
+  usage: {
+    prompt_tokens: number,
+    completion_tokens: number
+  },
+  // The approximate price in USD, if available.
+  price_usd?: number,
+  // Duration in seconds (with millisecond precision).
+  duration_sec: number,
+  // Reasoning content, if available (e.g., from deepseek or some groq models).
+  reasoning_content?: string,
+}
+```
+
+#### Global and Injected Variables:
+
+- All stage Lua code blocks and required scripts receive a [`CTX`](#ctx) variable containing context information (e.g., `CTX.AGENT_NAME`, `CTX.TMP_DIR`, etc.).
+- All stage Lua code blocks also receive `options`, which includes `.model` and `.input_concurrency`.
+- `# Before All` stage Lua code blocks receive `inputs` (can be `nil` if no inputs are given).
+- `# Data` stage Lua code blocks receive `input` (can be `nil` if no input is provided) and the return value from the `# Before All` stage (`before_all`, which can be `nil`).
+- `# Output` stage Lua code blocks receive `input`, `ai_response` (can be `nil`), `data` (the return value from the `# Data` stage), and `before_all`.
+- `# After All` stage Lua code blocks receive `outputs` (return values from each `# Output` stage), `inputs`, and `before_all`.
+
+**NOTE**
+
+> All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
 >       and arrays and dictionaries are denoted with `{ }`.
 
@@ -29,22 +79,40 @@ The available submodules are:
 
 File manipulation functions for loading, saving, listing, and managing files and their content, including specialized functions for JSON and Markdown.
 
-**Functions:**
-- `aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord`
-- `aip.file.save(rel_path: string, content: string)`
-- `aip.file.append(rel_path: string, content: string)`
-- `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta`
-- `aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileMeta>`
-- `aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>`
-- `aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileMeta | nil`
-- `aip.file.load_json(path: string): table | value`
-- `aip.file.load_ndjson(path: string): list<table>`
-- `aip.file.append_json_line(path: string, data: value)`
-- `aip.file.append_json_lines(path: string, data: list)`
-- `aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>`
-- `aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}`
-- `aip.file.save_html_to_md(html_path: string, dest?: string | table): FileMeta`
-- `aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileMeta`
+### Functions Summary
+
+```lua
+aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
+
+aip.file.save(rel_path: string, content: string)
+
+aip.file.append(rel_path: string, content: string)
+
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
+
+aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileMeta>
+
+aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>
+
+aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileMeta | nil
+
+aip.file.load_json(path: string): table | value
+
+aip.file.load_ndjson(path: string): list<table>
+
+aip.file.append_json_line(path: string, data: value)
+
+aip.file.append_json_lines(path: string, data: list)
+
+aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>
+
+aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
+
+aip.file.save_html_to_md(html_path: string, dest?: string | table): FileMeta
+
+aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileMeta
+```
+
 
 > Note: All relative paths are relative to the workspace directory (parent of `.aipack/`) unless a `base_dir` option is specified. Pack references (e.g., `ns@pack/`) can be used in paths and `base_dir`.
 
@@ -638,14 +706,23 @@ Returns an error (Lua table `{ error: string }`) if file I/O, slimming, or desti
 
 Functions for path manipulation, checking, and resolution within the AIPACK workspace.
 
-**Functions:**
-- `aip.path.split(path: string): parent: string, filename: string`
-- `aip.path.resolve(path: string): string`
-- `aip.path.exists(path: string): boolean`
-- `aip.path.is_file(path: string): boolean`
-- `aip.path.is_dir(path: string): boolean`
-- `aip.path.diff(file_path: string, base_path: string): string`
-- `aip.path.parent(path: string): string | nil`
+### Functions Summary
+
+```lua
+aip.path.split(path: string): (parent: string, filename: string)
+
+aip.path.resolve(path: string): string
+
+aip.path.exists(path: string): boolean
+
+aip.path.is_file(path: string): boolean
+
+aip.path.is_dir(path: string): boolean
+
+aip.path.diff(file_path: string, base_path: string): string
+
+aip.path.parent(path: string): string | nil
+```
 
 > Note: Paths are typically relative to the workspace directory unless otherwise specified or resolved using pack references.
 
@@ -845,22 +922,39 @@ Does not typically error.
 
 Text manipulation functions for cleaning, splitting, modifying, and extracting text content.
 
-**Functions:**
-- `aip.text.escape_decode(content: string): string`
-- `aip.text.escape_decode_if_needed(content: string): string`
-- `aip.text.split_first(content: string, sep: string): (string, string | nil)`
-- `aip.text.remove_first_line(content: string): string`
-- `aip.text.remove_first_lines(content: string, n: number): string`
-- `aip.text.remove_last_line(content: string): string`
-- `aip.text.remove_last_lines(content: string, n: number): string`
-- `aip.text.trim(content: string): string`
-- `aip.text.trim_start(content: string): string`
-- `aip.text.trim_end(content: string): string`
-- `aip.text.truncate(content: string, max_len: number, ellipsis?: string): string`
-- `aip.text.replace_markers(content: string, new_sections: list): string`
-- `aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string`
-- `aip.text.ensure_single_ending_newline(content: string): string`
-- `aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)`
+### Functions Summary
+
+```lua
+aip.text.escape_decode(content: string): string
+
+aip.text.escape_decode_if_needed(content: string): string
+
+aip.text.split_first(content: string, sep: string): (string, string | nil)
+
+aip.text.remove_first_line(content: string): string
+
+aip.text.remove_first_lines(content: string, n: number): string
+
+aip.text.remove_last_line(content: string): string
+
+aip.text.remove_last_lines(content: string, n: number): string
+
+aip.text.trim(content: string): string
+
+aip.text.trim_start(content: string): string
+
+aip.text.trim_end(content: string): string
+
+aip.text.truncate(content: string, max_len: number, ellipsis?: string): string
+
+aip.text.replace_markers(content: string, new_sections: list): string
+
+aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string
+
+aip.text.ensure_single_ending_newline(content: string): string
+
+aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)
+```
 
 ### aip.text.escape_decode
 
@@ -1179,10 +1273,19 @@ Returns an error (Lua table `{ error: string }`) if arguments are invalid.
 
 Markdown processing functions for extracting structured information like code blocks and metadata.
 
-**Functions:**
-- `aip.md.extract_blocks(md_content: string, options?: string | {lang?: string, extrude?: "content"}): list<MdBlock> | (list<MdBlock>, string)`
-- `aip.md.extract_meta(md_content: string): (table, string)`
-- `aip.md.outer_block_content_or_raw(md_content: string): string`
+### Functions Summary
+
+```lua
+aip.md.extract_blocks(md_content: string): list<MdBlock>
+
+aip.md.extract_blocks(md_content: string, lang: string): list<MdBlock>
+
+aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (list<MdBlock>, string)
+
+aip.md.extract_meta(md_content: string): (table, string)
+
+aip.md.outer_block_content_or_raw(md_content: string): string
+```
 
 ### aip.md.extract_blocks
 
@@ -1284,12 +1387,19 @@ print(aip.md.outer_block_content_or_raw(raw))   -- Output: "no block"
 
 JSON parsing and stringification functions.
 
-**Functions:**
-- `aip.json.parse(content: string): table | value`
-- `aip.json.parse_ndjson(content: string): list<table>`
-- `aip.json.stringify(content: table): string` (Compact, single-line)
-- `aip.json.stringify_pretty(content: table): string` (Formatted with 2-space indent)
-- `aip.json.stringify_to_line(content: table): string` (Deprecated alias for `stringify`)
+### Functions Summary
+
+```lua
+aip.json.parse(content: string): table | value
+
+aip.json.parse_ndjson(content: string): list<table>
+
+aip.json.stringify(content: table): string
+
+aip.json.stringify_pretty(content: table): string
+
+aip.json.stringify_to_line(content: table): string -- Deprecated alias for `stringify`
+```
 
 ### aip.json.parse
 
@@ -1410,9 +1520,13 @@ aip.json.stringify_to_line(content: table): string
 
 Functions for making HTTP GET and POST requests.
 
-**Functions:**
-- `aip.web.get(url: string): WebResponse`
-- `aip.web.post(url: string, data: string | table): WebResponse`
+### Functions Summary
+
+```lua
+aip.web.get(url: string): WebResponse
+
+aip.web.post(url: string, data: string | table): WebResponse
+```
 
 ### aip.web.get
 
@@ -1482,8 +1596,11 @@ Returns an error (Lua table `{ error: string }`) if the request cannot be initia
 
 Lua value inspection functions.
 
-**Functions:**
-- `aip.lua.dump(value: any): string`
+### Functions Summary
+
+```lua
+aip.lua.dump(value: any): string
+```
 
 ### aip.lua.dump
 
@@ -1517,8 +1634,11 @@ Returns an error (Lua table `{ error: string }`) if the value cannot be converte
 
 Functions for running other AIPACK agents from within a Lua script.
 
-**Functions:**
-- `aip.agent.run(agent_name: string, options?: table): any`
+### Functions Summary
+
+```lua
+aip.agent.run(agent_name: string, options?: table): any
+```
 
 ### aip.agent.run
 
@@ -1562,10 +1682,15 @@ Returns an error (Lua table `{ error: string }`) if the agent cannot be found/lo
 
 Functions for controlling the AIPACK agent execution flow from within script blocks (`before_all`, `data`).
 
-**Functions:**
-- `aip.flow.before_all_response(data: {inputs?: list, options?: table}): table`
-- `aip.flow.data_response(data: {input?: any, options?: table}): table`
-- `aip.flow.skip(reason?: string): table`
+### Functions Summary
+
+```lua
+aip.flow.before_all_response(data: {inputs?: list, options?: table, ...}): table
+
+aip.flow.data_response(data: {input?: any, options?: table}): table
+
+aip.flow.skip(reason?: string): table
+```
 
 These functions return special tables that instruct the agent executor how to proceed. They should be the return value of the script block.
 
@@ -1693,8 +1818,11 @@ return aip.flow.data_response({ input = input }) -- Pass input through
 
 Functions for executing system commands.
 
-**Functions:**
-- `aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}`
+### Functions Summary
+
+```lua
+aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
+```
 
 ### aip.cmd.exec
 
@@ -1740,11 +1868,17 @@ Returns an error (Lua table `{ error: string, stdout?: string, stderr?: string, 
 
 Functions for semantic versioning (SemVer 2.0.0) operations.
 
-**Functions:**
-- `aip.semver.compare(version1: string, operator: string, version2: string): boolean | {error: string}`
-- `aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil} | {error: string}`
-- `aip.semver.is_prerelease(version: string): boolean | {error: string}`
-- `aip.semver.valid(version: string): boolean`
+### Functions Summary
+
+```lua
+aip.semver.compare(version1: string, operator: string, version2: string): boolean | {error: string}
+
+aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil} | {error: string}
+
+aip.semver.is_prerelease(version: string): boolean | {error: string}
+
+aip.semver.valid(version: string): boolean
+```
 
 ### aip.semver.compare
 
@@ -1874,8 +2008,11 @@ This function does not typically error, returning `false` for invalid formats.
 
 Functions for processing Rust code.
 
-**Functions:**
-- `aip.rust.prune_to_declarations(code: string): string | {error: string}`
+### Functions Summary
+
+```lua
+aip.rust.prune_to_declarations(code: string): string | {error: string}
+```
 
 ### aip.rust.prune_to_declarations
 
@@ -1909,9 +2046,13 @@ Returns an error (Lua table `{ error: string }`) if pruning fails.
 
 Functions for processing HTML content.
 
-**Functions:**
-- `aip.html.slim(html_content: string): string | {error: string}`
-- `aip.html.to_md(html_content: string): string | {error: string}`
+### Functions Summary
+
+```lua
+aip.html.slim(html_content: string): string | {error: string}
+
+aip.html.to_md(html_content: string): string | {error: string}
+```
 
 ### aip.html.slim
 
@@ -1974,8 +2115,11 @@ Returns an error (Lua table `{ error: string }`) if the HTML content fails to be
 
 Functions for performing basic Git operations in the workspace.
 
-**Functions:**
-- `aip.git.restore(path: string): string | {error: string, stdout?: string, stderr?: string, exit?: number}`
+### Functions Summary
+
+```lua
+aip.git.restore(path: string): string | {error: string, stdout?: string, stderr?: string, exit?: number}
+```
 
 ### aip.git.restore
 
@@ -2015,8 +2159,11 @@ Returns an error (Lua table `{ error: string, stdout?: string, stderr?: string, 
 
 Functions for rendering Handlebars templates.
 
-**Functions:**
-- `aip.hbs.render(content: string, data: any): string | {error: string}`
+### Functions Summary
+
+```lua
+aip.hbs.render(content: string, data: any): string | {error: string}
+```
 
 ### aip.hbs.render
 
@@ -2070,8 +2217,11 @@ Returns an error (Lua table `{ error: string }`) if Lua data cannot be converted
 
 Utility functions for code formatting and manipulation.
 
-**Functions:**
-- `aip.code.comment_line(lang_ext: string, comment_content: string): string | {error: string}`
+### Functions Summary
+
+```lua
+aip.code.comment_line(lang_ext: string, comment_content: string): string | {error: string}
+```
 
 ### aip.code.comment_line
 
@@ -2210,3 +2360,38 @@ Represents the result of executing a system command via `aip.cmd.exec`.
   exit:   number   // Exit code returned by the command (0 usually indicates success)
 }
 ```
+
+## CTX
+
+All Lua scripts get the `CTX` table in scope, providing context about the current execution environment.
+
+| Key                      | Example Value                                                            | Description                                                       |
+|--------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------|
+| CTX.WORKSPACE_DIR        | `/Users/dev/my-project`                                                  | Absolute path to the workspace directory (containing `.aipack/`). |
+| CTX.WORKSPACE_AIPACK_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
+| CTX.BASE_AIPACK_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPACK directory.                |
+| CTX.AGENT_NAME           | `my_pack/my-agent` or `path/to/my-agent.aip`                             | The name or path used to invoke the agent.                        |
+| CTX.AGENT_FILE_PATH      | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack/my-agent.aip` | Absolute path to the resolved agent `.aip` file.                  |
+| CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |
+| CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
+| CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
+| CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
+| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065/tmp`                               | The Session ID of this `aip run ...` until it is terminated       |
+
+When running a pack. (when no packs, those will be all nil)
+
+For `aip run acme@my_pack/my-agent`
+
+| Key                            | Example Value                                             | Description                                                                       |
+|--------------------------------|-----------------------------------------------------------|-----------------------------------------------------------------------------------|
+| CTX.PACK_IDENTITY              | `acme@my_pack`                                            | Pack identity (namespace@name) (nil if not run via pack ref).                     |
+| CTX.PACK_NAMESPACE             | `acme`                                                    | Namespace of the pack (nil if not run via pack reference).                        |
+| CTX.PACK_NAME                  | `my_pack`                                                 | Name of the pack (nil if not run via pack reference).                             |
+| CTX.PACK_REF                   | `acme@my_pack/my-agent`                                   | (Nil if not a pack) Full pack reference used (nil if not run via pack reference). |
+| CTX.PACK_WORKSPACE_SUPPORT_DIR | `/Users/dev/my-project/.aipack/support/pack/acme/my_pack` | Workspace-specific support directory for this agent (if applicable).              |
+| CTX.PACK_BASE_SUPPORT_DIR      | `/Users/home/john/.aipack-base/support/pack/acme/my_pack` | Base support directory for this agent (if applicable).                            |
+
+
+- All paths are absolute and normalized for the OS.
+- `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
+- The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.

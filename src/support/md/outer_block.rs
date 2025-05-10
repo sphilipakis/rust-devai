@@ -131,23 +131,17 @@ End of the text."
 	#[test]
 	fn test_md_outer_block_content_only_opening_backticks() {
 		// -- Fixtures
-		let input = "\
+		let fx_input = "\
 Text before the code block.
 
 ```
 fn incomplete() {
     // Missing closing backticks
 }";
-		let expected = "\
-Text before the code block.
-
-```
-fn incomplete() {
-    // Missing closing backticks
-}";
+		let expected = fx_input;
 
 		// -- Exec
-		let result = outer_block_content_or_raw(input);
+		let result = outer_block_content_or_raw(fx_input);
 
 		// -- Check
 		assert_eq!(result, expected);
@@ -156,7 +150,7 @@ fn incomplete() {
 	#[test]
 	fn test_md_outer_block_content_only_closing_backticks() {
 		// -- Fixtures
-		let input = "\
+		let fx_input = "\
 Missing opening backticks for this code block.
 
 fn incomplete() {
@@ -164,17 +158,10 @@ fn incomplete() {
 }
 ```
 ";
-		let expected = "\
-Missing opening backticks for this code block.
-
-fn incomplete() {
-    // Missing opening backticks
-}
-```
-";
+		let expected = fx_input;
 
 		// -- Exec
-		let result = outer_block_content_or_raw(input);
+		let result = outer_block_content_or_raw(fx_input);
 
 		// -- Check
 		assert_eq!(result, expected);
