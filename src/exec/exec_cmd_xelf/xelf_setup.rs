@@ -63,7 +63,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	else {
 		let target_exe_path = base_bin_dir.join(current_exe_spath.name());
 		// Copy the file
-		fs::copy(&current_exe_spath, &target_exe_path)?;
+		super::support::atomic_replace(&current_exe_spath, &target_exe_path)?;
 		hub.publish(format!(
 			"-> {:<18} '{}' to '{}'",
 			"Copy executable", current_exe_spath, target_exe_path
