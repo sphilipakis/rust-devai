@@ -81,14 +81,17 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 
 	// -- Eventually remove the current exec
 	// NOTE: Only if there is a `.tar.gz` sibling
+	// NOTE: Now, because of the new atomic move, this aip should be moved anyway on Unix
 	if let Some(tmp_exe_to_trash) = tmp_exe_to_trash {
 		let gz_sibling = tmp_exe_to_trash.new_sibling(format!("{}.tar.gz", tmp_exe_to_trash.stem()));
 		if gz_sibling.exists() && tmp_exe_to_trash.stem() == "aip" {
 			if !is_windows() {
 				// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
-				remove_file(&tmp_exe_to_trash)?;
-				hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
-					.await;
+				if tmp_exe_to_trash.exists() {
+					remove_file(&tmp_exe_to_trash)?;
+					hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
+						.await;
+				}
 			}
 			// NOTE: Windows cannot delete/write to self executable
 			//        So later,
