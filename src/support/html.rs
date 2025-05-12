@@ -28,6 +28,8 @@ pub fn slim(html_content: String) -> Result<String> {
 pub fn to_md(html_content: String) -> Result<String> {
 	let options = htmd::options::Options {
 		bullet_list_marker: htmd::options::BulletListMarker::Dash,
+		ul_bullet_spacing: 1,
+		ol_number_spacing: 1,
 		..Default::default()
 	};
 	let converter = htmd::HtmlToMarkdown::builder().options(options).build();

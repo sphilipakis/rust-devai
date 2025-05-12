@@ -210,7 +210,7 @@ mod tests {
     <h1>Main Title</h1>
     <p>This is a paragraph with <strong>strong</strong> text and <em>emphasized</em> text.</p>
     <ul>
-        <li>Item 1</li>
+        <li>  Item 1</li>
         <li>Item 2</li>
     </ul>
     <a href="https://example.com">A Link</a>
@@ -246,8 +246,8 @@ mod tests {
 			&md_content,
 			"This is a paragraph with **strong** text and _emphasized_ text.",
 		);
-		assert_contains(&md_content, "-   Item 1");
-		assert_contains(&md_content, "-   Item 2");
+		assert_contains(&md_content, "- Item 1");
+		assert_contains(&md_content, "- Item 2");
 		assert_contains(&md_content, "[A Link](https://example.com)");
 
 		// -- Cleanup
