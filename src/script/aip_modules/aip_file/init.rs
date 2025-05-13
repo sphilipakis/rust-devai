@@ -114,4 +114,3 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	Ok(table)
 }
-
