@@ -284,7 +284,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 /// - `path: string` - The path to the file, relative to the workspace root.
 /// - `content?: string` (optional) - The content to write to the file if it's created or if it's empty and `content_when_empty` is true. Defaults to an empty string if nil.
 /// - `options?: table` (optional) - A table containing options:
-///   - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file *only if* the file already exists but is empty (contains only whitespace or is zero-length). Defaults to `false`.
+///   - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file if the file is empty (or only contains whitespace). Defaults to `false`.
 ///
 /// ### Returns
 ///

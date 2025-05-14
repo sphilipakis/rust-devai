@@ -215,7 +215,7 @@ Checks if the file exists. If not, creates it with `content`. If it exists and `
 - `path: string`: The path relative to the workspace root.
 - `content?: string` (optional): Content to write. Defaults to empty string.
 - `options?: table` (optional):
-  - `content_when_empty?: boolean` (optional): Write content only if file exists and is empty. Defaults to `false`.
+  - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file if the file is empty (or only contains whitespace). Defaults to `false`.
 
 #### Returns
 - `FileMeta`: Metadata ([FileMeta](#filemeta)) about the file.
