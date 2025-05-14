@@ -1,3 +1,14 @@
+## Lua Lang
+
+```lua
+
+-- Check if string is empty (empty or only white characters)
+if not content:find("%S") then
+  print("Is empty")
+end
+
+
+```
 ## Best practice to proces multiple files
 
 Let's say we want to summarize many files, one good practice is to let the each input process each file and append it to a shared file. 
