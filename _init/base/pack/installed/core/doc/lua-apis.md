@@ -72,7 +72,7 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
 **NOTE**
 
 > All of the type documentation is noted in "TypeScript style" as it is a common and concise type notation for scripting languages and works well to express Lua types.
->       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:`,
+>       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:',
 >       and arrays and dictionaries are denoted with `{ }`.
 
 ## aip.file
@@ -1640,6 +1640,8 @@ Functions for running other AIPACK agents from within a Lua script.
 
 ```lua
 aip.agent.run(agent_name: string, options?: table): any
+
+aip.agent.extract_options(value: any): table | nil
 ```
 
 ### aip.agent.run
@@ -1651,33 +1653,97 @@ Runs another agent and returns its response.
 aip.agent.run(agent_name: string, options?: table): any
 ```
 
-Executes the agent specified by `agent_name` (relative path or pack reference), waits for completion, and returns the result.
+Executes the agent specified by `agent_name`. The function waits for the called agent
+to complete and returns its result. This allows for chaining agents together.
 
 #### Arguments
-- `agent_name: string`: Name/path of the agent to run (e.g., `"../other.aip"`, `"ns@pack/agent.aip"`).
-- `options?: table` (optional):
-  - `inputs?: string | list | table`: Input data for the called agent.
-  - `options?: table`: Agent-specific options to pass to the called agent, potentially overriding its settings.
 
-#### Returns
-- `any`: The result depends on the called agent:
-  - If it produces an AI response without an output script: returns a table representing the `AiResponse`.
-  - If it has an output script: returns the value returned by that script.
+- `agent_name: string`: The name of the agent to run. This can be a relative path
+  (e.g., `"../my-other-agent.aip"`) or a fully qualified pack reference
+  (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
+  from the directory of the calling agent.
+- `options?: table`: An optional table containing input data and agent options.
+  - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
+  - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
+    execution environment and can override settings defined in the called agent's `.aip` file.
 
-#### Example
+##### Input Examples:
+
 ```lua
--- Run agent with single input
-local response1 = aip.agent.run("my-agent.aip", { inputs = "hello" })
+-- Run an agent with a single string input
+local response = aip.agent.run("agent-name", { inputs = "hello" })
 
--- Run agent with structured inputs and custom options
-local response2 = aip.agent.run("ns@pack/processor.aip", {
-  inputs = { { path = "f1.txt", content = "..." }, { path = "f2.txt", content = "..." } },
-  options = { model = "gpt-4o-mini" }
+-- Run an agent with multiple string inputs
+local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
+
+-- Run an agent with structured inputs (e.g., file records)
+local response = aip.agent.run("agent-name", {
+  inputs = {
+    { path = "file1.txt", content = "..." },
+    { path = "file2.txt", content = "..." }
+  }
 })
 ```
 
+#### Returns
+
+The result of the agent execution. The type of the returned value depends on the agent's output:
+
+- If the agent produces an AI response without a specific output script, it returns a table representing the `AiResponse` object.
+- If the agent has an output script, it returns the value returned by that output script.
+
+```ts
+// Example structure of a returned AiResponse object (if no output script)
+{
+  action: string, // e.g., "PrintToConsole", "WriteFiles"
+  outputs: any,   // Depends on the action/output
+  options: table  // Options used during the run
+  // ... other properties from AiResponse
+}
+```
+
 #### Error
-Returns an error (Lua table `{ error: string }`) if the agent cannot be found/loaded, options are invalid, execution fails, or internal communication error.
+
+Returns an error if:
+- The `agent_name` is invalid or the agent file cannot be located/loaded.
+- The options table contains invalid parameters.
+- The execution of the called agent fails.
+- An internal communication error occurs while waiting for the agent's result.
+
+```ts
+{
+  error: string // Error message
+}
+```
+
+### aip.agent.extract_options
+
+Extracts relevant agent options from a given Lua value.
+
+```lua
+-- API Signature
+aip.agent.extract_options(value: any): table | nil
+```
+
+If the input `value` is a Lua table, this function creates a new table and copies
+the following properties if they exist in the input table:
+
+- `model`
+- `model_aliases`
+- `input_concurrency`
+- `temperature`
+
+Other properties are ignored. If the input `value` is `nil` or not a table,
+the function returns `nil`.
+
+#### Arguments
+
+- `value: any`: The Lua value from which to extract options.
+
+#### Returns
+
+A new Lua table containing the extracted options, or `nil` if the input
+was `nil` or not a table.
 
 
 ## aip.flow
@@ -2398,3 +2464,4 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
+
