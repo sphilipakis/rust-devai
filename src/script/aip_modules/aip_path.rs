@@ -19,7 +19,8 @@
 use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use mlua::{Lua, MultiValue, Table};
+use crate::script::helpers::to_vec_of_strings;
+use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
 use simple_fs::SPath;
 use std::path::Path;
 
@@ -49,11 +50,16 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_diff_fn =
 		lua.create_function(move |_lua, (file_path, base_path): (String, String)| path_diff(file_path, base_path))?;
 
+	// -- join
+	let path_join =
+		lua.create_function(move |lua, (base, args): (String, Variadic<Value>)| path_join(lua, base, args))?;
+
 	// -- parent
 	let path_parent_fn = lua.create_function(move |_lua, path: String| path_parent(path))?;
 
 	// -- Add all functions to the module
 	table.set("resolve", path_resolve_fn)?;
+	table.set("join", path_join)?;
 	table.set("exists", path_exists_fn)?;
 	table.set("is_file", path_is_file_fn)?;
 	table.set("is_dir", path_is_dir_fn)?;
@@ -116,6 +122,34 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 		mlua::Value::String(lua.create_string(parent)?),
 		mlua::Value::String(lua.create_string(file_name)?),
 	]))
+}
+
+/// ## Lua Documentation
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.join(base: string, parts: string, string[], ...): string
+/// ```
+///
+/// Join a base path with one or more parts. Extra `/` will be normalized (i.e. collapsed)
+///
+/// - Parts can be a single part `aip.path.join("base-dir/", "file.txt")`
+/// - Parts can be a array part `aip.path.join("base-dir/", {"sub-dir", "file.txt"})`
+/// - Parts can be a variadique argument `aip.path.join("base-dir/", "sub-dir", "file.txt")`
+///
+fn path_join(lua: &Lua, base: String, parts: Variadic<Value>) -> mlua::Result<Value> {
+	let base = SPath::from(base);
+
+	let mut parts_str = String::new();
+	for part in parts {
+		// TODO: Could optimize a little to not put a Vec when single value
+		let sub_parts = to_vec_of_strings(part, "aip.path.join")?;
+		parts_str.push_str(&sub_parts.join("/"))
+	}
+
+	let res = base.join(parts_str).to_string();
+	let res = res.into_lua(lua)?;
+	Ok(res)
 }
 
 /// ## Lua Documentation
@@ -552,6 +586,31 @@ mod tests {
 			let res = eval_lua(&lua, &code)?;
 			let result = res.as_str().ok_or("Should be a string")?;
 			assert_eq!(result, *expected, "Parent mismatch for path: {path}");
+		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_path_join() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_path::init_module, "path")?;
+		let data = [
+			//
+			("./", r#""file.txt""#, "./file.txt"),
+			("./", r#"{"my-dir","file.txt"}"#, "./my-dir/file.txt"),
+			("", r#"{"my-dir","file.txt"}"#, "my-dir/file.txt"),
+			("", r#"{"my-dir/","//file.txt"}"#, "my-dir/file.txt"),
+			("some-base/", r#""my-dir/","file.txt""#, "some-base/my-dir/file.txt"),
+		];
+
+		// -- Exec & Check
+		for (base, args, expected) in data {
+			let code = format!(r#"return aip.path.join("{base}", {args})"#);
+			let res = eval_lua(&lua, &code)?;
+			let res = res.as_str().ok_or("Should have returned string")?;
+
+			assert_eq!(res, expected);
 		}
 
 		Ok(())
