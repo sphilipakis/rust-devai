@@ -12,6 +12,7 @@
 //! ### Functions
 //!
 //! - `aip.agent.run(agent_name: string, options?: table): any`
+//! - `aip.agent.extract_options(value: any): table | nil`
 
 use crate::Result;
 use crate::exec::RunAgentParams;
@@ -30,7 +31,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		aip_agent_run(lua, &rt, agent_name, options)
 	})?;
 
+	let extract_options = lua.create_function(move |lua, value: Value| aip_agent_extract_options(lua, value))?;
+
 	table.set("run", agent_run)?;
+	table.set("extract_options", extract_options)?;
 
 	Ok(table)
 }
@@ -148,6 +152,56 @@ pub fn aip_agent_run(
 	Ok(run_command_response)
 }
 
+/// ## Lua Documentation
+///
+/// Extracts relevant agent options from a given Lua value.
+///
+/// ```lua
+/// -- API Signature
+/// aip.agent.extract_options(value: any): table | nil
+/// ```
+///
+/// If the input `value` is a Lua table, this function creates a new table and copies
+/// the following properties if they exist in the input table:
+///
+/// - `model`
+/// - `model_aliases`
+/// - `input_comcurrency`
+/// - `temperature`
+///
+/// Other properties are ignored. If the input `value` is `nil` or not a table,
+/// the function returns `nil`.
+///
+/// ### Arguments
+///
+/// - `value: any`: The Lua value from which to extract options.
+///
+/// ### Returns
+///
+/// A new Lua table containing the extracted options, or `nil` if the input
+/// was `nil` or not a table.
+pub fn aip_agent_extract_options(lua: &Lua, value: Value) -> mlua::Result<Value> {
+	match value {
+		Value::Table(table) => {
+			let result_table = lua.create_table()?;
+
+			// List of keys to copy
+			let keys_to_copy = ["model", "model_aliases", "input_comcurrency", "temperature"];
+
+			for key in keys_to_copy.iter() {
+				if let Some(val) = table.x_get_value(key) {
+					if val != Value::Nil {
+						result_table.set(*key, val)?;
+					}
+				}
+			}
+
+			Ok(Value::Table(result_table))
+		}
+		_ => Ok(Value::Nil),
+	}
+}
+
 // region:    --- Support
 
 /// Helper function to get the calling agent's directory from the Lua CTX global.
@@ -166,13 +220,13 @@ fn get_agent_dir_from_lua(lua: &Lua) -> Option<SPath> {
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::{assert_contains, run_reflective_agent, run_test_agent};
+	use crate::_test_support::{assert_contains, eval_lua, run_reflective_agent, run_test_agent, setup_lua};
 	use crate::agent::Agent;
 	use crate::runtime::Runtime;
 	use value_ext::JsonValueExt;
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_script_lua_script_aip_modules_aip_agent_run_simple() -> Result<()> {
+	async fn test_script_aip_agent_run_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let script = r#"
             local result = aip.agent.run("agent-script/agent-hello-world")
@@ -193,7 +247,7 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_script_lua_script_aip_modules_aip_agent_run_relative() -> Result<()> {
+	async fn test_script_aip_agent_run_relative() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01()?;
 		let agent_file = runtime
@@ -214,7 +268,7 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_script_lua_script_aip_modules_aip_agent_run_with_input() -> Result<()> {
+	async fn test_script_aip_agent_run_with_input() -> Result<()> {
 		// -- Setup & Fixtures
 		// Note: the agent is relative to sandbox-01/ because the run_reflective_agent mock agent is at the base
 		let script = r#"
@@ -236,7 +290,7 @@ mod tests {
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_script_lua_script_aip_modules_aip_agent_run_with_options() -> Result<()> {
+	async fn test_script_aip_agent_run_with_options() -> Result<()> {
 		// -- Setup & Fixtures
 		let script = r#"
             local result = aip.agent.run("agent-script/agent-hello",
@@ -257,6 +311,79 @@ mod tests {
 		let output = outputs.x_remove::<String>("/0")?;
 		assert_contains(&output, "Hello 'John' from agent-hello.aip");
 		assert_contains(&output, "options.model = super-fast");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_agent_extract_options_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "agent")?;
+		let script = r#"
+local big = {
+		model = "gpt-4",
+		temperature = 0.8,
+		input_comcurrency = 5,
+		some_other_prop = "ignore_me",
+		model_aliases = { fast = "gpt-3.5" },
+		nil_prop = nil -- should not be included
+}
+return aip.agent.extract_options(big)
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("model")?, "gpt-4");
+		assert_eq!(res.x_get_f64("temperature")?, 0.8);
+		assert_eq!(res.x_get_i64("input_comcurrency")?, 5);
+		assert!(
+			res.x_get::<serde_json::Value>("some_other_prop").is_err(),
+			"Should not have 'some_other_prop'"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_agent_extract_options_string() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "agent")?;
+		let script = r#"
+return aip.agent.extract_options("Some string")
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert!(
+			matches!(res, serde_json::Value::Null),
+			"Should be nil but was: {:?}",
+			res
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_agent_extract_options_nil() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "agent")?;
+		let script = r#"
+return aip.agent.extract_options(nil)
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert!(
+			matches!(res, serde_json::Value::Null),
+			"Should be nil but was: {:?}",
+			res
+		);
 
 		Ok(())
 	}
