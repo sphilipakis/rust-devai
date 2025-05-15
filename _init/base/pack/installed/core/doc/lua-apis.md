@@ -1282,7 +1282,7 @@ aip.md.extract_blocks(md_content: string, lang: string): list<MdBlock>
 
 aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (list<MdBlock>, string)
 
-aip.md.extract_meta(md_content: string): (table, string)
+aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
 
 aip.md.outer_block_content_or_raw(md_content: string): string
 ```
@@ -1335,7 +1335,7 @@ Extracts and merges metadata from `#!meta` TOML blocks.
 
 ```lua
 -- API Signature
-aip.md.extract_meta(md_content: string): (table, string)
+aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
 ```
 
 Finds all ```toml #!meta ... ``` blocks, parses their TOML content, merges them into a single Lua table, and returns the table along with the original content stripped of the meta blocks.
@@ -1344,8 +1344,10 @@ Finds all ```toml #!meta ... ``` blocks, parses their TOML content, merges them 
 - `md_content: string`: The markdown content.
 
 #### Returns
-- `table`: Merged metadata from all `#!meta` blocks.
+- `table`: Merged metadata from all `#!meta` blocks (empty object if not found)
 - `string`: Original content with meta blocks removed.
+
+If `md_content` the return will be `(nil, nil)`
 
 #### Example
 ```lua

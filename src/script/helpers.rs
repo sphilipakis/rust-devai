@@ -62,6 +62,18 @@ pub fn to_vec_of_strings(value: Value, err_prefix: &'static str) -> mlua::Result
 	}
 }
 
+pub fn into_option_string(value: mlua::Value, err_prefix: &str) -> mlua::Result<Option<String>> {
+	match value {
+		Value::Nil => Ok(None),
+		Value::String(string) => Ok(Some(string.to_string_lossy())),
+		other => Err(crate::Error::Custom(format!(
+			"{err_prefix} - accepted argument types are String or Nil, but was {} ",
+			other.type_name()
+		))
+		.into()),
+	}
+}
+
 /// Pragmatic way to get a string property from an option lua value
 /// TODO: To refactor/clean later
 pub fn get_value_prop_as_string(
@@ -82,9 +94,10 @@ pub fn get_value_prop_as_string(
 			// TODO: probaby need to normalize_dir to remove the eventual end "/"
 			Ok(Some(string.to_string_lossy()))
 		}
-		Some(_other) => {
-			Err(crate::Error::custom("aip.file... options.base_dir must be of type string is present").into())
-		}
+		Some(_other) => Err(crate::Error::custom(format!(
+			"{err_prefix} options.base_dir must be of type string is present"
+		))
+		.into()),
 		None => Ok(None),
 	}
 }

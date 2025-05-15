@@ -17,6 +17,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
+use crate::script::helpers::into_option_string;
 use crate::support::md::{self};
 use crate::support::{Extrude, W};
 use crate::types::MdBlock;
@@ -197,7 +198,7 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 ///
 /// ### Arguments
 ///
-/// - `md_content: string`: The markdown content string to process.
+/// - `md_content: string | nil`: The markdown content string to process.
 ///
 /// ### Returns
 ///
@@ -205,6 +206,8 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 ///
 /// - `table`: A Lua table containing the merged data from all meta blocks. If no meta blocks are found, an empty table is returned.
 /// - `string`: The remaining content of the markdown string after all meta blocks have been removed.
+///
+/// If `md_content` is nil, then, return `{nil, nil}`
 ///
 /// ### Example
 ///
@@ -235,17 +238,6 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 /// -- Note: Tags will likely be a Lua table/list
 ///
 /// print(remaining_content)
-/// -- Output:
-/// -- [[
-/// -- Some introductory text.
-/// --
-/// --
-/// --
-/// -- Main content.
-/// --
-/// --
-/// --
-/// -- ]]
 /// ```
 ///
 /// ### Error
@@ -253,9 +245,15 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 /// Returns an error if:
 /// - A meta block is found but its content cannot be parsed as TOML.
 /// - An internal error occurs during processing.
-fn extract_meta(lua: &Lua, md_content: String) -> mlua::Result<MultiValue> {
+fn extract_meta(lua: &Lua, md_content: Value) -> mlua::Result<MultiValue> {
+	// allow md_content to be nil
+	let Some(md_content) = into_option_string(md_content, "aip.md.extract_meta")? else {
+		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
+	};
+	// extract value
 	let (value, remain) = md::extract_meta(&md_content)?;
 	let lua_value = lua.to_value(&value)?;
+	// return the tuple of two
 	let values = MultiValue::from_vec(vec![lua_value, W(remain).into_lua(lua)?]);
 	Ok(values)
 }
