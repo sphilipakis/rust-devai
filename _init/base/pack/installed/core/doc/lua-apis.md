@@ -1687,7 +1687,7 @@ Functions for controlling the AIPACK agent execution flow from within script blo
 ```lua
 aip.flow.before_all_response(data: {inputs?: list, options?: table, ...}): table
 
-aip.flow.data_response(data: {input?: any, options?: table}): table
+aip.flow.data_response(data: {data?: any, input?: any, options?: table}): table
 
 aip.flow.skip(reason?: string): table
 ```
@@ -1751,6 +1751,7 @@ Allows overriding the input and/or options for the *current* input cycle.
 - `data: table`:
   ```ts
   type DataData = {
+    data?: any | nill, // Optional. The data return from this block (accessible have data... in next stages)
     input?: any | nil, // Optional. The new input to use for this cycle. If nil, the original input is used.
     options?: AgentOptions // Optional. Partial AgentOptions to override for this cycle.
   } & any // Can also include other arbitrary data fields (e.g., computed values, flags)

@@ -139,7 +139,8 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- Use a transformed input and override the model for this cycle
-/// local result = aip.flow.data_response({
+/// return aip.flow.data_response({
+///   data  = data, -- The data that would have been returned
 ///   input = transformed_input,
 ///   options = { model = "gpt-4o" },
 ///   processed = true -- Pass extra data
