@@ -722,6 +722,8 @@ aip.path.is_dir(path: string): boolean
 aip.path.diff(file_path: string, base_path: string): string
 
 aip.path.parent(path: string): string | nil
+
+aip.path.join(base: string, ...parts: string | string[]): string
 ```
 
 > Note: Paths are typically relative to the workspace directory unless otherwise specified or resolved using pack references.
@@ -757,6 +759,59 @@ print(filename) -- Output: "justafile.md"
 
 #### Error
 Does not typically error.
+
+### aip.path.join
+
+Joins a base path with one or more path segments.
+
+```lua
+-- API Signature
+aip.path.join(base: string, ...parts: string | string[]): string
+```
+
+Constructs a new path by appending processed segments from `...parts` to the `base` path.
+Each argument in `...parts` is first converted to a string:
+- String arguments are used as-is.
+- List (table) arguments have their string items joined by `/`.
+These resulting strings are then concatenated together. Finally, this single concatenated string
+is joined with `base` using system-appropriate path logic (which also normalizes separators like `//` to `/`).
+
+
+#### Arguments
+- `base: string`: The initial base path.
+- `...parts: string | string[]` (variadic): One or more path segments to process and append. Each part can be a single string or a Lua list (table) of strings.
+
+#### Returns
+- `string`: A new string representing the combined and normalized path.
+
+#### Example
+```lua
+-- Example 1: Basic join
+print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file1.txt"
+print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file1.txt"
+
+-- Example 2: Joining with a list (table)
+print(aip.path.join("dir1/", {"subdir", "file2.txt"})) -- Output: "dir1/subdir/file2.txt"
+
+-- Example 3: Multiple string arguments
+-- Segments are concatenated, then joined to base.
+print(aip.path.join("dir1/", "subdir/", "file3.txt"))  -- Output: "dir1/subdir/file3.txt"
+print(aip.path.join("dir1/", "subdir", "file3.txt"))   -- Output: "dir1/subdirfile3.txt"
+
+-- Example 4: Mixed arguments (strings and lists)
+-- Lists are pre-joined with '/', then all resulting strings are concatenated, then joined to base.
+print(aip.path.join("root/", {"user", "docs"}, "projectA", {"report", "final.pdf"}))
+-- Output: "root/user/docsprojectAreport/final.pdf"
+
+-- Example 5: Normalization
+print(aip.path.join("", {"my-dir//", "///file.txt"}))  -- Output: "my-dir/file.txt"
+print(aip.path.join("a", "b", "c"))                     -- Output: "a/bc"
+print(aip.path.join("a/", "b/", "c/"))                  -- Output: "a/b/c/"
+```
+
+#### Error
+Returns an error (Lua table `{ error: string }`) if any of the `parts` arguments cannot be converted to a string or a list of strings (e.g., passing a boolean or a function).
+
 
 ### aip.path.resolve
 
@@ -2464,4 +2519,5 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
+
 

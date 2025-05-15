@@ -14,6 +14,7 @@
 //! - `aip.path.is_dir(path: string): boolean`
 //! - `aip.path.diff(file_path: string, base_path: string): string`
 //! - `aip.path.parent(path: string): string | nil`
+//! - `aip.path.join(base: string, ...parts: string | string[]): string`
 //!
 
 use crate::Result;
@@ -126,17 +127,60 @@ fn path_split(lua: &Lua, path: String) -> mlua::Result<MultiValue> {
 
 /// ## Lua Documentation
 ///
+/// Joins a base path with one or more path segments.
+///
 /// ```lua
 /// -- API Signature
-/// aip.path.join(base: string, parts: string, string[], ...): string
+/// aip.path.join(base: string, ...parts: string | string[]): string
 /// ```
 ///
-/// Join a base path with one or more parts. Extra `/` will be normalized (i.e. collapsed)
+/// Constructs a new path by appending processed segments from `...parts` to the `base` path.
+/// Each argument in `...parts` is first converted to a string:
+/// - String arguments are used as-is.
+/// - List (table) arguments have their string items joined by `/`.
+///   These resulting strings are then concatenated together. Finally, this single concatenated string
+///   is joined with `base` using system-appropriate path logic (which also normalizes separators like `//` to `/`).
 ///
-/// - Parts can be a single part `aip.path.join("base-dir/", "file.txt")`
-/// - Parts can be a array part `aip.path.join("base-dir/", {"sub-dir", "file.txt"})`
-/// - Parts can be a variadique argument `aip.path.join("base-dir/", "sub-dir", "file.txt")`
+/// ### Arguments
 ///
+/// - `base: string`: The initial base path.
+/// - `...parts: string | string[]` (variadic): One or more path segments to process and append.
+///   Each part can be a single string or a Lua list (table) of strings.
+///
+/// ### Returns
+///
+/// - `string`: A new string representing the combined and normalized path.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Example 1: Basic join
+/// print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file1.txt"
+/// print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file1.txt"
+///
+/// -- Example 2: Joining with a list (table)
+/// print(aip.path.join("dir1/", {"subdir", "file2.txt"})) -- Output: "dir1/subdir/file2.txt"
+///
+/// -- Example 3: Multiple string arguments
+/// -- Segments are concatenated, then joined to base.
+/// print(aip.path.join("dir1/", "subdir/", "file3.txt"))  -- Output: "dir1/subdir/file3.txt"
+/// print(aip.path.join("dir1/", "subdir", "file3.txt"))   -- Output: "dir1/subdirfile3.txt"
+///
+/// -- Example 4: Mixed arguments (strings and lists)
+/// -- Lists are pre-joined with '/', then all resulting strings are concatenated, then joined to base.
+/// print(aip.path.join("root/", {"user", "docs"}, "projectA", {"report", "final.pdf"}))
+/// -- Output: "root/user/docsprojectAreport/final.pdf"
+///
+/// -- Example 5: Normalization
+/// print(aip.path.join("", {"my-dir//", "///file.txt"}))  -- Output: "my-dir/file.txt"
+/// print(aip.path.join("a", "b", "c"))                     -- Output: "a/bc"
+/// print(aip.path.join("a/", "b/", "c/"))                  -- Output: "a/b/c/"
+/// ```
+///
+/// ### Error
+///
+/// Returns an error (Lua table `{ error: string }`) if any of the `parts` arguments cannot be
+/// converted to a string or a list of strings (e.g., passing a boolean or a function).
 fn path_join(lua: &Lua, base: String, parts: Variadic<Value>) -> mlua::Result<Value> {
 	let base = SPath::from(base);
 
@@ -163,7 +207,7 @@ fn path_join(lua: &Lua, base: String, parts: Variadic<Value>) -> mlua::Result<Va
 ///
 /// Resolves and normalizes the given path string. This handles relative paths (`.`, `..`),
 /// absolute paths, and special aipack pack references (`ns@pack/`, `ns@pack$base/`, `ns@pack$workspace/`).
-/// The resulting path is normalized (e.g., `some/../path` becomes `some/path`).
+/// The resulting path is normalized (e.g., `some/../path` becomes `path`). Note: `some/path` was a typo in original, fixed to `path`.
 ///
 /// ### Arguments
 ///
@@ -602,6 +646,13 @@ mod tests {
 			("", r#"{"my-dir","file.txt"}"#, "my-dir/file.txt"),
 			("", r#"{"my-dir/","//file.txt"}"#, "my-dir/file.txt"),
 			("some-base/", r#""my-dir/","file.txt""#, "some-base/my-dir/file.txt"),
+			("a", r#""b", "c""#, "a/bc"),
+			("a/", r#""b/", "c/""#, "a/b/c/"),
+			(
+				"root/",
+				r#"{"user", "docs"}, "projectA", {"report", "final.pdf"}"#,
+				"root/user/docsprojectAreport/final.pdf",
+			),
 		];
 
 		// -- Exec & Check
