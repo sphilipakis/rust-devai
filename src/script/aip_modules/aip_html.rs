@@ -12,20 +12,28 @@
 //! - `aip.html.to_md(html_content: string) -> string`
 
 use crate::runtime::Runtime;
+use crate::script::helpers::to_vec_of_strings;
+use crate::support::W;
 use crate::{Result, support};
-use mlua::{Lua, Table};
+use html_helpers::Elem;
+use mlua::{IntoLua, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
-	let prune_fn = lua.create_function(html_slim)?;
-	table.set("slim", prune_fn.clone())?;
+	let slim_fn = lua.create_function(html_slim)?;
+	table.set("slim", slim_fn.clone())?;
 
-	// deprecated (TODO: need to send a deprecation notice once we have the deprecation)
-	table.set("prune_to_content", prune_fn)?;
+	let select_fn = lua.create_function(move |lua, (html_content, selectors): (String, Value)| {
+		html_select(lua, html_content, selectors)
+	})?;
+	table.set("select", select_fn)?;
 
 	let to_md_fn = lua.create_function(html_to_md)?;
 	table.set("to_md", to_md_fn)?;
+
+	// deprecated (TODO: need to send a deprecation notice once we have the deprecation)
+	table.set("prune_to_content", slim_fn)?;
 
 	Ok(table)
 }
@@ -73,6 +81,32 @@ fn html_slim(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
 }
 
+fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Result<Value> {
+	// if selectors, nil, then empty table
+	if selectors.is_nil() {
+		let seq = lua.create_sequence_from(Vec::<String>::new())?;
+		return Ok(Value::Table(seq));
+	}
+
+	// extract as selectors
+	let selectors = to_vec_of_strings(selectors, "aip.html.select")?;
+
+	let els = html_helpers::select(&html_content, &selectors)
+		.map_err(|err| crate::Error::custom(format!("Cannot apply selector '{selectors:?}'. Cause: {err}")))?;
+
+	let els: Vec<mlua::Value> = els
+		.into_iter()
+		.map(|el| W(el).into_lua(lua))
+		.collect::<mlua::Result<Vec<_>>>()
+		.map_err(|err| {
+			crate::Error::custom(format!("aip.html.select cannot make elem into Lua object. Cause {err}"))
+		})?;
+
+	let seq = lua.create_sequence_from(els)?;
+
+	Ok(Value::Table(seq))
+}
+
 /// ## Lua Documentation
 ///
 /// Converts HTML content to Markdown format.
@@ -111,6 +145,23 @@ fn html_to_md(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to convert HTML to Markdown: {}", err)))
 }
 
+// region:    --- Froms
+
+impl IntoLua for W<Elem> {
+	fn into_lua(self, lua: &Lua) -> mlua::Result<Value> {
+		let el = self.0;
+		let table = lua.create_table()?;
+		table.set("tag", el.tag)?;
+		table.set("attrs", el.attrs)?;
+		table.set("text", el.text)?;
+		table.set("inner_html", el.inner_html)?;
+
+		Ok(Value::Table(table))
+	}
+}
+
+// endregion: --- Froms
+
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
@@ -118,6 +169,7 @@ mod tests {
 
 	use crate::_test_support::{eval_lua, setup_lua};
 	use crate::script::aip_modules::aip_html;
+	use value_ext::JsonValueExt;
 
 	#[tokio::test]
 	async fn test_lua_html_slim_ok() -> Result<()> {
@@ -139,14 +191,55 @@ local html_content = [[
 ]]
 return aip.html.slim(html_content)
         "#;
+
 		// -- Exec
 		let res = eval_lua(&lua, fx_script)?;
+
 		// -- Check
 		let cleaned_html = res.as_str().unwrap();
 		assert!(!cleaned_html.contains("<script>"));
 		assert!(!cleaned_html.contains("<style>"));
 		assert!(!cleaned_html.contains("<!-- comment -->"));
 		assert!(cleaned_html.contains(r#"<div class="content">Hello World</div>"#));
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_html_select_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_html::init_module, "html")?;
+		let fx_script = r#"
+local html_content = [[
+			<div>First div<div>
+			<li class="me">Bullet One </li>
+			<section>
+				<p>Some text</p>
+			  <DIV class="me other " TITLE = " Some Title" > Div <strong>Two </strong></DIV>
+			</section>
+]]
+return aip.html.select(html_content, ".me")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, fx_script)?;
+
+		// -- Check
+		let res = res.as_array().ok_or("Should be array")?;
+		assert_eq!(res.len(), 2);
+		// first one (<li>)
+		let el = res.first().ok_or("Should have at least one")?;
+		assert_eq!(el.x_get_str("tag")?, "li");
+		assert_eq!(el.x_get_str("/attrs/class")?, "me");
+		assert_eq!(el.x_get_str("text")?, "Bullet One ");
+		assert_eq!(el.x_get_str("inner_html")?, "Bullet One ");
+		// second one (<div>)
+		let el = res.get(1).ok_or("Should have at least two")?;
+		assert_eq!(el.x_get_str("tag")?, "div");
+		assert_eq!(el.x_get_str("/attrs/class")?, "me other ");
+		assert_eq!(el.x_get_str("/attrs/title")?, " Some Title");
+		assert_eq!(el.x_get_str("text")?, " Div Two ");
+		assert_eq!(el.x_get_str("inner_html")?, " Div <strong>Two </strong>");
+
 		Ok(())
 	}
 
