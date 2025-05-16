@@ -1,5 +1,21 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-05-16 - [v0.7.9](https://github.com/jeremychone/rust-devai/compare/v0.7.7...v0.7.8)
+
+- `+` aip.path.parse - parse a file and return a FileMeta (without size, modified, ...)
+- `+` aip.web.resolve_href
+- `+` aip.web.parse_url - parse a URL string into a url struct
+- `^` pricing - update gemini caching pricing
+- `!` aip.text - now accept content strings to be nil (will return nil)
+- `+` aip.html.select - added select(html_content, selectors)
+- `+` aip.file.join - add back join, simpler and more ergonomic
+- `^` lua-apis - add aip.agent.extract_options
+- `+` aip.agent.extract_options - from a lua table, only the properties that are agent options
+- `^` aip.md.extract_meta - allow content to be nil
+- `!` path.join - fully deprecate join (removed). Just add '/' regardless of OS, '\' will be normalized
+- `^` error - make better error display
+- `-` (v0.7.8) - Fix install issue on nixes.
+
 ## 2025-05-08 - [v0.7.7](https://github.com/jeremychone/rust-devai/compare/v0.7.6...v0.7.7)
 
 - `+` NEW session & tmp dir - Added `CTX.SESSION`, `CTX.TMP_DIR`, and `$tmp/some/path.txt` alias
