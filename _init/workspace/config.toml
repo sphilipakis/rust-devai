@@ -31,7 +31,6 @@
 # However, you can add new aliases or override them below (in this workspace config.toml). 
 #
 # [default_options.model_aliases]
-[default_options.model_aliases]
 # # -- Anthropic
 # claude      = "claude-3-7-sonnet-latest"
 # # -- OpenAI
