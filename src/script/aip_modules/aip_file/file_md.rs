@@ -20,7 +20,7 @@
 
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::helpers::to_vec_of_strings;
+use crate::script::support::into_vec_of_strings;
 use crate::support::md::MdSectionIter;
 use mlua::{IntoLua, Lua, Value};
 
@@ -44,7 +44,7 @@ pub(super) fn file_load_md_sections(
 	headings: Option<Value>,
 ) -> mlua::Result<Value> {
 	let headings = headings
-		.map(|headings| to_vec_of_strings(headings, "file::load_md_sections headings argument"))
+		.map(|headings| into_vec_of_strings(headings, "file::load_md_sections headings argument"))
 		.transpose()?;
 	let headings: Option<Vec<&str>> = headings
 		.as_deref()

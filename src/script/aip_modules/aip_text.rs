@@ -28,7 +28,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::DEFAULT_MARKERS;
-use crate::script::helpers::to_vec_of_strings;
+use crate::script::support::into_vec_of_strings;
 use crate::support::Extrude;
 use crate::support::html::decode_html_entities;
 use crate::support::text::{self, EnsureOptions, truncate_with_ellipsis};
@@ -168,7 +168,7 @@ fn ensure_single_ending_newline(_lua: &Lua, content: String) -> mlua::Result<Str
 ///
 /// The string with markers replaced by the corresponding sections.
 fn replace_markers_with_default_parkers(_lua: &Lua, (content, new_sections): (String, Value)) -> mlua::Result<String> {
-	let sections = to_vec_of_strings(new_sections, "new_sections")?;
+	let sections = into_vec_of_strings(new_sections, "new_sections")?;
 	let sections: Vec<&str> = sections.iter().map(|s| s.as_str()).collect();
 	let new_content = text::replace_markers(&content, &sections, DEFAULT_MARKERS)?;
 	Ok(new_content)

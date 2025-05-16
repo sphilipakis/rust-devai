@@ -2,9 +2,8 @@ use crate::support::W;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Value};
 
-// region:    --- mlua::Value utils
-
 /// Process correctly the lua eval result
+/// (Used by the lua engine eval, and test)
 pub fn process_lua_eval_result(_lua: &Lua, res: mlua::Result<Value>, script: &str) -> Result<Value> {
 	let res = match res {
 		Ok(res) => res,
@@ -23,8 +22,10 @@ pub fn process_lua_eval_result(_lua: &Lua, res: mlua::Result<Value>, script: &st
 	Ok(res)
 }
 
+// region:    --- mlua::Value utils
+
 // Return a Vec<String> from a lua Value which can be String or Array of strings
-pub fn to_vec_of_strings(value: Value, err_prefix: &'static str) -> mlua::Result<Vec<String>> {
+pub fn into_vec_of_strings(value: Value, err_prefix: &'static str) -> mlua::Result<Vec<String>> {
 	match value {
 		// If the value is a string, return a Vec with that single string.
 		Value::String(lua_string) => {

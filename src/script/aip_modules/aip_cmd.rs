@@ -12,7 +12,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::helpers::to_vec_of_strings;
+use crate::script::support::into_vec_of_strings;
 use mlua::{Lua, Table, Value};
 use std::process::Command;
 
@@ -89,7 +89,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// print("exit:", result.exit)
 /// ```
 fn cmd_exec(lua: &Lua, (cmd_name, args): (String, Option<Value>)) -> mlua::Result<Value> {
-	let args = args.map(|args| to_vec_of_strings(args, "command args")).transpose()?;
+	let args = args.map(|args| into_vec_of_strings(args, "command args")).transpose()?;
 
 	let mut command = cross_command(&cmd_name, args)?;
 

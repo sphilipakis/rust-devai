@@ -20,7 +20,7 @@
 use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::helpers::to_vec_of_strings;
+use crate::script::support::into_vec_of_strings;
 use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
 use simple_fs::SPath;
 use std::path::Path;
@@ -187,7 +187,7 @@ fn path_join(lua: &Lua, base: String, parts: Variadic<Value>) -> mlua::Result<Va
 	let mut parts_str = String::new();
 	for part in parts {
 		// TODO: Could optimize a little to not put a Vec when single value
-		let sub_parts = to_vec_of_strings(part, "aip.path.join")?;
+		let sub_parts = into_vec_of_strings(part, "aip.path.join")?;
 		parts_str.push_str(&sub_parts.join("/"))
 	}
 

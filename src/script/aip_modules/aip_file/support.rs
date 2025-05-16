@@ -5,7 +5,7 @@ use crate::dir_context::find_to_run_pack_dir;
 use crate::dir_context::resolve_pack_ref_base_path;
 use crate::pack::PackRef;
 use crate::runtime::Runtime;
-use crate::script::helpers::{get_value_prop_as_string, to_vec_of_strings};
+use crate::script::support::{get_value_prop_as_string, into_vec_of_strings};
 use crate::types::{DestOptions, FileRecord};
 use mlua::FromLua as _;
 use mlua::{Lua, Value};
@@ -21,7 +21,7 @@ pub fn base_dir_and_globs(
 	include_globs: Value,
 	options: Option<&Value>,
 ) -> Result<(Option<SPath>, Vec<String>)> {
-	let globs: Vec<String> = to_vec_of_strings(include_globs, "file::file_list globs argument")?;
+	let globs: Vec<String> = into_vec_of_strings(include_globs, "file::file_list globs argument")?;
 	let base_dir = compute_base_dir(runtime, options)?.or_else(|| runtime.dir_context().wks_dir().cloned());
 
 	// Process any pack references in the globs

@@ -177,7 +177,12 @@ mod tests {
 
 		// -- Check
 		// Expected directories at exactly depth 2 (relative to "src")
-		let expected = vec!["src/script/support", "src/support/code", "src/support/md", "src/support/text"];
+		let expected = vec![
+			"src/script/aip_modules",
+			"src/support/code",
+			"src/support/md",
+			"src/support/text",
+		];
 
 		for exp in expected {
 			let exp_path = SPath::new(exp).canonicalize()?;
@@ -202,7 +207,7 @@ mod tests {
 
 		// -- Check
 		// For only_leaf = false, expected directories include those at depth 1 and depth 2.
-		let expected = vec!["src/agent", "src/cli", "src/script", "src/support", "src/script/support"];
+		let expected = vec!["src/agent", "src/cli", "src/script", "src/support"];
 
 		for exp in expected {
 			let exp_path = SPath::new(exp).canonicalize()?;

@@ -12,7 +12,7 @@
 //! - `aip.html.to_md(html_content: string) -> string`
 
 use crate::runtime::Runtime;
-use crate::script::helpers::to_vec_of_strings;
+use crate::script::support::into_vec_of_strings;
 use crate::support::W;
 use crate::{Result, support};
 use html_helpers::Elem;
@@ -89,7 +89,7 @@ fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Resul
 	}
 
 	// extract as selectors
-	let selectors = to_vec_of_strings(selectors, "aip.html.select")?;
+	let selectors = into_vec_of_strings(selectors, "aip.html.select")?;
 
 	let els = html_helpers::select(&html_content, &selectors)
 		.map_err(|err| crate::Error::custom(format!("Cannot apply selector '{selectors:?}'. Cause: {err}")))?;
