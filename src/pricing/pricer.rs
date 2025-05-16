@@ -173,7 +173,7 @@ mod tests {
 		let price = price.ok_or("Should have price")?;
 
 		// Calculate expected: cached tokens should use input_normal price
-		let cached = fx_cached_tokens as f64 * 1.25 / 1_000_000.0;
+		let cached = fx_cached_tokens as f64 * 0.31 / 1_000_000.0;
 		let prompt = fx_prompt_normal_tokens as f64 * 1.25 / 1_000_000.0;
 		let completion = fx_completion_tokens as f64 * 10. / 1_000_000.0;
 		let expected = cached + prompt + completion;
