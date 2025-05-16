@@ -11,6 +11,7 @@
 //! - `aip.web.get(url: string): WebResponse`
 //! - `aip.web.post(url: string, data: string | table): WebResponse`
 //! - `aip.web.parse_url(url: string | nil): table | nil`
+//! - `aip.web.resolve_href(href: string | nil, base_url: string): string | nil`
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
@@ -29,11 +30,12 @@ pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 	let web_get_fn = lua.create_function(web_get)?;
 	let web_post_fn = lua.create_function(web_post)?;
 	let parse_url_fn = lua.create_function(web_parse_url)?;
+	let resolve_href_fn = lua.create_function(web_resolve_href)?;
 
 	table.set("get", web_get_fn)?;
 	table.set("post", web_post_fn)?;
-
 	table.set("parse_url", parse_url_fn)?;
+	table.set("resolve_href", resolve_href_fn)?;
 
 	Ok(table)
 }
@@ -96,6 +98,96 @@ pub fn web_parse_url(lua: &Lua, url: Value) -> mlua::Result<Value> {
 	match Url::parse(&url) {
 		Ok(url) => Ok(W(url).into_lua(lua)?),
 		Err(err) => Err(crate::Error::Custom(format!("Cannot parse url '{url}'. Cause: {err}")).into()),
+	}
+}
+
+/// ## Lua Documentation
+///
+/// Resolves an `href` (like one from an HTML `<a>` tag) against a `base_url`.
+///
+/// ```lua
+/// -- API Signature
+/// aip.web.resolve_href(href: string | nil, base_url: string): string | nil
+/// ```
+///
+/// ### Arguments
+///
+/// - `href: string | nil`: The href string to resolve. This can be an absolute URL, a scheme-relative URL, an absolute path, or a relative path. If `nil`, the function returns `nil`.
+/// - `base_url: string`: The base URL string against which to resolve the `href`. Must be a valid absolute URL.
+///
+/// ### Returns (`string | nil`)
+///
+/// - If `href` is `nil`, returns `nil`.
+/// - If `href` is already an absolute URL (e.g., "https://example.com/page"), it's returned as is.
+/// - Otherwise, `href` is joined with `base_url` to form an absolute URL.
+/// - Returns the resolved absolute URL string.
+///
+/// ### Example
+///
+/// ```lua
+/// local base = "https://example.com/docs/path/"
+///
+/// -- Absolute href
+/// print(aip.web.resolve_href("https://another.com/page.html", base))
+/// -- Output: "https://another.com/page.html"
+///
+/// -- Relative path href
+/// print(aip.web.resolve_href("sub/page.html", base))
+/// -- Output: "https://example.com/docs/path/sub/page.html"
+///
+/// -- Absolute path href
+/// print(aip.web.resolve_href("/other/resource.txt", base))
+/// -- Output: "https://example.com/other/resource.txt"
+///
+/// -- Scheme-relative href
+/// print(aip.web.resolve_href("//cdn.com/asset.js", base))
+/// -- Output: "https://cdn.com/asset.js" (uses base_url's scheme)
+///
+/// print(aip.web.resolve_href("//cdn.com/asset.js", "http://example.com/"))
+/// -- Output: "http://cdn.com/asset.js"
+///
+/// -- href is nil
+/// print(aip.web.resolve_href(nil, base))
+/// -- Output: nil (Lua nil)
+/// ```
+///
+/// ### Error
+///
+/// Returns an error (Lua table `{ error: string }`) if:
+/// - `base_url` is not a valid absolute URL.
+/// - `href` and `base_url` cannot be successfully joined (e.g., due to malformed `href`).
+fn web_resolve_href(lua: &Lua, (href_val, base_url_str): (Value, String)) -> mlua::Result<Value> {
+	let href_opt_str = into_option_string(href_val, "aip.web.resolve_href 'href' argument")?;
+
+	let Some(href_str) = href_opt_str else {
+		return Ok(Value::Nil);
+	};
+
+	// Attempt to parse href_str as a standalone, absolute URL.
+	if let Ok(parsed_href_url) = Url::parse(&href_str) {
+		if !parsed_href_url.scheme().is_empty() {
+			// It's already an absolute URL with a scheme.
+			return Ok(Value::String(lua.create_string(&href_str)?));
+		}
+		// If it parsed but has no scheme (e.g. "//example.com/path", "/path", "path"),
+		// it should be joined with the base_url.
+	}
+	// If parsing href_str failed, it's treated as a path segment to be joined with base_url.
+
+	let base_url = Url::parse(&base_url_str).map_err(|e| {
+		Error::custom(format!(
+			"aip.web.resolve_href: Invalid base_url '{}'. Cause: {}",
+			base_url_str, e
+		))
+	})?;
+
+	match base_url.join(&href_str) {
+		Ok(resolved_url) => Ok(Value::String(lua.create_string(resolved_url.as_str())?)),
+		Err(e) => Err(Error::custom(format!(
+			"aip.web.resolve_href: Failed to join href '{}' with base_url '{}'. Cause: {}",
+			href_str, base_url_str, e
+		))
+		.into()),
 	}
 }
 
@@ -487,6 +579,193 @@ return aip.web.parse_url(nil)
 
 		// -- Check
 		assert_eq!(res, JsonValue::Null, "Result should be JSON null for Lua nil");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_absolute_href() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("https://another.com/page.html", "https://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res.as_str().ok_or("should be string")?, "https://another.com/page.html");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_relative_path_href() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("sub/page.html", "https://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(
+			res.as_str().ok_or("should be string")?,
+			"https://base.com/docs/sub/page.html"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_absolute_path_href() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("/other/resource", "https://base.com/docs/path/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(
+			res.as_str().ok_or("should be string")?,
+			"https://base.com/other/resource"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_scheme_relative_href_https() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("//cdn.example.com/script.js", "https://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(
+			res.as_str().ok_or("should be string")?,
+			"https://cdn.example.com/script.js"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_scheme_relative_href_http() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("//cdn.example.com/script.js", "http://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(
+			res.as_str().ok_or("should be string")?,
+			"http://cdn.example.com/script.js"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_nil_href() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href(nil, "https://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res, JsonValue::Null);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_err_invalid_base_url() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("path", "not-a-base-url")
+		"#;
+
+		// -- Exec
+		let err = match eval_lua(&lua, script) {
+			Ok(_) => return Err("Should have returned an error".into()),
+			Err(e) => e,
+		};
+
+		// -- Check
+		let err_str = err.to_string();
+		assert_contains(&err_str, "aip.web.resolve_href: Invalid base_url 'not-a-base-url'");
+		assert_contains(&err_str, "relative URL without a base");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_empty_href() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("", "https://base.com/docs/")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(&res, "https://base.com/docs/");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_href_is_fragment() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r##"
+return aip.web.resolve_href("#section1", "https://base.com/page.html")
+		"##;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(&res, "https://base.com/page.html#section1");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_resolve_href_ok_href_is_query() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.resolve_href("?key=val", "https://base.com/page.html")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(&res, "https://base.com/page.html?key=val");
 
 		Ok(())
 	}

@@ -9,7 +9,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.text`](#aiptext): Text processing utilities (trim, split, replace, truncate, escape, ensure).
 - [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
 - [`aip.json`](#aipjson): JSON parsing and stringification.
-- [`aip.web`](#aipweb): HTTP requests (GET, POST).
+- [`aip.web`](#aipweb): HTTP requests (GET, POST), URL parsing and resolution.
 - [`aip.lua`](#aiplua): Some lua helpers (for now only `.dump(data)`).
 - [`aip.agent`](#aipagent): Running other AIPACK agents.
 - [`aip.flow`](#aipflow): Controlling agent execution flow.
@@ -1575,7 +1575,7 @@ aip.json.stringify_to_line(content: table): string
 
 ## aip.web
 
-Functions for making HTTP GET and POST requests.
+Functions for making HTTP GET and POST requests, and for URL manipulation.
 
 ### Functions Summary
 
@@ -1585,6 +1585,8 @@ aip.web.get(url: string): WebResponse
 aip.web.post(url: string, data: string | table): WebResponse
 
 aip.web.parse_url(url: string | nil): table | nil
+
+aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 ```
 
 ### aip.web.get
@@ -1703,6 +1705,62 @@ local nil_result = aip.web.parse_url(nil)
 
 Returns an error (Lua table `{ error: string }`) if the `url` string is provided but is invalid and cannot be parsed.
 
+
+### aip.web.resolve_href
+
+Resolves an `href` (like one from an HTML `<a>` tag) against a `base_url`.
+
+```lua
+-- API Signature
+aip.web.resolve_href(href: string | nil, base_url: string): string | nil
+```
+
+#### Arguments
+
+- `href: string | nil`: The href string to resolve. This can be an absolute URL, a scheme-relative URL, an absolute path, or a relative path. If `nil`, the function returns `nil`.
+- `base_url: string`: The base URL string against which to resolve the `href`. Must be a valid absolute URL.
+
+#### Returns (`string | nil`)
+
+- If `href` is `nil`, returns `nil`.
+- If `href` is already an absolute URL (e.g., "https://example.com/page"), it's returned as is.
+- Otherwise, `href` is joined with `base_url` to form an absolute URL.
+- Returns the resolved absolute URL string.
+
+#### Example
+
+```lua
+local base = "https://example.com/docs/path/"
+
+-- Absolute href
+print(aip.web.resolve_href("https://another.com/page.html", base))
+-- Output: "https://another.com/page.html"
+
+-- Relative path href
+print(aip.web.resolve_href("sub/page.html", base))
+-- Output: "https://example.com/docs/path/sub/page.html"
+
+-- Absolute path href
+print(aip.web.resolve_href("/other/resource.txt", base))
+-- Output: "https://example.com/other/resource.txt"
+
+-- Scheme-relative href
+print(aip.web.resolve_href("//cdn.com/asset.js", base))
+-- Output: "https://cdn.com/asset.js" (uses base_url's scheme)
+
+print(aip.web.resolve_href("//cdn.com/asset.js", "http://example.com/"))
+-- Output: "http://cdn.com/asset.js"
+
+-- href is nil
+print(aip.web.resolve_href(nil, base))
+-- Output: nil (Lua nil)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- `base_url` is not a valid absolute URL.
+- `href` and `base_url` cannot be successfully joined (e.g., due to malformed `href`).
 
 ## aip.lua
 
@@ -2574,3 +2632,4 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
+
