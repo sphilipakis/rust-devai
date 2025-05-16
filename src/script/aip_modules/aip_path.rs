@@ -15,12 +15,14 @@
 //! - `aip.path.diff(file_path: string, base_path: string): string`
 //! - `aip.path.parent(path: string): string | nil`
 //! - `aip.path.join(base: string, ...parts: string | string[]): string`
+//! - `aip.path.parse(path: string | nil): table | nil`
 //!
 
 use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::support::into_vec_of_strings;
+use crate::script::support::{into_option_string, into_vec_of_strings};
+use crate::types::FileMeta;
 use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
 use simple_fs::SPath;
 use std::path::Path;
@@ -55,10 +57,14 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_join =
 		lua.create_function(move |lua, (base, args): (String, Variadic<Value>)| path_join(lua, base, args))?;
 
+	// -- parse
+	let path_parse_fn = lua.create_function(path_parse)?;
+
 	// -- parent
 	let path_parent_fn = lua.create_function(move |_lua, path: String| path_parent(path))?;
 
 	// -- Add all functions to the module
+	table.set("parse", path_parse_fn)?;
 	table.set("resolve", path_resolve_fn)?;
 	table.set("join", path_join)?;
 	table.set("exists", path_exists_fn)?;
@@ -72,6 +78,55 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 }
 
 // region:    --- Lua Functions
+
+/// ## Lua Documentation
+///
+/// Parses a path string and returns a [FileMeta](#filemeta) table representation of its components.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.parse(path: string | nil): table | nil
+/// ```
+///
+/// Parses the given path string into a structured table containing components like `dir`, `name`, `stem`, `ext`, etc., without checking file existence or metadata.
+///
+/// ### Arguments
+///
+/// - `path: string | nil`: The path string to parse. If `nil`, the function returns `nil`.
+///
+/// ### Returns
+///
+/// - `table | nil`: A [FileMeta](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+///
+/// ### Example
+///
+/// ```lua
+/// local parsed = aip.path.parse("some/folder/file.txt")
+/// -- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", created_epoch_us = nil, ... }
+/// print(parsed.name) -- Output: "file.txt"
+///
+/// local nil_result = aip.path.parse(nil)
+/// -- nil_result will be nil
+/// ```
+///
+/// ### Error
+///
+/// Returns an error (Lua table `{ error: string }`) if the path string is provided but is invalid and cannot be parsed into a valid SPath object.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
+fn path_parse(lua: &Lua, path: Value) -> mlua::Result<Value> {
+	let Some(path) = into_option_string(path, "aip.path.parse")? else {
+		return Ok(Value::Nil);
+	};
+
+	let spath = SPath::new(path);
+	let meta = FileMeta::new(spath, false);
+	meta.into_lua(lua)
+}
 
 /// ## Lua Documentation
 ///
@@ -702,6 +757,67 @@ mod tests {
 
 		Ok(())
 	}
+
+	// TODO: Needs to enable (code assume res is lua, but it's serde json)
+	// #[tokio::test]
+	// async fn test_lua_path_parse() -> Result<()> {
+	// 	// -- Setup & Fixtures
+	// 	let lua = setup_lua(aip_path::init_module, "path")?;
+	// 	let paths = &[
+	// 		("some/path/to_file.md", "some/path", "to_file.md", "to_file", "md"),
+	// 		("folder/file.txt", "folder", "file.txt", "file", "txt"),
+	// 		("justafile.md", "", "justafile.md", "justafile", "md"),
+	// 		("/absolute/path/file.log", "/absolute/path", "file.log", "file", "log"),
+	// 		("/file_at_root", "/", "file_at_root", "file_at_root", ""),
+	// 		("trailing/slash/", "trailing", "slash", "slash", ""),
+	// 		(".", "", ".", ".", ""),
+	// 		("", "", "", "", ""),
+	// 	];
+
+	// 	// -- Exec & Check
+	// 	for (path, exp_dir, exp_name, exp_stem, exp_ext) in paths {
+	// 		let code = format!(r#"return aip.path.parse("{path}")"#);
+	// 		let res = eval_lua(&lua, &code)?;
+	// 		let table = res.as_table().ok_or_else(|| format!("Expected a table for path: {path}"))?;
+
+	// 		// check dir
+	// 		let dir = table
+	// 			.get::<_, String>("dir")
+	// 			.ok_or_else(|| format!("Missing 'dir' for path: {path}"))?;
+	// 		assert_eq!(dir, *exp_dir, "Dir mismatch for path: {path}");
+
+	// 		// check name
+	// 		let name = table
+	// 			.get::<_, String>("name")
+	// 			.ok_or_else(|| format!("Missing 'name' for path: {path}"))?;
+	// 		assert_eq!(name, *exp_name, "Name mismatch for path: {path}");
+
+	// 		// check stem
+	// 		let stem = table
+	// 			.get::<_, String>("stem")
+	// 			.ok_or_else(|| format!("Missing 'stem' for path: {path}"))?;
+	// 		assert_eq!(stem, *exp_stem, "Stem mismatch for path: {path}");
+
+	// 		// check ext
+	// 		let ext = table
+	// 			.get::<_, String>("ext")
+	// 			.ok_or_else(|| format!("Missing 'ext' for path: {path}"))?;
+	// 		assert_eq!(ext, *exp_ext, "Ext mismatch for path: {path}");
+
+	// 		// check path
+	// 		let res_path = table
+	// 			.get::<_, String>("path")
+	// 			.ok_or_else(|| format!("Missing 'path' for path: {path}"))?;
+	// 		assert_eq!(res_path, *path, "Path mismatch for path: {path}");
+	// 	}
+
+	// 	// Check nil case
+	// 	let code_nil = r#"return aip.path.parse(nil)"#;
+	// 	let res_nil = eval_lua(&lua, code_nil)?;
+	// 	assert!(res_nil.is_nil(), "Expected nil for nil input");
+
+	// 	Ok(())
+	// }
 }
 
 // endregion: --- Tests

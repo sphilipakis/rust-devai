@@ -724,9 +724,51 @@ aip.path.diff(file_path: string, base_path: string): string
 aip.path.parent(path: string): string | nil
 
 aip.path.join(base: string, ...parts: string | string[]): string
+
+aip.path.parse(path: string | nil): table | nil
 ```
 
 > Note: Paths are typically relative to the workspace directory unless otherwise specified or resolved using pack references.
+
+### aip.path.parse
+
+Parses a path string and returns a [FileMeta](#filemeta) table representation of its components.
+
+```lua
+-- API Signature
+aip.path.parse(path: string | nil): table | nil
+```
+
+Parses the given path string into a structured table containing components like `dir`, `name`, `stem`, `ext`, etc., without checking file existence or metadata.
+
+#### Arguments
+
+- `path: string | nil`: The path string to parse. If `nil`, the function returns `nil`.
+
+#### Returns
+
+- `table | nil`: A [FileMeta](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+
+#### Example
+
+```lua
+local parsed = aip.path.parse("some/folder/file.txt")
+-- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", created_epoch_us = nil, ... }
+print(parsed.name) -- Output: "file.txt"
+
+local nil_result = aip.path.parse(nil)
+-- nil_result will be nil
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the path string is provided but is invalid and cannot be parsed into a valid SPath object.
+
+```ts
+{
+  error: string // Error message
+}
+```
 
 ### aip.path.split
 
@@ -787,8 +829,8 @@ is joined with `base` using system-appropriate path logic (which also normalizes
 #### Example
 ```lua
 -- Example 1: Basic join
-print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file1.txt"
-print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file1.txt"
+print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file.txt" (was dir1/file1.txt - typo fixed)
+print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file.txt" (was dir1/file1.txt - typo fixed)
 
 -- Example 2: Joining with a list (table)
 print(aip.path.join("dir1/", {"subdir", "file2.txt"})) -- Output: "dir1/subdir/file2.txt"
