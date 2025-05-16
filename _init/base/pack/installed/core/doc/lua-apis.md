@@ -980,93 +980,93 @@ Text manipulation functions for cleaning, splitting, modifying, and extracting t
 ### Functions Summary
 
 ```lua
-aip.text.escape_decode(content: string): string
+aip.text.escape_decode(content: string | nil): string | nil
 
-aip.text.escape_decode_if_needed(content: string): string
+aip.text.escape_decode_if_needed(content: string | nil): string | nil
 
-aip.text.split_first(content: string, sep: string): (string, string | nil)
+aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
 
-aip.text.remove_first_line(content: string): string
+aip.text.remove_first_line(content: string | nil): string | nil
 
-aip.text.remove_first_lines(content: string, n: number): string
+aip.text.remove_first_lines(content: string | nil, n: number): string | nil
 
-aip.text.remove_last_line(content: string): string
+aip.text.remove_last_line(content: string | nil): string | nil
 
-aip.text.remove_last_lines(content: string, n: number): string
+aip.text.remove_last_lines(content: string | nil, n: number): string | nil
 
-aip.text.trim(content: string): string
+aip.text.trim(content: string | nil): string | nil
 
-aip.text.trim_start(content: string): string
+aip.text.trim_start(content: string | nil): string | nil
 
-aip.text.trim_end(content: string): string
+aip.text.trim_end(content: string | nil): string | nil
 
-aip.text.truncate(content: string, max_len: number, ellipsis?: string): string
+aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): string | nil
 
-aip.text.replace_markers(content: string, new_sections: list): string
+aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
 
-aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string
+aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): string | nil
 
-aip.text.ensure_single_ending_newline(content: string): string
+aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 
-aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)
+aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
 ```
 
 ### aip.text.escape_decode
 
-HTML-decodes the entire content string.
+HTML-decodes the entire content string. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.escape_decode(content: string): string
+aip.text.escape_decode(content: string | nil): string | nil
 ```
 
 Useful for decoding responses from LLMs that might HTML-encode output.
 
 #### Arguments
-- `content: string`: The content to HTML-decode.
+- `content: string | nil`: The content to HTML-decode. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The decoded string.
+- `string | nil`: The decoded string, or `nil` if the input `content` was `nil`.
 
 #### Error
-Returns an error (Lua table `{ error: string }`) if decoding fails.
+Returns an error (Lua table `{ error: string }`) if decoding fails (and content was not `nil`).
 
 ### aip.text.escape_decode_if_needed
 
-Selectively HTML-decodes content if needed (currently only decodes `&lt;`).
+Selectively HTML-decodes content if needed (currently only decodes `&lt;`). If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.escape_decode_if_needed(content: string): string
+aip.text.escape_decode_if_needed(content: string | nil): string | nil
 ```
 
 A more conservative version of `escape_decode` for cases where only specific entities need decoding.
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The potentially decoded string.
+- `string | nil`: The potentially decoded string, or `nil` if the input `content` was `nil`.
 
 #### Error
-Returns an error (Lua table `{ error: string }`) if decoding fails.
+Returns an error (Lua table `{ error: string }`) if decoding fails (and content was not `nil`).
 
 ### aip.text.split_first
 
-Splits a string into two parts based on the first occurrence of a separator.
+Splits a string into two parts based on the first occurrence of a separator. If `content` is `nil`, returns `(nil, nil)`.
 
 ```lua
 -- API Signature
-aip.text.split_first(content: string, sep: string): (string, string | nil)
+aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
 ```
 
 #### Arguments
-- `content: string`: The string to split.
+- `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
 - `sep: string`: The separator string.
 
 #### Returns
-- `string`: The part before the first separator.
-- `string | nil`: The part after the first separator (nil if separator not found, empty string if separator is at the end).
+- `string | nil`: The part before the first separator. `nil` if `content` was `nil` or separator not found.
+- `string | nil`: The part after the first separator. `nil` if `content` was `nil` or separator not found. Empty string if separator is at the end.
 
 #### Example
 ```lua
@@ -1081,237 +1081,237 @@ This function does not typically error.
 
 ### aip.text.remove_first_line
 
-Removes the first line from the content.
+Removes the first line from the content. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.remove_first_line(content: string): string
+aip.text.remove_first_line(content: string | nil): string | nil
 ```
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The content with the first line removed.
+- `string | nil`: The content with the first line removed, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.remove_first_lines
 
-Removes the first `n` lines from the content.
+Removes the first `n` lines from the content. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.remove_first_lines(content: string, n: number): string
+aip.text.remove_first_lines(content: string | nil, n: number): string | nil
 ```
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `n: number`: The number of lines to remove.
 
 #### Returns
-- `string`: The content with the first `n` lines removed.
+- `string | nil`: The content with the first `n` lines removed, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.remove_last_line
 
-Removes the last line from the content.
+Removes the last line from the content. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.remove_last_line(content: string): string
+aip.text.remove_last_line(content: string | nil): string | nil
 ```
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The content with the last line removed.
+- `string | nil`: The content with the last line removed, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.remove_last_lines
 
-Removes the last `n` lines from the content.
+Removes the last `n` lines from the content. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.remove_last_lines(content: string, n: number): string
+aip.text.remove_last_lines(content: string | nil, n: number): string | nil
 ```
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `n: number`: The number of lines to remove.
 
 #### Returns
-- `string`: The content with the last `n` lines removed.
+- `string | nil`: The content with the last `n` lines removed, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.trim
 
-Trims leading and trailing whitespace from a string.
+Trims leading and trailing whitespace from a string. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.trim(content: string): string
+aip.text.trim(content: string | nil): string | nil
 ```
 
 #### Arguments
-- `content: string`: The string to trim.
+- `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The trimmed string.
+- `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.trim_start
 
-Trims leading whitespace from a string.
+Trims leading whitespace from a string. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.trim_start(content: string): string
+aip.text.trim_start(content: string | nil): string | nil
 ```
 
 #### Arguments
-- `content: string`: The string to trim.
+- `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The trimmed string.
+- `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.trim_end
 
-Trims trailing whitespace from a string.
+Trims trailing whitespace from a string. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.trim_end(content: string): string
+aip.text.trim_end(content: string | nil): string | nil
 ```
 
 #### Arguments
-- `content: string`: The string to trim.
+- `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The trimmed string.
+- `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.truncate
 
-Truncates content to a maximum length, optionally adding an ellipsis.
+Truncates content to a maximum length, optionally adding an ellipsis. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.truncate(content: string, max_len: number, ellipsis?: string): string
+aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): string | nil
 ```
 
 If `content` length exceeds `max_len`, truncates and appends `ellipsis` (if provided).
 
 #### Arguments
-- `content: string`: The content to truncate.
+- `content: string | nil`: The content to truncate. If `nil`, the function returns `nil`.
 - `max_len: number`: The maximum length of the result.
 - `ellipsis?: string` (optional): String to append if truncated (e.g., "...").
 
 #### Returns
-- `string`: The truncated string.
+- `string | nil`: The truncated string, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.replace_markers
 
-Replaces `<<START>>...<<END>>` markers in content with corresponding sections.
+Replaces `<<START>>...<<END>>` markers in content with corresponding sections. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.replace_markers(content: string, new_sections: list): string
+aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
 ```
 
 Replaces occurrences of `<<START>>...<<END>>` blocks sequentially with items from `new_sections`. Items in `new_sections` can be strings or tables with a `.content` field.
 
 #### Arguments
-- `content: string`: The content containing `<<START>>...<<END>>` markers.
+- `content: string | nil`: The content containing `<<START>>...<<END>>` markers. If `nil`, the function returns `nil`.
 - `new_sections: list`: A Lua list of strings or tables to replace the markers.
 
 #### Returns
-- `string`: The string with markers replaced.
+- `string | nil`: The string with markers replaced, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.ensure
 
-Ensures the content starts with `prefix` and/or ends with `suffix`.
+Ensures the content starts with `prefix` and/or ends with `suffix`. If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.ensure(content: string, {prefix?: string, suffix?: string}): string
+aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): string | nil
 ```
 
 Adds the prefix/suffix only if the content doesn't already start/end with it.
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `options: table`: A table with optional `prefix` and `suffix` string keys.
 
 #### Returns
-- `string`: The ensured string.
+- `string | nil`: The ensured string, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.ensure_single_ending_newline
 
-Ensures the content ends with exactly one newline character (`\n`).
+Ensures the content ends with exactly one newline character (`\n`). If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.ensure_single_ending_newline(content: string): string
+aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 ```
 
 Removes trailing whitespace and adds a single newline if needed. Returns `\n` if content is empty. Useful for code normalization.
 
 #### Arguments
-- `content: string`: The content to process.
+- `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
-- `string`: The string ending with a single newline.
+- `string | nil`: The string ending with a single newline, or `nil` if the input `content` was `nil`.
 
 #### Error
 This function does not typically error.
 
 ### aip.text.extract_line_blocks
 
-Extracts consecutive lines starting with a specific prefix.
+Extracts consecutive lines starting with a specific prefix. If `content` is `nil`, returns `(nil, nil)`.
 
 ```lua
 -- API Signature
-aip.text.extract_line_blocks(content: string, options: {starts_with: string, extrude?: "content", first?: number}): (list<string>, string | nil)
+aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
 ```
 
 Extracts blocks of consecutive lines from `content` where each line begins with `options.starts_with`.
 
 #### Arguments
-- `content: string`: The content to extract from.
+- `content: string | nil`: The content to extract from. If `nil`, the function returns `(nil, nil)`.
 - `options: table`:
   - `starts_with: string` (required): The prefix indicating a line block.
   - `extrude?: "content"` (optional): If set, returns the remaining content after extraction as the second return value.
   - `first?: number` (optional): Limits the number of blocks extracted. Remaining lines (if any) contribute to the extruded content if `extrude` is set.
 
 #### Returns
-- `list<string>`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix.
-- `string | nil`: The remaining content if `extrude = "content"`, otherwise `nil`.
+- `list<string> | nil`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix. `nil` if input `content` was `nil`.
+- `string | nil`: The remaining content if `extrude = "content"`, otherwise `nil`. `nil` if input `content` was `nil`.
 
 #### Example
 ```lua
@@ -1322,7 +1322,7 @@ local blocks, remain = aip.text.extract_line_blocks(text, {starts_with = ">", ex
 ```
 
 #### Error
-Returns an error (Lua table `{ error: string }`) if arguments are invalid.
+Returns an error (Lua table `{ error: string }`) if arguments are invalid (and content was not `nil`).
 
 ## aip.md
 
@@ -2519,5 +2519,6 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
+
 
 
