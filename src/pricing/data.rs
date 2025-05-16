@@ -205,14 +205,14 @@ const GROQ: Provider = Provider {
 const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "gemini-2.5-flash", // Renamed from gemini-2.5-flash-preview
-		input_cached: None,
+		input_cached: Some(0.0375),
 		input_normal: 0.15,
 		output_normal: 0.6,
 		output_reasoning: Some(3.50),
 	},
 	ModelPricing {
 		name: "gemini-2.5-pro", // Renamed from gemini-2.5-pro-preview
-		input_cached: None,
+		input_cached: Some(0.31),
 		input_normal: 1.25,
 		output_normal: 10.0,
 		output_reasoning: None,
