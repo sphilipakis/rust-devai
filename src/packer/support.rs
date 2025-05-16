@@ -109,19 +109,14 @@ pub fn validate_version_update(installed_version: &str, new_version: &str) -> Re
 	let new = new_version.trim_start_matches('v');
 
 	// Parse versions into semver::Version
-	match (Version::parse(installed), Version::parse(new)) {
-		(Ok(installed_semver), Ok(new_semver)) => {
-			// Check if installed version is greater than new version
-			if installed_semver > new_semver {
-				return Err(Error::InstallFailInstalledVersionAbove {
-					installed_version: installed_version.to_string(),
-					new_version: new_version.to_string(),
-				});
-			}
+	if let (Ok(installed_semver), Ok(new_semver)) = (Version::parse(installed), Version::parse(new)) {
+		// Check if installed version is greater than new version
+		if installed_semver > new_semver {
+			return Err(Error::InstallFailInstalledVersionAbove {
+				installed_version: installed_version.to_string(),
+				new_version: new_version.to_string(),
+			});
 		}
-		// If we can't parse one of the versions, we'll just allow the installation
-		// since we can't reliably determine which is newer
-		_ => {}
 	}
 
 	Ok(())

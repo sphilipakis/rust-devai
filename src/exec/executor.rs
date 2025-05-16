@@ -77,12 +77,12 @@ impl Executor {
 	/// Return the latest agent file_path that was executed
 	async fn get_agent_file_path(&self) -> Option<SPath> {
 		let redo_ctx = self.current_redo_ctx.lock().await;
-		let path = redo_ctx
+
+		redo_ctx
 			.as_ref()
 			.and_then(|r| r.get_agent())
 			.map(|a| a.file_path())
-			.map(SPath::new);
-		path
+			.map(SPath::new)
 	}
 
 	async fn set_current_redo_ctx(&self, redo_ctx: RedoCtx) {
