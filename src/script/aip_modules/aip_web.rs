@@ -10,25 +10,118 @@
 //!
 //! - `aip.web.get(url: string): WebResponse`
 //! - `aip.web.post(url: string, data: string | table): WebResponse`
+//! - `aip.web.parse_url(url: string | nil): table | nil`
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::support::StrExt as _;
+use crate::script::support::into_option_string;
+use crate::support::{StrExt as _, W};
 use crate::{Error, Result};
-use mlua::{Lua, LuaSerdeExt, Table, Value};
+use mlua::{IntoLua, Lua, LuaSerdeExt, Table, Value};
 use reqwest::redirect::Policy;
 use reqwest::{Client, Response, header};
+use std::collections::HashMap;
+use url::Url;
 
 pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
-	let web_get_fn = lua.create_function(move |lua, (url,): (String,)| web_get(lua, url))?;
-	let web_post_fn = lua.create_function(move |lua, (url, data): (String, Value)| web_post(lua, url, data))?;
+	let web_get_fn = lua.create_function(web_get)?;
+	let web_post_fn = lua.create_function(web_post)?;
+	let parse_url_fn = lua.create_function(web_parse_url)?;
 
 	table.set("get", web_get_fn)?;
 	table.set("post", web_post_fn)?;
 
+	table.set("parse_url", parse_url_fn)?;
+
 	Ok(table)
+}
+
+/// ## Lua Documentation
+///
+/// Parses a URL string and returns its components as a table.
+///
+/// ```lua
+/// -- API Signature
+/// aip.web.parse_url(url: string | nil): table | nil
+/// ```
+///
+/// ### Arguments
+///
+/// - `url: string | nil`: The URL string to parse. If `nil` is provided, the function returns `nil`.
+///
+/// ### Returns (`table | nil`)
+///
+/// - If the `url` is a valid string, returns a table with the following fields:
+///   - `scheme: string` (e.g., "http", "https")
+///   - `host: string | nil` (e.g., "example.com")
+///   - `port: number | nil` (e.g., 80, 443)
+///   - `path: string` (e.g., "/path/to/resource")
+///   - `query: table | nil` (A Lua table where keys are query parameter names and values are their corresponding string values. E.g., `{ name = "value" }`)
+///   - `fragment: string | nil` (The part of the URL after '#')
+///   - `username: string` (The username for authentication, empty string if not present)
+///   - `password: string | nil` (The password for authentication)
+///   - `url: string` (The original or normalized URL string that was parsed)
+/// - If the input `url` is `nil`, the function returns `nil`.
+///
+/// ### Example
+///
+/// ```lua
+/// local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path?query=val#fragment")
+/// if parsed then
+///   print(parsed.scheme)    -- "https"
+///   print(parsed.host)      -- "example.com"
+///   print(parsed.port)      -- 8080
+///   print(parsed.path)      -- "/path"
+///   print(parsed.query.query) -- "val"
+///   print(parsed.fragment)  -- "fragment"
+///   print(parsed.username)  -- "user"
+///   print(parsed.password)  -- "pass"
+///   print(parsed.url)       -- "https://user:pass@example.com:8080/path?query=val#fragment"
+/// end
+///
+/// local nil_result = aip.web.parse_url(nil)
+/// -- nil_result will be nil
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the `url` string is provided but is invalid and cannot be parsed.
+pub fn web_parse_url(lua: &Lua, url: Value) -> mlua::Result<Value> {
+	let Some(url) = into_option_string(url, "aip.web.parse_url argument")? else {
+		return Ok(Value::Nil);
+	};
+
+	match Url::parse(&url) {
+		Ok(url) => Ok(W(url).into_lua(lua)?),
+		Err(err) => Err(crate::Error::Custom(format!("Cannot parse url '{url}'. Cause: {err}")).into()),
+	}
+}
+
+impl IntoLua for W<Url> {
+	fn into_lua(self, lua: &Lua) -> mlua::Result<Value> {
+		let url = self.0;
+		let table = lua.create_table()?;
+		table.set("scheme", url.scheme())?;
+		table.set("host", url.host_str())?;
+		table.set("port", url.port())?;
+		table.set("path", url.path())?;
+		let query = url.query_pairs().into_owned().collect::<HashMap<String, String>>();
+		let query_table = if query.is_empty() {
+			Value::Nil
+		} else {
+			lua.to_value(&query)?
+		};
+		table.set("query", query_table)?;
+		table.set("fragment", url.fragment())?;
+		table.set("username", url.username())?;
+		table.set("password", url.password())?;
+
+		table.set("url", url.as_str())?;
+
+		Ok(Value::Table(table))
+	}
 }
 
 /// ## Lua Documentation
@@ -139,7 +232,7 @@ Cause: {err}"
 /// ### Error
 ///
 /// Returns an error if the web request cannot be made (e.g., invalid URL, network error, data serialization error). Does not throw an error for non-2xx status codes. Check the `success` field in the `WebResponse`.
-fn web_post(lua: &Lua, url: String, data: Value) -> mlua::Result<Value> {
+fn web_post(lua: &Lua, (url, data): (String, Value)) -> mlua::Result<Value> {
 	let rt = tokio::runtime::Handle::try_current().map_err(Error::TokioTryCurrent)?;
 	let res: mlua::Result<Value> = tokio::task::block_in_place(|| {
 		rt.block_on(async {
@@ -264,10 +357,11 @@ mod tests {
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
 	use crate::script::aip_modules::aip_web;
+	use serde_json::Value as JsonValue;
 	use value_ext::JsonValueExt;
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_web_get_simple_ok() -> Result<()> {
+	async fn test_script_aip_web_get_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
@@ -288,7 +382,7 @@ return aip.web.get(url)
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_web_post_json_ok() -> Result<()> {
+	async fn test_script_aip_web_post_json_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
@@ -307,7 +401,7 @@ return aip.web.post(url, {some = "stuff"})
 	}
 
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn test_lua_web_get_invalid_url() -> Result<()> {
+	async fn test_script_aip_web_get_invalid_url() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_web::init_module, "web")?;
 		let script = r#"
@@ -325,6 +419,74 @@ return aip.web.get(url)
 		let err_str = err.to_string();
 		assert_contains(&err_str, "Fail to do aip.web.get");
 		assert_contains(&err_str, "https://this-cannot-go/anywhere-or-can-it.aip");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_parse_url_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.parse_url("https://user:pass@example.com:8080/path/to/resource?key1=val1&key2=val2#fragment")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("scheme")?, "https");
+		assert_eq!(res.x_get_str("host")?, "example.com");
+		assert_eq!(res.x_get_i64("port")?, 8080);
+		assert_eq!(res.x_get_str("path")?, "/path/to/resource");
+		assert_eq!(res.x_get_str("/query/key1")?, "val1");
+		assert_eq!(res.x_get_str("/query/key2")?, "val2");
+		assert_eq!(res.x_get_str("fragment")?, "fragment");
+		assert_eq!(res.x_get_str("username")?, "user");
+		assert_eq!(res.x_get_str("password")?, "pass");
+		assert_eq!(
+			res.x_get_str("url")?,
+			"https://user:pass@example.com:8080/path/to/resource?key1=val1&key2=val2#fragment"
+		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_parse_url_invalid() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.parse_url("not a valid url")
+		"#;
+
+		// -- Exec
+		let err = match eval_lua(&lua, script) {
+			Ok(_) => return Err("Should have returned an error".into()),
+			Err(e) => e,
+		};
+
+		// -- Check
+		let err_str = err.to_string();
+		assert_contains(&err_str, "Cannot parse url 'not a valid url'");
+		assert_contains(&err_str, "relative URL without a base"); // This is the specific error from url::Url::parse
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_web_parse_url_nil() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web")?;
+		let script = r#"
+return aip.web.parse_url(nil)
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res, JsonValue::Null, "Result should be JSON null for Lua nil");
 
 		Ok(())
 	}

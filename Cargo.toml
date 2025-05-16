@@ -37,10 +37,13 @@ aho-corasick = "1.1.3"
 lazy-regex = "3.4.1"
 num-format = "0.4.4"
 humantime = "2.1.0"
-# -- HTML Helpers
+# -- HTML 
 html-escape = "0.2"
 html-helpers = { version = "0.0.9" }
 htmd = "0.2.1"
+url = "2.5.4"
+# -- Web
+reqwest = {version = "0.12", default-features = false, features = ["json", "rustls-tls"]}
 # -- Template & Scripting
 mlua = { version = "0.10.1", features = ["lua54", "vendored", "send", "serialize"] }
 handlebars = "6"
@@ -54,8 +57,7 @@ zip = "3"
 walkdir = "2.4"
 size = "0.5.0"
 trash = "5.2.2"
-# -- Web
-reqwest = {version = "0.12", default-features = false, features = ["json", "rustls-tls"]}
+
 # -- Others
 derive_more = {version = "2.0.0", features = ["from","display","debug"] }
 strum = { version = "0.27", features = ["derive"] }

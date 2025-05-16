@@ -24,7 +24,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 #### Common Data Types:
 
 - [`FileMeta`](#filemeta) (for `aip.file..`) (FileMeta + `.content`)
-- [`FileRecord`](#filerecord) (for `aip.file..`) 
+- [`FileRecord`](#filerecord) (for `aip.file..`)
 - [`WebResponse`](#webresponse) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
 - [`MdBlock`](#mdsection) (for `aip.md..`)
@@ -114,7 +114,7 @@ aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileMeta
 ```
 
 
-> Note: All relative paths are relative to the workspace directory (parent of `.aipack/`) unless a `base_dir` option is specified. Pack references (e.g., `ns@pack/`) can be used in paths and `base_dir`.
+> Note: All relative paths are relative to the workspace directory (parent of `.aipack/`). Unless a `base_dir` option is specified. Pack references (e.g., `ns@pack/`) can be used in paths and `base_dir`.
 
 ### aip.file.load
 
@@ -1583,6 +1583,8 @@ Functions for making HTTP GET and POST requests.
 aip.web.get(url: string): WebResponse
 
 aip.web.post(url: string, data: string | table): WebResponse
+
+aip.web.parse_url(url: string | nil): table | nil
 ```
 
 ### aip.web.get
@@ -1647,6 +1649,59 @@ end
 
 #### Error
 Returns an error (Lua table `{ error: string }`) if the request cannot be initiated or data serialization fails. Check `response.success` for HTTP-level errors.
+
+### aip.web.parse_url
+
+Parses a URL string and returns its components as a table.
+
+```lua
+-- API Signature
+aip.web.parse_url(url: string | nil): table | nil
+```
+
+Parses the given URL string and extracts its various components.
+
+#### Arguments
+
+- `url: string | nil`: The URL string to parse. If `nil` is provided, the function returns `nil`.
+
+#### Returns (`table | nil`)
+
+- If the `url` is a valid string, returns a table with the following fields:
+  - `scheme: string` (e.g., "http", "https")
+  - `host: string | nil` (e.g., "example.com")
+  - `port: number | nil` (e.g., 80, 443)
+  - `path: string` (e.g., "/path/to/resource")
+  - `query: table | nil` (A Lua table where keys are query parameter names and values are their corresponding string values. E.g., `{ name = "value" }`)
+  - `fragment: string | nil` (The part of the URL after '#')
+  - `username: string` (The username for authentication, empty string if not present)
+  - `password: string | nil` (The password for authentication)
+  - `url: string` (The original or normalized URL string that was parsed)
+- If the input `url` is `nil`, the function returns `nil`.
+
+#### Example
+
+```lua
+local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path?param1=val#fragment")
+if parsed then
+  print(parsed.scheme)       -- "https"
+  print(parsed.host)         -- "example.com"
+  print(parsed.port)         -- 8080
+  print(parsed.path)         -- "/path"
+  print(parsed.query.param1) -- "val"
+  print(parsed.fragment)     -- "fragment"
+  print(parsed.username)     -- "user"
+  print(parsed.password)     -- "pass"
+  print(parsed.url)          -- "https://user:pass@example.com:8080/path?query=val#fragment"
+end
+
+local nil_result = aip.web.parse_url(nil)
+-- nil_result will be nil
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the `url` string is provided but is invalid and cannot be parsed.
 
 
 ## aip.lua
@@ -2519,6 +2574,3 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
-
-
-
