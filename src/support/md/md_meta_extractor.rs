@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::Result;
 use crate::types::MdBlock;
 use serde_json::Value;
@@ -26,6 +25,20 @@ fn merge_values(meta_blocks: Vec<MdBlock>) -> Result<Value> {
 				let content = meta_block.content;
 				let toml_value: toml::Value = content.parse()?;
 				let json_value: Value = serde_json::to_value(toml_value)?;
+				values.push(json_value);
+			}
+			Some("json") => {
+				let content = meta_block.content;
+				let json_value: Value = serde_json::from_str(&content)
+					.map_err(|err| format!("Cannot parse json content.\n    Error: {err}\n    Content: {content}"))?;
+				values.push(json_value);
+			}
+			Some("yaml" | "yml") => {
+				let content = meta_block.content;
+
+				// Probably do not support multi docs now.
+				let json_value: Value = serde_yaml_ng::from_str(&content)
+					.map_err(|err| format!("Cannot parse yaml content.\n    Error: {err}\n    Content: {content}"))?;
 				values.push(json_value);
 			}
 			Some(other) => return Err(format!("Lang '{other}' not supported for meta block").into()),
@@ -95,7 +108,13 @@ fn extract_md_blocks_and_content(content: &str, extrude: bool) -> Result<(Vec<Md
 			} else {
 				in_block = true;
 				first_block_line = true;
-				let is_meta_lang = line.strip_prefix("```").map(|v| v.trim() == "toml").unwrap_or_default();
+				let is_meta_lang = line
+					.strip_prefix("```")
+					.map(|v| {
+						let lang = v.trim();
+						lang == "toml" || lang == "json" || lang == "yaml" || lang == "yml"
+					})
+					.unwrap_or_default();
 				in_candidate_meta_block = is_meta_lang;
 				action = Action::StartBlock;
 			}
@@ -106,7 +125,8 @@ fn extract_md_blocks_and_content(content: &str, extrude: bool) -> Result<(Vec<Md
 			if in_block {
 				if in_candidate_meta_block {
 					if first_block_line {
-						if line.trim().starts_with("#!meta") {
+						let line_trimmed = line.trim();
+						if line_trimmed.starts_with("#!meta") || line_trimmed.starts_with("//!meta") {
 							first_block_line = false;
 							action = Action::CaptureInMetaBlock
 						} else {
@@ -197,6 +217,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
+	use crate::_test_support::{assert_contains, assert_not_contains};
 	use value_ext::JsonValueExt;
 
 	// region:    --- fx_md
@@ -232,12 +253,54 @@ def some()
  return 123
 ```
 
-
 		"#;
+
+	const FX_MD_MIXED: &str = r#"
+		Hey some content over here. 
+		
+```toml
+#!meta
+model = "deepseek-chat"
+globs = ["src/**/*rs", "Cargo.toml"]
+```
+
+This is is pretty cool
+
+```yaml
+#!meta
+temperature: 1.0
+model_aliases:
+  gpro: gemini-2.5-pro
+  flash: gemini-2.5-flash
+```
+
+
+```json
+//!meta
+{
+  "json_param": "Some Json Val"
+}
+```
+
+And some more2
+
+```toml
+some = "stuff"
+```
+
+
+
+```python
+#!meta
+def some() 
+	return 123
+```
+		
+				"#;
 	// endregion: --- fx_md
 
 	#[test]
-	fn test_meta_extrude_simple() -> Result<()> {
+	fn test_meta_extractor_extrude_simple() -> Result<()> {
 		// -- Exec
 		let (value_root, content) = extract_meta(FX_MD_SIMPLE)?;
 
@@ -260,7 +323,27 @@ def some()
 	}
 
 	#[test]
-	fn test_extract_md_blocks_and_content_simple() -> Result<()> {
+	fn test_meta_extractor_extrude_mixed() -> Result<()> {
+		// -- Exec
+		let (root, content) = extract_meta(FX_MD_MIXED)?;
+
+		// -- Check
+		// check meta
+		assert_eq!(root.x_get_str("model")?, "deepseek-chat");
+		assert_eq!(root.x_get_f64("temperature")?, 1.0);
+		assert_eq!(root.x_get_str("/globs/0")?, "src/**/*rs");
+		assert_eq!(root.x_get_str("/model_aliases/flash")?, "gemini-2.5-flash");
+		assert_eq!(root.x_get_str("/json_param")?, "Some Json Val");
+
+		// check content
+		assert_contains(&content, "And some more2");
+		assert_not_contains(&content, "Some Json Val");
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_meta_extractor_extract_md_blocks_and_content_simple() -> Result<()> {
 		// -- Exec
 		let (meta_blocks, content) = extract_md_blocks_and_content(FX_MD_SIMPLE, true)?;
 
