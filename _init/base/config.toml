@@ -1,6 +1,7 @@
 # This `~/.aipack-base/config.toml` file is the base config for all of the aipack workspaces (`.aipack/` container folders)
 
-[default_options]
+# Note: Was `default_options` in `<= 0.7.9` (both still supported, but now use 'options')
+[options]
 
 # `model` required to be able to run an agent. 
 #         This will be the fallback for any workspace that does not define its model in their config.toml
@@ -32,7 +33,7 @@ input_concurrency = 2
 # Note: It is important to have `model_aliases` as a property of `default_options.model_aliases` as shown below.
 #
 # Change as you see fit. Can be overridden in workspace config.toml `.aipack/config.toml`.
-[default_options.model_aliases]
+[options.model_aliases]
 # -- Anthropic
 claude      = "claude-3-7-sonnet-latest"
 # -- OpenAI

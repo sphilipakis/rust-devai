@@ -1,5 +1,4 @@
 use crate::Result;
-use crate::hub::get_hub;
 use genai::chat::ChatOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -148,7 +147,7 @@ impl AgentOptions {
 	pub fn from_config_value(value: Value) -> Result<AgentOptions> {
 		let options = match Self::from_current_config(value)? {
 			OptionsParsing::Parsed(agent_options) => agent_options,
-			OptionsParsing::Unparsed(value) => Self::from_legacy_0_5_9_config(value)?,
+			OptionsParsing::Unparsed(_) => AgentOptions::default(),
 		};
 
 		Ok(options)
@@ -244,6 +243,7 @@ impl mlua::FromLua for AgentOptions {
 
 enum OptionsParsing {
 	Parsed(AgentOptions),
+	#[allow(unused)]
 	Unparsed(Value),
 }
 
@@ -251,56 +251,32 @@ enum OptionsParsing {
 impl AgentOptions {
 	/// Parse the config toml json value with legacy support.
 	///
-	/// - Returns None if it is not a latest config format (with `default_options`)
+	/// - Returns None if it is not a latest config format (with `options`)
 	/// - Returns the AgentOptions is valid config toml
 	/// - Returns error if something wrong in the format
+	///
+	/// NOTE: still support `default_options` for `<= 0.7.9`
 	fn from_current_config(config_value: Value) -> Result<OptionsParsing> {
 		// first, check if it has some invalid value
 		if config_value.pointer("/default-options").is_some() {
-			return Err("Config [default-options] is invalid. Use [default_options] (with _ and not -)".into());
+			return Err("Config [default-options] is invalid. Use [options] (with _ and not -)".into());
 		}
 
-		let Some(config_value) = config_value.x_get::<Value>("/default_options").ok() else {
+		// -- Check the new options
+		// NOTE: the new options is `options` but still support
+		// TODO: Might want to put a warning whe default_options
+		let options = config_value
+			.x_get::<Value>("/options")
+			.ok()
+			.or_else(|| config_value.x_get::<Value>("/default_options").ok());
+
+		let Some(config_value) = options else {
 			return Ok(OptionsParsing::Unparsed(config_value));
 		};
 
 		let options = Self::from_options_value(config_value)?;
 
 		Ok(OptionsParsing::Parsed(options))
-	}
-
-	/// Parse the legacy 0.5.9 config format, with `genai.` and `runtime.`
-	fn from_legacy_0_5_9_config(config_value: Value) -> Result<AgentOptions> {
-		let model = config_value.x_get("/genai/model").ok();
-		let temperature: Option<f64> = config_value.x_get("/genai/temperature").ok();
-
-		let input_concurrency = config_value.x_get("/runtime/input_concurrency").ok();
-
-		// -- send a warning message
-		let hub = get_hub();
-		hub.publish_sync(
-			"\
-==== WARNING
-
-The config.toml format has been updated. 
-Your current config.toml uses the legacy format. It still works, but it is recommended to update it. 
-
-To update your config.toml:
-  - Rename your current config.toml to config-old.toml (or any name you prefer).
-  - Run 'aip init' (this will create a new config.toml).
-  - Manually transfer the values from your config-old.toml to the new config.toml.
-
-====
-",
-		);
-
-		Ok(AgentOptions {
-			legacy: true,
-			model,
-			temperature,
-			input_concurrency,
-			model_aliases: None,
-		})
 	}
 }
 
