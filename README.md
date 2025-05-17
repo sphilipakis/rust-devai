@@ -8,23 +8,38 @@
 
 # AIPACK - Run, Build, and Share AI Packs
 
-Check out the site: https://aipack.ai for more information and links, [AIPACK News & Blog Posts](https://news.aipack.ai/archive)
-
 Open-source Agentic Runtime to run, build, and share AI Packs.
 
-- Supports **all** major AI providers and models.
-- Efficient and small (**< 20MB**), with **zero** dependencies.
-- Built in **Rust** using Lua for embedded scripting (small and efficient).
-- Runs locally, completely IDE-agnostic.
-- Or in the cloud—server or serverless.
+- **Simple & Powerful** – 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs in a single [aip-doc page](https://aipack.ai/doc/lua-apis).  
+
+- **Light & Lean** – No bloat, **< 20MB**, **single executable**, **ZERO dependencies**.  
+
+- **Efficient** – Engine written in **Rust** with a lightweight and efficient embedded Lua script. All `aip` functions are implemented in Rust.  
+
+- **Multi-AI** – Supports all major AI **providers and models** at the native layer. For example, it can use zero thinking budget with Gemini models.
+
+- **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
+
+
+Check out: 
+
+- https://aipack.ai for more information and links, [AIPACK News & Blog Posts](https://news.aipack.ai/archive)
+
+- [Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
+
+- **[AIPACK Lab Repo](https://github.com/aipack-ai/aipack-lab)** for some cool examples. 
+
+- [AIPACK Substack at news.aipack.ai](https://news.aipack.ai)
 
 <img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
 
+- [Video: AIPACK Concept Video](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [Video: Build Agent Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
+- [Video: Production Coding With pro@coder AI PACK](https://news.aipack.ai/p/production-coding-example-with-procoder)
+- [Video: Example generate doc from code](https://news.aipack.ai/p/procoder-ai-pack-demo-generate-doc)
 - [Video: pro@coder with pro@rust10x Rust best practices](https://www.youtube.com/watch?v=rIAoSf4TWho&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigq)
-- [Video: jc@coder (now pro@coder) Pack Demo ](https://www.youtube.com/watch?v=-xFd00rrfLk&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
-- [Video: AIPACK Introduction](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
-- [AIPACK Substack at news.aipack.ai](https://news.aipack.ai)
+
 
 ## Quick Start
 

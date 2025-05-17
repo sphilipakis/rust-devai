@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2025-05-16 - [v0.7.9](https://github.com/jeremychone/rust-devai/compare/v0.7.7...v0.7.8)
+## 2025-05-16 - [v0.7.9](https://github.com/jeremychone/rust-devai/compare/v0.7.7...v0.7.9)
 
 - `+` aip.path.parse - parse a file and return a FileMeta (without size, modified, ...)
 - `+` aip.web.resolve_href

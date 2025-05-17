@@ -2,6 +2,8 @@
 
 The `aip` top module provides a comprehensive set of functions for interacting with files, paths, text, markdown, JSON, web services, Lua value inspection, agent control flow, command execution, semantic versioning, Handlebars templating, code formatting, Git, Rust code processing, and HTML processing within the AIPACK environment.
 
+[Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
+
 #### The available submodules are:
 
 - [`aip.file`](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
