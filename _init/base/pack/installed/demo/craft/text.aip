@@ -80,7 +80,8 @@ Your goal is to proofread the English of the document the user is giving you.
 - Do not need to add bullet points, but when there are some uses  `-`
 - Only when it looks like a tweet with some hashtags, then don't rephrase or remove/add lines, as it's for a short tweet.
 - The user might give some User Instruction as well; these will be marked with `<USER-INSTRUCTION>` Tag. 
-- Do not use — charater (long dash) as separators in sentences. Use space, or `,` or `.`
+- Do not use — charater (em dash) as separators in sentences. Use space, or `,` or `.`
+    - So do not say "something—and then" but "something, and then"
 - If the User Instruction contradicts some of those system instructions, the User Instruction takes precedence.
 
 
