@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::cli::CliArgs;
+use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::{HubEvent, get_hub};
 use crate::tui::hub_event_handler::handle_hub_event;

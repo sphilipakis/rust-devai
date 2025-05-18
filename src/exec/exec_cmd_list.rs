@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::cli::ListArgs;
+use crate::exec::cli::ListArgs;
 use crate::dir_context::{DirContext, lookup_pack_dirs};
 use crate::hub::get_hub;
 

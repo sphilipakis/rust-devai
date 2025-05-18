@@ -1,6 +1,6 @@
 use super::*;
 use crate::_test_support::{remove_test_dir, save_file_content};
-use crate::packer::{self, install_pack};
+use crate::exec::packer::{self, install_pack};
 use crate::runtime::Runtime;
 use simple_fs::{SPath, ensure_dir};
 

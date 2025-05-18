@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::cli::CheckKeysArgs;
+use crate::exec::cli::CheckKeysArgs;
 use crate::exec::support::{KEY_ENV_VARS, get_available_api_keys};
 use crate::hub::get_hub;
 use crate::tui::PrintEvent;

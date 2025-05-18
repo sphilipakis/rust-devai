@@ -30,4 +30,8 @@ pub use event_status::*;
 pub use executor::*;
 pub use params::*;
 
+pub mod cli;
+pub mod init;
+pub mod packer;
+
 // endregion: --- Modules

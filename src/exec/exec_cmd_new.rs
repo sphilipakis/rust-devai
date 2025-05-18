@@ -1,6 +1,6 @@
 use crate::Result;
-use crate::cli::NewArgs;
 use crate::dir_context::DirContext;
+use crate::exec::cli::NewArgs;
 use crate::hub::get_hub;
 
 /// exec for the New command

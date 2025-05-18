@@ -1,6 +1,6 @@
 use crate::dir_context::path_consts::SUPPORT_PACK;
 use crate::dir_context::{DirContext, find_pack_dirs};
-use crate::pack::{PackRef, PackRefSubPathScope};
+use crate::types::{PackRef, PackRefSubPathScope};
 use crate::{Error, Result};
 use simple_fs::SPath;
 

@@ -207,7 +207,7 @@ mod tests {
 
 		// -- Check
 		// For only_leaf = false, expected directories include those at depth 1 and depth 2.
-		let expected = vec!["src/agent", "src/cli", "src/script", "src/support"];
+		let expected = vec!["src/agent", "src/exec", "src/script", "src/support"];
 
 		for exp in expected {
 			let exp_path = SPath::new(exp).canonicalize()?;

@@ -2,7 +2,7 @@
 //! or as a PackRef, which can be parsed from a string using the '@' delimiter.
 
 use crate::Result;
-use crate::pack::{LocalPackRef, PackRef};
+use crate::types::{LocalPackRef, PackRef};
 use std::str::FromStr;
 
 /// AgentRef represents a reference to an agent.

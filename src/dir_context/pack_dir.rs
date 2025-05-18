@@ -1,7 +1,7 @@
 use super::{DirContext, RepoKind};
-use crate::pack::PackRef;
 use crate::support::files::list_dirs;
 use crate::support::paths;
+use crate::types::PackRef;
 use crate::{Error, Result};
 use simple_fs::SPath;
 

@@ -4,7 +4,7 @@
 use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
 use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
-use crate::pack::LocalPackRef;
+use crate::types::LocalPackRef;
 use crate::runtime::Runtime;
 use crate::support::tomls::parse_toml;
 use crate::{Error, Result};

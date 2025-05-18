@@ -1,7 +1,7 @@
 // region:    --- PackRef
 
 use crate::dir_context::{PackDir, RepoKind};
-use crate::pack::PackIdentity;
+use crate::types::PackIdentity;
 use crate::{Error, Result};
 use simple_fs::SPath;
 use std::str::FromStr;

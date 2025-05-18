@@ -3,7 +3,7 @@ use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::dir_context::find_to_run_pack_dir;
 use crate::dir_context::resolve_pack_ref_base_path;
-use crate::pack::PackRef;
+use crate::types::PackRef;
 use crate::runtime::Runtime;
 use crate::script::support::{get_value_prop_as_string, into_vec_of_strings};
 use crate::types::{DestOptions, FileRecord};

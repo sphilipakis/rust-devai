@@ -1,9 +1,9 @@
 use crate::dir_context::DirContext;
-use crate::pack::PackIdentity;
-use crate::packer::PackToml;
-use crate::packer::pack_toml::parse_validate_pack_toml;
-use crate::packer::support;
+use crate::exec::packer::PackToml;
+use crate::exec::packer::pack_toml::parse_validate_pack_toml;
+use crate::exec::packer::support;
 use crate::support::zip;
+use crate::types::PackIdentity;
 use crate::{Error, Result};
 use reqwest::Client;
 use serde::Deserialize;
@@ -382,7 +382,7 @@ fn install_aipack_file(
 // region:    --- Tests
 
 #[cfg(test)]
-#[path = "../_tests/tests_installer_impl.rs"]
-mod tests_installer_impl;
+#[path = "../../_tests/tests_installer_impl.rs"]
+mod tests;
 
 // endregion: --- Tests

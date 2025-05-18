@@ -1,6 +1,6 @@
 #![allow(unused)] // Now, as lot of upcoming code
 
-use crate::cli::XelfUpdateArgs;
+use crate::exec::cli::XelfUpdateArgs;
 use crate::dir_context::AipackBaseDir;
 use crate::hub::get_hub;
 use crate::support::os; // Keep zip for now, might be used elsewhere or remove later if truly unused

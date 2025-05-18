@@ -5,6 +5,7 @@ use crate::agent::Agent;
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
+use crate::exec::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::exec::support::open_vscode;
 use crate::exec::{
 	ExecStatusEvent,
@@ -19,7 +20,6 @@ use crate::exec::{
 	exec_xelf_setup, // Added import
 };
 use crate::hub::{HubEvent, get_hub};
-use crate::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::runtime::Runtime;
 use crate::{Error, Result};
 use derive_more::derive::From;

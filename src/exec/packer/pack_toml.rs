@@ -1,4 +1,4 @@
-use crate::pack::PackIdentity;
+use crate::types::PackIdentity;
 use crate::{Error, Result};
 use lazy_regex::regex;
 use serde::Deserialize;

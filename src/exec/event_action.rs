@@ -2,10 +2,10 @@
 //! Note: For now, the content of the variant of the ExecCommand often contain the CliArgs,
 //!       but this will eventual change to have it's own
 
-use crate::cli::{
+use crate::exec::RunAgentParams;
+use crate::exec::cli::{
 	CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs, XelfUpdateArgs,
 };
-use crate::exec::RunAgentParams;
 use derive_more::From;
 
 /// Executor Action Event that needs to be performed

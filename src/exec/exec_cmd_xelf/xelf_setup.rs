@@ -1,10 +1,10 @@
 use crate::Result;
-use crate::cli::XelfSetupArgs;
 use crate::dir_context::AipackBaseDir;
+use crate::exec::cli::XelfSetupArgs;
 use crate::hub::get_hub;
 use crate::hub::hub_prompt;
-use crate::init::extract_setup_aip_env_sh_zfile; // Import the specific function
-use crate::init::init_base;
+use crate::exec::init::extract_setup_aip_env_sh_zfile; // Import the specific function
+use crate::exec::init::init_base;
 use crate::support::os;
 use crate::support::os::current_os;
 use crate::support::os::is_windows;

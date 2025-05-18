@@ -1,14 +1,10 @@
 // region:    --- Modules
 
 mod agent;
-mod cli;
 mod dir_context;
 mod error;
 mod exec;
 mod hub;
-mod init;
-mod pack;
-mod packer;
 mod pricing;
 mod run;
 mod runtime;
@@ -20,8 +16,8 @@ mod types;
 #[cfg(test)]
 mod _test_support;
 
-use crate::cli::CliArgs;
 use crate::exec::Executor;
+use crate::exec::cli::CliArgs;
 use crate::hub::{HubEvent, get_hub};
 use crate::tui::TuiApp;
 use clap::{Parser, crate_version};

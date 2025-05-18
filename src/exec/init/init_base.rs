@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext};
 use crate::hub::get_hub;
-use crate::init::assets;
+use crate::exec::init::assets;
 use crate::support::AsStrsExt;
 use crate::support::files::safer_delete_dir;
 use simple_fs::{SPath, ensure_dir};

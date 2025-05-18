@@ -1,6 +1,6 @@
 use super::AipackPaths;
 use crate::dir_context::resolve_pack_ref_base_path;
-use crate::pack::{PackRef, looks_like_pack_ref};
+use crate::types::{PackRef, looks_like_pack_ref};
 use crate::runtime::Session;
 use crate::support::files::current_dir;
 use crate::{Error, Result};

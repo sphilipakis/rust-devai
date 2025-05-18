@@ -1,7 +1,7 @@
 //! Module that pack the files into their .aipack
 
-use crate::packer::PackToml;
-use crate::packer::pack_toml::parse_validate_pack_toml;
+use crate::exec::packer::PackToml;
+use crate::exec::packer::pack_toml::parse_validate_pack_toml;
 use crate::support::zip;
 use crate::{Error, Result};
 use simple_fs::SPath;
@@ -62,7 +62,7 @@ pub fn pack_dir(pack_dir: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Res
 // region:    --- Tests
 
 #[cfg(test)]
-#[path = "../_tests/tests_packer_impl.rs"]
-mod tests_packer_impl;
+#[path = "../../_tests/tests_packer_impl.rs"]
+mod tests;
 
 // endregion: --- Tests

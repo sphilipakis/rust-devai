@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::dir_context::{AipackPaths, AipackWksDir, DirContext, find_wks_dir};
+use crate::exec::init::assets;
 use crate::hub::get_hub;
-use crate::init::assets;
 use crate::support::files::current_dir;
 use simple_fs::{SPath, ensure_dir};
 use std::fs::write;
