@@ -272,7 +272,7 @@ pub async fn run_agent_input(
 		let ai_response_content = content.and_then(|c| c.text_into_string());
 		let ai_response_reasoning_content = reasoning_content;
 
-		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden);
+		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden, &agent.options());
 		if run_base_options.verbose() {
 			hub.publish(format!(
 				"\n-- AI Output ({model_info})\n\n{}\n",
@@ -337,18 +337,32 @@ fn get_price(chat_res: &ChatResponse) -> Option<f64> {
 
 /// Model: gemini-2.0-flash | Adapter: Gemini
 /// TODO: Might want to use the agent model somehow
-fn format_model(_agent: &Agent, res_model_iden: &ModelIden, res_provider_model_iden: &ModelIden) -> String {
+fn format_model(
+	_agent: &Agent,
+	res_model_iden: &ModelIden,
+	res_provider_model_iden: &ModelIden,
+	agent_options: &AgentOptions,
+) -> String {
 	// let model_iden = agent.model_resolved();
-	let model_txt: Cow<str> = if *res_model_iden.model_name != *res_provider_model_iden.model_name {
-		Cow::Owned(format!(
-			"{} ({})",
+	let model_section = if *res_model_iden.model_name != *res_provider_model_iden.model_name {
+		format!(
+			"Model: {} ({}) ",
 			res_model_iden.model_name, res_provider_model_iden.model_name
-		))
+		)
 	} else {
-		Cow::Borrowed(&*res_model_iden.model_name)
+		format!("Model: {} ", res_model_iden.model_name)
 	};
 
-	format!("Model: {model_txt} | Adapter: {}", res_model_iden.adapter_kind,)
+	let temp_section = if let Some(temp) = agent_options.temperature() {
+		Cow::Owned(format!(" | Temperature: {temp}"))
+	} else {
+		Cow::Borrowed("")
+	};
+
+	format!(
+		"{model_section}| Adapter: {}{temp_section}",
+		res_model_iden.adapter_kind,
+	)
 }
 
 /// Format the `Prompt Tokens: 2,070 | Completion Tokens: 131`
