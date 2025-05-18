@@ -359,8 +359,14 @@ fn format_model(
 		Cow::Borrowed("")
 	};
 
+	let top_p_section = if let Some(top_p) = agent_options.top_p() {
+		Cow::Owned(format!(" | top_p: {top_p}"))
+	} else {
+		Cow::Borrowed("")
+	};
+
 	format!(
-		"{model_section}| Adapter: {}{temp_section}",
+		"{model_section}| Adapter: {}{temp_section}{top_p_section}",
 		res_model_iden.adapter_kind,
 	)
 }

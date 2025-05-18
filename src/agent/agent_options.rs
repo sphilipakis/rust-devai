@@ -19,6 +19,8 @@ pub struct AgentOptions {
 
 	temperature: Option<f64>,
 
+	top_p: Option<f64>,
+
 	// Runtime settings
 	input_concurrency: Option<usize>,
 
@@ -27,11 +29,17 @@ pub struct AgentOptions {
 
 // region:    --- Froms
 
+/// This is what is use to go from a aipack AgentOptions to the genai ChatOptions
 impl From<&AgentOptions> for ChatOptions {
 	fn from(agent_options: &AgentOptions) -> Self {
 		let mut chat_options = ChatOptions::default();
+		// temperature
 		if let Some(temp) = agent_options.temperature() {
 			chat_options.temperature = Some(temp);
+		}
+		// top_p
+		if let Some(top_p) = agent_options.top_p() {
+			chat_options.top_p = Some(top_p);
 		}
 		chat_options
 	}
@@ -130,6 +138,10 @@ impl AgentOptions {
 		self.temperature
 	}
 
+	pub fn top_p(&self) -> Option<f64> {
+		self.top_p
+	}
+
 	#[allow(unused)]
 	fn get_model_for_alias(&self, alias: &str) -> Option<&str> {
 		self.model_aliases
@@ -174,6 +186,7 @@ impl AgentOptions {
 			legacy: options_ov.legacy, // only take the value of the legacy
 			model: options_ov.model.or(self.model),
 			temperature: options_ov.temperature.or(self.temperature),
+			top_p: options_ov.top_p.or(self.top_p),
 			input_concurrency: options_ov.input_concurrency.or(self.input_concurrency),
 			model_aliases,
 		})
@@ -189,6 +202,7 @@ impl AgentOptions {
 			legacy: options_ov.legacy, // only take the value of the legacy
 			model: options_ov.model.or(self.model.clone()),
 			temperature: options_ov.temperature.or(self.temperature),
+			top_p: options_ov.top_p.or(self.top_p),
 			input_concurrency: options_ov.input_concurrency.or(self.input_concurrency),
 			model_aliases,
 		})
@@ -203,6 +217,7 @@ impl mlua::IntoLua for &AgentOptions {
 		table.set("model", self.model())?;
 		table.set("resolved_model", self.resolve_model())?;
 		table.set("temperature", self.temperature)?;
+		table.set("top_p", self.top_p)?;
 		table.set("input_concurrency", self.input_concurrency)?;
 
 		let model_aliases = self.model_aliases.as_ref();
@@ -217,6 +232,7 @@ impl mlua::FromLua for AgentOptions {
 		if let mlua::Value::Table(table) = value {
 			let model = table.get::<Option<String>>("model")?;
 			let temperature = table.get::<Option<f64>>("temperature")?;
+			let top_p = table.get::<Option<f64>>("top_p")?;
 			let input_concurrency = table.get::<Option<usize>>("input_concurrency")?;
 
 			// --
@@ -227,6 +243,7 @@ impl mlua::FromLua for AgentOptions {
 				legacy: false,
 				model,
 				temperature,
+				top_p,
 				input_concurrency,
 				model_aliases,
 			};
@@ -291,6 +308,7 @@ impl AgentOptions {
 			legacy: false,
 			model: Some(model_name.into()),
 			temperature: None,
+			top_p: None,
 			input_concurrency: None,
 			model_aliases: None,
 		}

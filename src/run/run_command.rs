@@ -389,11 +389,16 @@ fn get_input_label(input: &Value) -> Option<String> {
 	None
 }
 
+/// For the run commands info (before each input run)
 fn get_genai_info(agent: &Agent) -> String {
 	let mut genai_infos: Vec<String> = vec![];
 
 	if let Some(temp) = agent.options().temperature() {
 		genai_infos.push(format!("temperature: {temp}"));
+	}
+
+	if let Some(top_p) = agent.options().top_p() {
+		genai_infos.push(format!("top_p: {top_p}"));
 	}
 
 	if genai_infos.is_empty() {
