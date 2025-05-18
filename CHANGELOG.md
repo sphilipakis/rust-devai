@@ -1,5 +1,11 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-05-17 - [v0.7.10](https://github.com/jeremychone/rust-devai/compare/v0.7.9...v0.7.10)
+
+- `+` meta block / parametric prompt - added support for json and yaml (on top of toml)
+- `!` soft deprecation - now `config.toml` has `[options]` (rather than `[default_options]`). Both still supported during transition.
+- `.` message - fix print issue when pressing R while already running
+
 ## 2025-05-16 - [v0.7.9](https://github.com/jeremychone/rust-devai/compare/v0.7.7...v0.7.9)
 
 - `+` aip.path.parse - parse a file and return a FileMeta (without size, modified, ...)
