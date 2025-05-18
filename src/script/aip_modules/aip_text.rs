@@ -11,6 +11,7 @@
 //! - `aip.text.escape_decode(content: string | nil): string | nil`
 //! - `aip.text.escape_decode_if_needed(content: string | nil): string | nil`
 //! - `aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)`
+//! - `aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)`
 //! - `aip.text.remove_first_line(content: string | nil): string | nil`
 //! - `aip.text.remove_first_lines(content: string | nil, n: int): string | nil`
 //! - `aip.text.remove_last_line(content: string | nil): string | nil`
@@ -41,6 +42,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	table.set("escape_decode", lua.create_function(escape_decode)?)?;
 	table.set("escape_decode_if_needed", lua.create_function(escape_decode_if_needed)?)?;
 	table.set("split_first", lua.create_function(split_first)?)?;
+	table.set("split_last", lua.create_function(split_last)?)?;
 	table.set("remove_first_line", lua.create_function(remove_first_line)?)?;
 	table.set("remove_first_lines", lua.create_function(remove_first_lines)?)?;
 	table.set("remove_last_lines", lua.create_function(remove_last_lines)?)?;
@@ -235,16 +237,48 @@ fn truncate(lua: &Lua, (content_val, max_len, ellipsis): (Value, usize, Option<S
 /// aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
 /// ```
 ///
-/// ```lua
-/// local content = "some first content\n===\nsecond content"
-/// local first, second = aip.text.split_first(content,"===")
-/// -- first  = "some first content\n"
-/// -- second = "\nsecond content"
-/// -- NOTE: When no match, second is nil.
-/// --       If match, but nothing after, second is ""
+/// ### Arguments
+///
+/// - `content: string | nil`: The string to split.
+/// - `sep: string`: The separator string.
+///
+/// ### Returns
+///
+/// A tuple containing the first part and the second part (or nil if no match).
+/// Returns `(nil, nil)` if input `content` is `nil`.
+///
+/// ```ts
+/// [string | nil, string | nil]
 /// ```
 ///
-/// NOTE: For optimization, this will use LuaString to avoid converting Lua String to Rust String and back
+/// ### Examples
+///
+/// ```lua
+/// local first, second = aip.text.split_first("some == text", "==")
+/// -- "some ", " text"
+///
+/// local first, second = aip.text.split_first("some == text", "++")
+/// -- "some == text", nil
+/// ```
+fn split_first(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlua::Result<MultiValue> {
+	let Some(content) = into_option_string(content_val, "aip.text.split_first")? else {
+		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
+	};
+
+	let sep_str = sep_lua_str.to_str()?;
+
+	split_once(lua, content, &sep_str, true)
+}
+
+/// ## Lua Documentation
+///
+/// Splits a string into two parts based on the last occurrence of a separator.
+/// If `content` is `nil`, returns `(nil, nil)`.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)
+/// ```
 ///
 /// ### Arguments
 ///
@@ -259,16 +293,34 @@ fn truncate(lua: &Lua, (content_val, max_len, ellipsis): (Value, usize, Option<S
 /// ```ts
 /// [string | nil, string | nil]
 /// ```
-fn split_first(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlua::Result<MultiValue> {
-	let Some(content_str) = into_option_string(content_val, "aip.text.split_first")? else {
+///
+/// ### Examples
+///
+/// ```lua
+/// local first, second = aip.text.split_last("some == text == more", "==")
+/// -- "some == text ", " more"
+///
+/// local first, second = aip.text.split_last("some == text", "++")
+/// -- "some == text", nil
+/// ```
+fn split_last(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlua::Result<MultiValue> {
+	let Some(content) = into_option_string(content_val, "aip.text.split_last")? else {
 		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
 	};
 
 	let sep_str = sep_lua_str.to_str()?;
 
-	if let Some(index) = content_str.find(&*sep_str) {
-		let first_part = &content_str[..index];
-		let second_part = &content_str[index + sep_str.len()..];
+	split_once(lua, content, &sep_str, false)
+}
+
+/// Support function
+/// `first` - if true, will do a split_first, if false, will do a split_last
+fn split_once(lua: &Lua, content: String, sep: &str, first: bool) -> mlua::Result<MultiValue> {
+	let index = if first { content.find(sep) } else { content.rfind(sep) };
+
+	if let Some(index) = index {
+		let first_part = &content[..index];
+		let second_part = &content[index + sep.len()..];
 
 		Ok(MultiValue::from_vec(vec![
 			Value::String(lua.create_string(first_part)?),
@@ -276,7 +328,7 @@ fn split_first(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlu
 		]))
 	} else {
 		Ok(MultiValue::from_vec(vec![
-			Value::String(lua.create_string(&content_str)?),
+			Value::String(lua.create_string(&content)?),
 			Value::Nil,
 		]))
 	}
@@ -699,6 +751,7 @@ mod tests {
 			("some first content\n===", "===", ("some first content\n", Some(""))),
 		];
 
+		// -- Exec & Check
 		for (content, sep, expected) in data {
 			let script = format!(
 				r#"
@@ -750,6 +803,81 @@ mod tests {
 	}
 
 	#[tokio::test]
+	async fn test_lua_text_split_last_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text")?;
+		// (content, separator, (first, second))
+		let data = [
+			// with matching
+			(
+				"some == text == more",
+				"==",
+				("some == text ", Some(" more")),
+			),
+			// with multiple matching and newlines
+			(
+				"line1\n==\nline2\n==\nline3",
+				"==",
+				("line1\n==\nline2\n", Some("\nline3")),
+			),
+			// no matching
+			("some first content\n", "===", ("some first content\n", None)),
+			// matching but nothing after separator
+			("some first content\n===", "===", ("some first content\n", Some(""))),
+		];
+
+		// -- Exec & Check
+		for (content, sep, expected) in data {
+			let script = format!(
+				r#"
+			local first, second = aip.text.split_last({content:?}, "{sep}")
+			return {{first, second}}
+			"#
+			);
+			let res = eval_lua(&lua, &script)?;
+
+			// -- Check
+			let values = res.as_array().ok_or("Should have returned an array")?;
+
+			let first = values
+				.first()
+				.ok_or("Should always have at least a first return")?
+				.as_str()
+				.ok_or("First should be string")?;
+			assert_eq!(expected.0, first);
+
+			let second_val = values.get(1);
+			if let Some(exp_second) = expected.1 {
+				let second_val = second_val.ok_or("Should have at least one")?; // if expected.1 is Some, this should exist
+				assert_eq!(exp_second, second_val.as_str().ok_or("Should be string")?);
+			} else {
+				assert!(second_val.is_none(), "Second should have been none");
+			}
+		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_split_last_nil_content() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text")?;
+		let script = r#"
+        local first, second = aip.text.split_last(nil, "===")
+        return {first, second}
+    "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		// NOTE: Because it returns {nil, nil}, then the json ignore the nil, and we have empty json object (since lua have one constructs for both)
+		let res = res.as_object().ok_or("Should be object")?;
+		assert!(res.is_empty(), "Should be empty");
+		Ok(())
+	}
+
+	#[tokio::test]
 	async fn test_lua_text_ensure_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_text::init_module, "text")?;
@@ -764,11 +892,9 @@ mod tests {
 			("~ some- ! -path", r#"{prefix = " ~ "}"#, " ~ ~ some- ! -path"),
 		];
 
+		// -- Exec & Check
 		for (content, arg, expected) in data {
-			// -- Exec
 			let script = format!("return aip.text.ensure(\"{content}\", {arg})");
-
-			// -- Check
 			let res = eval_lua(&lua, &script)?;
 			assert_eq!(res.as_str().unwrap(), expected);
 		}

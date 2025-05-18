@@ -831,8 +831,8 @@ is joined with `base` using system-appropriate path logic (which also normalizes
 #### Example
 ```lua
 -- Example 1: Basic join
-print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file.txt" (was dir1/file1.txt - typo fixed)
-print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file.txt" (was dir1/file1.txt - typo fixed)
+print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file1.txt"
+print(aip.path.join("dir1", "file1.txt"))              -- Output: "dir1/file1.txt"
 
 -- Example 2: Joining with a list (table)
 print(aip.path.join("dir1/", {"subdir", "file2.txt"})) -- Output: "dir1/subdir/file2.txt"
@@ -1030,6 +1030,8 @@ aip.text.escape_decode_if_needed(content: string | nil): string | nil
 
 aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
 
+aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)
+
 aip.text.remove_first_line(content: string | nil): string | nil
 
 aip.text.remove_first_lines(content: string | nil, n: number): string | nil
@@ -1118,6 +1120,39 @@ local content = "first part===second part"
 local first, second = aip.text.split_first(content, "===")
 -- first = "first part"
 -- second = "second part"
+```
+
+#### Error
+This function does not typically error.
+
+### aip.text.split_last
+
+Splits a string into two parts based on the last occurrence of a separator. If `content` is `nil`, returns `(nil, nil)`.
+
+```lua
+-- API Signature
+aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)
+```
+
+#### Arguments
+- `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
+- `sep: string`: The separator string.
+
+#### Returns
+- `string | nil`: The part before the last separator. `nil` if `content` was `nil` or separator not found.
+- `string | nil`: The part after the last separator. `nil` if `content` was `nil` or separator not found. Empty string if separator is at the end.
+
+#### Example
+```lua
+local content = "some == text == more"
+local first, second = aip.text.split_last(content, "==")
+-- first = "some == text "
+-- second = " more"
+
+local content = "no separator here"
+local first, second = aip.text.split_last(content, "++")
+-- first = "no separator here"
+-- second = nil
 ```
 
 #### Error
@@ -2676,4 +2711,3 @@ For `aip run acme@my_pack/my-agent`
 - All paths are absolute and normalized for the OS.
 - `CTX.PACK...` fields are `nil` if the agent was invoked directly via its file path rather than a pack reference (e.g., `aip run my-agent.aip`).
 - The `AGENT_NAME` reflects how the agent was called, while `AGENT_FILE_PATH` is the fully resolved location.
-
