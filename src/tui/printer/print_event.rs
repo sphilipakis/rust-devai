@@ -8,6 +8,9 @@ pub enum PrintEvent {
 	#[from]
 	PackList(Vec<PackDir>),
 
+	/// Single line info
+	InfoShort(String),
+
 	ApiKeysStatus {
 		all_keys: &'static [&'static str],
 		available_keys: HashSet<String>,

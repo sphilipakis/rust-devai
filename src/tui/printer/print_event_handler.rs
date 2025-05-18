@@ -11,6 +11,9 @@ pub fn handle_print(print_event: Arc<PrintEvent>, interactive: bool) {
 			printers::print_pack_list(&pack_dirs, interactive);
 		}
 
+		PrintEvent::InfoShort(info) => {
+			let _ = printers::print_info_short(info);
+		}
 		// -- Print api key status (aip check-keys)
 		PrintEvent::ApiKeysStatus {
 			all_keys,

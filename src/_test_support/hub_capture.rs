@@ -33,6 +33,12 @@ impl HubCapture {
 								content.push('\n');
 							}
 
+
+							HubEvent::InfoShort(msg) => {
+								let mut content = content_clone.lock().await;
+								content.push_str(&msg);
+								content.push('\n');
+							}
 							HubEvent::Print(print_event) => {
 								let mut content = content_clone.lock().await;
 								content.push_str(&format!("Print: {print_event:?}\n"));

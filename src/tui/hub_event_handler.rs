@@ -11,6 +11,10 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorSender, int
 			safer_println(&format!("{msg}"), interactive);
 		}
 
+		HubEvent::InfoShort(msg) => {
+			handle_print(PrintEvent::InfoShort(msg.to_string()).into(), interactive);
+		}
+
 		HubEvent::Error { error } => match &*error {
 			Error::GenAIEnvKeyMissing { model_iden, env_name } => handle_print(
 				PrintEvent::ApiKeyEnvMissing {

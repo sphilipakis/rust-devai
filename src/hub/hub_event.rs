@@ -19,6 +19,8 @@ use std::sync::Arc;
 pub enum HubEvent {
 	Message(Arc<str>),
 
+	InfoShort(Arc<str>),
+
 	Error {
 		error: Arc<Error>,
 	},

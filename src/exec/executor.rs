@@ -18,7 +18,7 @@ use crate::exec::{
 	exec_run_redo,
 	exec_xelf_setup, // Added import
 };
-use crate::hub::get_hub;
+use crate::hub::{HubEvent, get_hub};
 use crate::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::runtime::Runtime;
 use crate::{Error, Result};
@@ -204,7 +204,7 @@ impl Executor {
 					hub.publish(ExecStatusEvent::RunStart).await;
 					match redo_ctx {
 						RedoCtx::RunRedoCtx(redo_ctx_orig) => {
-							// if sucessull, we recapture the redo_ctx to have the latest agent.
+							// if sucessful, we recapture the redo_ctx to have the latest agent.
 							if let Some(redo_ctx) = exec_run_redo(&redo_ctx_orig).await {
 								self.set_current_redo_ctx(redo_ctx.into()).await;
 							}
@@ -215,7 +215,8 @@ impl Executor {
 						}
 					}
 				} else {
-					hub.publish(Error::custom("No redo available to be performed")).await;
+					hub.publish(HubEvent::InfoShort("Agent currently running, wait until done.".into()))
+						.await;
 				}
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
