@@ -46,10 +46,8 @@ pub enum ExecActionEvent {
 	#[from]
 	RunAgent(RunAgentParams),
 
-	// -- To be deprecated or redesigned
-	/// Eventually will get deprecated
-	#[allow(unused)]
-	CmdNewAgent(NewArgs),
+	// -- New Agent
+	CmdNew(NewArgs),
 }
 
 impl ExecActionEvent {

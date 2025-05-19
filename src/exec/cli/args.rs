@@ -34,6 +34,10 @@ pub enum CliCommand {
 	)]
 	Run(RunArgs),
 
+	/// Create a new agent from a built-in template
+	/// Disabled for now
+	//New(NewArgs),
+
 	/// List the available aipacks `aip run list` or `aip run list demo@`
 	List(ListArgs),
 
@@ -62,7 +66,7 @@ impl CliCommand {
 			CliCommand::Run(run_args) => !run_args.single_shot,
 			CliCommand::Init(_) => false,
 			CliCommand::InitBase => false,
-			// CliCommand::New(_) => false,
+			//CliCommand::New(_) => true,
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
@@ -155,7 +159,7 @@ pub struct ListArgs {
 /// Arguments for the `new` subcommand
 #[derive(Parser, Debug)]
 pub struct NewArgs {
-	pub agent_path: String,
+	pub agent_path: Option<String>,
 
 	/// Open the .aipack file, and the target file if exists.
 	/// Note: For now assume vscode `code ...` is installed
@@ -208,6 +212,7 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::Init(init_args) => ExecActionEvent::CmdInit(init_args),
 			CliCommand::InitBase => ExecActionEvent::CmdInitBase,
 			CliCommand::Run(run_args) => ExecActionEvent::CmdRun(run_args),
+			//CliCommand::New(new_args) => ExecActionEvent::CmdNew(new_args),
 			// CliCommand::New(new_args) => ExecCommand::NewCommandAgent(new_args),
 			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),

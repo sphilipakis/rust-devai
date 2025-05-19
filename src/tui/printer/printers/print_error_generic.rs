@@ -1,4 +1,4 @@
-use crate::tui::support::safer_println;
+use crate::term::safer_println;
 use crossterm::{
 	cursor::MoveToColumn,
 	execute,

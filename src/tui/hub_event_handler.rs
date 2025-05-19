@@ -1,7 +1,7 @@
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
 use crate::hub::HubEvent;
+use crate::term::safer_println;
 use crate::tui::prompter::prompt;
-use crate::tui::support::safer_println;
 use crate::tui::{PrintEvent, handle_print, tui_elem};
 use crate::{Error, Result};
 

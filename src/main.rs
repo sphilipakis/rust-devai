@@ -10,6 +10,7 @@ mod run;
 mod runtime;
 mod script;
 mod support;
+mod term;
 mod tui;
 mod types;
 

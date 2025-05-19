@@ -12,6 +12,9 @@ pub enum Error {
 	#[display("Command Agent not found at: {_0}")]
 	CommandAgentNotFound(String),
 
+	#[display("User cancelled command.")]
+	UserInterrupted,
+
 	// -- Agent
 	#[display("Model is missing for agent path: {agent_path}")]
 	ModelMissing {

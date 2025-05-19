@@ -155,8 +155,17 @@ impl Executor {
 				init_base(true).await?;
 			}
 			// TODO: need to rethink this action
-			ExecActionEvent::CmdNewAgent(new_args) => {
-				exec_new(new_args, init_wks(None, false).await?).await?;
+			ExecActionEvent::CmdNew(new_args) => {
+				if let Err(err) = exec_new(new_args, init_wks(None, false).await?).await {
+					if matches!(err, Error::UserInterrupted) {
+						hub.publish(HubEvent::InfoShort("New agent creation cancelled by user".into()))
+							.await;
+						hub.publish(HubEvent::Quit).await;
+					} else {
+						return Err(err);
+					}
+				}
+				hub.publish(HubEvent::Quit).await;
 			}
 			ExecActionEvent::CmdList(list_args) => {
 				exec_list(init_base_and_dir_context(false).await?, list_args).await?
@@ -175,7 +184,7 @@ impl Executor {
 				init_base(false).await?;
 				// NOTE: We might want to change this at some point and not require a Workspace to run (since now we have the base)
 				let dir_ctx = init_wks(None, false).await?;
-				// NOTE: For now, we create the runtime here. But we need to think more about the Runtime / Executor relationship.
+
 				let exec_sender = self.sender();
 				let runtime = Runtime::new(dir_ctx, exec_sender)?;
 				let redo = exec_run(run_args, runtime).await?;

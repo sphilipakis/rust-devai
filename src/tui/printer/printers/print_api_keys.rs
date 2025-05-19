@@ -1,4 +1,6 @@
-use crate::{Result, support::os, tui::support::safer_println};
+use crate::Result;
+use crate::support::os;
+use crate::term::safer_println;
 use crossterm::{
 	execute,
 	style::{Color, Print, ResetColor, SetForegroundColor},
