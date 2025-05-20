@@ -22,7 +22,7 @@ use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use crate::script::aip_modules::aip_file::support::{
-	base_dir_and_globs, compute_base_dir, create_file_records, list_files_with_options,
+	base_dir_and_globs, check_access_write, compute_base_dir, create_file_records, list_files_with_options,
 };
 use crate::support::{AsStrsExt, files};
 use crate::types::{FileMeta, FileRecord};
@@ -168,19 +168,7 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
 
-	// Check that if three is .., it ist still in a .aipack-base
-	// TODO: Would probably need to check that it can only write in it's own support folder
-	if let Some(rel_path) = full_path.diff(wks_dir) {
-		if rel_path.as_str().starts_with("..") {
-			// allow the .aipack-base
-			if !full_path.as_str().contains(".aipack-base") {
-				return Err(Error::custom(format!(
-            "Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
-        ))
-        .into());
-			}
-		}
-	}
+	check_access_write(&full_path, wks_dir)?;
 
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 

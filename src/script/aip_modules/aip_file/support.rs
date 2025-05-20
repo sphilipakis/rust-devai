@@ -1,17 +1,36 @@
 use crate::Error;
 use crate::Result;
+use crate::dir_context::DirContext;
 use crate::dir_context::PathResolver;
 use crate::dir_context::find_to_run_pack_dir;
 use crate::dir_context::resolve_pack_ref_base_path;
-use crate::types::PackRef;
 use crate::runtime::Runtime;
 use crate::script::support::{get_value_prop_as_string, into_vec_of_strings};
+use crate::types::PackRef;
 use crate::types::{DestOptions, FileRecord};
 use mlua::FromLua as _;
 use mlua::{Lua, Value};
 use simple_fs::{ListOptions, SPath, list_files};
 use std::path::Path;
 use std::str::FromStr;
+
+/// Check if write access is granted.
+/// TODO: Need to fix that. Should check that is workspace dir, or in .aipack-base/ dir, but right now, poor check.
+pub fn check_access_write(full_path: &SPath, wks_dir: &SPath) -> Result<()> {
+	// Check that if three is .., it ist still in a .aipack-base
+	// TODO: Would probably need to check that it can only write in it's own support folder
+	if let Some(rel_path) = full_path.diff(wks_dir) {
+		if rel_path.as_str().starts_with("..") {
+			// allow the .aipack-base
+			if !full_path.as_str().contains(".aipack-base") {
+				return Err(Error::custom(format!(
+					"Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
+				)));
+			}
+		}
+	}
+	Ok(())
+}
 
 /// Extracts base directory and glob patterns from options
 ///
