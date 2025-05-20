@@ -15,8 +15,6 @@
 use crate::script::support::into_option_string;
 use mlua::{Lua, Value};
 
-// region:    --- Trim
-
 /// ## Lua Documentation
 ///
 /// Trims leading and trailing whitespace from a string.
@@ -91,8 +89,6 @@ pub fn trim_end(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let trimmed_str = content_str.trim_end();
 	lua.create_string(trimmed_str).map(Value::String)
 }
-
-// endregion: --- Trim
 
 // region:    --- Tests
 

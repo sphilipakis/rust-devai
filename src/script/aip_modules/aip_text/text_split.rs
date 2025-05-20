@@ -14,8 +14,6 @@
 use crate::script::support::into_option_string;
 use mlua::{Lua, MultiValue, String as LuaString, Value};
 
-// region:    --- Split
-
 /// ## Lua Documentation
 ///
 /// Splits a string into two parts based on the first occurrence of a separator.
@@ -122,8 +120,6 @@ fn split_once(lua: &Lua, content: String, sep: &str, first: bool) -> mlua::Resul
 		]))
 	}
 }
-
-// endregion: --- Split
 
 // region:    --- Tests
 

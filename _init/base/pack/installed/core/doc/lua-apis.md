@@ -8,7 +8,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 
 - [`aip.file`](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
 - [`aip.path`](#aippath): Path manipulation and checking (split, resolve, exists, diff, parent).
-- [`aip.text`](#aiptext): Text processing utilities (trim, split, replace, truncate, escape, ensure).
+- [`aip.text`](#aiptext): Text processing utilities (trim, split, split lines, replace, truncate, escape, ensure).
 - [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
 - [`aip.json`](#aipjson): JSON parsing and stringification.
 - [`aip.web`](#aipweb): HTTP requests (GET, POST), URL parsing and resolution.
@@ -1046,6 +1046,14 @@ aip.text.trim_start(content: string | nil): string | nil
 
 aip.text.trim_end(content: string | nil): string | nil
 
+aip.text.remove_last_lines(content: string | nil, n: number): string | nil
+
+aip.text.trim(content: string | nil): string | nil
+
+aip.text.trim_start(content: string | nil): string | nil
+
+aip.text.trim_end(content: string | nil): string | nil
+
 aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): string | nil
 
 aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
@@ -1055,6 +1063,10 @@ aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): stri
 aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 
 aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
+
+aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
+
+aip.text.split_last_line(content: string | nil, sep: string): (string | nil, string | nil)
 ```
 
 ### aip.text.escape_decode
@@ -1402,6 +1414,83 @@ local blocks, remain = aip.text.extract_line_blocks(text, {starts_with = ">", ex
 
 #### Error
 Returns an error (Lua table `{ error: string }`) if arguments are invalid (and content was not `nil`).
+
+### aip.text.split_first_line
+
+Splits a string into two parts based on the *first* line that exactly matches the separator. If `content` is `nil`, returns `(nil, nil)`. If no line matches, returns `(original_content, nil)`.
+
+```lua
+-- API Signature
+aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
+```
+
+The separator line itself is not included in either part.
+
+#### Arguments
+- `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
+- `sep: string`: The exact string the line must match.
+
+#### Returns
+- `string | nil`: The part before the first matching line. `nil` if `content` was `nil`. Empty string if the first matching line was the first line.
+- `string | nil`: The part after the first matching line. `nil` if `content` was `nil` or no line matched `sep`. Empty string if the first matching line was the last line.
+
+#### Example
+```lua
+local text = "line one\n---\nline two\n---\nline three"
+local first, second = aip.text.split_first_line(text, "---")
+-- first = "line one"
+-- second = "line two\n---\nline three"
+
+local first, second = aip.text.split_first_line("START\ncontent", "START")
+-- first = ""
+-- second = "content"
+
+local first, second = aip.text.split_first_line("no separator", "---")
+-- first = "no separator"
+-- second = nil
+```
+
+#### Error
+This function does not typically error.
+
+### aip.text.split_last_line
+
+Splits a string into two parts based on the *last* line that exactly matches the separator. If `content` is `nil`, returns `(nil, nil)`. If no line matches, returns `(original_content, nil)`.
+
+```lua
+-- API Signature
+aip.text.split_last_line(content: string | nil, sep: string): (string | nil, string | nil)
+```
+
+The separator line itself is not included in either part.
+
+#### Arguments
+- `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
+- `sep: string`: The exact string the line must match.
+
+#### Returns
+- `string | nil`: The part before the last matching line. `nil` if `content` was `nil` or no line matched `sep`.
+- `string | nil`: The part after the last matching line. `nil` if `content` was `nil` or no line matched `sep`. Empty string if the last matching line was the last line.
+
+#### Example
+```lua
+local text = "line one\n---\nline two\n---\nline three"
+local first, second = aip.text.split_last_line(text, "---")
+-- first = "line one\n---\nline two"
+-- second = "line three"
+
+local first, second = aip.text.split_last_line("content\nEND", "END")
+-- first = "content"
+-- second = ""
+
+local first, second = aip.text.split_last_line("no separator", "---")
+-- first = "no separator"
+-- second = nil
+```
+
+#### Error
+This function does not typically error.
+
 
 ## aip.md
 
