@@ -2,16 +2,11 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::script::LuaValueExt;
-use crate::script::aip_modules::aip_file::support::{
-	base_dir_and_globs, check_access_write, compute_base_dir, create_file_records, list_files_with_options,
-};
-use crate::support::{AsStrsExt, files, text};
-use crate::types::{FileMeta, FileRecord};
-use mlua::{FromLua, IntoLua, Lua, Value};
-use simple_fs::{SPath, ensure_file_dir, iter_files};
+use crate::script::aip_modules::aip_file::support::check_access_write;
+use crate::support::text;
+use mlua::Lua;
+use simple_fs::ensure_file_dir;
 use std::fs::write;
-use std::io::Write;
 
 pub(super) fn file_save_changes(_lua: &Lua, runtime: &Runtime, rel_path: String, changes: String) -> mlua::Result<()> {
 	let dir_context = runtime.dir_context();

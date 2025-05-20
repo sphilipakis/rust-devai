@@ -1,71 +1,105 @@
-//! Defines the `text` module, used in the lua engine.
+//! Defines common text processing functions for the `aip.text` Lua module.
 //!
 //! ---
 //!
 //! ## Lua documentation
 //!
-//! This module exposes functions that process text.
+//! This section of the `aip.text` module exposes common text processing and ensuring functions.
 //!
 //! ### Functions
 //!
 //! - `aip.text.escape_decode(content: string | nil): string | nil`
 //! - `aip.text.escape_decode_if_needed(content: string | nil): string | nil`
-//! - `aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)`
-//! - `aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)`
 //! - `aip.text.remove_first_line(content: string | nil): string | nil`
 //! - `aip.text.remove_first_lines(content: string | nil, n: int): string | nil`
 //! - `aip.text.remove_last_line(content: string | nil): string | nil`
 //! - `aip.text.remove_last_lines(content: string | nil, n: int): string | nil`
-//! - `aip.text.trim(content: string | nil): string | nil`
-//! - `aip.text.trim_start(content: string | nil): string | nil`
-//! - `aip.text.trim_end(content: string | nil): string | nil`
 //! - `aip.text.truncate(content: string | nil, max_len: int): string | nil`
 //! - `aip.text.truncate(content: string | nil, max_len: int, ellipsis: string): string | nil`
 //! - `aip.text.replace_markers(content: string | nil, new_sections: array): string | nil`
-//! - `aip.text.ensure(content: string | nil, opt: table): string | nil`
-//! - `aip.text.ensure_single_ending_newline(content: string | nil): string | nil`
 //! - `aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (table | nil, string | nil)`
+//! - `aip.text.ensure(content: string | nil, {prefix? = string, suffix? = string}): string | nil`
+//! - `aip.text.ensure_single_ending_newline(content: string | nil): string | nil`
 
-use crate::Result;
-use crate::runtime::Runtime;
 use crate::script::DEFAULT_MARKERS;
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::support::Extrude;
 use crate::support::html::decode_html_entities;
 use crate::support::text::{self, EnsureOptions, truncate_with_ellipsis};
 use crate::support::text::{LineBlockIter, LineBlockIterOptions};
-use mlua::{FromLua, IntoLua, Lua, MultiValue, String as LuaString, Table, Value};
+use mlua::{FromLua, IntoLua, Lua, MultiValue, Table, Value};
 
-pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
-	let table = lua.create_table()?;
+// region:    --- Transform
 
-	table.set("escape_decode", lua.create_function(escape_decode)?)?;
-	table.set("escape_decode_if_needed", lua.create_function(escape_decode_if_needed)?)?;
-	table.set("split_first", lua.create_function(split_first)?)?;
-	table.set("split_last", lua.create_function(split_last)?)?;
-	table.set("remove_first_line", lua.create_function(remove_first_line)?)?;
-	table.set("remove_first_lines", lua.create_function(remove_first_lines)?)?;
-	table.set("remove_last_lines", lua.create_function(remove_last_lines)?)?;
-	table.set("remove_last_line", lua.create_function(remove_last_line)?)?;
-	table.set("trim", lua.create_function(trim)?)?;
-	table.set("trim_start", lua.create_function(trim_start)?)?;
-	table.set("trim_end", lua.create_function(trim_end)?)?;
-	table.set("truncate", lua.create_function(truncate)?)?;
-	table.set(
-		"replace_markers",
-		lua.create_function(replace_markers_with_default_parkers)?,
-	)?;
-	table.set("ensure", lua.create_function(ensure)?)?;
-	table.set(
-		"ensure_single_ending_newline",
-		lua.create_function(ensure_single_ending_newline)?,
-	)?;
-	table.set("extract_line_blocks", lua.create_function(extract_line_blocks)?)?;
-
-	Ok(table)
+/// ## Lua Documentation
+///
+/// Replaces markers in `content` with corresponding sections from `new_sections`.
+/// Each section in `new_sections` can be a string or a map containing a `.content` string.
+/// If `content` is `nil`, returns `nil`.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.replace_markers(content: string | nil, new_sections: array): string | nil
+/// ```
+///
+/// Assumes the markers are `<<START>>` and `<<END>>`.
+///
+/// ### Arguments
+///
+/// - `content: string | nil`: The content containing markers to replace.
+/// - `new_sections: array`: An array of strings to replace the markers.
+///
+/// ### Returns
+///
+/// The string with markers replaced by the corresponding sections, or `nil` if input `content` is `nil`.
+pub fn replace_markers_with_default_parkers(
+	lua: &Lua,
+	(content_val, new_sections_val): (Value, Value),
+) -> mlua::Result<Value> {
+	let Some(content) = into_option_string(content_val, "aip.text.replace_markers")? else {
+		return Ok(Value::Nil);
+	};
+	let sections = into_vec_of_strings(new_sections_val, "new_sections")?;
+	let sections: Vec<&str> = sections.iter().map(|s| s.as_str()).collect();
+	let new_content = text::replace_markers(&content, &sections, DEFAULT_MARKERS)?;
+	lua.create_string(&new_content).map(Value::String)
 }
 
-// region:    --- ensure
+/// ## Lua Documentation
+///
+/// Returns `content` truncated to a maximum length of `max_len`.
+/// If the content exceeds `max_len`, it appends the optional `ellipsis` string to indicate truncation.
+/// If `ellipsis` is not provided, no additional characters are added after truncation.
+/// If `content` is `nil`, returns `nil`.
+///
+/// ```lua
+/// -- API Signature
+/// aip.text.truncate(content: string | nil, max_len: int, ellipsis?: string): string | nil
+/// ```
+///
+/// This function is useful for limiting the length of text output while preserving meaningful context.
+///
+/// ### Arguments
+///
+/// - `content: string | nil`: The content to truncate.
+/// - `max_len: int`: The maximum length of the truncated string.
+/// - `ellipsis: string` (optional): The string to append if truncation occurs.
+///
+/// ### Returns
+///
+/// The truncated string, or `nil` if input `content` is `nil`.
+pub fn truncate(lua: &Lua, (content_val, max_len, ellipsis): (Value, usize, Option<String>)) -> mlua::Result<Value> {
+	let Some(content) = into_option_string(content_val, "aip.text.truncate")? else {
+		return Ok(Value::Nil);
+	};
+	let ellipsis_str = ellipsis.unwrap_or_default();
+	let res_cow = truncate_with_ellipsis(&content, max_len, &ellipsis_str);
+	lua.create_string(res_cow.as_ref()).map(Value::String)
+}
+
+// endregion: --- Transform
+
+// region:    --- Ensure
 
 impl FromLua for EnsureOptions {
 	fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
@@ -115,7 +149,7 @@ impl FromLua for EnsureOptions {
 /// ### Returns
 ///
 /// The ensured string, or `nil` if input `content` is `nil`.
-fn ensure(lua: &Lua, (content_val, inst_val): (Value, Value)) -> mlua::Result<Value> {
+pub fn ensure(lua: &Lua, (content_val, inst_val): (Value, Value)) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.ensure")? else {
 		return Ok(Value::Nil);
 	};
@@ -145,7 +179,7 @@ fn ensure(lua: &Lua, (content_val, inst_val): (Value, Value)) -> mlua::Result<Va
 /// ### Returns
 ///
 /// The string with a single ending newline, or `nil` if input `content` is `nil`.
-fn ensure_single_ending_newline(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+pub fn ensure_single_ending_newline(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.ensure_single_ending_newline")? else {
 		return Ok(Value::Nil);
 	};
@@ -153,267 +187,7 @@ fn ensure_single_ending_newline(lua: &Lua, content_val: Value) -> mlua::Result<V
 	lua.create_string(&res).map(Value::String)
 }
 
-// endregion: --- ensure
-
-// region:    --- Transform
-
-/// ## Lua Documentation
-///
-/// Replaces markers in `content` with corresponding sections from `new_sections`.
-/// Each section in `new_sections` can be a string or a map containing a `.content` string.
-/// If `content` is `nil`, returns `nil`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.replace_markers(content: string | nil, new_sections: array): string | nil
-/// ```
-///
-/// Assumes the markers are `<<START>>` and `<<END>>`.
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The content containing markers to replace.
-/// - `new_sections: array`: An array of strings to replace the markers.
-///
-/// ### Returns
-///
-/// The string with markers replaced by the corresponding sections, or `nil` if input `content` is `nil`.
-fn replace_markers_with_default_parkers(
-	lua: &Lua,
-	(content_val, new_sections_val): (Value, Value),
-) -> mlua::Result<Value> {
-	let Some(content) = into_option_string(content_val, "aip.text.replace_markers")? else {
-		return Ok(Value::Nil);
-	};
-	let sections = into_vec_of_strings(new_sections_val, "new_sections")?;
-	let sections: Vec<&str> = sections.iter().map(|s| s.as_str()).collect();
-	let new_content = text::replace_markers(&content, &sections, DEFAULT_MARKERS)?;
-	lua.create_string(&new_content).map(Value::String)
-}
-
-/// ## Lua Documentation
-///
-/// Returns `content` truncated to a maximum length of `max_len`.
-/// If the content exceeds `max_len`, it appends the optional `ellipsis` string to indicate truncation.
-/// If `ellipsis` is not provided, no additional characters are added after truncation.
-/// If `content` is `nil`, returns `nil`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.truncate(content: string | nil, max_len: int, ellipsis?: string): string | nil
-/// ```
-///
-/// This function is useful for limiting the length of text output while preserving meaningful context.
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The content to truncate.
-/// - `max_len: int`: The maximum length of the truncated string.
-/// - `ellipsis: string` (optional): The string to append if truncation occurs.
-///
-/// ### Returns
-///
-/// The truncated string, or `nil` if input `content` is `nil`.
-fn truncate(lua: &Lua, (content_val, max_len, ellipsis): (Value, usize, Option<String>)) -> mlua::Result<Value> {
-	let Some(content) = into_option_string(content_val, "aip.text.truncate")? else {
-		return Ok(Value::Nil);
-	};
-	let ellipsis_str = ellipsis.unwrap_or_default();
-	let res_cow = truncate_with_ellipsis(&content, max_len, &ellipsis_str);
-	lua.create_string(res_cow.as_ref()).map(Value::String)
-}
-
-// endregion: --- Transform
-
-// region:    --- Split
-
-/// ## Lua Documentation
-///
-/// Splits a string into two parts based on the first occurrence of a separator.
-/// If `content` is `nil`, returns `(nil, nil)`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
-/// ```
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The string to split.
-/// - `sep: string`: The separator string.
-///
-/// ### Returns
-///
-/// A tuple containing the first part and the second part (or nil if no match).
-/// Returns `(nil, nil)` if input `content` is `nil`.
-///
-/// ```ts
-/// [string | nil, string | nil]
-/// ```
-///
-/// ### Examples
-///
-/// ```lua
-/// local first, second = aip.text.split_first("some == text", "==")
-/// -- "some ", " text"
-///
-/// local first, second = aip.text.split_first("some == text", "++")
-/// -- "some == text", nil
-/// ```
-fn split_first(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlua::Result<MultiValue> {
-	let Some(content) = into_option_string(content_val, "aip.text.split_first")? else {
-		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
-	};
-
-	let sep_str = sep_lua_str.to_str()?;
-
-	split_once(lua, content, &sep_str, true)
-}
-
-/// ## Lua Documentation
-///
-/// Splits a string into two parts based on the last occurrence of a separator.
-/// If `content` is `nil`, returns `(nil, nil)`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)
-/// ```
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The string to split.
-/// - `sep: string`: The separator string.
-///
-/// ### Returns
-///
-/// A tuple containing the first part and the second part (or nil if no match).
-/// Returns `(nil, nil)` if input `content` is `nil`.
-///
-/// ```ts
-/// [string | nil, string | nil]
-/// ```
-///
-/// ### Examples
-///
-/// ```lua
-/// local first, second = aip.text.split_last("some == text == more", "==")
-/// -- "some == text ", " more"
-///
-/// local first, second = aip.text.split_last("some == text", "++")
-/// -- "some == text", nil
-/// ```
-fn split_last(lua: &Lua, (content_val, sep_lua_str): (Value, LuaString)) -> mlua::Result<MultiValue> {
-	let Some(content) = into_option_string(content_val, "aip.text.split_last")? else {
-		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
-	};
-
-	let sep_str = sep_lua_str.to_str()?;
-
-	split_once(lua, content, &sep_str, false)
-}
-
-/// Support function
-/// `first` - if true, will do a split_first, if false, will do a split_last
-fn split_once(lua: &Lua, content: String, sep: &str, first: bool) -> mlua::Result<MultiValue> {
-	let index = if first { content.find(sep) } else { content.rfind(sep) };
-
-	if let Some(index) = index {
-		let first_part = &content[..index];
-		let second_part = &content[index + sep.len()..];
-
-		Ok(MultiValue::from_vec(vec![
-			Value::String(lua.create_string(first_part)?),
-			Value::String(lua.create_string(second_part)?),
-		]))
-	} else {
-		Ok(MultiValue::from_vec(vec![
-			Value::String(lua.create_string(&content)?),
-			Value::Nil,
-		]))
-	}
-}
-
-// endregion: --- Split
-
-// region:    --- Trim
-
-/// ## Lua Documentation
-///
-/// Trims leading and trailing whitespace from a string.
-/// If `content` is `nil`, returns `nil`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.trim(content: string | nil): string | nil
-/// ```
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The string to trim.
-///
-/// ### Returns
-///
-/// The trimmed string, or `nil` if input `content` is `nil`.
-fn trim(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
-	let Some(content_str) = into_option_string(content_val, "aip.text.trim")? else {
-		return Ok(Value::Nil);
-	};
-	let trimmed_str = content_str.trim();
-	lua.create_string(trimmed_str).map(Value::String)
-}
-
-/// ## Lua Documentation
-///
-/// Trims leading whitespace from a string.
-/// If `content` is `nil`, returns `nil`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.trim_start(content: string | nil): string | nil
-/// ```
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The string to trim.
-///
-/// ### Returns
-///
-/// The trimmed string, or `nil` if input `content` is `nil`.
-fn trim_start(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
-	let Some(content_str) = into_option_string(content_val, "aip.text.trim_start")? else {
-		return Ok(Value::Nil);
-	};
-	let trimmed_str = content_str.trim_start();
-	lua.create_string(trimmed_str).map(Value::String)
-}
-
-/// ## Lua Documentation
-///
-/// Trims trailing whitespace from a string.
-/// If `content` is `nil`, returns `nil`.
-///
-/// ```lua
-/// -- API Signature
-/// aip.text.trim_end(content: string | nil): string | nil
-/// ```
-///
-/// ### Arguments
-///
-/// - `content: string | nil`: The string to trim.
-///
-/// ### Returns
-///
-/// The trimmed string, or `nil` if input `content` is `nil`.
-fn trim_end(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
-	let Some(content_str) = into_option_string(content_val, "aip.text.trim_end")? else {
-		return Ok(Value::Nil);
-	};
-	let trimmed_str = content_str.trim_end();
-	lua.create_string(trimmed_str).map(Value::String)
-}
-
-// endregion: --- Trim
+// endregion: --- Ensure
 
 // region:    --- Remove
 
@@ -434,7 +208,7 @@ fn trim_end(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 /// ### Returns
 ///
 /// The string with the first line removed, or `nil` if input `content` is `nil`.
-fn remove_first_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+pub fn remove_first_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.remove_first_line")? else {
 		return Ok(Value::Nil);
 	};
@@ -460,7 +234,7 @@ fn remove_first_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 /// ### Returns
 ///
 /// The string with the first `n` lines removed, or `nil` if input `content` is `nil`.
-fn remove_first_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> mlua::Result<Value> {
+pub fn remove_first_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.remove_first_lines")? else {
 		return Ok(Value::Nil);
 	};
@@ -468,7 +242,7 @@ fn remove_first_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> m
 	lua.create_string(&res).map(Value::String)
 }
 
-fn remove_first_lines_impl(content: &str, num_of_lines: usize) -> &str {
+pub fn remove_first_lines_impl(content: &str, num_of_lines: usize) -> &str {
 	let mut start_idx = 0;
 	let mut newline_count = 0;
 
@@ -506,7 +280,7 @@ fn remove_first_lines_impl(content: &str, num_of_lines: usize) -> &str {
 /// ### Returns
 ///
 /// The string with the last line removed, or `nil` if input `content` is `nil`.
-fn remove_last_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+pub fn remove_last_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.remove_last_line")? else {
 		return Ok(Value::Nil);
 	};
@@ -532,7 +306,7 @@ fn remove_last_line(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 /// ### Returns
 ///
 /// The string with the last `n` lines removed, or `nil` if input `content` is `nil`.
-fn remove_last_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> mlua::Result<Value> {
+pub fn remove_last_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.remove_last_lines")? else {
 		return Ok(Value::Nil);
 	};
@@ -540,7 +314,7 @@ fn remove_last_lines(lua: &Lua, (content_val, num_of_lines): (Value, i64)) -> ml
 	lua.create_string(&res).map(Value::String)
 }
 
-fn remove_last_lines_impl(content: &str, num_of_lines: usize) -> &str {
+pub fn remove_last_lines_impl(content: &str, num_of_lines: usize) -> &str {
 	let mut end_idx = content.len();
 	let mut newline_count = 0;
 
@@ -587,7 +361,7 @@ fn remove_last_lines_impl(content: &str, num_of_lines: usize) -> &str {
 /// ### Returns
 ///
 /// The HTML-decoded string, or `nil` if input `content` is `nil`.
-fn escape_decode_if_needed(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+pub fn escape_decode_if_needed(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.escape_decode_if_needed")? else {
 		return Ok(Value::Nil);
 	};
@@ -617,7 +391,7 @@ fn escape_decode_if_needed(lua: &Lua, content_val: Value) -> mlua::Result<Value>
 /// ### Returns
 ///
 /// The HTML-decoded string, or `nil` if input `content` is `nil`.
-fn escape_decode(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+pub fn escape_decode(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.escape_decode")? else {
 		return Ok(Value::Nil);
 	};
@@ -662,7 +436,7 @@ fn escape_decode(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
 /// ```ts
 /// [string[] | nil, string | nil]
 /// ```
-fn extract_line_blocks(lua: &Lua, (content_val, options): (Value, Table)) -> mlua::Result<MultiValue> {
+pub fn extract_line_blocks(lua: &Lua, (content_val, options): (Value, Table)) -> mlua::Result<MultiValue> {
 	let Some(content) = into_option_string(content_val, "aip.text.extract_line_blocks")? else {
 		return Ok(MultiValue::from_vec(vec![Value::Nil, Value::Nil]));
 	};
@@ -734,203 +508,6 @@ mod tests {
 	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
-	async fn test_lua_text_split_first_simple() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		// (content, separator, (first, second))
-		let data = [
-			// with matching
-			(
-				"some first content\n===\nsecond content",
-				"===",
-				("some first content\n", Some("\nsecond content")),
-			),
-			// no matching
-			("some first content\n", "===", ("some first content\n", None)),
-			// matching but nothing after separator
-			("some first content\n===", "===", ("some first content\n", Some(""))),
-		];
-
-		// -- Exec & Check
-		for (content, sep, expected) in data {
-			let script = format!(
-				r#"
-			local first, second = aip.text.split_first({content:?}, "{sep}")
-			return {{first, second}}
-			"#
-			);
-			let res = eval_lua(&lua, &script)?;
-
-			// -- Check
-			let values = res.as_array().ok_or("Should have returned an array")?;
-
-			let first = values
-				.first()
-				.ok_or("Should always have at least a first return")?
-				.as_str()
-				.ok_or("First should be string")?;
-			assert_eq!(expected.0, first);
-
-			let second_val = values.get(1);
-			if let Some(exp_second) = expected.1 {
-				let second_val = second_val.ok_or("Should have at least one")?; // if expected.1 is Some, this should exist
-				assert_eq!(exp_second, second_val.as_str().ok_or("Should be string")?);
-			} else {
-				assert!(second_val.is_none(), "Second should have been none");
-			}
-		}
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_split_first_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"
-        local first, second = aip.text.split_first(nil, "===")
-        return {first, second}
-    "#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		// NOTE: Because it returns {nil, nil}, then the json ignore the nil, and we have empty json object (since lua have one constructs for both)
-		let res = res.as_object().ok_or("Should be object")?;
-		assert!(res.is_empty(), "Should be empty");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_split_last_simple() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		// (content, separator, (first, second))
-		let data = [
-			// with matching
-			(
-				"some == text == more",
-				"==",
-				("some == text ", Some(" more")),
-			),
-			// with multiple matching and newlines
-			(
-				"line1\n==\nline2\n==\nline3",
-				"==",
-				("line1\n==\nline2\n", Some("\nline3")),
-			),
-			// no matching
-			("some first content\n", "===", ("some first content\n", None)),
-			// matching but nothing after separator
-			("some first content\n===", "===", ("some first content\n", Some(""))),
-		];
-
-		// -- Exec & Check
-		for (content, sep, expected) in data {
-			let script = format!(
-				r#"
-			local first, second = aip.text.split_last({content:?}, "{sep}")
-			return {{first, second}}
-			"#
-			);
-			let res = eval_lua(&lua, &script)?;
-
-			// -- Check
-			let values = res.as_array().ok_or("Should have returned an array")?;
-
-			let first = values
-				.first()
-				.ok_or("Should always have at least a first return")?
-				.as_str()
-				.ok_or("First should be string")?;
-			assert_eq!(expected.0, first);
-
-			let second_val = values.get(1);
-			if let Some(exp_second) = expected.1 {
-				let second_val = second_val.ok_or("Should have at least one")?; // if expected.1 is Some, this should exist
-				assert_eq!(exp_second, second_val.as_str().ok_or("Should be string")?);
-			} else {
-				assert!(second_val.is_none(), "Second should have been none");
-			}
-		}
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_split_last_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"
-        local first, second = aip.text.split_last(nil, "===")
-        return {first, second}
-    "#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		// NOTE: Because it returns {nil, nil}, then the json ignore the nil, and we have empty json object (since lua have one constructs for both)
-		let res = res.as_object().ok_or("Should be object")?;
-		assert!(res.is_empty(), "Should be empty");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_ensure_simple() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let data = [
-			(
-				"some- ! -path",
-				r#"{prefix = "./", suffix = ".md"}"#,
-				"./some- ! -path.md",
-			),
-			("some- ! -path", r#"{suffix = ".md"}"#, "some- ! -path.md"),
-			(" ~ some- ! -path", r#"{prefix = " ~ "}"#, " ~ some- ! -path"),
-			("~ some- ! -path", r#"{prefix = " ~ "}"#, " ~ ~ some- ! -path"),
-		];
-
-		// -- Exec & Check
-		for (content, arg, expected) in data {
-			let script = format!("return aip.text.ensure(\"{content}\", {arg})");
-			let res = eval_lua(&lua, &script)?;
-			assert_eq!(res.as_str().unwrap(), expected);
-		}
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_ensure_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"return aip.text.ensure(nil, {prefix = "./", suffix = ".md"})"#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		assert!(res.is_null(), "Expected null for nil content input");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_ensure_single_ending_newline_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"return aip.text.ensure_single_ending_newline(nil)"#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		assert!(res.is_null(), "Expected null for nil content input");
-		Ok(())
-	}
-
-	#[tokio::test]
 	async fn test_lua_text_replace_markers_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_text::init_module, "text")?;
@@ -949,48 +526,6 @@ mod tests {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_text::init_module, "text")?;
 		let script = r#"return aip.text.truncate(nil, 10, "...")"#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		assert!(res.is_null(), "Expected null for nil content input");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_trim_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"return aip.text.trim(nil)"#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		assert!(res.is_null(), "Expected null for nil content input");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_trim_start_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"return aip.text.trim_start(nil)"#;
-
-		// -- Exec
-		let res = eval_lua(&lua, script)?;
-
-		// -- Check
-		assert!(res.is_null(), "Expected null for nil content input");
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_lua_text_trim_end_nil_content() -> Result<()> {
-		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
-		let script = r#"return aip.text.trim_end(nil)"#;
 
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
@@ -1204,6 +739,60 @@ return { blocks = a, extruded = b }
 			"extruded should be nil when extrude option is not set"
 		);
 
+		Ok(())
+	}
+
+	// --- Tests for ensure functions (moved from text_trim.rs)
+	#[tokio::test]
+	async fn test_lua_text_ensure_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text")?;
+		let data = [
+			(
+				"some- ! -path",
+				r#"{prefix = "./", suffix = ".md"}"#,
+				"./some- ! -path.md",
+			),
+			("some- ! -path", r#"{suffix = ".md"}"#, "some- ! -path.md"),
+			(" ~ some- ! -path", r#"{prefix = " ~ "}"#, " ~ some- ! -path"),
+			("~ some- ! -path", r#"{prefix = " ~ "}"#, " ~ ~ some- ! -path"),
+		];
+
+		// -- Exec & Check
+		for (content, arg, expected) in data {
+			let script = format!("return aip.text.ensure(\"{content}\", {arg})");
+			let res = eval_lua(&lua, &script)?;
+			assert_eq!(res.as_str().unwrap(), expected);
+		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_ensure_nil_content() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text")?;
+		let script = r#"return aip.text.ensure(nil, {prefix = "./", suffix = ".md"})"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert!(res.is_null(), "Expected null for nil content input");
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_ensure_single_ending_newline_nil_content() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text")?;
+		let script = r#"return aip.text.ensure_single_ending_newline(nil)"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert!(res.is_null(), "Expected null for nil content input");
 		Ok(())
 	}
 }
