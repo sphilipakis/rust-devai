@@ -35,7 +35,7 @@ input_concurrency = 2
 # Change as you see fit. Can be overridden in workspace config.toml `.aipack/config.toml`.
 [options.model_aliases]
 # -- Anthropic
-claude      = "claude-3-7-sonnet-latest"
+claude      = "claude-sonnet-4-20250514"
 # -- OpenAI
 high        = "o4-mini-high"
 med         = "o4-mini"
