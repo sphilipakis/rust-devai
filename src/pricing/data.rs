@@ -299,6 +299,20 @@ const DEEPSEEK: Provider = Provider {
 // Define Anthropic pricing
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "claude-opus-4",
+		input_cached: Some(1.5),
+		input_normal: 15.0,
+		output_normal: 75.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "claude-sonnet-4",
+		input_cached: Some(0.3),
+		input_normal: 3.0,
+		output_normal: 15.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "claude-3-7-sonnet",
 		input_cached: Some(0.3),
 		input_normal: 3.0,
