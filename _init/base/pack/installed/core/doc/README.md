@@ -35,7 +35,8 @@ aip run ./my-agents/first-agent.aip -f "./README.md"
 # Data
 
 ```lua
--- This script runs before each instruction.
+-- `aip run -f src/**/*.rs`
+-- NOTE: Each file will be an input, so it can run concurrently (as defined by input_concurrency options)
 -- It has access to `input` and `before_all` and can fetch more data, returning it for the next stage.
 -- Input originates from the command line (when using -f, this will be a FileMeta object).
 
@@ -85,6 +86,87 @@ return "File saved: " .. input.path
 - See [Lua doc](lua.md) for more details on the available Lua modules and functions.
 
 ## More Details
+
+### `aip` command line doc
+
+Here is the overall command 
+
+```
+Command Agent runner to accelerate production coding with genai.
+
+Usage: aip <COMMAND>
+
+Commands:
+  init        Initialize the workspace `.aipack/` and the base `~/.aipack-base/` aipack directories
+  init-base   Init the ~/.aipack-base only with force update
+  run         Executes the AIPack agent using `aip run demo@craft/code`, or an agent file `aip run path/to/agent.aip`.
+              
+              Example usage:
+              ```sh
+              # Run the demo@craft/code AIP agent
+              aip run demo@craft/code
+              
+              # Run the demo@proof main.aip agent and provide a file as input
+              aip run demo@proof -f ./README.md
+              
+              # Run a direct agent file from the local directory
+              aip run some/agent.aip
+              ```
+  list        Create a new agent from a built-in template Disabled for now List the available aipacks `aip run list` or `aip run list demo@`
+  pack        Pack a directory into a .aipack file
+  install     Install an aipack file
+  check-keys  Check available API keys in the environment
+  self        Manage the aip CLI itself
+  help        Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+#### `aip run ...` documentation 
+
+Executes the AIPack agent using `aip run demo@craft/code`, or an agent file `aip run path/to/agent.aip`.
+
+Example usage:
+
+```sh
+# Run a direct agent file from the local directory
+aip run some/agent.aip
+
+# Gives two inputs
+aip run some/agent.aip -i "input 1" -i "input 2"
+
+# Use -f to give file or globs (each matched file will be a input)
+aip run some/agent.aip -f "src/**/*.js"
+
+# Run the demo@craft/code AIP agent
+aip run demo@craft/code
+
+# Run the demo@proof main.aip agent and provide a single file as input
+aip run demo@proof -f ./README.md
+
+```
+
+Usage: aip run [OPTIONS] <CMD_AGENT_NAME>
+
+Arguments:
+  <CMD_AGENT_NAME>  The name of the agent, which can be:
+                    - A AIP pack reference:
+                    `aip run demo@proof`
+                    - Or a direct file:
+                    `aip run path/to/agent.aip`
+
+Options:
+  -i, --input <ON_INPUTS>    Optional input, allowing multiple input NOTE: CANNOT be combined with -f/--on-files
+  -f, --on-files <ON_FILES>  Optional file parameter, allowing multiple files NOTE: CANNOT be combined with -i/--input
+  -w, --watch                Optional watch flag
+  -v, --verbose              Verbose mode
+  -o, --open                 Attempt to open the agent file (for now use VSCode code command)
+      --dry <DRY_MODE>       Dry mode, takes either 'req' or 'res' [possible values: req, res]
+  -s, --single-shot          Single Shot execution (e.g., non-interactive). (Was the `--ni` or `--non-interactive` in v0.6.x)
+  -h, --help                 Print help
+
+### Tips
 
 **aipack** is built on top of the [genai crate](https://crates.io/crates/genai) and therefore supports all major AI Providers and Models (OpenAI, Anthropic, Gemini, Ollama, Groq, Cohere).
 

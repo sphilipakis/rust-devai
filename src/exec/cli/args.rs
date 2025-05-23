@@ -20,16 +20,24 @@ pub enum CliCommand {
 
 	#[command(
 		about = "Executes the AIPack agent using `aip run demo@craft/code`, or an agent file `aip run path/to/agent.aip`.\n\n\
-    Example usage:\n\
+    Example usage:\n
+\
     ```sh\n\
+    # Run a direct agent file from the local directory\n\
+    aip run some/agent.aip\n\
+		\n\
+    # Gives two inputs\n\
+    aip run some/agent.aip -i \"input 1\" -i \"input 2\"\n\
+		\n\
+    # Use -f to give file or globs (each matched file will be a input)\n\
+    aip run some/agent.aip -f \"src/**/*.js\"\n\
+		\n\
     # Run the demo@craft/code AIP agent\n\
     aip run demo@craft/code\n\
     \n\
-    # Run the demo@proof main.aip agent and provide a file as input\n\
+    # Run the demo@proof main.aip agent and provide a single file as input\n\
     aip run demo@proof -f ./README.md\n\
     \n\
-    # Run a direct agent file from the local directory\n\
-    aip run some/agent.aip\n\
     ```"
 	)]
 	Run(RunArgs),
@@ -212,7 +220,7 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::Init(init_args) => ExecActionEvent::CmdInit(init_args),
 			CliCommand::InitBase => ExecActionEvent::CmdInitBase,
 			CliCommand::Run(run_args) => ExecActionEvent::CmdRun(run_args),
-			//CliCommand::New(new_args) => ExecActionEvent::CmdNew(new_args),
+			// CliCommand::New(new_args) => ExecActionEvent::CmdNew(new_args),
 			// CliCommand::New(new_args) => ExecCommand::NewCommandAgent(new_args),
 			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
