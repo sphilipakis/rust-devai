@@ -34,7 +34,7 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 		Some(details) => {
 			let cached = details.cached_tokens.unwrap_or(0) as f64;
 			let cache_creation_tokens = details.cache_creation_tokens.unwrap_or(0) as f64;
-			let normal = prompt_tokens - cached;
+			let normal = prompt_tokens - cached - cache_creation_tokens;
 			(normal, cached, cache_creation_tokens)
 		}
 		None => (prompt_tokens, 0.0, 0.0),
