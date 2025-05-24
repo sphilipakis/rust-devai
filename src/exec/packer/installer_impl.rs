@@ -2,7 +2,7 @@ use crate::dir_context::DirContext;
 use crate::exec::packer::PackToml;
 use crate::exec::packer::pack_toml::parse_validate_pack_toml;
 use crate::exec::packer::support;
-use crate::support::zip;
+use crate::support::{webc, zip};
 use crate::types::PackIdentity;
 use crate::{Error, Result};
 use reqwest::Client;
@@ -245,49 +245,7 @@ async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(S
 		let download_path = download_dir.join(&timestamped_filename);
 
 		// Download the file
-		let client = Client::new();
-		let response = client.get(url).send().await.map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to download file: {}", e),
-		})?;
-
-		// Check if the request was successful
-		if !response.status().is_success() {
-			return Err(Error::FailToInstall {
-				aipack_ref: pack_uri.to_string(),
-				cause: format!("HTTP error: {}", response.status()),
-			});
-		}
-
-		// Stream the response body to file
-		let mut stream = response.bytes_stream();
-		use tokio::fs::File as TokioFile;
-		use tokio::io::AsyncWriteExt;
-
-		// We need to use tokio's async file for proper streaming
-		let mut file = TokioFile::create(download_path.path())
-			.await
-			.map_err(|e| Error::FailToInstall {
-				aipack_ref: pack_uri.to_string(),
-				cause: format!("Failed to create file: {}", e),
-			})?;
-
-		while let Some(chunk_result) = tokio_stream::StreamExt::next(&mut stream).await {
-			let chunk = chunk_result.map_err(|e| Error::FailToInstall {
-				aipack_ref: pack_uri.to_string(),
-				cause: format!("Failed to download chunk: {}", e),
-			})?;
-
-			file.write_all(&chunk).await.map_err(|e| Error::FailToInstall {
-				aipack_ref: pack_uri.to_string(),
-				cause: format!("Failed to write chunk to file: {}", e),
-			})?;
-		}
-
-		file.flush().await.map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to flush file: {}", e),
-		})?;
+		webc::web_download_to_file(url, &download_path).await?;
 
 		return Ok((download_path, pack_uri));
 	}

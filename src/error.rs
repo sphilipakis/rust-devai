@@ -45,6 +45,14 @@ pub enum Error {
 		cause: &'static str,
 	},
 
+	// -- WebC
+	#[display("Fail to download url '{url}' to file '{dest_file}'.\nCause: {cause}")]
+	FailToDownload {
+		url: String,
+		dest_file: String,
+		cause: String,
+	},
+
 	// -- Packer & Installer
 	#[display("pack.toml file is missing at '{_0}'")]
 	AipackTomlMissing(String),

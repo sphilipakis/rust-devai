@@ -171,7 +171,6 @@ mod tests {
 	// region:    --- Support
 
 	fn get_returned_parts(res: JsonValue) -> Result<(Option<String>, Option<String>)> {
-		println!("->> {res:?}");
 		let arr = res.as_array().ok_or("Result should be an array")?;
 		let first_json = arr.first().ok_or("Missing first part")?;
 		let second = arr

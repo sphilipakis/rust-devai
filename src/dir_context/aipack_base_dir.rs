@@ -4,12 +4,16 @@ use home::home_dir;
 use simple_fs::SPath;
 use std::ops::Deref;
 
+// Because the bin with .aip
+const BIN_DIR: &str = "bin";
+
 /// BaseAipackPath is the typed wrapper of the `~/.aipack-base` absolute path
 #[derive(Debug, Clone)]
 pub struct AipackBaseDir {
 	path: SPath,
 }
 
+/// Constructor and base getters
 impl AipackBaseDir {
 	/// Build the absolute path for `~/.aipack-base/`
 	/// NOTE: This does not test if it exists
@@ -22,6 +26,16 @@ impl AipackBaseDir {
 
 	pub fn path(&self) -> &SPath {
 		&self.path
+	}
+}
+
+/// Sub paths
+impl AipackBaseDir {
+	pub fn bin_dir(&self) -> SPath {
+		self.path.join(BIN_DIR)
+	}
+	pub fn bin_tmp_dir(&self) -> SPath {
+		self.path.join(BIN_DIR).join("tmp")
 	}
 }
 

@@ -44,6 +44,16 @@ pub enum HubEvent {
 	Quit,
 }
 
+// region:    --- Convenient
+
+impl HubEvent {
+	pub fn info_short(msg: impl Into<String>) -> Self {
+		HubEvent::InfoShort(msg.into().into())
+	}
+}
+
+// endregion: --- Convenient
+
 // region:    --- Froms
 
 impl<T> From<T> for HubEvent

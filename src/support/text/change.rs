@@ -324,7 +324,6 @@ mod tests {
 		let block3 = format_change_block("cherry", "C");
 		// TODO: Should allow spaced after the markers on same line
 		let changes = format!("{}\n{}\n{}", block1, block2, block3);
-		println!("->>\n{changes}");
 
 		// -- Exec
 		let result = apply_changes(original, changes)?;

@@ -1,10 +1,10 @@
 use crate::Result;
 use crate::dir_context::AipackBaseDir;
 use crate::exec::cli::XelfSetupArgs;
-use crate::hub::get_hub;
-use crate::hub::hub_prompt;
 use crate::exec::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::exec::init::init_base;
+use crate::hub::get_hub;
+use crate::hub::hub_prompt;
 use crate::support::os;
 use crate::support::os::current_os;
 use crate::support::os::is_windows;
@@ -13,9 +13,6 @@ use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
 use std::fs::remove_file;
 use std::fs::write;
-
-// Because the bin with .aip
-const BIN_DIR: &str = "bin";
 
 // TODO: On Mac/Linux, we need to handle the situation where the `aip` binary is running to avoid issues.
 //       Using `mv` ensures that the running process can continue while the `aip` binary is swapped correctly.
@@ -38,7 +35,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	.await;
 
 	// -- Create the bin directory
-	let base_bin_dir = aipack_base_dir.join(BIN_DIR);
+	let base_bin_dir = aipack_base_dir.bin_dir();
 	if ensure_dir(&base_bin_dir)? {
 		hub.publish(format!("-> {:<18} '{}'", "Create dir", base_bin_dir)).await;
 	}

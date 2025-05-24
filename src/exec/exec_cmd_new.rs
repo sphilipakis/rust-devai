@@ -56,8 +56,9 @@ template: {template_name}
 
 	let confirm = prompt_input(&mut stdout, "Confirm creation (Y/n)", false)?;
 
+	// TODO: NOT IMPLEMENTED YET
 	if confirm == "Y" {
-		safer_println("->> Will do the create", true);
+		safer_println("Will do the create", true);
 	} else {
 		safer_println("Agent creation cancelled", true);
 	}

@@ -22,6 +22,7 @@ pub mod os;
 pub mod paths;
 pub mod text;
 pub mod tomls;
+pub mod webc;
 pub mod zip;
 
 // endregion: --- Modules
