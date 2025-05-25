@@ -1,14 +1,16 @@
 use crate::{Error, Result};
+use semver::Version;
 use simple_fs::SPath;
 use std::env::consts::{ARCH, OS};
 use std::fs;
 
 // region:    --- Bin Path Resolver
 
-const BASE_STABLE_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest";
+const BASE_STABLE_URL: &str = "https://repo.aipack.ai/aip-dist/stable";
+const BASE_STABLE_LATEST_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest";
 
 /// Returns the stable URL for the `aip` binary archive based on the current OS and architecture.
-pub fn get_aip_stable_url() -> Result<String> {
+pub fn get_aip_stable_url(version: Option<&Version>) -> Result<String> {
 	let target_os = OS;
 	let target_arch = ARCH;
 
@@ -26,7 +28,13 @@ pub fn get_aip_stable_url() -> Result<String> {
 		}
 	};
 
-	Ok(format!("{BASE_STABLE_URL}/{}/aip.tar.gz", target_triple))
+	let url = if let Some(version) = version {
+		format!("{BASE_STABLE_URL}/v{}/{}/aip.tar.gz", version, target_triple)
+	} else {
+		format!("{BASE_STABLE_LATEST_URL}/{}/aip.tar.gz", target_triple)
+	};
+
+	Ok(url)
 }
 
 // endregion: --- Bin Path Resolver

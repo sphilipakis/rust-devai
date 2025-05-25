@@ -8,77 +8,92 @@ use serde::Deserialize; // Current CLI version
 
 const LATEST_TOML_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest/latest.toml";
 
-pub async fn exec_xelf_update(_args: XelfUpdateArgs) -> Result<()> {
+pub async fn exec_xelf_update(args: XelfUpdateArgs) -> Result<()> {
 	let hub = get_hub();
 	hub.publish(HubEvent::info_short(format!("Current aip version: {}", VERSION)))
 		.await;
 
 	hub.publish(HubEvent::info_short("Checking for latest version...")).await;
 
-	match fetch_latest_remote_version().await {
-		Ok(remote_v) => {
-			hub.publish(HubEvent::info_short(format!(
-				"Latest remote version available: {}",
-				remote_v
-			)))
-			.await;
-
-			// Parse current and remote versions for comparison.
-			// Handles cases like "0.7.11-WIP" by parsing the "0.7.11" part.
-			let current_v = Version::parse(VERSION)
-				.map_err(|e| Error::custom(format!("Failed to parse current version string '{}': {}", VERSION, e)))?;
-
-			if remote_v > current_v {
-				hub.publish(format!(
-					"A new version {} is available (you have {}).",
-					remote_v, current_v
-				))
-				.await;
-
-				// Check OS for platform-specific update logic
-				if cfg!(target_os = "windows") {
-					hub.publish(
-						"Automatic update is not yet supported on Windows.\n\
-						Please update manually by downloading the latest release from:\n\
-						https://aipack.ai/
-						",
-					)
-					.await;
-				} else {
-					// -- Execute update for non-Windows (Nix-like) systems
-					match super::xelf_update_nix::exec_update_for_nix(&remote_v).await {
-						Ok(_) => {
-							// Success message is handled within exec_update_for_nix
-						}
-						Err(e) => {
-							// Publish the specific error that occurred during the update attempt
-							hub.publish(HubEvent::Error { error: e.into() }).await;
-							// Provide fallback instructions
-							hub.publish(
-								"Automatic update failed. Please try updating manually from:\n\
-								https://github.com/aipack-ai/aipack/releases",
-							)
-							.await;
-						}
-					}
-				}
-			} else {
+	let (target_version, explicit_version) = if let Some(version) = args.version {
+		let version = version.strip_prefix("v").unwrap_or(&version);
+		let version = Version::parse(version).map_err(|err| format!("Version '{version}' not valid. {err}"))?;
+		(version, true)
+	} else {
+		match fetch_latest_remote_version().await {
+			Ok(latest_version) => {
 				hub.publish(HubEvent::info_short(format!(
-					"You are already using the latest version ({})",
-					current_v
+					"Latest remote version available: {}",
+					latest_version
 				)))
 				.await;
+				(latest_version, false)
+			}
+			Err(e) => {
+				hub.publish(HubEvent::Error { error: e.into() }).await;
+				hub.publish(
+					"Failed to check for updates. Please check your internet connection or try again later.\n\
+						You can manually check for releases at: https://aipack.ai/doc/install",
+				)
+				.await;
+				return Ok(());
 			}
 		}
-		Err(e) => {
-			// Error during fetching the remote version
-			hub.publish(HubEvent::Error { error: e.into() }).await;
-			hub.publish(
-				"Failed to check for updates. Please check your internet connection or try again later.\n\
-				You can manually check for releases at: https://github.com/aipack-ai/aipack/releases",
-			)
+	};
+
+	// Parse current and remote versions for comparison.
+	// Handles cases like "0.7.11-WIP" by parsing the "0.7.11" part.
+	let current_v = Version::parse(VERSION)
+		.map_err(|e| Error::custom(format!("Failed to parse current version string '{}': {}", VERSION, e)))?;
+
+	if explicit_version || target_version > current_v {
+		if !explicit_version && target_version > current_v {
+			hub.publish(format!(
+				"A new version {} is available (you have v{}).",
+				target_version, current_v
+			))
+			.await;
+		} else if explicit_version {
+			hub.publish(format!(
+				"Installing v{} is available (you have v{}).",
+				target_version, current_v
+			))
 			.await;
 		}
+
+		// Check OS for platform-specific update logic
+		if cfg!(target_os = "windows") {
+			hub.publish(
+				"Automatic update is not yet supported on Windows.\n\
+				Please update manually by downloading the latest release from:\n\
+				https://aipack.ai/doc/install
+				",
+			)
+			.await;
+		} else {
+			// -- Execute update for non-Windows (Nix-like) systems
+			match super::xelf_update_nix::exec_update_for_nix(&target_version, true).await {
+				Ok(_) => {
+					// Success message is handled within exec_update_for_nix
+				}
+				Err(e) => {
+					// Publish the specific error that occurred during the update attempt
+					hub.publish(HubEvent::Error { error: e.into() }).await;
+					// Provide fallback instructions
+					hub.publish(
+						"Automatic update failed. Please try updating manually from:\n\
+						https://aipack.ai/doc/install",
+					)
+					.await;
+				}
+			}
+		}
+	} else {
+		hub.publish(HubEvent::info_short(format!(
+			"You are already using the latest version ({})",
+			current_v
+		)))
+		.await;
 	}
 
 	Ok(())

@@ -208,7 +208,11 @@ pub struct XelfSetupArgs {}
 
 /// Arguments for the `self Update` subcommand
 #[derive(Parser, Debug)]
-pub struct XelfUpdateArgs {}
+pub struct XelfUpdateArgs {
+	/// The version (needs to be valid, can start with 'v')
+	#[arg(short = 'v', long = "version")]
+	pub version: Option<String>,
+}
 
 // endregion: --- Sub Command Args
 

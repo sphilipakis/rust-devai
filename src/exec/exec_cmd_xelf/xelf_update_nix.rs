@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::dir_context::AipackBaseDir;
 use crate::exec::exec_cmd_xelf::support::get_aip_stable_url;
-use crate::hub::get_hub;
+use crate::hub::{HubEvent, get_hub};
 use crate::support::webc;
 use crate::{Error, Result};
 use semver::Version;
@@ -21,7 +21,7 @@ const ARCHIVE_NAME: &str = "aip.tar.gz";
 // region:    --- Public Functions
 
 /// Executes the update process for non-Windows (Nix-like) systems.
-pub(super) async fn exec_update_for_nix(remote_version: &Version) -> Result<()> {
+pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: bool) -> Result<()> {
 	let hub = get_hub();
 	hub.publish(format!("Starting update to version {remote_version}...")).await;
 
@@ -39,7 +39,11 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version) -> Result<()> 
 
 	// -- Download
 	hub.publish(format!("Downloading new version ({})...", remote_version)).await;
-	let download_url = get_aip_stable_url()?;
+	let download_url = if is_latest {
+		get_aip_stable_url(None)?
+	} else {
+		get_aip_stable_url(Some(remote_version))?
+	};
 
 	webc::web_download_to_file(&download_url, &archive_path).await?;
 
@@ -88,9 +92,8 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version) -> Result<()> 
 			setup_output.status, stdout, stderr
 		)));
 	}
-	hub.publish(
-		"Update successful! New version installed.\n\
-		Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect.",
+	hub.publish(HubEvent::info_short(format!("Update successful! New version 'v{remote_version}' installed.\n
+		Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect."))
 	)
 	.await;
 
