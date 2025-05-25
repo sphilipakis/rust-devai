@@ -9,11 +9,11 @@
 #
 # Support models from: OpenAI, Gemini, Anthropic, Ollama (local), DeepSeek, Groq, Grok(xAI)
 #
-# e.g., 
-#    Ollama: "llama3.3:70b", "llama3.1:8b", "llama3.2:3b", "deepseek-r1:8b", "deepseek-coder-v2:16b" (or any locally installed Ollama)
+# e.g.,  
+#    Ollama: "phi4:14b", "gemma3:4b", "gemma3:27b", "deepseek-r1:70b", "llama4:scout" (or any locally installed Ollama)
+# Anthropic: "claude-sonnet-4-20250514", "claude-3-5-haiku-latest"
+#    OpenAI:  "gpt-4.1, "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "o4-mini-high", "o4-mini-low"
 #    Gemini: "gemini-2.5-pro-preview-05-06", "gemini-2.5-flash-preview-04-17", "gemini-2.5-flash-preview-04-17-zero"
-# Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
-#    OpenAI: "o4-mini", "o4-mini-high", "o4-mini-low", "gpt-4.1, "gpt-4.1-mini",  "gpt-4.1-nano"
 
 model = "gpt-4.1-mini" # or an alias from below (e.g., "flash", "gpro")
 
@@ -21,10 +21,9 @@ model = "gpt-4.1-mini" # or an alias from below (e.g., "flash", "gpro")
 
 # temperature = 0.0
 
-# How many inputs can be processed at the same time (Defaults to 1 if absent)
+# How many inputs can be processed at the same time (Defaults to 2 if absent)
 
 input_concurrency = 2
-
 
 # Model Aliases
 # Define your own model aliases for any model/provider you have access to, and they can be used in place of the model name.
