@@ -187,11 +187,11 @@ mod tests {
 	fn test_pricing_pricer_price_it_with_cache_creation() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_prompt_normal_tokens = 1000;
+		let fx_cache_creation_tokens = 200;
 		let fx_cached_tokens = 400;
 		let fx_completion_tokens = 500;
-		let fx_cache_creation_tokens = 200;
 		let usage = Usage {
-			prompt_tokens: Some(fx_prompt_normal_tokens + fx_cached_tokens),
+			prompt_tokens: Some(fx_prompt_normal_tokens + fx_cache_creation_tokens + fx_cached_tokens),
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
