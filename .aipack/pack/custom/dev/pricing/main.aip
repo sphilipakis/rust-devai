@@ -18,7 +18,9 @@ local inputs = {
    {name = "groq",      do_json = false, url = "https://groq.com/pricing/"},
    {name = "gemini",    do_json = false, url = "https://ai.google.dev/pricing"},
    {name = "deepseek",  do_json = false, url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = true, url = "https://www.anthropic.com/pricing#anthropic-api"},
+   -- {name = "anthropic", do_json = false, url = "https://www.anthropic.com/pricing#anthropic-api"},
+   -- https://docs.anthropic.com/en/docs/about-claude/models/overview
+   {name = "anthropic", do_json = true, url = "https://docs.anthropic.com/en/docs/about-claude/models/overview"},
    {name = "xai",       do_json = false,  url = "NO-PUBLIC-URL-FOR-THIS-ONE"},
 }
 
@@ -81,7 +83,7 @@ From this content for the {{data.provider}}:
 - For Anthropic Models (Claude), the `.` should be replaced by `-`
 - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
-- For Anthropic models (Claude), remove the suffix with the `-2025...` Note needed. 
+- For Anthropic models (Cluade), make sure you get the model names from the model is, and remove the `-2025...`
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
 - For Gemini models, do not add the audio or tts model.
 - but for gemini model, keep the `.` in the name.

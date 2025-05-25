@@ -21,11 +21,29 @@
       },
       {
         "input": {
+          "cache_write": 3.75,
+          "cached": 0.3,
+          "normal": 3
+        },
+        "name": "claude-3-7-sonnet",
+        "output": 15
+      },
+      {
+        "input": {
+          "cache_write": 3.75,
+          "cached": 0.3,
+          "normal": 3
+        },
+        "name": "claude-3-5-sonnet",
+        "output": 15
+      },
+      {
+        "input": {
           "cache_write": 1,
           "cached": 0.08,
           "normal": 0.8
         },
-        "name": "claude-haiku-3-5",
+        "name": "claude-3-5-haiku",
         "output": 4
       },
       {
@@ -34,17 +52,8 @@
           "cached": 1.5,
           "normal": 15
         },
-        "name": "claude-opus-3",
+        "name": "claude-3-opus",
         "output": 75
-      },
-      {
-        "input": {
-          "cache_write": 3.75,
-          "cached": 0.3,
-          "normal": 3
-        },
-        "name": "claude-sonnet-3-7",
-        "output": 15
       },
       {
         "input": {
@@ -52,7 +61,7 @@
           "cached": 0.03,
           "normal": 0.25
         },
-        "name": "claude-haiku-3",
+        "name": "claude-3-haiku",
         "output": 1.25
       }
     ]
@@ -473,62 +482,44 @@
     "models": [
       {
         "input": {
-          "cache_write": 0.6,
-          "cached": 0.6,
-          "normal": 0.6
-        },
-        "name": "grok-3-mini-fast-beta",
-        "output": 4
-      },
-      {
-        "input": {
-          "cache_write": 0.3,
-          "cached": 0.3,
-          "normal": 0.3
-        },
-        "name": "grok-3-mini-beta",
-        "output": 0.5
-      },
-      {
-        "input": {
-          "cache_write": 5,
-          "cached": 5,
-          "normal": 5
-        },
-        "name": "grok-3-fast-beta",
-        "output": 25
-      },
-      {
-        "input": {
-          "cache_write": 3,
-          "cached": 3,
+          "cache_write": null,
+          "cached": null,
           "normal": 3
         },
-        "name": "grok-3-beta",
+        "name": "grok-3",
         "output": 15
       },
       {
         "input": {
-          "cache_write": 2,
-          "cached": 2,
-          "normal": 2
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.3
         },
-        "name": "grok-2-1212",
-        "output": 10
+        "name": "grok-3-mini",
+        "output": 0.5
       },
       {
         "input": {
-          "cache_write": 2,
-          "cached": 2,
-          "normal": 2
+          "cache_write": null,
+          "cached": null,
+          "normal": 5
         },
-        "name": "grok-2-vision-1212",
-        "output": 10
+        "name": "grok-3-fast",
+        "output": 25
       },
       {
         "input": {
-          "cache_write": 5,
-          "cached": 5,
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "grok-3-mini-fast",
+        "output": 4
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
           "normal": 5
         },
         "name": "grok-beta",
@@ -536,8 +527,35 @@
       },
       {
         "input": {
-          "cache_write": 5,
-          "cached": 5,
+          "cache_write": null,
+          "cached": null,
+          "normal": null
+        },
+        "name": "grok-2-image-gen",
+        "output": null
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2
+        },
+        "name": "grok-2-vision-1212",
+        "output": 10
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2
+        },
+        "name": "grok-2-1212",
+        "output": 10
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
           "normal": 5
         },
         "name": "grok-vision-beta",
