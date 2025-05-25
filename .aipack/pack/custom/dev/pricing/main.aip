@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "gpt-4.1"
+model = "flash"
 input_concurrency = 6
 ```
 
@@ -82,12 +82,13 @@ From this content for the {{data.provider}}:
 - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
+- For Gemini models, do not add the audio or tts model.
+- but for gemini model, keep the `.` in the name.
+- For Gemini model, `gemini-2.5-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
 - For deepseek model, ignore the discound price
 - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
 - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
 - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 
-- but for gemini model, keep the `.` in the name.
-- For Gemini model, `gemini-2.5-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
 - Do not put in code block, just the raw json, pretty formatted.
 - If caching price not available, set to `null`
 - If price has text and audio, take the text price
@@ -148,7 +149,7 @@ content = content .. "}"
 
 -- == Normalize json
 local json    = aip.json.parse(content)
-local content = aip.json.stringify(json)
+local content = aip.json.stringify_pretty(json)
 
 -- == Save final json
 aip.file.save(json_path, content)

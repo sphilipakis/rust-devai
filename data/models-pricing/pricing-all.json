@@ -75,7 +75,7 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.0375,
           "normal": 0.15
         },
         "name": "gemini-2.5-flash",
@@ -84,7 +84,7 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.31,
           "normal": 1.25
         },
         "name": "gemini-2.5-pro",
@@ -134,24 +134,6 @@
         },
         "name": "gemini-1.5-pro",
         "output": 5
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": null
-        },
-        "name": "gemma-3-27b-it",
-        "output": null
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": null
-        },
-        "name": "text-embedding-004",
-        "output": null
       }
     ]
   },
