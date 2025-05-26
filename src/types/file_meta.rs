@@ -1,6 +1,6 @@
 use mlua::{IntoLua, Lua};
 use serde::Serialize;
-use simple_fs::{SFile, SPath};
+use simple_fs::SPath;
 
 /// The FileMeta object contains the metadata of a file but not its content.
 /// The created_epoch_us, modified_epoch_us, and size metadata are generally loaded,
@@ -48,7 +48,7 @@ impl FileMeta {
 
 		let with_meta: WithMeta = with_meta.into();
 		if with_meta.with_meta {
-			let mut res = FileMeta::from(path.clone());
+			let mut res = FileMeta::from_path(path.clone());
 			let full_path = with_meta.full_path.unwrap_or(&path);
 
 			if let Ok(meta) = full_path.meta() {
@@ -58,13 +58,12 @@ impl FileMeta {
 			}
 			res
 		} else {
-			FileMeta::from(path)
+			FileMeta::from_path(path)
 		}
 	}
-}
 
-impl From<&SPath> for FileMeta {
-	fn from(file: &SPath) -> Self {
+	/// Private util
+	fn from_path(file: SPath) -> Self {
 		let dir = file.parent().map(|p| p.to_string()).unwrap_or_default();
 		FileMeta {
 			path: file.to_string(),
@@ -77,19 +76,6 @@ impl From<&SPath> for FileMeta {
 			modified_epoch_us: None,
 			size: None,
 		}
-	}
-}
-
-impl From<SPath> for FileMeta {
-	fn from(spath: SPath) -> Self {
-		From::<&SPath>::from(&spath)
-	}
-}
-
-impl From<SFile> for FileMeta {
-	fn from(file: SFile) -> Self {
-		let spath: SPath = file.into();
-		From::<SPath>::from(spath)
 	}
 }
 

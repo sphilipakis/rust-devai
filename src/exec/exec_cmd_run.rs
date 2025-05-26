@@ -190,7 +190,7 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 			})
 			.collect();
 
-		let file_metas = files.into_iter().map(FileMeta::from).collect::<Vec<_>>();
+		let file_metas = files.into_iter().map(|f| FileMeta::new(f, true)).collect::<Vec<_>>();
 		Some(into_values(file_metas)?)
 	} else {
 		None

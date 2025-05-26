@@ -31,7 +31,7 @@ async fn test_run_agent_llm_c_on_file_ok() -> Result<()> {
 
 	// -- Execute
 	let on_file = SPath::new("./other/hello.txt");
-	let file_meta = FileMeta::from(on_file);
+	let file_meta = FileMeta::new(on_file, false);
 
 	let res = run_test_agent_with_input(&runtime, &agent, file_meta).await?;
 

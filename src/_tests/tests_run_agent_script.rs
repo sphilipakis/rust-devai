@@ -86,7 +86,7 @@ return {
 
 	// -- Execute
 	let on_path = SPath::new("./some-random/file.txt");
-	let path_ref = FileMeta::from(on_path);
+	let path_ref = FileMeta::new(on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
 	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
@@ -111,7 +111,7 @@ async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 
 	// -- Execute
 	let on_path = SPath::new("./some-random/file.txt");
-	let path_ref = FileMeta::from(on_path);
+	let path_ref = FileMeta::new(on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
 	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
