@@ -107,7 +107,7 @@ pub(super) fn file_load(
 
 	let rel_path = SPath::new(rel_path);
 
-	let file_record = FileRecord::load_from_full_path(&full_path, &rel_path)?;
+	let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &full_path, &rel_path)?;
 	let res = file_record.into_lua(lua)?;
 
 	Ok(res)
@@ -343,7 +343,7 @@ pub(super) fn file_ensure_exists(
 		write(&full_path, content)?;
 	}
 
-	let file_info = FileInfo::new(rel_path, &full_path);
+	let file_info = FileInfo::new(runtime.dir_context(), rel_path, &full_path);
 
 	file_info.into_lua(lua)
 }
@@ -451,7 +451,10 @@ pub(super) fn file_list(
 
 	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
 
-	let file_infos: Vec<FileInfo> = spaths.into_iter().map(|spath| FileInfo::new(spath, with_meta)).collect();
+	let file_infos: Vec<FileInfo> = spaths
+		.into_iter()
+		.map(|spath| FileInfo::new(runtime.dir_context(), spath, with_meta))
+		.collect();
 	let res = file_infos.into_lua(lua)?;
 
 	Ok(res)
@@ -672,7 +675,7 @@ pub(super) fn file_first(
 			.map_err(|err| Error::cc("Cannot diff with base_path", err))?
 	};
 
-	let res = FileInfo::new(spath, &absolute_path).into_lua(lua)?;
+	let res = FileInfo::new(runtime.dir_context(), spath, &absolute_path).into_lua(lua)?;
 
 	Ok(res)
 }

@@ -190,7 +190,11 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 			})
 			.collect();
 
-		let file_infos = files.into_iter().map(|f| FileInfo::new(f, true)).collect::<Vec<_>>();
+		let dir_context = runtime.dir_context();
+		let file_infos = files
+			.into_iter()
+			.map(|f| FileInfo::new(dir_context, f, true))
+			.collect::<Vec<_>>();
 		Some(into_values(file_infos)?)
 	} else {
 		None

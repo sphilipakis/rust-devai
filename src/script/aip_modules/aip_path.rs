@@ -58,7 +58,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		lua.create_function(move |lua, (base, args): (String, Variadic<Value>)| path_join(lua, base, args))?;
 
 	// -- parse
-	let path_parse_fn = lua.create_function(path_parse)?;
+	let rt = runtime.clone();
+	let path_parse_fn = lua.create_function(move |lua, value: Value| path_parse(lua, &rt, value))?;
 
 	// -- parent
 	let path_parent_fn = lua.create_function(move |_lua, path: String| path_parent(path))?;
@@ -118,13 +119,13 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///   error: string // Error message
 /// }
 /// ```
-fn path_parse(lua: &Lua, path: Value) -> mlua::Result<Value> {
+fn path_parse(lua: &Lua, runtime: &Runtime, path: Value) -> mlua::Result<Value> {
 	let Some(path) = into_option_string(path, "aip.path.parse")? else {
 		return Ok(Value::Nil);
 	};
 
 	let spath = SPath::new(path);
-	let meta = FileInfo::new(spath, false);
+	let meta = FileInfo::new(runtime.dir_context(), spath, false);
 	meta.into_lua(lua)
 }
 

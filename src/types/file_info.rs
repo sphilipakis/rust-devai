@@ -1,3 +1,4 @@
+use crate::dir_context::DirContext;
 use mlua::{IntoLua, Lua};
 use serde::Serialize;
 use simple_fs::SPath;
@@ -44,7 +45,7 @@ impl FileInfo {
 	/// - with_meta: when true, will attempt to get the file meta. Will ignore if error
 	/// - with_meta if SPath, then, it's true, and the SPath is the absolute path
 	/// - `base_path` is only use with_meta true to attempt to get the meta
-	pub fn new<'a>(rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
+	pub fn new<'a>(_dir_context: &DirContext, rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
 		let path: SPath = rel_path.into();
 
 		let with_meta: WithMeta = with_meta.into();

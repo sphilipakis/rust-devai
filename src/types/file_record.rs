@@ -1,3 +1,4 @@
+use crate::dir_context::DirContext;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua};
 use serde::Serialize;
@@ -27,7 +28,7 @@ pub struct FileRecord {
 
 /// Constructors
 impl FileRecord {
-	pub fn load_from_full_path(full_path: &SPath, rel_path: &SPath) -> Result<Self> {
+	pub fn load_from_full_path(_dir_context: &DirContext, full_path: &SPath, rel_path: &SPath) -> Result<Self> {
 		let content = read_to_string(full_path).map_err(|err| Error::cc(format!("Fail to read {full_path}"), err))?;
 		let dir = rel_path.parent().map(|p| p.to_string()).unwrap_or_default();
 		let meta = full_path.meta()?;

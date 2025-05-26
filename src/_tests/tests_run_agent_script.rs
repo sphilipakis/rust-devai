@@ -81,12 +81,13 @@ return {
 }
 ```
 	"#;
-	let agent = Agent::mock_from_content(content)?;
 	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let dir_context = runtime.dir_context();
+	let agent = Agent::mock_from_content(content)?;
 
 	// -- Execute
 	let on_path = SPath::new("./some-random/file.txt");
-	let path_ref = FileInfo::new(on_path, false);
+	let path_ref = FileInfo::new(dir_context, on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
 	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
@@ -107,11 +108,12 @@ return {
 async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let dir_context = runtime.dir_context();
 	let agent = load_test_agent("./agent-script/agent-before-all.aip", &runtime)?;
 
 	// -- Execute
 	let on_path = SPath::new("./some-random/file.txt");
-	let path_ref = FileInfo::new(on_path, false);
+	let path_ref = FileInfo::new(dir_context, on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
 	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;

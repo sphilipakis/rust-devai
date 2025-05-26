@@ -89,7 +89,7 @@ pub(super) fn file_save_html_to_md(
 	write(&full_md, md_content)
 		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{}'. Cause: {}", rel_md, e)))?;
 
-	let meta = FileInfo::new(rel_md, &full_md);
+	let meta = FileInfo::new(runtime.dir_context(), rel_md, &full_md);
 	meta.into_lua(lua)
 }
 
@@ -179,7 +179,7 @@ pub(super) fn file_save_html_to_slim(
 		))
 	})?;
 
-	let meta = FileInfo::new(rel_html_dest, &full_html_dest);
+	let meta = FileInfo::new(runtime.dir_context(), rel_html_dest, &full_html_dest);
 	meta.into_lua(lua)
 }
 
