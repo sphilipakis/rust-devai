@@ -76,7 +76,7 @@ impl AipackBaseDir {
 /// NOTE: This does NOT create or test if the path exists
 ///
 fn aipack_base_dir() -> Result<SPath> {
-	let home_dir = home_dir().map_err(|_e| "No Home Dir Found, cannot init ./aipack-base")?;
+	let home_dir = home_dir();
 	if !home_dir.exists() {
 		Err(format!("Home dir '{home_dir}' does not exist"))?;
 	}

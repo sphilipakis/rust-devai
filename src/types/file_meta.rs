@@ -48,7 +48,6 @@ impl FileMeta {
 
 		let with_meta: WithMeta = with_meta.into();
 		if with_meta.with_meta {
-			// let full_path = base_path.map(|bp| bp.join(&path)).unwrap_or_else(|| path.clone());
 			let mut res = FileMeta::from(path.clone());
 			let full_path = with_meta.full_path.unwrap_or(&path);
 

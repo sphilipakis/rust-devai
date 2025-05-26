@@ -8,7 +8,7 @@ use simple_fs::SPath;
 /// Return the os env file
 /// for mac `Some("~/.zshenv")` (but absolute path)
 pub fn get_os_env_file_path() -> Option<SPath> {
-	let home_dir = home_dir().ok()?;
+	let home_dir = home_dir();
 
 	match current_os() {
 		OsType::Mac => Some(home_dir.join(".zshenv")),

@@ -1,8 +1,8 @@
 use super::AipackPaths;
 use crate::dir_context::resolve_pack_ref_base_path;
-use crate::types::{PackRef, looks_like_pack_ref};
 use crate::runtime::Session;
-use crate::support::files::current_dir;
+use crate::support::files::{current_dir, home_dir};
+use crate::types::{PackRef, looks_like_pack_ref};
 use crate::{Error, Result};
 use simple_fs::SPath;
 use std::str::FromStr;
@@ -17,6 +17,11 @@ pub enum PathResolver {
 
 #[derive(Debug, Clone)]
 pub struct DirContext {
+	/// The resolve user home dir.
+	///
+	/// NOTE: For now, if no home_dir found, then, it will use the root as home dir.
+	home_dir: SPath,
+
 	/// Absolute path of the current_dir (pwd)
 	/// (except for test, which can be mocked to another dir)
 	current_dir: SPath,
@@ -37,6 +42,7 @@ impl DirContext {
 	fn from_aipack_dir_and_current_dir(aipack_paths: AipackPaths, current_dir: SPath) -> Result<Self> {
 		let current_dir = current_dir.canonicalize()?;
 		Ok(Self {
+			home_dir: home_dir(),
 			current_dir,
 			aipack_paths,
 		})
@@ -45,6 +51,7 @@ impl DirContext {
 	#[cfg(test)]
 	pub fn from_current_and_aipack_paths(current_dir: SPath, aipack_paths: AipackPaths) -> Result<Self> {
 		Ok(Self {
+			home_dir: home_dir(),
 			current_dir,
 			aipack_paths,
 		})
@@ -53,6 +60,10 @@ impl DirContext {
 
 /// Property Getters
 impl DirContext {
+	pub fn home_dir(&self) -> &SPath {
+		&self.home_dir
+	}
+
 	pub fn current_dir(&self) -> &SPath {
 		&self.current_dir
 	}
@@ -87,6 +98,13 @@ impl DirContext {
 	///
 	///
 	pub fn resolve_path(&self, session: &Session, path: SPath, mode: PathResolver) -> Result<SPath> {
+		// -- First check if it starts with `~/` and resolve to home
+		let path = if path.starts_with("~/") {
+			path.into_replace_prefix("~", self.home_dir())
+		} else {
+			path
+		};
+
 		// -- Absolute Path
 		let final_path = if path.is_absolute() {
 			path

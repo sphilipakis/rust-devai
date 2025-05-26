@@ -13,11 +13,13 @@ pub fn current_dir() -> Result<SPath> {
 	Ok(dir)
 }
 
-/// Return the absolute path of the home dir
-pub fn home_dir() -> Result<SPath> {
-	let home_dir = std::env::home_dir().ok_or("No Home Dir found")?;
-	let home_dir: SPath = SPath::from_std_path_buf(home_dir)?;
-	Ok(home_dir)
+/// Returns the AIPACK home directory, or the root path if no home directory is found.
+/// This strategy allows AIPACK to run on systems that do not have a home directory,
+/// avoiding downstream complexity.
+pub fn home_dir() -> SPath {
+	let home_dir = std::env::home_dir().and_then(|h| SPath::from_std_path_buf(h).ok());
+	let home_dir: SPath = home_dir.unwrap_or_else(|| SPath::new("/"));
+	home_dir
 }
 
 /// Lists directories under the base_dir up to the specified depth.
