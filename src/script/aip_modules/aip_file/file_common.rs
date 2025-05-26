@@ -107,7 +107,7 @@ pub(super) fn file_load(
 
 	let rel_path = SPath::new(rel_path);
 
-	let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &full_path, &rel_path)?;
+	let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &full_path, rel_path)?;
 	let res = file_record.into_lua(lua)?;
 
 	Ok(res)
@@ -939,6 +939,8 @@ mod tests {
 
 		// -- Exec
 		let res = eval_lua(&lua, &code)?;
+
+		println!("->> \n{}", res.x_pretty()?);
 
 		// -- Check
 		let res = res.as_array().ok_or("Should be array")?;

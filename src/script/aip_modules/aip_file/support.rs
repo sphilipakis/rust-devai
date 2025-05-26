@@ -280,7 +280,7 @@ pub fn create_file_records(
 		.map(|sfile| -> Result<FileRecord> {
 			if absolute {
 				// So, here, the sfile is the full path (for laoding), and the rel_path
-				let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &sfile, &sfile)?;
+				let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &sfile, sfile.clone())?;
 				Ok(file_record)
 			} else {
 				let full_path = if has_base_path {
@@ -301,7 +301,7 @@ pub fn create_file_records(
 					(base_path.clone(), diff)
 				};
 				let full_path = base_path.join(&rel_path);
-				let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &full_path, &rel_path)?;
+				let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &full_path, rel_path)?;
 				Ok(file_record)
 			}
 		})

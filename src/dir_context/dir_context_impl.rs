@@ -91,6 +91,10 @@ impl DirContext {
 /// Resolvers
 impl DirContext {
 	/// Resolve a path from this DirContext
+	///
+	/// This is resolve to a loadable/savable file path (if exists).
+	/// Note: It wont't test if the path exists.
+	///
 	/// - `mode`
 	///   - For pack_ref path, it will attempt to do a relative to PathResolver variat if possible,
 	///   - For relative path, it will resolve relative to PathResolver variant (CurrentDir, ...)
@@ -171,5 +175,13 @@ impl DirContext {
 		};
 
 		Ok(base_dir.join(path))
+	}
+
+	pub fn path_home_into_tilde(&self, path: SPath) -> SPath {
+		if path.is_absolute() && path.starts_with(self.home_dir()) {
+			path.into_replace_prefix(self.home_dir(), "~")
+		} else {
+			path
+		}
 	}
 }
