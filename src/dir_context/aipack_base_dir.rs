@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::dir_context::path_consts::AIPACK_BASE;
-use home::home_dir;
+use crate::support::files::home_dir;
 use simple_fs::SPath;
 use std::ops::Deref;
 
@@ -76,12 +76,10 @@ impl AipackBaseDir {
 /// NOTE: This does NOT create or test if the path exists
 ///
 fn aipack_base_dir() -> Result<SPath> {
-	let home_dir = home_dir().ok_or("No Home Dir Found, cannot init ./aipack-base")?;
+	let home_dir = home_dir().map_err(|_e| "No Home Dir Found, cannot init ./aipack-base")?;
 	if !home_dir.exists() {
-		Err(format!("Home dir '{}' does not exist", home_dir.to_string_lossy()))?;
+		Err(format!("Home dir '{home_dir}' does not exist"))?;
 	}
-	let home_dir = SPath::from_std_path_buf(home_dir)?;
-
 	let base_dir = home_dir.join(AIPACK_BASE);
 
 	Ok(base_dir)
