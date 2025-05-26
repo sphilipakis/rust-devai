@@ -96,13 +96,13 @@ pub(super) fn file_load(
 	rel_path: String,
 	options: Option<Value>,
 ) -> mlua::Result<mlua::Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?;
+
 	let base_path = compute_base_dir(runtime, options.as_ref())?;
-	let full_path = match base_path {
-		Some(base_path) => base_path.join(&rel_path),
-		None => {
-			let dir_context = runtime.dir_context();
-			dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?
-		}
+	let full_path = match (base_path, full_path.is_absolute()) {
+		(Some(base_path), false) => base_path.join(full_path),
+		_ => full_path,
 	};
 
 	let rel_path = SPath::new(rel_path);
@@ -939,8 +939,6 @@ mod tests {
 
 		// -- Exec
 		let res = eval_lua(&lua, &code)?;
-
-		println!("->> \n{}", res.x_pretty()?);
 
 		// -- Check
 		let res = res.as_array().ok_or("Should be array")?;

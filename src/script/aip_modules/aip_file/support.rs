@@ -10,6 +10,7 @@ use crate::types::{DestOptions, FileRecord};
 use mlua::FromLua as _;
 use mlua::{Lua, Value};
 use simple_fs::{ListOptions, SPath, list_files};
+use std::borrow::Cow;
 use std::path::Path;
 use std::str::FromStr;
 
@@ -45,10 +46,6 @@ pub fn base_dir_and_globs(
 	// Process any pack references in the globs
 	let processed_globs = process_path_references(runtime, globs)?;
 
-	// TODO: need to check this
-	// Here we do if no base dir, then current dir.
-	// let base_dir = base_dir.unwrap_or_else(|| SPath::new(""));
-
 	Ok((base_dir, processed_globs))
 }
 
@@ -61,8 +58,15 @@ pub fn base_dir_and_globs(
 pub fn process_path_reference(runtime: &Runtime, path: &str) -> Result<SPath> {
 	let dir_context = runtime.dir_context();
 
+	// -- Resolve the eventual `~/` with the home_dir
+	let path: Cow<str> = if let Some(path_from_home) = path.strip_prefix("~/") {
+		format!("{}/{path_from_home}", dir_context.home_dir()).into()
+	} else {
+		path.into()
+	};
+
 	// -- Process if 'ns@pack_name...`
-	if let Some(pack_ref_str) = extract_pack_reference(path) {
+	if let Some(pack_ref_str) = extract_pack_reference(&path) {
 		// Parse the pack reference
 		if let Ok(partial_pack) = PackRef::from_str(pack_ref_str) {
 			// Try to find the pack directory
@@ -89,7 +93,7 @@ pub fn process_path_reference(runtime: &Runtime, path: &str) -> Result<SPath> {
 	}
 
 	// -- Look if it is $tmp
-	let path = SPath::new(path);
+	let path = SPath::new(&path);
 	// It's a `$tmp/...` path
 	if dir_context.is_tmp_path(&path) {
 		dir_context.resolve_tmp_path(runtime.session(), &path)
