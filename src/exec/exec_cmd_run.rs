@@ -6,7 +6,7 @@ use crate::run::RunCommandOptions;
 use crate::run::run_command_agent;
 use crate::runtime::Runtime;
 use crate::support::jsons::into_values;
-use crate::types::FileMeta;
+use crate::types::FileInfo;
 use crate::{Error, Result};
 use simple_fs::{SEventKind, SPath, list_files, watch};
 use std::sync::Arc;
@@ -190,8 +190,8 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 			})
 			.collect();
 
-		let file_metas = files.into_iter().map(|f| FileMeta::new(f, true)).collect::<Vec<_>>();
-		Some(into_values(file_metas)?)
+		let file_infos = files.into_iter().map(|f| FileInfo::new(f, true)).collect::<Vec<_>>();
+		Some(into_values(file_infos)?)
 	} else {
 		None
 	};

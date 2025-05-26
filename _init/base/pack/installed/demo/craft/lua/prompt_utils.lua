@@ -86,7 +86,7 @@ function prep_inst_and_content(content, separator, options)
   return inst, content
 end
 
--- This loads maps the FileMeta array as a FileRecord array by loading each file
+-- This loads maps the FileInfo array as a FileRecord array by loading each file
 -- It also augments the FileRecord with `.comment_file_path` (.e.g., "// file: some/path/to/file.ext")
 -- returns nil if refs is nil
 function load_file_refs(base_dir, refs) 

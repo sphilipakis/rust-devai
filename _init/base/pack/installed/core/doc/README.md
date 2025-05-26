@@ -38,7 +38,7 @@ aip run ./my-agents/first-agent.aip -f "./README.md"
 -- `aip run -f src/**/*.rs`
 -- NOTE: Each file will be an input, so it can run concurrently (as defined by input_concurrency options)
 -- It has access to `input` and `before_all` and can fetch more data, returning it for the next stage.
--- Input originates from the command line (when using -f, this will be a FileMeta object).
+-- Input originates from the command line (when using -f, this will be a FileInfo object).
 
 local file_record = aip.file.load(input.path)
 return {
@@ -205,7 +205,7 @@ Here is a full description of the complete flow:
 - First, an agent receives zero or more inputs.
     - Inputs can be given through the command line via:
         - `-i` or `--input` to specify one input (multiple `-i`/`--input` flags can be used). The input type is typically a string.
-        - `-f some_glob` which creates one input per matched file, with the input structured as a [FileMeta object](lua.md#filemeta) `{path, name, stem, ext, ...}`.
+        - `-f some_glob` which creates one input per matched file, with the input structured as a [FileInfo object](lua.md#filemeta) `{path, name, stem, ext, ...}`.
     - Then the following stages occur (all are optional):
 - **Stage 1**: `# Before All` (lua block) (optional)
     - The `lua` block has the following in scope:
@@ -219,7 +219,7 @@ Here is a full description of the complete flow:
 - **Stage 2**: `# Data` (lua block) (optional)
     - This stage runs *for each input* item.
     - The `lua` block receives the following variables in scope:
-        - `input`: The current input item (string, [FileMeta](lua.md#filemeta), or value from `# Before All`).
+        - `input`: The current input item (string, [FileInfo](lua.md#filemeta), or value from `# Before All`).
         - `before_all`: Data returned from the `# Before All` stage (or `nil`).
         - `aip`: The [AIPACK Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx).
@@ -263,7 +263,7 @@ Example: `aip run proof-rs-comments -f "./src/main.rs"`
 (You can also use any glob pattern, like `-f "./src/**/*.rs"`)
 
 - This command initializes the `.aip/defaults` folder if necessary, containing the "Command Agent Markdown" file `proof-rs-comments.aip` (see [.aip/defaults/proof-comments.aip](./_init/agents/proof-comments.aip)), and runs it using `genai` as follows:
-    - `-f "./src/**/*.rs"`: The `-f` argument takes a glob pattern. An "input" record (a [FileMeta object](lua.md#filemeta)) is created for each matching file.
+    - `-f "./src/**/*.rs"`: The `-f` argument takes a glob pattern. An "input" record (a [FileInfo object](lua.md#filemeta)) is created for each matching file.
     - `# Data`: Contains a ```lua``` block executed for each `input`.
         - Provides Lua utility functions (`aip.*`) for tasks like listing files, loading content (`aip.file.load`), etc. The results are returned as `data` for use in prompt stages.
     - Prompt Stages (`# System`, `# Instruction`, `# Assistant`): Handlebars template sections with access to `input`, `data`, and `before_all`.
@@ -314,7 +314,7 @@ aip run path/to/my-agent.aip
 - `aip run`: Runs an agent file (`.aip`) or a pre-installed pack.
     - The first argument is the agent file path or the pack name (e.g., `namespace@pack/agent`).
     - `-i <string>`: Provides a single string input. Can be used multiple times.
-    - `-f <path_or_glob>`: Specifies input files using a path or glob pattern. Creates one input ([FileMeta](lua.md#filemeta)) per matched file. Can be used multiple times.
+    - `-f <path_or_glob>`: Specifies input files using a path or glob pattern. Creates one input ([FileInfo](lua.md#filemeta)) per matched file. Can be used multiple times.
     - `--verbose` (`-v`): Prints detailed information to the console, including rendered prompts, AI responses, and `# Output` stage return values (if string-like).
     - `--dry req`: Performs a dry run, executing only the `# Before All`, `# Data`, and template rendering stages (`# System`, `# Instruction`, `# Assistant`). Use with `--verbose` to see the rendered prompt content. Does not call the AI.
     - `--dry res`: Performs a dry run including the AI call. It executes stages up to and including the AI interaction but skips the `# Output` and `# After All` stages. Use with `--verbose` to see the prompt sent and the AI response received.

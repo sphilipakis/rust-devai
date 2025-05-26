@@ -10,7 +10,7 @@
 //!
 //! - `aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>`  
 //! - `aip.file.load_md_split_first(path: string): MdSplitFirst`  
-//! - `aip.file.save_html_to_md(html_path: string, dest?: string | table): FileMeta`  
+//! - `aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo`  
 //!
 //! ## Error
 //!

@@ -25,7 +25,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 
 #### Common Data Types:
 
-- [`FileMeta`](#filemeta) (for `aip.file..`) (FileMeta + `.content`)
+- [`FileInfo`](#filemeta) (for `aip.file..`) (FileInfo + `.content`)
 - [`FileRecord`](#filerecord) (for `aip.file..`)
 - [`WebResponse`](#webresponse) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
@@ -90,13 +90,13 @@ aip.file.save(rel_path: string, content: string)
 
 aip.file.append(rel_path: string, content: string)
 
-aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 
-aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileMeta>
+aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileInfo>
 
 aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>
 
-aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileMeta | nil
+aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 
 aip.file.load_json(path: string): table | value
 
@@ -110,9 +110,9 @@ aip.file.load_md_sections(path: string, headings?: string | list<string>): list<
 
 aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
 
-aip.file.save_html_to_md(html_path: string, dest?: string | table): FileMeta
+aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
-aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileMeta
+aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
 ```
 
 
@@ -208,7 +208,7 @@ Ensure a file exists at the given path, optionally creating it or adding content
 
 ```lua
 -- API Signature
-aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 ```
 
 Checks if the file exists. If not, creates it with `content`. If it exists and `options.content_when_empty` is true and the file is empty (or whitespace only), writes `content`. Intended for files, not directories.
@@ -220,7 +220,7 @@ Checks if the file exists. If not, creates it with `content`. If it exists and `
   - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file if the file is empty (or only contains whitespace). Defaults to `false`.
 
 #### Returns
-- `FileMeta`: Metadata ([FileMeta](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
 ```lua
@@ -241,7 +241,7 @@ Returns an error (Lua table `{ error: string }`) on creation/write failure, perm
 
 ### aip.file.list
 
-List file metadata ([FileMeta](#filemeta)) matching glob patterns.
+List file metadata ([FileInfo](#filemeta)) matching glob patterns.
 
 ```lua
 -- API Signature
@@ -252,16 +252,16 @@ aip.file.list(
     absolute?: boolean,
     with_meta?: boolean
   }
-): list<FileMeta>
+): list<FileInfo>
 ```
 
-Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileMeta](#filemeta) objects (metadata only, no content).
+Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileInfo](#filemeta) objects (metadata only, no content).
 
 #### Arguments
 - `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
 - `options?: table` (optional):
   - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
-  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileMeta](#filemeta) objects will be absolute.
+  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#filemeta) objects will be absolute.
     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
@@ -269,7 +269,7 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
     if only the path information is needed. Defaults to `true`.
 
 #### Returns
-- `list<FileMeta>`: A Lua list of [FileMeta](#filemeta) tables. Empty if no matches.
+- `list<FileInfo>`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
 
 #### Example
 ```lua
@@ -352,7 +352,7 @@ Returns an error (Lua table `{ error: string }`) on invalid arguments, resolutio
 
 ### aip.file.first
 
-Find the first file matching glob patterns and return its metadata ([FileMeta](#filemeta)).
+Find the first file matching glob patterns and return its metadata ([FileInfo](#filemeta)).
 
 ```lua
 -- API Signature
@@ -362,11 +362,11 @@ aip.file.first(
     base_dir?: string,
     absolute?: boolean
   }
-): FileMeta | nil
+): FileInfo | nil
 ```
 
 Searches for files matching the `include_globs` patterns within the specified `base_dir` (or workspace root).
-It stops searching as soon as the first matching file is found and returns its [FileMeta](#filemeta) object (metadata only, no content).
+It stops searching as soon as the first matching file is found and returns its [FileInfo](#filemeta) object (metadata only, no content).
 If no matching file is found, it returns `nil`.
 
 #### Arguments
@@ -375,11 +375,11 @@ If no matching file is found, it returns `nil`.
 - `options?: table` (optional) - A table containing options:
   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
-  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileMeta](#filemeta) object (if found) will be absolute.
+  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#filemeta) object (if found) will be absolute.
     If `false` (default), the `path` will be relative to the `base_dir`. Similar to `aip.file.list`, paths outside `base_dir` become absolute.
 
 #### Returns
-- `FileMeta | nil`: If a matching file is found, returns a [FileMeta](#filemeta) table. If no matching file is found, returns `nil`.
+- `FileInfo | nil`: If a matching file is found, returns a [FileInfo](#filemeta) table. If no matching file is found, returns `nil`.
 
 #### Example
 ```lua
@@ -599,7 +599,7 @@ Loads an HTML file, converts its content to Markdown, and saves it.
 aip.file.save_html_to_md(
   html_path: string,
   dest?: string | table
-): FileMeta
+): FileInfo
 ```
 
 Loads the HTML file at `html_path` (relative to workspace), converts its content to Markdown, and saves the result. The destination can be specified as a string path or a table of options ([DestOptions](#destoptions)).
@@ -621,8 +621,8 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 
 #### Returns
 
-- `FileMeta`
-  Metadata ([FileMeta](#filemeta)) about the created Markdown file.
+- `FileInfo`
+  Metadata ([FileInfo](#filemeta)) about the created Markdown file.
 
 #### Example
 
@@ -655,7 +655,7 @@ Loads an HTML file, "slims" its content (removes scripts, styles, comments, etc.
 aip.file.save_html_to_slim(
   html_path: string,
   dest?: string | table
-): FileMeta
+): FileInfo
 ```
 
 Loads the HTML file at `html_path` (relative to workspace), removes non-content elements, and saves the cleaned HTML. The destination can be specified as a string path or a table of options ([DestOptions](#destoptions)).
@@ -677,8 +677,8 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 
 #### Returns
 
-- `FileMeta`
-  Metadata ([FileMeta](#filemeta)) about the created slimmed HTML file.
+- `FileInfo`
+  Metadata ([FileInfo](#filemeta)) about the created slimmed HTML file.
 
 #### Example
 
@@ -734,7 +734,7 @@ aip.path.parse(path: string | nil): table | nil
 
 ### aip.path.parse
 
-Parses a path string and returns a [FileMeta](#filemeta) table representation of its components.
+Parses a path string and returns a [FileInfo](#filemeta) table representation of its components.
 
 ```lua
 -- API Signature
@@ -749,7 +749,7 @@ Parses the given path string into a structured table containing components like 
 
 #### Returns
 
-- `table | nil`: A [FileMeta](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+- `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 
 #### Example
 
@@ -2683,7 +2683,7 @@ Represents a file with its metadata and content. Returned by `aip.file.load` and
 }
 ```
 
-### FileMeta
+### FileInfo
 
 Represents file metadata without content. Returned by `aip.file.list`, `aip.file.first`, `aip.file.ensure_exists`, `aip.file.save_html_to_md`, and `aip.file.save_html_to_slim`.
 

@@ -8,7 +8,7 @@
 
 ## 2025-05-16 - [v0.7.9](https://github.com/jeremychone/rust-devai/compare/v0.7.7...v0.7.9)
 
-- `+` aip.path.parse - parse a file and return a FileMeta (without size, modified, ...)
+- `+` aip.path.parse - parse a file and return a FileInfo (without size, modified, ...)
 - `+` aip.web.resolve_href
 - `+` aip.web.parse_url - parse a URL string into a url struct
 - `^` pricing - update gemini caching pricing
@@ -34,7 +34,7 @@
     - Added `aip.file.append_json_lines(path, [data])`
     - Added `aip.file.load_ndjson(path)`
     - Added `aip.file.load_json`
-    - `FileMeta` and `FileRecord` now have created, updated, size metadata
+    - `FileInfo` and `FileRecord` now have created, updated, size metadata
 - `^` `aip.json`
     - Now `aip.json.stringify(data)` stringify to single line. 
     - Added `aip.json.stringify_pretty(data)`

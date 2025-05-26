@@ -205,7 +205,7 @@ COHERE_API_KEY
   - agent file `main.aip`
   - Full path `~/.aipack-base/pack/installed/demo/proof/main.aip`
   - You can pass input to your agent using:
-    - `-f "path/with/optional/**/glob.*" -f "README.md"` (the Lua code will receive a `{path = .., name =..}` FileMeta-like structure as input)
+    - `-f "path/with/optional/**/glob.*" -f "README.md"` (the Lua code will receive a `{path = .., name =..}` FileInfo-like structure as input)
     -  `-i "some string" -i "another input"` (the Lua code will receive these strings as input)
     - Each input triggers one run of the agent.
 - `aip run some/path/to/agent`

@@ -4,7 +4,7 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tes
 
 use super::*;
 use crate::_test_support::{assert_contains, load_test_agent, run_test_agent, run_test_agent_with_input};
-use crate::types::FileMeta;
+use crate::types::FileInfo;
 use simple_fs::SPath;
 use value_ext::JsonValueExt;
 
@@ -31,9 +31,9 @@ async fn test_run_agent_llm_c_on_file_ok() -> Result<()> {
 
 	// -- Execute
 	let on_file = SPath::new("./other/hello.txt");
-	let file_meta = FileMeta::new(on_file, false);
+	let file_info = FileInfo::new(on_file, false);
 
-	let res = run_test_agent_with_input(&runtime, &agent, file_meta).await?;
+	let res = run_test_agent_with_input(&runtime, &agent, file_info).await?;
 
 	// -- Check
 	// The output return the {data_path: data.file.path, input_name: input.name}

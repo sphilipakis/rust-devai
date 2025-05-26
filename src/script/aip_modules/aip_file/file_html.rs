@@ -2,7 +2,7 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 
-use crate::types::FileMeta;
+use crate::types::FileInfo;
 use mlua::{IntoLua, Lua, Value};
 use simple_fs::SPath;
 use std::fs::{read_to_string, write};
@@ -20,7 +20,7 @@ use std::fs::{read_to_string, write};
 ///     file_name?: string,
 ///     suffix?: string
 ///   }
-/// ): FileMeta
+/// ): FileInfo
 /// ```
 ///
 /// ### Arguments
@@ -41,7 +41,7 @@ use std::fs::{read_to_string, write};
 ///
 /// ### Returns
 ///
-/// - `FileMeta`  
+/// - `FileInfo`  
 ///   Metadata about the created Markdown file (path, name, stem, ext, timestamps, size).
 ///
 /// ### Example
@@ -89,7 +89,7 @@ pub(super) fn file_save_html_to_md(
 	write(&full_md, md_content)
 		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{}'. Cause: {}", rel_md, e)))?;
 
-	let meta = FileMeta::new(rel_md, &full_md);
+	let meta = FileInfo::new(rel_md, &full_md);
 	meta.into_lua(lua)
 }
 
@@ -107,7 +107,7 @@ pub(super) fn file_save_html_to_md(
 ///     file_name?: string,
 ///     suffix?: string
 ///   }
-/// ): FileMeta
+/// ): FileInfo
 /// ```
 ///
 /// ### Arguments
@@ -127,7 +127,7 @@ pub(super) fn file_save_html_to_md(
 ///
 /// ### Returns
 ///
-/// - `FileMeta`  
+/// - `FileInfo`  
 ///   Metadata about the created slimmed HTML file.
 ///
 /// ### Example
@@ -179,7 +179,7 @@ pub(super) fn file_save_html_to_slim(
 		))
 	})?;
 
-	let meta = FileMeta::new(rel_html_dest, &full_html_dest);
+	let meta = FileInfo::new(rel_html_dest, &full_html_dest);
 	meta.into_lua(lua)
 }
 
@@ -233,7 +233,7 @@ mod tests {
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check
-		// Check FileMeta result
+		// Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, md_path.as_str());
 		assert_eq!(res.x_get_str("ext")?, "md");
 		assert!(res.x_get_i64("size")? > 0);
@@ -291,7 +291,7 @@ mod tests {
 		let lua_code = format!(r#"return aip.file.save_html_to_slim("{}")"#, fx_html_path);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
-		// -- Check FileMeta result
+		// -- Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
 		assert_eq!(res.x_get_str("name")?, expected_slim_path_rel.name());
 		assert_eq!(res.x_get_str("ext")?, "html");
@@ -330,7 +330,7 @@ mod tests {
 		);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
-		// -- Check FileMeta result
+		// -- Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
 		assert_eq!(res.x_get_str("name")?, "custom_slim_output.html");
 
@@ -362,7 +362,7 @@ mod tests {
 		);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
-		// -- Check FileMeta result
+		// -- Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
 		assert_eq!(res.x_get_str("name")?, format!("{}.html", fx_html_path.stem()));
 
@@ -396,7 +396,7 @@ mod tests {
 		);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
-		// -- Check FileMeta result
+		// -- Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
 		assert_eq!(res.x_get_str("name")?, expected_output_filename);
 
@@ -424,7 +424,7 @@ mod tests {
 		);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
-		// -- Check FileMeta result
+		// -- Check FileInfo result
 		assert_eq!(res.x_get_str("path")?, expected_slim_path_rel.as_str());
 		assert_eq!(res.x_get_str("name")?, fx_file_name);
 

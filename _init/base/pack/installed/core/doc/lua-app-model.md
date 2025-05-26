@@ -15,13 +15,13 @@ The full Lua APIs (`aip.` module) can be found in [lua-apis](lua-apis)
 
 - In the `# Before All` stage
   - `inputs`: A Lua list containing all the inputs provided to the agent run command.
-    - When `-f "**/some/glob*.*"` is used, each element in `inputs` will be a [FileMeta](lua-apis#filemeta) object.
+    - When `-f "**/some/glob*.*"` is used, each element in `inputs` will be a [FileInfo](lua-apis#filemeta) object.
     - When `-i "some string"` is used, each element will be the corresponding string.
     <br/>
 
 - In the `# Data` stage (runs per input)
   - `input`: The individual input item being processed for this cycle.
-    - If from `-f`, it's a [FileMeta](lua-apis#filemeta) object.
+    - If from `-f`, it's a [FileInfo](lua-apis#filemeta) object.
     - If from `-i`, it's a string.
     - Can be modified by the return value of `# Before All` using `aip.flow.before_all_response`.
   - `before_all`: The data returned by the `# Before All` stage (if any, otherwise `nil`).
@@ -59,7 +59,7 @@ For example:
 - The scripting model is designed to pass data between stages (e.g., return data from `# Before All` to be used in `# Data`, `# Output`, `# After All`; return data from `# Data` to be used in prompt stages and `# Output`; return data from `# Output` to be aggregated in `# After All`).
 - It is **not** possible to return Lua functions or userdata between stages. Only serializable data (tables, strings, numbers, booleans, nil) can be reliably passed.
 - As a best practice, when processing multiple files (via `-f`):
-    - The `# Before All` stage can filter or modify the `inputs` list (list of `FileMeta` objects) but should generally avoid loading file content.
+    - The `# Before All` stage can filter or modify the `inputs` list (list of `FileInfo` objects) but should generally avoid loading file content.
     - The `# Data` stage (which runs per file) is the best place to load the content of the *current* file (`aip.file.load(input.path)`) because this allows the `input_concurrency` setting to parallelize file loading and processing.
     - The `# Before All` stage is suitable for preparing common resources (e.g., ensuring a shared output file exists) and returning common configuration or paths via `before_all`.
 - You can use Lua's `require("my-module")` function to include custom Lua code. Place your `.lua` files in the `lua/` subdirectory relative to your `.aip` agent file (e.g., `my-agent.aip` can `require("utils")` if `lua/utils.lua` exists).

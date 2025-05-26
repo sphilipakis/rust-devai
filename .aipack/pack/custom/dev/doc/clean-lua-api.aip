@@ -43,7 +43,7 @@ Update instruruction:
 - Second make sure that when it returns a type or take the type in arguments that defined in the Types, we put there markdown reference to it. (we do not need to re-inline the type)
 So for example this is good: 
 ```md
-- `list<FileMeta>: table`: A Lua list of [FileMeta](#filemeta) tables. Empty if no matches.
+- `list<FileInfo>: table`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
 ```
 - Do not add markdown links inside ticks, they won't link in Markdodown
 NOT THIS
@@ -58,11 +58,11 @@ BUT THIS
 But great to make thing linkable when possible
 NOT THIS
 ```md
-List file metadata (`FileMeta`) matching glob patterns.
+List file metadata (`FileInfo`) matching glob patterns.
 ```
 But this: 
 ```md
-List file metadata ([FileMeta](#filemeta)) matching glob patterns.
+List file metadata ([FileInfo](#filemeta)) matching glob patterns.
 ```
 
 - Now if the data is not in the type section, do not remove the inline definition.

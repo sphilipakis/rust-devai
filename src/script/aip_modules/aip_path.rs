@@ -22,7 +22,7 @@ use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::support::{into_option_string, into_vec_of_strings};
-use crate::types::FileMeta;
+use crate::types::FileInfo;
 use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
 use simple_fs::SPath;
 use std::path::Path;
@@ -81,7 +81,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Parses a path string and returns a [FileMeta](#filemeta) table representation of its components.
+/// Parses a path string and returns a [FileInfo](#filemeta) table representation of its components.
 ///
 /// ```lua
 /// -- API Signature
@@ -96,7 +96,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ### Returns
 ///
-/// - `table | nil`: A [FileMeta](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+/// - `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 ///
 /// ### Example
 ///
@@ -124,7 +124,7 @@ fn path_parse(lua: &Lua, path: Value) -> mlua::Result<Value> {
 	};
 
 	let spath = SPath::new(path);
-	let meta = FileMeta::new(spath, false);
+	let meta = FileInfo::new(spath, false);
 	meta.into_lua(lua)
 }
 

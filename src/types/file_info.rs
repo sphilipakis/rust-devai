@@ -2,11 +2,11 @@ use mlua::{IntoLua, Lua};
 use serde::Serialize;
 use simple_fs::SPath;
 
-/// The FileMeta object contains the metadata of a file but not its content.
+/// The FileInfo object contains the metadata of a file but not its content.
 /// The created_epoch_us, modified_epoch_us, and size metadata are generally loaded,
 /// but this can be turned off when listing files using the `with_meta = false` option.
 #[derive(Debug, Serialize)]
-pub struct FileMeta {
+pub struct FileInfo {
 	path: String,
 	/// The dir/parent path of this file from path (will be empty if no parent of the rel path)
 	dir: String,
@@ -40,15 +40,16 @@ impl<'a> From<&'a SPath> for WithMeta<'a> {
 	}
 }
 
-impl FileMeta {
+impl FileInfo {
 	/// - with_meta: when true, will attempt to get the file meta. Will ignore if error
+	/// - with_meta if SPath, then, it's true, and the SPath is the absolute path
 	/// - `base_path` is only use with_meta true to attempt to get the meta
 	pub fn new<'a>(rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
 		let path: SPath = rel_path.into();
 
 		let with_meta: WithMeta = with_meta.into();
 		if with_meta.with_meta {
-			let mut res = FileMeta::from_path(path.clone());
+			let mut res = FileInfo::from_path(path.clone());
 			let full_path = with_meta.full_path.unwrap_or(&path);
 
 			if let Ok(meta) = full_path.meta() {
@@ -58,14 +59,14 @@ impl FileMeta {
 			}
 			res
 		} else {
-			FileMeta::from_path(path)
+			FileInfo::from_path(path)
 		}
 	}
 
-	/// Private util
+	/// Internal from spath (note: do not make public)
 	fn from_path(file: SPath) -> Self {
 		let dir = file.parent().map(|p| p.to_string()).unwrap_or_default();
-		FileMeta {
+		FileInfo {
 			path: file.to_string(),
 			name: file.name().to_string(),
 			dir,
@@ -81,7 +82,7 @@ impl FileMeta {
 
 // region:    --- Lua
 
-impl IntoLua for FileMeta {
+impl IntoLua for FileInfo {
 	fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
 		table.set("path", self.path)?;

@@ -11,10 +11,10 @@
 //! - `aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord`
 //! - `aip.file.save(rel_path: string, content: string)`
 //! - `aip.file.append(rel_path: string, content: string)`
-//! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileMeta`
-//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean, with_meta: boolean}): list<FileMeta>`
+//! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileInfo`
+//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean, with_meta: boolean}): list<FileInfo>`
 //! - `aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>`
-//! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileMeta | nil`
+//! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileInfo | nil`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
@@ -25,7 +25,7 @@ use crate::script::aip_modules::aip_file::support::{
 	base_dir_and_globs, check_access_write, compute_base_dir, create_file_records, list_files_with_options,
 };
 use crate::support::{AsStrsExt, files};
-use crate::types::{FileMeta, FileRecord};
+use crate::types::{FileInfo, FileRecord};
 use mlua::{FromLua, IntoLua, Lua, Value};
 use simple_fs::{SPath, ensure_file_dir, iter_files};
 use std::fs::write;
@@ -252,7 +252,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileMeta
+/// aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 /// ```
 ///
 /// Checks if the file at `path` (relative to the workspace root) exists.
@@ -276,7 +276,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 ///
 /// ### Returns
 ///
-/// - `FileMeta: table` - Metadata about the file (even if it was just created).
+/// - `FileInfo: table` - Metadata about the file (even if it was just created).
 ///   ```ts
 ///   {
 ///     path : string,             // Relative path used
@@ -294,8 +294,8 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 /// ```lua
 /// -- Ensure a config file exists, creating it with defaults if needed
 /// local config_content = "-- Default Settings --\nenabled=true"
-/// local file_meta = aip.file.ensure_exists("config/settings.lua", config_content)
-/// print("Ensured file:", file_meta.path)
+/// local file_info = aip.file.ensure_exists("config/settings.lua", config_content)
+/// print("Ensured file:", file_info.path)
 ///
 /// -- Ensure a log file exists, but don't overwrite if it has content
 /// aip.file.ensure_exists("logs/activity.log")
@@ -343,14 +343,14 @@ pub(super) fn file_ensure_exists(
 		write(&full_path, content)?;
 	}
 
-	let file_meta = FileMeta::new(rel_path, &full_path);
+	let file_info = FileInfo::new(rel_path, &full_path);
 
-	file_meta.into_lua(lua)
+	file_info.into_lua(lua)
 }
 
 /// ## Lua Documentation
 ///
-/// List file metadata (`FileMeta`) matching glob patterns.
+/// List file metadata (`FileInfo`) matching glob patterns.
 ///
 /// ```lua
 /// -- API Signature
@@ -361,11 +361,11 @@ pub(super) fn file_ensure_exists(
 ///     absolute?: boolean,
 ///     with_meta?: boolean
 ///   }
-/// ): list<FileMeta>
+/// ): list<FileInfo>
 /// ```
 ///
 /// Finds files matching the `include_globs` patterns within the specified `base_dir` (or workspace root)
-/// and returns a list of `FileMeta` objects containing information about each file (path, name, timestamps, size, etc.),
+/// and returns a list of `FileInfo` objects containing information about each file (path, name, timestamps, size, etc.),
 /// but *not* the file content.
 ///
 /// ### Arguments
@@ -375,7 +375,7 @@ pub(super) fn file_ensure_exists(
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
-///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileMeta` objects will be absolute.
+///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileInfo` objects will be absolute.
 ///     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
 ///     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
 ///   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
@@ -384,7 +384,7 @@ pub(super) fn file_ensure_exists(
 ///
 /// ### Returns
 ///
-/// - `list<FileMeta>: table` - A Lua list (table) where each element is a `FileMeta` table:
+/// - `list<FileInfo>: table` - A Lua list (table) where each element is a `FileInfo` table:
 ///   ```ts
 ///   {
 ///     path : string,             // Path (relative to base_dir or absolute)
@@ -451,8 +451,8 @@ pub(super) fn file_list(
 
 	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
 
-	let file_metas: Vec<FileMeta> = spaths.into_iter().map(|spath| FileMeta::new(spath, with_meta)).collect();
-	let res = file_metas.into_lua(lua)?;
+	let file_infos: Vec<FileInfo> = spaths.into_iter().map(|spath| FileInfo::new(spath, with_meta)).collect();
+	let res = file_infos.into_lua(lua)?;
 
 	Ok(res)
 }
@@ -555,7 +555,7 @@ pub(super) fn file_list_load(
 
 /// ## Lua Documentation
 ///
-/// Find the first file matching glob patterns and return its metadata (`FileMeta`).
+/// Find the first file matching glob patterns and return its metadata (`FileInfo`).
 ///
 /// ```lua
 /// -- API Signature
@@ -565,11 +565,11 @@ pub(super) fn file_list_load(
 ///     base_dir?: string,
 ///     absolute?: boolean
 ///   }
-/// ): FileMeta | nil
+/// ): FileInfo | nil
 /// ```
 ///
 /// Searches for files matching the `include_globs` patterns within the specified `base_dir` (or workspace root).
-/// It stops searching as soon as the first matching file is found and returns its `FileMeta` object (metadata only, no content).
+/// It stops searching as soon as the first matching file is found and returns its `FileInfo` object (metadata only, no content).
 /// If no matching file is found, it returns `nil`.
 ///
 /// ### Arguments
@@ -579,12 +579,12 @@ pub(super) fn file_list_load(
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
-///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileMeta` object (if found) will be absolute.
+///   - `absolute?: boolean` (optional): If `true`, the `path` in the returned `FileInfo` object (if found) will be absolute.
 ///     If `false` (default), the `path` will be relative to the `base_dir`. Similar to `aip.file.list`, paths outside `base_dir` become absolute.
 ///
 /// ### Returns
 ///
-/// - `FileMeta: table | nil` - If a matching file is found, returns a `FileMeta` table:
+/// - `FileInfo: table | nil` - If a matching file is found, returns a `FileInfo` table:
 ///   ```ts
 ///   {
 ///     path : string,             // Path (relative to base_dir or absolute)
@@ -672,7 +672,7 @@ pub(super) fn file_first(
 			.map_err(|err| Error::cc("Cannot diff with base_path", err))?
 	};
 
-	let res = FileMeta::new(spath, &absolute_path).into_lua(lua)?;
+	let res = FileInfo::new(spath, &absolute_path).into_lua(lua)?;
 
 	Ok(res)
 }
