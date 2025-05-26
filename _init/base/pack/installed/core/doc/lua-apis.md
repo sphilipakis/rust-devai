@@ -1847,22 +1847,24 @@ Parses the given URL string and extracts its various components.
   - `username: string` (The username for authentication, empty string if not present)
   - `password: string | nil` (The password for authentication)
   - `url: string` (The original or normalized URL string that was parsed)
+  - `page_url: string` - (The url without the query and fragment
 - If the input `url` is `nil`, the function returns `nil`.
 
 #### Example
 
 ```lua
-local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path?param1=val#fragment")
+local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path/to/page.html?param1=val#fragment")
 if parsed then
   print(parsed.scheme)       -- "https"
   print(parsed.host)         -- "example.com"
   print(parsed.port)         -- 8080
-  print(parsed.path)         -- "/path"
+  print(parsed.path)         -- "/path/to/page.html"
   print(parsed.query.param1) -- "val"
   print(parsed.fragment)     -- "fragment"
   print(parsed.username)     -- "user"
   print(parsed.password)     -- "pass"
-  print(parsed.url)          -- "https://user:pass@example.com:8080/path?query=val#fragment"
+  print(parsed.url)          -- "https://user:pass@example.com:8080/path/to/page.html?query=val#fragment"
+  print(parsed.page_url)     -- "https://user:pass@example.com:8080/path/to/page.html"
 end
 
 local nil_result = aip.web.parse_url(nil)
