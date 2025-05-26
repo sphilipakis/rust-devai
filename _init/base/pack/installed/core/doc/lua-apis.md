@@ -23,6 +23,28 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.hbs`](#aiphbs): Handlebars template rendering.
 - [`aip.code`](#aipcode): Code commenting utilities.
 
+#### File Path supported
+
+AIPACK supports several types of file paths:
+
+| Type                   | Example                                  | Notes                                                                                                    |
+|------------------------|------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| Relative               | `some/file.txt`                          | Relative to the workspace directory                                                                      |
+| Absolute               | `/absolute/path/file.txt`                | Absolute path (`C:/` on Windows)                                                                         |
+| Pack Ref               | `my_org@my_pack/path/file.txt`           | Finds the closest pack (in custom workspace, custom base, or install base) and uses this as a directory  |
+| Home Tilde             | `~/path/to/file.txt`                     | User home directory; `~` is replaced by the home directory (or `/` if no home directory is found)        |
+| Session TMP            | `$tmp/some/file.txt`                     | Located in `.aipack/.sessions/_uid_/` within the workspace; unique per session (until command stops)     |
+| Workspace Pack Support | `my_org@my_pack$workspace/some/file.txt` | Maps to `.aipack/support/pack/my_org/my_pack/some/file.txt` in the workspace                             |
+| Base Pack Support      | `my_org@my_pack$base/some/file.txt`      | Maps to `.aipack-base/support/pack/my_org/my_pack/some/file.txt` in the base directory                   |
+
+Important notes:
+
+- The workspace directory is the parent directory of the `.aipack/` folder. Like `.git` or `.vscode`, the `.aipack/` folder marks a directory as the workspace.
+- The pack support directory suffixes `$workspace` and `$base` must appear immediately after the pack name.
+- These paths can be used in globs (e.g., `aip.file.list({"~/path/to/**/*.md", "pro@rust10x/guide/**/*.md"})`).
+
+
+
 #### Common Data Types:
 
 - [`FileInfo`](#filemeta) (for `aip.file..`) (FileInfo + `.content`)

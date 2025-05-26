@@ -15,7 +15,7 @@ use simple_fs::SPath;
 ///
 /// - `pro@rust10x/guide/base/some.md` `~/.aipack-base/pack/installed/pro/rust10x` (so the dir)
 /// - `pro@rust10x/guide/base/**/*.md` `~/.aipack-base/pack/installed/pro/rust10x` (so the dir)
-/// - `pro@coder$workspace/so/data.md` `.aipack/support/`
+/// - `pro@coder$workspace/so/data.md` `.aipack/support/pack/pro/coder`
 pub fn resolve_pack_ref_base_path(dir_context: &DirContext, pack_ref: &PackRef) -> Result<SPath> {
 	match pack_ref.sub_path_scope {
 		// -- If we have the pack dir,
