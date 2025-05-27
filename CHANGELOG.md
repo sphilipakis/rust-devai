@@ -1,5 +1,24 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-05-26 - [v0.7.11](https://github.com/jeremychone/rust-devai/compare/v0.7.10...v0.7.11)
+
+- `+` BIG ONE - on mac/lin now `aip self update` fully update binary!
+- `+` Now support `~/` for home dir, and will normalize path with `~/` (to limit Personal Information in prompt)
+- `+` `aip.file.save_changes` - big one, now support applying SEARCH/REPLACE pairs as well as whole content (use in `pro@coder` experimental flag)
+- `+` `aip.text.split_.._line` - added `split_first_line` and `split_last_line` (more bullet proof way to split a file from delim)
+- `+` `aip.text.split_last`
+- `+` AgentOptions - added top_p for agent options
+- `^` `aip.web.parse_url` - add page_url (no fragment, no query)
+- `^` add `aip.file.exits(path)` (same as `aip.path.exists`) make it work with pack ref (when no exists)
+- `^` doc - update `core@doc/lua-apis.md` more path information 
+- `^` AiResponse.info - add temperature when set
+- `-` update/fix pricing
+- `-` fix gemini cached computation (from genai 0.3.3)
+- `.` rename to FileInfo (from FileMeta) - Should not change aips
+- `.` update init config.tomls
+- `.` craft@text - add for no long dash (more)
+
 ## 2025-05-17 - [v0.7.10](https://github.com/jeremychone/rust-devai/compare/v0.7.9...v0.7.10)
 
 - `+` meta block / parametric prompt - added support for json and yaml (on top of toml)
