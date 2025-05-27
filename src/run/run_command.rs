@@ -1,6 +1,6 @@
 use crate::agent::{Agent, AgentOptions, AgentRef};
 use crate::dir_context::DirContext;
-use crate::hub::get_hub;
+use crate::hub::{HubEvent, get_hub};
 use crate::run::RunBaseOptions;
 use crate::run::literals::Literals;
 use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
@@ -58,8 +58,10 @@ pub async fn run_command_agent(
 			// it is an skip action
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
-				hub.publish(format!("-! Aipack Skip inputs at Before All section{reason_msg}"))
-					.await;
+				hub.publish(HubEvent::info_short(format!(
+					"Aipack Skip inputs at Before All section{reason_msg}"
+				)))
+				.await;
 				return Ok(RunAgentResponse::default());
 			}
 
@@ -184,7 +186,10 @@ pub async fn run_command_agent(
 				// if it is a skip, we skip
 				FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 					let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
-					hub.publish(format!("-! Aipack Skip input at Output stage{reason_msg}")).await;
+					hub.publish(HubEvent::info_short(format!(
+						"-! Aipack Skip input at Output stage{reason_msg}"
+					)))
+					.await;
 					Value::Null
 				}
 

@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
-use crate::hub::get_hub;
+use crate::hub::{HubEvent, get_hub};
 use crate::pricing::price_it;
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
@@ -99,8 +99,10 @@ pub async fn run_agent_input(
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
 
-				hub.publish(format!("-! Aipack Skip input at Data stage: {label}{reason_txt}"))
-					.await;
+				hub.publish(HubEvent::info_short(format!(
+					"-! Aipack Skip input at Data stage: {label}{reason_txt}"
+				)))
+				.await;
 				return Ok(None);
 			}
 
