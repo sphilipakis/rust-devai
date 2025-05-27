@@ -25,7 +25,7 @@ tokio = { version = "1" }
 tokio-stream = "0.1.17"
 flume = "0.11.1"
 # -- AI
-genai = { version = "0.3.4"}
+genai = { version = "0.3.5"}
 # -- Json & Data Files
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -57,7 +57,6 @@ zip = "3"
 walkdir = "2.4"
 size = "0.5.0"
 trash = "5.2.2"
-
 # -- Others
 derive_more = {version = "2.0.0", features = ["from","display","debug"] }
 strum = { version = "0.27", features = ["derive"] }
