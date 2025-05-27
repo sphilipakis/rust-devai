@@ -1,3 +1,5 @@
+use crate::dir_context::PathResolver;
+use crate::runtime::Runtime;
 use crate::support::W;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Value};
@@ -116,3 +118,17 @@ impl IntoLua for W<String> {
 }
 
 // endregion: --- mlua::Value utils
+
+// region:    --- Common Paths Support
+
+pub fn path_exits(runtime: &Runtime, path: &str) -> bool {
+	let dir_context = runtime.dir_context();
+	// Resolve the path relative to the workspace directory
+	let full_path = dir_context
+		.resolve_path(runtime.session(), path.into(), PathResolver::WksDir)
+		.ok();
+
+	full_path.map(|p| p.exists()).unwrap_or(false)
+}
+
+// endregion: --- Common Paths Support

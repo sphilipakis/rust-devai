@@ -114,6 +114,8 @@ aip.file.append(rel_path: string, content: string)
 
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 
+aip.file.exists(path: string): boolean
+
 aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileInfo>
 
 aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>
@@ -260,6 +262,48 @@ aip.file.ensure_exists("src/module.lua", "-- TODO", {content_when_empty = true})
 
 #### Error
 Returns an error (Lua table `{ error: string }`) on creation/write failure, permission issues, or metadata retrieval failure.
+
+### aip.file.exists
+
+Checks if the specified path exists (file or directory).
+
+```lua
+-- API Signature
+aip.file.exists(path: string): boolean
+```
+
+Checks if the file or directory specified by `path` exists. The path is resolved relative to the workspace root.
+Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
+
+#### Arguments
+
+- `path: string`: The path string to check for existence. Can be relative, absolute, or a pack reference.
+
+#### Returns
+
+- `boolean`: Returns `true` if a file or directory exists at the specified path, `false` otherwise.
+
+#### Example
+
+```lua
+if aip.file.exists("README.md") then
+  print("README.md exists.")
+end
+
+if aip.file.exists("ns@pack/main.aip") then
+  print("Pack main agent exists.")
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+
+```ts
+{
+  error: string // Error message
+}
+```
 
 ### aip.file.list
 

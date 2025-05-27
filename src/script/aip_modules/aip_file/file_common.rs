@@ -12,6 +12,7 @@
 //! - `aip.file.save(rel_path: string, content: string)`
 //! - `aip.file.append(rel_path: string, content: string)`
 //! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileInfo`
+//! - `aip.file.exists(path: string): boolean`
 //! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean, with_meta: boolean}): list<FileInfo>`
 //! - `aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>`
 //! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileInfo | nil`
@@ -346,6 +347,51 @@ pub(super) fn file_ensure_exists(
 	let file_info = FileInfo::new(runtime.dir_context(), rel_path, &full_path);
 
 	file_info.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Checks if the specified path exists.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.exists(path: string): boolean
+/// ```
+///
+/// Checks if the file or directory specified by `path` exists. The path is resolved relative to the workspace root.
+/// Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
+///
+/// ### Arguments
+///
+/// - `path: string`: The path string to check for existence. Can be relative, absolute, or a pack reference.
+///
+/// ### Returns
+///
+/// - `boolean`: Returns `true` if a file or directory exists at the specified path, `false` otherwise.
+///
+/// ### Example
+///
+/// ```lua
+/// if aip.file.exists("README.md") then
+///   print("README.md exists.")
+/// end
+///
+/// if aip.file.exists("ns@pack/main.aip") then
+///   print("Pack main agent exists.")
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
+pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<bool> {
+	Ok(crate::script::support::path_exits(runtime, &path))
 }
 
 /// ## Lua Documentation
@@ -866,6 +912,61 @@ mod tests {
 		let Err(err) = res else { panic!("Should return error") };
 		assert!(err.to_string().contains("does not belong to the workspace dir"));
 
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_exists_true() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_file::init_module, "file")?;
+		let paths = &[
+			"./agent-script/agent-hello.aip",
+			"agent-script/agent-hello.aip",
+			"./sub-dir-a/agent-hello-2.aip",
+			"sub-dir-a/agent-hello-2.aip",
+			"./sub-dir-a/",
+			"sub-dir-a",
+			"./sub-dir-a/",
+			"./sub-dir-a/../",
+			"./sub-dir-a/..",
+			// Pack references
+			"ns_b@pack_b_2/main.aip",
+			"ns_a@pack_a_1$workspace/extra/test.txt",
+		];
+
+		// -- Exec & Check
+		for path in paths {
+			let code = format!(r#"return aip.file.exists("{path}")"#);
+			let res = eval_lua(&lua, &code)?;
+			assert!(res.as_bool().ok_or("Result should be a bool")?, "'{path}' should exist");
+		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_exists_false() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_file::init_module, "file")?;
+		let paths = &[
+			"./no file .rs",
+			"some/no-file.md",
+			"./s do/",
+			"no-dir/at/all",
+			"non_existent_ns@non_existent_pack/file.txt",
+		];
+
+		// -- Exec & Check
+		for path in paths {
+			let code = format!(r#"return aip.file.exists("{path}")"#);
+			let res = eval_lua(&lua, &code);
+
+			let res = res?;
+			assert!(
+				!res.as_bool().ok_or("Result should be a bool")?,
+				"'{path}' should NOT exist"
+			);
+		}
 		Ok(())
 	}
 

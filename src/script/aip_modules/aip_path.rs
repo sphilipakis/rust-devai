@@ -341,10 +341,7 @@ fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
 /// }
 /// ```
 fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
-	let path = runtime
-		.dir_context()
-		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir)?;
-	Ok(path.exists())
+	Ok(crate::script::support::path_exits(runtime, &path))
 }
 
 /// ## Lua Documentation
