@@ -187,7 +187,7 @@ pub async fn run_command_agent(
 				FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 					let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
 					hub.publish(HubEvent::info_short(format!(
-						"-! Aipack Skip input at Output stage{reason_msg}"
+						"Aipack Skip input at Output stage{reason_msg}"
 					)))
 					.await;
 					Value::Null

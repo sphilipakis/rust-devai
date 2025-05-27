@@ -100,7 +100,7 @@ pub async fn run_agent_input(
 				let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
 
 				hub.publish(HubEvent::info_short(format!(
-					"-! Aipack Skip input at Data stage: {label}{reason_txt}"
+					"Aipack Skip input at Data stage: {label}{reason_txt}"
 				)))
 				.await;
 				return Ok(None);
@@ -118,11 +118,7 @@ pub async fn run_agent_input(
 			},
 
 			FromValue::AipackCustom(other) => {
-				return Err(format!(
-					"-! Aipack Custom '{}' is not supported at the Data stage",
-					other.as_ref()
-				)
-				.into());
+				return Err(format!("Aipack Custom '{}' is not supported at the Data stage", other.as_ref()).into());
 			}
 		}
 	} else {
