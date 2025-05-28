@@ -4,6 +4,8 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 
 [Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
 
+[AIPACK Lab Repo](https://github.com/aipack-ai/aipack-lab)
+
 #### The available submodules are:
 
 - [`aip.file`](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
