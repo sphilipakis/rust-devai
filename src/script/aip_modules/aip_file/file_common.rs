@@ -105,8 +105,6 @@ pub(super) fn file_load(
 		PathResolver::WksDir,
 		base_path.as_ref(),
 	)?;
-	println!("->> full_path: {full_path}");
-
 	let full_path = match (base_path, full_path.is_absolute()) {
 		(Some(base_path), false) => base_path.join(full_path),
 		_ => full_path,
