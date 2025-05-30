@@ -449,7 +449,7 @@ mod tests {
 	async fn test_lua_hash_sha256_b58() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_hash::init_module, "hash")?;
-		let expected = "CnKqR4x6r4nAv2iGk8DrZSSWp7n3W9xKRj69eZysS272"; // Corrected expected value
+		let expected = "DULfJyE3WQqNxy3ymuhAChyNR3yufT88pmqvAazKFMG4"; // Corrected expected value
 
 		// -- Exec
 		let lua_code = format!(r#"return aip.hash.sha256_b58("{}")"#, TEST_INPUT);

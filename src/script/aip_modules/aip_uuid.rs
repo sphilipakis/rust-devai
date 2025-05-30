@@ -469,7 +469,6 @@ mod tests {
 
 		// -- Check
 		let b64_str = res.as_str().ok_or("Result should be a string")?;
-		println!("->> {b64_str}");
 		assert!(
 			is_base64_standard_chars(b64_str),
 			"String should contain only Base64 standard characters"
