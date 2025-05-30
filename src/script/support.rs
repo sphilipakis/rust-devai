@@ -125,7 +125,7 @@ pub fn path_exits(runtime: &Runtime, path: &str) -> bool {
 	let dir_context = runtime.dir_context();
 	// Resolve the path relative to the workspace directory
 	let full_path = dir_context
-		.resolve_path(runtime.session(), path.into(), PathResolver::WksDir)
+		.resolve_path(runtime.session(), path.into(), PathResolver::WksDir, None)
 		.ok();
 
 	full_path.map(|p| p.exists()).unwrap_or(false)

@@ -10,7 +10,7 @@ use std::fs::write;
 
 pub(super) fn file_save_changes(_lua: &Lua, runtime: &Runtime, rel_path: String, changes: String) -> mlua::Result<()> {
 	let dir_context = runtime.dir_context();
-	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?;
+	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 
 	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;

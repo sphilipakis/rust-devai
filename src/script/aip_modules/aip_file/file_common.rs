@@ -98,9 +98,15 @@ pub(super) fn file_load(
 	options: Option<Value>,
 ) -> mlua::Result<mlua::Value> {
 	let dir_context = runtime.dir_context();
-	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?;
-
 	let base_path = compute_base_dir(runtime, options.as_ref())?;
+	let full_path = dir_context.resolve_path(
+		runtime.session(),
+		(&rel_path).into(),
+		PathResolver::WksDir,
+		base_path.as_ref(),
+	)?;
+	println!("->> full_path: {full_path}");
+
 	let full_path = match (base_path, full_path.is_absolute()) {
 		(Some(base_path), false) => base_path.join(full_path),
 		_ => full_path,
@@ -164,7 +170,7 @@ pub(super) fn file_load(
 /// ```
 pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let dir_context = runtime.dir_context();
-	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?;
+	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 
 	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
@@ -229,7 +235,7 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
 	let path = runtime
 		.dir_context()
-		.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir)?;
+		.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 	ensure_file_dir(&path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
@@ -328,9 +334,10 @@ pub(super) fn file_ensure_exists(
 	let options = options.unwrap_or_default();
 
 	let rel_path = SPath::new(path);
-	let full_path = runtime
-		.dir_context()
-		.resolve_path(runtime.session(), rel_path.clone(), PathResolver::WksDir)?;
+	let full_path =
+		runtime
+			.dir_context()
+			.resolve_path(runtime.session(), rel_path.clone(), PathResolver::WksDir, None)?;
 
 	// if the file does not exist, create it.
 	if !full_path.exists() {

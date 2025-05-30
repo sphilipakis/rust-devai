@@ -69,7 +69,7 @@ pub(super) fn file_save_html_to_md(
 
 	// -- resolve and read source
 	let rel_html = SPath::new(html_path.clone());
-	let full_html = dir_context.resolve_path(runtime.session(), rel_html.clone(), PathResolver::WksDir)?;
+	let full_html = dir_context.resolve_path(runtime.session(), rel_html.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
 		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{}'. Cause: {}", html_path, e)))?;
 
@@ -158,7 +158,8 @@ pub(super) fn file_save_html_to_slim(
 
 	// -- resolve and read source
 	let rel_html_src = SPath::new(html_path.clone());
-	let full_html_src = dir_context.resolve_path(runtime.session(), rel_html_src.clone(), PathResolver::WksDir)?;
+	let full_html_src =
+		dir_context.resolve_path(runtime.session(), rel_html_src.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html_src)
 		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{}'. Cause: {}", html_path, e)))?;
 

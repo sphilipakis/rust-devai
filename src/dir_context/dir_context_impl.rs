@@ -101,7 +101,16 @@ impl DirContext {
 	///   - For absolute path it will be ignored
 	///
 	///
-	pub fn resolve_path(&self, session: &Session, path: SPath, mode: PathResolver) -> Result<SPath> {
+	pub fn resolve_path(
+		&self,
+		session: &Session,
+		path: SPath,
+		mode: PathResolver,
+		base_dir: Option<&SPath>,
+	) -> Result<SPath> {
+		if let Some(base_dir) = base_dir {
+			return Ok(base_dir.join(path));
+		}
 		// -- First check if it starts with `~/` and resolve to home
 		let path = if path.starts_with("~/") {
 			path.into_replace_prefix("~", self.home_dir())

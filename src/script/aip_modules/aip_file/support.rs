@@ -291,7 +291,7 @@ pub fn create_file_records(
 					base_path.join(&sfile)
 				} else {
 					let dir_context = runtime.dir_context();
-					dir_context.resolve_path(runtime.session(), sfile.clone(), PathResolver::WksDir)?
+					dir_context.resolve_path(runtime.session(), sfile.clone(), PathResolver::WksDir, None)?
 				};
 
 				// Need to cannonicalize because we need to compute the diff
@@ -383,7 +383,8 @@ pub fn resolve_dest_path(
 		}
 	};
 
-	let full_dest_path = dir_context.resolve_path(runtime.session(), rel_dest_path.clone(), PathResolver::WksDir)?;
+	let full_dest_path =
+		dir_context.resolve_path(runtime.session(), rel_dest_path.clone(), PathResolver::WksDir, None)?;
 	Ok((rel_dest_path, full_dest_path))
 }
 

@@ -4,9 +4,9 @@
 use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
 use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
-use crate::types::LocalPackRef;
 use crate::runtime::Runtime;
 use crate::support::tomls::parse_toml;
+use crate::types::LocalPackRef;
 use crate::{Error, Result};
 use simple_fs::{SPath, read_to_string};
 
@@ -30,7 +30,7 @@ pub fn find_agent(name: &str, runtime: &Runtime, base_dir: Option<&SPath>) -> Re
 			} else {
 				match base_dir {
 					Some(base_dir) => base_dir.join(&path),
-					None => dir_context.resolve_path(runtime.session(), path, PathResolver::CurrentDir)?,
+					None => dir_context.resolve_path(runtime.session(), path, PathResolver::CurrentDir, None)?,
 				}
 			};
 			let possible_paths = possible_aip_paths(path.clone(), false);

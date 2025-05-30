@@ -295,7 +295,7 @@ fn path_join(lua: &Lua, base: String, parts: Variadic<Value>) -> mlua::Result<Va
 fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
 	let path = runtime
 		.dir_context()
-		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir)?;
+		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir, None)?;
 	Ok(path.to_string())
 }
 
@@ -388,7 +388,7 @@ fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime
 		.dir_context()
-		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir)?;
+		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir, None)?;
 	Ok(path.is_file())
 }
 
@@ -485,7 +485,7 @@ fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
 fn path_is_dir(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	let path = runtime
 		.dir_context()
-		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir)?;
+		.resolve_path(runtime.session(), (&path).into(), PathResolver::WksDir, None)?;
 	Ok(path.is_dir())
 }
 
