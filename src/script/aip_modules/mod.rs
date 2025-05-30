@@ -6,6 +6,7 @@ pub mod aip_code;
 pub mod aip_file;
 pub mod aip_flow;
 pub mod aip_git;
+pub mod aip_hash; // Added new hash module
 pub mod aip_hbs;
 pub mod aip_html;
 pub mod aip_json;

@@ -12,8 +12,8 @@ repository = "https://github.com/aipack-ai/aipack"
 
 [lints.rust]
 unsafe_code = "forbid"
-# unused = { level = "allow", priority = -1 } # For exploratory dev.
-# deprecated = { level = "allow", priority = -1 } # For exploratory dev.
+unused = { level = "allow", priority = -1 } # For exploratory dev.
+deprecated = { level = "allow", priority = -1 } # For exploratory dev.
 
 [[bin]]
 name = "aip"
@@ -57,6 +57,13 @@ zip = "3"
 walkdir = "2.4"
 size = "0.5.0"
 trash = "5.2.2"
+# -- Hash
+blake3 = "1.8.2"
+sha2 = "0.10.9"
+# -- BaseX
+base64 = "0.22.1"
+bs58 = "0.5.1"
+hex = "0.4" # Added for hex encoding
 # -- Others
 derive_more = {version = "2.0.0", features = ["from","display","debug"] }
 strum = { version = "0.27", features = ["derive"] }
