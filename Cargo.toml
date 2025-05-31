@@ -53,7 +53,7 @@ clap =  {version = "4.5.17", features = ["cargo", "derive"]}
 crossterm = { version = "0.29", features = ["event-stream"] }
 # -- Files
 simple-fs = { version = "0.6.4", features = ["with-json"]}
-zip = "3"
+zip = "4"
 walkdir = "2.4"
 size = "0.5.0"
 trash = "5.2.2"
@@ -79,5 +79,5 @@ uuid-extra = "0.0.1"
 
 [build-dependencies]
 simple-fs = { version = "0.6.4", features = ["with-json"]}
-zip = "3"
+zip = "4"
 walkdir = "2.4"
