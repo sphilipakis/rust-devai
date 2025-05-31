@@ -182,7 +182,8 @@ fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 
 	init_and_set!(
 		table, lua_vm, runtime, // -- The lua module names that refers to aip_...
-		flow, file, git, web, text, rust, path, md, json, html, cmd, lua, code, hbs, semver, agent, uuid
+		flow, file, git, web, text, rust, path, md, json, //
+		html, cmd, lua, code, hbs, semver, agent, uuid, hash
 	);
 
 	let globals = lua_vm.globals();

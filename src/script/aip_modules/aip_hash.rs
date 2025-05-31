@@ -26,6 +26,7 @@ use crate::runtime::Runtime;
 use mlua::{Lua, Table};
 use sha2::{Digest, Sha256, Sha512};
 // Added blake3 Hasher
+use base64::engine::{Engine as _, general_purpose};
 use blake3::Hasher;
 
 /// Initializes the `hash` Lua module.
@@ -136,10 +137,7 @@ fn lua_sha256_b64(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Sha256::new();
 	hasher.update(input.as_bytes());
 	let result = hasher.finalize();
-	Ok(base64::encode_engine(
-		result,
-		&base64::engine::general_purpose::STANDARD,
-	))
+	Ok(general_purpose::STANDARD.encode(result))
 }
 
 /// ## Lua Documentation
@@ -167,10 +165,7 @@ fn lua_sha256_b64u(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Sha256::new();
 	hasher.update(input.as_bytes());
 	let result = hasher.finalize();
-	Ok(base64::encode_engine(
-		result,
-		&base64::engine::general_purpose::URL_SAFE_NO_PAD,
-	))
+	Ok(general_purpose::URL_SAFE_NO_PAD.encode(result))
 }
 
 // endregion: --- SHA256 Functions
@@ -258,10 +253,7 @@ fn lua_sha512_b64(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Sha512::new();
 	hasher.update(input.as_bytes());
 	let result = hasher.finalize();
-	Ok(base64::encode_engine(
-		result,
-		&base64::engine::general_purpose::STANDARD,
-	))
+	Ok(general_purpose::STANDARD.encode(result))
 }
 
 /// ## Lua Documentation
@@ -289,10 +281,7 @@ fn lua_sha512_b64u(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Sha512::new();
 	hasher.update(input.as_bytes());
 	let result = hasher.finalize();
-	Ok(base64::encode_engine(
-		result,
-		&base64::engine::general_purpose::URL_SAFE_NO_PAD,
-	))
+	Ok(general_purpose::URL_SAFE_NO_PAD.encode(result))
 }
 
 // endregion: --- SHA512 Functions
@@ -379,11 +368,8 @@ fn lua_blake3_b58(_lua: &Lua, input: String) -> mlua::Result<String> {
 fn lua_blake3_b64(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Hasher::new();
 	hasher.update(input.as_bytes());
-	let hash_bytes = hasher.finalize();
-	Ok(base64::encode_engine(
-		hash_bytes.as_bytes(),
-		&base64::engine::general_purpose::STANDARD,
-	))
+	let result = hasher.finalize();
+	Ok(general_purpose::STANDARD.encode(result.as_bytes()))
 }
 
 /// ## Lua Documentation
@@ -410,11 +396,8 @@ fn lua_blake3_b64(_lua: &Lua, input: String) -> mlua::Result<String> {
 fn lua_blake3_b64u(_lua: &Lua, input: String) -> mlua::Result<String> {
 	let mut hasher = Hasher::new();
 	hasher.update(input.as_bytes());
-	let hash_bytes = hasher.finalize();
-	Ok(base64::encode_engine(
-		hash_bytes.as_bytes(),
-		&base64::engine::general_purpose::URL_SAFE_NO_PAD,
-	))
+	let result = hasher.finalize();
+	Ok(general_purpose::URL_SAFE_NO_PAD.encode(result.as_bytes()))
 }
 
 // endregion: --- Blake3 Functions
