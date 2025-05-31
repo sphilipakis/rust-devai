@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-05-31 - [v0.7.12](https://github.com/jeremychone/rust-devai/compare/v0.7.11...v0.7.12)
+
+- `+` Added `aip.hash` - [See doc](https://aipack.ai/doc/lua-apis#aipuuid) e.g., `aip.hash.blak3_b58(some_text_content)` - Added `aip.hash` lua utilities for sha256, sha512, blake3, with hex, b64, b64u, base 58 serialization
+- `+` Added `aip.uuid` - [See doc](https://aipack.ai/doc/lua-apis#aiphash) e.g., `aip.hash.new() -- v4`, `aip.hash.new_v7_b58() -- v7 in base 58`
+- `-` aip.file.load - fix base_path issue (was causing issue with pro@coder when base_dir was not empty)
 
 ## 2025-05-26 - [v0.7.11](https://github.com/jeremychone/rust-devai/compare/v0.7.10...v0.7.11)
 
