@@ -11,7 +11,6 @@ use std::str::FromStr;
 pub enum PathResolver {
 	CurrentDir,
 	WksDir,
-	#[allow(unused)]
 	AipackDir,
 }
 
@@ -100,6 +99,8 @@ impl DirContext {
 	///   - For relative path, it will resolve relative to PathResolver variant (CurrentDir, ...)
 	///   - For absolute path it will be ignored
 	///
+	/// - `base_dir` only get used whenthe pat is a relative path, in tis case, the mode is ignored, and this ise used
+	///
 	///
 	pub fn resolve_path(
 		&self,
@@ -108,9 +109,6 @@ impl DirContext {
 		mode: PathResolver,
 		base_dir: Option<&SPath>,
 	) -> Result<SPath> {
-		if let Some(base_dir) = base_dir {
-			return Ok(base_dir.join(path));
-		}
 		// -- First check if it starts with `~/` and resolve to home
 		let path = if path.starts_with("~/") {
 			path.into_replace_prefix("~", self.home_dir())
@@ -134,29 +132,35 @@ impl DirContext {
 		}
 		// -- Relative path
 		else {
-			let base_path = match mode {
-				PathResolver::CurrentDir => Some(self.current_dir()),
-				PathResolver::WksDir => {
-					let wks_dir = self.try_wks_dir_with_err_ctx(&format!(
-						"Cannot resolve '{path}' for workspace, because no workspace are available"
-					))?;
-					Some(wks_dir)
-				}
-				PathResolver::AipackDir => {
-					// Get the optional AipackWksDir reference
-					match self.aipack_paths().aipack_wks_dir() {
-						Some(dir) => Some(dir.as_ref()), // Use AsRef<SPath>
-						None => {
-							return Err(Error::custom(format!(
-								"Cannot resolve path relative to '.aipack' directory because it was not found in workspace '{}'",
-								self.wks_dir()
-									.map(|p| p.to_string())
-									.unwrap_or_else(|| "no workspace found".to_string())
-							)));
+			// Note: here is the base path of the dir takes precedence
+			let base_path = if let Some(base_dir) = base_dir {
+				Some(base_dir)
+			} else {
+				match mode {
+					PathResolver::CurrentDir => Some(self.current_dir()),
+					PathResolver::WksDir => {
+						let wks_dir = self.try_wks_dir_with_err_ctx(&format!(
+							"Cannot resolve '{path}' for workspace, because no workspace are available"
+						))?;
+						Some(wks_dir)
+					}
+					PathResolver::AipackDir => {
+						// Get the optional AipackWksDir reference
+						match self.aipack_paths().aipack_wks_dir() {
+							Some(dir) => Some(dir.as_ref()), // Use AsRef<SPath>
+							None => {
+								return Err(Error::custom(format!(
+									"Cannot resolve path relative to '.aipack' directory because it was not found in workspace '{}'",
+									self.wks_dir()
+										.map(|p| p.to_string())
+										.unwrap_or_else(|| "no workspace found".to_string())
+								)));
+							}
 						}
 					}
 				}
 			};
+
 			match base_path {
 				Some(base) => base.join(path),
 				None => path, // Path was already absolute
