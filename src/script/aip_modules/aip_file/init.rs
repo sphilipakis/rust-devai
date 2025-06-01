@@ -5,6 +5,11 @@ use crate::script::aip_modules::aip_file::file_common::{
 	EnsureExistsOptions, file_append, file_ensure_exists, file_exists, file_first, file_list, file_list_load,
 	file_load, file_save,
 };
+use crate::script::aip_modules::aip_file::file_hash::{
+	file_hash_blake3, file_hash_blake3_b58u, file_hash_blake3_b64, file_hash_blake3_b64u, file_hash_sha256,
+	file_hash_sha256_b58u, file_hash_sha256_b64, file_hash_sha256_b64u, file_hash_sha512, file_hash_sha512_b58u,
+	file_hash_sha512_b64, file_hash_sha512_b64u,
+};
 use crate::script::aip_modules::aip_file::file_html::{file_save_html_to_md, file_save_html_to_slim};
 use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
@@ -106,6 +111,40 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_save_changes_fn =
 		lua.create_function(move |lua, (path, changes): (String, String)| file_save_changes(lua, &rt, path, changes))?;
 
+	// -- File Hash Functions
+	let rt = runtime.clone();
+	let file_hash_sha256_fn = lua.create_function(move |lua, path: String| file_hash_sha256(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha256_b64_fn = lua.create_function(move |lua, path: String| file_hash_sha256_b64(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha256_b64u_fn =
+		lua.create_function(move |lua, path: String| file_hash_sha256_b64u(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha256_b58u_fn =
+		lua.create_function(move |lua, path: String| file_hash_sha256_b58u(lua, &rt, path))?;
+
+	let rt = runtime.clone();
+	let file_hash_sha512_fn = lua.create_function(move |lua, path: String| file_hash_sha512(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha512_b64_fn = lua.create_function(move |lua, path: String| file_hash_sha512_b64(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha512_b64u_fn =
+		lua.create_function(move |lua, path: String| file_hash_sha512_b64u(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_sha512_b58u_fn =
+		lua.create_function(move |lua, path: String| file_hash_sha512_b58u(lua, &rt, path))?;
+
+	let rt = runtime.clone();
+	let file_hash_blake3_fn = lua.create_function(move |lua, path: String| file_hash_blake3(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_blake3_b64_fn = lua.create_function(move |lua, path: String| file_hash_blake3_b64(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_blake3_b64u_fn =
+		lua.create_function(move |lua, path: String| file_hash_blake3_b64u(lua, &rt, path))?;
+	let rt = runtime.clone();
+	let file_hash_blake3_b58u_fn =
+		lua.create_function(move |lua, path: String| file_hash_blake3_b58u(lua, &rt, path))?;
+
 	// -- Add all functions to the module
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
@@ -125,6 +164,19 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
 	table.set("save_changes", file_save_changes_fn)?;
 
+	// -- Add file hash functions
+	table.set("hash_sha256", file_hash_sha256_fn)?;
+	table.set("hash_sha256_b64", file_hash_sha256_b64_fn)?;
+	table.set("hash_sha256_b64u", file_hash_sha256_b64u_fn)?;
+	table.set("hash_sha256_b58u", file_hash_sha256_b58u_fn)?;
+	table.set("hash_sha512", file_hash_sha512_fn)?;
+	table.set("hash_sha512_b64", file_hash_sha512_b64_fn)?;
+	table.set("hash_sha512_b64u", file_hash_sha512_b64u_fn)?;
+	table.set("hash_sha512_b58u", file_hash_sha512_b58u_fn)?;
+	table.set("hash_blake3", file_hash_blake3_fn)?;
+	table.set("hash_blake3_b64", file_hash_blake3_b64_fn)?;
+	table.set("hash_blake3_b64u", file_hash_blake3_b64u_fn)?;
+	table.set("hash_blake3_b58u", file_hash_blake3_b58u_fn)?;
+
 	Ok(table)
 }
-
