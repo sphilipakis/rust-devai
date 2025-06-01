@@ -8,6 +8,7 @@ use crate::hub::hub_prompt;
 use crate::support::os;
 use crate::support::os::current_os;
 use crate::support::os::is_windows;
+use crate::term;
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
@@ -117,6 +118,7 @@ mod for_windows {
 
 	use std::process::Command;
 
+	use crate::term;
 	#[cfg(windows)]
 	use std::os::windows::process::CommandExt;
 
@@ -142,7 +144,7 @@ mod for_windows {
 		)
 		.await?;
 
-		if user_response.trim() != "Y" {
+		if term::is_input_yes(&user_response) {
 			hub.publish(format!(
 				r#"-! Answer was not 'Y' so skipping updating environment path.
    Make sure to add '{new_path}' in your system path.
@@ -268,7 +270,7 @@ async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 					),
 				)
 				.await?;
-				if user_response.trim() == "Y" {
+				if term::is_input_yes(&user_response) {
 					let content = format!("{}\n\n{}\n", content.trim_end(), os_source_line);
 					write(&home_sh_env_path, content)?;
 					hub.publish(format!(

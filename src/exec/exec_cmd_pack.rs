@@ -2,7 +2,7 @@ use super::init::extract_template_pack_toml_zfile;
 use super::packer::pack_dir;
 use crate::exec::cli::PackArgs;
 use crate::hub::get_hub;
-use crate::{Error, Result};
+use crate::{Error, Result, term};
 use aho_corasick::AhoCorasick;
 use simple_fs::SPath;
 use std::fs;
@@ -69,7 +69,7 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 			let mut input = String::new();
 			io::stdin().read_line(&mut input)?;
 
-			if input.trim().to_uppercase() == "Y" {
+			if term::is_input_yes(&input) {
 				// Try packing again
 				match pack_dir(&src_dir, &dest_dir) {
 					Ok(pack_data) => {

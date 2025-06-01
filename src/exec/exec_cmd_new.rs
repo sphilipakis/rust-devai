@@ -1,9 +1,9 @@
 #![allow(unused)]
-use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::cli::NewArgs;
 use crate::support::AsStrsExt;
 use crate::term::{init_term, prompt_input, prompt_select, safer_println};
+use crate::{Result, term};
 
 // (name, title)
 const AGENT_TEMPLATES: [(&str, &str); 2] = [
@@ -57,7 +57,7 @@ template: {template_name}
 	let confirm = prompt_input(&mut stdout, "Confirm creation (Y/n)", false)?;
 
 	// TODO: NOT IMPLEMENTED YET
-	if confirm == "Y" {
+	if term::is_input_yes(&confirm) {
 		safer_println("Will do the create", true);
 	} else {
 		safer_println("Agent creation cancelled", true);
