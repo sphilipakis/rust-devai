@@ -106,7 +106,6 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
 ## aip.file
 
 File manipulation functions for loading, saving, listing, and managing files and their content, including specialized functions for JSON and Markdown.
-
 ### Functions Summary
 
 ```lua
@@ -141,6 +140,21 @@ aip.file.load_md_split_first(path: string): {before: string, first: MdSection, a
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
 aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
+
+aip.file.hash_sha256(path: string): string
+aip.file.hash_sha256_b64(path: string): string
+aip.file.hash_sha256_b64u(path: string): string
+aip.file.hash_sha256_b58u(path: string): string
+
+aip.file.hash_sha512(path: string): string
+aip.file.hash_sha512_b64(path: string): string
+aip.file.hash_sha512_b64u(path: string): string
+aip.file.hash_sha512_b58u(path: string): string
+
+aip.file.hash_blake3(path: string): string
+aip.file.hash_blake3_b64(path: string): string
+aip.file.hash_blake3_b64u(path: string): string
+aip.file.hash_blake3_b58u(path: string): string
 ```
 
 
