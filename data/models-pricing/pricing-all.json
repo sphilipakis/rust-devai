@@ -416,11 +416,20 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 2.5,
-          "normal": 10
+          "cached": null,
+          "normal": 20
+        },
+        "name": "o3-pro",
+        "output": 80
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.5,
+          "normal": 2
         },
         "name": "o3",
-        "output": 40
+        "output": 8
       },
       {
         "input": {
@@ -452,6 +461,15 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.375,
+          "normal": 1.5
+        },
+        "name": "codex-mini-latest",
+        "output": 6
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": null,
           "normal": 0.15
         },
@@ -475,6 +493,33 @@
         },
         "name": "computer-use-preview",
         "output": 12
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 1.25,
+          "normal": 5
+        },
+        "name": "gpt-image-1",
+        "output": null
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.25,
+          "normal": 1
+        },
+        "name": "o3 (flex processing)",
+        "output": 4
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.138,
+          "normal": 0.55
+        },
+        "name": "o4-mini (flex processing)",
+        "output": 2.2
       }
     ]
   },

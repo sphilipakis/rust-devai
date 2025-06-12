@@ -14,7 +14,7 @@ local base_dir = p_utils.base_dir
 
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = false, url = "https://platform.openai.com/docs/pricing/"},
+   {name = "openai",    do_json = true, url = "https://platform.openai.com/docs/pricing/"},
    {name = "groq",      do_json = false, url = "https://groq.com/pricing/"},
    {name = "gemini",    do_json = false, url = "https://ai.google.dev/pricing"},
    {name = "deepseek",  do_json = false, url = "https://api-docs.deepseek.com/quick_start/pricing"},
