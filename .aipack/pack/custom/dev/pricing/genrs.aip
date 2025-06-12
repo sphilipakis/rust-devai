@@ -1,6 +1,6 @@
 # Options
 ```toml
-model = "gpro"
+model = "main"
 ```
 
 # Description
@@ -51,6 +51,8 @@ Some very IMPORTANT rules when updateding `data.rs`,
 - For google provider, no need `gemma-3-27b-it`, `text-embedding-004`
 - Only change what needs to be changed.
 - For Anthropic, `"claude-sonnet-3-7"` also duplicate for `"claude-sonnet-3-5"`
+- for OPENAI pricing, ignore the "flex ..." model
+- For OPENAI pricing, ignore the audio models. 
 - Do NOT remove things that are there and present in the json.
 - Do NOT add ANY COMMENT. Comments are not needed in this file. 
 - DO NOT REMOVE COMMENT, DO NOT ADD COMMENT.

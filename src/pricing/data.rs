@@ -98,14 +98,14 @@ const DEEPSEEK: Provider = Provider {
 
 // Define Gemini pricing
 const GEMINI_MODELS: &[ModelPricing] = &[
-	ModelPricing { // Renamed from gemini-2.5-flash-preview
+	ModelPricing {
 		name: "gemini-2.5-flash",
 		input_cached: Some(0.0375),
 		input_normal: 0.15,
 		output_normal: 0.6,
 		output_reasoning: Some(3.50),
 	},
-	ModelPricing { // Renamed from gemini-2.5-pro-preview
+	ModelPricing {
 		name: "gemini-2.5-pro",
 		input_cached: Some(0.31),
 		input_normal: 1.25,
@@ -185,10 +185,31 @@ const GROQ_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "qwen-qwq-32b-(preview)-128k",
+		input_cached: None,
+		input_normal: 0.29,
+		output_normal: 0.39,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "mistral-saba-24b",
 		input_cached: None,
 		input_normal: 0.79,
 		output_normal: 0.79,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-3.2-1b-(preview)-8k",
+		input_cached: None,
+		input_normal: 0.04,
+		output_normal: 0.04,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-3.2-3b-(preview)-8k",
+		input_cached: None,
+		input_normal: 0.06,
+		output_normal: 0.06,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -278,6 +299,13 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gpt-4.5-preview",
+		input_cached: Some(37.5),
+		input_normal: 75.0,
+		output_normal: 150.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gpt-4o",
 		input_cached: Some(1.25),
 		input_normal: 2.5,
@@ -285,10 +313,24 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gpt-4o-realtime-preview",
+		input_cached: Some(2.5),
+		input_normal: 5.0,
+		output_normal: 20.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gpt-4o-mini",
 		input_cached: Some(0.075),
 		input_normal: 0.15,
 		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-4o-mini-realtime-preview",
+		input_cached: Some(0.3),
+		input_normal: 0.6,
+		output_normal: 2.4,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -306,10 +348,17 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "o3-pro",
+		input_cached: None,
+		input_normal: 20.0,
+		output_normal: 80.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "o3",
-		input_cached: Some(2.5),
-		input_normal: 10.0,
-		output_normal: 40.0,
+		input_cached: Some(0.5),
+		input_normal: 2.0,
+		output_normal: 8.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -331,6 +380,41 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		input_cached: Some(0.55),
 		input_normal: 1.1,
 		output_normal: 4.4,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "codex-mini-latest",
+		input_cached: Some(0.375),
+		input_normal: 1.5,
+		output_normal: 6.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-4o-mini-search-preview",
+		input_cached: None,
+		input_normal: 0.15,
+		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-4o-search-preview",
+		input_cached: None,
+		input_normal: 2.5,
+		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "computer-use-preview",
+		input_cached: None,
+		input_normal: 3.0,
+		output_normal: 12.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-image-1",
+		input_cached: Some(1.25),
+		input_normal: 5.0,
+		output_normal: 0.0,
 		output_reasoning: None,
 	},
 ];
@@ -420,3 +504,4 @@ const XAI: Provider = Provider {
 };
 
 pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI];
+
