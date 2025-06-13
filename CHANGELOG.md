@@ -1,5 +1,13 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-05-31 - [v0.7.13](https://github.com/jeremychone/rust-devai/compare/v0.7.12...v0.7.13)
+
+- `+` `aip.file_file_hash_...` for sha256, sha512, and blake3 (hex, b64, b64u, and b58 encoding)
+- `^` doc - lua-apis for the file.hash_... and aip.file.hash_...
+- `^` pricing - update new OpenAI o3 pricing
+- `.` all 'y' input are now case insensitive and match 'yes' as well
+- `.` init - config update to latest gemini 2.5 pro 06-05
+
 ## 2025-05-31 - [v0.7.12](https://github.com/jeremychone/rust-devai/compare/v0.7.11...v0.7.12)
 
 - `+` Added `aip.hash` - [See doc](https://aipack.ai/doc/lua-apis#aipuuid) e.g., `aip.hash.blak3_b58(some_text_content)` - Added `aip.hash` lua utilities for sha256, sha512, blake3, with hex, b64, b64u, base 58 serialization
