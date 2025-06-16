@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2025-05-31 - [v0.7.13](https://github.com/jeremychone/rust-devai/compare/v0.7.12...v0.7.13)
+## 2025-06-12 - [v0.7.13](https://github.com/jeremychone/rust-devai/compare/v0.7.12...v0.7.13)
 
 - `+` `aip.file_file_hash_...` for sha256, sha512, and blake3 (hex, b64, b64u, and b58 encoding)
 - `^` doc - lua-apis for the file.hash_... and aip.file.hash_...
