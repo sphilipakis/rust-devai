@@ -13,7 +13,7 @@
 #    Ollama: "phi4:14b", "gemma3:4b", "gemma3:27b", "deepseek-r1:70b", "llama4:scout" (or any locally installed Ollama)
 # Anthropic: "claude-sonnet-4-20250514", "claude-3-5-haiku-latest"
 #    OpenAI: "gpt-4.1, "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "o4-mini-high", "o4-mini-low"
-#    Gemini: "gemini-2.5-pro-preview-06-05", "gemini-2.5-flash-preview-05-20", "gemini-2.5-flash-preview-05-20-zero"
+#    Gemini: "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-zero"
 
 model = "gpt-4.1-mini" # or an alias from below (e.g., "flash", "gpro")
 
@@ -43,9 +43,9 @@ main        = "gpt-4.1"
 mini        = "gpt-4.1-mini"
 nano        = "gpt-4.1-nano"
 # -- Google
-gpro-prev       = "gemini-2.5-pro-preview-06-05"
+gpro-prev       = "gemini-2.5-pro"
 flash           = "gemini-2.0-flash"
-flash-prev      = "gemini-2.5-flash-preview-05-20"
-flash-prev-zero = "gemini-2.5-flash-preview-05-20-zero"
+flash-prev      = "gemini-2.5-flash"
+flash-prev-zero = "gemini-2.5-flash-zero"
 # -- Deepseek
 r1          = "deepseek-reasoner"
