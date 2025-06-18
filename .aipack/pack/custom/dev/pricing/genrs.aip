@@ -1,6 +1,6 @@
 # Options
 ```toml
-model = "main"
+model = "claude"
 ```
 
 # Description
@@ -47,7 +47,7 @@ Some very IMPORTANT rules when updateding `data.rs`,
 - for openai model, when the name is prefix `openai-` you can remove it from the model name. 
 - Ignore "preview" models except the `gemini-2.5-pro-preview` and `gemini-2.5-preview`
 - Rename `gemini-2.5-pro-preview` to `gemini-2.5-pro` and `gemini-2.5-flash-preview` to `gemini-2.5-flash`
-- for `gemini-2.5-flash...` it's the only model with `output_reasoning: Some(3.50),`
+- For the gemini.. pricing, make sure to set the cache price if defined. 
 - For google provider, no need `gemma-3-27b-it`, `text-embedding-004`
 - Only change what needs to be changed.
 - For Anthropic, `"claude-sonnet-3-7"` also duplicate for `"claude-sonnet-3-5"`

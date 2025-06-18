@@ -99,17 +99,24 @@ const DEEPSEEK: Provider = Provider {
 // Define Gemini pricing
 const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
-		name: "gemini-2.5-flash",
-		input_cached: Some(0.0375),
-		input_normal: 0.15,
-		output_normal: 0.6,
-		output_reasoning: Some(3.50),
-	},
-	ModelPricing {
 		name: "gemini-2.5-pro",
 		input_cached: Some(0.31),
 		input_normal: 1.25,
 		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash",
+		input_cached: Some(0.075),
+		input_normal: 0.3,
+		output_normal: 2.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash-lite",
+		input_cached: Some(0.025),
+		input_normal: 0.1,
+		output_normal: 0.4,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -504,4 +511,3 @@ const XAI: Provider = Provider {
 };
 
 pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI];
-
