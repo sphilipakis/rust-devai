@@ -93,20 +93,29 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.0375,
-          "normal": 0.15
-        },
-        "name": "gemini-2.5-flash",
-        "output": 0.6
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": 0.31,
           "normal": 1.25
         },
         "name": "gemini-2.5-pro",
         "output": 10
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.075,
+          "normal": 0.3
+        },
+        "name": "gemini-2.5-flash",
+        "output": 2.5
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.025,
+          "normal": 0.1
+        },
+        "name": "gemini-2.5-flash-lite",
+        "output": 0.4
       },
       {
         "input": {
