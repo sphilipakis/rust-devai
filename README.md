@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://crates.io/crates/aipack"><img src="https://img.shields.io/crates/v/aipack.svg" /></a>
-<a href="https://github.com/jeremychone/rust-aipack"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-Repo?color=%23336699"></a>
+<a href="https://github.com/aipack-ai/aipack"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-Repo?color=%23336699"></a>
 <a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_Introduction_-Video?style=flat&logo=youtube&color=%23ff0000"></a>
 
 </div>
@@ -142,8 +142,8 @@ aip run core@ask-aipack
 ### Thanks to
 
 -  **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
--  [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/jeremychone/rust-aipack/pull/30))
--  [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/jeremychone/rust-aipack/pull/28))
+-  [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/aipack-ai/aipack/pull/30))
+-  [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/aipack-ai/aipack/pull/28))
 
 
 ### `pro@coder`
