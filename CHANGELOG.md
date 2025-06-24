@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-06-23 - [v0.7.14](https://github.com/jeremychone/rust-devai/compare/v0.7.13...v0.7.14)
+
+- `-` pricing - fix gemini 2.5 lite pricing (to reflect new pricing)
+- `.` update config.toml with gemini 2.5
+
 ## 2025-06-12 - [v0.7.13](https://github.com/jeremychone/rust-devai/compare/v0.7.12...v0.7.13)
 
 - `+` `aip.file_file_hash_...` for sha256, sha512, and blake3 (hex, b64, b64u, and b58 encoding)
