@@ -45,8 +45,11 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	let current_exe = std::env::current_exe()?;
 	let current_exe_spath = SPath::from_std_path_buf(current_exe)?;
 
-	// Check if already running from within the base bin directory (or subdirs)
-	let is_current_exe_at_base_bin_dir = current_exe_spath.as_str().starts_with(base_bin_dir.as_str());
+	// Check if already running from within the base bin directory (so if tmp/ dir, this will be false)
+	let is_current_exe_at_base_bin_dir = current_exe_spath
+		.parent()
+		.map(|p| p.as_str() == base_bin_dir.as_str())
+		.unwrap_or_default();
 
 	// If running on the already installed, just warn that it will just udpate the settings
 	let tmp_exe_to_trash = if is_current_exe_at_base_bin_dir {

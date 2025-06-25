@@ -92,6 +92,10 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 			setup_output.status, stdout, stderr
 		)));
 	}
+	let setup_str = String::from_utf8_lossy(&setup_output.stdout).to_string();
+	let setup_str = format!("'aip self setup' executed:\n{setup_str}\n");
+	hub.publish(setup_str).await;
+
 	hub.publish(HubEvent::info_short(format!("Update successful! New version 'v{remote_version}' installed.\n
 		Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect."))
 	)
