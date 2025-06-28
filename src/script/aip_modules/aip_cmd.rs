@@ -222,7 +222,7 @@ mod tests {
 
 		// -- Check
 		let err_str = err.to_string();
-		assert_contains(&err_str, "Fail to execute: nonexistentcommand");
+		assert_contains(&err_str, "Fail to execute: {nonexistentcommand}");
 		assert_contains(&err_str, "Cause:");
 
 		Ok(())
@@ -242,7 +242,7 @@ mod tests {
 
 		// -- Check
 		let err_str = err.to_string();
-		assert_contains(&err_str, "Fail to execute: nonexistentcommand");
+		assert_contains(&err_str, "Fail to execute: {nonexistentcommand}");
 		assert_contains(&err_str, "Cause:");
 
 		Ok(())

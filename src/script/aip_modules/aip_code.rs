@@ -62,11 +62,11 @@ fn comment_line(_lua: &Lua, (lang_ext, comment_content): (String, String)) -> ml
 	// Normalize the language extension by trimming and converting to lowercase.
 	let ext = lang_ext.trim().to_lowercase();
 	let comment = match ext.as_str() {
-		"lua" | "sql" => format!("-- {}", comment_content),
-		"html" => format!("<!-- {} -->", comment_content),
-		"css" | "pcss" => format!("/* {} */", comment_content),
-		"py" => format!("# {}", comment_content),
-		_ => format!("// {}", comment_content),
+		"lua" | "sql" => format!("-- {comment_content}"),
+		"html" => format!("<!-- {comment_content} -->"),
+		"css" | "pcss" => format!("/* {comment_content} */"),
+		"py" => format!("# {comment_content}"),
+		_ => format!("// {comment_content}"),
 	};
 	Ok(comment)
 }
@@ -100,13 +100,12 @@ mod tests {
 
 		// -- Exec & Check
 		for (lang, content, expected) in test_cases.iter() {
-			let script = format!("return aip.code.comment_line({:?}, {:?})", lang, content);
+			let script = format!("return aip.code.comment_line({lang:?}, {content:?})");
 			let res = eval_lua(&lua, &script)?;
 			let res_str = res.as_str().ok_or("Expected a string result")?;
 			assert_eq!(
 				res_str, *expected,
-				"Failed for lang_ext: {} with content: {}",
-				lang, content
+				"Failed for lang_ext: {lang} with content: {content}"
 			);
 		}
 		Ok(())

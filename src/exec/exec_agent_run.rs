@@ -20,7 +20,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 
 	// Find and build the agent
 	let agent = find_agent(&agent_name, &runtime, agent_dir.as_ref())
-		.map_err(|e| Error::custom(format!("Failed to find agent '{}': {}", agent_name, e)))?;
+		.map_err(|e| Error::custom(format!("Failed to find agent '{agent_name}': {e}")))?;
 
 	// -- If we had a agent options, need to overrid the agent options.
 	let agent = match agent_options {
@@ -34,7 +34,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 
 	let result = run_command_agent(&runtime, agent, inputs, &run_base_options, true)
 		.await
-		.map_err(|e| Error::custom(format!("Failed to run agent '{}': {}", agent_name, e)));
+		.map_err(|e| Error::custom(format!("Failed to run agent '{agent_name}': {e}")));
 
 	match response_shot {
 		Some(response_shot) => {
@@ -42,8 +42,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 				Ok(result) => {
 					if let Err(err) = response_shot.send_async(Ok(result)).await {
 						return Err(Error::custom(format!(
-							"Failed to send response to agent '{}': {}",
-							agent_name, err
+							"Failed to send response to agent '{agent_name}': {err}"
 						)));
 					}
 				}
@@ -51,8 +50,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 					// Handle the error case
 					if let Err(err) = response_shot.send_async(Err(Error::custom(err.to_string()))).await {
 						return Err(Error::custom(format!(
-							"Failed to send response to agent '{}': {}",
-							agent_name, err
+							"Failed to send response to agent '{agent_name}': {err}"
 						)));
 					}
 				}

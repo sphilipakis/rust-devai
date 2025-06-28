@@ -69,7 +69,7 @@ pub fn parse_prompt_part_options(content: &str) -> Result<Option<PartOptions>> {
 	let options_str = if content.starts_with('{') && content.ends_with('}') {
 		content.to_string()
 	} else {
-		format!("{{{}}}", content)
+		format!("{{{content}}}")
 	};
 
 	let options_str = format!("value = {options_str}");

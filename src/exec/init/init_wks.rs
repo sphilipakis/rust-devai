@@ -33,16 +33,14 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 		if show_info_always {
 			hub.publish("\n=== Initializing .aipack/").await;
 			hub.publish(format!(
-				"-- Parent path: '{}'\n   (`.aipack/` already exists. Will create missing files)",
-				wks_dir
+				"-- Parent path: '{wks_dir}'\n   (`.aipack/` already exists. Will create missing files)"
 			))
 			.await;
 		}
 	} else {
 		hub.publish("\n=== Initializing .aipack/").await;
 		hub.publish(format!(
-			"-- Parent path: '{}'\n   (`.aipack/` will be created at this path)",
-			wks_dir
+			"-- Parent path: '{wks_dir}'\n   (`.aipack/` will be created at this path)"
 		))
 		.await;
 	}

@@ -218,13 +218,11 @@ mod tests {
 		for (content_str, sep_str, exp_first_opt, exp_second_opt) in test_cases {
 			let script = format!(
 				r#"
-                local content = {:?}
-                local sep = {:?}
+                local content = {content_str:?}
+                local sep = {sep_str:?}
                 local first, second = aip.text.split_first_line(content, sep)
                 return {{first, second}}
                 "#,
-				content_str, // Use debug format for content to handle escapes
-				sep_str      // Separator is already a &str, debug will quote it
 			);
 			let res_json = eval_lua(&lua, &script)?;
 			let (first, second) = get_returned_parts(res_json)?;
@@ -232,16 +230,12 @@ mod tests {
 			assert_eq!(
 				first,
 				exp_first_opt.map(String::from),
-				"Content: {:?}, Sep: {:?}",
-				content_str,
-				sep_str
+				"Content: {content_str}, Sep: {sep_str}"
 			);
 			assert_eq!(
 				second,
 				exp_second_opt.map(String::from),
-				"Content: {:?}, Sep: {:?}",
-				content_str,
-				sep_str
+				"Content: {content_str}, Sep: {sep_str}"
 			);
 		}
 		Ok(())
@@ -298,12 +292,11 @@ mod tests {
 		for (content_str, sep_str, exp_first_opt, exp_second_opt) in test_cases {
 			let script = format!(
 				r#"
-                local content = {:?}
-                local sep = {:?}
+                local content = {content_str:?}
+                local sep = {sep_str:?}
                 local first, second = aip.text.split_last_line(content, sep)
                 return {{first, second}}
                 "#,
-				content_str, sep_str
 			);
 			let res_json = eval_lua(&lua, &script)?;
 			let (first, second) = get_returned_parts(res_json)?;
@@ -311,16 +304,12 @@ mod tests {
 			assert_eq!(
 				first,
 				exp_first_opt.map(String::from),
-				"Content: {:?}, Sep: {:?}",
-				content_str,
-				sep_str
+				"Content: {content_str:?}, Sep: {sep_str:?}"
 			);
 			assert_eq!(
 				second,
 				exp_second_opt.map(String::from),
-				"Content: {:?}, Sep: {:?}",
-				content_str,
-				sep_str
+				"Content: {content_str:?}, Sep: {sep_str:?}"
 			);
 		}
 		Ok(())

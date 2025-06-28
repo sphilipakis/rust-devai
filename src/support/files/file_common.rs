@@ -191,7 +191,7 @@ mod tests {
 			let found = dirs
 				.iter()
 				.any(|d| d.canonicalize().map(|p| p.as_str() == exp_path.as_str()).unwrap_or(false));
-			assert!(found, "Expected directory {:?} not found in the returned list", exp);
+			assert!(found, "Expected directory {exp:?} not found in the returned list");
 		}
 
 		Ok(())
@@ -216,7 +216,7 @@ mod tests {
 			let found = dirs
 				.iter()
 				.any(|d| d.canonicalize().map(|p| p.as_str() == exp_path.as_str()).unwrap_or(false));
-			assert!(found, "Expected directory {:?} not found in the returned list", exp);
+			assert!(found, "Expected directory {exp:?} not found in the returned list");
 		}
 
 		Ok(())

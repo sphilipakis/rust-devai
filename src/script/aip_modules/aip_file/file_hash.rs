@@ -69,8 +69,7 @@ pub(super) fn file_hash_sha256(lua: &Lua, runtime: &Runtime, path: String) -> ml
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha256_hex(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha256 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha256 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -91,8 +90,7 @@ pub(super) fn file_hash_sha256_b64(lua: &Lua, runtime: &Runtime, path: String) -
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha256_b64(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha256_b64 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha256_b64 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -113,8 +111,7 @@ pub(super) fn file_hash_sha256_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha256_b64u(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha256_b64u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha256_b64u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -136,8 +133,7 @@ pub(super) fn file_hash_sha256_b58u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha256_b58(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha256_b58u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha256_b58u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -162,8 +158,7 @@ pub(super) fn file_hash_sha512(lua: &Lua, runtime: &Runtime, path: String) -> ml
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha512_hex(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha512 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha512 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -184,8 +179,7 @@ pub(super) fn file_hash_sha512_b64(lua: &Lua, runtime: &Runtime, path: String) -
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha512_b64(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha512_b64 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha512_b64 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -206,8 +200,7 @@ pub(super) fn file_hash_sha512_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha512_b64u(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha512_b64u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha512_b64u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -229,8 +222,7 @@ pub(super) fn file_hash_sha512_b58u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = hash_file_sha512_b58(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_sha512_b58u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_sha512_b58u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -255,8 +247,7 @@ pub(super) fn file_hash_blake3(lua: &Lua, runtime: &Runtime, path: String) -> ml
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = blake3_hash_file_hex(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_blake3 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_blake3 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -277,8 +268,7 @@ pub(super) fn file_hash_blake3_b64(lua: &Lua, runtime: &Runtime, path: String) -
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = blake3_hash_file_b64(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_blake3_b64 - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_blake3_b64 - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -299,8 +289,7 @@ pub(super) fn file_hash_blake3_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = blake3_hash_file_b64u(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_blake3_b64u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_blake3_b64u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)
@@ -322,8 +311,7 @@ pub(super) fn file_hash_blake3_b58u(lua: &Lua, runtime: &Runtime, path: String) 
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string = blake3_hash_file_b58(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.hash_blake3_b58u - Failed to hash file '{}'.\nCause: {}",
-			path, e
+			"aip.file.hash_blake3_b58u - Failed to hash file '{path}'.\nCause: {e}"
 		))
 	})?;
 	hash_string.into_lua(lua)

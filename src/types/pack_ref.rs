@@ -77,15 +77,13 @@ impl FromStr for PackRef {
 				if ns.is_empty() {
 					// Catches cases like "@name"
 					return Err(Error::custom(format!(
-						"Invalid pack reference format: '{}'. Namespace cannot be empty when '@' is present.",
-						full_ref
+						"Invalid pack reference format: '{full_ref}'. Namespace cannot be empty when '@' is present.",
 					)));
 				}
 				if rest.is_empty() {
 					// Catches cases like "ns@"
 					return Err(Error::custom(format!(
-						"Invalid pack reference format: '{}'. Pack name/path part cannot be empty after '@'.",
-						full_ref
+						"Invalid pack reference format: '{full_ref}'. Pack name/path part cannot be empty after '@'.",
 					)));
 				}
 				// Validate namespace characters early
@@ -95,8 +93,7 @@ impl FromStr for PackRef {
 			_ => {
 				// More than one '@' (e.g., "ns@name@extra", "ns@@name")
 				return Err(Error::custom(format!(
-					"Invalid pack reference format: '{}'. Too many '@' symbols.",
-					full_ref
+					"Invalid pack reference format: '{full_ref}'. Too many '@' symbols."
 				)));
 			}
 		};
@@ -114,8 +111,7 @@ impl FromStr for PackRef {
 				if name_part.is_empty() {
 					// Catches cases like "$base", "ns@$base/path"
 					return Err(Error::custom(format!(
-						"Invalid pack reference format: '{}'. Pack name cannot be empty before '$'.",
-						full_ref
+						"Invalid pack reference format: '{full_ref}'. Pack name cannot be empty before '$'."
 					)));
 				}
 
@@ -125,14 +121,12 @@ impl FromStr for PackRef {
 					"" => {
 						// Handle cases like "name$" or "name$/path"
 						return Err(Error::custom(format!(
-							"Invalid pack reference scope in '{}'. Scope cannot be empty after '$'. Expected '$base' or '$workspace'",
-							full_ref
+							"Invalid pack reference scope in '{full_ref}'. Scope cannot be empty after '$'. Expected '$base' or '$workspace'"
 						)));
 					}
 					_ => {
 						return Err(Error::custom(format!(
-							"Invalid pack reference scope in '{}'. Expected '$base' or '$workspace', found '${}'.",
-							full_ref, scope_part
+							"Invalid pack reference scope in '{full_ref}'. Expected '$base' or '$workspace', found '${scope_part}'."
 						)));
 					}
 				};
@@ -151,15 +145,13 @@ impl FromStr for PackRef {
 		if let Some(ref sp) = sub_path {
 			if sp.contains('$') {
 				return Err(Error::custom(format!(
-					"Invalid pack reference format: '{}'. Character '$' is not allowed in the sub-path.",
-					full_ref
+					"Invalid pack reference format: '{full_ref}'. Character '$' is not allowed in the sub-path."
 				)));
 			}
 			// Ensure sub_path does not contain ".."
 			if sp.split('/').any(|part| part == "..") {
 				return Err(Error::custom(format!(
-					"Invalid pack reference format: '{}'. Sub-path cannot contain '..'.",
-					full_ref
+					"Invalid pack reference format: '{full_ref}'. Sub-path cannot contain '..'."
 				)));
 			}
 		}
@@ -169,8 +161,7 @@ impl FromStr for PackRef {
 		// e.g. "/", "ns@/", "ns@$base/"
 		if name_str.is_empty() {
 			return Err(Error::custom(format!(
-				"Invalid pack reference format: '{}'. Pack name part cannot be empty.",
-				full_ref
+				"Invalid pack reference format: '{full_ref}'. Pack name part cannot be empty."
 			)));
 		}
 
@@ -195,7 +186,7 @@ impl std::fmt::Display for PackRef {
 		}
 
 		if let Some(sub_path) = &self.sub_path {
-			write!(f, "/{}", sub_path)?;
+			write!(f, "/{sub_path}")?;
 		}
 		Ok(())
 	}
@@ -267,9 +258,14 @@ impl LocalPackRef {
 /// Implement the Display trait for PackRef
 impl std::fmt::Display for LocalPackRef {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}@{}", self.namespace(), self.name())?;
+		write!(
+			f,
+			"{namespace}@{name}",
+			namespace = self.namespace(),
+			name = self.name()
+		)?;
 		if let Some(sub_path) = &self.sub_path {
-			write!(f, "/{}", sub_path)?;
+			write!(f, "/{sub_path}")?;
 		}
 		Ok(())
 	}
@@ -333,10 +329,10 @@ mod tests {
 		// -- Exec & Check
 		for (input, ns, name, scope, sub) in data {
 			let pref = PackRef::from_str(input)?;
-			assert_eq!(pref.namespace, ns, "Input: {}", input);
-			assert_eq!(pref.name, name, "Input: {}", input);
-			assert_eq!(pref.sub_path_scope, scope, "Input: {}", input);
-			assert_eq!(pref.sub_path.as_deref(), sub, "Input: {}", input);
+			assert_eq!(pref.namespace, ns, "Input: {input}");
+			assert_eq!(pref.name, name, "Input: {input}");
+			assert_eq!(pref.sub_path_scope, scope, "Input: {input}");
+			assert_eq!(pref.sub_path.as_deref(), sub, "Input: {input}");
 		}
 
 		Ok(())
@@ -389,17 +385,16 @@ mod tests {
 		// -- Exec & Check
 		for (input, ns, name, scope, sub) in data {
 			let pref = PackRef::from_str(input)?;
-			assert_eq!(pref.namespace, ns, "Input: {}", input);
-			assert_eq!(pref.name, name, "Input: {}", input);
-			assert_eq!(pref.sub_path_scope, scope, "Input: {}", input);
-			assert_eq!(pref.sub_path.as_deref(), sub, "Input: {}", input);
+			assert_eq!(pref.namespace, ns, "Input: {input}");
+			assert_eq!(pref.name, name, "Input: {input}");
+			assert_eq!(pref.sub_path_scope, scope, "Input: {input}");
+			assert_eq!(pref.sub_path.as_deref(), sub, "Input: {input}");
 
 			// Check Display roundtrip (where applicable)
 			assert_eq!(
 				pref.to_string(),
 				input.trim_end_matches('/'),
-				"Display mismatch for: {}",
-				input
+				"Display mismatch for: {input}"
 			);
 		}
 
@@ -449,12 +444,12 @@ mod tests {
 		for (invalid_input, expected_error) in data {
 			let result = PackRef::from_str(invalid_input);
 
-			assert!(result.is_err(), "Should fail for invalid input: '{}'", invalid_input);
+			assert!(result.is_err(), "Should fail for invalid input: '{invalid_input}'");
 			if let Err(err) = result {
 				assert_contains(&err.to_string(), expected_error);
 			} else {
 				// This panic will trigger if result is Ok, which shouldn't happen for these inputs
-				panic!("Input '{}' should have failed but succeeded.", invalid_input);
+				panic!("Input '{invalid_input}' should have failed but succeeded.");
 			}
 		}
 

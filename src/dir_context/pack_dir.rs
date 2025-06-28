@@ -34,7 +34,7 @@ impl PackDir {
 			RepoKind::BaseCustom => "~/",
 			RepoKind::BaseInstalled => "~/",
 		};
-		format!("{}{}", prefix, last_five)
+		format!("{prefix}{last_five}")
 	}
 }
 impl std::fmt::Display for PackDir {
@@ -88,9 +88,9 @@ pub fn find_to_run_pack_dir(dir_context: &DirContext, pack_ref: &PackRef) -> Res
 				// Get the propert list
 				let pack_dirs = find_pack_dirs(dir_context, pack_ref)?;
 				// -- in case > 1, for now, no support
+				let pack_dir_list_str = pack_dirs.iter().map(|p| p.to_string()).collect::<Vec<String>>().join("\n");
 				return Err(Error::custom(format!(
-					"{pack_ref} matches multiple AI packs across different namespaces.\n\nRun aip run ... with one of the full AI pack references below:\n\n{}\n",
-					pack_dirs.iter().map(|p| p.to_string()).collect::<Vec<String>>().join("\n")
+					"{pack_ref} matches multiple AI packs across different namespaces.\n\nRun aip run ... with one of the full AI pack references below:\n\n{pack_dir_list_str}\n"
 				)));
 			}
 		}
@@ -247,7 +247,10 @@ mod tests {
 	fn pack_dir_into_strs(pack_dirs: Vec<PackDir>) -> Vec<String> {
 		pack_dirs
 			.into_iter()
-			.map(|p| format!("{}@{} - {}", p.namespace, p.name, path_last_components(&p.path, 5)))
+			.map(|p| {
+				let last_components = path_last_components(&p.path, 5);
+				format!("{}@{} - {last_components}", p.namespace, p.name)
+			})
 			.collect::<Vec<_>>()
 	}
 	// endregion: --- Support

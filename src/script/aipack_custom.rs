@@ -128,8 +128,9 @@ fn parse_before_all_response(custom_data: Option<Value>) -> Result<BeforeAllResp
 
 			let keys: Vec<String> = obj.keys().map(|k| k.to_string()).collect();
 			if !keys.is_empty() {
+				let joined_keys = keys.join(", ");
 				return Err(Error::BeforeAllFailWrongReturn {
-					cause: format!("{ERROR_CAUSE}. But also contained: {}", keys.join(", ")),
+					cause: format!("{ERROR_CAUSE}. But also contained: {joined_keys}"),
 				});
 			}
 			BeforeAllResponse {
@@ -160,8 +161,9 @@ fn parse_data_response(custom_data: Option<Value>) -> Result<DataResponse> {
 
 			let keys: Vec<String> = obj.keys().map(|k| k.to_string()).collect();
 			if !keys.is_empty() {
+				let joined_keys = keys.join(", ");
 				return Err(Error::BeforeAllFailWrongReturn {
-					cause: format!("{ERROR_CAUSE}. But also contained: {}", keys.join(", ")),
+					cause: format!("{ERROR_CAUSE}. But also contained: {joined_keys}"),
 				});
 			}
 			DataResponse { input, data, options }
@@ -205,7 +207,7 @@ mod tests {
 			return Err("Should be a aipack custom".into());
 		};
 		// lazy check
-		let debug_string = format!("{:?}", custom);
+		let debug_string = format!("{custom:?}");
 		assert_contains(&debug_string, r#"inputs: Some([String("A"), String("B"), Number(123)]"#);
 		assert_contains(&debug_string, r#"before_all: Some(String("Some before all data"))"#);
 

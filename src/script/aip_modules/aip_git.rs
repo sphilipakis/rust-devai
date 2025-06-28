@@ -70,7 +70,7 @@ fn git_restore(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value
 	let stderr = String::from_utf8_lossy(&output.stderr);
 
 	if !stderr.is_empty() {
-		get_hub().publish_sync(format!("stderr: {}", stderr));
+		get_hub().publish_sync(format!("stderr: {stderr}"));
 		return Err(Error::cc(format!("'git restore {path}' failed"), stderr).into());
 	}
 

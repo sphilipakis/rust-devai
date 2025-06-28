@@ -36,9 +36,7 @@ pub fn find_agent(name: &str, runtime: &Runtime, base_dir: Option<&SPath>) -> Re
 			let possible_paths = possible_aip_paths(path.clone(), false);
 			let found_path = possible_paths.into_iter().find(|p| p.exists()).ok_or_else(|| {
 				Error::custom(format!(
-					"No agent found for local path: '{}'\n   (full path: {})",
-					local_path,
-					path.as_str()
+					"No agent found for local path: '{local_path}'\n   (full path: {path})"
 				))
 			})?;
 			let doc = AgentDoc::from_file(found_path)?;

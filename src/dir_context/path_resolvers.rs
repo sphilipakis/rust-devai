@@ -23,7 +23,7 @@ pub fn resolve_pack_ref_base_path(dir_context: &DirContext, pack_ref: &PackRef) 
 			// -- Get the base path
 			let pack_dirs = find_pack_dirs(dir_context, pack_ref)?;
 			let Some(pack_dir) = pack_dirs.into_iter().next() else {
-				return Err(Error::custom(format!("Cannot find the base path for {}", pack_ref)));
+				return Err(Error::custom(format!("Cannot find the base path for {pack_ref}")));
 			};
 
 			Ok(pack_dir.path)

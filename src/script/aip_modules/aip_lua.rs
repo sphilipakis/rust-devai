@@ -89,7 +89,7 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 			Value::Number(n) => Ok(n.to_string()),
 			Value::String(s) => {
 				let s: String = s.to_str()?.to_string();
-				Ok(format!("\"{}\"", s))
+				Ok(format!("\"{s}\""))
 			}
 			Value::Table(t) => {
 				let mut entries: Vec<String> = Vec::new();
@@ -100,14 +100,17 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 						_ => dump_value(_lua, key, 0)?,
 					};
 					let dumped_val = dump_value(_lua, val, indent + 1)?;
-					entries.push(format!("{}{} = {}", "  ".repeat(indent + 1), dumped_key, dumped_val));
+					entries.push(format!(
+						"{indent_str_for_entry}{dumped_key} = {dumped_val}",
+						indent_str_for_entry = "  ".repeat(indent + 1)
+					));
 				}
 				let inner = entries.join(",\n");
-				Ok(format!("{{\n{}\n{}}}", inner, indent_str))
+				Ok(format!("{{\n{inner}\n{indent_str}}}"))
 			}
 			Value::Function(f) => {
 				let name = f.info().name.unwrap_or("<anonymous>".to_string());
-				Ok(format!("<function {}>", name))
+				Ok(format!("<function {name}>"))
 			}
 			Value::UserData(_) => Ok("<UserData>".to_string()),
 			Value::LightUserData(_) => Ok("<LightUserData>".to_string()),
@@ -147,9 +150,9 @@ return aip.lua.dump(tbl)
 		let res = res.as_str().ok_or("res json value should be of type string")?;
 
 		// -- Check
-		assert_contains(res, "bool = true");
-		assert_contains(res, "key1 = \"value1\"");
-		assert_contains(res, "key2 = 42");
+		assert_contains(res, "bool = {true}");
+		assert_contains(res, "key1 = {\"value1\"}");
+		assert_contains(res, "key2 = {42}");
 		Ok(())
 	}
 }

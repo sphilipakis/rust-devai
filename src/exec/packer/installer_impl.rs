@@ -41,9 +41,9 @@ impl PackUri {
 impl std::fmt::Display for PackUri {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			PackUri::RepoPack(identity) => write!(f, "{}", identity),
-			PackUri::LocalPath(path) => write!(f, "local file '{}'", path),
-			PackUri::HttpLink(url) => write!(f, "URL '{}'", url),
+			PackUri::RepoPack(identity) => write!(f, "{identity}"),
+			PackUri::LocalPath(path) => write!(f, "local file '{path}'"),
+			PackUri::HttpLink(url) => write!(f, "URL '{url}'"),
 		}
 	}
 }
@@ -144,7 +144,7 @@ async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Resu
 		let client = Client::new();
 		let response = client.get(&latest_toml_url).send().await.map_err(|e| Error::FailToInstall {
 			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to download latest.toml: {}", e),
+			cause: format!("Failed to download latest.toml: {e}"),
 		})?;
 
 		// Check if the request was successful
@@ -158,12 +158,12 @@ async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Resu
 		// Parse the latest.toml content
 		let latest_toml_content = response.text().await.map_err(|e| Error::FailToInstall {
 			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to read latest.toml content: {}", e),
+			cause: format!("Failed to read latest.toml content: {e}"),
 		})?;
 
 		let latest_toml: LatestToml = toml::from_str(&latest_toml_content).map_err(|e| Error::FailToInstall {
 			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to parse latest.toml: {}", e),
+			cause: format!("Failed to parse latest.toml: {e}"),
 		})?;
 
 		// Validate the latest.toml content
@@ -175,7 +175,7 @@ async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Resu
 			pack_identity.namespace, pack_identity.name
 		);
 
-		let aipack_url = format!("{}{}", base_url, rel_path);
+		let aipack_url = format!("{base_url}{rel_path}");
 
 		// Use HttpLink to download the actual pack
 		let http_uri = PackUri::HttpLink(aipack_url);
@@ -235,13 +235,13 @@ async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(S
 			now.format(&time::format_description::well_known::Rfc3339)
 				.map_err(|e| Error::FailToInstall {
 					aipack_ref: pack_uri.to_string(),
-					cause: format!("Failed to format timestamp: {}", e),
+					cause: format!("Failed to format timestamp: {e}"),
 				})?;
 
 		// Create a cleaner timestamp for filenames (removing colons, etc.)
 		let file_timestamp = timestamp.replace([':', 'T'], "-");
 		let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
-		let timestamped_filename = format!("{}-{}", file_timestamp, filename);
+		let timestamped_filename = format!("{file_timestamp}-{filename}");
 		let download_path = download_dir.join(&timestamped_filename);
 
 		// Download the file
@@ -298,7 +298,7 @@ fn install_aipack_file(
 			let existing_toml_content =
 				std::fs::read_to_string(existing_pack_toml_path.path()).map_err(|e| Error::FailToInstall {
 					aipack_ref: pack_uri.to_string(),
-					cause: format!("Failed to read existing pack.toml: {}", e),
+					cause: format!("Failed to read existing pack.toml: {e}"),
 				})?;
 
 			// Parse the existing pack.toml
@@ -317,13 +317,13 @@ fn install_aipack_file(
 	if pack_target_dir.exists() {
 		std::fs::remove_dir_all(pack_target_dir.path()).map_err(|e| Error::FailToInstall {
 			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to remove existing pack directory: {}", e),
+			cause: format!("Failed to remove existing pack directory: {e}"),
 		})?;
 	}
 
 	zip::unzip_file(aipack_zipped_file, &pack_target_dir).map_err(|e| Error::FailToInstall {
 		aipack_ref: pack_uri.to_string(),
-		cause: format!("Failed to unzip pack: {}", e),
+		cause: format!("Failed to unzip pack: {e}"),
 	})?;
 
 	// Calculate the size of the installed pack

@@ -65,7 +65,7 @@ mod tests {
 				#[allow(clippy::single_match)]
 				match event {
 					HubEvent::Message(msg) => {
-						println!("Received Message: {}", msg);
+						println!("Received Message: {msg}");
 					}
 					_ => (),
 				}

@@ -55,7 +55,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 fn prune_to_declarations(lua: &Lua, code: String) -> mlua::Result<Value> {
 	match run_prune_to_declarations(&code) {
 		Ok(result) => Ok(Value::String(lua.create_string(&result)?)),
-		Err(err) => Err(crate::Error::custom(format!("Failed to prune Rust code: {}", err)).into()),
+		Err(err) => Err(crate::Error::custom(format!("Failed to prune Rust code: {err}")).into()),
 	}
 }
 
@@ -90,7 +90,7 @@ fn some_normal() {
 }	 
 		"#;
 		// -- Exec
-		let script = format!("return aip.rust.prune_to_declarations({:?})", data_script);
+		let script = format!("return aip.rust.prune_to_declarations({data_script:?})");
 		let res = eval_lua(&lua, &script)?;
 		// -- Check
 		let res = res.as_str().ok_or("Should be str")?;

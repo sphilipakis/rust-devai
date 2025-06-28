@@ -27,9 +27,8 @@ pub async fn exec_install(dir_context: DirContext, install_args: InstallArgs) ->
 	// let formatted_size = Size::from_bytes(installed_pack.size as u64).to_string();
 
 	hub.publish(format!(
-		"{:>15} {}\n{:>15} {}@{}\n{:>15} {}\n{:>15} {}",
+		"{:>15} {formatted_zip_size}\n{:>15} {}@{}\n{:>15} {}\n{:>15} {}",
 		".aipack Size:",
-		formatted_zip_size,
 		"Pack:",
 		installed_pack.pack_toml.namespace,
 		installed_pack.pack_toml.name,

@@ -238,11 +238,10 @@ let s = \"Hello, `world`!\";";
 		let input = format!(
 			"\
 ```
-{}
+{fx_content}
 ```
 
 End text.",
-			fx_content
 		);
 
 		// -- Exec

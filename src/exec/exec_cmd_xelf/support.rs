@@ -29,9 +29,9 @@ pub fn get_aip_stable_url(version: Option<&Version>) -> Result<String> {
 	};
 
 	let url = if let Some(version) = version {
-		format!("{BASE_STABLE_URL}/v{}/{}/aip.tar.gz", version, target_triple)
+		format!("{BASE_STABLE_URL}/v{version}/{target_triple}/aip.tar.gz")
 	} else {
-		format!("{BASE_STABLE_LATEST_URL}/{}/aip.tar.gz", target_triple)
+		format!("{BASE_STABLE_LATEST_URL}/{target_triple}/aip.tar.gz")
 	};
 
 	Ok(url)
@@ -44,9 +44,8 @@ pub fn get_aip_stable_url(version: Option<&Version>) -> Result<String> {
 pub(super) fn atomic_replace(src: &SPath, dest: &SPath) -> Result<()> {
 	fs::rename(src, dest).map_err(|err| {
 		Error::custom(format!(
-			"Failed to replace '{}' with '{}'. Cause: {}.\n\
-					 On Windows, make sure all 'aip' processes are terminated before updating.",
-			dest, src, err
+			"Failed to replace '{dest}' with '{src}'. Cause: {err}.\n\
+					 On Windows, make sure all 'aip' processes are terminated before updating."
 		))
 	})?;
 	Ok(())

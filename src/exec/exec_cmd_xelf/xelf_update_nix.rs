@@ -35,10 +35,10 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	// -- Ensure tmp directory exists
 	// Assuming files::ensure_dir creates the directory if it doesn't exist.
 	ensure_dir(&tmp_dir)?;
-	hub.publish(format!("Using temporary directory: {}", tmp_dir)).await;
+	hub.publish(format!("Using temporary directory: {tmp_dir}")).await;
 
 	// -- Download
-	hub.publish(format!("Downloading new version ({})...", remote_version)).await;
+	hub.publish(format!("Downloading new version ({remote_version})...")).await;
 	let download_url = if is_latest {
 		get_aip_stable_url(None)?
 	} else {
@@ -48,7 +48,7 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	webc::web_download_to_file(&download_url, &archive_path).await?;
 
 	// -- Extract
-	hub.publish(format!("Extracting {} in {}...", ARCHIVE_NAME, tmp_dir)).await;
+	hub.publish(format!("Extracting {ARCHIVE_NAME} in {tmp_dir}...")).await;
 	let tar_output = Command::new("tar")
 		.args(["-xvf", ARCHIVE_NAME]) // Extracts contents into the current directory (tmp_dir)
 		.current_dir(&tmp_dir)
@@ -58,8 +58,8 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	if !tar_output.status.success() {
 		let stderr = String::from_utf8_lossy(&tar_output.stderr);
 		return Err(Error::custom(format!(
-			"Failed to extract archive. tar exited with status {}. Stderr: {}",
-			tar_output.status, stderr
+			"Failed to extract archive. tar exited with status {}. Stderr: {stderr}",
+			tar_output.status
 		)));
 	}
 	hub.publish("Extraction complete.").await;
@@ -67,11 +67,8 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	// -- Run setup for the new version
 	// Assumes the executable in the archive is named 'aip' and is placed in tmp_dir directly by tar.
 	let new_aip_exe_path = tmp_dir.join("aip");
-	hub.publish(format!(
-		"Running setup for the new version using {}...",
-		new_aip_exe_path
-	))
-	.await;
+	hub.publish(format!("Running setup for the new version using {new_aip_exe_path}..."))
+		.await;
 
 	let setup_output = Command::new(new_aip_exe_path.as_str())
 		.args(["self", "setup"])
@@ -79,8 +76,7 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 		.output()
 		.map_err(|e| {
 			Error::custom(format!(
-				"Failed to execute new 'aip self setup' from {}: {e}",
-				new_aip_exe_path
+				"Failed to execute new 'aip self setup' from {new_aip_exe_path}: {e}"
 			))
 		})?;
 
@@ -88,8 +84,8 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 		let stderr = String::from_utf8_lossy(&setup_output.stderr);
 		let stdout = String::from_utf8_lossy(&setup_output.stdout);
 		return Err(Error::custom(format!(
-			"New 'aip self setup' failed. Exit status: {}. Stdout: {}. Stderr: {}",
-			setup_output.status, stdout, stderr
+			"New 'aip self setup' failed. Exit status: {}. Stdout: {stdout}. Stderr: {stderr}",
+			setup_output.status
 		)));
 	}
 	let setup_str = String::from_utf8_lossy(&setup_output.stdout).to_string();

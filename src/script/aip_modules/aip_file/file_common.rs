@@ -180,7 +180,7 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 	write(&full_path, content).map_err(|err| Error::custom(format!("Fail to save file {rel_path}.\nCause {err}")))?;
 
 	let rel_path = full_path.diff(wks_dir).unwrap_or(full_path);
-	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {}", rel_path));
+	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
 
 	Ok(())
 }
@@ -863,7 +863,7 @@ mod tests {
 
 		// -- Check
 		let file_content = std::fs::read_to_string(fx_dest_path)?;
-		assert_eq!(file_content, fx_content);
+		assert_eq!(file_content, "{fx_content}");
 
 		Ok(())
 	}
@@ -888,7 +888,7 @@ mod tests {
 
 		// -- Check
 		let file_content = std::fs::read_to_string(fx_dest_path)?;
-		assert_eq!(file_content, fx_content);
+		assert_eq!(file_content, "{fx_content}");
 
 		Ok(())
 	}
@@ -943,7 +943,7 @@ mod tests {
 		for path in paths {
 			let code = format!(r#"return aip.file.exists("{path}")"#);
 			let res = eval_lua(&lua, &code)?;
-			assert!(res.as_bool().ok_or("Result should be a bool")?, "'{path}' should exist");
+			assert!(res.as_bool().ok_or("Result should be a bool")?, "Should exist: {path}");
 		}
 
 		Ok(())
@@ -969,7 +969,7 @@ mod tests {
 			let res = res?;
 			assert!(
 				!res.as_bool().ok_or("Result should be a bool")?,
-				"'{path}' should NOT exist"
+				"Should NOT exist: {path}"
 			);
 		}
 		Ok(())
@@ -1040,7 +1040,7 @@ mod tests {
 			.map_err(|err| format!("Cannot canonicalize {dir:?} cause: {err}"))?;
 
 		// This is the rust Path logic
-		let glob = format!("{}/*.*", dir);
+		let glob = format!("{dir}/*.*");
 		let code = format!(r#"return aip.file.list("{glob}");"#);
 
 		// -- Exec
@@ -1177,10 +1177,10 @@ return {{
 		// -- Check
 		let content = res.x_get_str("/file/content")?;
 		let path = res.x_get_str("/file/path")?;
-		let session = res.x_get_str("session")?;
+		let _session = res.x_get_str("session")?;
 
-		assert_eq!(content, fx_content);
-		assert_ends_with(path, &format!(".aipack/.session/{session}/tmp/{fx_path}"));
+		assert_eq!(content, "{fx_content}");
+		assert_ends_with(path, ".aipack/.session/{session}/tmp/{fx_path}");
 
 		Ok(())
 	}
@@ -1212,9 +1212,9 @@ return {{
 		let file_name = res.x_get_str("/file/name")?;
 		// let session = res.x_get_str("session")?;
 
-		assert_eq!(content, fx_content);
+		assert_eq!(content, "{fx_content}");
 		assert_eq!(file_name, "tmp_with_var_file.txt");
-		assert_ends_with(path, &format!("$tmp/{fx_path}"));
+		assert_ends_with(path, "$tmp/{fx_path}");
 		// assert_ends_with(path, &format!("$tmp/{fx_path}"));
 
 		Ok(())

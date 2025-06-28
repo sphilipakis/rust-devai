@@ -139,8 +139,7 @@ pub async fn run_command_agent(
 	let agent_info = agent_info.as_deref().unwrap_or_default();
 
 	hub.publish(format!(
-		"\nRunning agent command: {}{agent_info}\n                 from: {}\n   with default model: {}{genai_info}",
-		agent_name, agent_path, model_info
+		"\nRunning agent command: {agent_name}{agent_info}\n                 from: {agent_path}\n   with default model: {model_info}{genai_info}"
 	))
 	.await;
 
@@ -298,7 +297,7 @@ async fn run_command_agent_input(
 	// get the eventual "._label" property of the input
 	// try to get the path, name
 	let label = get_input_label(&input).unwrap_or_else(|| format!("{input_idx}"));
-	hub.publish(format!("\n==== Running input: {}", label)).await;
+	hub.publish(format!("\n==== Running input: {label}")).await;
 
 	let run_response = run_agent_input(runtime, agent, before_all, &label, input, literals, run_base_options).await?;
 
@@ -308,7 +307,7 @@ async fn run_command_agent_input(
 		hub.publish(format!("-> Agent Output:\n\n{response_txt}\n")).await;
 	}
 
-	hub.publish(format!("==== DONE (input: {})", label)).await;
+	hub.publish(format!("==== DONE (input: {label})")).await;
 
 	Ok(run_response)
 }

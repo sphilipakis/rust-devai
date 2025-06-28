@@ -18,15 +18,15 @@ pub fn extract_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Result<PackTo
 	// Extract the pack.toml from zip
 	let toml_content = zip::extract_text_content(path_to_aipack, "pack.toml").map_err(|e| Error::FailToInstall {
 		aipack_ref: path_to_aipack.as_str().to_string(),
-		cause: format!("Failed to extract pack.toml: {}", e),
+		cause: format!("Failed to extract pack.toml: {e}"),
 	})?;
 
 	// Parse and validate the pack.toml content
 	let pack_toml =
-		parse_validate_pack_toml(&toml_content, &format!("pack.toml for {}", path_to_aipack)).map_err(|e| {
+		parse_validate_pack_toml(&toml_content, &format!("pack.toml for {path_to_aipack}")).map_err(|e| {
 			Error::FailToInstall {
 				aipack_ref: path_to_aipack.as_str().to_string(),
-				cause: format!("Invalid pack.toml: {}", e),
+				cause: format!("Invalid pack.toml: {e}"),
 			}
 		})?;
 
@@ -49,13 +49,13 @@ pub fn extract_partial_pack_toml_from_pack_file(path_to_aipack: &SPath) -> Resul
 	// Extract the pack.toml from zip
 	let toml_content = zip::extract_text_content(path_to_aipack, "pack.toml").map_err(|e| Error::FailToInstall {
 		aipack_ref: path_to_aipack.as_str().to_string(),
-		cause: format!("Failed to extract pack.toml: {}", e),
+		cause: format!("Failed to extract pack.toml: {e}"),
 	})?;
 
 	// Parse the TOML content without validation
 	let partial_pack_toml = toml::from_str(&toml_content).map_err(|e| Error::FailToInstall {
 		aipack_ref: path_to_aipack.as_str().to_string(),
-		cause: format!("Failed to parse pack.toml: {}", e),
+		cause: format!("Failed to parse pack.toml: {e}"),
 	})?;
 
 	Ok(partial_pack_toml)
@@ -194,7 +194,7 @@ pub fn validate_version_for_install(version: &str) -> Result<()> {
 pub fn get_file_size(file_path: &SPath, reference: &str) -> Result<usize> {
 	let metadata = std::fs::metadata(file_path.path()).map_err(|e| Error::FailToInstall {
 		aipack_ref: reference.to_string(),
-		cause: format!("Failed to get file metadata: {}", e),
+		cause: format!("Failed to get file metadata: {e}"),
 	})?;
 
 	Ok(metadata.len() as usize)

@@ -147,7 +147,7 @@ pub fn exec_run_watch(redo_ctx: Arc<RunRedoCtx>) {
 				}
 				Err(e) => {
 					// Handle any errors related to receiving the message
-					get_hub().publish(format!("Error receiving event: {:?}", e)).await;
+					get_hub().publish(format!("Error receiving event: {e:?}")).await;
 					break;
 				}
 			}

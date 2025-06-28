@@ -29,7 +29,7 @@ pub(super) fn file_save_changes(_lua: &Lua, runtime: &Runtime, rel_path: String,
 	write(&full_path, content).map_err(|err| Error::custom(format!("Fail to save file {rel_path}.\nCause {err}")))?;
 
 	let rel_path = full_path.diff(wks_dir).unwrap_or(full_path);
-	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {}", rel_path));
+	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
 
 	Ok(())
 }

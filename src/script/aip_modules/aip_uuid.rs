@@ -407,8 +407,8 @@ mod tests {
 		// or 22 if unpadded (not standard for this function, new_v4_b64u is for unpadded)
 		assert!(
 			(22..=24).contains(&b64_str.len()),
-			"Base64 string length for UUIDv4 should be between 22 and 24. Got: {}",
-			b64_str.len()
+			"Base64 string length for UUIDv4 should be between 22 and 24. Got: {b64_str_len}",
+			b64_str_len = b64_str.len()
 		);
 
 		Ok(())
@@ -452,8 +452,8 @@ mod tests {
 		// Base58 of 16 bytes is usually around 22 characters
 		assert!(
 			(21..=23).contains(&b58_str.len()),
-			"Base58 string length for UUIDv4 should be around 21-23. Got: {}",
-			b58_str.len()
+			"Base58 string length for UUIDv4 should be around 21-23. Got: {b58_str_len}",
+			b58_str_len = b58_str.len()
 		);
 
 		Ok(())
@@ -475,8 +475,8 @@ mod tests {
 		);
 		assert!(
 			(22..=24).contains(&b64_str.len()),
-			"Base64 string length for UUIDv7 should be between 22 and 24. Got: {}",
-			b64_str.len()
+			"Base64 string length for UUIDv7 should be between 22 and 24. Got: {b64_str_len}",
+			b64_str_len = b64_str.len()
 		);
 
 		Ok(())
@@ -519,8 +519,8 @@ mod tests {
 		assert!(is_base58_chars(b58_str), "String should contain only Base58 characters");
 		assert!(
 			(21..=23).contains(&b58_str.len()),
-			"Base58 string length for UUIDv7 should be around 21-23. Got: {}",
-			b58_str.len()
+			"Base58 string length for UUIDv7 should be around 21-23. Got: {b58_str_len}",
+			b58_str_len = b58_str.len()
 		);
 
 		Ok(())
@@ -559,7 +559,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "uuid")?;
 		let v4_uuid_str = uuid_extra::new_v4().to_string();
-		let script = format!("return aip.uuid.to_time_epoch_ms('{}')", v4_uuid_str);
+		let script = format!("return aip.uuid.to_time_epoch_ms('{v4_uuid_str}')");
 
 		// -- Exec
 		let result_val = eval_lua(&lua, &script)?;
@@ -588,7 +588,7 @@ mod tests {
 			})
 			.ok_or("Failed to get timestamp from generated V7 UUID")?;
 
-		let script = format!("return aip.uuid.to_time_epoch_ms('{}')", v7_uuid_str);
+		let script = format!("return aip.uuid.to_time_epoch_ms('{v7_uuid_str}')");
 
 		// -- Exec
 		let result_val = eval_lua(&lua, &script)?;

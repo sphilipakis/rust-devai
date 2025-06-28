@@ -7,12 +7,7 @@ where
 	T: Into<DataContainer<'a>>,
 {
 	let container: DataContainer = data.into();
-	assert!(
-		container.contains(val),
-		"Should contain: {}\nBut was: {:?}",
-		val,
-		container
-	);
+	assert!(container.contains(val), "Should contain: {val}\nBut was: {container:?}");
 }
 
 pub fn assert_not_contains<'a, T>(data: T, val: &str)
@@ -22,9 +17,7 @@ where
 	let container: DataContainer = data.into();
 	assert!(
 		!container.contains(val),
-		"Should not contain: {}\nBut was: {:?}",
-		val,
-		container
+		"Should not contain: {val}\nBut was: {container:?}"
 	);
 }
 
@@ -35,9 +28,7 @@ where
 	let container: DataContainer = data.into();
 	assert!(
 		container.ends_with(val),
-		"Should end with: {}\nBut was: {:?}",
-		val,
-		container
+		"Should end with: {val}\nBut was: {container:?}"
 	);
 }
 
@@ -48,9 +39,7 @@ where
 	let container: DataContainer = data.into();
 	assert!(
 		!container.ends_with(val),
-		"Should not end with: {}\nBut was: {:?}",
-		val,
-		container
+		"Should not end with: {val}\nBut was: {container:?}"
 	);
 }
 
@@ -64,7 +53,7 @@ pub enum DataContainer<'a> {
 impl std::fmt::Debug for DataContainer<'_> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			DataContainer::Slice(slice) => write!(f, "{:?}", slice),
+			DataContainer::Slice(slice) => write!(f, "{slice:?}"),
 			DataContainer::Str(s) => {
 				let s = truncate_with_ellipsis(s, 64, "...");
 				write!(f, "{s}")

@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext};
-use crate::hub::get_hub;
 use crate::exec::init::assets;
+use crate::hub::get_hub;
 use crate::support::AsStrsExt;
 use crate::support::files::safer_delete_dir;
 use simple_fs::{SPath, ensure_dir};
@@ -57,7 +57,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 	if !config_path.exists() {
 		let config_zfile = assets::extract_base_config_toml_zfile()?;
 		write(&config_path, config_zfile.content)?;
-		hub.publish(format!("-> {:<18} '{}'", "Create config file", config_path)).await;
+		hub.publish(format!("-> {label:<18} '{path}'", label = "Create config file", path = config_path)).await;
 	}
 
 	// -- Init the doc
@@ -109,7 +109,7 @@ If there is no match with the current version, this file will be recreated, and 
 			crate::VERSION
 		);
 		write(&version_path, content)?;
-		get_hub().publish(format!("-> {:<18} '{}'", "Create file", version_path)).await;
+		get_hub().publish(format!("-> {label:<18} '{path}'", label = "Create file", path = version_path)).await;
 	}
 
 	Ok(is_new)

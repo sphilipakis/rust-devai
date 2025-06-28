@@ -134,11 +134,10 @@ mod tests {
 		// -- Exec & Check
 		for (input, expected_name, expected_namespace) in data {
 			let identity = PackIdentity::from_str(input)?;
-			assert_eq!(identity.name, *expected_name, "Name should match for input: {}", input);
+			assert_eq!(identity.name, *expected_name, "Name should match for input: {input}");
 			assert_eq!(
 				identity.namespace, *expected_namespace,
-				"Namespace should match for input: {}",
-				input
+				"Namespace should match for input: {input}"
 			);
 		}
 
@@ -175,7 +174,7 @@ mod tests {
 		// -- Exec & Check
 		for (invalid_input, expected_error) in data {
 			let result = PackIdentity::from_str(invalid_input);
-			assert!(result.is_err(), "Should fail for invalid input: {}", invalid_input);
+			assert!(result.is_err(), "Should fail for invalid input: {invalid_input}");
 			let err = result.unwrap_err().to_string();
 			assert_contains(&err, expected_error);
 		}

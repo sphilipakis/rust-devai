@@ -25,7 +25,7 @@ pub async fn exec_new(new_args: NewArgs, _dir_context: DirContext) -> Result<()>
 	let max_len = AGENT_TEMPLATES.iter().map(|(name, _)| name.len()).max().unwrap_or(0);
 	let labels = AGENT_TEMPLATES
 		.iter()
-		.map(|(name, title)| format!(" {name:>width$} - {title}", width = max_len))
+		.map(|(name, title)| format!(" {name:>max_len$} - {title}"))
 		.collect::<Vec<_>>();
 	let template_idx = prompt_select(&mut stdout, "Select the agent template you want", &labels.x_as_strs())?;
 

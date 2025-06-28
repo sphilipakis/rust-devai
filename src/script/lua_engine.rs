@@ -116,7 +116,8 @@ impl LuaEngine {
 			}
 			if let Ok(lua_package) = globals.get::<Table>("package") {
 				let path: String = lua_package.get("path")?;
-				let new_path = format!("{};{path}", paths.join(";"));
+				let joined_paths = paths.join(";");
+				let new_path = format!("{joined_paths};{path}");
 				lua_package.set("path", new_path)?;
 			}
 		}

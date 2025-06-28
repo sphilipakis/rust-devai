@@ -114,7 +114,7 @@ mod tests {
 		assert_contains(content, "heading-1-content");
 		assert_contains(content, "sub heading 1-a");
 		assert_contains(content, "heading-1-a-blockquote");
-		assert_not_contains(content, "content-2");
+		assert_not_contains(content, "{content}-2");
 		assert_not_contains(content, "heading-2-blockquote");
 
 		Ok(())

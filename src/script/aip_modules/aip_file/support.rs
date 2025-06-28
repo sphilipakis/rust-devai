@@ -326,21 +326,21 @@ pub fn resolve_dest_path(
 	let dir_context = runtime.dir_context();
 
 	let opts: DestOptions = DestOptions::from_lua(dest_value, lua)
-		.map_err(|e| Error::Custom(format!("Failed to parse destination options. Cause: {}", e)))?;
+		.map_err(|e| Error::Custom(format!("Failed to parse destination options. Cause: {e}")))?;
 
 	let src_stem = Path::new(src_rel_path.as_str())
 		.file_stem()
 		.and_then(|s| s.to_str())
-		.ok_or_else(|| Error::Custom(format!("Source path '{}' has no file stem.", src_rel_path)))?;
+		.ok_or_else(|| Error::Custom(format!("Source path '{src_rel_path}' has no file stem.")))?;
 
 	let rel_dest_path: SPath = match opts {
 		DestOptions::Nil => {
 			let effective_stem = if let Some(def_suf) = default_stem_suffix {
-				format!("{}{}", src_stem, def_suf)
+				format!("{src_stem}{def_suf}")
 			} else {
 				src_stem.to_string()
 			};
-			let filename_part = format!("{}.{}", effective_stem, target_ext);
+			let filename_part = format!("{effective_stem}.{target_ext}");
 
 			if let Some(parent_dir) = src_rel_path.parent() {
 				parent_dir.join(filename_part)
@@ -354,19 +354,19 @@ pub fn resolve_dest_path(
 				name_opt
 			} else {
 				let effective_stem = if let Some(opt_suf) = c.suffix {
-					format!("{}{}", src_stem, opt_suf)
+					format!("{src_stem}{opt_suf}")
 				} else if let Some(def_suf) = default_stem_suffix {
 					if c.base_dir.is_some() {
 						// If base_dir is specified, default_stem_suffix is ignored as per slim requirement
 						src_stem.to_string()
 					} else {
 						// No base_dir, apply default_stem_suffix
-						format!("{}{}", src_stem, def_suf)
+						format!("{src_stem}{def_suf}")
 					}
 				} else {
 					src_stem.to_string()
 				};
-				format!("{}.{}", effective_stem, target_ext)
+				format!("{effective_stem}.{target_ext}")
 			};
 
 			if let Some(base_dir_spath) = c.base_dir {

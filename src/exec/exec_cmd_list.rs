@@ -1,6 +1,6 @@
 use crate::Result;
-use crate::exec::cli::ListArgs;
 use crate::dir_context::{DirContext, lookup_pack_dirs};
+use crate::exec::cli::ListArgs;
 use crate::hub::get_hub;
 
 pub async fn exec_list(dir_context: DirContext, list_args: ListArgs) -> Result<()> {

@@ -43,10 +43,10 @@ pub fn print_pack_list(pack_dirs: &[&PackDir], _interactive: bool) {
 		execute!(
 			stdout,
 			SetAttribute(weight_ref),
-			Print(format!("{bullet} {:<width$}", name)),
+			Print(format!("{bullet} {name:<width$}")),
 			ResetColor,
 			SetAttribute(weight_path),
-			Print(format!("- {}\n", path)),
+			Print(format!("- {path}\n")),
 			ResetColor,
 			SetAttribute(Attribute::Reset)
 		);

@@ -94,7 +94,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 	match serde_json::from_str::<serde_json::Value>(&content) {
 		Ok(val) => serde_value_to_lua_value(lua, val).map_err(|e| e.into()),
-		Err(err) => Err(Error::custom(format!("aip.json.parse failed. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.parse failed. {err}")).into()),
 	}
 }
 
@@ -151,7 +151,7 @@ fn parse_ndjson(lua: &Lua, content: String) -> mlua::Result<Value> {
 			let lua_value = serde_value_to_lua_value(lua, values)?;
 			Ok(lua_value)
 		}
-		Err(err) => Err(Error::custom(format!("aip.json.parse_ndjson failed. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.parse_ndjson failed. {err}")).into()),
 	}
 }
 
@@ -202,7 +202,7 @@ fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	let json_value = lua_value_to_serde_value(content)?;
 	match serde_json::to_string(&json_value) {
 		Ok(str) => Ok(str),
-		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify fail to stringify. {err}")).into()),
 	}
 }
 
@@ -254,7 +254,7 @@ fn stringify_pretty(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	let json_value = lua_value_to_serde_value(content)?;
 	match serde_json::to_string_pretty(&json_value) {
 		Ok(str) => Ok(str),
-		Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to stringify. {}", err)).into()),
+		Err(err) => Err(Error::custom(format!("aip.json.stringify_pretty fail to stringify. {err}")).into()),
 	}
 }
 
@@ -306,7 +306,7 @@ mod tests {
 
 		// -- Check
 		let Err(err) = res else {
-			panic!("Expected error, got {:?}", res);
+			panic!("Expected error, got {res:?}");
 		};
 
 		// -- Check
@@ -377,7 +377,7 @@ mod tests {
 
 		// -- Check
 		let Err(err) = res else {
-			panic!("Expected error, got {:?}", res);
+			panic!("Expected error, got {res:?}");
 		};
 		let err_str = err.to_string();
 		assert_contains(&err_str, "aip.json.parse_ndjson failed");
@@ -403,7 +403,7 @@ mod tests {
 		let parsed: serde_json::Value = serde_json::from_str(result)?;
 		assert_eq!(parsed["name"], "John");
 		assert_eq!(parsed["age"], 30);
-		assert!(result.contains("\n"), "Expected pretty formatting with newlines");
+		assert!(result.contains('\n'), "Expected pretty formatting with newlines");
 		assert!(result.contains("  "), "Expected pretty formatting with indentation");
 		Ok(())
 	}
@@ -433,7 +433,7 @@ mod tests {
 		assert_eq!(parsed["age"], 30);
 		assert_eq!(parsed["address"]["street"], "123 Main St");
 		assert_eq!(parsed["hobbies"][0], "reading");
-		assert!(result.contains("\n"), "Expected pretty formatting with newlines");
+		assert!(result.contains('\n'), "Expected pretty formatting with newlines");
 		assert!(result.contains("  "), "Expected pretty formatting with indentation");
 		Ok(())
 	}

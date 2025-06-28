@@ -10,7 +10,7 @@ const LATEST_TOML_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest/lat
 
 pub async fn exec_xelf_update(args: XelfUpdateArgs) -> Result<()> {
 	let hub = get_hub();
-	hub.publish(HubEvent::info_short(format!("Current aip version: {}", VERSION)))
+	hub.publish(HubEvent::info_short(format!("Current aip version: {VERSION}")))
 		.await;
 
 	hub.publish(HubEvent::info_short("Checking for latest version...")).await;
@@ -23,8 +23,7 @@ pub async fn exec_xelf_update(args: XelfUpdateArgs) -> Result<()> {
 		match fetch_latest_remote_version().await {
 			Ok(latest_version) => {
 				hub.publish(HubEvent::info_short(format!(
-					"Latest remote version available: {}",
-					latest_version
+					"Latest remote version available: {latest_version}"
 				)))
 				.await;
 				(latest_version, false)
@@ -44,19 +43,17 @@ pub async fn exec_xelf_update(args: XelfUpdateArgs) -> Result<()> {
 	// Parse current and remote versions for comparison.
 	// Handles cases like "0.7.11-WIP" by parsing the "0.7.11" part.
 	let current_v = Version::parse(VERSION)
-		.map_err(|e| Error::custom(format!("Failed to parse current version string '{}': {}", VERSION, e)))?;
+		.map_err(|e| Error::custom(format!("Failed to parse current version string '{VERSION}': {e}")))?;
 
 	if explicit_version || target_version > current_v {
 		if !explicit_version && target_version > current_v {
 			hub.publish(format!(
-				"A new version {} is available (you have v{}).",
-				target_version, current_v
+				"A new version {target_version} is available (you have v{current_v})."
 			))
 			.await;
 		} else if explicit_version {
 			hub.publish(format!(
-				"Installing v{} is available (you have v{}).",
-				target_version, current_v
+				"Installing v{target_version} is available (you have v{current_v})."
 			))
 			.await;
 		}
@@ -90,8 +87,7 @@ pub async fn exec_xelf_update(args: XelfUpdateArgs) -> Result<()> {
 		}
 	} else {
 		hub.publish(HubEvent::info_short(format!(
-			"You are already using the latest version ({})",
-			current_v
+			"You are already using the latest version ({current_v})"
 		)))
 		.await;
 	}
@@ -120,8 +116,7 @@ async fn fetch_latest_remote_version() -> Result<Version> {
 
 	if !resp.status().is_success() {
 		return Err(Error::custom(format!(
-			"Failed to fetch latest version info from {}. Status: {}",
-			LATEST_TOML_URL,
+			"Failed to fetch latest version info from {LATEST_TOML_URL}. Status: {}",
 			resp.status()
 		)));
 	}
@@ -131,16 +126,14 @@ async fn fetch_latest_remote_version() -> Result<Version> {
 	// -- Parse TOML
 	let latest_data: LatestTomlData = toml::from_str(&toml_content).map_err(|e| {
 		Error::custom(format!(
-			"Failed to parse latest version TOML from {}. Cause: {}",
-			LATEST_TOML_URL, e
+			"Failed to parse latest version TOML from {LATEST_TOML_URL}. Cause: {e}"
 		))
 	})?;
 
 	let latest_version_str = &latest_data.latest_stable.version;
 	let latest_version = Version::parse(latest_version_str).map_err(|e| {
 		Error::custom(format!(
-			"Failed to parse latest version '{}'. Cause: {}",
-			latest_version_str, e
+			"Failed to parse latest version '{latest_version_str}'. Cause: {e}"
 		))
 	})?;
 

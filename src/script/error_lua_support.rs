@@ -16,9 +16,9 @@ impl Error {
 				} else {
 					msg
 				};
-				buff.push(format!("Lua error:\n{}", msg));
+				buff.push(format!("Lua error:\n{msg}"));
 			} else {
-				buff.push(format!("Other lua error:\n{}", item));
+				buff.push(format!("Other lua error:\n{item}"));
 			}
 		}
 		Error::custom(buff.join("\n"))
@@ -37,7 +37,8 @@ fn process_stack_with_script(stack: &str, script: &str) -> String {
 			let replaced_line = rx.replace_all(line, |caps: &regex::Captures| {
 				if let Some(num) = caps.get(1).and_then(|m| m.as_str().parse::<usize>().ok()) {
 					if let Some(script_line) = script_lines.get(num - 1) {
-						Cow::from(format!("At line {num} '{}'", script_line.trim()))
+						let script_line = script_line.trim();
+						Cow::from(format!("At line {num} '{script_line}'"))
 					} else {
 						Cow::from(format!("Line({num})"))
 					}
@@ -70,9 +71,9 @@ impl From<&mlua::Error> for Error {
 		let mut buff: Vec<String> = Vec::new();
 		for item in lua_error.chain() {
 			if let Some(lua_item) = item.downcast_ref::<mlua::Error>() {
-				buff.push(format!("Lua error chain item\n - {}", lua_item))
+				buff.push(format!("Lua error chain item\n - {lua_item}"))
 			} else {
-				buff.push(format!("Other error chain item\n - {}", item))
+				buff.push(format!("Other error chain item\n - {item}"))
 			}
 		}
 		let msg = buff.join("\n");

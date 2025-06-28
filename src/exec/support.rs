@@ -56,7 +56,7 @@ pub async fn open_vscode(path: impl AsRef<Path>) {
 			get_hub().publish(Error::Custom(msg)).await;
 		}
 		Err(e) => {
-			let msg = format!("Failed to execute VSCode command: {}", e);
+			let msg = format!("Failed to execute VSCode command: {e}");
 			get_hub().publish(Error::Custom(msg)).await;
 		}
 	}

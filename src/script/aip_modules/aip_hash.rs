@@ -498,7 +498,7 @@ mod tests {
 		let expected = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha256("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha256("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -527,7 +527,7 @@ mod tests {
 		let expected = "DULfJyE3WQqNxy3ymuhAChyNR3yufT88pmqvAazKFMG4"; // Corrected expected value
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha256_b58("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha256_b58("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -542,7 +542,7 @@ mod tests {
 		let expected = "uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha256_b64("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha256_b64("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -557,7 +557,7 @@ mod tests {
 		let expected = "uU0nuZNNPgilLlLX2n2r-sSE7-N6U4DukIj3rOLvzek";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha256_b64u("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha256_b64u("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -572,7 +572,7 @@ mod tests {
 		let expected = "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha512("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha512("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -601,7 +601,7 @@ mod tests {
 		let expected = "yP4cqy7jmaRDzC2bmcGNZkuQb3VdftMk6YH7ynQ2Qw4zktKsyA9fk52xghNQNAdkpF9iFmFkKh2bNVG4kDWhsok";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha512_b58("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha512_b58("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -616,7 +616,7 @@ mod tests {
 		let expected = "MJ7MSJwS1utMxA9QyQLytNDtd+5RGnx6m808qG1M2G+YndNbxf9JlnDaNCVbRbDP2DDoH2Bdz33FVC6TrpzXbw==";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha512_b64("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha512_b64("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -631,7 +631,7 @@ mod tests {
 		let expected = "MJ7MSJwS1utMxA9QyQLytNDtd-5RGnx6m808qG1M2G-YndNbxf9JlnDaNCVbRbDP2DDoH2Bdz33FVC6TrpzXbw";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.sha512_b64u("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.sha512_b64u("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -647,7 +647,7 @@ mod tests {
 		let expected = "d74981efa70a0c880b8d8c1985d075dbcbf679b99a5f9914e5aaf96b831a9e24";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.blake3("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.blake3("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -676,7 +676,7 @@ mod tests {
 		let expected = "FVPfbg9bK7mj7jnaSRXhuVcVakkXcjMPgSwxmauUofYf";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.blake3_b58("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.blake3_b58("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -691,7 +691,7 @@ mod tests {
 		let expected = "10mB76cKDIgLjYwZhdB128v2ebmaX5kU5ar5a4ManiQ=";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.blake3_b64("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.blake3_b64("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check
@@ -706,7 +706,7 @@ mod tests {
 		let expected = "10mB76cKDIgLjYwZhdB128v2ebmaX5kU5ar5a4ManiQ";
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.hash.blake3_b64u("{}")"#, TEST_INPUT);
+		let lua_code = format!(r#"return aip.hash.blake3_b64u("{TEST_INPUT}")"#);
 		let res = eval_lua(&lua, &lua_code)?;
 
 		// -- Check

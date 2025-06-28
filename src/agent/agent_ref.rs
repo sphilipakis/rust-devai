@@ -51,9 +51,9 @@ impl PartialAgentRef {
 impl std::fmt::Display for PartialAgentRef {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			PartialAgentRef::LocalPath(path) => write!(f, "{}", path),
+			PartialAgentRef::LocalPath(path) => write!(f, "{path}"),
 			PartialAgentRef::PackRef(pack_ref) => {
-				write!(f, "{}", pack_ref)?;
+				write!(f, "{pack_ref}")?;
 				Ok(())
 			}
 		}

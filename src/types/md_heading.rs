@@ -181,12 +181,12 @@ mod tests {
 		for (line, expected_level, expected_name) in headings {
 			let heading = MdHeading::new(line);
 
-			assert!(heading.is_some(), "Failed to parse valid heading: '{}'", line);
+			assert!(heading.is_some(), "Failed to parse valid heading: '{line}'");
 
 			let heading = heading.unwrap();
 
-			assert_eq!(heading.level, expected_level, "Incorrect level for heading: '{}'", line);
-			assert_eq!(heading.name(), expected_name, "Incorrect name for heading: '{}'", line);
+			assert_eq!(heading.level, expected_level, "Incorrect level for heading: '{line}'");
+			assert_eq!(heading.name(), expected_name, "Incorrect name for heading: '{line}'");
 		}
 	}
 
@@ -207,8 +207,7 @@ mod tests {
 			let heading = MdHeading::new(line.to_string());
 			assert!(
 				heading.is_none(),
-				"Parsed an invalid heading that should be None: '{}'",
-				line
+				"Parsed an invalid heading that should be None: '{line}'"
 			);
 		}
 	}

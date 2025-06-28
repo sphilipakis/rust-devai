@@ -70,8 +70,8 @@ pub fn into_option_string(value: mlua::Value, err_prefix: &str) -> mlua::Result<
 		Value::Nil => Ok(None),
 		Value::String(string) => Ok(Some(string.to_string_lossy())),
 		other => Err(crate::Error::Custom(format!(
-			"{err_prefix} - accepted argument types are String or Nil, but was {} ",
-			other.type_name()
+			"{err_prefix} - accepted argument types are String or Nil, but was {type_name}",
+			type_name = other.type_name()
 		))
 		.into()),
 	}

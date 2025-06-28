@@ -49,7 +49,7 @@ pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Resu
 				let dir_name = if name.ends_with('/') {
 					name.to_string()
 				} else {
-					format!("{}/", name)
+					format!("{name}/")
 				};
 				zip.add_directory(&dir_name, options).map_err(|err| Error::ZipFail {
 					zip_dir: src_dir.to_string(),

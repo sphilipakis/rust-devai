@@ -15,7 +15,7 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 	// Get source directory path
 	let src_dir = SPath::from(&pack_args.dir_path);
 	if !src_dir.exists() {
-		return Err(Error::custom(format!("Source directory '{}' does not exist", src_dir)));
+		return Err(Error::custom(format!("Source directory '{src_dir}' does not exist")));
 	}
 
 	// Get destination directory (default to current directory if not specified)
@@ -31,7 +31,7 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 	}
 
 	// Perform the packing
-	hub.publish(format!("\nPacking directory '{}' into a .aipack file...", src_dir))
+	hub.publish(format!("\nPacking directory '{src_dir}' into a .aipack file..."))
 		.await;
 
 	match pack_dir(&src_dir, &dest_dir) {
@@ -46,14 +46,13 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 		Err(Error::AipackTomlMissing(_missing_toml_path)) => {
 			// Generate template pack.toml
 			if let Err(gen_err) = generate_pack_toml(&src_dir).await {
-				hub.publish(format!("Failed to generate pack.toml: {}", gen_err)).await;
+				hub.publish(format!("Failed to generate pack.toml: {gen_err}")).await;
 				return Ok(());
 			}
 
 			// Prompt user to continue
 			hub.publish(format!(
-				"\n{src_dir}/pack.toml was missing, a default one was generated\n\nPlease check {}/pack.toml",
-				src_dir
+				"\n{src_dir}/pack.toml was missing, a default one was generated\n\nPlease check {src_dir}/pack.toml"
 			))
 			.await;
 
@@ -78,8 +77,7 @@ pub async fn exec_pack(pack_args: &PackArgs) -> Result<()> {
 					}
 					Err(retry_err) => {
 						hub.publish(format!(
-							"Failed to pack directory after generating pack.toml: {}",
-							retry_err
+							"Failed to pack directory after generating pack.toml: {retry_err}",
 						))
 						.await;
 					}
@@ -119,7 +117,7 @@ async fn generate_pack_toml(dir_path: &SPath) -> Result<()> {
 	let toml_path = dir_path.join("pack.toml");
 	fs::write(&toml_path, content)?;
 
-	hub.publish(format!("-> Created default pack.toml at '{}'", toml_path)).await;
+	hub.publish(format!("-> Created default pack.toml at '{toml_path}'")).await;
 
 	Ok(())
 }

@@ -178,16 +178,14 @@ fn web_resolve_href(lua: &Lua, (href_val, base_url_str): (Value, String)) -> mlu
 
 	let base_url = Url::parse(&base_url_str).map_err(|e| {
 		Error::custom(format!(
-			"aip.web.resolve_href: Invalid base_url '{}'. Cause: {}",
-			base_url_str, e
+			"aip.web.resolve_href: Invalid base_url '{base_url_str}'. Cause: {e}"
 		))
 	})?;
 
 	match base_url.join(&href_str) {
 		Ok(resolved_url) => Ok(Value::String(lua.create_string(resolved_url.as_str())?)),
 		Err(e) => Err(Error::custom(format!(
-			"aip.web.resolve_href: Failed to join href '{}' with base_url '{}'. Cause: {}",
-			href_str, base_url_str, e
+			"aip.web.resolve_href: Failed to join href '{href_str}' with base_url '{base_url_str}'. Cause: {e}"
 		))
 		.into()),
 	}
@@ -218,7 +216,7 @@ impl IntoLua for W<Url> {
 		let mut page_url = format!("{}://{}", url.scheme(), url.host_str().unwrap_or_default());
 		if let Some(port) = url.port() {
 			page_url.push(':');
-			page_url.push_str(&format!(":{}", port));
+			page_url.push_str(&format!(":{port}"));
 		}
 		page_url.push_str(url.path());
 		table.set("page_url", page_url)?;
@@ -284,7 +282,7 @@ Cause: {err}"
 			};
 
 			if res.is_ok() {
-				get_hub().publish_sync(format!("-> lua web::get OK ({}) ", url));
+				get_hub().publish_sync(format!("-> lua web::get OK ({url}) "));
 			}
 
 			// return the Result<Dynamic, Error>
@@ -382,7 +380,7 @@ Cause: {err}"
 			};
 
 			if res.is_ok() {
-				get_hub().publish_sync(format!("-> lua web::post OK ({}) ", url));
+				get_hub().publish_sync(format!("-> lua web::post OK ({url}) "));
 			}
 
 			// return the Result<Dynamic, Error>

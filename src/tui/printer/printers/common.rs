@@ -38,7 +38,7 @@ pub fn print_blue_label_white_message(label: &str, msg: &str, interactive: bool)
 			stdout_lock,
 			ResetColor,
 			SetAttribute(Attribute::Reset),
-			Print(format!("{}\n", line)),
+			Print(format!("{line}\n")),
 			ResetColor,
 			SetAttribute(Attribute::Reset)
 		);

@@ -358,11 +358,7 @@ return aip.agent.extract_options("Some string")
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
-		assert!(
-			matches!(res, serde_json::Value::Null),
-			"Should be nil but was: {:?}",
-			res
-		);
+		assert!(matches!(res, serde_json::Value::Null), "Should be nil but was: {res:?}");
 
 		Ok(())
 	}
@@ -379,11 +375,7 @@ return aip.agent.extract_options(nil)
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
-		assert!(
-			matches!(res, serde_json::Value::Null),
-			"Should be nil but was: {:?}",
-			res
-		);
+		assert!(matches!(res, serde_json::Value::Null), "Should be nil but was: {res:?}");
 
 		Ok(())
 	}

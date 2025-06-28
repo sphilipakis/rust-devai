@@ -108,8 +108,7 @@ fn process_change_requests(changes_str: &str) -> Result<Vec<ChangeRequestIndices
 					};
 				} else {
 					return Err(Error::custom(format!(
-						"Malformed changes: Expected '{}' or a whitespace line to start a block. Found text outside of a valid block structure. Line: '{}'",
-						LINE_MARKER_SEARCH_START,
+						"Malformed changes: Expected '{LINE_MARKER_SEARCH_START}' or a whitespace line to start a block. Found text outside of a valid block structure. Line: '{}'",
 						truncate_with_ellipsis(line_str, 100, "...")
 					)));
 				}
@@ -172,12 +171,10 @@ fn process_change_requests(changes_str: &str) -> Result<Vec<ChangeRequestIndices
 	match state {
 		ParseState::ExpectBlockStartOrWhitespace => Ok(requests),
 		ParseState::InSearchPattern { .. } => Err(Error::custom(format!(
-			"Malformed change block: Ended in search pattern. Missing separator marker '{}'.",
-			LINE_MARKER_SEP
+			"Malformed change block: Ended in search pattern. Missing separator marker '{LINE_MARKER_SEP}'."
 		))),
 		ParseState::InReplacePattern { .. } => Err(Error::custom(format!(
-			"Malformed change block: Ended in replace pattern. Missing end marker '{}'.",
-			LINE_MARKER_REPLACE_END
+			"Malformed change block: Ended in replace pattern. Missing end marker '{LINE_MARKER_REPLACE_END}'."
 		))),
 	}
 }
@@ -190,10 +187,7 @@ mod tests {
 
 	// Helper to construct `changes` string for tests, ensuring markers are on their own lines.
 	fn format_change_block(search: &str, replace: &str) -> String {
-		format!(
-			"{}\n{}\n{}\n{}\n{}",
-			LINE_MARKER_SEARCH_START, search, LINE_MARKER_SEP, replace, LINE_MARKER_REPLACE_END
-		)
+		format!("{LINE_MARKER_SEARCH_START}\n{search}\n{LINE_MARKER_SEP}\n{replace}\n{LINE_MARKER_REPLACE_END}")
 	}
 
 	fn format_multiple_change_blocks(blocks: Vec<(&str, &str)>, separator_str: &str) -> String {
@@ -223,7 +217,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let original = "Hello world";
 		// LINE_MARKER_REPLACE_END is not at the start of a line, so simple mode.
-		let changes = format!("Some text {} with an end marker style part", LINE_MARKER_REPLACE_END);
+		let changes = format!("Some text {LINE_MARKER_REPLACE_END} with an end marker style part");
 
 		// -- Exec
 		let result = apply_changes(original, changes.clone())?;
@@ -323,7 +317,7 @@ mod tests {
 		let block2 = format_change_block("banana", "B");
 		let block3 = format_change_block("cherry", "C");
 		// TODO: Should allow spaced after the markers on same line
-		let changes = format!("{}\n{}\n{}", block1, block2, block3);
+		let changes = format!("{block1}\n{block2}\n{block3}");
 
 		// -- Exec
 		let result = apply_changes(original, changes)?;
@@ -348,7 +342,7 @@ mod tests {
 			LINE_MARKER_REPLACE_END // This is correct
 		)
 		// Now make one of the marker lines incorrect by adding trailing space
-		.replace(LINE_MARKER_SEP, &format!("{} ", LINE_MARKER_SEP)); // "======= "
+		.replace(LINE_MARKER_SEP, &format!("{LINE_MARKER_SEP} ")); // "======= "
 
 		// -- Exec
 		let result = apply_changes(original, changes);
@@ -359,10 +353,8 @@ mod tests {
 			// The line "======= " is not a valid separator, so it's part of search pattern.
 			// Parsing ends in InSearchPattern state.
 			assert!(
-				e.to_string()
-					.contains(&format!("Missing separator marker '{}'", LINE_MARKER_SEP)),
-				"Error message mismatch: {}",
-				e
+				e.to_string().contains(&format!("Missing separator marker '{LINE_MARKER_SEP}'")),
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -373,8 +365,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let original = "Replace target.";
 		let changes = format!(
-			"Some preamble text, should cause error.\n{}\ntarget\n{}\nreplacement\n{}",
-			LINE_MARKER_SEARCH_START, LINE_MARKER_SEP, LINE_MARKER_REPLACE_END
+			"Some preamble text, should cause error.\n{LINE_MARKER_SEARCH_START}\ntarget\n{LINE_MARKER_SEP}\nreplacement\n{LINE_MARKER_REPLACE_END}"
 		);
 
 		// -- Exec
@@ -385,13 +376,11 @@ mod tests {
 		if let Err(e) = result {
 			assert!(
 				e.to_string().contains("Expected '<<<<<<< SEARCH' or a whitespace line"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 			assert!(
 				e.to_string().contains("Line: 'Some preamble text"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -403,7 +392,7 @@ mod tests {
 		let original = "one two";
 		let block1 = format_change_block("one", "1");
 		let block2 = format_change_block("two", "2");
-		let changes = format!("{}\n  Some interstitial text, should cause error.\n{}", block1, block2);
+		let changes = format!("{block1}\n  Some interstitial text, should cause error.\n{block2}");
 
 		// -- Exec
 		let result = apply_changes(original, changes);
@@ -413,13 +402,11 @@ mod tests {
 		if let Err(e) = result {
 			assert!(
 				e.to_string().contains("Expected '<<<<<<< SEARCH' or a whitespace line"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 			assert!(
 				e.to_string().contains("Line: '  Some interstitial text"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -430,7 +417,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let original = "Replace target.";
 		let block = format_change_block("target", "replacement");
-		let changes = format!("{}\n  Some trailing text, should cause error.", block);
+		let changes = format!("{block}\n  Some trailing text, should cause error.");
 
 		// -- Exec
 		let result = apply_changes(original, changes);
@@ -440,13 +427,11 @@ mod tests {
 		if let Err(e) = result {
 			assert!(
 				e.to_string().contains("Expected '<<<<<<< SEARCH' or a whitespace line"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 			assert!(
 				e.to_string().contains("Line: '  Some trailing text"),
-				"Error message mismatch: {}",
-				e
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -503,8 +488,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let original = "Hello world";
 		let changes = format!(
-			"{}\nsearch_text_no_sep_then_end\n{}", // Missing LINE_MARKER_SEP
-			LINE_MARKER_SEARCH_START, LINE_MARKER_REPLACE_END
+			"{LINE_MARKER_SEARCH_START}\nsearch_text_no_sep_then_end\n{LINE_MARKER_REPLACE_END}" // Missing LINE_MARKER_SEP
 		);
 
 		// -- Exec
@@ -514,10 +498,8 @@ mod tests {
 		assert!(result.is_err(), "Should fail due to missing separator");
 		if let Err(e) = result {
 			assert!(
-				e.to_string()
-					.contains(&format!("Missing separator marker '{}'", LINE_MARKER_SEP)),
-				"Error message mismatch: {}",
-				e
+				e.to_string().contains(&format!("Missing separator marker '{LINE_MARKER_SEP}'")),
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -528,8 +510,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let original = "Hello world";
 		let changes = format!(
-			"{}\nsearch_text\n{}\nreplace_text_no_end", // Missing LINE_MARKER_REPLACE_END
-			LINE_MARKER_SEARCH_START, LINE_MARKER_SEP
+			"{LINE_MARKER_SEARCH_START}\nsearch_text\n{LINE_MARKER_SEP}\nreplace_text_no_end" // Missing LINE_MARKER_REPLACE_END
 		);
 
 		// -- Exec
@@ -540,9 +521,8 @@ mod tests {
 		if let Err(e) = result {
 			assert!(
 				e.to_string()
-					.contains(&format!("Missing end marker '{}'", LINE_MARKER_REPLACE_END)),
-				"Error message mismatch: {}",
-				e
+					.contains(&format!("Missing end marker '{LINE_MARKER_REPLACE_END}'")),
+				"Error message mismatch: {e}"
 			);
 		}
 		Ok(())
@@ -552,8 +532,7 @@ mod tests {
 	fn test_support_text_apply_change_markers_as_text_in_patterns() -> Result {
 		// -- Setup & Fixtures
 		let original = format!(
-			"Content with {} inside, and also {} and {}.",
-			LINE_MARKER_SEARCH_START, LINE_MARKER_SEP, LINE_MARKER_REPLACE_END
+			"Content with {LINE_MARKER_SEARCH_START} inside, and also {LINE_MARKER_SEP} and {LINE_MARKER_REPLACE_END}."
 		);
 		// Search for the literal text of a marker, not as a structural marker.
 		let search_pattern = LINE_MARKER_SEARCH_START; // e.g. "<<<<<<< SEARCH"
@@ -567,8 +546,7 @@ mod tests {
 		assert_eq!(
 			result,
 			format!(
-				"Content with FOUND_IT inside, and also {} and {}.", // Only first "<<<<<<< SEARCH" is replaced
-				LINE_MARKER_SEP, LINE_MARKER_REPLACE_END
+				"Content with FOUND_IT inside, and also {LINE_MARKER_SEP} and {LINE_MARKER_REPLACE_END}.", // Only first "<<<<<<< SEARCH" is replaced
 			)
 		);
 		Ok(())
@@ -619,10 +597,7 @@ mod tests {
 		assert!(result.is_err());
 		if let Err(e) = result {
 			// Ends in search pattern, missing separator
-			assert!(
-				e.to_string()
-					.contains(&format!("Missing separator marker '{}'", LINE_MARKER_SEP))
-			);
+			assert!(e.to_string().contains(&format!("Missing separator marker '{LINE_MARKER_SEP}'")));
 		}
 		Ok(())
 	}
@@ -631,7 +606,7 @@ mod tests {
 	fn test_support_text_apply_change_changes_is_incomplete_block_missing_replace_text_and_end_marker() -> Result {
 		// -- Setup & Fixtures
 		let original = "original";
-		let changes = format!("{}\nsearch_text\n{}", LINE_MARKER_SEARCH_START, LINE_MARKER_SEP);
+		let changes = format!("{LINE_MARKER_SEARCH_START}\nsearch_text\n{LINE_MARKER_SEP}");
 		// Lines: "<<<<<<< SEARCH", "search_text", "======="
 
 		// -- Exec
@@ -643,7 +618,7 @@ mod tests {
 			// Ends in replace pattern (empty), missing end marker
 			assert!(
 				e.to_string()
-					.contains(&format!("Missing end marker '{}'", LINE_MARKER_REPLACE_END))
+					.contains(&format!("Missing end marker '{LINE_MARKER_REPLACE_END}'"))
 			);
 		}
 		Ok(())

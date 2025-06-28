@@ -83,10 +83,10 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// - `version1` or `version2` are not valid semantic version strings.
 fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String)) -> mlua::Result<bool> {
 	let v1 =
-		parse_version(&version1).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version1, e)))?;
+		parse_version(&version1).map_err(|e| mlua::Error::runtime(format!("Invalid version '{version1}': {e}")))?;
 
 	let v2 =
-		parse_version(&version2).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version2, e)))?;
+		parse_version(&version2).map_err(|e| mlua::Error::runtime(format!("Invalid version '{version2}': {e}")))?;
 
 	let val = match operator.as_str() {
 		"<" => v1.lt(&v2),
@@ -95,7 +95,7 @@ fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String))
 		">=" => v1.ge(&v2),
 		">" => v1.gt(&v2),
 		"!=" | "~=" => v1 != v2,
-		_ => return Err(mlua::Error::RuntimeError(format!("Invalid operator '{}'", operator))),
+		_ => return Err(mlua::Error::RuntimeError(format!("Invalid operator '{operator}'"))),
 	};
 
 	Ok(val)
@@ -150,8 +150,7 @@ fn compare(_lua: &Lua, (version1, operator, version2): (String, String, String))
 ///
 /// Returns an error if the `version` string is not a valid semantic version.
 fn parse(_lua: &Lua, version: String) -> mlua::Result<Table> {
-	let v =
-		parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version, e)))?;
+	let v = parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{version}': {e}")))?;
 
 	let table = _lua.create_table()?;
 	table.set("major", v.major)?;
@@ -205,8 +204,7 @@ fn parse(_lua: &Lua, version: String) -> mlua::Result<Table> {
 ///
 /// Returns an error if the `version` string is not a valid semantic version.
 fn is_prerelease(_lua: &Lua, version: String) -> mlua::Result<bool> {
-	let v =
-		parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{}': {}", version, e)))?;
+	let v = parse_version(&version).map_err(|e| mlua::Error::runtime(format!("Invalid version '{version}': {e}")))?;
 
 	Ok(!v.pre.is_empty())
 }
@@ -284,12 +282,11 @@ mod tests {
 		];
 
 		for (v1, op, v2, expected) in test_cases {
-			let script = format!(r#"return aip.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
+			let script = format!(r#"return aip.semver.compare("{v1}", "{op}", "{v2}")"#);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
-				"Failed for compare(\"{}\", \"{}\", \"{}\"): expected {}, got {}",
-				v1, op, v2, expected, result
+				"Failed for compare(\"{v1}\", \"{op}\", \"{v2}\"): expected {expected}, got {result}"
 			);
 		}
 
@@ -318,12 +315,11 @@ mod tests {
 		];
 
 		for (v1, op, v2, expected) in test_cases {
-			let script = format!(r#"return aip.semver.compare("{}", "{}", "{}")"#, v1, op, v2);
+			let script = format!(r#"return aip.semver.compare("{v1}", "{op}", "{v2}")"#);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
-				"Failed for compare(\"{}\", \"{}\", \"{}\"): expected {}, got {}",
-				v1, op, v2, expected, result
+				"Failed for compare(\"{v1}\", \"{op}\", \"{v2}\"): expected {expected}, got {result}"
 			);
 		}
 
@@ -374,12 +370,11 @@ mod tests {
 		];
 
 		for (version, expected) in test_cases {
-			let script = format!(r#"return aip.semver.is_prerelease("{}")"#, version);
+			let script = format!(r#"return aip.semver.is_prerelease("{version}")"#);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
-				"Failed for is_prerelease(\"{}\"): expected {}, got {}",
-				version, expected, result
+				"Failed for is_prerelease(\"{version}\"): expected {expected}, got {result}"
 			);
 		}
 
@@ -401,12 +396,11 @@ mod tests {
 		];
 
 		for (version, expected) in test_cases {
-			let script = format!(r#"return aip.semver.valid("{}")"#, version);
+			let script = format!(r#"return aip.semver.valid("{version}")"#);
 			let result: bool = eval_lua(&lua, &script)?.as_bool().ok_or("should be bool")?;
 			assert_eq!(
 				result, expected,
-				"Failed for valid(\"{}\"): expected {}, got {}",
-				version, expected, result
+				"Failed for valid(\"{version}\"): expected {expected}, got {result}"
 			);
 		}
 

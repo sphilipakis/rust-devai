@@ -3,16 +3,28 @@ use crate::runtime::Runtime;
 use mlua::{Lua, Table};
 
 use super::{
+	ensure,
+	ensure_single_ending_newline,
 	// text_common.rs
-	escape_decode, escape_decode_if_needed, remove_first_line, remove_first_lines,
-	remove_last_lines, remove_last_line, truncate, replace_markers_with_default_parkers,
-	extract_line_blocks, ensure, ensure_single_ending_newline,
+	escape_decode,
+	escape_decode_if_needed,
+	extract_line_blocks,
+	remove_first_line,
+	remove_first_lines,
+	remove_last_line,
+	remove_last_lines,
+	replace_markers_with_default_parkers,
 	// text_split.rs
-	split_first, split_last,
+	split_first,
 	// text_split_lines.rs
-	split_first_line, split_last_line,
+	split_first_line,
+	split_last,
+	split_last_line,
 	// text_trim.rs
-	trim, trim_start, trim_end,
+	trim,
+	trim_end,
+	trim_start,
+	truncate,
 };
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {

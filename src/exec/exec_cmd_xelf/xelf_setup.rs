@@ -38,7 +38,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 	// -- Create the bin directory
 	let base_bin_dir = aipack_base_dir.bin_dir();
 	if ensure_dir(&base_bin_dir)? {
-		hub.publish(format!("-> {:<18} '{}'", "Create dir", base_bin_dir)).await;
+		hub.publish(format!("-> {:<18} '{base_bin_dir}'", "Create dir")).await;
 	}
 
 	// -- Copy current executable
@@ -66,8 +66,8 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		// Copy the file
 		super::support::atomic_replace(&current_exe_spath, &target_exe_path)?;
 		hub.publish(format!(
-			"-> {:<18} '{}' to '{}'",
-			"Copy executable", current_exe_spath, target_exe_path
+			"-> {:<18} '{current_exe_spath}' to '{target_exe_path}'",
+			"Copy executable"
 		))
 		.await;
 		Some(current_exe_spath)
@@ -90,7 +90,7 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 				// Here we delete directly, as calling safer_trash_file will prompt a Mac finder access dialog which would be confusing
 				if tmp_exe_to_trash.exists() {
 					remove_file(&tmp_exe_to_trash)?;
-					hub.publish(format!("-> {:<18} '{}'", "Temp aip file deleted", tmp_exe_to_trash))
+					hub.publish(format!("-> {:<18} '{tmp_exe_to_trash}'", "Temp aip file deleted"))
 						.await;
 				}
 			}
@@ -185,7 +185,7 @@ Then, check with
 		let current_user_path = exec_powershell(r#"[Environment]::GetEnvironmentVariable("Path", "User")"#)?;
 		let current_user_path = current_user_path.trim();
 
-		let updated_path = format!("{};{}", current_user_path.trim_end_matches(';'), new_path);
+		let updated_path = format!("{};{new_path}", current_user_path.trim_end_matches(';'));
 		let power_set_path_cmd = &format!(
 			"[Environment]::SetEnvironmentVariable('Path', '{}', 'User')",
 			updated_path.replace("'", "''") // escape single quotes
@@ -241,7 +241,7 @@ async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 			fs::set_permissions(&target_env_script_path, perms)?;
 		}
 	}
-	hub.publish(format!("-> {:<18} '{}'", "Create script", target_env_script_path))
+	hub.publish(format!("-> {:<18} '{target_env_script_path}'", "Create script"))
 		.await;
 
 	// -- Check & Setup env

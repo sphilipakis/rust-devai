@@ -29,8 +29,7 @@ async fn test_packer_impl_pack_simple() -> Result<()> {
 	let filename = pack_result.pack_file.name();
 	assert!(
 		filename.starts_with("test@test_pack_01-v0.1.0"),
-		"Unexpected filename: {}",
-		filename
+		"Unexpected filename: {filename}"
 	);
 
 	// -- Cleanup
@@ -46,8 +45,7 @@ fn verify_aipack_file(aipack_path: &SPath) -> Result<()> {
 	// Check that the file exists
 	assert!(
 		aipack_path.exists(),
-		"The .aipack file was not created at {}",
-		aipack_path
+		"The .aipack file was not created at {aipack_path}"
 	);
 
 	// Check that it has the correct extension
@@ -57,8 +55,8 @@ fn verify_aipack_file(aipack_path: &SPath) -> Result<()> {
 	let metadata = fs::metadata(aipack_path.path())?;
 	assert!(
 		metadata.len() > 100,
-		"The .aipack file is too small: {} bytes",
-		metadata.len()
+		"The .aipack file is too small: {bytes} bytes",
+		bytes = metadata.len()
 	);
 
 	Ok(())

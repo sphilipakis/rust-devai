@@ -51,8 +51,8 @@ impl<'a> TagContentIterator<'a> {
 			input,
 			tag_name,
 			current_pos: 0,
-			start_tag_prefix: format!("<{}", tag_name),
-			end_tag: format!("</{}>", tag_name),
+			start_tag_prefix: format!("<{tag_name}"),
+			end_tag: format!("</{tag_name}>"),
 		}
 	}
 }

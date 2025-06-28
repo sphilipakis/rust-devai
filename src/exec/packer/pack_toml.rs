@@ -42,7 +42,7 @@ pub(super) fn parse_validate_pack_toml(toml_content: &str, toml_path: &str) -> R
 	// Get the pack section
 	let pack_info = match partial_config.pack {
 		Some(p) => p,
-		None => return Err(Error::custom(format!("Missing [pack] section in {}", toml_path))),
+		None => return Err(Error::custom(format!("Missing [pack] section in {toml_path}"))),
 	};
 
 	// Validate fields
@@ -83,8 +83,7 @@ pub(super) fn validate_version(version: &str, toml_path: &str) -> Result<()> {
 
 	if !re.is_match(version) {
 		return Err(Error::custom(format!(
-			"Invalid version format in {}. Version must follow semver format (e.g., 1.0.0, 1.0.0-alpha.1)",
-			toml_path
+			"Invalid version format in {toml_path}. Version must follow semver format (e.g., 1.0.0, 1.0.0-alpha.1)"
 		)));
 	}
 

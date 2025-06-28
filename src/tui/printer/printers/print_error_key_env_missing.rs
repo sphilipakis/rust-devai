@@ -52,7 +52,7 @@ pub fn print_key_env_missing(missing_env_name: &str, model_iden: &ModelIden, _in
 		ResetColor,
 		Print("Environment variable "),
 		SetForegroundColor(Color::Magenta),
-		Print(format!("'{}'", missing_env_name)),
+		Print(format!("'{missing_env_name}'")),
 		ResetColor,
 		Print(" missing. Make sure to set it for this terminal."),
 		SetAttribute(Attribute::Bold),

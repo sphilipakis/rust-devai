@@ -173,7 +173,10 @@ mod tests {
 				let second_val = second_val.ok_or("Should have at least one")?; // if expected.1 is Some, this should exist
 				assert_eq!(exp_second, second_val.as_str().ok_or("Should be string")?);
 			} else {
-				assert!(second_val.is_none(), "Second should have been none");
+				assert!(
+					second_val.is_none(),
+					"Second should have been none"
+				);
 			}
 		}
 
@@ -244,7 +247,10 @@ mod tests {
 				let second_val = second_val.ok_or("Should have at least one")?; // if expected.1 is Some, this should exist
 				assert_eq!(exp_second, second_val.as_str().ok_or("Should be string")?);
 			} else {
-				assert!(second_val.is_none(), "Second should have been none");
+				assert!(
+					second_val.is_none(),
+					"Second should have been none"
+				);
 			}
 		}
 

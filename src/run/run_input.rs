@@ -118,7 +118,7 @@ pub async fn run_agent_input(
 			},
 
 			FromValue::AipackCustom(other) => {
-				return Err(format!("Aipack Custom '{}' is not supported at the Data stage", other.as_ref()).into());
+				return Err(format!("Aipack Custom '{other_ref}' is not supported at the Data stage", other_ref = other.as_ref()).into());
 			}
 		}
 	} else {
@@ -162,7 +162,7 @@ pub async fn run_agent_input(
 		//       this way it can take advantage of being rendered
 		//       and then, we will extract it later
 		let (options_line, content) = if let Some(options_str) = options_str {
-			(true, Cow::Owned(format!("{}\n{}", options_str, content)))
+			(true, Cow::Owned(format!("{options_str}\n{content}")))
 		} else {
 			(false, Cow::Borrowed(content))
 		};
@@ -205,9 +205,9 @@ pub async fn run_agent_input(
 		hub.publish("\n").await;
 		for msg in chat_messages.iter() {
 			hub.publish(format!(
-				"-- {}:\n{}",
-				msg.role,
-				msg.content.text_as_str().unwrap_or_default()
+				"-- {role}:\n{content}",
+				role = msg.role,
+				content = msg.content.text_as_str().unwrap_or_default()
 			))
 			.await;
 		}
@@ -235,7 +235,7 @@ pub async fn run_agent_input(
 
 		// region:    --- First Info Part
 
-		let duration_msg = format!("Duration: {}", format_duration(duration));
+		let duration_msg = format!("Duration: {duration_str}", duration_str = format_duration(duration));
 		// this is for the duration in second with 3 digit for milli (for the AI Response)
 		let duration_sec = duration.as_secs_f64(); // Convert to f64
 		let duration_sec = (duration_sec * 1000.0).round() / 1000.0; // Round to 3 decimal places
@@ -253,8 +253,8 @@ pub async fn run_agent_input(
 		// endregion: --- First Info Part
 
 		hub.publish(format!(
-			"<- ai_response content received - {} | {info}",
-			chat_res.provider_model_iden.model_name
+			"<- ai_response content received - {model_name} | {info}",
+			model_name = chat_res.provider_model_iden.model_name
 		))
 		.await;
 
@@ -273,8 +273,8 @@ pub async fn run_agent_input(
 		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden, &agent.options());
 		if run_base_options.verbose() {
 			hub.publish(format!(
-				"\n-- AI Output ({model_info})\n\n{}\n",
-				ai_response_content.as_deref().unwrap_or_default()
+				"\n-- AI Output ({model_info})\n\n{content}\n",
+				content = ai_response_content.as_deref().unwrap_or_default()
 			))
 			.await;
 		}
@@ -344,11 +344,12 @@ fn format_model(
 	// let model_iden = agent.model_resolved();
 	let model_section = if *res_model_iden.model_name != *res_provider_model_iden.model_name {
 		format!(
-			"Model: {} ({}) ",
-			res_model_iden.model_name, res_provider_model_iden.model_name
+			"Model: {model_name} ({provider_model_name}) ",
+			model_name = res_model_iden.model_name,
+			provider_model_name = res_provider_model_iden.model_name
 		)
 	} else {
-		format!("Model: {} ", res_model_iden.model_name)
+		format!("Model: {model_name} ", model_name = res_model_iden.model_name)
 	};
 
 	let temp_section = if let Some(temp) = agent_options.temperature() {
@@ -364,8 +365,8 @@ fn format_model(
 	};
 
 	format!(
-		"{model_section}| Adapter: {}{temp_section}{top_p_section}",
-		res_model_iden.adapter_kind,
+		"{model_section}| Adapter: {adapter_kind}{temp_section}{top_p_section}",
+		adapter_kind = res_model_iden.adapter_kind,
 	)
 }
 

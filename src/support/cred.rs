@@ -57,10 +57,9 @@ fn prompt_and_save(entry: Entry, disp_name: &str) -> Result<String> {
 
 	print!(
 		r#"
-API KEY for '{}' not found in environment vairable or keychain 
-Please enter value (will store key in Mac keychain, under aipack_secrets/{}): 
-"#,
-		disp_name, disp_name
+API KEY for '{disp_name}' not found in environment vairable or keychain 
+Please enter value (will store key in Mac keychain, under aipack_secrets/{disp_name}): 
+"#
 	);
 	io::stdout().flush()?;
 

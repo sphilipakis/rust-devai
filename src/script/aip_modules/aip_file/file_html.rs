@@ -71,13 +71,12 @@ pub(super) fn file_save_html_to_md(
 	let rel_html = SPath::new(html_path.clone());
 	let full_html = dir_context.resolve_path(runtime.session(), rel_html.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{}'. Cause: {}", html_path, e)))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
 
 	// -- convert to Markdown
 	let md_content = crate::support::html::to_md(html_content).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to convert HTML file '{}' to Markdown. Cause: {}",
-			html_path, e
+			"Failed to convert HTML file '{html_path}' to Markdown. Cause: {e}"
 		))
 	})?;
 
@@ -87,7 +86,7 @@ pub(super) fn file_save_html_to_md(
 	// -- write out and return metadata
 	simple_fs::ensure_file_dir(&full_md).map_err(Error::from)?;
 	write(&full_md, md_content)
-		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{}'. Cause: {}", rel_md, e)))?;
+		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{rel_md}'. Cause: {e}")))?;
 
 	let meta = FileInfo::new(runtime.dir_context(), rel_md, &full_md);
 	meta.into_lua(lua)
@@ -161,11 +160,11 @@ pub(super) fn file_save_html_to_slim(
 	let full_html_src =
 		dir_context.resolve_path(runtime.session(), rel_html_src.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html_src)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{}'. Cause: {}", html_path, e)))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
 
 	// -- slim the HTML content
 	let slim_html_content = crate::support::html::slim(html_content)
-		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{}'. Cause: {}", html_path, e)))?;
+		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?;
 
 	// -- determine destination paths using the helper
 	let (rel_html_dest, full_html_dest) =
@@ -175,8 +174,7 @@ pub(super) fn file_save_html_to_slim(
 	simple_fs::ensure_file_dir(&full_html_dest).map_err(Error::from)?;
 	write(&full_html_dest, slim_html_content).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to write slimmed HTML file '{}'. Cause: {}",
-			rel_html_dest, e
+			"Failed to write slimmed HTML file '{rel_html_dest}'. Cause: {e}"
 		))
 	})?;
 
@@ -230,7 +228,7 @@ mod tests {
 		let md_path = fx_html_path.new_sibling("test_script_aip_file_save_html_to_md_simple_ok-input.md");
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.file.save_html_to_md("{}", "{}")"#, fx_html_path, md_path);
+		let lua_code = format!(r#"return aip.file.save_html_to_md("{fx_html_path}", "{md_path}")"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check
@@ -263,10 +261,7 @@ mod tests {
 		let fx_dst_path = gen_sandbox_01_temp_file_path("test_script_aip_file_save_html_to_md_html_not_found.md");
 
 		// -- Exec
-		let lua_code = format!(
-			r#"return aip.file.save_html_to_md("{}", "{}")"#,
-			fx_src_path, fx_dst_path
-		);
+		let lua_code = format!(r#"return aip.file.save_html_to_md("{fx_src_path}", "{fx_dst_path}")"#);
 
 		let Err(res) = run_reflective_agent(&lua_code, None).await else {
 			panic!("Should have returned a error")
@@ -289,7 +284,7 @@ mod tests {
 		let expected_slim_path_rel = fx_html_path.new_sibling(format!("{}-slim.html", fx_html_path.stem()));
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.file.save_html_to_slim("{}")"#, fx_html_path);
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{fx_html_path}")"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check FileInfo result
@@ -325,10 +320,7 @@ mod tests {
 		let expected_slim_path_rel = SPath::new(fx_custom_output_path_str);
 
 		// -- Exec
-		let lua_code = format!(
-			r#"return aip.file.save_html_to_slim("{}", "{}")"#,
-			fx_html_path, fx_custom_output_path_str
-		);
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{fx_html_path}", "{fx_custom_output_path_str}")"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check FileInfo result
@@ -357,10 +349,8 @@ mod tests {
 		let expected_slim_path_rel = SPath::new(format!("{}/{}.html", fx_base_dir, fx_html_path.stem()));
 
 		// -- Exec
-		let lua_code = format!(
-			r#"return aip.file.save_html_to_slim("{}", {{ base_dir = "{}" }})"#,
-			fx_html_path, fx_base_dir
-		);
+		let lua_code =
+			format!(r#"return aip.file.save_html_to_slim("{fx_html_path}", {{ base_dir = "{fx_base_dir}" }})"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check FileInfo result
@@ -391,10 +381,7 @@ mod tests {
 		let expected_slim_path_rel = fx_html_path.new_sibling(&expected_output_filename);
 
 		// -- Exec
-		let lua_code = format!(
-			r#"return aip.file.save_html_to_slim("{}", {{ suffix = "{}" }})"#,
-			fx_html_path, fx_suffix
-		);
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{fx_html_path}", {{ suffix = "{fx_suffix}" }})"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check FileInfo result
@@ -419,10 +406,8 @@ mod tests {
 		let expected_slim_path_rel = fx_html_path.new_sibling(fx_file_name);
 
 		// -- Exec
-		let lua_code = format!(
-			r#"return aip.file.save_html_to_slim("{}", {{ file_name = "{}" }})"#,
-			fx_html_path, fx_file_name
-		);
+		let lua_code =
+			format!(r#"return aip.file.save_html_to_slim("{fx_html_path}", {{ file_name = "{fx_file_name}" }})"#);
 		let res = run_reflective_agent(&lua_code, None).await?;
 
 		// -- Check FileInfo result
@@ -446,7 +431,7 @@ mod tests {
 		// No need to specify dest, as it should fail before path resolution.
 
 		// -- Exec
-		let lua_code = format!(r#"return aip.file.save_html_to_slim("{}")"#, fx_src_path);
+		let lua_code = format!(r#"return aip.file.save_html_to_slim("{fx_src_path}")"#);
 		let Err(res) = run_reflective_agent(&lua_code, None).await else {
 			panic!("Should have returned an error")
 		};

@@ -78,7 +78,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// ```
 fn html_slim(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 	support::html::slim(html_content)
-		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {}", err)))
+		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to prune HTML content: {err}")))
 }
 
 fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Result<Value> {
@@ -142,7 +142,7 @@ fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Resul
 /// ```
 fn html_to_md(_lua: &Lua, html_content: String) -> mlua::Result<String> {
 	support::html::to_md(html_content)
-		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to convert HTML to Markdown: {}", err)))
+		.map_err(|err| mlua::Error::RuntimeError(format!("Failed to convert HTML to Markdown: {err}")))
 }
 
 // region:    --- Froms

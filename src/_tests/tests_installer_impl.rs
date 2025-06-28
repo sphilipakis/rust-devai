@@ -109,7 +109,7 @@ version = "0.1.0"
 				assert_eq!(installed_version, "0.2.0");
 				assert_eq!(new_version, "0.1.0");
 			}
-			other => panic!("Expected InstallFailInstalledVersionAbove error, got: {:?}", other),
+			other => panic!("Expected InstallFailInstalledVersionAbove error, got: {other:?}"),
 		}
 	}
 
@@ -160,7 +160,7 @@ version = "0.1.0-alpha"
 			Error::InvalidPrereleaseFormat { version } => {
 				assert_eq!(version, "0.1.0-alpha");
 			}
-			other => panic!("Expected InvalidPrereleaseFormat error, got: {:?}", other),
+			other => panic!("Expected InvalidPrereleaseFormat error, got: {other:?}"),
 		}
 	}
 

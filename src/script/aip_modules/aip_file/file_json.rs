@@ -76,8 +76,7 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 
 	let json_value = simple_fs::load_json(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.load_json - Failed to read json file '{}'.\nCause: {}",
-			path, e
+			"aip.file.load_json - Failed to read json file '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -146,8 +145,7 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 
 	let json_values = simple_fs::load_ndjson(full_path).map_err(|e| {
 		Error::from(format!(
-			"aip.file.load_ndjson - Failed to load newline json file '{}'.\nCause: {}",
-			path, e
+			"aip.file.load_ndjson - Failed to load newline json file '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -222,8 +220,7 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	// Convert Lua value to serde_json::Value
 	let json_value = lua_value_to_serde_value(data).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_line - Failed to convert Lua data to JSON for file '{}'.\nCause: {}",
-			path, e
+			"aip.file.append_json_line - Failed to convert Lua data to JSON for file '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -233,8 +230,7 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	// Append using simple_fs
 	simple_fs::append_json_line(full_path, &json_value).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_line - Failed to append json line to  '{}'.\nCause: {}",
-			path, e
+			"aip.file.append_json_line - Failed to append json line to  '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -307,8 +303,7 @@ pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String
 	// -- Get the json values
 	let json_values = lua_value_list_to_serde_values(data).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_lines - Failed to append json lines to '{}'.\nCause: {}",
-			path, e
+			"aip.file.append_json_lines - Failed to append json lines to '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -322,8 +317,7 @@ pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String
 	// -- Append using simple_fs
 	simple_fs::append_json_lines(full_path, &json_values).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_json_lines - Failed to append json line to  '{}'.\nCause: {}",
-			path, e
+			"aip.file.append_json_lines - Failed to append json line to  '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -577,7 +571,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data2})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
@@ -606,7 +600,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
@@ -643,7 +637,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
@@ -678,7 +672,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
@@ -705,7 +699,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		assert_eq!(content, "", "File should be empty");
 
@@ -724,7 +718,7 @@ invalid json line here
 		// Create data larger than buffer size
 		let mut lua_list = String::from("{");
 		for i in 0..(100 + 5) {
-			lua_list.push_str(&format!(r#"{{idx = {}, name = "name-{}""#, i, i));
+			lua_list.push_str(&format!(r#"{{idx = {i}, name = "name-{i}""#));
 			// Add a nil value occasionally to test handling
 			if i % 10 == 0 {
 				lua_list.push_str(", optional = nil");
@@ -737,7 +731,7 @@ invalid json line here
 		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {lua_list})"#), None).await?;
 
 		// -- Check
-		let full_path = format!("tests-data/sandbox-01/{}", fx_path);
+		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
 
@@ -746,7 +740,7 @@ invalid json line here
 		assert_eq!(lines[0], r#"{"idx":0,"name":"name-0"}"#); // optional = nil omitted
 		assert_eq!(
 			lines.last().unwrap(),
-			&format!(r#"{{"idx":{},"name":"name-{}"}}"#, 100 + 4, 100 + 4)
+			&format!("{{\"idx\":{idx},\"name\":\"name-{idx}\"}}", idx = 100 + 4)
 		);
 
 		// -- Clean

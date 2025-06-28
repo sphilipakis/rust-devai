@@ -299,7 +299,7 @@ impl ExecutorSender {
 		let event_str: &'static str = (&event).into();
 		if let Err(err) = self.tx.send_async(event).await {
 			get_hub()
-				.publish(Error::cc(format!("Fail to send action event {}", event_str), err))
+				.publish(Error::cc(format!("Fail to send action event {event_str}"), err))
 				.await;
 		};
 	}
