@@ -118,7 +118,11 @@ pub async fn run_agent_input(
 			},
 
 			FromValue::AipackCustom(other) => {
-				return Err(format!("Aipack Custom '{other_ref}' is not supported at the Data stage", other_ref = other.as_ref()).into());
+				return Err(format!(
+					"Aipack Custom '{other_ref}' is not supported at the Data stage",
+					other_ref = other.as_ref()
+				)
+				.into());
 			}
 		}
 	} else {
@@ -207,7 +211,7 @@ pub async fn run_agent_input(
 			hub.publish(format!(
 				"-- {role}:\n{content}",
 				role = msg.role,
-				content = msg.content.text_as_str().unwrap_or_default()
+				content = msg.content.text().unwrap_or_default()
 			))
 			.await;
 		}
@@ -267,7 +271,13 @@ pub async fn run_agent_input(
 			..
 		} = chat_res;
 
-		let ai_response_content = content.and_then(|c| c.text_into_string());
+		let content = content
+			.into_iter()
+			.filter_map(|c| c.into_text())
+			.collect::<Vec<_>>()
+			.join("\n\n");
+
+		let ai_response_content = if content.is_empty() { None } else { Some(content) };
 		let ai_response_reasoning_content = reasoning_content;
 
 		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden, &agent.options());

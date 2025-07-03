@@ -51,14 +51,34 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// - `data: table` - A table defining the new inputs and options for the agent execution cycle.
 ///   ```ts
 ///   type BeforeAllData = {
-///     inputs?: any[],      // Optional. A list of new inputs to use for the agent run cycle. Overrides initial inputs.
-///     options?: AgentOptions // Optional. Partial AgentOptions to override for this run.
+///     inputs?:  any[],        // Optional. A list of new inputs to use for the agent run cycle. Overrides initial inputs.
+///     options?: AgentOptions, // Optional. Partial AgentOptions to override for this run.
+///     before_all?: any,       // Optional. The before_all data that can be access via before_all...
 ///   } & any // Can also include other arbitrary data fields if needed.
 ///   ```
 ///
-/// ### Returns
 ///
-/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// ### Example
+///
+/// ```lua
+/// local result = aip.flow.before_all_response({
+///   inputs = {"processed_input_1", "processed_input_2"},
+///   options = {
+///     model = "gemini-2.5-flash",
+///     input_concurrency = 3
+///   },
+///   before_all = {some_data = "hello world" } -- Arbitrary data is allowed
+/// })
+/// -- The agent executor will process this result table.
+/// ```
+///
+/// ### Error
+///
+/// This function does not directly return any errors. Errors might occur during the creation of lua table.
+///
+/// ## Internal (not for Lua doc
+///
+/// Internaly this returns a Lua table with a specific structure recognized by AIPACK's executor.
 /// This return value does not typically need to be captured or used by the script itself;
 /// it serves as a directive for the AIPACK execution engine.
 ///
@@ -70,23 +90,6 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///   }
 /// }
 /// ```
-///
-/// ### Example
-///
-/// ```lua
-/// local result = aip.flow.before_all_response({
-///   inputs = {"processed_input_1", "processed_input_2"},
-///   options = {
-///     model = "claude-3-5-sonnet-latest"
-///   },
-///   custom_field = "example" -- Arbitrary data is allowed
-/// })
-/// -- The agent executor will process this result table.
-/// ```
-///
-/// ### Error
-///
-/// This function does not directly return any errors. Errors might occur during the creation of lua table.
 fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "BeforeAllResponse")?;
