@@ -118,14 +118,31 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 /// - `data: table` - A table defining the new input, options, and/or other data for the current cycle.
 ///   ```ts
 ///   type DataData = {
-///     input?: any | nil, // Optional. The new input to use for this cycle. If nil, the original input is used.
+///     input?: any | nil,     // Optional. The new input to use for this cycle. If nil, the original input is used.
+///     data?: any | nil,      // Data that will be available in the next stage. Same as returning a simple data.
 ///     options?: AgentOptions // Optional. Partial AgentOptions to override for this cycle.
 ///   } & any // Can also include other arbitrary data fields (e.g., computed values, flags)
 ///   ```
 ///
-/// ### Returns
+/// ### Example
 ///
-/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// ```lua
+/// -- Use a transformed input and override the model for this cycle
+/// return aip.flow.data_response({
+///   data  = data,              -- The data that would have been returned
+///   input = transformed_input,
+///   options = { model = "gpt-4o" },
+/// })
+/// -- The agent executor will process this result table.
+/// ```
+///
+/// ### Error
+///
+/// This function does not directly return any errors. Errors might occur during the creation of lua table.
+///
+/// ## Internal (not for Lua doc)
+///
+/// Internaly this returns a Lua table with a specific structure recognized by AIPACK's executor.
 /// This return value does not typically need to be captured or used by the script itself;
 /// it serves as a directive for the AIPACK execution engine.
 ///
@@ -137,23 +154,6 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 ///   }
 /// }
 /// ```
-///
-/// ### Example
-///
-/// ```lua
-/// -- Use a transformed input and override the model for this cycle
-/// return aip.flow.data_response({
-///   data  = data, -- The data that would have been returned
-///   input = transformed_input,
-///   options = { model = "gpt-4o" },
-///   processed = true -- Pass extra data
-/// })
-/// -- The agent executor will process this result table.
-/// ```
-///
-/// ### Error
-///
-/// This function does not directly return any errors. Errors might occur during the creation of lua table.
 fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "DataResponse")?;
@@ -181,23 +181,6 @@ fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 /// - `reason: string (optional)`: An optional string providing the reason for skipping the input cycle.
 ///   This reason might be logged or displayed depending on the AIPACK execution context.
 ///
-/// ### Returns
-///
-/// Returns a Lua table with a specific structure recognized by AIPACK's executor.
-/// This return value does not typically need to be captured or used by the script itself;
-/// it serves as a directive for the AIPACK execution engine.
-///
-/// ```ts
-/// type AipackFlowResponse = {
-///   _aipack_: {
-///     kind: "Skip",
-///     data: {
-///       reason: string | nil // The optional reason provided
-///     }
-///   }
-/// }
-/// ```
-///
 /// ### Example
 ///
 /// ```lua
@@ -212,6 +195,23 @@ fn aipack_data_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 /// ### Error
 ///
 /// This function does not directly return any errors. Errors might occur during the creation of lua table.
+///
+/// ## Internal (not for Lua doc)
+///
+/// Internaly this returns a Lua table with a specific structure recognized by AIPACK's executor.
+/// This return value does not typically need to be captured or used by the script itself;
+/// it serves as a directive for the AIPACK execution engine.
+///
+/// ```ts
+/// type AipackFlowResponse = {
+///   _aipack_: {
+///     kind: "Skip",
+///     data: {
+///       reason: string | nil // The optional reason provided
+///     }
+///   }
+/// }
+/// ```
 fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 	let data = lua.create_table()?;
 	data.set("reason", reason)?;
