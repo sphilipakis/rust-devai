@@ -11,9 +11,6 @@ use value_ext::JsonValueExt;
 /// Note: The values are flattened for simplicity but may be nested in the future.
 #[derive(Debug, Clone, Deserialize, Default, Serialize)]
 pub struct AgentOptions {
-	#[serde(default)]
-	legacy: bool,
-
 	// The raw model name of the configuration
 	model: Option<String>,
 
@@ -183,7 +180,6 @@ impl AgentOptions {
 		};
 
 		Ok(AgentOptions {
-			legacy: options_ov.legacy, // only take the value of the legacy
 			model: options_ov.model.or(self.model),
 			temperature: options_ov.temperature.or(self.temperature),
 			top_p: options_ov.top_p.or(self.top_p),
@@ -199,7 +195,6 @@ impl AgentOptions {
 		};
 
 		Ok(AgentOptions {
-			legacy: options_ov.legacy, // only take the value of the legacy
 			model: options_ov.model.or(self.model.clone()),
 			temperature: options_ov.temperature.or(self.temperature),
 			top_p: options_ov.top_p.or(self.top_p),
@@ -240,7 +235,6 @@ impl mlua::FromLua for AgentOptions {
 			let model_aliases = model_aliases.map(|v| ModelAliases::from_lua(v, lua)).transpose()?;
 
 			let options = AgentOptions {
-				legacy: false,
 				model,
 				temperature,
 				top_p,
@@ -305,7 +299,6 @@ impl AgentOptions {
 	/// Creates a new `AgentOptions` with the specified model name. (for test)
 	pub fn new(model_name: impl Into<String>) -> Self {
 		AgentOptions {
-			legacy: false,
 			model: Some(model_name.into()),
 			temperature: None,
 			top_p: None,
@@ -335,7 +328,6 @@ mod tests {
 		let options = AgentOptions::from_config_value(config_value)?;
 
 		// -- Check
-		assert!(!options.legacy, "Should NOT be legacy");
 		assert_eq!(options.model(), Some("gpt-4o-mini"));
 		assert_eq!(options.temperature(), Some(0.0));
 		assert_eq!(options.input_concurrency(), Some(6));

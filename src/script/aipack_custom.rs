@@ -22,7 +22,7 @@ pub enum AipackCustom {
 pub struct DataResponse {
 	pub input: Option<Value>,
 	pub data: Option<Value>,
-	pub options: Option<Value>,
+	pub options: Option<Value>, // AgentOptions
 }
 
 #[derive(Debug, Default)]
