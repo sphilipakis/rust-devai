@@ -4,6 +4,7 @@ mod run_input;
 
 mod ai_response;
 mod genai_client;
+mod queue;
 mod run_command;
 mod run_options;
 
