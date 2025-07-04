@@ -24,6 +24,7 @@ impl ModelManager {
 
 // region:    --- Once
 
+use crate::support::time::now_unix_time_us;
 use tokio::sync::OnceCell;
 
 #[derive(Clone, Copy)]
@@ -48,7 +49,9 @@ impl ModelManager {
 
 		for i in 0..10 {
 			let run_c = RunForCreate {
-				label: Some(format!("run-{i}")),
+				agent_name: Some(format!("agent_name-{i}")),
+				agent_path: Some(format!("agent_path-{i}")),
+				start: Some(now_unix_time_us().into()),
 			};
 			let id = RunBmc::create(self, run_c)?;
 

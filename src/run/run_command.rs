@@ -36,7 +36,6 @@ pub async fn run_command_agent(
 	// -- Run Action - Start Run
 
 	let run_id = runtime.run_start(agent.name(), &agent_path).await?;
-	runtime.send_run_event(RunEvent::start(run_id.into(), 123)).await;
 
 	// -- Run the before all
 	let BeforeAllResponse {

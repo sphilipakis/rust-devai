@@ -28,9 +28,11 @@ impl Run {
 	}
 }
 
-#[derive(Debug, Clone, Fields, SqliteFromRow)]
+#[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
 pub struct RunForCreate {
-	pub label: Option<String>,
+	pub agent_name: Option<String>,
+	pub agent_path: Option<String>,
+	pub start: Option<UnixTimeUs>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -107,7 +109,9 @@ mod tests {
 		// -- Fixture
 		let mm = ModelManager::new().await?;
 		let run_c = RunForCreate {
-			label: Some("Test Run".to_string()),
+			agent_name: Some("Test Run".to_string()),
+			agent_path: Some("test/path".to_string()),
+			start: None,
 		};
 
 		// -- Exec
@@ -124,7 +128,9 @@ mod tests {
 		// -- Fixture
 		let mm = ModelManager::new().await?;
 		let run_c = RunForCreate {
-			label: Some("Test Run".to_string()),
+			agent_name: Some("Test Run".to_string()),
+			agent_path: Some("test/path".to_string()),
+			start: None,
 		};
 		let id = RunBmc::create(&mm, run_c)?;
 
@@ -148,7 +154,9 @@ mod tests {
 		let mm = ModelManager::new().await?;
 		for i in 0..3 {
 			let run_c = RunForCreate {
-				label: Some(format!("label-{i}")),
+				agent_name: Some(format!("label-{i}")),
+				agent_path: Some(format!("path/label-{i}")),
+				start: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}
@@ -191,7 +199,9 @@ mod tests {
 		let mm = ModelManager::new().await?;
 		for i in 0..3 {
 			let run_c = RunForCreate {
-				label: Some(format!("label-{i}")),
+				agent_name: Some(format!("label-{i}")),
+				agent_path: Some(format!("path/label-{i}")),
+				start: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}

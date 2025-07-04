@@ -92,7 +92,9 @@ mod tests {
 	// region:    --- Support
 	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
 		let run_c = RunForCreate {
-			label: Some(label.to_string()),
+			agent_name: Some(label.to_string()),
+			agent_path: Some(format!("path/{label}")),
+			start: None,
 		};
 		Ok(RunBmc::create(mm, run_c)?)
 	}
