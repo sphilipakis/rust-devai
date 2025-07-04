@@ -9,7 +9,6 @@ use modql::field::HasSqliteFields;
 use modql::field::SqliteFields;
 use modql::filter::ListOptions;
 use rusqlite::ToSql;
-use rusqlite::types::Value;
 
 pub fn create<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
 where
@@ -34,7 +33,7 @@ where
 	Ok(id.into())
 }
 
-pub fn update<MC>(mm: &ModelManager, id: Id, mut fields: SqliteFields) -> Result<()>
+pub fn update<MC>(mm: &ModelManager, id: Id, mut fields: SqliteFields) -> Result<usize>
 where
 	MC: DbBmc,
 {
@@ -50,7 +49,7 @@ where
 
 	let count = db.exec(&sql, &*values)?;
 
-	Ok(())
+	Ok(count)
 }
 
 pub fn get<MC, E>(mm: &ModelManager, id: Id) -> Result<E>

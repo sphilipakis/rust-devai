@@ -53,12 +53,7 @@ impl ModelManager {
 				agent_path: Some(format!("agent_path-{i}")),
 				start: Some(now_unix_time_us().into()),
 			};
-			let id = RunBmc::create(self, run_c)?;
-
-			if i < 3 {
-				RunBmc::start(self, id)?;
-				RunBmc::end(self, id)?;
-			}
+			let _id = RunBmc::create(self, run_c)?;
 		}
 
 		Ok(())

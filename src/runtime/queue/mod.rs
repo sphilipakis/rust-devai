@@ -1,3 +1,7 @@
+#![allow(unused)]
+
+//! IMPORTANT: At this point, not sure if this is needed, and it is not used.
+
 // region:    --- Modules
 
 mod run_event;

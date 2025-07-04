@@ -1,5 +1,5 @@
 use crate::store::Result;
-use crate::store::db::setup::recreate_db;
+use crate::store::db::setup_rt::recreate_db;
 use modql::SqliteFromRow;
 use rusqlite::types::FromSql;
 use rusqlite::{Connection, OptionalExtension, Params};
@@ -21,7 +21,7 @@ impl Db {
 	}
 
 	pub fn recreate(&self) -> Result<()> {
-		let mut con = self.con.lock()?;
+		let con = self.con.lock()?;
 		recreate_db(&con)?;
 		Ok(())
 	}

@@ -65,7 +65,7 @@ impl Executor {
 	pub fn new(once_mm: OnceModelManager) -> Self {
 		let (tx, rx) = flume::unbounded();
 		Executor {
-			once_mm: OnceModelManager,
+			once_mm,
 			action_rx: rx,
 			action_sender: ExecutorTx::new(tx),
 			current_redo_ctx: Default::default(),

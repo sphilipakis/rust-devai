@@ -4,7 +4,6 @@
 use super::DbBmc;
 use crate::support::time::now_unix_time_us;
 use modql::field::{SqliteField, SqliteFields};
-use rusqlite::types::Value;
 use uuid::Uuid;
 
 /// This method must be called when a model controller intends to create its entity.

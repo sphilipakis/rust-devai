@@ -1,6 +1,5 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, UnixTimeUs};
-use crate::support::time::now_unix_time_us;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -23,6 +22,7 @@ pub struct Run {
 }
 
 impl Run {
+	#[allow(unused)]
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
@@ -52,25 +52,6 @@ impl DbBmc for RunBmc {
 	const TABLE: &'static str = "run";
 }
 
-/// Custom Methods
-impl RunBmc {
-	pub fn start(mm: &ModelManager, run_id: Id) -> Result<()> {
-		let run_u = RunForUpdate {
-			start: Some(now_unix_time_us().into()),
-			..Default::default()
-		};
-		base::update::<Self>(mm, run_id, run_u.sqlite_not_none_fields())
-	}
-
-	pub fn end(mm: &ModelManager, run_id: Id) -> Result<()> {
-		let run_u = RunForUpdate {
-			end: Some(now_unix_time_us().into()),
-			..Default::default()
-		};
-		base::update::<Self>(mm, run_id, run_u.sqlite_not_none_fields())
-	}
-}
-
 /// Basic CRUD
 impl RunBmc {
 	pub fn create(mm: &ModelManager, run_c: RunForCreate) -> Result<Id> {
@@ -78,15 +59,18 @@ impl RunBmc {
 		base::create::<Self>(mm, fields)
 	}
 
-	pub fn update(mm: &ModelManager, id: Id, run_u: RunForUpdate) -> Result<()> {
+	#[allow(unused)]
+	pub fn update(mm: &ModelManager, id: Id, run_u: RunForUpdate) -> Result<usize> {
 		let fields = run_u.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)
 	}
 
+	#[allow(unused)]
 	pub fn get(mm: &ModelManager, id: Id) -> Result<Run> {
 		base::get::<Self, _>(mm, id)
 	}
 
+	#[allow(unused)]
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Run>> {
 		base::list::<Self, _>(mm, list_options)
 	}

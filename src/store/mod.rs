@@ -5,7 +5,6 @@ mod error;
 mod model_manager;
 mod types;
 
-pub use db::*;
 pub use error::{Error, Result};
 pub use model_manager::*;
 pub use types::*;

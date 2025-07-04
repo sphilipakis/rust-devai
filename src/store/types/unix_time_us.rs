@@ -20,7 +20,9 @@ impl From<&i64> for UnixTimeUs {
 impl TryFrom<String> for UnixTimeUs {
 	type Error = Error;
 	fn try_from(val: String) -> Result<UnixTimeUs> {
-		let id = val.parse().map_err(|v| format!("id should be a number was '{val}'"))?;
+		let id = val
+			.parse()
+			.map_err(|err| format!("id should be a number was '{val}'. Cause: {err}"))?;
 		Ok(UnixTimeUs(id))
 	}
 }

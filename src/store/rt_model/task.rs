@@ -27,6 +27,7 @@ pub struct Task {
 }
 
 impl Task {
+	#[allow(unused)]
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
@@ -57,20 +58,24 @@ impl DbBmc for TaskBmc {
 }
 
 impl TaskBmc {
+	#[allow(unused)]
 	pub fn create(mm: &ModelManager, task_c: TaskForCreate) -> Result<Id> {
 		let fields = task_c.sqlite_not_none_fields();
 		base::create::<Self>(mm, fields)
 	}
 
-	pub fn update(mm: &ModelManager, id: Id, task_u: TaskForUpdate) -> Result<()> {
+	#[allow(unused)]
+	pub fn update(mm: &ModelManager, id: Id, task_u: TaskForUpdate) -> Result<usize> {
 		let fields = task_u.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)
 	}
 
+	#[allow(unused)]
 	pub fn get(mm: &ModelManager, id: Id) -> Result<Task> {
 		base::get::<Self, _>(mm, id)
 	}
 
+	#[allow(unused)]
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Task>> {
 		base::list::<Self, _>(mm, list_options)
 	}
