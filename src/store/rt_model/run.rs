@@ -18,6 +18,18 @@ pub struct Run {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
+	// Before All start/end
+	pub ba_start: Option<UnixTimeUs>,
+	pub ba_end: Option<UnixTimeUs>,
+
+	// All tasks start/end
+	pub tasks_start: Option<UnixTimeUs>,
+	pub tasks_end: Option<UnixTimeUs>,
+
+	// After All start/end
+	pub aa_start: Option<UnixTimeUs>,
+	pub aa_end: Option<UnixTimeUs>,
+
 	pub label: Option<String>,
 }
 
@@ -39,6 +51,19 @@ pub struct RunForCreate {
 pub struct RunForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
+
+	// Before All start/end
+	pub ba_start: Option<UnixTimeUs>,
+	pub ba_end: Option<UnixTimeUs>,
+
+	// All tasks start/end
+	pub tasks_start: Option<UnixTimeUs>,
+	pub tasks_end: Option<UnixTimeUs>,
+
+	// After All start/end
+	pub aa_start: Option<UnixTimeUs>,
+	pub aa_end: Option<UnixTimeUs>,
+
 	pub label: Option<String>,
 }
 

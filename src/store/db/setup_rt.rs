@@ -21,8 +21,21 @@ fn create_schema(con: &Connection) -> Result<()> {
 						start  INTEGER,
 						end    INTEGER,
 
+						-- Before All start/end
+						ba_start INTEGER,
+						ba_end   INTEGER,
+
+						-- All tasks start/end
+						tasks_start INTEGER,
+						tasks_end   INTEGER,
+
+						-- After All start/end
+						aa_start INTEGER,
+						aa_end   INTEGER,
+
 						agent_name TEXT,
-						agent_path TEXT
+						agent_path TEXT,
+						label TEXT
 
 				) STRICT",
 		(), // empty list of parameters.
