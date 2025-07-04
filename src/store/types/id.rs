@@ -1,9 +1,9 @@
 use crate::store::{Error, Result};
 // use derive_more::{Deref, Display, From, Into};
-use crate::derive_simple_data_type;
+use crate::derive_simple_struct_type;
 
 // Simple wrapper for SQLite Ids
-derive_simple_data_type! {
+derive_simple_struct_type! {
 	pub struct Id(i64);
 }
 

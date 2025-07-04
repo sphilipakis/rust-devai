@@ -7,7 +7,7 @@
 /// The macro generates the struct with the specified name and type,
 /// and adds the specified attributes to it.
 #[macro_export]
-macro_rules! derive_simple_data_type {
+macro_rules! derive_simple_struct_type {
     ($(#[$meta:meta])* $vis:vis struct $name:ident($type:ty);) => {
         $(#[$meta])*
         // #[cfg_attr(feature = "for-ts", derive(schemars::JsonSchema))]
@@ -30,5 +30,31 @@ macro_rules! derive_simple_data_type {
             // modql::field::SeaFieldValue,
         )]
         $vis struct $name($type);
+    };
+}
+
+#[macro_export]
+macro_rules! derive_simple_enum_type {
+    ($(#[$meta:meta])* $vis:vis enum $name:ident { $($variant:ident),* $(,)? }) => {
+        $(#[$meta])*
+        #[derive(
+            Clone,
+            Copy,
+            Debug,
+            Hash,
+            Eq,
+            PartialEq,
+            PartialOrd,
+            derive_more::Display,
+            modql::SqliteFromValue,
+            modql::SqliteToValue,
+            // Add or remove derives as appropriate for your use-case
+            // e.g., serde::Serialize, serde::Deserialize,
+        )]
+        $vis enum $name {
+            $(
+                $variant,
+            )*
+        }
     };
 }

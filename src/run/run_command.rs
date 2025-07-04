@@ -33,9 +33,8 @@ pub async fn run_command_agent(
 		Err(_) => agent.file_path().to_string(),
 	};
 
-	// -- Run Action - Start Run
-
-	let run_id = runtime.run_start(agent.name(), &agent_path).await?;
+	// -- Run Rec - Start Run
+	let run_id = runtime.rec_start(agent.name(), &agent_path).await?;
 
 	// -- Run the before all
 	let BeforeAllResponse {
@@ -43,19 +42,29 @@ pub async fn run_command_agent(
 		before_all,
 		options: options_to_merge,
 	} = if let Some(before_all_script) = agent.before_all_script() {
+		// -- Run Rec - Start Before All
+		runtime.rec_ba_start(run_id).await?;
+
+		// -- Setup the Lua engine
 		let lua_engine = runtime.new_lua_engine_with_ctx(&literals)?;
 		let lua_scope = lua_engine.create_table()?;
 		let lua_inputs = inputs.clone().map(Value::Array).unwrap_or_default();
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(lua_inputs)?)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
+		// -- Exec the script
 		let lua_value = lua_engine.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		let before_all_res = serde_json::to_value(lua_value)?;
 
+		// -- Run Rec - End Before All
+		runtime.rec_ba_end(run_id).await?;
+
+		// -- Process output
 		match AipackCustom::from_value(before_all_res)? {
 			// it is an skip action
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
+
 				hub.publish(HubEvent::info_short(format!(
 					"Aipack Skip inputs at Before All section{reason_msg}"
 				)))

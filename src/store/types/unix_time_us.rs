@@ -1,7 +1,7 @@
-use crate::derive_simple_data_type;
+use crate::derive_simple_struct_type;
 use crate::{Error, Result};
 
-derive_simple_data_type! {
+derive_simple_struct_type! {
 	pub struct UnixTimeUs(i64);
 }
 impl UnixTimeUs {
