@@ -20,6 +20,7 @@ mod _test_support;
 use crate::exec::Executor;
 use crate::exec::cli::CliArgs;
 use crate::hub::{HubEvent, get_hub};
+use crate::store::OnceModelManager;
 use crate::tui::TuiApp;
 use clap::{Parser, crate_version};
 use error::{Error, Result};
@@ -33,8 +34,12 @@ async fn main() -> Result<()> {
 	// -- Command arguments
 	let args = CliArgs::parse(); // Will fail early, but that’s okay.
 
+	// -- The OnceModelManager
+	// This way, ModelManager is only created when needed
+	let once_mm = OnceModelManager;
+
 	// -- Start executor
-	let executor = Executor::new();
+	let executor = Executor::new(once_mm);
 	let exec_sender = executor.sender();
 	// TODO: Probably want to move the spawn inside executor.start
 	tokio::spawn(async move {

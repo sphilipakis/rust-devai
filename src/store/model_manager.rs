@@ -22,6 +22,24 @@ impl ModelManager {
 	}
 }
 
+// region:    --- Once
+
+use tokio::sync::OnceCell;
+
+#[derive(Clone, Copy)]
+pub struct OnceModelManager;
+
+impl OnceModelManager {
+	/// Returns a reference to the singleton `ModelManager`, creating it on first call.
+	pub async fn get(&self) -> Result<ModelManager> {
+		static INSTANCE: OnceCell<ModelManager> = OnceCell::const_new();
+		let val = INSTANCE.get_or_try_init(|| async { ModelManager::new().await }).await?;
+		Ok(val.clone())
+	}
+}
+
+// endregion: --- Once
+
 // region:    --- Mock Seed
 
 impl ModelManager {

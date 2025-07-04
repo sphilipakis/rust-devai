@@ -21,6 +21,7 @@ use crate::exec::{
 };
 use crate::hub::{HubEvent, get_hub};
 use crate::runtime::Runtime;
+use crate::store::OnceModelManager;
 use crate::{Error, Result};
 use derive_more::derive::From;
 use flume::{Receiver, Sender};
@@ -42,6 +43,8 @@ use tokio::sync::Mutex;
 /// The executor is designed to execute multiple actions at the same time. It keeps some states (currently just the RedoCtx)
 /// so that commands like "Redo" can be performed.
 pub struct Executor {
+	once_mm: OnceModelManager,
+
 	/// The receiver that this executor will itreate on "start"
 	action_rx: Receiver<ExecActionEvent>,
 	/// Sender that gets cloned for parts that want to send events
@@ -59,9 +62,10 @@ pub struct Executor {
 
 /// Contructor
 impl Executor {
-	pub fn new() -> Self {
+	pub fn new(once_mm: OnceModelManager) -> Self {
 		let (tx, rx) = flume::unbounded();
 		Executor {
+			once_mm: OnceModelManager,
 			action_rx: rx,
 			action_sender: ExecutorSender::new(tx),
 			current_redo_ctx: Default::default(),
@@ -189,7 +193,8 @@ impl Executor {
 				let dir_ctx = init_wks(None, false).await?;
 
 				let exec_sender = self.sender();
-				let runtime = Runtime::new(dir_ctx, exec_sender).await?;
+				let mm = self.once_mm.get().await?;
+				let runtime = Runtime::new(dir_ctx, exec_sender, mm).await?;
 				let redo = exec_run(run_args, runtime).await?;
 				self.set_current_redo_ctx(redo.into()).await;
 				hub.publish(ExecStatusEvent::RunEnd).await;

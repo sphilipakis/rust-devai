@@ -24,12 +24,9 @@ pub struct Runtime {
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
-	pub async fn new(dir_context: DirContext, executor_sender: ExecutorSender) -> Result<Self> {
+	pub async fn new(dir_context: DirContext, executor_sender: ExecutorSender, mm: ModelManager) -> Result<Self> {
 		// Note: Make the type explicit for clarity
 		let genai_client = new_genai_client()?;
-
-		// -- Create the Runtime ModelManager
-		let mm = ModelManager::new().await?;
 
 		// -- Create the Runtime Queue
 		let mut run_queue = RunQueue::new();
@@ -86,6 +83,7 @@ impl Runtime {
 	pub(super) fn mm(&self) -> &ModelManager {
 		&self.inner.mm
 	}
+
 	pub fn genai_client(&self) -> &Client {
 		self.inner.genai_client()
 	}
@@ -141,6 +139,7 @@ mod tests_support {
 	use crate::dir_context::{AipackBaseDir, AipackPaths};
 	use crate::exec::Executor;
 	use crate::hub::{HubEvent, get_hub};
+	use crate::store::OnceModelManager;
 	use simple_fs::{SPath, ensure_dir};
 
 	impl Runtime {
@@ -187,7 +186,7 @@ mod tests_support {
 		}
 
 		async fn new_test_runtime(dir_context: DirContext) -> Result<Self> {
-			let executor = Executor::new();
+			let executor = Executor::new(OnceModelManager);
 			let exec_sender = executor.sender();
 			tokio::spawn(async move {
 				if let Err(err) = executor.start().await {
@@ -196,7 +195,8 @@ mod tests_support {
 					hub.publish(HubEvent::Quit).await;
 				}
 			});
-			Self::new(dir_context, exec_sender).await
+			let mm = ModelManager::new().await?;
+			Self::new(dir_context, exec_sender, mm).await
 		}
 	}
 }
