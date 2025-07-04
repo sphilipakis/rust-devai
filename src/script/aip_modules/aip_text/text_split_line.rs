@@ -192,7 +192,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_first_line_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let test_cases = vec![
 			// content, separator, expected_first, expected_second
 			("line1\nSEP\nline2", "SEP", Some("line1"), Some("line2")),
@@ -244,7 +244,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_first_line_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"
         local first, second = aip.text.split_first_line(nil, "SEP")
         return {first, second}
@@ -265,7 +265,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_last_line_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let test_cases = vec![
 			// content, separator, expected_first, expected_second
 			("line1\nSEP\nline2", "SEP", Some("line1"), Some("line2")),
@@ -318,7 +318,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_last_line_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"
         local first, second = aip.text.split_last_line(nil, "SEP")
         return {first, second}

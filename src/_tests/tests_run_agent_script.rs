@@ -8,7 +8,7 @@ use simple_fs::SPath;
 #[tokio::test]
 async fn test_run_agent_script_hello_ok() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-script/agent-hello.aip", &runtime)?;
 
 	// -- Execute
@@ -27,7 +27,7 @@ async fn test_run_agent_script_hello_ok() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_script_four_backticks_ok() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-script/agent-four-backticks.aip", &runtime)?;
 
 	// -- Execute
@@ -45,7 +45,7 @@ async fn test_run_agent_script_four_backticks_ok() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_script_require_lua() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./other/demo", &runtime)?;
 
 	// -- Exec
@@ -81,7 +81,7 @@ return {
 }
 ```
 	"#;
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let dir_context = runtime.dir_context();
 	let agent = Agent::mock_from_content(content)?;
 
@@ -107,7 +107,7 @@ return {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let dir_context = runtime.dir_context();
 	let agent = load_test_agent("./agent-script/agent-before-all.aip", &runtime)?;
 
@@ -133,7 +133,7 @@ async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_script_with_options_read() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-script/agent-options.aip", &runtime)?;
 
 	// -- Exec
@@ -167,7 +167,7 @@ async fn test_run_agent_script_with_options_read() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_script_before_all_inputs_reshape() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-script/agent-before-all-inputs-reshape.aip", &runtime)?;
 
 	// -- Exec
@@ -189,7 +189,7 @@ async fn test_run_agent_script_before_all_inputs_reshape() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_script_before_all_inputs_gen() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-script/agent-before-all-inputs-gen.aip", &runtime)?;
 
 	// -- Exec
@@ -231,7 +231,7 @@ async fn test_run_agent_script_skip_reason() -> Result<()> {
 }
 
 async fn common_test_run_agent_script_skip(reason: Option<&str>) -> Result<()> {
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 	let reason_str = reason.map(|v| format!("\"{v}\"")).unwrap_or_default();
 	// -- Setup & Fixtures

@@ -35,7 +35,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_hbs_with_lua_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let script = r#"
         local file1 = aip.file.load("file-01.txt")
         local file2 = aip.file.load("agent-script/agent-before-all.aip")

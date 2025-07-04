@@ -174,7 +174,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_html_slim_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_html::init_module, "html")?;
+		let lua = setup_lua(aip_html::init_module, "html").await?;
 		let fx_script = r#"
 local html_content = [[
 <!DOCTYPE html>
@@ -207,7 +207,7 @@ return aip.html.slim(html_content)
 	#[tokio::test]
 	async fn test_lua_html_select_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_html::init_module, "html")?;
+		let lua = setup_lua(aip_html::init_module, "html").await?;
 		let fx_script = r#"
 local html_content = [[
 			<div>First div<div>
@@ -246,7 +246,7 @@ return aip.html.select(html_content, ".me")
 	#[tokio::test]
 	async fn test_lua_html_to_md_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_html::init_module, "html")?;
+		let lua = setup_lua(aip_html::init_module, "html").await?;
 		let fx_script = r#"
 local html_content = "<h1>Title</h1><p>Some <strong>bold</strong> text.</p><ul><li>Item 1</li><li>Item 2</li></ul>"
 return aip.html.to_md(html_content)
@@ -265,7 +265,7 @@ return aip.html.to_md(html_content)
 	#[tokio::test]
 	async fn test_lua_html_to_md_empty_input() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_html::init_module, "html")?;
+		let lua = setup_lua(aip_html::init_module, "html").await?;
 		let fx_script = r#"
 return aip.html.to_md("")
         "#;

@@ -133,7 +133,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_first_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		// (content, separator, (first, second))
 		let data = [
 			// with matching
@@ -186,7 +186,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_first_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"
         local first, second = aip.text.split_first(nil, "===")
         return {first, second}
@@ -205,7 +205,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_last_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		// (content, separator, (first, second))
 		let data = [
 			// with matching
@@ -260,7 +260,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_split_last_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"
         local first, second = aip.text.split_last(nil, "===")
         return {first, second}

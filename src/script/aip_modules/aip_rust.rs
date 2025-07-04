@@ -71,7 +71,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_rust_prune_to_declarations() -> Result<()> {
 		// -- Fixtures
-		let lua = setup_lua(aip_rust::init_module, "rust")?;
+		let lua = setup_lua(aip_rust::init_module, "rust").await?;
 		let data_script = r#"
 //! Some top comment 
 

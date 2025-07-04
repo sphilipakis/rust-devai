@@ -82,7 +82,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_code_comment_line_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "code")?;
+		let lua = setup_lua(super::init_module, "code").await?;
 
 		// Define test cases as tuples: (language extension, comment content, expected result)
 		let test_cases = [

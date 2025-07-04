@@ -846,7 +846,7 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_file_save_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let dir_context = runtime.dir_context();
 		let fx_dest_path = dir_context
 			.wks_dir()
@@ -871,7 +871,7 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_file_save_ok_in_base() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let dir_context = runtime.dir_context();
 		let fx_dest_path = dir_context
 			.aipack_paths()
@@ -898,7 +898,7 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_file_save_err_out_workspace() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let dir_context = runtime.dir_context();
 		let fx_dest_path = dir_context
 			.wks_dir()
@@ -923,7 +923,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_exists_true() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_file::init_module, "file")?;
+		let lua = setup_lua(aip_file::init_module, "file").await?;
 		let paths = &[
 			"./agent-script/agent-hello.aip",
 			"agent-script/agent-hello.aip",
@@ -952,7 +952,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_exists_false() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_file::init_module, "file")?;
+		let lua = setup_lua(aip_file::init_module, "file").await?;
 		let paths = &[
 			"./no file .rs",
 			"some/no-file.md",
@@ -1033,7 +1033,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_list_glob_abs_with_wild() -> Result<()> {
 		// -- Fixtures
-		let lua = setup_lua(aip_file::init_module, "file")?;
+		let lua = setup_lua(aip_file::init_module, "file").await?;
 		let dir = SPath::new("./tests-data/config");
 		let dir = dir
 			.canonicalize()
@@ -1059,7 +1059,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_list_glob_with_base_dir_all_nested() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::super::init_module, "file")?;
+		let lua = setup_lua(super::super::init_module, "file").await?;
 		let lua_code = r#"
 local files = aip.file.list({"**/*.*"}, {base_dir = "sub-dir-a"})
 return { files = files }
@@ -1096,7 +1096,7 @@ return { files = files }
 	#[tokio::test]
 	async fn test_lua_file_list_glob_with_base_dir_one_level() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::super::init_module, "file")?;
+		let lua = setup_lua(super::super::init_module, "file").await?;
 		let lua_code = r#"
 local files = aip.file.list({"agent-hello-*.aip"}, {base_dir = "sub-dir-a"})
 return { files = files }

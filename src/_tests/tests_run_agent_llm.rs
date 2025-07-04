@@ -11,7 +11,7 @@ use value_ext::JsonValueExt;
 #[tokio::test]
 async fn test_run_agent_llm_c_simple_ok() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-llm/agent-simple.aip", &runtime)?;
 
 	// -- Execute
@@ -26,7 +26,7 @@ async fn test_run_agent_llm_c_simple_ok() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_llm_c_on_file_ok() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("./agent-llm/agent-on-file.aip", &runtime)?;
 
 	// -- Execute
@@ -49,7 +49,7 @@ async fn test_run_agent_llm_c_on_file_ok() -> Result<()> {
 #[tokio::test]
 async fn test_run_agent_llm_full_chat_ok() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 	let agent = load_test_agent("agent-llm/agent-full-chat.aip", &runtime)?;
 
 	// -- Execute

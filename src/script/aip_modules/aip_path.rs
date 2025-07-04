@@ -543,7 +543,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_path_exists_true() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &[
 			"./agent-script/agent-hello.aip",
 			"agent-script/agent-hello.aip",
@@ -568,7 +568,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_exists_false() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &["./no file .rs", "some/no-file.md", "./s do/", "no-dir/at/all"];
 
 		for path in paths {
@@ -585,7 +585,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_is_file_true() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &[
 			"./agent-script/agent-hello.aip",
 			"agent-script/agent-hello.aip",
@@ -608,7 +608,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_is_file_false() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &["./no-file", "no-file.txt", "sub-dir-a/"];
 
 		for path in paths {
@@ -625,7 +625,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_is_dir_true() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &["./sub-dir-a", "sub-dir-a", "./sub-dir-a/.."];
 
 		for path in paths {
@@ -642,7 +642,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_is_dir_false() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &[
 			"./agent-hello.aipack",
 			"agent-hello.aipack",
@@ -666,7 +666,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_parent() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		// Fixtures: (path, expected_parent)
 		let paths = &[
 			("./agent-hello.aipack", "."),
@@ -691,7 +691,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_path_join() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let data = [
 			//
 			("./", r#""file.txt""#, "./file.txt"),
@@ -722,7 +722,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn test_lua_path_split() -> Result<()> {
-		let lua = setup_lua(aip_path::init_module, "path")?;
+		let lua = setup_lua(aip_path::init_module, "path").await?;
 		let paths = &[
 			("some/path/to_file.md", "some/path", "to_file.md"),
 			("folder/file.txt", "folder", "file.txt"),

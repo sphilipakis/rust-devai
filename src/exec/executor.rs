@@ -35,6 +35,8 @@ use tokio::sync::Mutex;
 /// - CLI interactive - When the user interacts with the CLI, e.g., pressing `r` for redo
 /// - Agent logic     - When the agent calls some agent action, e.g., `aip.agent.run("my-agent")`
 ///
+/// NOTE: We might want to split that with cmd_executor, rt_executor (for agent). But not sure yet
+///
 /// Other parts of the system can get the `ExecutorSender` and clone it to communicate with the executor.
 ///
 /// The executor is designed to execute multiple actions at the same time. It keeps some states (currently just the RedoCtx)
@@ -178,6 +180,7 @@ impl Executor {
 			}
 
 			// TODO: Might want to not initialize the workspace here, and let the user know. Not sure.
+			// NOTE: This is the EVent from the Command line only (when aip.agent.run, the event RunAgent is sent)
 			ExecActionEvent::CmdRun(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
 				// Here we init base if version changed. This was we make sure doc and all work as expected
@@ -186,7 +189,7 @@ impl Executor {
 				let dir_ctx = init_wks(None, false).await?;
 
 				let exec_sender = self.sender();
-				let runtime = Runtime::new(dir_ctx, exec_sender)?;
+				let runtime = Runtime::new(dir_ctx, exec_sender).await?;
 				let redo = exec_run(run_args, runtime).await?;
 				self.set_current_redo_ctx(redo.into()).await;
 				hub.publish(ExecStatusEvent::RunEnd).await;

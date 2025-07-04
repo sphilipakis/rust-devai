@@ -172,7 +172,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_pack_dir_lookup_pack_dirs_all() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let expected = vec![
 			"ns_a@pack_a_1 - .aipack/pack/custom/ns_a/pack_a_1",
 			"ns_a@pack_a_2 - .aipack/pack/custom/ns_a/pack_a_2",
@@ -199,7 +199,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_pack_dir_lookup_pack_dirs_ns() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let expected = vec![
 			"ns_b@pack_b_1 - .aipack/pack/custom/ns_b/pack_b_1",
 			"ns_b@pack_b_1 - .aipack-base/pack/custom/ns_b/pack_b_1",
@@ -223,7 +223,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_pack_dir_lookup_pack_dirs_pack_name() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let expected = vec![
 			"ns_b@pack_b_1 - .aipack/pack/custom/ns_b/pack_b_1",
 			"ns_b@pack_b_1 - .aipack-base/pack/custom/ns_b/pack_b_1",

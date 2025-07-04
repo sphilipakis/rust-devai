@@ -347,7 +347,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v4_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res_new = eval_lua(&lua, "return aip.uuid.new()")?;
@@ -376,7 +376,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v7_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v7()")?;
@@ -392,7 +392,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v4_b64_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v4_b64()")?;
@@ -417,7 +417,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v4_b64u_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v4_b64u()")?;
@@ -441,7 +441,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v4_b58_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v4_b58()")?;
@@ -462,7 +462,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v7_b64_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v7_b64()")?;
@@ -485,7 +485,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v7_b64u_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v7_b64u()")?;
@@ -509,7 +509,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_new_v7_b58_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// -- Exec
 		let res = eval_lua(&lua, "return aip.uuid.new_v7_b58()")?;
@@ -529,7 +529,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_to_time_epoch_ms_nil_input() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 		let script = "return aip.uuid.to_time_epoch_ms(nil)";
 
 		// -- Exec
@@ -543,7 +543,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_to_time_epoch_ms_invalid_uuid_string() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 		let script = "return aip.uuid.to_time_epoch_ms('not-a-valid-uuid')";
 
 		// -- Exec
@@ -557,7 +557,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_to_time_epoch_ms_v4_uuid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 		let v4_uuid_str = uuid_extra::new_v4().to_string();
 		let script = format!("return aip.uuid.to_time_epoch_ms('{v4_uuid_str}')");
 
@@ -575,7 +575,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_aip_uuid_to_time_epoch_ms_v7_uuid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(init_module, "uuid")?;
+		let lua = setup_lua(init_module, "uuid").await?;
 
 		// Generate a V7 UUID and get its expected millisecond timestamp
 		let v7_uuid = uuid_extra::new_v7(); // Uses current time

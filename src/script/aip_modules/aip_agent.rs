@@ -249,7 +249,7 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_script_aip_agent_run_relative() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let agent_file = runtime
 			.dir_context()
 			.wks_dir()
@@ -318,7 +318,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_aip_agent_extract_options_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "agent")?;
+		let lua = setup_lua(super::init_module, "agent").await?;
 		let script = r#"
 local big = {
 		model = "gpt-4",
@@ -349,7 +349,7 @@ return aip.agent.extract_options(big)
 	#[tokio::test]
 	async fn test_script_aip_agent_extract_options_string() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "agent")?;
+		let lua = setup_lua(super::init_module, "agent").await?;
 		let script = r#"
 return aip.agent.extract_options("Some string")
         "#;
@@ -366,7 +366,7 @@ return aip.agent.extract_options("Some string")
 	#[tokio::test]
 	async fn test_script_aip_agent_extract_options_nil() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "agent")?;
+		let lua = setup_lua(super::init_module, "agent").await?;
 		let script = r#"
 return aip.agent.extract_options(nil)
         "#;

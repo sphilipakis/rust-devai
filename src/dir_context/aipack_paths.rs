@@ -290,7 +290,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_aipack_paths_from_wks_dir_exists() -> Result<()> {
 		// -- Exec
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let aipack_paths = runtime.dir_context().aipack_paths();
 
 		// -- Check wks_dir and aipack_wks_dir
@@ -327,7 +327,7 @@ mod tests {
 		// -- Setup & Fixtures
 		// Runtime::new_test_runtime_sandbox_01() correctly sets up AipackPaths
 		// with an existing .aipack dir.
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let aipack_paths = runtime.dir_context().aipack_paths();
 
 		// -- Check that aipack_wks_dir is Some

@@ -272,7 +272,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_parse_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local content = '{"name": "John", "age": 30}'
             return aip.json.parse(content)
@@ -289,7 +289,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_parse_invalid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local ok, err = pcall(function()
                 local content = "{invalid_json}"
@@ -319,7 +319,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_parse_ndjson_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local content = '{"name": "John", "age": 30}\n{"name": "Jane", "age": 25}'
             return aip.json.parse_ndjson(content)
@@ -339,7 +339,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_parse_ndjson_empty_lines() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local content = '{"id": 1}\n\n{"id": 2}\n   \n{"id": 3}'
             return aip.json.parse_ndjson(content)
@@ -360,7 +360,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_parse_ndjson_invalid_json() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local ok, err = pcall(function()
                 local content = '{"id": 1}\n{invalid_json}\n{"id": 3}'
@@ -388,7 +388,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_stringify_pretty_basic() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local obj = {
                 name = "John",
@@ -411,7 +411,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_stringify_pretty_complex() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local obj = {
                 name = "John",
@@ -441,7 +441,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_stringify_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local obj = {
                 name = "John",
@@ -467,7 +467,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_json_stringify_to_line_alias() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_modules::aip_json::init_module, "json")?;
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local obj = {
                 name = "John",

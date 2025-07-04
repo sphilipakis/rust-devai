@@ -2,6 +2,7 @@ use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
 use crate::run::{Literals, new_genai_client};
+use crate::runtime::queue::RunQueue;
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
@@ -21,11 +22,18 @@ pub struct Runtime {
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
-	pub fn new(dir_context: DirContext, exec_sender: ExecutorSender) -> Result<Self> {
+	pub async fn new(dir_context: DirContext, executor_sender: ExecutorSender) -> Result<Self> {
 		// Note: Make the type explicit for clarity
-		let client = new_genai_client()?;
+		let genai_client = new_genai_client()?;
 
-		let inner = RuntimeInner::new(dir_context, client, exec_sender);
+		let run_queue = RunQueue::new();
+
+		let inner = RuntimeInner {
+			dir_context,
+			genai_client,
+			executor_sender,
+			session: Session::new(),
+		};
 
 		let runtime = Self { inner: Arc::new(inner) };
 
@@ -108,7 +116,7 @@ mod tests_support {
 
 	impl Runtime {
 		/// This will create a new Runtime for the .tests-data/sandbox-01/ folder
-		pub fn new_test_runtime_sandbox_01() -> Result<Self> {
+		pub async fn new_test_runtime_sandbox_01() -> Result<Self> {
 			let current_dir = SPath::new(SANDBOX_01_WKS_DIR).canonicalize()?;
 			let current_dir = SPath::new(current_dir);
 
@@ -121,11 +129,11 @@ mod tests_support {
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 
-			Self::new_test_runtime(dir_context)
+			Self::new_test_runtime(dir_context).await
 		}
 
 		/// This dir is relative to `./tests-data/.tmp`
-		pub fn new_test_runtime_for_temp_dir() -> Result<Self> {
+		pub async fn new_test_runtime_for_temp_dir() -> Result<Self> {
 			let test_dir = gen_test_dir_path();
 			// should not be the case with the above case, but just as a double check
 			if test_dir.path().is_absolute() {
@@ -146,10 +154,10 @@ mod tests_support {
 
 			let dir_context = DirContext::from_current_and_aipack_paths(current_dir, aipack_paths)?;
 
-			Self::new_test_runtime(dir_context)
+			Self::new_test_runtime(dir_context).await
 		}
 
-		fn new_test_runtime(dir_context: DirContext) -> Result<Self> {
+		async fn new_test_runtime(dir_context: DirContext) -> Result<Self> {
 			let executor = Executor::new();
 			let exec_sender = executor.sender();
 			tokio::spawn(async move {
@@ -159,7 +167,7 @@ mod tests_support {
 					hub.publish(HubEvent::Quit).await;
 				}
 			});
-			Self::new(dir_context, exec_sender)
+			Self::new(dir_context, exec_sender).await
 		}
 	}
 }

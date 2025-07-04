@@ -135,7 +135,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_dump_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_lua::init_module, "lua")?;
+		let lua = setup_lua(aip_lua::init_module, "lua").await?;
 		let script = r#"
 local tbl = {
   nested = { key1 = "value1", key2 = 42 },

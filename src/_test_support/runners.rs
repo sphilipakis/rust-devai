@@ -11,7 +11,7 @@ use serde_json::Value;
 /// It's useful for testing Lua module functions.
 ///
 pub async fn run_reflective_agent(data_lua_code: &str, input: Option<Value>) -> Result<Value> {
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 	let agent = load_reflective_agent(data_lua_code)?;
 	let input = if let Some(input) = input { input } else { Value::Null };

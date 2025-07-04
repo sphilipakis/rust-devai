@@ -211,7 +211,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_engine_eval_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let engine = LuaEngine::new(runtime.clone())?;
 		let fx_script = r#"
 local square_root = math.sqrt(25)

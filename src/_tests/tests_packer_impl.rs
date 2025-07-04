@@ -9,7 +9,7 @@ pub type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 #[tokio::test]
 async fn test_packer_impl_pack_simple() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let runtime = Runtime::new_test_runtime_for_temp_dir().await?;
 	let dir_context = runtime.dir_context();
 	let to_pack_dir = SPath::new("tests-data/test_packs_folder/test_pack_01");
 

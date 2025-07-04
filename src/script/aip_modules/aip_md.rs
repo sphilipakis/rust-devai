@@ -454,7 +454,7 @@ return {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_lua_md_extract_meta() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(super::init_module, "md")?;
+		let lua = setup_lua(super::init_module, "md").await?;
 		let lua_code = r#"
 local content = [[
 Some content

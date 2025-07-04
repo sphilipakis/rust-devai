@@ -175,7 +175,7 @@ mod tests {
 				"/sandbox-01/.aipack/pack/custom/ns_b/pack_b_1/main.aip",
 			),
 		];
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
@@ -197,7 +197,7 @@ mod tests {
 			("ns_b@pack_b_2", ".aipack-base/pack/custom/ns_b/pack_b_2/main.aip"),
 			("ns_d@pack_d_1", ".aipack-base/pack/installed/ns_d/pack_d_1/main.aip"),
 		];
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {
@@ -221,7 +221,7 @@ mod tests {
 			("sub-dir-a/agent-hello-2", "agent-hello-2.aip"),
 			("sub-dir-a/sub-sub-dir", "main.aip"),
 		];
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 		// -- Check & Exec
 		for (name, fx_file_path) in data {

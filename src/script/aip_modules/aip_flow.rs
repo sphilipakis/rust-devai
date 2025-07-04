@@ -242,7 +242,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_aip_flow_before_all_response_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_flow::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow").await?;
 		let script = r#"
 			return aip.flow.before_all_response(123)
 		"#;
@@ -262,7 +262,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_aip_flow_skip_with_reason() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_flow::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow").await?;
 		let script = r#"
 			return aip.flow.skip("Not applicable")
 		"#;
@@ -282,7 +282,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_script_lua_aip_flow_skip_without_reason() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_flow::init_module, "flow")?;
+		let lua = setup_lua(aip_flow::init_module, "flow").await?;
 		let script = r#"
 			return aip.flow.skip()
 		"#;

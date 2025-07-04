@@ -104,7 +104,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_hbs_render_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs").await?;
 
 		// -- Exec
 		let lua_code = r#"
@@ -121,7 +121,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_hbs_render_obj() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs").await?;
 
 		// -- Exec
 		let lua_code = r#"
@@ -138,7 +138,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_hbs_render_list() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_hbs::init_module, "hbs")?;
+		let lua = setup_lua(aip_hbs::init_module, "hbs").await?;
 
 		// -- Exec
 		let lua_code = r#"

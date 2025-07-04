@@ -5,11 +5,11 @@ use mlua::{Lua, Table};
 use serde_json::Value;
 
 /// Sets up a Lua instance with both functions registered under `aip.` aip_name.
-pub fn setup_lua<F>(init_fn: F, utils_name: &str) -> Result<Lua>
+pub async fn setup_lua<F>(init_fn: F, utils_name: &str) -> Result<Lua>
 where
 	F: FnOnce(&Lua, &Runtime) -> Result<Table>,
 {
-	let runtime = Runtime::new_test_runtime_sandbox_01()?;
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 
 	let lua = Lua::new();
 	let globals = lua.globals();

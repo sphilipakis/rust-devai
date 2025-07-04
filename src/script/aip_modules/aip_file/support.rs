@@ -402,7 +402,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_support_process_pack_references() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let fx_globs: Vec<String> = ["ns_b@pack_b_2/main.aip", "no_ns@pack_b_2/main.aip", "**/*.txt"]
 			.into_iter()
 			.map(|v| v.to_string())
@@ -425,7 +425,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_file_support_process_path_reference() -> Result<()> {
 		// -- Setup & Fixtures
-		let runtime = Runtime::new_test_runtime_sandbox_01()?;
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let fx_path = "ns_b@pack_b_2/main.aip";
 
 		// -- Exec

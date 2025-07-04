@@ -168,7 +168,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_echo_single_arg() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd").await?;
 		let script = r#"
 			return aip.cmd.exec("echo", "hello world")
 		"#;
@@ -187,7 +187,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_echo_multiple_args() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd").await?;
 		let script = r#"
 			return aip.cmd.exec("echo", {"hello", "world"})
 		"#;
@@ -206,7 +206,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_invalid_command_pcall() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd").await?;
 		let script = r#"
 			local ok, err = pcall(function()
 				aip.cmd.exec("nonexistentcommand")
@@ -231,7 +231,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_invalid_command_direct() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd").await?;
 		let script = r#"return aip.cmd.exec("nonexistentcommand")"#;
 
 		// -- Exec & Check
@@ -251,7 +251,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_cmd_exec_non_zero_exit() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_cmd::init_module, "cmd")?;
+		let lua = setup_lua(aip_cmd::init_module, "cmd").await?;
 		// Command that typically exits with non-zero status (e.g., grep non-existent file)
 		// Using `false` is more portable than `grep non-existent-file`
 		let script = r#"

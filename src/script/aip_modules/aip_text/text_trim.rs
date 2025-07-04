@@ -102,7 +102,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim("  hello world  ")"#;
 
 		// -- Exec
@@ -116,7 +116,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim(nil)"#;
 
 		// -- Exec
@@ -130,7 +130,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_start_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim_start("  hello world  ")"#;
 
 		// -- Exec
@@ -144,7 +144,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_start_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim_start(nil)"#;
 
 		// -- Exec
@@ -158,7 +158,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_end_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim_end("  hello world  ")"#;
 
 		// -- Exec
@@ -172,7 +172,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_trim_end_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.trim_end(nil)"#;
 
 		// -- Exec

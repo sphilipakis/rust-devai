@@ -510,7 +510,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_replace_markers_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.replace_markers(nil, {"new1", "new2"})"#;
 
 		// -- Exec
@@ -524,7 +524,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_truncate_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.truncate(nil, 10, "...")"#;
 
 		// -- Exec
@@ -538,7 +538,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_remove_first_line_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.remove_first_line(nil)"#;
 
 		// -- Exec
@@ -552,7 +552,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_remove_first_lines_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.remove_first_lines(nil, 2)"#;
 
 		// -- Exec
@@ -566,7 +566,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_remove_last_line_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.remove_last_line(nil)"#;
 
 		// -- Exec
@@ -580,7 +580,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_remove_last_lines_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.remove_last_lines(nil, 2)"#;
 
 		// -- Exec
@@ -594,7 +594,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_escape_decode_if_needed_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.escape_decode_if_needed(nil)"#;
 
 		// -- Exec
@@ -608,7 +608,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_escape_decode_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.escape_decode(nil)"#;
 
 		// -- Exec
@@ -622,7 +622,7 @@ mod tests {
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let lua_code = r#"
 local content = [[
 > one
@@ -653,7 +653,7 @@ return {blocks = a, extruded = b}
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"
         local blocks, extruded = aip.text.extract_line_blocks(nil, { starts_with = ">", extrude = "content" })
         return {blocks, blocks}
@@ -673,7 +673,7 @@ return {blocks = a, extruded = b}
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_with_first_extrude() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let lua_code = r#"
 local content = [[
 > one
@@ -705,7 +705,7 @@ return { blocks = a, extruded = b }
 	#[tokio::test]
 	async fn test_lua_text_extract_line_blocks_with_first_no_extrude() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let lua_code = r#"
 local content = [[
 > one
@@ -746,7 +746,7 @@ return { blocks = a, extruded = b }
 	#[tokio::test]
 	async fn test_lua_text_ensure_simple() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let data = [
 			(
 				"some- ! -path",
@@ -771,7 +771,7 @@ return { blocks = a, extruded = b }
 	#[tokio::test]
 	async fn test_lua_text_ensure_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.ensure(nil, {prefix = "./", suffix = ".md"})"#;
 
 		// -- Exec
@@ -785,7 +785,7 @@ return { blocks = a, extruded = b }
 	#[tokio::test]
 	async fn test_lua_text_ensure_single_ending_newline_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_text::init_module, "text")?;
+		let lua = setup_lua(aip_text::init_module, "text").await?;
 		let script = r#"return aip.text.ensure_single_ending_newline(nil)"#;
 
 		// -- Exec

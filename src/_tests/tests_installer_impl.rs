@@ -10,7 +10,7 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 async fn test_installer_impl_local_file_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	// this will create the .tests-data/.tmp/... and the base dir for .aipack/ and .aipack-base
-	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let runtime = Runtime::new_test_runtime_for_temp_dir().await?;
 	let dir_context = runtime.dir_context();
 	// Prep the pack dir
 	let to_pack_dir = SPath::new("tests-data/test_packs_folder/test_pack_01");
@@ -55,7 +55,7 @@ async fn test_installer_impl_local_file_simple() -> Result<()> {
 #[tokio::test]
 async fn test_installer_impl_local_version_above_err() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let runtime = Runtime::new_test_runtime_for_temp_dir().await?;
 	let dir_context = runtime.dir_context();
 
 	// Create common main.aip content for both packs
@@ -122,7 +122,7 @@ version = "0.1.0"
 #[tokio::test]
 async fn test_installer_impl_invalid_prerelease_err() -> Result<()> {
 	// -- Setup & Fixtures
-	let runtime = Runtime::new_test_runtime_for_temp_dir()?;
+	let runtime = Runtime::new_test_runtime_for_temp_dir().await?;
 	let dir_context = runtime.dir_context();
 
 	// Create a pack directory with an invalid prerelease version "0.1.0-alpha"

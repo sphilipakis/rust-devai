@@ -5,22 +5,22 @@ use genai::Client;
 
 #[derive(Debug, Clone)]
 pub struct RuntimeInner {
-	dir_context: DirContext,
-	genai_client: Client,
-	executor_sender: ExecutorSender,
-	session: Session,
+	pub(super) dir_context: DirContext,
+	pub(super) genai_client: Client,
+	pub(super) executor_sender: ExecutorSender,
+	pub(super) session: Session,
 }
 
 /// Constructors
 impl RuntimeInner {
-	pub fn new(dir_context: DirContext, genai_client: Client, executor_sender: ExecutorSender) -> Self {
-		Self {
-			dir_context,
-			genai_client,
-			executor_sender,
-			session: Session::new(),
-		}
-	}
+	// pub fn new(dir_context: DirContext, genai_client: Client, executor_sender: ExecutorSender) -> Self {
+	// 	Self {
+	// 		dir_context,
+	// 		genai_client,
+	// 		executor_sender,
+	// 		session: ,
+	// 	}
+	// }
 }
 
 /// Getters

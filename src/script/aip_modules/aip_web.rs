@@ -464,7 +464,7 @@ mod tests {
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_script_aip_web_get_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 local url = "https://phet-dev.colorado.edu/html/build-an-atom/0.0.0-3/simple-text-only-test-page.html"
 return aip.web.get(url)
@@ -485,7 +485,7 @@ return aip.web.get(url)
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_script_aip_web_post_json_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 local url = "https://postman-echo.com/post"
 return aip.web.post(url, {some = "stuff"})
@@ -504,7 +504,7 @@ return aip.web.post(url, {some = "stuff"})
 	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 	async fn test_script_aip_web_get_invalid_url() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 local url = "https://this-cannot-go/anywhere-or-can-it.aip"
 return aip.web.get(url)
@@ -527,7 +527,7 @@ return aip.web.get(url)
 	#[tokio::test]
 	async fn test_script_aip_web_parse_url_ok() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.parse_url("https://user:pass@example.com:8080/path/to/resource?key1=val1&key2=val2#fragment")
 		"#;
@@ -556,7 +556,7 @@ return aip.web.parse_url("https://user:pass@example.com:8080/path/to/resource?ke
 	#[tokio::test]
 	async fn test_script_aip_web_parse_url_invalid() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.parse_url("not a valid url")
 		"#;
@@ -578,7 +578,7 @@ return aip.web.parse_url("not a valid url")
 	#[tokio::test]
 	async fn test_script_aip_web_parse_url_nil() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.parse_url(nil)
 		"#;
@@ -595,7 +595,7 @@ return aip.web.parse_url(nil)
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_absolute_href() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("https://another.com/page.html", "https://base.com/docs/")
 		"#;
@@ -612,7 +612,7 @@ return aip.web.resolve_href("https://another.com/page.html", "https://base.com/d
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_relative_path_href() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("sub/page.html", "https://base.com/docs/")
 		"#;
@@ -632,7 +632,7 @@ return aip.web.resolve_href("sub/page.html", "https://base.com/docs/")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_absolute_path_href() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("/other/resource", "https://base.com/docs/path/")
 		"#;
@@ -652,7 +652,7 @@ return aip.web.resolve_href("/other/resource", "https://base.com/docs/path/")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_scheme_relative_href_https() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("//cdn.example.com/script.js", "https://base.com/docs/")
 		"#;
@@ -672,7 +672,7 @@ return aip.web.resolve_href("//cdn.example.com/script.js", "https://base.com/doc
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_scheme_relative_href_http() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("//cdn.example.com/script.js", "http://base.com/docs/")
 		"#;
@@ -692,7 +692,7 @@ return aip.web.resolve_href("//cdn.example.com/script.js", "http://base.com/docs
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_nil_href() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href(nil, "https://base.com/docs/")
 		"#;
@@ -709,7 +709,7 @@ return aip.web.resolve_href(nil, "https://base.com/docs/")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_err_invalid_base_url() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("path", "not-a-base-url")
 		"#;
@@ -731,7 +731,7 @@ return aip.web.resolve_href("path", "not-a-base-url")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_empty_href() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("", "https://base.com/docs/")
 		"#;
@@ -748,7 +748,7 @@ return aip.web.resolve_href("", "https://base.com/docs/")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_href_is_fragment() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r##"
 return aip.web.resolve_href("#section1", "https://base.com/page.html")
 		"##;
@@ -765,7 +765,7 @@ return aip.web.resolve_href("#section1", "https://base.com/page.html")
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_href_is_query() -> Result<()> {
 		// -- Setup & Fixtures
-		let lua = setup_lua(aip_web::init_module, "web")?;
+		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 return aip.web.resolve_href("?key=val", "https://base.com/page.html")
 		"#;
