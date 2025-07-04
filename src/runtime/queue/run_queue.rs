@@ -46,7 +46,7 @@ impl RunQueue {
 
 // region:    --- RunTx/Rx
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RunTx(Sender<RunEvent>);
 
 impl RunTx {

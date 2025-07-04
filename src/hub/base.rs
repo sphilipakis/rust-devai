@@ -1,6 +1,8 @@
 // src/hub/hub_base.rs
 
+use crate::Error;
 use crate::hub::hub_event::HubEvent;
+use std::fmt::Display;
 use std::sync::{Arc, LazyLock};
 use tokio::sync::broadcast;
 
@@ -11,6 +13,7 @@ pub struct Hub {
 	_rx: broadcast::Receiver<HubEvent>,
 }
 
+/// Core Hub Methods
 impl Hub {
 	pub fn new() -> Self {
 		let (tx, _rx) = broadcast::channel(500);
@@ -41,6 +44,27 @@ impl Hub {
 
 	pub fn subscriber(&self) -> broadcast::Receiver<HubEvent> {
 		self.tx.subscribe()
+	}
+}
+
+/// Convenient Methods
+impl Hub {
+	pub async fn publish_err(&self, msg: impl Into<String>, cause: Option<impl Display>) {
+		match cause {
+			Some(cause) => {
+				self.publish(Error::cc(msg, cause)).await;
+			}
+			None => self.publish(Error::Custom(msg.into())).await,
+		}
+	}
+
+	pub fn publish_err_sync(&self, msg: impl Into<String>, cause: Option<impl Display>) {
+		match cause {
+			Some(cause) => {
+				self.publish_sync(Error::cc(msg, cause));
+			}
+			None => self.publish_sync(Error::Custom(msg.into())),
+		}
 	}
 }
 

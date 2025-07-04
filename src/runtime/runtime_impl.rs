@@ -26,12 +26,14 @@ impl Runtime {
 		// Note: Make the type explicit for clarity
 		let genai_client = new_genai_client()?;
 
-		let run_queue = RunQueue::new();
+		let mut run_queue = RunQueue::new();
+		let run_tx = run_queue.start()?;
 
 		let inner = RuntimeInner {
 			dir_context,
 			genai_client,
 			executor_sender,
+			run_tx,
 			session: Session::new(),
 		};
 

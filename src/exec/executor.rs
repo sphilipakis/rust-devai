@@ -301,7 +301,7 @@ impl ExecutorSender {
 	pub fn send_sync(&self, event: ExecActionEvent) {
 		let event_str: &'static str = (&event).into();
 		if let Err(err) = self.tx.send(event) {
-			get_hub().publish_sync(Error::cc(format!("Fail to send action event {event_str}"), err));
+			get_hub().publish_err_sync(format!("Fail to send action event {event_str}"), Some(err));
 		}
 	}
 
@@ -309,7 +309,7 @@ impl ExecutorSender {
 		let event_str: &'static str = (&event).into();
 		if let Err(err) = self.tx.send_async(event).await {
 			get_hub()
-				.publish(Error::cc(format!("Fail to send action event {event_str}"), err))
+				.publish_err(format!("Fail to send action event {event_str}"), Some(err))
 				.await;
 		};
 	}
