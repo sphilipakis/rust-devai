@@ -128,19 +128,7 @@ pub fn aip_agent_run(
 	};
 
 	let exec_sender = runtime.executor_sender();
-	// Important to spawn off the send to make sure we do not have deadlock since we are in a sync context.
-	tokio::task::block_in_place(|| {
-		let rt = tokio::runtime::Handle::try_current();
-		match rt {
-			Ok(rt) => rt.block_on(async {
-				// Non-blocking send to the executor task
-				let _ = exec_sender.send(run_agent_params.into()).await;
-			}),
-
-			// NOTE: Here per design, we do not return error or break, as it is just for logging
-			Err(err) => println!("AIPACK INTERNAL ERROR - no current tokio handle - {err}"),
-		}
-	});
+	exec_sender.send_sync(run_agent_params.into());
 
 	// -- Wait for the result
 	let run_agent_response = rx.recv()?;
