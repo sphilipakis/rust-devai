@@ -51,6 +51,7 @@ macro_rules! derive_simple_enum_type {
             // Add or remove derives as appropriate for your use-case
             // e.g., serde::Serialize, serde::Deserialize,
         )]
+        #[allow(clippy::enum_variant_names)]
         $vis enum $name {
             $(
                 $variant,

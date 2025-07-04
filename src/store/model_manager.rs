@@ -22,7 +22,22 @@ impl ModelManager {
 	}
 }
 
-// region:    --- Once
+/// Management
+impl ModelManager {
+	/// NOTE: This is to make sure the db does not become too big in memory
+	///      For now, very agressive, just delete everything.
+	/// Should be called at the start of each run
+	pub fn trim(&self) -> Result<usize> {
+		let db = self.db();
+		let run_count = db.exec("DELETE FROM run", [])?;
+		let task_count = db.exec("DELETE FROM task", [])?;
+		let log_count = db.exec("DELETE FROM log", [])?;
+
+		Ok(run_count + task_count + log_count)
+	}
+}
+
+// region:    --- OnceModelManager
 
 use crate::support::time::now_unix_time_us;
 use tokio::sync::OnceCell;
@@ -39,7 +54,7 @@ impl OnceModelManager {
 	}
 }
 
-// endregion: --- Once
+// endregion: --- OnceModelManager
 
 // region:    --- Mock Seed
 

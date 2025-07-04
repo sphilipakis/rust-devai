@@ -6,6 +6,7 @@ use crate::run::literals::Literals;
 use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
+use crate::store::rt_model::LogKind;
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -25,6 +26,9 @@ pub async fn run_command_agent(
 ) -> Result<RunAgentResponse> {
 	let hub = get_hub();
 
+	// -- Trim the runtime db
+	runtime.rec_trim().await?;
+
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
 
 	// display relative agent path if possible
@@ -42,7 +46,7 @@ pub async fn run_command_agent(
 		before_all,
 		options: options_to_merge,
 	} = if let Some(before_all_script) = agent.before_all_script() {
-		// -- Run Rec - Start Before All
+		// -- Rt Rec - Start Before All
 		runtime.rec_ba_start(run_id).await?;
 
 		// -- Setup the Lua engine
@@ -56,19 +60,24 @@ pub async fn run_command_agent(
 		let lua_value = lua_engine.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		let before_all_res = serde_json::to_value(lua_value)?;
 
-		// -- Run Rec - End Before All
+		// -- Rt Rec - End Before All
 		runtime.rec_ba_end(run_id).await?;
 
-		// -- Process output
+		// -- Process before all response
 		match AipackCustom::from_value(before_all_res)? {
 			// it is an skip action
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
 
-				hub.publish(HubEvent::info_short(format!(
-					"Aipack Skip inputs at Before All section{reason_msg}"
-				)))
-				.await;
+				// -- Rt Rc - SysInfo message
+				runtime
+					.rec_log_ba(
+						run_id,
+						format!("Aipack Skip inputs at Before All section{reason_msg}"),
+						Some(LogKind::SysInfo),
+					)
+					.await?;
+
 				return Ok(RunAgentResponse::default());
 			}
 
@@ -84,6 +93,7 @@ pub async fn run_command_agent(
 			},
 
 			// if it is another AipackCustom, we throw error
+			// NOTE: for now, we leave this one as is. Shold use Rt Rec
 			FromValue::AipackCustom(other) => {
 				return Err(Error::custom(format!(
 					"Aipack custom '{}' not supported at the Before All stage",
@@ -106,9 +116,8 @@ pub async fn run_command_agent(
 		}
 	};
 
-	// Normalize the inputs, so, if empty, we have one input of value Value::Null
-	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
-	// The default of
+	// -- Merge the eventual options from before all
+	// Recompute Agent if needed
 	let agent: Agent = match options_to_merge {
 		Some(options_to_merge) => {
 			let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
@@ -117,6 +126,10 @@ pub async fn run_command_agent(
 		}
 		None => agent,
 	};
+
+	// -- Get the Inputs and Before All data for the next stage
+	// so, if empty, we have one input of value Value::Null
+	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
 	let before_all = before_all.unwrap_or_default();
 
 	// -- Print the run info
@@ -144,11 +157,13 @@ pub async fn run_command_agent(
 		agent_info = Some(format!(" ({pack_ref} from {kind_pretty})"))
 	}
 	let agent_info = agent_info.as_deref().unwrap_or_default();
+	// TODO: might simplify message
+	let msg = format!(
+		"Running agent command: {agent_name}{agent_info}\n                 from: {agent_path}\n   with default model: {model_info}{genai_info}"
+	);
 
-	hub.publish(format!(
-		"\nRunning agent command: {agent_name}{agent_info}\n                 from: {agent_path}\n   with default model: {model_info}{genai_info}"
-	))
-	.await;
+	// -- Rt Rec - Message
+	runtime.rec_log_run(run_id, msg, None).await?;
 
 	// -- Initialize outputs for capture
 	let mut captured_outputs: Option<Vec<(usize, Value)>> =

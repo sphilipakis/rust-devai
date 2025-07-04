@@ -57,20 +57,6 @@ fn create_schema(con: &Connection) -> Result<()> {
 						start  INTEGER,
 						end    INTEGER,
 
-						-- Before All start/end
-						ba_start INTEGER,
-						ba_end   INTEGER,
-						
-						-- All tasks start/end
-						-- So, first start, and last end
-						tasks_start INTERGER,
-						tasks_end   INTEGER,
-
-						-- After All start/end
-						aa_start INTERGER,
-						aa_end   INTEGER,						
-
-						
 						label  TEXT
 
 				) STRICT",
@@ -84,12 +70,14 @@ fn create_schema(con: &Connection) -> Result<()> {
 						uid     BLOB NOT NULL,
 
 						ctime   INTEGER NOT NULL,
-						mtime   INTEGER NOT NULL,								
+						mtime   INTEGER NOT NULL,							
 
 						run_id  INTEGER NOT NULL, -- Should always belong to a run
 						task_id INTEGER,          -- Might belong to a task
 
-						stage   TEXT, 
+						kind     TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
+
+						stage    TEXT, 
 						
 						message  TEXT
 
