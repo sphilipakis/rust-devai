@@ -8,6 +8,7 @@ mod hub;
 mod run;
 mod runtime;
 mod script;
+mod store;
 mod support;
 mod term;
 mod tui;

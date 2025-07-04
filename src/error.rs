@@ -98,6 +98,10 @@ pub enum Error {
 	#[display("Fail to make AI Request. Cause:\n{_0}")]
 	GenAI(genai::Error),
 
+	// -- Store
+	#[from]
+	Store(crate::store::Error),
+
 	// -- TokioSync
 	TokioTryCurrent(TryCurrentError),
 

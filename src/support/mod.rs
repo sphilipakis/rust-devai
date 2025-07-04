@@ -21,6 +21,7 @@ pub mod md;
 pub mod os;
 pub mod paths;
 pub mod text;
+pub mod time;
 pub mod tomls;
 pub mod webc;
 pub mod zip;

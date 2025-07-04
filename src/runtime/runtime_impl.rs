@@ -6,6 +6,7 @@ use crate::run::{Literals, new_genai_client};
 use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
+use crate::store::ModelManager;
 use genai::Client;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -27,6 +28,10 @@ impl Runtime {
 		// Note: Make the type explicit for clarity
 		let genai_client = new_genai_client()?;
 
+		// -- Create the Runtime ModelManager
+		let mm = ModelManager::new().await?;
+
+		// -- Create the Runtime Queue
 		let mut run_queue = RunQueue::new();
 		let run_tx = run_queue.start()?;
 
@@ -36,6 +41,7 @@ impl Runtime {
 			executor_sender,
 			run_tx,
 			session: Session::new(),
+			mm,
 		};
 
 		let runtime = Self { inner: Arc::new(inner) };
@@ -77,6 +83,9 @@ impl Runtime {
 
 /// Getters
 impl Runtime {
+	pub(super) fn mm(&self) -> &ModelManager {
+		&self.inner.mm
+	}
 	pub fn genai_client(&self) -> &Client {
 		self.inner.genai_client()
 	}

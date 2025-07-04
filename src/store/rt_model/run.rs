@@ -1,0 +1,216 @@
+use crate::store::base::{self, DbBmc};
+use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use crate::support::time::now_unix_time_us;
+use modql::SqliteFromRow;
+use modql::field::{Fields, HasSqliteFields};
+use modql::filter::ListOptions;
+use uuid::Uuid;
+
+// region:    --- Types
+
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+pub struct Run {
+	pub id: Id,
+	pub uid: Uuid,
+
+	pub ctime: UnixTimeUs,
+	pub mtime: UnixTimeUs,
+
+	pub start: Option<UnixTimeUs>,
+	pub end: Option<UnixTimeUs>,
+
+	pub label: Option<String>,
+}
+
+impl Run {
+	pub fn is_done(&self) -> bool {
+		self.end.is_some()
+	}
+}
+
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+pub struct RunForCreate {
+	pub label: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
+pub struct RunForUpdate {
+	pub start: Option<UnixTimeUs>,
+	pub end: Option<UnixTimeUs>,
+	pub label: Option<String>,
+}
+
+// endregion: --- Types
+
+// region:    --- Bmc
+
+pub struct RunBmc;
+
+impl DbBmc for RunBmc {
+	const TABLE: &'static str = "run";
+}
+
+/// Custom Methods
+impl RunBmc {
+	pub fn start(mm: &ModelManager, run_id: Id) -> Result<()> {
+		let run_u = RunForUpdate {
+			start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		base::update::<Self>(mm, run_id, run_u.sqlite_not_none_fields())
+	}
+
+	pub fn end(mm: &ModelManager, run_id: Id) -> Result<()> {
+		let run_u = RunForUpdate {
+			end: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		base::update::<Self>(mm, run_id, run_u.sqlite_not_none_fields())
+	}
+}
+
+/// Basic CRUD
+impl RunBmc {
+	pub fn create(mm: &ModelManager, run_c: RunForCreate) -> Result<Id> {
+		let fields = run_c.sqlite_not_none_fields();
+		base::create::<Self>(mm, fields)
+	}
+
+	pub fn update(mm: &ModelManager, id: Id, run_u: RunForUpdate) -> Result<()> {
+		let fields = run_u.sqlite_not_none_fields();
+		base::update::<Self>(mm, id, fields)
+	}
+
+	pub fn get(mm: &ModelManager, id: Id) -> Result<Run> {
+		base::get::<Self, _>(mm, id)
+	}
+
+	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Run>> {
+		base::list::<Self, _>(mm, list_options)
+	}
+}
+
+// endregion: --- Bmc
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+
+	use super::*;
+	use crate::support::time::now_unix_time_us;
+	use modql::filter::OrderBy;
+
+	#[tokio::test]
+	async fn test_model_run_bmc_create() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_c = RunForCreate {
+			label: Some("Test Run".to_string()),
+		};
+
+		// -- Exec
+		let id = RunBmc::create(&mm, run_c)?;
+
+		// -- Check
+		assert_eq!(id.as_i64(), 1);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_run_bmc_update() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_c = RunForCreate {
+			label: Some("Test Run".to_string()),
+		};
+		let id = RunBmc::create(&mm, run_c)?;
+
+		// -- Exec
+		let run_u = RunForUpdate {
+			start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		RunBmc::update(&mm, id, run_u)?;
+
+		// -- Check
+		let run = RunBmc::get(&mm, id)?;
+		assert!(run.start.is_some());
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_run_bmc_list_simple() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		for i in 0..3 {
+			let run_c = RunForCreate {
+				label: Some(format!("label-{i}")),
+			};
+			RunBmc::create(&mm, run_c)?;
+		}
+
+		// -- Exec
+		let runs: Vec<Run> = RunBmc::list(&mm, Some(ListOptions::default()))?;
+		assert_eq!(runs.len(), 3);
+		let run = runs.first().ok_or("Should have first item")?;
+		assert_eq!(run.id, 1.into());
+		assert_eq!(run.label, Some("label-0".to_string()));
+		let run = runs.get(2).ok_or("Should have 3 items")?;
+		assert_eq!(run.id, 3.into());
+		assert_eq!(run.label, Some("label-2".to_string()));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_run_bmc_list_from_seed() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		mm.mock_rt_seed().await?;
+
+		// -- Exec
+		let runs: Vec<Run> = RunBmc::list(&mm, Some(ListOptions::default()))?;
+		assert_eq!(runs.len(), 10);
+		let run = runs.first().ok_or("Should have first item")?;
+		assert_eq!(run.id, 1.into());
+		assert_eq!(run.label, Some("label-0".to_string()));
+		let run = runs.get(2).ok_or("Should have third item")?;
+		assert_eq!(run.id, 3.into());
+		assert_eq!(run.label, Some("label-2".to_string()));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_run_bmc_list_order_by() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		for i in 0..3 {
+			let run_c = RunForCreate {
+				label: Some(format!("label-{i}")),
+			};
+			RunBmc::create(&mm, run_c)?;
+		}
+
+		let order_bys = OrderBy::from("!id");
+		let list_options = ListOptions::from(order_bys);
+
+		// -- Exec
+		let runs: Vec<Run> = RunBmc::list(&mm, Some(list_options))?;
+		assert_eq!(runs.len(), 3);
+		let run = runs.first().ok_or("Should have first item")?;
+		assert_eq!(run.id, 3.into());
+		assert_eq!(run.label, Some("label-2".to_string()));
+		let run = runs.get(2).ok_or("Should have third item")?;
+		assert_eq!(run.id, 1.into());
+		assert_eq!(run.label, Some("label-0".to_string()));
+
+		Ok(())
+	}
+}
+
+// endregion: --- Tests
