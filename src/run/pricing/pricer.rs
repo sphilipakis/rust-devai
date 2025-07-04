@@ -1,4 +1,4 @@
-use crate::pricing::data::{ModelPricing, PROVIDERS};
+use super::data::{ModelPricing, PROVIDERS};
 use genai::chat::Usage;
 
 /// Calculates the price for a given provider type, model name, and usage.

@@ -56,10 +56,10 @@ pub struct RunPrint {
 	pub msg: String,
 }
 
-#[derive(Debug, Clone)]
-pub enum LuaEvent {
-	FileSave { path: String },
-	Print { message: String },
-}
+// #[derive(Debug, Clone)]
+// pub enum LuaEvent {
+// 	FileSave { path: String },
+// 	Print { message: String },
+// }
 
 // endregion: --- Sub Types

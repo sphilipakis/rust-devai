@@ -5,7 +5,6 @@ mod dir_context;
 mod error;
 mod exec;
 mod hub;
-mod pricing;
 mod run;
 mod runtime;
 mod script;
