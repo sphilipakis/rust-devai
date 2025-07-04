@@ -1,8 +1,9 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::ExecutorSender;
+use crate::hub::get_hub;
 use crate::run::{Literals, new_genai_client};
-use crate::runtime::queue::RunQueue;
+use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
 use genai::Client;
@@ -40,6 +41,23 @@ impl Runtime {
 		let runtime = Self { inner: Arc::new(inner) };
 
 		Ok(runtime)
+	}
+}
+
+/// Send event
+impl Runtime {
+	pub async fn send_run_event(&self, run_event: RunEvent) {
+		let run_tx = self.inner.run_tx();
+		if let Err(err) = run_tx.send(run_event).await {
+			get_hub().publish_err("Runtime send_run_event", Some(err)).await
+		}
+	}
+
+	pub async fn send_run_event_sync(&self, run_event: RunEvent) {
+		let run_tx = self.inner.run_tx();
+		if let Err(err) = run_tx.send_sync(run_event) {
+			get_hub().publish_err_sync("Runtime send_run_event", Some(err))
+		}
 	}
 }
 
