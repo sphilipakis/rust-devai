@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::exec::cli::CliArgs;
-use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorSender};
+use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
 use crate::hub::{HubEvent, get_hub};
 use crate::term::safer_println;
 use crate::tui::hub_event_handler::handle_hub_event;
@@ -15,20 +15,20 @@ use tokio::sync::oneshot;
 /// Note: Right now the quick channel is a watch, but might be better to be a mpsc.
 #[derive(Debug)]
 pub struct TuiApp {
-	executor_sender: ExecutorSender,
+	executor_tx: ExecutorTx,
 }
 
 /// Constructor
 impl TuiApp {
-	pub fn new(executor_sender: ExecutorSender) -> Self {
-		Self { executor_sender }
+	pub fn new(executor_tx: ExecutorTx) -> Self {
+		Self { executor_tx }
 	}
 }
 
 /// Getters
 impl TuiApp {
-	fn executor_sender(&self) -> ExecutorSender {
-		self.executor_sender.clone()
+	fn executor_tx(&self) -> ExecutorTx {
+		self.executor_tx.clone()
 	}
 }
 
@@ -82,7 +82,7 @@ impl TuiApp {
 			let (in_reader, in_rx) = InReader::new_and_rx();
 			in_reader.start();
 
-			let exec_sender = self.executor_sender();
+			let exec_tx = self.executor_tx();
 
 			tokio::spawn(async move {
 				let hub = get_hub();
@@ -93,7 +93,7 @@ impl TuiApp {
 							// clear_last_n_lines(1);
 							if key_event.kind == KeyEventKind::Press {
 								safer_println("\n-- R pressed - Redo\n", interactive);
-								exec_sender.send(ExecActionEvent::Redo).await;
+								exec_tx.send(ExecActionEvent::Redo).await;
 							}
 						}
 
@@ -108,7 +108,7 @@ impl TuiApp {
 						KeyCode::Char('a') => {
 							// clear_last_n_lines(1);
 							if key_event.kind == KeyEventKind::Press {
-								exec_sender.send(ExecActionEvent::OpenAgent).await;
+								exec_tx.send(ExecActionEvent::OpenAgent).await;
 							}
 						}
 
@@ -133,7 +133,7 @@ impl TuiApp {
 	/// The hub events are typically to be displayed to the user one way or another
 	/// For now, we just print most of tose event content.
 	fn handle_hub_event(&self, interactive: bool) {
-		let exec_sender = self.executor_sender();
+		let exec_tx = self.executor_tx();
 
 		tokio::spawn(async move {
 			let mut rx = get_hub().subscriber();
@@ -142,7 +142,7 @@ impl TuiApp {
 				let evt_res = rx.recv().await;
 				match evt_res {
 					Ok(event) => {
-						if let Err(err) = handle_hub_event(event, &exec_sender, interactive).await {
+						if let Err(err) = handle_hub_event(event, &exec_tx, interactive).await {
 							println!("Tui ERROR while handling handle_hub_event. Cause {err}")
 						}
 					}
@@ -168,7 +168,7 @@ impl TuiApp {
 	///       so that it does not block the async caller.
 	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<oneshot::Receiver<()>> {
 		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
-		let executor_tx = self.executor_sender();
+		let executor_tx = self.executor_tx();
 
 		let (done_tx, done_rx) = oneshot::channel();
 		tokio::spawn(async move {

@@ -48,7 +48,7 @@ pub struct Executor {
 	/// The receiver that this executor will itreate on "start"
 	action_rx: Receiver<ExecActionEvent>,
 	/// Sender that gets cloned for parts that want to send events
-	action_sender: ExecutorSender,
+	action_sender: ExecutorTx,
 
 	/// For now, the executor keep the last redoCtx state
 	/// Note: This might change to a stack, not sure yet.
@@ -67,7 +67,7 @@ impl Executor {
 		Executor {
 			once_mm: OnceModelManager,
 			action_rx: rx,
-			action_sender: ExecutorSender::new(tx),
+			action_sender: ExecutorTx::new(tx),
 			current_redo_ctx: Default::default(),
 			active_actions: Arc::new(AtomicUsize::new(0)),
 		}
@@ -76,7 +76,7 @@ impl Executor {
 
 /// Getter & Setters
 impl Executor {
-	pub fn sender(&self) -> ExecutorSender {
+	pub fn sender(&self) -> ExecutorTx {
 		self.action_sender.clone()
 	}
 
@@ -291,16 +291,16 @@ impl RedoCtx {
 /// The Executor Sender is a wrapper over `Sender<ExecActionEvent>` and some domain specific functions
 /// It is acquired from the `Executor` with `sender()` or from `Runtime` with `executor_sender()`
 #[derive(Debug, Clone)]
-pub struct ExecutorSender {
+pub struct ExecutorTx {
 	tx: Sender<ExecActionEvent>,
 }
 
-impl ExecutorSender {
+impl ExecutorTx {
 	/// Create a new executor sender
 	/// Note: This is private to this module as Runtime and others will clone ExecutorSender to get a new one
 	///       as they need to point to the same receiver
 	fn new(tx: Sender<ExecActionEvent>) -> Self {
-		ExecutorSender { tx }
+		ExecutorTx { tx }
 	}
 
 	pub fn send_sync(&self, event: ExecActionEvent) {

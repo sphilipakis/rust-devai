@@ -34,12 +34,9 @@ pub async fn run_command_agent(
 	};
 
 	// -- Run Action - Start Run
-	runtime.send_run_event(RunEvent::start(1, 123)).await;
-	hub.publish(format!(
-		"\n======= RUNNING: {}\n     Agent path: {agent_path}\n",
-		agent.name()
-	))
-	.await;
+
+	let run_id = runtime.run_start(agent.name(), &agent_path).await?;
+	runtime.send_run_event(RunEvent::start(run_id.into(), 123)).await;
 
 	// -- Run the before all
 	let BeforeAllResponse {

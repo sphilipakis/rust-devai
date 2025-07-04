@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::dir_context::DirContext;
-use crate::exec::ExecutorSender;
+use crate::exec::ExecutorTx;
 use crate::hub::get_hub;
 use crate::run::{Literals, new_genai_client};
 use crate::runtime::queue::{RunEvent, RunQueue};
@@ -24,7 +24,7 @@ pub struct Runtime {
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
-	pub async fn new(dir_context: DirContext, executor_sender: ExecutorSender, mm: ModelManager) -> Result<Self> {
+	pub async fn new(dir_context: DirContext, executor_tx: ExecutorTx, mm: ModelManager) -> Result<Self> {
 		// Note: Make the type explicit for clarity
 		let genai_client = new_genai_client()?;
 
@@ -35,7 +35,7 @@ impl Runtime {
 		let inner = RuntimeInner {
 			dir_context,
 			genai_client,
-			executor_sender,
+			executor_tx,
 			run_tx,
 			session: Session::new(),
 			mm,
@@ -92,8 +92,8 @@ impl Runtime {
 		self.inner.dir_context()
 	}
 
-	pub fn executor_sender(&self) -> ExecutorSender {
-		self.inner.executor_sender()
+	pub fn executor_sender(&self) -> ExecutorTx {
+		self.inner.executor_tx()
 	}
 
 	pub fn session_str(&self) -> &str {
