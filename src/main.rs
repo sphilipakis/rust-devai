@@ -11,7 +11,7 @@ mod script;
 mod store;
 mod support;
 mod term;
-mod tui;
+mod tui_v1;
 mod types;
 
 #[cfg(test)]
@@ -21,7 +21,7 @@ use crate::exec::Executor;
 use crate::exec::cli::CliArgs;
 use crate::hub::{HubEvent, get_hub};
 use crate::store::OnceModelManager;
-use crate::tui::TuiApp;
+use crate::tui_v1::TuiAppV1;
 use clap::{Parser, crate_version};
 use error::{Error, Result};
 
@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
 	});
 
 	// -- Start UI
-	let tui = TuiApp::new(exec_sender);
+	let tui = TuiAppV1::new(exec_sender);
 	// This will wait until all done
 	tui.start_with_args(args).await?;
 

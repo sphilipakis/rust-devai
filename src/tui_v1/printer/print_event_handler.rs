@@ -1,5 +1,5 @@
-use crate::tui::PrintEvent;
-use crate::tui::printer::printers::{self, print_error_generic, print_key_env_missing};
+use crate::tui_v1::PrintEvent;
+use crate::tui_v1::printer::printers::{self, print_error_generic, print_key_env_missing};
 use std::sync::Arc;
 
 pub fn handle_print(print_event: Arc<PrintEvent>, interactive: bool) {

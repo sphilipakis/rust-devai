@@ -3,8 +3,8 @@ use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
 use crate::hub::{HubEvent, get_hub};
 use crate::term::safer_println;
-use crate::tui::hub_event_handler::handle_hub_event;
-use crate::tui::in_reader::InReader;
+use crate::tui_v1::hub_event_handler::handle_hub_event;
+use crate::tui_v1::in_reader::InReader;
 use crossterm::cursor::MoveUp;
 use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
@@ -14,26 +14,26 @@ use tokio::sync::oneshot;
 
 /// Note: Right now the quick channel is a watch, but might be better to be a mpsc.
 #[derive(Debug)]
-pub struct TuiApp {
+pub struct TuiAppV1 {
 	executor_tx: ExecutorTx,
 }
 
 /// Constructor
-impl TuiApp {
+impl TuiAppV1 {
 	pub fn new(executor_tx: ExecutorTx) -> Self {
 		Self { executor_tx }
 	}
 }
 
 /// Getters
-impl TuiApp {
+impl TuiAppV1 {
 	fn executor_tx(&self) -> ExecutorTx {
 		self.executor_tx.clone()
 	}
 }
 
 /// Starter
-impl TuiApp {
+impl TuiAppV1 {
 	/// Start the app with arg
 	pub async fn start_with_args(self, cli_args: CliArgs) -> Result<()> {
 		let hub_rx_for_exit = get_hub().subscriber();
@@ -76,7 +76,7 @@ impl TuiApp {
 }
 
 /// In and Out handlers
-impl TuiApp {
+impl TuiAppV1 {
 	fn handle_in_event(&self, interactive: bool) -> Option<InReader> {
 		if interactive {
 			let (in_reader, in_rx) = InReader::new_and_rx();
@@ -157,7 +157,7 @@ impl TuiApp {
 }
 
 /// Lifecyle private functions
-impl TuiApp {
+impl TuiAppV1 {
 	/// Execute the initial cli_args
 	///
 	/// Returns:

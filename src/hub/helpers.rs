@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::hub::{Hub, HubEvent};
-use crate::tui::PromptParams;
+use crate::tui_v1::PromptParams;
 
 // region:    --- Prompt Via Hub
 

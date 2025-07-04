@@ -1,8 +1,8 @@
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::term::safer_println;
-use crate::tui::prompter::prompt;
-use crate::tui::{PrintEvent, handle_print, tui_elem};
+use crate::tui_v1::prompter::prompt;
+use crate::tui_v1::{PrintEvent, handle_print, tui_elem};
 use crate::{Error, Result};
 
 pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorTx, interactive: bool) -> Result<()> {
