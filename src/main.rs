@@ -12,6 +12,7 @@ mod script;
 mod store;
 mod support;
 mod term;
+mod tui;
 mod tui_v1;
 mod types;
 
@@ -25,6 +26,9 @@ use crate::store::OnceModelManager;
 use crate::tui_v1::TuiAppV1;
 use clap::{Parser, crate_version};
 use error::{Error, Result};
+use tracing::debug;
+use tracing_appender::rolling::never;
+use tracing_subscriber::EnvFilter;
 
 pub static VERSION: &str = crate_version!();
 
@@ -32,6 +36,21 @@ pub static VERSION: &str = crate_version!();
 
 #[tokio::main]
 async fn main() -> Result<()> {
+	// -- Setup tracing
+	// Create a file appender (will write all logs to ".tmp.log" in the current dir)
+	let file_appender = never(".tmp-log", "file.log");
+	let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+	// Set up the subscriber with the file writer and log level
+	tracing_subscriber::fmt()
+		.with_writer(non_blocking)
+		.with_env_filter(EnvFilter::new(",aip=debug"))
+		.without_time()
+		.with_ansi(false)
+		.init();
+
+	debug!("START");
+
 	// -- Command arguments
 	let args = CliArgs::parse(); // Will fail early, but that’s okay.
 
@@ -53,9 +72,16 @@ async fn main() -> Result<()> {
 	});
 
 	// -- Start UI
-	let tui = TuiAppV1::new(exec_sender);
-	// This will wait until all done
-	tui.start_with_args(args).await?;
+	// NOTE: For now, if interactive, we go to new TUI
+	//       Otherwise, if non interactive, we go to v1
+	if args.cmd.is_interactive() {
+		let mm = once_mm.get().await?;
+		tui::start_tui(mm, exec_sender, args).await?;
+	} else {
+		let tui_v1 = TuiAppV1::new(exec_sender);
+		// This will wait until all done
+		tui_v1.start_with_args(args).await?;
+	}
 
 	// -- End
 	// Tokio wait for 100ms

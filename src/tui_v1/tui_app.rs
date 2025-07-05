@@ -51,8 +51,13 @@ impl TuiAppV1 {
 		let in_reader = self.start_app(exit_tx.into(), interactive)?;
 
 		// -- Exec the first cli_args
-		self.exec_cli_args(cli_args)?;
-		// NOTE: for now, WE do not wait until done, because, we have the exit_rx below
+		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
+		let executor_tx = self.executor_tx();
+
+		tokio::spawn(async move {
+			// TODO: handle exceptions in both those cases
+			let _ = executor_tx.send(exec_cmd).await;
+		});
 
 		// -- Wait for the exit
 		exit_rx.recv().await;
@@ -156,29 +161,6 @@ impl TuiAppV1 {
 					}
 				}
 			}
-		});
-
-		Ok(())
-	}
-}
-
-/// Lifecyle private functions
-impl TuiAppV1 {
-	/// Execute the initial cli_args
-	///
-	/// Returns:
-	///
-	/// - The oneshot that will be executed after the executor_tx.send
-	///
-	/// Note: This function is designed to spawn it's on work and return the oneshot described above,
-	///       so that it does not block the async caller.
-	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<()> {
-		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
-		let executor_tx = self.executor_tx();
-
-		tokio::spawn(async move {
-			// TODO: handle exceptions in both those cases
-			let _ = executor_tx.send(exec_cmd).await;
 		});
 
 		Ok(())

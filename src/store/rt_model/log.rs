@@ -31,7 +31,9 @@ derive_simple_enum_type! {
 pub enum LogKind {
 	SysInfo,
 	SysWarn,
+	SysError,
 	SysDebug,
+	AgentPrint,
 }
 }
 
