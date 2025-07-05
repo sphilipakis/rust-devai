@@ -2,10 +2,15 @@ use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::term::safer_println;
 use crate::tui_v1::prompter::prompt;
-use crate::tui_v1::{PrintEvent, handle_print, tui_elem};
+use crate::tui_v1::{ExitTx, PrintEvent, handle_print, tui_elem};
 use crate::{Error, Result};
 
-pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorTx, interactive: bool) -> Result<()> {
+pub async fn handle_hub_event(
+	event: HubEvent,
+	exec_sender: &ExecutorTx,
+	exit_tx: &ExitTx,
+	interactive: bool,
+) -> Result<()> {
 	match event {
 		HubEvent::Message(msg) => {
 			safer_println(&format!("{msg}"), interactive);
@@ -33,14 +38,14 @@ pub async fn handle_hub_event(event: HubEvent, exec_sender: &ExecutorTx, interac
 
 		HubEvent::Prompt(params) => prompt(&params).await?,
 
-		HubEvent::Executor(exec_event) => {
-			if let (ExecStatusEvent::RunEnd, true) = (exec_event, interactive) {
-				tui_elem::print_bottom_bar();
-			}
-		}
+		HubEvent::Executor(exec_event) => match (exec_event, interactive) {
+			(ExecStatusEvent::RunEnd, true) => tui_elem::print_bottom_bar(),
+			(ExecStatusEvent::EndExec, false) => exit_tx.send(()).await?,
+			(_, _) => (),
+		},
 		HubEvent::DoExecRedo => exec_sender.send(ExecActionEvent::Redo).await,
 		HubEvent::Quit => {
-			// Nothing to do for now
+			exit_tx.send(()).await?;
 		}
 	}
 

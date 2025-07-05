@@ -1,4 +1,5 @@
 use crate::Result;
+use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
 use crate::hub::{HubEvent, get_hub};
@@ -9,6 +10,7 @@ use crossterm::cursor::MoveUp;
 use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{Clear, ClearType};
+use derive_more::{Deref, From};
 use tokio::sync::broadcast::Receiver;
 use tokio::sync::oneshot;
 
@@ -32,27 +34,30 @@ impl TuiAppV1 {
 	}
 }
 
+#[derive(Clone, From, Deref)]
+pub struct ExitTx(Tx<()>);
+
 /// Starter
 impl TuiAppV1 {
 	/// Start the app with arg
 	pub async fn start_with_args(self, cli_args: CliArgs) -> Result<()> {
-		let hub_rx_for_exit = get_hub().subscriber();
+		let (exit_tx, exit_rx) = new_channel::<()>("exit_term");
+
+		// let hub_rx_for_exit = get_hub().subscriber();
 
 		let interactive = cli_args.cmd.is_interactive();
 
 		// -- Start the application (very rudementary "cli UI for now")
-		let in_reader = self.start_app(interactive)?;
+		let in_reader = self.start_app(exit_tx.into(), interactive)?;
 
 		// -- Exec the first cli_args
 		self.exec_cli_args(cli_args)?;
-		// NOTE: for now, we wait unitl the exec is done.
-		// let done_rx = self.exec_cli_args(cli_args)?;
-		// done_rx.await;
+		// NOTE: for now, WE do not wait until done, because, we have the exit_rx below
 
 		// -- Wait for the exit
-		self.wait_for_exit(hub_rx_for_exit, interactive).await?;
+		exit_rx.recv().await;
 
-		// -- Make sure to cloase the in_reader if one to restore states
+		// -- Make sure to close the in_reader if one to restore states
 		if let Some(in_reader) = in_reader {
 			in_reader.close()
 		}
@@ -64,12 +69,12 @@ impl TuiAppV1 {
 	/// - It starts the handle_hub_event which is mostly for display
 	/// - And starts the handle_in_event to react to user input
 	///   - The handle_in_event might return a InReader so that it can be correctly closed on app quit
-	fn start_app(&self, interactive: bool) -> Result<Option<InReader>> {
+	fn start_app(&self, exit_tx: ExitTx, interactive: bool) -> Result<Option<InReader>> {
 		// -- Will handle the stdout
-		self.handle_hub_event(interactive);
+		self.run_handle_hub_event(exit_tx.clone(), interactive)?;
 
 		// -- When interactive, handle the stdin
-		let in_reader = self.handle_in_event(interactive);
+		let in_reader = self.run_handle_in_event(exit_tx, interactive);
 
 		Ok(in_reader)
 	}
@@ -77,7 +82,7 @@ impl TuiAppV1 {
 
 /// In and Out handlers
 impl TuiAppV1 {
-	fn handle_in_event(&self, interactive: bool) -> Option<InReader> {
+	fn run_handle_in_event(&self, exit_tx: ExitTx, interactive: bool) -> Option<InReader> {
 		if interactive {
 			let (in_reader, in_rx) = InReader::new_and_rx();
 			in_reader.start();
@@ -132,17 +137,16 @@ impl TuiAppV1 {
 
 	/// The hub events are typically to be displayed to the user one way or another
 	/// For now, we just print most of tose event content.
-	fn handle_hub_event(&self, interactive: bool) {
+	fn run_handle_hub_event(&self, exit_tx: ExitTx, interactive: bool) -> Result<()> {
 		let exec_tx = self.executor_tx();
+		let hub_rx = get_hub().take_rx()?;
 
 		tokio::spawn(async move {
-			let mut rx = get_hub().subscriber();
-
 			loop {
-				let evt_res = rx.recv().await;
+				let evt_res = hub_rx.recv().await;
 				match evt_res {
 					Ok(event) => {
-						if let Err(err) = handle_hub_event(event, &exec_tx, interactive).await {
+						if let Err(err) = handle_hub_event(event, &exec_tx, &exit_tx, interactive).await {
 							println!("Tui ERROR while handling handle_hub_event. Cause {err}")
 						}
 					}
@@ -153,6 +157,8 @@ impl TuiAppV1 {
 				}
 			}
 		});
+
+		Ok(())
 	}
 }
 
@@ -166,33 +172,14 @@ impl TuiAppV1 {
 	///
 	/// Note: This function is designed to spawn it's on work and return the oneshot described above,
 	///       so that it does not block the async caller.
-	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<oneshot::Receiver<()>> {
+	fn exec_cli_args(&self, cli_args: CliArgs) -> Result<()> {
 		let exec_cmd: ExecActionEvent = cli_args.cmd.into();
 		let executor_tx = self.executor_tx();
 
-		let (done_tx, done_rx) = oneshot::channel();
 		tokio::spawn(async move {
 			// TODO: handle exceptions in both those cases
 			let _ = executor_tx.send(exec_cmd).await;
-			let _ = done_tx.send(());
 		});
-
-		Ok(done_rx)
-	}
-
-	/// Wait for the exit
-	/// - When interative mode, wait for HubEvent::Quit
-	/// - When not intractive, the first HubEvent::Executor(ExecEvent::End) will end
-	async fn wait_for_exit(&self, mut hub_rx: Receiver<HubEvent>, interactive: bool) -> Result<()> {
-		loop {
-			if let Ok(hub_event) = hub_rx.recv().await {
-				match (hub_event, interactive) {
-					(HubEvent::Quit, _) => break,
-					(HubEvent::Executor(ExecStatusEvent::EndExec), false) => break,
-					_ => (),
-				}
-			}
-		}
 
 		Ok(())
 	}

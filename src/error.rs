@@ -45,6 +45,18 @@ pub enum Error {
 		cause: &'static str,
 	},
 
+	// -- Channel
+	#[display("Send on channel '{name}' fail. Cause: {cause}")]
+	ChannelTx {
+		name: &'static str,
+		cause: String,
+	},
+	#[display("Recieve on channel '{name}' fail. Cause: {cause}")]
+	ChannelRx {
+		name: &'static str,
+		cause: String,
+	},
+
 	// -- WebC
 	#[display("Fail to download url '{url}' to file '{dest_file}'.\nCause: {cause}")]
 	FailToDownload {

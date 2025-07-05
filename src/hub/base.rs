@@ -1,49 +1,54 @@
-// src/hub/hub_base.rs
-
-use crate::Error;
+use crate::event::{Rx, Tx, new_channel};
 use crate::hub::hub_event::HubEvent;
+use crate::{Error, Result};
 use std::fmt::Display;
-use std::sync::{Arc, LazyLock};
+use std::sync::{Arc, LazyLock, Mutex};
 use tokio::sync::broadcast;
 
 /// Hub for receiving and broadcasting all OutEvent to the systems.
 /// Those events are Log Message, Error, and Stage(StagEvent) to capture each progress steps
 pub struct Hub {
-	tx: Arc<broadcast::Sender<HubEvent>>,
-	_rx: broadcast::Receiver<HubEvent>,
+	tx: Tx<HubEvent>,
+	rx_holder: Arc<Mutex<Option<Rx<HubEvent>>>>,
 }
 
 /// Core Hub Methods
 impl Hub {
 	pub fn new() -> Self {
-		let (tx, _rx) = broadcast::channel(500);
-		Self { tx: Arc::new(tx), _rx }
+		let (tx, rx) = new_channel("main_hub");
+
+		let rx_holder = Mutex::new(Some(rx)).into();
+
+		Self { tx, rx_holder }
 	}
 
+	pub fn take_rx(&self) -> Result<Rx<HubEvent>> {
+		let mut rx_holder = self
+			.rx_holder
+			.lock()
+			.map_err(|err| format!("Hub::take_rx fail on mutex: {err}"))?;
+		let rx = rx_holder.take().ok_or("Hub Rx already taken, cannot take twice")?;
+
+		Ok(rx)
+	}
+}
+
+/// Publish event
+impl Hub {
 	pub async fn publish(&self, event: impl Into<HubEvent>) {
 		let event = event.into();
 
-		match self.tx.send(event) {
+		match self.tx.send(event).await {
 			Ok(_) => (),
 			Err(err) => println!("AIPACK INTERNAL ERROR - failed to send event to hub - {err}"),
 		}
 	}
 
 	pub fn publish_sync(&self, event: impl Into<HubEvent>) {
-		tokio::task::block_in_place(|| {
-			let event = event.into();
-			let rt = tokio::runtime::Handle::try_current();
-			match rt {
-				Ok(rt) => rt.block_on(async { self.publish(event).await }),
-
-				// NOTE: Here per design, we do not return error or break, as it is just for logging
-				Err(err) => println!("AIPACK INTERNAL ERROR - no current tokio handle - {err}"),
-			}
-		});
-	}
-
-	pub fn subscriber(&self) -> broadcast::Receiver<HubEvent> {
-		self.tx.subscribe()
+		match self.tx.send_sync(event) {
+			Ok(_) => (),
+			Err(err) => println!("AIPACK INTERNAL ERROR - failed to send event to hub - {err}"),
+		}
 	}
 }
 
@@ -79,11 +84,13 @@ pub fn get_hub() -> &'static Hub {
 mod tests {
 	use super::*;
 
+	pub type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+
 	#[tokio::test]
-	async fn test_hub() {
+	async fn test_hub() -> Result<()> {
 		let hub = get_hub();
 
-		let mut rx = hub.subscriber();
+		let mut rx = hub.take_rx()?;
 		tokio::spawn(async move {
 			while let Ok(event) = rx.recv().await {
 				#[allow(clippy::single_match)]
@@ -101,5 +108,7 @@ mod tests {
 
 		// NOTE: Call below will fail in test because require multi-thread
 		// hub.publish_sync(Event::Message("Hello from sync!".to_string()));
+
+		Ok(())
 	}
 }

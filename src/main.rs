@@ -3,6 +3,7 @@
 mod agent;
 mod dir_context;
 mod error;
+mod event;
 mod exec;
 mod hub;
 mod run;
