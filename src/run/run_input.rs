@@ -7,6 +7,7 @@ use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
+use crate::store::Id;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_num};
 use genai::ModelIden;
@@ -56,8 +57,11 @@ impl RunAgentInputResponse {
 ///
 /// Note 1: For now, this will create a new Lua engine.
 ///         This is likely to stay as it creates a strong segregation between input execution
+#[allow(clippy::too_many_arguments)]
 pub async fn run_agent_input(
 	runtime: &Runtime,
+	run_id: Id,
+	task_id: Id,
 	agent: &Agent,
 	before_all_result: Value,
 	label: &str,
@@ -83,9 +87,17 @@ pub async fn run_agent_input(
 
 	// -- Execute data
 	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
+		// -- Rt Step - Start Dt Start
+		runtime.step_task_dt_start(run_id, task_id).await?;
+
+		// -- Exec
 		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir_str]))?;
 		let data_res = serde_json::to_value(lua_value)?;
 
+		// -- Rt Step - Start Dt Start
+		runtime.step_task_dt_end(run_id, task_id).await?;
+
+		// -- Post Process
 		// skip input if aipack action is sent
 		match AipackCustom::from_value(data_res)? {
 			// If it is not a AipackCustom the data is the orginal value

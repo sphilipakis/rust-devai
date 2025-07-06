@@ -4,18 +4,26 @@ use crate::derive_simple_enum_type;
 derive_simple_enum_type! {
 pub enum RunStep {
 	Start,
-	End,
+
+	// -- Before All
 	BaStart,
 	BaEnd,
 	TasksStart, // First tasks start
 	TasksEnd, // All tasks ended
+
+	// -- Task
 	TaskStart,
 	TaskEnd,
-	DtStart,
-	DtEnd,
-	OtStart,
-	OtEnd,
+	TaskDtStart,
+	TaskDtEnd,
+	TaskOtStart,
+	TaskOtEnd,
+
+	// -- After All
 	AaStart,
 	AaEnd,
+
+
+	End,
 }
 }

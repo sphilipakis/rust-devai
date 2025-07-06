@@ -347,7 +347,18 @@ async fn run_command_agent_input(
 	let label = get_input_label(&input).unwrap_or_else(|| format!("{input_idx}"));
 	hub.publish(format!("\n==== Running input: {label}")).await;
 
-	let run_response = run_agent_input(runtime, agent, before_all, &label, input, literals, run_base_options).await?;
+	let run_response = run_agent_input(
+		runtime,
+		run_id,
+		task_id,
+		agent,
+		before_all,
+		&label,
+		input,
+		literals,
+		run_base_options,
+	)
+	.await?;
 
 	// if the response value is a String, then, print it
 	if let Some(response_txt) = run_response.as_ref().and_then(|r| r.as_str()) {

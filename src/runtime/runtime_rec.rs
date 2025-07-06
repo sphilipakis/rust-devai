@@ -121,6 +121,34 @@ impl Runtime {
 		Ok(id)
 	}
 
+	pub async fn step_task_dt_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskDtStart),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(())
+	}
+
+	pub async fn step_task_dt_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskDtEnd),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(())
+	}
+
 	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Model
 		let task_u = TaskForUpdate {
