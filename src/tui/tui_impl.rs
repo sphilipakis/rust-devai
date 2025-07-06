@@ -6,21 +6,14 @@ use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
+use crate::tui::AppState;
+use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
-use crate::tui::app_state::AppState;
 use crate::tui::event::ActionEvent;
-use crate::tui::{MainView, RunsView, SumView};
-use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use derive_more::{Deref, From};
 use ratatui::DefaultTerminal;
-use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::Stylize;
-use ratatui::widgets::Block;
-use tokio::fs::OpenOptions;
-use tokio::io::AsyncWriteExt;
-use tokio::sync::mpsc::{Receiver, channel};
 use tokio::task::JoinHandle;
-use tracing::{debug, error};
+use tracing::error;
 
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
 	// -- init terminal
@@ -61,7 +54,7 @@ async fn exec_app(
 	let _tin_read_handle = run_term_read(app_tx.clone())?;
 
 	// -- Running Tui application
-	let tui_handle = run_ui_loop(terminal, mm, executor_tx.clone(), app_rx, app_tx.clone(), exit_tx)?;
+	let _tui_handle = run_ui_loop(terminal, mm, executor_tx.clone(), app_rx, app_tx.clone(), exit_tx)?;
 
 	// -- Start the hub event and forward to App Event
 	let hub_rx = get_hub().take_rx()?;
@@ -70,11 +63,9 @@ async fn exec_app(
 		loop {
 			let hub_evt = hub_rx.recv().await;
 
-			debug!("HUB LOOP - {hub_evt:?}");
-
 			match hub_evt {
 				Ok(hub_evt) => {
-					app_tx.send(hub_evt).await;
+					let _ = app_tx.send(hub_evt).await;
 				}
 				Err(err) => {
 					// NOTE: for now, just print and stop (this might be erased)
@@ -93,7 +84,7 @@ async fn exec_app(
 	});
 
 	// -- Wait for the exit
-	exit_rx.recv().await;
+	let _ = exit_rx.recv().await;
 
 	Ok(())
 }
@@ -102,7 +93,7 @@ fn run_ui_loop(
 	mut terminal: DefaultTerminal,
 	mm: ModelManager,
 	executor_tx: ExecutorTx,
-	mut app_rx: Rx<AppEvent>,
+	app_rx: Rx<AppEvent>,
 	app_tx: AppTx,
 	exit_tx: ExitTx,
 ) -> Result<JoinHandle<()>> {
@@ -123,17 +114,17 @@ fn run_ui_loop(
 					continue;
 				}
 			};
-			debug!("->> run_ui_loop AppEvent: {app_event:?}");
+			//debug!("->> run_ui_loop AppEvent: {app_event:?}");
 
 			// NOTE: Handle this specific even there because we need to break the llop
 			//       Later, handle_app_event might return a control flow enum
 			if let AppEvent::Action(ActionEvent::Quit) = &app_event {
-				terminal.clear();
-				exit_tx.send(()).await;
+				let _ = terminal.clear();
+				let _ = exit_tx.send(()).await;
 				break;
 			}
 
-			handle_app_event(&mut terminal, &mm, &executor_tx, &app_tx, &exit_tx, &app_event).await;
+			let _ = handle_app_event(&mut terminal, &mm, &executor_tx, &app_tx, &exit_tx, &app_event).await;
 
 			last_event = app_event.into();
 		}

@@ -17,7 +17,7 @@ impl Runtime {
 /// Rec for all step record (like timestamp and all)
 /// All the function that "record" the progress of a Runtime execution
 impl Runtime {
-	pub async fn rec_start(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
+	pub async fn step_start(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
 		let hub = get_hub();
 
 		let run_id = RunBmc::create(
@@ -29,7 +29,8 @@ impl Runtime {
 			},
 		)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		// -- For V1 terminal
 		hub.publish(format!(
@@ -40,91 +41,98 @@ impl Runtime {
 		Ok(run_id)
 	}
 
-	pub async fn rec_ba_start(&self, run_id: Id) -> Result<()> {
+	pub async fn step_ba_start(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			ba_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
-	pub async fn rec_ba_end(&self, run_id: Id) -> Result<()> {
+	pub async fn step_ba_end(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			ba_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
 	/// Mark the start of Tasks execution.
-	pub async fn rec_tasks_start(&self, run_id: Id) -> Result<()> {
+	pub async fn step_tasks_start(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			tasks_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
 	/// Mark the end of Tasks execution.
-	pub async fn rec_tasks_end(&self, run_id: Id) -> Result<()> {
+	pub async fn step_tasks_end(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			tasks_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
 	/// Mark the start of After All execution.
-	pub async fn rec_aa_start(&self, run_id: Id) -> Result<()> {
+	pub async fn step_aa_start(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			aa_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
 	/// Mark the end of After All execution.
-	pub async fn rec_aa_end(&self, run_id: Id) -> Result<()> {
+	pub async fn step_aa_end(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			aa_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
 
 	/// Mark the run as completed.
-	pub async fn rec_end(&self, run_id: Id) -> Result<()> {
+	pub async fn step_end(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
 			end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogLevel::SysInfo));
+		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogLevel::SysInfo))
+			.await?;
 
 		Ok(())
 	}
@@ -139,7 +147,7 @@ impl Runtime {
 		step: Option<RunStep>,
 		stage: Option<Stage>,
 		msg: impl Into<String>,
-		kind: Option<LogLevel>,
+		level: Option<LogLevel>,
 	) -> Result<()> {
 		let msg = msg.into();
 
@@ -149,13 +157,13 @@ impl Runtime {
 			step,
 			stage,
 			message: Some(msg.clone()),
-			level: kind,
+			level,
 		};
 		LogBmc::create(self.mm(), log_c)?;
 
 		// -- For V1 terminal
 		let hub = get_hub();
-		if let Some(LogLevel::SysInfo) = kind {
+		if let Some(LogLevel::SysInfo) = level {
 			hub.publish(HubEvent::info_short(msg)).await;
 		} else {
 			hub.publish(msg).await;
@@ -170,7 +178,7 @@ impl Runtime {
 		task_id: Option<Id>,
 		step: Option<RunStep>,
 		stage: Option<Stage>,
-		kind: Option<LogLevel>,
+		level: Option<LogLevel>,
 	) -> Result<()> {
 		let log_c = LogForCreate {
 			run_id,
@@ -178,7 +186,7 @@ impl Runtime {
 			step,
 			stage,
 			message: None,
-			level: kind,
+			level,
 		};
 		LogBmc::create(self.mm(), log_c)?;
 
@@ -189,13 +197,13 @@ impl Runtime {
 	}
 
 	#[allow(unused)]
-	pub async fn rec_log_run(&self, run_id: Id, msg: impl Into<String>, kind: Option<LogLevel>) -> Result<()> {
-		self.rec_log(run_id, None, None, None, msg, kind).await
+	pub async fn rec_log_run(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
+		self.rec_log(run_id, None, None, None, msg, level).await
 	}
 
 	#[allow(unused)]
-	pub async fn rec_log_ba(&self, run_id: Id, msg: impl Into<String>, kind: Option<LogLevel>) -> Result<()> {
-		self.rec_log(run_id, None, None, Some(Stage::BeforeAll), msg, kind).await
+	pub async fn rec_log_ba(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
+		self.rec_log(run_id, None, None, Some(Stage::BeforeAll), msg, level).await
 	}
 
 	#[allow(unused)]
@@ -204,9 +212,9 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		kind: Option<LogLevel>,
+		level: Option<LogLevel>,
 	) -> Result<()> {
-		self.rec_log(run_id, Some(task_id), None, Some(Stage::Data), msg, kind).await
+		self.rec_log(run_id, Some(task_id), None, Some(Stage::Data), msg, level).await
 	}
 
 	#[allow(unused)]
@@ -215,9 +223,9 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		kind: Option<LogLevel>,
+		level: Option<LogLevel>,
 	) -> Result<()> {
-		self.rec_log(run_id, Some(task_id), None, Some(Stage::Ai), msg, kind).await
+		self.rec_log(run_id, Some(task_id), None, Some(Stage::Ai), msg, level).await
 	}
 
 	#[allow(unused)]
@@ -226,13 +234,13 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		kind: Option<LogLevel>,
+		level: Option<LogLevel>,
 	) -> Result<()> {
-		self.rec_log(run_id, Some(task_id), None, Some(Stage::Output), msg, kind).await
+		self.rec_log(run_id, Some(task_id), None, Some(Stage::Output), msg, level).await
 	}
 
 	#[allow(unused)]
-	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, kind: Option<LogLevel>) -> Result<()> {
-		self.rec_log(run_id, None, None, Some(Stage::AfterAll), msg, kind).await
+	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
+		self.rec_log(run_id, None, None, Some(Stage::AfterAll), msg, level).await
 	}
 }

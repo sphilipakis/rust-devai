@@ -37,8 +37,8 @@ pub async fn run_command_agent(
 		Err(_) => agent.file_path().to_string(),
 	};
 
-	// -- Run Rec - Start Run
-	let run_id = runtime.rec_start(agent.name(), &agent_path).await?;
+	// -- Rt Step - Start Run
+	let run_id = runtime.step_start(agent.name(), &agent_path).await?;
 
 	// -- Run the before all
 	let BeforeAllResponse {
@@ -46,8 +46,8 @@ pub async fn run_command_agent(
 		before_all,
 		options: options_to_merge,
 	} = if let Some(before_all_script) = agent.before_all_script() {
-		// -- Rt Rec - Start Before All
-		runtime.rec_ba_start(run_id).await?;
+		// -- Rt Step - Start Before All
+		runtime.step_ba_start(run_id).await?;
 
 		// -- Setup the Lua engine
 		let lua_engine = runtime.new_lua_engine_with_ctx(&literals)?;
@@ -61,12 +61,12 @@ pub async fn run_command_agent(
 		let before_all_res = serde_json::to_value(lua_value)?;
 
 		// -- Process before all response
-		match AipackCustom::from_value(before_all_res)? {
+		let before_all_response = match AipackCustom::from_value(before_all_res)? {
 			// it is an skip action
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
 
-				// -- Rt Rc - SysInfo message
+				// -- Rt Log - SysInfo message
 				runtime
 					.rec_log_ba(
 						run_id,
@@ -104,7 +104,11 @@ pub async fn run_command_agent(
 				before_all: Some(value),
 				options: None,
 			},
-		}
+		};
+		// -- Rt Step - End Before All
+		runtime.step_ba_end(run_id).await?;
+
+		before_all_response
 	} else {
 		BeforeAllResponse {
 			inputs,
@@ -113,19 +117,25 @@ pub async fn run_command_agent(
 		}
 	};
 
-	// -- Rt Rec - End Before All
-	runtime.rec_ba_end(run_id).await?;
-
 	// -- Merge the eventual options from before all
 	// Recompute Agent if needed
 	let agent: Agent = match options_to_merge {
 		Some(options_to_merge) => {
 			let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
 			let options_ov = agent.options_as_ref().merge_new(options_to_merge)?;
+
 			agent.new_merge(options_ov)?
 		}
 		None => agent,
 	};
+
+	// -- Rt Log
+	let msg = format!(
+		"Model: {} (). Input Concurrency: {}",
+		agent.model_resolved(),
+		agent.options().input_concurrency().unwrap_or(1)
+	);
+	let _ = runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await;
 
 	// -- Get the Inputs and Before All data for the next stage
 	// so, if empty, we have one input of value Value::Null

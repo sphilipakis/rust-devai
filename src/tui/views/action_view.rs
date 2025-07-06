@@ -1,10 +1,8 @@
-use crate::tui::styles::{CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACTION};
-use crate::tui::support::RectExt;
+use crate::tui::styles::STL_TXT_ACTION;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph, Widget};
+use ratatui::widgets::{Paragraph, Widget};
 
 pub struct ActionView;
 

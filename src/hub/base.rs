@@ -3,7 +3,6 @@ use crate::hub::hub_event::HubEvent;
 use crate::{Error, Result};
 use std::fmt::Display;
 use std::sync::{Arc, LazyLock, Mutex};
-use tokio::sync::broadcast;
 
 /// Hub for receiving and broadcasting all OutEvent to the systems.
 /// Those events are Log Message, Error, and Stage(StagEvent) to capture each progress steps
@@ -90,7 +89,7 @@ mod tests {
 	async fn test_hub() -> Result<()> {
 		let hub = get_hub();
 
-		let mut rx = hub.take_rx()?;
+		let rx = hub.take_rx()?;
 		tokio::spawn(async move {
 			while let Ok(event) = rx.recv().await {
 				#[allow(clippy::single_match)]

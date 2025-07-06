@@ -21,7 +21,7 @@ pub fn format_duration(duration: Duration) -> String {
 	humantime::format_duration(duration).to_string()
 }
 
-use time::{OffsetDateTime, format_description, macros::format_description};
+use time::{OffsetDateTime, format_description};
 
 // already in e
 pub fn format_time_local(epoch_us: i64) -> Result<String> {

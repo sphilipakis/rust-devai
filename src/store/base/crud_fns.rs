@@ -107,6 +107,7 @@ where
 			MC::table_ref(),
 			where_clause,
 		);
+
 		(sql, filter_fields.values_as_dyn_to_sql_vec())
 	} else {
 		let sql = format!(

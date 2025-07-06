@@ -59,6 +59,7 @@ impl<T> Rx<T> {
 	}
 
 	/// Synchronous receive (`_sync` suffix for clarity).
+	#[allow(unused)]
 	pub fn recv_sync(&self) -> Result<T> {
 		self.0.recv().map_err(|err| Error::ChannelRx {
 			name: self.1,
@@ -68,6 +69,7 @@ impl<T> Rx<T> {
 
 	/// Non-blocking receive.
 	/// Returns `Ok(None)` if channel is empty.
+	#[allow(unused)]
 	pub fn try_recv(&self) -> Result<Option<T>> {
 		match self.0.try_recv() {
 			Ok(v) => Ok(Some(v)),

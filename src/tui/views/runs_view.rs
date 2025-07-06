@@ -10,7 +10,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap};
+use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget};
 
 pub struct RunsView {
 	mm: ModelManager,
@@ -120,9 +120,18 @@ impl RunsView {
 		let list_options = ListOptions::from_order_bys("!id");
 		match LogBmc::list(&self.mm, Some(list_options), None) {
 			Ok(logs) => {
-				for message in logs.into_iter().filter_map(|v| v.message) {
-					// let item = Paragraph::new(message).wrap(Wrap { trim: true });
-					items.push(ListItem::new(message))
+				for log in logs {
+					if let Some(msg) = log.message {
+						// let item = Paragraph::new(message).wrap(Wrap { trim: true });
+						items.push(ListItem::new(format!("{} - {} - {msg}", log.run_id, log.id)))
+					} else {
+						let msg = log
+							.step
+							.map(|s| s.to_string())
+							.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
+						// let item = Paragraph::new(message).wrap(Wrap { trim: true });
+						items.push(ListItem::new(format!("{} - {} - {msg}", log.run_id, log.id)))
+					}
 				}
 			}
 			Err(err) => items.push(ListItem::new(format!("LogBmc::list error. {err}"))),

@@ -60,9 +60,9 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 
 async fn handle_action_event(
 	action_event: &ActionEvent,
-	terminal: &mut DefaultTerminal,
+	_terminal: &mut DefaultTerminal,
 	executor_tx: &ExecutorTx,
-	exit_tx: &ExitTx,
+	_exit_tx: &ExitTx,
 ) -> Result<()> {
 	match action_event {
 		// -- The quick is handle at the main loop to break
@@ -88,19 +88,19 @@ async fn handle_data_event(data_event: &DataEvent) -> Result<()> {
 async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()> {
 	match hub_event {
 		// -- Message
-		HubEvent::Message(msg) => {
+		HubEvent::Message(_msg) => {
 			// FIXME: need to have an Error table or someting
-			LogBmc::create(
-				mm,
-				LogForCreate {
-					run_id: 0.into(),
-					task_id: None,
-					level: Some(LogLevel::SysInfo),
-					step: None,
-					stage: None,
-					message: Some(msg.to_string()),
-				},
-			)?;
+			// LogBmc::create(
+			// 	mm,
+			// 	LogForCreate {
+			// 		run_id: 0.into(),
+			// 		task_id: None,
+			// 		level: Some(LogLevel::SysInfo),
+			// 		step: None,
+			// 		stage: None,
+			// 		message: Some(msg.to_string()),
+			// 	},
+			// )?;
 		}
 
 		// -- Error

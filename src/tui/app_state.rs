@@ -4,6 +4,7 @@ use crate::tui::{RunsState, SumState};
 pub struct AppState {
 	sum_state: SumState,
 	runs_state: RunsState,
+	#[allow(unused)]
 	pub run_id: Option<i64>,
 }
 

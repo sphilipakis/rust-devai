@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
-use crate::exec::{ExecActionEvent, ExecStatusEvent, ExecutorTx};
+use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::{HubEvent, get_hub};
 use crate::term::safer_println;
 use crate::tui_v1::hub_event_handler::handle_hub_event;
@@ -11,8 +11,6 @@ use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{Clear, ClearType};
 use derive_more::{Deref, From};
-use tokio::sync::broadcast::Receiver;
-use tokio::sync::oneshot;
 
 /// Note: Right now the quick channel is a watch, but might be better to be a mpsc.
 #[derive(Debug)]
@@ -60,7 +58,7 @@ impl TuiAppV1 {
 		});
 
 		// -- Wait for the exit
-		exit_rx.recv().await;
+		let _ = exit_rx.recv().await;
 
 		// -- Make sure to close the in_reader if one to restore states
 		if let Some(in_reader) = in_reader {
@@ -87,7 +85,7 @@ impl TuiAppV1 {
 
 /// In and Out handlers
 impl TuiAppV1 {
-	fn run_handle_in_event(&self, exit_tx: ExitTx, interactive: bool) -> Option<InReader> {
+	fn run_handle_in_event(&self, _exit_tx: ExitTx, interactive: bool) -> Option<InReader> {
 		if interactive {
 			let (in_reader, in_rx) = InReader::new_and_rx();
 			in_reader.start();

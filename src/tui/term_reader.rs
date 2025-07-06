@@ -1,13 +1,10 @@
 use super::AppTx;
-use super::event::AppEvent;
 use crate::Result;
-use crate::event::Tx;
 use crossterm::event::EventStream;
 use futures::{FutureExt, StreamExt};
 use futures_timer::Delay;
 use std::time::Duration;
 use tokio::select;
-use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
 pub fn run_term_read(app_tx: AppTx) -> Result<JoinHandle<()>> {

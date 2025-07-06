@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
 		.with_ansi(false)
 		.init();
 
-	debug!("START");
+	debug!("AIP START");
 
 	// -- Command arguments
 	let args = CliArgs::parse(); // Will fail early, but that’s okay.

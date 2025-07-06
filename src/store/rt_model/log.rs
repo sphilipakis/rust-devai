@@ -97,7 +97,6 @@ impl LogBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
-	#[allow(unused)]
 	pub fn list(
 		mm: &ModelManager,
 		list_options: Option<ListOptions>,
