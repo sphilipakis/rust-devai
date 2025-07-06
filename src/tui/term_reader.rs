@@ -1,3 +1,4 @@
+use super::AppTx;
 use super::event::AppEvent;
 use crate::Result;
 use crate::event::Tx;
@@ -9,7 +10,7 @@ use tokio::select;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
-pub fn run_term_read(app_tx: Tx<AppEvent>) -> Result<JoinHandle<()>> {
+pub fn run_term_read(app_tx: AppTx) -> Result<JoinHandle<()>> {
 	let handle = tokio::spawn(async move {
 		let mut reader = EventStream::new();
 

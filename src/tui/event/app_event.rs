@@ -30,6 +30,7 @@ pub enum AppEvent {
 
 #[derive(Debug)]
 pub enum ActionEvent {
+	Quit,
 	Redo,
 }
 

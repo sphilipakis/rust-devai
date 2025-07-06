@@ -1,41 +1,94 @@
+use super::AppTx;
 use crate::Result;
+use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::store::ModelManager;
 use crate::store::rt_model::{LogBmc, LogForCreate, LogKind};
 use crate::tui::ExitTx;
-use crate::tui::event::AppEvent;
-use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
+use crate::tui::event::{ActionEvent, AppEvent, DataEvent};
+use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
 use tracing::debug;
+
+// region:    --- Public
 
 pub async fn handle_app_event(
 	terminal: &mut DefaultTerminal,
 	mm: &ModelManager,
+	executor_tx: &ExecutorTx,
+	app_tx: &AppTx,
 	exit_tx: &ExitTx,
 	app_event: &AppEvent,
 ) -> Result<()> {
-	let _ = mm;
 	debug!("APP EVENT HANDLER - {app_event:?}");
-	match &app_event {
-		// -- Term event
-		AppEvent::Term(crossterm::event::Event::Key(key)) => {
-			// -- Handle Quit Event
-			if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q')
-				|| key.kind == KeyEventKind::Press
-					&& key.modifiers.contains(KeyModifiers::CONTROL)
-					&& key.code == KeyCode::Char('c')
-			{
-				terminal.clear();
-				exit_tx.send(()).await;
-			}
-			// -- TODO: More key Event
-		}
 
+	match app_event {
+		AppEvent::Term(term_event) => {
+			handle_term_event(term_event, app_tx).await?;
+		}
+		AppEvent::Action(action_event) => {
+			handle_action_event(action_event, terminal, executor_tx, exit_tx).await?;
+		}
 		AppEvent::Data(data_event) => {
-			println!("DataEvent {data_event:?}")
+			handle_data_event(data_event).await?;
+		}
+		AppEvent::Hub(hub_event) => {
+			handle_hub_event(mm, hub_event).await?;
+		}
+	};
+
+	Ok(())
+}
+
+// endregion: --- Public
+
+// region:    --- Handlers
+
+async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
+	if let Event::Key(key) = term_event {
+		if let KeyEventKind::Press = key.kind {
+			let mod_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+			match (key.code, mod_ctrl) {
+				(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
+				(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
+				_ => (),
+			}
+		}
+	}
+	Ok(())
+}
+
+async fn handle_action_event(
+	action_event: &ActionEvent,
+	terminal: &mut DefaultTerminal,
+	executor_tx: &ExecutorTx,
+	exit_tx: &ExitTx,
+) -> Result<()> {
+	match action_event {
+		// -- Do the Quit
+		ActionEvent::Quit => {
+			terminal.clear();
+			exit_tx.send(()).await?;
 		}
 
-		AppEvent::Hub(HubEvent::Error { error }) => {
+		// -- Do the Redo
+		ActionEvent::Redo => {
+			//
+			executor_tx.send(ExecActionEvent::Redo).await;
+		}
+	}
+	Ok(())
+}
+
+async fn handle_data_event(data_event: &DataEvent) -> Result<()> {
+	println!("DataEvent {data_event:?}");
+	Ok(())
+}
+
+#[allow(clippy::single_match)]
+async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()> {
+	match hub_event {
+		HubEvent::Error { error } => {
 			// FIXME: need to have an Error table or someting
 			//        Her,e hack on run = 0
 			LogBmc::create(
@@ -54,3 +107,5 @@ pub async fn handle_app_event(
 
 	Ok(())
 }
+
+// endregion: --- Handlers

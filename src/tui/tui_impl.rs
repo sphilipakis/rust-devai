@@ -19,7 +19,7 @@ use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::mpsc::{Receiver, channel};
 use tokio::task::JoinHandle;
-use tracing::debug;
+use tracing::{debug, error};
 
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
 	// -- init terminal
@@ -35,6 +35,9 @@ pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs)
 #[derive(Clone, From, Deref)]
 pub(super) struct ExitTx(Tx<()>);
 
+#[derive(Clone, From, Deref)]
+pub(super) struct AppTx(Tx<AppEvent>);
+
 // Terminal<CrosstermBackend<Stdout>>
 async fn exec_app(
 	mut terminal: DefaultTerminal,
@@ -44,18 +47,20 @@ async fn exec_app(
 ) -> Result<()> {
 	// -- Exit Channel
 	let (exit_tx, exit_rx) = new_channel::<()>("exit_term");
+	let exit_tx = ExitTx::from(exit_tx);
 
 	// -- Setup Term
 	terminal.clear()?;
 
 	// -- Create AppEvent channels
 	let (app_tx, app_rx) = new_channel::<AppEvent>("app_event");
+	let app_tx = AppTx::from(app_tx);
 
 	// -- Running the term_reader tasks
 	let _tin_read_handle = run_term_read(app_tx.clone())?;
 
 	// -- Running Tui application
-	let tui_handle = run_ui_loop(terminal, mm, app_rx, exit_tx.into())?;
+	let tui_handle = run_ui_loop(terminal, mm, executor_tx.clone(), app_rx, app_tx.clone(), exit_tx)?;
 
 	// -- Start the hub event and forward to App Event
 	let hub_rx = get_hub().take_rx()?;
@@ -95,17 +100,14 @@ async fn exec_app(
 fn run_ui_loop(
 	mut terminal: DefaultTerminal,
 	mm: ModelManager,
+	executor_tx: ExecutorTx,
 	mut app_rx: Rx<AppEvent>,
+	app_tx: AppTx,
 	exit_tx: ExitTx,
 ) -> Result<JoinHandle<()>> {
 	let mut app_state = AppState::default();
 
 	let handle = tokio::spawn(async move {
-		// -- For event debug
-		let Ok(mut tmp_file) = OpenOptions::new().append(true).create(true).open(".tmp-event.txt").await else {
-			return;
-		};
-
 		let mut last_event: LastAppEvent = LastAppEvent::default();
 
 		loop {
@@ -116,19 +118,14 @@ fn run_ui_loop(
 			let app_event = match app_rx.recv().await {
 				Ok(r) => r,
 				Err(err) => {
-					eprintln!("UI LOOP ERROR. Cause: {err}");
+					error!("UI LOOP ERROR. Cause: {err}");
 					continue;
 				}
 			};
+			debug!("->> run_ui_loop AppEvent: {app_event:?}");
 
-			// -- Debug Save
-			let _ = tmp_file.write_all(format!(">> {app_event:?}\n").as_bytes()).await;
-			let _ = tmp_file.flush().await;
-			let _ = tmp_file.sync_all().await;
+			handle_app_event(&mut terminal, &mm, &executor_tx, &app_tx, &exit_tx, &app_event).await;
 
-			handle_app_event(&mut terminal, &mm, &exit_tx, &app_event).await;
-
-			// -- Capture the last event
 			last_event = app_event.into();
 		}
 	});

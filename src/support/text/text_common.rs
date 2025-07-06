@@ -12,8 +12,33 @@ pub fn format_num(num: i64) -> String {
 }
 
 pub fn format_duration(duration: Duration) -> String {
-	let duration = Duration::from_millis(duration.as_millis() as u64);
+	let duration = if duration.as_millis() > 1000 {
+		Duration::from_millis(duration.as_secs())
+	} else {
+		duration
+	};
+
 	humantime::format_duration(duration).to_string()
+}
+
+use time::{OffsetDateTime, format_description, macros::format_description};
+
+// already in e
+pub fn format_time_local(epoch_us: i64) -> Result<String> {
+	fn inner(epoch_us: i64) -> std::result::Result<String, Box<dyn std::error::Error>> {
+		let secs = epoch_us / 1_000_000;
+		let utc_dt = OffsetDateTime::from_unix_timestamp(secs)?;
+		let local_offset = OffsetDateTime::now_local()?.offset();
+
+		let local_dt = utc_dt.to_offset(local_offset);
+		// let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")?;
+		let format = format_description::parse("[hour]:[minute]")?;
+		Ok(local_dt.format(&format)?)
+	}
+
+	let res = inner(epoch_us).map_err(|err| format!("Cannot format epoch_us '{epoch_us}'. Cause: {err}"))?;
+
+	Ok(res)
 }
 
 // region:    --- Ensure

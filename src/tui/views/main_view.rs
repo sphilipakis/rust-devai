@@ -1,5 +1,6 @@
 use crate::store::ModelManager;
 use crate::store::rt_model::{LogBmc, RunBmc};
+use crate::support::text::format_time_local;
 use crate::tui::event::LastAppEvent;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
@@ -70,14 +71,23 @@ impl MainView {
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
-			.map(|(i, task)| {
-				let (mark_txt, mark_color) = if task.is_done() {
+			.map(|(i, run)| {
+				let (mark_txt, mark_color) = if run.is_done() {
 					("✔", CLR_TXT_GREEN)
 				} else {
 					("▶", CLR_TXT)
 				};
+
+				let label = if let Some(start) = run.start
+					&& let Ok(start_fmt) = format_time_local(start.into())
+				{
+					start_fmt
+				} else {
+					format!("Run {i}")
+				};
+
 				// TODO: need to try to avoid clone
-				let label = task.label.clone().unwrap_or_else(|| format!("Task {i}"));
+				let label = run.label.clone().unwrap_or(label);
 				let line = Line::from(vec![
 					Span::styled(mark_txt, Style::default().fg(mark_color)),
 					Span::styled(" ", Style::default()),
