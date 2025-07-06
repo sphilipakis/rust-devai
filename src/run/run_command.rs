@@ -27,7 +27,7 @@ pub async fn run_command_agent(
 	let hub = get_hub();
 
 	// -- Trim the runtime db
-	runtime.rec_trim().await?;
+	// runtime.rec_trim().await?;
 
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
 

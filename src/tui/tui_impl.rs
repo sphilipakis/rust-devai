@@ -8,7 +8,7 @@ use crate::hub::get_hub;
 use crate::store::ModelManager;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::app_state::AppState;
-use crate::tui::{MainView, SumView};
+use crate::tui::{MainView, RunsView, SumView};
 use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use derive_more::{Deref, From};
 use ratatui::DefaultTerminal;
@@ -141,27 +141,8 @@ fn terminal_draw(
 	terminal.draw(|frame| {
 		let area = frame.area();
 
-		// -- Add background
-		let bkg = Block::new().on_black();
-		frame.render_widget(bkg, area);
-
-		// -- Layout
-		let [header_a, main_a, action_a] = Layout::default()
-			.direction(Direction::Vertical)
-			.constraints(vec![Constraint::Length(2), Constraint::Fill(1), Constraint::Length(1)])
-			.spacing(1)
-			.areas(frame.area());
-
-		// -- Add header
-		let sum_v = SumView {};
-		frame.render_stateful_widget(sum_v, header_a, app_state.mut_sum_state());
-
-		// -- Add main
-		let run_v = MainView::new(mm.clone(), last_event.clone());
-		frame.render_stateful_widget(run_v, main_a, app_state.mut_run_state());
-
-		// -- Add action
-		//... todo
+		let main_view = MainView::new(mm.clone(), last_event);
+		frame.render_stateful_widget(main_view, area, app_state);
 	})?;
 
 	Ok(())

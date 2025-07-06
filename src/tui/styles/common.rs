@@ -23,3 +23,4 @@ pub const CLR_TXT_GREEN: Color = Color::Green;
 pub const STL_TXT: Style = Style::new();
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(Color::Blue);
+pub const STL_TXT_ACTION: Style = Style::new().fg(Color::Blue);

@@ -88,9 +88,25 @@ async fn handle_data_event(data_event: &DataEvent) -> Result<()> {
 #[allow(clippy::single_match)]
 async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()> {
 	match hub_event {
+		// -- Message
+		HubEvent::Message(msg) => {
+			// FIXME: need to have an Error table or someting
+			LogBmc::create(
+				mm,
+				LogForCreate {
+					run_id: 0.into(),
+					task_id: None,
+					kind: Some(LogKind::SysInfo),
+					stage: None,
+					message: Some(msg.to_string()),
+				},
+			)?;
+		}
+
+		// -- Error
 		HubEvent::Error { error } => {
 			// FIXME: need to have an Error table or someting
-			//        Her,e hack on run = 0
+			//        Here hack on run = 0
 			LogBmc::create(
 				mm,
 				LogForCreate {
