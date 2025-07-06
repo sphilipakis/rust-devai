@@ -6,7 +6,7 @@ use crate::run::literals::Literals;
 use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
-use crate::store::rt_model::LogKind;
+use crate::store::rt_model::LogLevel;
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -60,9 +60,6 @@ pub async fn run_command_agent(
 		let lua_value = lua_engine.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		let before_all_res = serde_json::to_value(lua_value)?;
 
-		// -- Rt Rec - End Before All
-		runtime.rec_ba_end(run_id).await?;
-
 		// -- Process before all response
 		match AipackCustom::from_value(before_all_res)? {
 			// it is an skip action
@@ -74,7 +71,7 @@ pub async fn run_command_agent(
 					.rec_log_ba(
 						run_id,
 						format!("Aipack Skip inputs at Before All section{reason_msg}"),
-						Some(LogKind::SysInfo),
+						Some(LogLevel::SysInfo),
 					)
 					.await?;
 
@@ -115,6 +112,9 @@ pub async fn run_command_agent(
 			options: None,
 		}
 	};
+
+	// -- Rt Rec - End Before All
+	runtime.rec_ba_end(run_id).await?;
 
 	// -- Merge the eventual options from before all
 	// Recompute Agent if needed

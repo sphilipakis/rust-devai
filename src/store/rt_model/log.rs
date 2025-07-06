@@ -1,6 +1,6 @@
 use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
-use crate::store::{Id, ModelManager, Result, Stage, UnixTimeUs};
+use crate::store::{Id, ModelManager, Result, RunStep, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -20,7 +20,9 @@ pub struct Log {
 	pub run_id: Id,
 	pub task_id: Option<Id>,
 
-	pub kind: Option<LogKind>,
+	pub level: Option<LogLevel>,
+
+	pub step: Option<RunStep>,
 
 	pub stage: Option<Stage>,
 
@@ -28,7 +30,7 @@ pub struct Log {
 }
 
 derive_simple_enum_type! {
-pub enum LogKind {
+pub enum LogLevel {
 	SysInfo,
 	SysWarn,
 	SysError,
@@ -42,7 +44,9 @@ pub struct LogForCreate {
 	pub run_id: Id,
 	pub task_id: Option<Id>,
 
-	pub kind: Option<LogKind>,
+	pub level: Option<LogLevel>,
+
+	pub step: Option<RunStep>,
 
 	// The logical processing stage when the log entry is created.
 	pub stage: Option<Stage>,
@@ -52,7 +56,7 @@ pub struct LogForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct LogForUpdate {
-	pub kind: Option<LogKind>,
+	pub level: Option<LogLevel>,
 
 	// Optionally update the processing stage for this log entry.
 	pub stage: Option<Stage>,
@@ -148,7 +152,8 @@ mod tests {
 		let log_c = LogForCreate {
 			run_id,
 			task_id: Some(task_id),
-			kind: Some(LogKind::SysInfo),
+			level: Some(LogLevel::SysInfo),
+			step: Some(RunStep::AaEnd),
 			stage: Some(Stage::AfterAll),
 			message: Some("First message".to_string()),
 		};
@@ -158,7 +163,8 @@ mod tests {
 		assert_eq!(id.as_i64(), 1);
 		let log: Log = LogBmc::get(&mm, id)?;
 		assert_eq!(log.stage, Some(Stage::AfterAll));
-		assert_eq!(log.kind, Some(LogKind::SysInfo));
+		assert_eq!(log.step, Some(RunStep::AaEnd));
+		assert_eq!(log.level, Some(LogLevel::SysInfo));
 
 		Ok(())
 	}
@@ -171,8 +177,9 @@ mod tests {
 		let log_c = LogForCreate {
 			run_id,
 			task_id: None,
-			kind: None,
+			level: None,
 			stage: None,
+			step: None,
 			message: Some("Before update".to_string()),
 		};
 		let id = LogBmc::create(&mm, log_c)?;
@@ -180,7 +187,7 @@ mod tests {
 		// -- Exec
 		let log_u = LogForUpdate {
 			message: Some(format!("Updated at {}", now_unix_time_us())),
-			kind: Some(LogKind::SysWarn),
+			level: Some(LogLevel::SysWarn),
 			..Default::default()
 		};
 		LogBmc::update(&mm, id, log_u)?;
@@ -188,7 +195,7 @@ mod tests {
 		// -- Check
 		let log = LogBmc::get(&mm, id)?;
 		assert!(log.message.unwrap().starts_with("Updated"));
-		assert_eq!(log.kind, Some(LogKind::SysWarn));
+		assert_eq!(log.level, Some(LogLevel::SysWarn));
 
 		Ok(())
 	}
@@ -202,8 +209,9 @@ mod tests {
 			let log_c = LogForCreate {
 				run_id,
 				task_id: None,
-				kind: None,
+				level: None,
 				stage: None,
+				step: None,
 				message: Some(format!("msg-{i}")),
 			};
 			LogBmc::create(&mm, log_c)?;
@@ -217,7 +225,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 1.into());
 		assert_eq!(log.message, Some("msg-0".to_string()));
-		assert!(log.kind.is_none());
+		assert!(log.level.is_none());
 
 		Ok(())
 	}
@@ -231,8 +239,9 @@ mod tests {
 			let log_c = LogForCreate {
 				run_id,
 				task_id: None,
-				kind: if i == 2 { Some(LogKind::SysDebug) } else { None },
+				level: if i == 2 { Some(LogLevel::SysDebug) } else { None },
 				stage: None,
+				step: None,
 				message: Some(format!("msg-{i}")),
 			};
 			LogBmc::create(&mm, log_c)?;
@@ -249,7 +258,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 3.into());
 		assert_eq!(log.message, Some("msg-2".to_string()));
-		assert_eq!(log.kind, Some(LogKind::SysDebug));
+		assert_eq!(log.level, Some(LogLevel::SysDebug));
 
 		Ok(())
 	}
@@ -265,8 +274,9 @@ mod tests {
 				let log_c = LogForCreate {
 					run_id,
 					task_id: None,
-					kind: if i == 2 { Some(LogKind::SysDebug) } else { None },
+					level: if i == 2 { Some(LogLevel::SysDebug) } else { None },
 					stage: None,
+					step: None,
 					message: Some(format!("msg-{i}")),
 				};
 				LogBmc::create(&mm, log_c)?;
@@ -284,7 +294,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 3.into());
 		assert_eq!(log.message, Some("msg-2".to_string()));
-		assert_eq!(log.kind, Some(LogKind::SysDebug));
+		assert_eq!(log.level, Some(LogLevel::SysDebug));
 
 		Ok(())
 	}

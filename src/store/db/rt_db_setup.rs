@@ -75,11 +75,13 @@ fn create_schema(con: &Connection) -> Result<()> {
 						run_id  INTEGER NOT NULL, -- Should always belong to a run
 						task_id INTEGER,          -- Might belong to a task
 
-						kind     TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
+						level   TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
 
-						stage    TEXT, 
+						stage   TEXT, 
+
+						step   TEXT, 
 						
-						message  TEXT
+						message TEXT
 
 				) STRICT",
 		(), // empty list of parameters.
