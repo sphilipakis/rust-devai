@@ -40,7 +40,7 @@ tracing-subscriber = {version = "0.3", features = ["env-filter"]}
 tracing-appender = "0.2"
 # -- DB
 rusqlite = { version = "0.36.0", features = ["bundled", "uuid" ] }
-modql = { version = "0.5.0-alpha.1", features = ["with-rusqlite"]}
+modql = { path = "/Users/jeremychone/_jeremy/_rust/utils/rust-modql", features = ["with-rusqlite"]}
 # -- Parsers & Formatters
 logos = "0.15"
 aho-corasick = "1.1.3"

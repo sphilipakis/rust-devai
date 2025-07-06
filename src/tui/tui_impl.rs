@@ -8,6 +8,7 @@ use crate::hub::get_hub;
 use crate::store::ModelManager;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::app_state::AppState;
+use crate::tui::event::ActionEvent;
 use crate::tui::{MainView, RunsView, SumView};
 use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use derive_more::{Deref, From};
@@ -123,6 +124,14 @@ fn run_ui_loop(
 				}
 			};
 			debug!("->> run_ui_loop AppEvent: {app_event:?}");
+
+			// NOTE: Handle this specific even there because we need to break the llop
+			//       Later, handle_app_event might return a control flow enum
+			if let AppEvent::Action(ActionEvent::Quit) = &app_event {
+				terminal.clear();
+				exit_tx.send(()).await;
+				break;
+			}
 
 			handle_app_event(&mut terminal, &mm, &executor_tx, &app_tx, &exit_tx, &app_event).await;
 

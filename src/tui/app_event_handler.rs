@@ -65,10 +65,9 @@ async fn handle_action_event(
 	exit_tx: &ExitTx,
 ) -> Result<()> {
 	match action_event {
-		// -- Do the Quit
+		// -- The quick is handle at the main loop to break
 		ActionEvent::Quit => {
-			terminal.clear();
-			exit_tx.send(()).await?;
+			// Handled at the main loop
 		}
 
 		// -- Do the Redo

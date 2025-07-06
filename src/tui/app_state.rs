@@ -3,7 +3,8 @@ use crate::tui::{RunsState, SumState};
 #[derive(Default)]
 pub struct AppState {
 	sum_state: SumState,
-	run_state: RunsState,
+	runs_state: RunsState,
+	pub run_id: Option<i64>,
 }
 
 impl AppState {
@@ -11,6 +12,6 @@ impl AppState {
 		&mut self.sum_state
 	}
 	pub fn mut_run_state(&mut self) -> &mut RunsState {
-		&mut self.run_state
+		&mut self.runs_state
 	}
 }

@@ -73,7 +73,11 @@ where
 	Ok(entity)
 }
 
-pub fn list<MC, E>(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<E>>
+pub fn list<MC, E>(
+	mm: &ModelManager,
+	list_options: Option<ListOptions>,
+	filter_fields: Option<SqliteFields>,
+) -> Result<Vec<E>>
 where
 	MC: DbBmc,
 	E: SqliteFromRow + Unpin + Send,
@@ -88,15 +92,34 @@ where
 	// TODO: add the offset
 
 	// -- Select
-	let sql = format!(
-		"SELECT {} FROM {} ORDER BY {order_by} LIMIT {limit} ",
-		E::sql_columns(),
-		MC::table_ref()
-	);
+	let (sql, params) = if let Some(filter_fields) = filter_fields.as_ref() {
+		// NOTE: For now only support =
+		let where_clause = filter_fields
+			.fields()
+			.iter()
+			.map(|f| format!("\"{}\" = ?", f.iden)) // won't work with rel.col
+			.collect::<Vec<_>>()
+			.join(", ");
+
+		let sql = format!(
+			"SELECT {} FROM {} WHERE {} ORDER BY {order_by} LIMIT {limit} ",
+			E::sql_columns(),
+			MC::table_ref(),
+			where_clause,
+		);
+		(sql, filter_fields.values_as_dyn_to_sql_vec())
+	} else {
+		let sql = format!(
+			"SELECT {} FROM {} ORDER BY {order_by} LIMIT {limit} ",
+			E::sql_columns(),
+			MC::table_ref()
+		);
+		(sql, Vec::new())
+	};
 
 	// -- Exec query
 	let db = mm.db();
-	let entities: Vec<E> = db.fetch_all(&sql, [])?;
+	let entities: Vec<E> = db.fetch_all(&sql, &*params)?;
 
 	Ok(entities)
 }

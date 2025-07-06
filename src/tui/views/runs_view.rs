@@ -116,20 +116,22 @@ impl RunsView {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Draw content
-		let mut content: Vec<String> = vec![];
+		let mut items: Vec<ListItem> = vec![];
 		let list_options = ListOptions::from_order_bys("!id");
-		match LogBmc::list(&self.mm, Some(list_options)) {
+		match LogBmc::list(&self.mm, Some(list_options), None) {
 			Ok(logs) => {
 				for message in logs.into_iter().filter_map(|v| v.message) {
-					content.push(message)
+					// let item = Paragraph::new(message).wrap(Wrap { trim: true });
+					items.push(ListItem::new(message))
 				}
 			}
-			Err(err) => content.push(format!("LogBmc::list error. {err}")),
+			Err(err) => items.push(ListItem::new(format!("LogBmc::list error. {err}"))),
 		}
-		let content = content.join("\n\n");
+		// let p = Paragraph::new(content).wrap(Wrap { trim: true });
 
-		let p = Paragraph::new(content).wrap(Wrap { trim: true });
+		let list_w = List::new(items);
 
-		p.render(area, buf);
+		let mut list_s = ListState::default();
+		StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
 	}
 }

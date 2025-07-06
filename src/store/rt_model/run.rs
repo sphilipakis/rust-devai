@@ -97,7 +97,7 @@ impl RunBmc {
 
 	#[allow(unused)]
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Run>> {
-		base::list::<Self, _>(mm, list_options)
+		base::list::<Self, _>(mm, list_options, None)
 	}
 }
 

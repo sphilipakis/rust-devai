@@ -60,6 +60,11 @@ pub struct LogForUpdate {
 	pub message: Option<String>,
 }
 
+#[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
+pub struct LogFilter {
+	pub run_id: Option<Id>,
+}
+
 // endregion: --- Types
 
 // region:    --- Bmc
@@ -89,8 +94,13 @@ impl LogBmc {
 	}
 
 	#[allow(unused)]
-	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Log>> {
-		base::list::<Self, _>(mm, list_options)
+	pub fn list(
+		mm: &ModelManager,
+		list_options: Option<ListOptions>,
+		log_filter: Option<LogFilter>,
+	) -> Result<Vec<Log>> {
+		let filter_fields = log_filter.map(|f| f.sqlite_not_none_fields());
+		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 }
 
@@ -200,7 +210,7 @@ mod tests {
 		}
 
 		// -- Exec
-		let logs: Vec<Log> = LogBmc::list(&mm, Some(ListOptions::default()))?;
+		let logs: Vec<Log> = LogBmc::list(&mm, Some(ListOptions::default()), None)?;
 
 		// -- Check
 		assert_eq!(logs.len(), 3);
@@ -232,7 +242,42 @@ mod tests {
 		let list_options = ListOptions::from(order_bys);
 
 		// -- Exec
-		let logs: Vec<Log> = LogBmc::list(&mm, Some(list_options))?;
+		let logs: Vec<Log> = LogBmc::list(&mm, Some(list_options), None)?;
+
+		// -- Check
+		assert_eq!(logs.len(), 3);
+		let log = logs.first().ok_or("Should have first item")?;
+		assert_eq!(log.id, 3.into());
+		assert_eq!(log.message, Some("msg-2".to_string()));
+		assert_eq!(log.kind, Some(LogKind::SysDebug));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_log_bmc_list_with_filter() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = ModelManager::new().await?;
+		let run_1_id = create_run(&mm, "run-1").await?;
+		let run_2_id = create_run(&mm, "run-2").await?;
+		for run_id in [run_1_id, run_2_id] {
+			for i in 0..3 {
+				let log_c = LogForCreate {
+					run_id,
+					task_id: None,
+					kind: if i == 2 { Some(LogKind::SysDebug) } else { None },
+					stage: None,
+					message: Some(format!("msg-{i}")),
+				};
+				LogBmc::create(&mm, log_c)?;
+			}
+		}
+
+		// -- Exec
+		let order_bys = OrderBy::from("!id");
+		let list_options = ListOptions::from(order_bys);
+		let filter = LogFilter { run_id: Some(run_1_id) };
+		let logs: Vec<Log> = LogBmc::list(&mm, Some(list_options), Some(filter))?;
 
 		// -- Check
 		assert_eq!(logs.len(), 3);
