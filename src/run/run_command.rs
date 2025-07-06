@@ -6,6 +6,7 @@ use crate::run::literals::Literals;
 use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
+use crate::store::Id;
 use crate::store::rt_model::LogLevel;
 use crate::{Error, Result};
 use mlua::IntoLua;
@@ -137,6 +138,9 @@ pub async fn run_command_agent(
 	);
 	let _ = runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await;
 
+	// -- Rt Update - model name
+	let _ = runtime.update_run_model(run_id, agent.model_resolved()).await;
+
 	// -- Get the Inputs and Before All data for the next stage
 	// so, if empty, we have one input of value Value::Null
 	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
@@ -189,6 +193,9 @@ pub async fn run_command_agent(
 
 	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
 
+	// -- Rt Step - Tasks Start
+	runtime.step_tasks_start(run_id).await?;
+
 	for (input_idx, input) in inputs.clone().into_iter().enumerate() {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();
@@ -201,6 +208,7 @@ pub async fn run_command_agent(
 		join_set.spawn(async move {
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_input_response = run_command_agent_input(
+				run_id,
 				input_idx,
 				&runtime_clone,
 				&agent_clone,
@@ -305,6 +313,9 @@ pub async fn run_command_agent(
 		None
 	};
 
+	// -- Rt Step - End
+	runtime.step_end(run_id).await?;
+
 	hub.publish(format!("\n======= COMPLETED: {}", agent.name())).await;
 
 	Ok(RunAgentResponse { after_all, outputs })
@@ -312,7 +323,9 @@ pub async fn run_command_agent(
 
 /// Run the command agent input for the run_command_agent_inputs
 /// Not public by design, should be only used in the context of run_command_agent_inputs
+#[allow(clippy::too_many_arguments)]
 async fn run_command_agent_input(
+	run_id: Id,
 	input_idx: usize,
 	runtime: &Runtime,
 	agent: &Agent,
@@ -322,6 +335,9 @@ async fn run_command_agent_input(
 	run_base_options: &RunBaseOptions,
 ) -> Result<Option<RunAgentInputResponse>> {
 	let hub = get_hub();
+
+	// -- Rt Step - Task Start
+	let task_id = runtime.step_task_start(run_id, input_idx).await?;
 
 	// -- prepare the scope_input
 	let input = serde_json::to_value(input)?;
@@ -340,6 +356,9 @@ async fn run_command_agent_input(
 	}
 
 	hub.publish(format!("==== DONE (input: {label})")).await;
+
+	// -- Rt Step - Task Start
+	runtime.step_task_end(run_id, task_id).await?;
 
 	Ok(run_response)
 }
@@ -402,6 +421,7 @@ pub async fn run_command_agent_input_for_test(
 	let literals = Literals::from_runtime_and_agent_path(runtime, agent)?;
 
 	run_command_agent_input(
+		0.into(), // run_id,
 		input_idx,
 		runtime,
 		agent,

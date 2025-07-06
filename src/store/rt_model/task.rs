@@ -18,7 +18,7 @@ pub struct Task {
 	// Foreign key
 	pub run_id: Id,
 
-	pub num: Option<i64>,
+	pub idx: Option<i64>,
 
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
@@ -36,7 +36,8 @@ impl Task {
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
 pub struct TaskForCreate {
 	pub run_id: Id,
-	pub num: Option<i64>,
+	pub idx: i64,
+	pub start: UnixTimeUs,
 	pub label: Option<String>,
 }
 
@@ -45,6 +46,11 @@ pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 	pub label: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
+pub struct TaskFilter {
+	pub run_id: Option<Id>,
 }
 
 // endregion: --- Types
@@ -75,9 +81,16 @@ impl TaskBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
-	#[allow(unused)]
-	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Task>> {
-		base::list::<Self, _>(mm, list_options, None)
+	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>, filter: Option<TaskFilter>) -> Result<Vec<Task>> {
+		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
+		base::list::<Self, _>(mm, list_options, filter_fields)
+	}
+
+	/// List the task for a given run_id
+	/// NOTE: Order id ASC (default)
+	pub fn list_for_run_id(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
+		let filter = TaskFilter { run_id: Some(run_id) };
+		Self::list(mm, None, Some(filter))
 	}
 }
 
@@ -112,7 +125,8 @@ mod tests {
 		let run_id = create_run(&mm, "run-1").await?;
 		let task_c = TaskForCreate {
 			run_id,
-			num: Some(1),
+			start: now_unix_time_us().into(),
+			idx: 1,
 			label: Some("Test Task".to_string()),
 		};
 
@@ -132,7 +146,8 @@ mod tests {
 		let run_id = create_run(&mm, "run-1").await?;
 		let task_c = TaskForCreate {
 			run_id,
-			num: Some(1),
+			start: now_unix_time_us().into(),
+			idx: 1,
 			label: Some("Test Task".to_string()),
 		};
 		let id = TaskBmc::create(&mm, task_c)?;
@@ -159,14 +174,15 @@ mod tests {
 		for i in 0..3 {
 			let task_c = TaskForCreate {
 				run_id,
-				num: Some(i + 1),
+				start: now_unix_time_us().into(),
+				idx: 1 + 1,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;
 		}
 
 		// -- Exec
-		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()))?;
+		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()), None)?;
 		assert_eq!(tasks.len(), 3);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 1.into());
@@ -186,14 +202,15 @@ mod tests {
 		for i in 0..10 {
 			let task_c = TaskForCreate {
 				run_id,
-				num: Some(i + 1),
+				start: now_unix_time_us().into(),
+				idx: i + 1,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;
 		}
 
 		// -- Exec
-		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()))?;
+		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()), None)?;
 		assert_eq!(tasks.len(), 10);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 1.into());
@@ -213,7 +230,8 @@ mod tests {
 		for i in 0..3 {
 			let task_c = TaskForCreate {
 				run_id,
-				num: Some(i + 1),
+				start: now_unix_time_us().into(),
+				idx: i + 1,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;
@@ -223,7 +241,7 @@ mod tests {
 		let list_options = ListOptions::from(order_bys);
 
 		// -- Exec
-		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(list_options))?;
+		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(list_options), None)?;
 		assert_eq!(tasks.len(), 3);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 3.into());

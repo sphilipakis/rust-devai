@@ -35,6 +35,12 @@ fn create_schema(con: &Connection) -> Result<()> {
 
 						agent_name TEXT,
 						agent_path TEXT,
+
+						model      TEXT,
+						adapter    TEXT,
+
+						total_price REAL,
+
 						label TEXT
 
 				) STRICT",
@@ -51,7 +57,7 @@ fn create_schema(con: &Connection) -> Result<()> {
 						mtime  INTEGER NOT NULL,								
 
 						run_id INTEGER NOT NULL,
-						num    INTEGER, -- start at 1
+						idx    INTEGER, -- Relative to the run (as created by Run)
 						
 						-- Full Run start/end
 						start  INTEGER,

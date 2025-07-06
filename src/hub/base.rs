@@ -70,6 +70,10 @@ impl Hub {
 			None => self.publish_sync(Error::Custom(msg.into())),
 		}
 	}
+
+	pub fn publish_rt_model_change_sync(&self) {
+		self.publish_sync(HubEvent::RtModelChange);
+	}
 }
 
 static HUB: LazyLock<Hub> = LazyLock::new(Hub::new);

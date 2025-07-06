@@ -6,22 +6,26 @@ use derive_more::derive::Display;
 use num_format::ToFormattedString;
 use std::borrow::Cow;
 use std::time::Duration;
+use time::{OffsetDateTime, format_description};
 
 pub fn format_num(num: i64) -> String {
 	num.to_formatted_string(&num_format::Locale::en)
 }
 
 pub fn format_duration(duration: Duration) -> String {
-	let duration = if duration.as_millis() > 1000 {
-		Duration::from_millis(duration.as_secs())
+	let duration_ms = duration.as_millis().min(u64::MAX as u128) as u64;
+	let duration = if duration_ms > 6000 {
+		Duration::from_secs(duration.as_secs())
 	} else {
-		duration
+		Duration::from_millis(duration_ms)
 	};
-
 	humantime::format_duration(duration).to_string()
 }
 
-use time::{OffsetDateTime, format_description};
+pub fn format_duration_us(duration_us: i64) -> String {
+	let duration = Duration::from_micros(duration_us as u64);
+	format_duration(duration)
+}
 
 // already in e
 pub fn format_time_local(epoch_us: i64) -> Result<String> {

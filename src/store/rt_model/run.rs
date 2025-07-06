@@ -30,6 +30,14 @@ pub struct Run {
 	pub aa_start: Option<UnixTimeUs>,
 	pub aa_end: Option<UnixTimeUs>,
 
+	pub agent_name: Option<String>,
+	pub agent_path: Option<String>,
+
+	pub model: Option<String>,
+	pub adapter: Option<String>,
+
+	pub total_price: Option<f64>,
+
 	pub label: Option<String>,
 }
 
@@ -42,9 +50,9 @@ impl Run {
 
 #[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
 pub struct RunForCreate {
+	pub start: Option<UnixTimeUs>,
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
-	pub start: Option<UnixTimeUs>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -63,6 +71,14 @@ pub struct RunForUpdate {
 	// After All start/end
 	pub aa_start: Option<UnixTimeUs>,
 	pub aa_end: Option<UnixTimeUs>,
+
+	pub agent_name: Option<String>,
+	pub agent_path: Option<String>,
+
+	pub model: Option<String>,
+	pub adapter: Option<String>,
+
+	pub total_price: Option<f64>,
 
 	pub label: Option<String>,
 }

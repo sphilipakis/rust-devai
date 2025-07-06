@@ -1,3 +1,5 @@
+use crate::support::text::format_duration_us;
+use crate::support::time::now_unix_time_us;
 use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_ACT, CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACT};
 use crate::tui::support::RectExt;
@@ -26,7 +28,7 @@ impl StatefulWidget for SumView {
 	}
 }
 
-fn render_current(area: Rect, buf: &mut Buffer, _state: &AppState) {
+fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 	Block::new().bg(CLR_BKG_ACT).render(area, buf);
 
 	let [status_a, metrics_a] = Layout::default()
@@ -35,11 +37,33 @@ fn render_current(area: Rect, buf: &mut Buffer, _state: &AppState) {
 		.spacing(1)
 		.areas(area);
 
+	// -- Extract Status data
+	let (agent_name, duration, ended) = if let Some(run) = state.current_run() {
+		let agent_name = run.agent_name.as_deref().unwrap_or("no agent").to_string();
+		let (duration, ended) = match (run.start, run.end) {
+			(None, None) => (0, false),
+			(None, Some(_)) => (0, false),
+			(Some(start), None) => (now_unix_time_us() - start.as_i64(), false),
+			(Some(start), Some(end)) => (end.as_i64() - start.as_i64(), true),
+		};
+		(agent_name, duration, ended)
+	} else {
+		("no agent".to_string(), 0, false)
+	};
+	let duration = format_duration_us(duration);
+
 	// -- Render status
+	let run_id = state.current_run().map(|r| r.id.as_i64()).unwrap_or(-1);
 	let status_a_inner = status_a.x_h_margin(1);
+	let txt = if ended {
+		format!("✔ {run_id} - {agent_name}")
+	} else {
+		format!("▶ {run_id} - {agent_name}...")
+	};
+
 	let line_1 = Line::from(vec![
 		//
-		Span::styled("▶ Running pro@coder ...", STL_TXT_ACT),
+		Span::styled(txt, STL_TXT_ACT),
 	]);
 	let line_2 = Line::from(vec![
 		Span::styled("  Tasks: ", STL_TXT_ACT),
@@ -55,7 +79,7 @@ fn render_current(area: Rect, buf: &mut Buffer, _state: &AppState) {
 	let metrics_a_inner = metrics_a.x_h_margin(1);
 	let line_1 = Line::from(vec![
 		//
-		Span::styled("1m 12s", STL_TXT),
+		Span::styled(duration, STL_TXT),
 	]);
 	let line_2 = Line::from(vec![
 		//

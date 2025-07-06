@@ -9,6 +9,8 @@ pub enum RunStep {
 	BaEnd,
 	TasksStart, // First tasks start
 	TasksEnd, // All tasks ended
+	TaskStart,
+	TaskEnd,
 	DtStart,
 	DtEnd,
 	OtStart,

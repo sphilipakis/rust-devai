@@ -139,7 +139,8 @@ mod tests {
 	async fn create_task(mm: &ModelManager, run_id: Id, num: i64) -> Result<Id> {
 		let task_c = TaskForCreate {
 			run_id,
-			num: Some(num),
+			idx: num,
+			start: now_unix_time_us().into(),
 			label: Some(format!("task-{num}")),
 		};
 		Ok(TaskBmc::create(mm, task_c)?)

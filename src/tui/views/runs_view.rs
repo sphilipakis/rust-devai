@@ -3,7 +3,6 @@ use crate::support::text::format_time_local;
 use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
-use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
@@ -40,23 +39,6 @@ impl StatefulWidget for RunsView {
 impl RunsView {
 	fn render_nav(&self, area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
-
-		// -- Process state
-		let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
-			match code {
-				KeyCode::Up | KeyCode::Char('w') => -1,
-				KeyCode::Down | KeyCode::Char('s') => 1,
-				_ => 0,
-			}
-		} else {
-			0
-		};
-
-		let runs_len = state.runs().len();
-		state.run_idx = match state.run_idx {
-			None => Some(0),
-			Some(n) => Some((n + offset).max(0).min(runs_len as i32 - 1)),
-		};
 
 		// -- Render background
 		Block::new().render(area, buf);
@@ -95,7 +77,7 @@ impl RunsView {
 			.highlight_style(Style::default().bg(CLR_BKG_SEL).fg(CLR_TXT_SEL))
 			.highlight_spacing(HighlightSpacing::WhenSelected);
 		let mut list_s = ListState::default();
-		list_s.select(state.run_idx.map(|v| v as usize));
+		list_s.select(state.run_idx());
 
 		StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
 	}

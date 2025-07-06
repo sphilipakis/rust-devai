@@ -5,11 +5,14 @@ use crate::exec::ExecutorTx;
 use crate::store::ModelManager;
 use crate::store::rt_model::Run;
 use crate::store::rt_model::RunBmc;
+use crate::store::rt_model::Task;
+use crate::store::rt_model::TaskBmc;
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::event::ActionEvent;
+use crossterm::event::KeyCode;
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -17,10 +20,12 @@ use tracing::error;
 /// The global app state
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
-	pub run_idx: Option<i32>,
+	run_idx: Option<i32>,
 
 	// newest to oldest
 	runs: Vec<Run>,
+
+	tasks: Vec<Task>,
 
 	mm: ModelManager,
 	last_app_event: LastAppEvent,
@@ -31,10 +36,16 @@ impl AppState {
 		Self {
 			run_idx: None,
 			runs: Vec::new(),
+			tasks: Vec::new(),
 			mm,
 			last_app_event,
 		}
 	}
+
+	pub fn run_idx(&self) -> Option<usize> {
+		self.run_idx.map(|idx| idx as usize)
+	}
+
 	pub fn current_run(&self) -> Option<&Run> {
 		if let Some(idx) = self.run_idx {
 			self.runs.get(idx as usize)
@@ -70,8 +81,7 @@ pub fn run_ui_loop(
 
 		loop {
 			// -- Update App State
-			let runs = RunBmc::list_for_display(app_state.mm()).unwrap_or_default();
-			app_state.runs = runs;
+			process_app_state(&mut app_state);
 
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
@@ -109,6 +119,36 @@ pub fn run_ui_loop(
 		}
 	});
 	Ok(handle)
+}
+
+fn process_app_state(state: &mut AppState) {
+	// -- load runs
+	let runs = RunBmc::list_for_display(state.mm()).unwrap_or_default();
+	state.runs = runs;
+
+	// -- Process Runs idx
+	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
+		match code {
+			KeyCode::Up | KeyCode::Char('w') => -1,
+			KeyCode::Down | KeyCode::Char('s') => 1,
+			_ => 0,
+		}
+	} else {
+		0
+	};
+
+	let runs_len = state.runs().len();
+	state.run_idx = match state.run_idx {
+		None => Some(0),
+		Some(n) => Some((n + offset).max(0).min(runs_len as i32 - 1)),
+	};
+
+	let current_run_id = state.current_run().map(|r| r.id);
+
+	if let Some(run_id) = current_run_id {
+		//
+		state.tasks = TaskBmc::list_for_run_id(state.mm(), run_id).unwrap_or_default();
+	}
 }
 
 fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Result<()> {

@@ -5,6 +5,9 @@ use crate::runtime::Runtime;
 use crate::store::Id;
 use crate::store::RunStep;
 use crate::store::Stage;
+use crate::store::rt_model::TaskBmc;
+use crate::store::rt_model::TaskForCreate;
+use crate::store::rt_model::TaskForUpdate;
 use crate::store::rt_model::{LogBmc, LogForCreate, LogLevel, RunBmc, RunForCreate, RunForUpdate};
 use crate::support::time::now_unix_time_us;
 
@@ -95,6 +98,50 @@ impl Runtime {
 		Ok(())
 	}
 
+	pub async fn step_task_start(&self, run_id: Id, idx: usize) -> Result<Id> {
+		// -- Update Model
+		let task_c = TaskForCreate {
+			run_id,
+			start: now_unix_time_us().into(),
+			idx: idx as i64,
+			label: None,
+		};
+		let id = TaskBmc::create(self.mm(), task_c)?;
+
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(id),
+			Some(RunStep::TaskStart),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(id)
+	}
+
+	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Model
+		let task_u = TaskForUpdate {
+			end: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskEnd),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(())
+	}
+
 	/// Mark the start of After All execution.
 	pub async fn step_aa_start(&self, run_id: Id) -> Result<()> {
 		let run_u = RunForUpdate {
@@ -133,6 +180,19 @@ impl Runtime {
 
 		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogLevel::SysInfo))
 			.await?;
+
+		Ok(())
+	}
+}
+
+/// Update model
+impl Runtime {
+	pub async fn update_run_model(&self, run_id: Id, model_name: &str) -> Result<()> {
+		let run_u = RunForUpdate {
+			model: Some(model_name.to_string()),
+			..Default::default()
+		};
+		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		Ok(())
 	}

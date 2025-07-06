@@ -1,3 +1,4 @@
+use crate::hub::get_hub;
 use crate::store::Id;
 use crate::store::ModelManager;
 use crate::store::Result;
@@ -30,6 +31,8 @@ where
 
 	let id = db.exec_returning_num(&sql, &*values)?;
 
+	get_hub().publish_rt_model_change_sync();
+
 	Ok(id.into())
 }
 
@@ -48,6 +51,8 @@ where
 	let db = mm.db();
 
 	let count = db.exec(&sql, &*values)?;
+
+	get_hub().publish_rt_model_change_sync();
 
 	Ok(count)
 }
