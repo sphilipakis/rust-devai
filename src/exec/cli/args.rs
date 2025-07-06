@@ -82,6 +82,20 @@ impl CliCommand {
 			CliCommand::Xelf(_) => false,      // Non-interactive
 		}
 	}
+
+	pub fn is_xp_tui(&self) -> bool {
+		match self {
+			CliCommand::Run(run_args) => run_args.xp_tui,
+			CliCommand::Init(_) => false,
+			CliCommand::InitBase => false,
+			//CliCommand::New(_) => false,
+			CliCommand::List(_) => false,
+			CliCommand::Pack(_) => false,
+			CliCommand::Install(_) => false,
+			CliCommand::CheckKeys(_) => false, // Non-interactive
+			CliCommand::Xelf(_) => false,      // Non-interactive
+		}
+	}
 }
 
 // region:    --- Sub Command Args
@@ -126,6 +140,10 @@ pub struct RunArgs {
 	/// (Was the `--ni` or `--non-interactive` in v0.6.x)
 	#[arg(short = 's', long = "single-shot", alias = "ni")]
 	pub single_shot: bool,
+
+	/// The new TUI
+	#[arg(long = "xp-tui")]
+	pub xp_tui: bool,
 }
 
 /// Arguments for the `pack` subcommand

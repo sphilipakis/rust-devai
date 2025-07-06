@@ -74,7 +74,7 @@ async fn main() -> Result<()> {
 	// -- Start UI
 	// NOTE: For now, if interactive, we go to new TUI
 	//       Otherwise, if non interactive, we go to v1
-	if args.cmd.is_interactive() {
+	if args.cmd.is_interactive() && args.cmd.is_xp_tui() {
 		let mm = once_mm.get().await?;
 		tui::start_tui(mm, exec_sender, args).await?;
 	} else {
