@@ -1,22 +1,11 @@
 use super::{ActionView, RunsView, SumView};
-use crate::store::ModelManager;
-use crate::tui::app_state::AppState;
-use crate::tui::event::LastAppEvent;
+use crate::tui::AppState;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
 use ratatui::widgets::{Block, StatefulWidget, Widget};
 
-pub struct MainView {
-	mm: ModelManager,
-	last_event: LastAppEvent,
-}
-
-impl MainView {
-	pub fn new(mm: ModelManager, last_event: LastAppEvent) -> Self {
-		Self { mm, last_event }
-	}
-}
+pub struct MainView {}
 
 impl StatefulWidget for MainView {
 	type State = AppState;
@@ -33,10 +22,10 @@ impl StatefulWidget for MainView {
 
 		// -- Render header
 		let sum_v = SumView {};
-		sum_v.render(header_a, buf, state.mut_sum_state());
+		sum_v.render(header_a, buf, state);
 
 		// -- Render main
-		let run_v = RunsView::new(self.mm, self.last_event);
+		let run_v = RunsView {};
 		run_v.render(runs_a, buf, state);
 
 		// -- Render action

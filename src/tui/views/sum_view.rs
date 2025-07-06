@@ -1,4 +1,4 @@
-use crate::tui::event::LastAppEvent;
+use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_ACT, CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACT};
 use crate::tui::support::RectExt;
 use ratatui::buffer::Buffer;
@@ -9,16 +9,10 @@ use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget};
 
 pub struct SumView {}
 
-#[allow(unused)]
-#[derive(Default)]
-pub struct SumState {
-	last_app_event: LastAppEvent,
-}
-
 impl StatefulWidget for SumView {
-	type State = SumState;
+	type State = AppState;
 
-	fn render(self, area: Rect, buf: &mut Buffer, _state: &mut SumState) {
+	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// -- Layout
 		let [current_a, total_a, config_a] = Layout::default()
 			.direction(Direction::Horizontal)
@@ -26,13 +20,13 @@ impl StatefulWidget for SumView {
 			.spacing(1)
 			.areas(area);
 
-		render_current(current_a, buf);
-		render_total(total_a, buf);
-		render_config(config_a, buf);
+		render_current(current_a, buf, state);
+		render_total(total_a, buf, state);
+		render_config(config_a, buf, state);
 	}
 }
 
-fn render_current(area: Rect, buf: &mut Buffer) {
+fn render_current(area: Rect, buf: &mut Buffer, _state: &AppState) {
 	Block::new().bg(CLR_BKG_ACT).render(area, buf);
 
 	let [status_a, metrics_a] = Layout::default()
@@ -72,7 +66,7 @@ fn render_current(area: Rect, buf: &mut Buffer) {
 	Paragraph::new(text).right_aligned().render(metrics_a_inner, buf);
 }
 
-fn render_total(area: Rect, buf: &mut Buffer) {
+fn render_total(area: Rect, buf: &mut Buffer, _state: &AppState) {
 	Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	let content_a = area.x_h_margin(1);
@@ -103,7 +97,7 @@ fn render_total(area: Rect, buf: &mut Buffer) {
 	Paragraph::new(text).right_aligned().render(content_a, buf);
 }
 
-fn render_config(area: Rect, buf: &mut Buffer) {
+fn render_config(area: Rect, buf: &mut Buffer, _state: &AppState) {
 	Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	let line_1 = Line::from(vec![

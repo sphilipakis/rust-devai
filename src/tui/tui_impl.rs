@@ -1,20 +1,14 @@
-use super::event::{AppEvent, LastAppEvent};
+use super::event::AppEvent;
 use super::term_reader::run_term_read;
 use crate::Result;
-use crate::event::{Rx, Tx, new_channel};
+use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
-use crate::store::rt_model::RunBmc;
-use crate::tui::AppState;
-use crate::tui::MainView;
-use crate::tui::app_event_handler::handle_app_event;
-use crate::tui::event::ActionEvent;
+use crate::tui::tui_loop::run_ui_loop;
 use derive_more::{Deref, From};
 use ratatui::DefaultTerminal;
-use tokio::task::JoinHandle;
-use tracing::error;
 
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
 	// -- init terminal
@@ -86,69 +80,6 @@ async fn exec_app(
 
 	// -- Wait for the exit
 	let _ = exit_rx.recv().await;
-
-	Ok(())
-}
-
-fn run_ui_loop(
-	mut terminal: DefaultTerminal,
-	mm: ModelManager,
-	executor_tx: ExecutorTx,
-	app_rx: Rx<AppEvent>,
-	app_tx: AppTx,
-	exit_tx: ExitTx,
-) -> Result<JoinHandle<()>> {
-	let handle = tokio::spawn(async move {
-		let mut last_event: LastAppEvent = LastAppEvent::default();
-
-		let mut app_state = AppState::default();
-
-		loop {
-			// -- Get data
-			let runs = RunBmc::list_for_display(&mm).unwrap_or_default();
-			app_state.runs = runs;
-
-			// -- Draw
-			let _ = terminal_draw(&mut terminal, last_event.take(), &mut app_state, &mm);
-
-			// -- Get Next App Event
-			let app_event = match app_rx.recv().await {
-				Ok(r) => r,
-				Err(err) => {
-					error!("UI LOOP ERROR. Cause: {err}");
-					continue;
-				}
-			};
-			//debug!("->> run_ui_loop AppEvent: {app_event:?}");
-
-			// NOTE: Handle this specific even there because we need to break the llop
-			//       Later, handle_app_event might return a control flow enum
-			if let AppEvent::Action(ActionEvent::Quit) = &app_event {
-				let _ = terminal.clear();
-				let _ = exit_tx.send(()).await;
-				break;
-			}
-
-			let _ = handle_app_event(&mut terminal, &mm, &executor_tx, &app_tx, &exit_tx, &app_event).await;
-
-			last_event = app_event.into();
-		}
-	});
-	Ok(handle)
-}
-
-fn terminal_draw(
-	terminal: &mut DefaultTerminal,
-	last_event: LastAppEvent,
-	app_state: &mut AppState,
-	mm: &ModelManager,
-) -> Result<()> {
-	terminal.draw(|frame| {
-		let area = frame.area();
-
-		let main_view = MainView::new(mm.clone(), last_event);
-		frame.render_stateful_widget(main_view, area, app_state);
-	})?;
 
 	Ok(())
 }

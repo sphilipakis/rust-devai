@@ -1,8 +1,6 @@
-use crate::store::ModelManager;
 use crate::store::rt_model::LogBmc;
 use crate::support::text::format_time_local;
-use crate::tui::app_state::AppState;
-use crate::tui::event::LastAppEvent;
+use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
 use crossterm::event::KeyCode;
@@ -12,17 +10,7 @@ use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget};
 
-pub struct RunsView {
-	mm: ModelManager,
-	last_event: LastAppEvent,
-}
-
-impl RunsView {
-	#[allow(clippy::new_without_default)]
-	pub fn new(mm: ModelManager, last_event: LastAppEvent) -> Self {
-		RunsView { mm, last_event }
-	}
-}
+pub struct RunsView {}
 
 impl StatefulWidget for RunsView {
 	type State = AppState;
@@ -53,10 +41,8 @@ impl RunsView {
 	fn render_nav(&self, area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
-		let runs = &state.runs;
-
 		// -- Process state
-		let offset: i32 = if let Some(code) = self.last_event.as_key_code() {
+		let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
 			match code {
 				KeyCode::Up | KeyCode::Char('w') => -1,
 				KeyCode::Down | KeyCode::Char('s') => 1,
@@ -66,15 +52,17 @@ impl RunsView {
 			0
 		};
 
+		let runs_len = state.runs().len();
 		state.run_idx = match state.run_idx {
 			None => Some(0),
-			Some(n) => Some((n + offset).max(0).min(runs.len() as i32 - 1)),
+			Some(n) => Some((n + offset).max(0).min(runs_len as i32 - 1)),
 		};
 
 		// -- Render background
 		Block::new().render(area, buf);
 
 		// -- Enter Items
+		let runs = state.runs();
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
@@ -117,7 +105,7 @@ impl RunsView {
 
 		// -- Draw content
 		let logs = if let Some(current_run) = state.current_run() {
-			LogBmc::list_for_display(&self.mm, current_run.id)
+			LogBmc::list_for_display(state.mm(), current_run.id)
 		} else {
 			Ok(Vec::new())
 		};
