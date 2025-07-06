@@ -1,18 +1,26 @@
-use crate::tui::{RunsState, SumState};
+use crate::store::rt_model::Run;
+use crate::tui::SumState;
 
 #[derive(Default)]
 pub struct AppState {
 	sum_state: SumState,
-	runs_state: RunsState,
-	#[allow(unused)]
-	pub run_id: Option<i64>,
+
+	pub run_idx: Option<i32>,
+
+	// newest to oldest
+	pub runs: Vec<Run>,
 }
 
 impl AppState {
 	pub fn mut_sum_state(&mut self) -> &mut SumState {
 		&mut self.sum_state
 	}
-	pub fn mut_run_state(&mut self) -> &mut RunsState {
-		&mut self.runs_state
+
+	pub fn current_run(&self) -> Option<&Run> {
+		if let Some(idx) = self.run_idx {
+			self.runs.get(idx as usize)
+		} else {
+			None
+		}
 	}
 }

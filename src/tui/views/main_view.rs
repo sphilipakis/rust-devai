@@ -37,7 +37,7 @@ impl StatefulWidget for MainView {
 
 		// -- Render main
 		let run_v = RunsView::new(self.mm, self.last_event);
-		run_v.render(runs_a, buf, state.mut_run_state());
+		run_v.render(runs_a, buf, state);
 
 		// -- Render action
 		let action_v = ActionView {};

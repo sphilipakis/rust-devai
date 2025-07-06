@@ -1,11 +1,11 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{LogBmc, RunBmc};
+use crate::store::rt_model::LogBmc;
 use crate::support::text::format_time_local;
+use crate::tui::app_state::AppState;
 use crate::tui::event::LastAppEvent;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
 use crossterm::event::KeyCode;
-use modql::filter::ListOptions;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
@@ -17,11 +17,6 @@ pub struct RunsView {
 	last_event: LastAppEvent,
 }
 
-#[derive(Default)]
-pub struct RunsState {
-	run_idx: Option<i32>,
-}
-
 impl RunsView {
 	#[allow(clippy::new_without_default)]
 	pub fn new(mm: ModelManager, last_event: LastAppEvent) -> Self {
@@ -30,7 +25,7 @@ impl RunsView {
 }
 
 impl StatefulWidget for RunsView {
-	type State = RunsState;
+	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// -- Layout Nav | Content
@@ -50,22 +45,27 @@ impl StatefulWidget for RunsView {
 		self.render_nav(nav_a, buf, state);
 
 		// -- Display the Content block
-		self.render_content(content_a, buf);
+		self.render_content(content_a, buf, state);
 	}
 }
 
 impl RunsView {
-	fn render_nav(&self, area: Rect, buf: &mut Buffer, state: &mut RunsState) {
+	fn render_nav(&self, area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
-		let runs = RunBmc::list(&self.mm, Some(ListOptions::from_order_bys("!id"))).unwrap_or_default();
+		let runs = &state.runs;
 
 		// -- Process state
-		let offset: i32 = match self.last_event.as_key_code() {
-			Some(KeyCode::Up) => -1,
-			Some(KeyCode::Down) => 1,
-			_ => 0,
+		let offset: i32 = if let Some(code) = self.last_event.as_key_code() {
+			match code {
+				KeyCode::Up | KeyCode::Char('w') => -1,
+				KeyCode::Down | KeyCode::Char('s') => 1,
+				_ => 0,
+			}
+		} else {
+			0
 		};
+
 		state.run_idx = match state.run_idx {
 			None => Some(0),
 			Some(n) => Some((n + offset).max(0).min(runs.len() as i32 - 1)),
@@ -112,13 +112,18 @@ impl RunsView {
 		StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
 	}
 
-	fn render_content(&self, area: Rect, buf: &mut Buffer) {
+	fn render_content(&self, area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Draw content
+		let logs = if let Some(current_run) = state.current_run() {
+			LogBmc::list_for_display(&self.mm, current_run.id)
+		} else {
+			Ok(Vec::new())
+		};
+
 		let mut items: Vec<ListItem> = vec![];
-		let list_options = ListOptions::from_order_bys("!id");
-		match LogBmc::list(&self.mm, Some(list_options), None) {
+		match logs {
 			Ok(logs) => {
 				for log in logs {
 					if let Some(msg) = log.message {

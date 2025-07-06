@@ -95,9 +95,13 @@ impl RunBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
-	#[allow(unused)]
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Run>> {
 		base::list::<Self, _>(mm, list_options, None)
+	}
+
+	pub fn list_for_display(mm: &ModelManager) -> Result<Vec<Run>> {
+		let options = ListOptions::from_order_bys("!id");
+		Self::list(mm, Some(options))
 	}
 }
 

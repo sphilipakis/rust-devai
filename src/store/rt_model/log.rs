@@ -105,6 +105,12 @@ impl LogBmc {
 		let filter_fields = log_filter.map(|f| f.sqlite_not_none_fields());
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
+
+	pub fn list_for_display(mm: &ModelManager, run_id: Id) -> Result<Vec<Log>> {
+		let list_options = ListOptions::from_order_bys("!id");
+		let filter = LogFilter { run_id: Some(run_id) };
+		Self::list(mm, Some(list_options), Some(filter))
+	}
 }
 
 // endregion: --- Bmc

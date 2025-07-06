@@ -6,6 +6,7 @@ use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
+use crate::store::rt_model::RunBmc;
 use crate::tui::AppState;
 use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
@@ -97,12 +98,16 @@ fn run_ui_loop(
 	app_tx: AppTx,
 	exit_tx: ExitTx,
 ) -> Result<JoinHandle<()>> {
-	let mut app_state = AppState::default();
-
 	let handle = tokio::spawn(async move {
 		let mut last_event: LastAppEvent = LastAppEvent::default();
 
+		let mut app_state = AppState::default();
+
 		loop {
+			// -- Get data
+			let runs = RunBmc::list_for_display(&mm).unwrap_or_default();
+			app_state.runs = runs;
+
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, last_event.take(), &mut app_state, &mm);
 
