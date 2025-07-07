@@ -3,7 +3,7 @@ use crate::agent::{Agent, find_agent};
 use crate::exec::cli::RunArgs;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::RunCommandOptions;
-use crate::run::run_command_agent;
+use crate::run::run_agent;
 use crate::runtime::Runtime;
 use crate::support::jsons::into_values;
 use crate::types::FileInfo;
@@ -200,7 +200,7 @@ async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agen
 		None
 	};
 
-	run_command_agent(
+	run_agent(
 		runtime,
 		agent.clone(),
 		inputs,

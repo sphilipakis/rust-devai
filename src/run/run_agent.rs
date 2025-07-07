@@ -3,7 +3,7 @@ use crate::dir_context::DirContext;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::RunBaseOptions;
 use crate::run::literals::Literals;
-use crate::run::run_input::{RunAgentInputResponse, run_agent_input};
+use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
 use crate::store::Id;
@@ -18,7 +18,7 @@ use value_ext::JsonValueExt;
 
 const DEFAULT_CONCURRENCY: usize = 1;
 
-pub async fn run_command_agent(
+pub async fn run_agent(
 	runtime: &Runtime,
 	agent: Agent,
 	inputs: Option<Vec<Value>>,
@@ -207,7 +207,7 @@ pub async fn run_command_agent(
 		// Spawn tasks up to the concurrency limit
 		join_set.spawn(async move {
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
-			let run_input_response = run_command_agent_input(
+			let run_input_response = run_agent_task_outer(
 				run_id,
 				input_idx,
 				&runtime_clone,
@@ -324,7 +324,7 @@ pub async fn run_command_agent(
 /// Run the command agent input for the run_command_agent_inputs
 /// Not public by design, should be only used in the context of run_command_agent_inputs
 #[allow(clippy::too_many_arguments)]
-async fn run_command_agent_input(
+async fn run_agent_task_outer(
 	run_id: Id,
 	input_idx: usize,
 	runtime: &Runtime,
@@ -347,7 +347,7 @@ async fn run_command_agent_input(
 	let label = get_input_label(&input).unwrap_or_else(|| format!("{input_idx}"));
 	hub.publish(format!("\n==== Running input: {label}")).await;
 
-	let run_response = run_agent_input(
+	let run_response = run_agent_task(
 		runtime,
 		run_id,
 		task_id,
@@ -431,7 +431,7 @@ pub async fn run_command_agent_input_for_test(
 ) -> Result<Option<RunAgentInputResponse>> {
 	let literals = Literals::from_runtime_and_agent_path(runtime, agent)?;
 
-	run_command_agent_input(
+	run_agent_task_outer(
 		0.into(), // run_id,
 		input_idx,
 		runtime,

@@ -147,7 +147,7 @@ fn process_app_state(state: &mut AppState) {
 
 	if let Some(run_id) = current_run_id {
 		//
-		state.tasks = TaskBmc::list_for_run_id(state.mm(), run_id).unwrap_or_default();
+		state.tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
 	}
 }
 

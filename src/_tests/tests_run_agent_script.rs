@@ -90,7 +90,7 @@ return {
 	let path_ref = FileInfo::new(dir_context, on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
-	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
+	let res = run_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
 
 	// -- Check
 	let outputs = res.outputs.ok_or("Should have output values")?;
@@ -116,7 +116,7 @@ async fn test_run_agent_script_before_all_response_simple() -> Result<()> {
 	let path_ref = FileInfo::new(dir_context, on_path, false);
 	let inputs = vec![serde_json::to_value(path_ref)?];
 
-	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
+	let res = run_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
 
 	// -- Check
 	let outputs = res.outputs.ok_or("Should have output values")?;
@@ -138,7 +138,7 @@ async fn test_run_agent_script_with_options_read() -> Result<()> {
 
 	// -- Exec
 	let inputs = vec!["one".into(), "two".into()];
-	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
+	let res = run_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true).await?;
 
 	let outputs = res.outputs.ok_or("Should have output values")?;
 	let first_output = outputs
@@ -172,7 +172,7 @@ async fn test_run_agent_script_before_all_inputs_reshape() -> Result<()> {
 
 	// -- Exec
 	let inputs = vec!["one".into(), "two".into()];
-	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true)
+	let res = run_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true)
 		.await?
 		.outputs
 		.ok_or("Should have output values")?;
@@ -193,7 +193,7 @@ async fn test_run_agent_script_before_all_inputs_gen() -> Result<()> {
 	let agent = load_test_agent("./agent-script/agent-before-all-inputs-gen.aip", &runtime)?;
 
 	// -- Exec
-	let res = run_command_agent(&runtime, agent, None, &RunBaseOptions::default(), true).await?;
+	let res = run_agent(&runtime, agent, None, &RunBaseOptions::default(), true).await?;
 
 	// -- Check
 	let res_value = serde_json::to_value(res)?;
@@ -257,7 +257,7 @@ return "output for: " .. input
 
 	// -- Execute
 	let inputs = fx_inputs.iter().map(|v| Value::String(v.to_string())).collect();
-	let res = run_command_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true)
+	let res = run_agent(&runtime, agent, Some(inputs), &RunBaseOptions::default(), true)
 		.await?
 		.outputs
 		.ok_or("Should have output result")?;

@@ -1,6 +1,6 @@
 use crate::agent::find_agent;
 use crate::exec::RunAgentParams;
-use crate::run::{RunBaseOptions, run_command_agent};
+use crate::run::{RunBaseOptions, run_agent};
 use crate::{Error, Result};
 
 pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
@@ -32,7 +32,7 @@ pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
 	// NOTE: For now, do not inherit the parent run, But eventually mgith be past in the RunAgentParams
 	let run_base_options = RunBaseOptions::default();
 
-	let result = run_command_agent(&runtime, agent, inputs, &run_base_options, true)
+	let result = run_agent(&runtime, agent, inputs, &run_base_options, true)
 		.await
 		.map_err(|e| Error::custom(format!("Failed to run agent '{agent_name}': {e}")));
 

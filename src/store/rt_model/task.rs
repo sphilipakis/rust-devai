@@ -88,7 +88,7 @@ impl TaskBmc {
 
 	/// List the task for a given run_id
 	/// NOTE: Order id ASC (default)
-	pub fn list_for_run_id(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
+	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
 		let filter = TaskFilter { run_id: Some(run_id) };
 		Self::list(mm, None, Some(filter))
 	}
