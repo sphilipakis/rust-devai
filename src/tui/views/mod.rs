@@ -2,11 +2,15 @@
 
 mod action_view;
 mod main_view;
+mod run_content_view;
+mod runs_nav_view;
 mod runs_view;
 mod sum_view;
 
 pub use action_view::*;
 pub use main_view::*;
+pub use run_content_view::*;
+pub use runs_nav_view::*;
 pub use runs_view::*;
 pub use sum_view::*;
 

@@ -62,7 +62,7 @@ fn create_schema(con: &Connection) -> Result<()> {
 						start  INTEGER,
 						end    INTEGER,
 
-						model_ov   TEXT
+						model_ov   TEXT,
 
 						cost REAL,
 
