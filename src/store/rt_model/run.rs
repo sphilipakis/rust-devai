@@ -34,7 +34,6 @@ pub struct Run {
 	pub agent_path: Option<String>,
 
 	pub model: Option<String>,
-	pub adapter: Option<String>,
 
 	pub total_cost: Option<f64>,
 
@@ -75,7 +74,6 @@ pub struct RunForUpdate {
 	pub agent_path: Option<String>,
 
 	pub model: Option<String>,
-	pub adapter: Option<String>,
 
 	pub total_cost: Option<f64>,
 

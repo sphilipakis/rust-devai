@@ -23,6 +23,8 @@ pub struct Task {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
+	pub model_ov: Option<String>,
+
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
@@ -46,6 +48,7 @@ pub struct TaskForCreate {
 pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
+	pub model_ov: Option<String>,
 	pub cost: Option<f64>,
 	pub label: Option<String>,
 }

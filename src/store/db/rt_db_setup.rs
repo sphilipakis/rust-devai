@@ -37,7 +37,6 @@ fn create_schema(con: &Connection) -> Result<()> {
 						agent_path TEXT,
 
 						model      TEXT,
-						adapter    TEXT,
 
 						total_cost REAL,
 
@@ -62,6 +61,8 @@ fn create_schema(con: &Connection) -> Result<()> {
 						-- Full Run start/end
 						start  INTEGER,
 						end    INTEGER,
+
+						model_ov   TEXT
 
 						cost REAL,
 
