@@ -13,7 +13,7 @@ where
 {
 	add_timestamps_for_create(fields);
 	let uid = Uuid::now_v7();
-	fields.push(SqliteField::new("uid", uid.into()));
+	fields.push(SqliteField::new("uid", uid));
 }
 
 /// This method must be calledwhen a Model Controller plans to update its entity.
@@ -28,13 +28,13 @@ where
 /// (e.g., cid, ctime, and mid, mtime will be updated with the same values)
 fn add_timestamps_for_create(fields: &mut SqliteFields) {
 	let now = now_unix_time_us();
-	fields.push(SqliteField::new("ctime", now.into()));
-	fields.push(SqliteField::new("mtime", now.into()));
+	fields.push(SqliteField::new("ctime", now));
+	fields.push(SqliteField::new("mtime", now));
 }
 
 /// Update the timestamps info only for update.
 /// (.e.g., only mid, mtime will be udpated)
 fn add_timestamps_for_update(fields: &mut SqliteFields) {
 	let now = now_unix_time_us();
-	fields.push(SqliteField::new("mtime", now.into()));
+	fields.push(SqliteField::new("mtime", now));
 }

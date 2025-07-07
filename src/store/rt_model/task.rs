@@ -49,6 +49,7 @@ pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 	pub model_ov: Option<String>,
+	// pub usage: Option<Value>,
 	pub cost: Option<f64>,
 	pub label: Option<String>,
 }
