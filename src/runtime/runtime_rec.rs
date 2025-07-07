@@ -149,6 +149,28 @@ impl Runtime {
 		Ok(())
 	}
 
+	pub async fn step_task_update_cost(&self, run_id: Id, task_id: Id, cost: f64) -> Result<()> {
+		// -- Add the cost to the task_u
+		let task_u = TaskForUpdate {
+			cost: Some(cost),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Update the run total cost
+		// NOTE: Here we recompute the total cost rather than doing a simple add to avoid
+		//       any race condition
+		let tasks = TaskBmc::list_for_run(self.mm(), run_id)?;
+		let total_cost: f64 = tasks.iter().filter_map(|t| t.cost).sum();
+		let run_u = RunForUpdate {
+			total_cost: Some(total_cost),
+			..Default::default()
+		};
+		RunBmc::update(self.mm(), run_id, run_u)?;
+
+		Ok(())
+	}
+
 	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Model
 		let task_u = TaskForUpdate {

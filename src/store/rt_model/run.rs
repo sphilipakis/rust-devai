@@ -36,13 +36,12 @@ pub struct Run {
 	pub model: Option<String>,
 	pub adapter: Option<String>,
 
-	pub total_price: Option<f64>,
+	pub total_cost: Option<f64>,
 
 	pub label: Option<String>,
 }
 
 impl Run {
-	#[allow(unused)]
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
@@ -78,7 +77,7 @@ pub struct RunForUpdate {
 	pub model: Option<String>,
 	pub adapter: Option<String>,
 
-	pub total_price: Option<f64>,
+	pub total_cost: Option<f64>,
 
 	pub label: Option<String>,
 }

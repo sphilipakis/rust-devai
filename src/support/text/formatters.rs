@@ -1,0 +1,70 @@
+use crate::Result;
+use genai::chat::Usage;
+use num_format::ToFormattedString;
+use std::time::Duration;
+use time::{OffsetDateTime, format_description};
+
+pub fn format_num(num: i64) -> String {
+	num.to_formatted_string(&num_format::Locale::en)
+}
+
+pub fn format_duration(duration: Duration) -> String {
+	let duration_ms = duration.as_millis().min(u64::MAX as u128) as u64;
+	let duration = if duration_ms > 6000 {
+		Duration::from_secs(duration.as_secs())
+	} else {
+		Duration::from_millis(duration_ms)
+	};
+	humantime::format_duration(duration).to_string()
+}
+
+pub fn format_duration_us(duration_us: i64) -> String {
+	let duration = Duration::from_micros(duration_us as u64);
+	format_duration(duration)
+}
+
+// already in
+pub fn format_time_local(epoch_us: i64) -> Result<String> {
+	fn inner(epoch_us: i64) -> std::result::Result<String, Box<dyn std::error::Error>> {
+		let secs = epoch_us / 1_000_000;
+		let utc_dt = OffsetDateTime::from_unix_timestamp(secs)?;
+		let local_offset = OffsetDateTime::now_local()?.offset();
+
+		let local_dt = utc_dt.to_offset(local_offset);
+		// let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")?;
+		let format = format_description::parse("At [hour]:[minute]:[second]")?;
+		Ok(local_dt.format(&format)?)
+	}
+
+	let res = inner(epoch_us).map_err(|err| format!("Cannot format epoch_us '{epoch_us}'. Cause: {err}"))?;
+
+	Ok(res)
+}
+
+/// Format the `Prompt Tokens: 2,070 | Completion Tokens: 131`
+pub fn format_usage(usage: &Usage) -> String {
+	let mut buff = String::new();
+
+	buff.push_str("Prompt Tokens: ");
+	buff.push_str(&format_num(usage.prompt_tokens.unwrap_or_default() as i64));
+	if let Some(prompt_tokens_details) = usage.prompt_tokens_details.as_ref() {
+		buff.push_str(" (cached: ");
+		let cached = prompt_tokens_details.cached_tokens.unwrap_or(0);
+		buff.push_str(&format_num(cached as i64));
+		if let Some(cache_creation_tokens) = prompt_tokens_details.cache_creation_tokens {
+			buff.push_str(", cache_creation: ");
+			buff.push_str(&format_num(cache_creation_tokens as i64));
+		}
+		buff.push(')');
+	}
+
+	buff.push_str(" | Completion Tokens: ");
+	buff.push_str(&format_num(usage.completion_tokens.unwrap_or_default() as i64));
+	if let Some(reasoning) = usage.completion_tokens_details.as_ref().and_then(|v| v.reasoning_tokens) {
+		buff.push_str(" (reasoning: ");
+		buff.push_str(&format_num(reasoning as i64));
+		buff.push(')');
+	}
+
+	buff
+}

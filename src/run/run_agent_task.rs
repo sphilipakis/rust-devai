@@ -9,9 +9,9 @@ use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
 use crate::store::Id;
 use crate::support::hbs::hbs_render;
-use crate::support::text::{self, format_duration, format_num};
+use crate::support::text::{self, format_duration, format_usage};
 use genai::ModelIden;
-use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, Usage};
+use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse};
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -258,7 +258,15 @@ pub async fn run_agent_task(
 
 		let mut info = duration_msg;
 
+		// Compute the price
 		let price_usd = get_price(&chat_res);
+
+		// Rt Rec - Update Cost
+		if let Some(price_usd) = price_usd {
+			let _ = runtime.step_task_update_cost(run_id, task_id, price_usd).await;
+		}
+
+		// add to info
 		if let Some(price_usd) = price_usd {
 			info = format!("{info} | ~${price_usd}")
 		}
@@ -390,34 +398,6 @@ fn format_model(
 		"{model_section}| Adapter: {adapter_kind}{temp_section}{top_p_section}",
 		adapter_kind = res_model_iden.adapter_kind,
 	)
-}
-
-/// Format the `Prompt Tokens: 2,070 | Completion Tokens: 131`
-fn format_usage(usage: &Usage) -> String {
-	let mut buff = String::new();
-
-	buff.push_str("Prompt Tokens: ");
-	buff.push_str(&format_num(usage.prompt_tokens.unwrap_or_default() as i64));
-	if let Some(prompt_tokens_details) = usage.prompt_tokens_details.as_ref() {
-		buff.push_str(" (cached: ");
-		let cached = prompt_tokens_details.cached_tokens.unwrap_or(0);
-		buff.push_str(&format_num(cached as i64));
-		if let Some(cache_creation_tokens) = prompt_tokens_details.cache_creation_tokens {
-			buff.push_str(", cache_creation: ");
-			buff.push_str(&format_num(cache_creation_tokens as i64));
-		}
-		buff.push(')');
-	}
-
-	buff.push_str(" | Completion Tokens: ");
-	buff.push_str(&format_num(usage.completion_tokens.unwrap_or_default() as i64));
-	if let Some(reasoning) = usage.completion_tokens_details.as_ref().and_then(|v| v.reasoning_tokens) {
-		buff.push_str(" (reasoning: ");
-		buff.push_str(&format_num(reasoning as i64));
-		buff.push(')');
-	}
-
-	buff
 }
 
 // endregion: --- Support

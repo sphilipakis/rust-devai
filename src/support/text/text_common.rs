@@ -3,47 +3,7 @@
 use crate::{Error, Result};
 use aho_corasick::AhoCorasick;
 use derive_more::derive::Display;
-use num_format::ToFormattedString;
 use std::borrow::Cow;
-use std::time::Duration;
-use time::{OffsetDateTime, format_description};
-
-pub fn format_num(num: i64) -> String {
-	num.to_formatted_string(&num_format::Locale::en)
-}
-
-pub fn format_duration(duration: Duration) -> String {
-	let duration_ms = duration.as_millis().min(u64::MAX as u128) as u64;
-	let duration = if duration_ms > 6000 {
-		Duration::from_secs(duration.as_secs())
-	} else {
-		Duration::from_millis(duration_ms)
-	};
-	humantime::format_duration(duration).to_string()
-}
-
-pub fn format_duration_us(duration_us: i64) -> String {
-	let duration = Duration::from_micros(duration_us as u64);
-	format_duration(duration)
-}
-
-// already in e
-pub fn format_time_local(epoch_us: i64) -> Result<String> {
-	fn inner(epoch_us: i64) -> std::result::Result<String, Box<dyn std::error::Error>> {
-		let secs = epoch_us / 1_000_000;
-		let utc_dt = OffsetDateTime::from_unix_timestamp(secs)?;
-		let local_offset = OffsetDateTime::now_local()?.offset();
-
-		let local_dt = utc_dt.to_offset(local_offset);
-		// let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")?;
-		let format = format_description::parse("At [hour]:[minute]:[second]")?;
-		Ok(local_dt.format(&format)?)
-	}
-
-	let res = inner(epoch_us).map_err(|err| format!("Cannot format epoch_us '{epoch_us}'. Cause: {err}"))?;
-
-	Ok(res)
-}
 
 // region:    --- Ensure
 

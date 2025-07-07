@@ -23,11 +23,12 @@ pub struct Task {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
+	pub cost: Option<f64>,
+
 	pub label: Option<String>,
 }
 
 impl Task {
-	#[allow(unused)]
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
@@ -45,6 +46,7 @@ pub struct TaskForCreate {
 pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
+	pub cost: Option<f64>,
 	pub label: Option<String>,
 }
 

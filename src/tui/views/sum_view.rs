@@ -38,7 +38,7 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 		.areas(area);
 
 	// -- Extract Status data
-	let (agent_name, duration, ended) = if let Some(run) = state.current_run() {
+	let (agent_name, duration, ended, total_cost) = if let Some(run) = state.current_run() {
 		let agent_name = run.agent_name.as_deref().unwrap_or("no agent").to_string();
 		let (duration, ended) = match (run.start, run.end) {
 			(None, None) => (0, false),
@@ -46,45 +46,64 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 			(Some(start), None) => (now_unix_time_us() - start.as_i64(), false),
 			(Some(start), Some(end)) => (end.as_i64() - start.as_i64(), true),
 		};
-		(agent_name, duration, ended)
+		let total_cost = run.total_cost;
+		(agent_name, duration, ended, total_cost)
 	} else {
-		("no agent".to_string(), 0, false)
+		("no agent".to_string(), 0, false, None)
 	};
 	let duration = format_duration_us(duration);
 
-	// -- Render status
+	// -- Extract Tasks Data
+	let mut done_count = 0;
+	let total_tasks = state.tasks().len();
+	for task in state.tasks().iter() {
+		task.is_done().then(|| done_count += 1);
+	}
+	let running = total_tasks - done_count;
+	let is_done = running == 0;
+
+	// -- Render Left Side
+	// Agent name
 	let run_id = state.current_run().map(|r| r.id.as_i64()).unwrap_or(-1);
 	let status_a_inner = status_a.x_h_margin(1);
-	let txt = if ended {
-		format!("✔ {run_id} - {agent_name}")
+
+	let mut line_1 = Line::default();
+	if ended {
+		line_1.push_span(Span::styled("✔", STL_TXT_ACT.green().bold()));
+		line_1.push_span(format!(" {run_id} - {agent_name}"));
 	} else {
-		format!("▶ {run_id} - {agent_name}...")
+		line_1.push_span(Span::styled("▶", STL_TXT_ACT));
+		line_1.push_span(format!(" {run_id} - {agent_name}"));
 	};
 
-	let line_1 = Line::from(vec![
-		//
-		Span::styled(txt, STL_TXT_ACT),
-	]);
-	let line_2 = Line::from(vec![
+	// Tasks
+	let mut line_2 = Line::from(vec![
 		Span::styled("  Tasks: ", STL_TXT_ACT),
-		Span::styled("3", STL_TXT_ACT.green().bold()),
+		Span::styled(format!("{done_count}"), STL_TXT_ACT.green().bold()),
 		Span::styled("/", STL_TXT_ACT),
-		Span::styled("12", STL_TXT_ACT.bold()),
-		Span::styled(" (2 running)", STL_TXT.dark_gray()),
+		Span::styled(format!("{total_tasks}"), STL_TXT_ACT.bold()),
 	]);
+	if is_done {
+		line_2.push_span(Span::styled(" (DONE)", STL_TXT.dark_gray()));
+	} else {
+		line_2.push_span(Span::styled(format!(" ({running} running)"), STL_TXT.dark_gray()));
+	}
 	let text = Text::from(vec![line_1, line_2]);
 	Paragraph::new(text).render(status_a_inner, buf);
 
-	// -- Render Time
+	// -- Render Right Side
 	let metrics_a_inner = metrics_a.x_h_margin(1);
+
 	let line_1 = Line::from(vec![
 		//
 		Span::styled(duration, STL_TXT),
 	]);
-	let line_2 = Line::from(vec![
-		//
-		Span::styled("$0.012", STL_TXT),
-	]);
+	let mut line_2 = Line::default();
+	if let Some(total_cost) = total_cost {
+		line_2.push_span(Span::styled(format!("~${total_cost}"), STL_TXT));
+	} else {
+		line_2.push_span(Span::styled("~$...", STL_TXT));
+	}
 
 	let text = Text::from(vec![line_1, line_2]);
 	Paragraph::new(text).right_aligned().render(metrics_a_inner, buf);

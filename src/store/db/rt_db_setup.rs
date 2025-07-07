@@ -39,7 +39,7 @@ fn create_schema(con: &Connection) -> Result<()> {
 						model      TEXT,
 						adapter    TEXT,
 
-						total_price REAL,
+						total_cost REAL,
 
 						label TEXT
 
@@ -62,6 +62,8 @@ fn create_schema(con: &Connection) -> Result<()> {
 						-- Full Run start/end
 						start  INTEGER,
 						end    INTEGER,
+
+						cost REAL,
 
 						label  TEXT
 

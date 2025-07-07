@@ -58,6 +58,10 @@ impl AppState {
 		&self.runs
 	}
 
+	pub fn tasks(&self) -> &[Task] {
+		&self.tasks
+	}
+
 	pub fn mm(&self) -> &ModelManager {
 		&self.mm
 	}
