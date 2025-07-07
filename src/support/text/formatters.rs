@@ -8,9 +8,19 @@ pub fn format_num(num: i64) -> String {
 	num.to_formatted_string(&num_format::Locale::en)
 }
 
+pub fn float_max_dec(val: f64, max_dec: u16) -> f64 {
+	let factor = 10f64.powi(max_dec as i32);
+	(val * factor).round() / factor
+}
+
+pub fn format_float(val: f64) -> String {
+	let rounded = float_max_dec(val, 4);
+	format!("{:.*}", 4, rounded)
+}
+
 pub fn format_duration(duration: Duration) -> String {
 	let duration_ms = duration.as_millis().min(u64::MAX as u128) as u64;
-	let duration = if duration_ms > 6000 {
+	let duration = if duration_ms > 10000 {
 		Duration::from_secs(duration.as_secs())
 	} else {
 		Duration::from_millis(duration_ms)
