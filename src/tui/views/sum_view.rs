@@ -1,5 +1,4 @@
 use crate::support::text::{format_duration_us, format_float};
-use crate::support::time::now_unix_time_us;
 use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_ACT, CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACT};
 use crate::tui::support::RectExt;
@@ -37,20 +36,15 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 		.areas(area);
 
 	// -- Extract Status data
-	let (agent_name, duration, ended, total_cost) = if let Some(run) = state.current_run() {
+	let (agent_name, ended, total_cost) = if let Some(run) = state.current_run() {
 		let agent_name = run.agent_name.as_deref().unwrap_or("no agent").to_string();
-		let (duration, ended) = match (run.start, run.end) {
-			(None, None) => (0, false),
-			(None, Some(_)) => (0, false),
-			(Some(start), None) => (now_unix_time_us() - start.as_i64(), false),
-			(Some(start), Some(end)) => (end.as_i64() - start.as_i64(), true),
-		};
+		let ended = run.end.is_some();
 		let total_cost = run.total_cost;
-		(agent_name, duration, ended, total_cost)
+		(agent_name, ended, total_cost)
 	} else {
-		("no agent".to_string(), 0, false, None)
+		("no agent".to_string(), false, None)
 	};
-	let duration = format_duration_us(duration);
+	let duration = state.current_run_duration_txt();
 
 	// -- Extract Tasks Data
 	let mut done_count = 0;

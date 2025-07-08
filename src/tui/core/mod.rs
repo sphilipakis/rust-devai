@@ -1,6 +1,7 @@
 // region:    --- Modules
 
 mod app_state;
+mod app_state_ui;
 mod tui_impl;
 mod tui_loop;
 

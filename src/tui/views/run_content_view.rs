@@ -1,5 +1,5 @@
 use crate::store::rt_model::LogBmc;
-use crate::support::text::{format_duration_us, format_float};
+use crate::support::text::format_duration_us;
 use crate::support::time::now_unix_time_us;
 use crate::tui::AppState;
 use crate::tui::styles::CLR_BKG_GRAY_DARKER;
@@ -24,25 +24,10 @@ impl StatefulWidget for RunContentView {
 			.areas(area);
 
 		// -- Prepare Header Data
-		let (model_name, cost_txt, duration_txt) = if let Some(run) = state.current_run() {
-			let model_name = run.agent_name.as_deref().unwrap_or("no model").to_string();
-
-			let cost_txt = if let Some(cost) = run.total_cost {
-				format!("${}", format_float(cost))
-			} else {
-				"$...".to_string()
-			};
-
-			let duration_us = match (run.start, run.end) {
-				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
-				(Some(start), None) => now_unix_time_us() - start.as_i64(),
-				_ => 0,
-			};
-
-			(model_name, cost_txt, format_duration_us(duration_us))
-		} else {
-			("no model".to_string(), "$...".to_string(), format_duration_us(0))
-		};
+		let agent_name = state.current_run_agent_name();
+		let model_name = state.current_run_model_name();
+		let cost_txt = state.current_run_cost_txt();
+		let duration_txt = state.current_run_duration_txt();
 
 		// -- Cumulative Duration
 		let mut cumul_us: i64 = 0;
@@ -57,8 +42,9 @@ impl StatefulWidget for RunContentView {
 		let cumul_txt = format_duration_us(cumul_us);
 
 		// -- Render Header
-		let header_line =
-			format!("Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}  Cumulative: {cumul_txt}");
+		let header_line = format!(
+			"Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}  Cumulative: {cumul_txt}"
+		);
 		Paragraph::new(header_line).render(header_a, buf);
 
 		// -- Draw Logs
