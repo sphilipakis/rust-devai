@@ -1,10 +1,10 @@
-use super::AppTx;
+use super::core::AppTx;
+use super::core::ExitTx;
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::store::ModelManager;
 use crate::store::rt_model::{LogBmc, LogForCreate, LogLevel};
-use crate::tui::ExitTx;
 use crate::tui::event::{ActionEvent, AppEvent, DataEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;

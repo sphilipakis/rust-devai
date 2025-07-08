@@ -1,75 +1,20 @@
-use super::event::{AppEvent, LastAppEvent};
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
 use crate::store::ModelManager;
-use crate::store::rt_model::Run;
 use crate::store::rt_model::RunBmc;
-use crate::store::rt_model::Task;
 use crate::store::rt_model::TaskBmc;
+use crate::tui::AppState;
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::event::ActionEvent;
+use crate::tui::event::{AppEvent, LastAppEvent};
 use crossterm::event::KeyCode;
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
-
-/// The global app state
-/// IMPORTANT: We define it in this file so that some state can be private
-pub struct AppState {
-	run_idx: Option<i32>,
-
-	// newest to oldest
-	runs: Vec<Run>,
-
-	tasks: Vec<Task>,
-
-	mm: ModelManager,
-	last_app_event: LastAppEvent,
-}
-
-impl AppState {
-	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
-		Self {
-			run_idx: None,
-			runs: Vec::new(),
-			tasks: Vec::new(),
-			mm,
-			last_app_event,
-		}
-	}
-
-	pub fn run_idx(&self) -> Option<usize> {
-		self.run_idx.map(|idx| idx as usize)
-	}
-
-	pub fn current_run(&self) -> Option<&Run> {
-		if let Some(idx) = self.run_idx {
-			self.runs.get(idx as usize)
-		} else {
-			None
-		}
-	}
-
-	pub fn runs(&self) -> &[Run] {
-		&self.runs
-	}
-
-	pub fn tasks(&self) -> &[Task] {
-		&self.tasks
-	}
-
-	pub fn mm(&self) -> &ModelManager {
-		&self.mm
-	}
-
-	pub fn last_app_event(&self) -> &LastAppEvent {
-		&self.last_app_event
-	}
-}
 
 pub fn run_ui_loop(
 	mut terminal: DefaultTerminal,

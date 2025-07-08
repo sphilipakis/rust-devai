@@ -1,12 +1,12 @@
-use super::event::AppEvent;
-use super::term_reader::run_term_read;
+use super::tui_loop::run_ui_loop;
 use crate::Result;
 use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
-use crate::tui::tui_loop::run_ui_loop;
+use crate::tui::event::AppEvent;
+use crate::tui::term_reader::run_term_read;
 use derive_more::{Deref, From};
 use ratatui::DefaultTerminal;
 
@@ -22,10 +22,10 @@ pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs)
 }
 
 #[derive(Clone, From, Deref)]
-pub(super) struct ExitTx(Tx<()>);
+pub struct ExitTx(Tx<()>);
 
 #[derive(Clone, From, Deref)]
-pub(super) struct AppTx(Tx<AppEvent>);
+pub struct AppTx(Tx<AppEvent>);
 
 // Terminal<CrosstermBackend<Stdout>>
 async fn exec_app(
