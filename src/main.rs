@@ -36,23 +36,32 @@ pub static VERSION: &str = crate_version!();
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	// -- Setup tracing
-	// Create a file appender (will write all logs to ".tmp.log" in the current dir)
-	let file_appender = never(".tmp-log", "file.log");
-	let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-
-	// Set up the subscriber with the file writer and log level
-	tracing_subscriber::fmt()
-		.with_writer(non_blocking)
-		.with_env_filter(EnvFilter::new(",aip=debug"))
-		.without_time()
-		.with_ansi(false)
-		.init();
-
-	debug!("AIP START");
-
 	// -- Command arguments
 	let args = CliArgs::parse(); // Will fail early, but that’s okay.
+
+	// -- Setup debug tracing_subscriber
+	// NOTE: need to keep the handle, otherwise dropped, and nothing get added to the file
+	let _tracing_guard = if args.cmd.is_xp_tui() {
+		// For now, only for --xp-tui
+		// if args.cmd.is_xp_tui() {
+		// Create a file appender (will write all logs to ".tmp.log" in the current dir)
+		let file_appender = never(".aip-debug-log", "file.log");
+		let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+		// Set up the subscriber with the file writer and log level
+		tracing_subscriber::fmt()
+			.with_writer(non_blocking)
+			.with_env_filter(EnvFilter::new("aip=debug"))
+			.without_time()
+			.with_ansi(false)
+			.init();
+		// }
+		Some(_guard)
+	} else {
+		None
+	};
+
+	debug!("AIP START");
 
 	// -- The OnceModelManager
 	// This way, ModelManager is only created when needed
