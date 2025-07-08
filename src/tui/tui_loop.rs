@@ -98,7 +98,6 @@ pub fn run_ui_loop(
 					continue;
 				}
 			};
-			//debug!("->> run_ui_loop AppEvent: {app_event:?}");
 
 			// NOTE: Handle this specific even there because we need to break the llop
 			//       Later, handle_app_event might return a control flow enum

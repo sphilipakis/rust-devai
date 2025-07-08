@@ -67,7 +67,7 @@ where
 	let sql = format!(
 		"SELECT {} FROM {} WHERE id = ? LIMIT 1",
 		//
-		E::sql_columns(),
+		E::sqlite_columns_for_select(),
 		MC::table_ref(),
 	);
 
@@ -141,7 +141,6 @@ where
 // 		fields.sql_columns(),
 // 		fields.sql_placeholders()
 // 	);
-// 	println!("->> SQL: {sql}");
 
 // 	// -- Execute the command
 // 	let values = fields.values_as_dyn_to_sql_vec();

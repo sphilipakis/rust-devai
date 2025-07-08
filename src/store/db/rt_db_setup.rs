@@ -64,7 +64,7 @@ fn create_schema(con: &Connection) -> Result<()> {
 
 						model_ov   TEXT,
 
-						usage TEXT,
+						usage BLOB,
 						cost  REAL,
 
 						label  TEXT

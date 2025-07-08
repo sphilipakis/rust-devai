@@ -25,6 +25,9 @@ pub struct Task {
 
 	pub model_ov: Option<String>,
 
+	#[field(cast_as = "json")]
+	pub usage: Option<serde_json::Value>,
+
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
@@ -49,8 +52,11 @@ pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 	pub model_ov: Option<String>,
-	// pub usage: Option<Value>,
+
+	#[field(cast_as = "jsonb")]
+	pub usage: Option<serde_json::Value>,
 	pub cost: Option<f64>,
+
 	pub label: Option<String>,
 }
 
@@ -112,6 +118,7 @@ mod tests {
 	use crate::store::rt_model::{RunBmc, RunForCreate};
 	use crate::support::time::now_unix_time_us;
 	use modql::filter::OrderBy;
+	use serde_json::json;
 
 	// region:    --- Support
 	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
@@ -146,7 +153,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_model_task_bmc_update() -> Result<()> {
+	async fn test_model_task_bmc_update_simple() -> Result<()> {
 		// -- Fixture
 		let mm = ModelManager::new().await?;
 		let run_id = create_run(&mm, "run-1").await?;
@@ -161,6 +168,36 @@ mod tests {
 		// -- Exec
 		let task_u = TaskForUpdate {
 			start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(&mm, id, task_u)?;
+
+		// -- Check
+		let task = TaskBmc::get(&mm, id)?;
+		assert!(task.start.is_some());
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_task_bmc_update_usage() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_id = create_run(&mm, "run-1").await?;
+		let task_c = TaskForCreate {
+			run_id,
+			start: now_unix_time_us().into(),
+			idx: 1,
+			label: Some("Test Task".to_string()),
+		};
+		let id = TaskBmc::create(&mm, task_c)?;
+
+		// -- Exec
+		let usage = json!({
+			"name-01": "value-01"
+		});
+		let task_u = TaskForUpdate {
+			usage: Some(usage),
 			..Default::default()
 		};
 		TaskBmc::update(&mm, id, task_u)?;
