@@ -21,51 +21,63 @@ impl StatefulWidget for RunContentView {
 			.constraints(vec![Constraint::Length(1), Constraint::Fill(1)])
 			.areas(area);
 
-		// -- Prepare Header Data
-		let agent_name = state.current_run_agent_name();
-		let model_name = state.tasks_cummulative_models();
-		let cost_txt = state.current_run_cost_txt();
-		let duration_txt = state.current_run_duration_txt();
-		let header_line = if let Some(cumul_txt) = state.tasks_cummulative_duration() {
-			format!(
-				"Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}  Cumulative: {cumul_txt}"
-			)
-		} else {
-			format!("Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}")
-		};
-
-		// -- Render Header
-		Paragraph::new(header_line).render(header_a, buf);
-
-		// -- Draw Logs
-		let logs = if let Some(current_run) = state.current_run() {
-			LogBmc::list_for_display(state.mm(), current_run.id)
-		} else {
-			Ok(Vec::new())
-		};
-
-		let mut items: Vec<ListItem> = vec![];
-		match logs {
-			Ok(logs) => {
-				for log in logs {
-					let entry = if let Some(msg) = log.message {
-						format!("{} - {} - {msg}", log.run_id, log.id)
-					} else {
-						let msg = log
-							.step
-							.map(|s| s.to_string())
-							.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
-						format!("{} - {} - {msg}", log.run_id, log.id)
-					};
-					items.push(ListItem::new(entry));
-				}
-			}
-			Err(err) => items.push(ListItem::new(format!("LogBmc::list error. {err}"))),
-		}
-
-		let list_w = List::new(items);
-
-		let mut list_s = ListState::default();
-		StatefulWidget::render(list_w, logs_a.x_margin(1), buf, &mut list_s);
+		render_top(header_a, buf, state);
+		render_logs(logs_a, buf, state);
 	}
 }
+
+// region:    --- Render Helpers
+
+fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	// -- Prepare Header Data
+	let agent_name = state.current_run_agent_name();
+	let model_name = state.tasks_cummulative_models();
+	let cost_txt = state.current_run_cost_txt();
+	let duration_txt = state.current_run_duration_txt();
+
+	let header_line = if let Some(cumul_txt) = state.tasks_cummulative_duration() {
+		format!(
+			"Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}  Cumulative: {cumul_txt}"
+		)
+	} else {
+		format!("Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}")
+	};
+
+	Paragraph::new(header_line).render(area, buf);
+}
+
+fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	// -- Fetch Logs
+	let logs = if let Some(current_run) = state.current_run() {
+		LogBmc::list_for_display(state.mm(), current_run.id)
+	} else {
+		Ok(Vec::new())
+	};
+
+	// -- Prepare Items
+	let mut items: Vec<ListItem> = vec![];
+	match logs {
+		Ok(logs) => {
+			for log in logs {
+				let entry = if let Some(msg) = log.message {
+					format!("{} - {} - {msg}", log.run_id, log.id)
+				} else {
+					let msg = log
+						.step
+						.map(|s| s.to_string())
+						.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
+					format!("{} - {} - {msg}", log.run_id, log.id)
+				};
+				items.push(ListItem::new(entry));
+			}
+		}
+		Err(err) => items.push(ListItem::new(format!("LogBmc::list error. {err}"))),
+	}
+
+	let list_w = List::new(items);
+	let mut list_s = ListState::default();
+	StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
+}
+
+// endregion: --- Render Helpers
+
