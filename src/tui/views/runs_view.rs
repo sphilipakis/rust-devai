@@ -1,4 +1,4 @@
-use super::{RunContentView, RunsNavView};
+use super::{RunMainView, RunsNavView};
 use crate::tui::AppState;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -17,7 +17,7 @@ impl StatefulWidget for RunsView {
 			.constraints(vec![Constraint::Length(1), Constraint::Fill(1)])
 			.areas(area);
 
-		let [nav_a, content_a] = Layout::default()
+		let [nav_a, main_a] = Layout::default()
 			.direction(Direction::Horizontal)
 			.constraints(vec![Constraint::Max(20), Constraint::Fill(1)])
 			.spacing(1)
@@ -28,7 +28,7 @@ impl StatefulWidget for RunsView {
 		runs_nav_v.render(nav_a, buf, state);
 
 		// -- Display the Content block
-		let run_content_v = RunContentView {};
-		run_content_v.render(content_a, buf, state);
+		let run_main_v = RunMainView {};
+		run_main_v.render(main_a, buf, state);
 	}
 }

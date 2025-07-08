@@ -31,15 +31,15 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 
 AIPACK supports several types of file paths:
 
-| Type                   | Example                                  | Notes                                                                                                    |
-|------------------------|------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| Relative               | `some/file.txt`                          | Relative to the workspace directory                                                                      |
-| Absolute               | `/absolute/path/file.txt`                | Absolute path (`C:/` on Windows)                                                                         |
-| Pack Ref               | `my_org@my_pack/path/file.txt`           | Finds the closest pack (in custom workspace, custom base, or install base) and uses this as a directory  |
-| Home Tilde             | `~/path/to/file.txt`                     | User home directory; `~` is replaced by the home directory (or `/` if no home directory is found)        |
-| Session TMP            | `$tmp/some/file.txt`                     | Located in `.aipack/.sessions/_uid_/` within the workspace; unique per session (until command stops)     |
-| Workspace Pack Support | `my_org@my_pack$workspace/some/file.txt` | Maps to `.aipack/support/pack/my_org/my_pack/some/file.txt` in the workspace                             |
-| Base Pack Support      | `my_org@my_pack$base/some/file.txt`      | Maps to `.aipack-base/support/pack/my_org/my_pack/some/file.txt` in the base directory                   |
+| Type                   | Example                                  | Notes                                                                                                   |
+|------------------------|------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Relative               | `some/file.txt`                          | Relative to the workspace directory                                                                     |
+| Absolute               | `/absolute/path/file.txt`                | Absolute path (`C:/` on Windows)                                                                        |
+| Pack Ref               | `my_org@my_pack/path/file.txt`           | Finds the closest pack (in custom workspace, custom base, or install base) and uses this as a directory |
+| Home Tilde             | `~/path/to/file.txt`                     | User home directory; `~` is replaced by the home directory (or `/` if no home directory is found)       |
+| Session TMP            | `$tmp/some/file.txt`                     | Located in `.aipack/.sessions/_uid_/` within the workspace; unique per session (until command stops)    |
+| Workspace Pack Support | `my_org@my_pack$workspace/some/file.txt` | Maps to `.aipack/support/pack/my_org/my_pack/some/file.txt` in the workspace                            |
+| Base Pack Support      | `my_org@my_pack$base/some/file.txt`      | Maps to `.aipack-base/support/pack/my_org/my_pack/some/file.txt` in the base directory                  |
 
 Important notes:
 
@@ -3473,7 +3473,7 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 | CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
 | CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
 | CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
-| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065/tmp`                               | The Session ID of this `aip run ...` until it is terminated       |
+| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065`                                   | The Session ID of this `aip run ...` until it is terminated       |
 
 When running a pack. (when no packs, those will be all nil)
 

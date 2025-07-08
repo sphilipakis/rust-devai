@@ -44,12 +44,12 @@ impl Run {
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
-	pub fn has_before_all(&self) -> bool {
-		self.ba_start.is_some()
-	}
-	pub fn has_after_all(&self) -> bool {
-		self.aa_start.is_some()
-	}
+	// pub fn has_before_all(&self) -> bool {
+	// 	self.ba_start.is_some()
+	// }
+	// pub fn has_after_all(&self) -> bool {
+	// 	self.aa_start.is_some()
+	// }
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow, Default)]

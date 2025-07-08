@@ -177,7 +177,7 @@ pub async fn run_agent(
 	);
 
 	// -- Rt Rec - Message
-	runtime.rec_log_run(run_id, msg, None).await?;
+	runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await?;
 
 	// -- Initialize outputs for capture
 	let mut captured_outputs: Option<Vec<(usize, Value)>> =
@@ -187,7 +187,7 @@ pub async fn run_agent(
 			None
 		};
 
-	// -- Run the inputs
+	// -- Run the Tasks
 	let mut join_set = JoinSet::new();
 	let mut in_progress = 0;
 

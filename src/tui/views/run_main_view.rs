@@ -7,9 +7,9 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;
 use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
-pub struct RunContentView {}
+pub struct RunMainView {}
 
-impl StatefulWidget for RunContentView {
+impl StatefulWidget for RunMainView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -103,15 +103,14 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			let lines: Vec<String> = logs
 				.into_iter()
 				.map(|log| {
-					if let Some(msg) = log.message {
-						format!("{} - {} - {msg}", log.run_id, log.id)
-					} else {
-						let msg = log
-							.step
-							.map(|s| s.to_string())
-							.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
-						format!("{} - {} - {msg}", log.run_id, log.id)
-					}
+					format!(
+						"{:<2} - {:<10} - {:<8} - {:<12} - {}",
+						log.id,
+						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
+						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
+						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
+						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
+					)
 				})
 				.collect();
 			if lines.is_empty() {
