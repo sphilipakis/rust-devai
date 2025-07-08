@@ -20,7 +20,7 @@ pub struct Task {
 
 	pub idx: Option<i64>,
 
-	// Time Stamps
+	// Step - Timestamps
 	pub start: Option<UnixTimeUs>,
 	pub data_start: Option<UnixTimeUs>,
 	pub data_end: Option<UnixTimeUs>,
@@ -32,6 +32,7 @@ pub struct Task {
 
 	pub model: Option<String>,
 
+	// -- Usage
 	#[field(cast_as = "json")]
 	pub usage: Option<serde_json::Value>,
 
@@ -56,7 +57,7 @@ pub struct TaskForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct TaskForUpdate {
-	// Time Stamps
+	// -- Step Timestamps
 	pub start: Option<UnixTimeUs>,
 	pub data_start: Option<UnixTimeUs>,
 	pub data_end: Option<UnixTimeUs>,
