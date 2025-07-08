@@ -49,9 +49,12 @@ impl StatefulWidget for RunsNavView {
 				ListItem::new(line)
 			})
 			.collect();
+
+		// -- Create List Widget & State
 		let list_w = List::new(items)
 			.highlight_style(Style::default().bg(CLR_BKG_SEL).fg(CLR_TXT_SEL))
 			.highlight_spacing(HighlightSpacing::WhenSelected);
+
 		let mut list_s = ListState::default();
 		list_s.select(state.run_idx());
 

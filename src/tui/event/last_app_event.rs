@@ -42,6 +42,14 @@ impl LastAppEvent {
 			_ => None,
 		})
 	}
+
+	/// Returns the mouse event when the last app event originated from the mouse.
+	pub fn as_mouse_event(&self) -> Option<&crossterm::event::MouseEvent> {
+		self.last_event.as_ref().and_then(|e| match e.as_ref() {
+			AppEvent::Term(crossterm::event::Event::Mouse(event)) => Some(event),
+			_ => None,
+		})
+	}
 }
 
 // region:    --- Froms

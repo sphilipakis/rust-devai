@@ -11,7 +11,7 @@ use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::event::ActionEvent;
 use crate::tui::event::{AppEvent, LastAppEvent};
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, MouseEventKind};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -78,8 +78,8 @@ fn process_app_state(state: &mut AppState) {
 	// -- Process Runs idx
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
 		match code {
-			KeyCode::Up | KeyCode::Char('w') => -1,
-			KeyCode::Down | KeyCode::Char('s') => 1,
+			KeyCode::Char('w') => -1,
+			KeyCode::Char('s') => 1,
 			_ => 0,
 		}
 	} else {
@@ -97,13 +97,24 @@ fn process_app_state(state: &mut AppState) {
 		state.log_scroll = 0;
 	}
 
-	// -- Process log scroll
+	// -- Process log scroll (keyboard & mouse)
 	if let Some(code) = state.last_app_event().as_key_code() {
 		match code {
-			KeyCode::Char('i') => state.log_scroll = state.log_scroll.saturating_sub(5),
-			KeyCode::Char('k') => state.log_scroll = state.log_scroll.saturating_add(5),
+			KeyCode::Up | KeyCode::Char('i') => state.log_scroll = state.log_scroll.saturating_sub(1),
+			KeyCode::Down | KeyCode::Char('k') => state.log_scroll = state.log_scroll.saturating_add(1),
 			KeyCode::Esc => state.log_scroll = 0,
-			// End is tricky, needs content height, so we do not implement it for now.
+			_ => (),
+		}
+	}
+
+	if let Some(mouse_evt) = state.last_app_event().as_mouse_event() {
+		match mouse_evt.kind {
+			MouseEventKind::ScrollUp => {
+				state.log_scroll = state.log_scroll.saturating_sub(3);
+			}
+			MouseEventKind::ScrollDown => {
+				state.log_scroll = state.log_scroll.saturating_add(3);
+			}
 			_ => (),
 		}
 	}
