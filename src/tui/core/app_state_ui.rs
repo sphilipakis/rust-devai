@@ -1,6 +1,5 @@
 //! Convenient AppState getters and formatters for the View
 //!
-
 // region:    --- Imports
 use crate::support::text::{format_duration_us, format_float};
 use crate::support::time::now_unix_time_us;
@@ -45,5 +44,26 @@ impl AppState {
 		self.current_run()
 			.and_then(|r| r.model.clone())
 			.unwrap_or_else(|| "no model".to_string())
+	}
+
+	/// Returns the cumulative duration of all tasks (formatted)  
+	/// or `None` when there is **one task or fewer**.
+	pub fn tasks_cummulative_duration(&self) -> Option<String> {
+		let tasks = self.tasks();
+		if tasks.len() <= 1 {
+			return None;
+		}
+
+		let mut cumul_us: i64 = 0;
+		for task in tasks {
+			let du = match (task.start, task.end) {
+				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
+				(Some(start), None) => now_unix_time_us() - start.as_i64(),
+				_ => 0,
+			};
+			cumul_us += du;
+		}
+
+		Some(format_duration_us(cumul_us))
 	}
 }
