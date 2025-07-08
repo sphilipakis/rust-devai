@@ -23,6 +23,7 @@ impl Runtime {
 	pub async fn step_start(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
 		let hub = get_hub();
 
+		// -- Create Run
 		let run_id = RunBmc::create(
 			self.mm(),
 			RunForCreate {
@@ -32,7 +33,8 @@ impl Runtime {
 			},
 		)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogLevel::RunStep))
 			.await?;
 
 		// -- For V1 terminal
@@ -45,26 +47,30 @@ impl Runtime {
 	}
 
 	pub async fn step_ba_start(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			ba_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
 	}
 
 	pub async fn step_ba_end(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			ba_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
@@ -72,13 +78,15 @@ impl Runtime {
 
 	/// Mark the start of Tasks execution.
 	pub async fn step_tasks_start(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			tasks_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
@@ -86,20 +94,22 @@ impl Runtime {
 
 	/// Mark the end of Tasks execution.
 	pub async fn step_tasks_end(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			tasks_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
 	}
 
 	pub async fn step_task_start(&self, run_id: Id, idx: usize) -> Result<Id> {
-		// -- Update Model
+		// -- Create Task
 		let task_c = TaskForCreate {
 			run_id,
 			start: now_unix_time_us().into(),
@@ -108,13 +118,13 @@ impl Runtime {
 		};
 		let id = TaskBmc::create(self.mm(), task_c)?;
 
-		// -- Update Log
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(id),
 			Some(RunStep::TaskStart),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -122,13 +132,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_data_start(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			data_start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
-			Some(RunStep::TaskDtStart),
+			Some(RunStep::TaskDataStart),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -136,13 +153,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_data_end(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			data_end: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
-			Some(RunStep::TaskDtEnd),
+			Some(RunStep::TaskDataEnd),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -150,13 +174,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_ai_start(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			ai_start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
 			Some(RunStep::TaskAiStart),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -164,13 +195,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_ai_end(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			ai_end: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
 			Some(RunStep::TaskAiEnd),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -178,13 +216,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_output_start(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			output_start: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
 			Some(RunStep::TaskOutputStart),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -192,13 +237,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_output_end(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Log
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			output_end: Some(now_unix_time_us().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
 			Some(RunStep::TaskOutputEnd),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -206,20 +258,20 @@ impl Runtime {
 	}
 
 	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Model
+		// -- Update Task
 		let task_u = TaskForUpdate {
 			end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
 
-		// -- Update Log
+		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
 			Some(task_id),
 			Some(RunStep::TaskEnd),
 			None,
-			Some(LogLevel::SysInfo),
+			Some(LogLevel::RunStep),
 		)
 		.await?;
 
@@ -228,13 +280,15 @@ impl Runtime {
 
 	/// Mark the start of After All execution.
 	pub async fn step_aa_start(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			aa_start: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
@@ -242,13 +296,15 @@ impl Runtime {
 
 	/// Mark the end of After All execution.
 	pub async fn step_aa_end(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			aa_end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())
@@ -256,13 +312,15 @@ impl Runtime {
 
 	/// Mark the run as completed.
 	pub async fn step_end(&self, run_id: Id) -> Result<()> {
+		// -- Update Run State
 		let run_u = RunForUpdate {
 			end: Some(now_unix_time_us().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
-		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogLevel::SysInfo))
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogLevel::RunStep))
 			.await?;
 
 		Ok(())

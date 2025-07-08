@@ -31,6 +31,7 @@ pub struct Log {
 
 derive_simple_enum_type! {
 pub enum LogLevel {
+	RunStep,
 	SysInfo,
 	SysWarn,
 	SysError,

@@ -20,7 +20,14 @@ pub struct Task {
 
 	pub idx: Option<i64>,
 
+	// Time Stamps
 	pub start: Option<UnixTimeUs>,
+	pub data_start: Option<UnixTimeUs>,
+	pub data_end: Option<UnixTimeUs>,
+	pub ai_start: Option<UnixTimeUs>,
+	pub ai_end: Option<UnixTimeUs>,
+	pub output_start: Option<UnixTimeUs>,
+	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
 	pub model: Option<String>,
@@ -49,7 +56,14 @@ pub struct TaskForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct TaskForUpdate {
+	// Time Stamps
 	pub start: Option<UnixTimeUs>,
+	pub data_start: Option<UnixTimeUs>,
+	pub data_end: Option<UnixTimeUs>,
+	pub ai_start: Option<UnixTimeUs>,
+	pub ai_end: Option<UnixTimeUs>,
+	pub output_start: Option<UnixTimeUs>,
+	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
 	pub model: Option<String>,
@@ -77,13 +91,11 @@ impl DbBmc for TaskBmc {
 }
 
 impl TaskBmc {
-	#[allow(unused)]
 	pub fn create(mm: &ModelManager, task_c: TaskForCreate) -> Result<Id> {
 		let fields = task_c.sqlite_not_none_fields();
 		base::create::<Self>(mm, fields)
 	}
 
-	#[allow(unused)]
 	pub fn update(mm: &ModelManager, id: Id, task_u: TaskForUpdate) -> Result<usize> {
 		let fields = task_u.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)

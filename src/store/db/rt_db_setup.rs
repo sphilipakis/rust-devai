@@ -18,20 +18,15 @@ fn create_schema(con: &Connection) -> Result<()> {
 						ctime  INTEGER NOT NULL,
 						mtime  INTEGER NOT NULL,						
 						
-						start  INTEGER,
-						end    INTEGER,
-
-						-- Before All start/end
-						ba_start INTEGER,
-						ba_end   INTEGER,
-
-						-- All tasks start/end
-						tasks_start INTEGER,
+						-- Step Timestamps
+						start       INTEGER,
+						ba_start    INTEGER,	-- Before All start/end
+						ba_end      INTEGER,
+						tasks_start INTEGER,  -- All tasks start/end
 						tasks_end   INTEGER,
-
-						-- After All start/end
-						aa_start INTEGER,
-						aa_end   INTEGER,
+						aa_start    INTEGER,  -- After All start/end
+						aa_end      INTEGER,
+						end         INTEGER,
 
 						agent_name TEXT,
 						agent_path TEXT,
@@ -58,9 +53,15 @@ fn create_schema(con: &Connection) -> Result<()> {
 						run_id INTEGER NOT NULL,
 						idx    INTEGER, -- Relative to the run (as created by Run)
 						
-						-- Full Run start/end
-						start  INTEGER,
-						end    INTEGER,
+						-- Step Timestamps
+						start         INTEGER,
+						data_start    INTEGER,    
+						data_end      INTEGER,
+						ai_start      INTEGER,
+						ai_end        INTEGER,
+						output_start  INTEGER,
+						output_end    INTEGER,
+						end           INTEGER,
 
 						model   TEXT,
 

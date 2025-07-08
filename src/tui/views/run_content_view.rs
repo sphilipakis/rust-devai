@@ -18,7 +18,7 @@ impl StatefulWidget for RunContentView {
 		// -- Layout Header | Logs
 		let [header_a, logs_a] = Layout::default()
 			.direction(Direction::Vertical)
-			.constraints(vec![Constraint::Length(1), Constraint::Fill(1)])
+			.constraints(vec![Constraint::Length(2), Constraint::Fill(1)])
 			.areas(area);
 
 		render_top(header_a, buf, state);
@@ -29,21 +29,64 @@ impl StatefulWidget for RunContentView {
 // region:    --- Render Helpers
 
 fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
-	// -- Prepare Header Data
+	// -- Prepare Data
 	let agent_name = state.current_run_agent_name();
 	let model_name = state.tasks_cummulative_models();
 	let cost_txt = state.current_run_cost_txt();
 	let duration_txt = state.current_run_duration_txt();
 
-	let header_line = if let Some(cumul_txt) = state.tasks_cummulative_duration() {
-		format!(
-			"Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}  Cumulative: {cumul_txt}"
-		)
-	} else {
-		format!("Agent: {agent_name}  Model: {model_name}  Cost: {cost_txt}  Duration: {duration_txt}")
-	};
+	// Tasks progress and optional cumulative duration.
+	let total_tasks = state.tasks().len();
+	let done_tasks = state.tasks().iter().filter(|t| t.is_done()).count();
+	let mut tasks_txt = format!("{done_tasks}/{total_tasks}");
+	if let Some(cumul_txt) = state.tasks_cummulative_duration() {
+		tasks_txt = format!("{tasks_txt} ({cumul_txt})");
+	}
 
-	Paragraph::new(header_line).render(area, buf);
+	// -- Layout Helpers
+	// 6 columns: label / value repeated 3 times.
+	let cols = vec![
+		Constraint::Length(10), // "Agent:" / "Model:" labels
+		Constraint::Length(20), // Values for Agent / Model
+		Constraint::Length(10), // "Duration:" / "Cost:"
+		Constraint::Length(8),  // Values for Duration / Cost
+		Constraint::Length(7),  // "Tasks:" label
+		Constraint::Length(10), // Tasks value or blank
+	];
+
+	let [line_1_a, line_2_a] = Layout::default()
+		.direction(Direction::Vertical)
+		.constraints(vec![Constraint::Length(1), Constraint::Length(1)])
+		.areas(area);
+
+	// -- Render Line 1
+	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(cols.clone())
+		.spacing(1)
+		.areas(line_1_a);
+
+	Paragraph::new("Agent:").right_aligned().render(l1_label_1, buf);
+	Paragraph::new(agent_name).render(l1_val_1, buf);
+
+	Paragraph::new("Duration:").right_aligned().render(l1_label_2, buf);
+	Paragraph::new(duration_txt).render(l1_val_2, buf);
+
+	Paragraph::new("Tasks:").right_aligned().render(l1_label_3, buf);
+	Paragraph::new(tasks_txt).render(l1_val_3, buf);
+
+	// -- Render Line 2
+	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, _l2_label_3, _l2_val_3] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(cols)
+		.spacing(1)
+		.areas(line_2_a);
+
+	Paragraph::new("Model:").right_aligned().render(l2_label_1, buf);
+	Paragraph::new(model_name).render(l2_val_1, buf);
+
+	Paragraph::new("Cost:").right_aligned().render(l2_label_2, buf);
+	Paragraph::new(cost_txt).render(l2_val_2, buf);
 }
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
@@ -80,4 +123,3 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 }
 
 // endregion: --- Render Helpers
-
