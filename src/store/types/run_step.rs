@@ -16,8 +16,10 @@ pub enum RunStep {
 	TaskEnd,
 	TaskDtStart,
 	TaskDtEnd,
-	TaskOtStart,
-	TaskOtEnd,
+	TaskAiStart,
+	TaskAiEnd,
+	TaskOutputStart,
+	TaskOutputEnd,
 
 	// -- After All
 	AaStart,

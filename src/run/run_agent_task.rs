@@ -1,13 +1,14 @@
 use super::pricing::price_it;
 use crate::Result;
 use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
-use crate::hub::{HubEvent, get_hub};
+use crate::hub::get_hub;
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
 use crate::store::Id;
+use crate::store::rt_model::LogLevel;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
 use genai::ModelIden;
@@ -88,14 +89,14 @@ pub async fn run_agent_task(
 	// -- Execute data
 	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
 		// -- Rt Step - Start Dt Start
-		runtime.step_task_dt_start(run_id, task_id).await?;
+		runtime.step_task_data_start(run_id, task_id).await?;
 
 		// -- Exec
 		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir_str]))?;
 		let data_res = serde_json::to_value(lua_value)?;
 
 		// -- Rt Step - Start Dt Start
-		runtime.step_task_dt_end(run_id, task_id).await?;
+		runtime.step_task_data_end(run_id, task_id).await?;
 
 		// -- Post Process
 		// skip input if aipack action is sent
@@ -111,10 +112,15 @@ pub async fn run_agent_task(
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 				let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
 
-				hub.publish(HubEvent::info_short(format!(
-					"Aipack Skip input at Data stage: {label}{reason_txt}"
-				)))
-				.await;
+				runtime
+					.rec_log_data(
+						run_id,
+						task_id,
+						format!("Aipack Skip input at Data stage: {label}{reason_txt}"),
+						Some(LogLevel::SysInfo),
+					)
+					.await?;
+
 				return Ok(None);
 			}
 
@@ -237,17 +243,26 @@ pub async fn run_agent_task(
 	// -- Now execute the instruction
 	let model_resolved = agent.model_resolved();
 
+	// -- Rt Update Task - Model
+	runtime.update_task_model(run_id, task_id, model_resolved).await?;
+
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
 		let chat_req = ChatRequest::from_messages(chat_messages);
 
 		hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
 			.await;
 
+		// -- Rt Step - start AI
+		runtime.step_task_ai_start(run_id, task_id).await?;
+
 		let start = Instant::now();
 		let chat_res = client
 			.exec_chat(model_resolved, chat_req, Some(agent.genai_chat_options()))
 			.await?;
 		let duration = start.elapsed();
+
+		// -- Rt Step - end AI
+		runtime.step_task_ai_end(run_id, task_id).await?;
 
 		// region:    --- First Info Part
 
@@ -263,7 +278,7 @@ pub async fn run_agent_task(
 
 		// Rt Rec - Update Cost
 		if let Some(price_usd) = price_usd {
-			let _ = runtime.step_task_update_cost(run_id, task_id, price_usd).await;
+			let _ = runtime.update_task_cost(run_id, task_id, price_usd).await;
 		}
 
 		// add to info
@@ -334,7 +349,11 @@ pub async fn run_agent_task(
 	}
 
 	// -- Exec output
+
 	let res = if let Some(output_script) = agent.output_script() {
+		// -- Rt Step - start output
+		runtime.step_task_output_start(run_id, task_id).await?;
+
 		let lua_engine = runtime.new_lua_engine_with_ctx(literals)?;
 
 		let lua_scope = lua_engine.create_table()?;
@@ -346,6 +365,9 @@ pub async fn run_agent_task(
 
 		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent_dir_str]))?;
 		let output_response = serde_json::to_value(lua_value)?;
+
+		// -- Rt Step - end output
+		runtime.step_task_output_end(run_id, task_id).await?;
 
 		Some(RunAgentInputResponse::OutputResponse(output_response))
 	} else {

@@ -121,7 +121,7 @@ impl Runtime {
 		Ok(id)
 	}
 
-	pub async fn step_task_dt_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+	pub async fn step_task_data_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Log
 		self.rec_log_no_msg(
 			run_id,
@@ -135,7 +135,7 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub async fn step_task_dt_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+	pub async fn step_task_data_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Log
 		self.rec_log_no_msg(
 			run_id,
@@ -149,24 +149,58 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub async fn step_task_update_cost(&self, run_id: Id, task_id: Id, cost: f64) -> Result<()> {
-		// -- Add the cost to the task_u
-		let task_u = TaskForUpdate {
-			cost: Some(cost),
-			..Default::default()
-		};
-		TaskBmc::update(self.mm(), task_id, task_u)?;
+	pub async fn step_task_ai_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskAiStart),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
 
-		// -- Update the run total cost
-		// NOTE: Here we recompute the total cost rather than doing a simple add to avoid
-		//       any race condition
-		let tasks = TaskBmc::list_for_run(self.mm(), run_id)?;
-		let total_cost: f64 = tasks.iter().filter_map(|t| t.cost).sum();
-		let run_u = RunForUpdate {
-			total_cost: Some(total_cost),
-			..Default::default()
-		};
-		RunBmc::update(self.mm(), run_id, run_u)?;
+		Ok(())
+	}
+
+	pub async fn step_task_ai_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskAiEnd),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(())
+	}
+
+	pub async fn step_task_output_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskOutputStart),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
+
+		Ok(())
+	}
+
+	pub async fn step_task_output_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Log
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskOutputEnd),
+			None,
+			Some(LogLevel::SysInfo),
+		)
+		.await?;
 
 		Ok(())
 	}
@@ -246,6 +280,38 @@ impl Runtime {
 
 		Ok(())
 	}
+
+	pub async fn update_task_model(&self, _run_id: Id, task_id: Id, model_name: &str) -> Result<()> {
+		let task_u = TaskForUpdate {
+			model: Some(model_name.to_string()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		Ok(())
+	}
+
+	pub async fn update_task_cost(&self, run_id: Id, task_id: Id, cost: f64) -> Result<()> {
+		// -- Add the cost to the task_u
+		let task_u = TaskForUpdate {
+			cost: Some(cost),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Update the run total cost
+		// NOTE: Here we recompute the total cost rather than doing a simple add to avoid
+		//       any race condition
+		let tasks = TaskBmc::list_for_run(self.mm(), run_id)?;
+		let total_cost: f64 = tasks.iter().filter_map(|t| t.cost).sum();
+		let run_u = RunForUpdate {
+			total_cost: Some(total_cost),
+			..Default::default()
+		};
+		RunBmc::update(self.mm(), run_id, run_u)?;
+
+		Ok(())
+	}
 }
 
 /// Rec for the log
@@ -306,17 +372,14 @@ impl Runtime {
 		Ok(())
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_run(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
 		self.rec_log(run_id, None, None, None, msg, level).await
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_ba(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
 		self.rec_log(run_id, None, None, Some(Stage::BeforeAll), msg, level).await
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_data(
 		&self,
 		run_id: Id,
@@ -327,7 +390,6 @@ impl Runtime {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Data), msg, level).await
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_ai(
 		&self,
 		run_id: Id,
@@ -338,7 +400,6 @@ impl Runtime {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Ai), msg, level).await
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_output(
 		&self,
 		run_id: Id,
@@ -349,7 +410,6 @@ impl Runtime {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Output), msg, level).await
 	}
 
-	#[allow(unused)]
 	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, level: Option<LogLevel>) -> Result<()> {
 		self.rec_log(run_id, None, None, Some(Stage::AfterAll), msg, level).await
 	}

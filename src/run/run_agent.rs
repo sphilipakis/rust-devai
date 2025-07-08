@@ -71,7 +71,7 @@ pub async fn run_agent(
 				runtime
 					.rec_log_ba(
 						run_id,
-						format!("Aipack Skip inputs at Before All section{reason_msg}"),
+						format!("Aipack Skip inputs at Before All section. {reason_msg}"),
 						Some(LogLevel::SysInfo),
 					)
 					.await?;

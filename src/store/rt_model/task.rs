@@ -23,7 +23,7 @@ pub struct Task {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
-	pub model_ov: Option<String>,
+	pub model: Option<String>,
 
 	#[field(cast_as = "json")]
 	pub usage: Option<serde_json::Value>,
@@ -51,7 +51,8 @@ pub struct TaskForCreate {
 pub struct TaskForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
-	pub model_ov: Option<String>,
+
+	pub model: Option<String>,
 
 	#[field(cast_as = "jsonb")]
 	pub usage: Option<serde_json::Value>,
