@@ -5,7 +5,7 @@ use crate::tui::support::RectExt;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;
-use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
+use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 pub struct RunContentView {}
 
@@ -97,29 +97,53 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Ok(Vec::new())
 	};
 
-	// -- Prepare Items
-	let mut items: Vec<ListItem> = vec![];
-	match logs {
+	// -- Prepare content
+	let content = match logs {
 		Ok(logs) => {
-			for log in logs {
-				let entry = if let Some(msg) = log.message {
-					format!("{} - {} - {msg}", log.run_id, log.id)
-				} else {
-					let msg = log
-						.step
-						.map(|s| s.to_string())
-						.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
-					format!("{} - {} - {msg}", log.run_id, log.id)
-				};
-				items.push(ListItem::new(entry));
+			let lines: Vec<String> = logs
+				.into_iter()
+				.map(|log| {
+					if let Some(msg) = log.message {
+						format!("{} - {} - {msg}", log.run_id, log.id)
+					} else {
+						let msg = log
+							.step
+							.map(|s| s.to_string())
+							.unwrap_or_else(|| format!("No msg or step for log id {}", log.id));
+						format!("{} - {} - {msg}", log.run_id, log.id)
+					}
+				})
+				.collect();
+			if lines.is_empty() {
+				"No logs for this run.".to_string()
+			} else {
+				lines.join("\n")
 			}
 		}
-		Err(err) => items.push(ListItem::new(format!("LogBmc::list error. {err}"))),
+		Err(err) => format!("LogBmc::list error. {err}"),
+	};
+	let line_count = content.lines().count();
+	let area_with_margin = area.x_margin(1);
+
+	// -- Clamp scroll
+	let max_scroll = line_count.saturating_sub(area_with_margin.height as usize) as u16;
+	if state.log_scroll > max_scroll {
+		state.log_scroll = max_scroll;
 	}
 
-	let list_w = List::new(items);
-	let mut list_s = ListState::default();
-	StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
+	// -- Render content
+	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
+	p.render(area_with_margin, buf);
+
+	// -- Render Scrollbar
+	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
+
+	let scrollbar = Scrollbar::default()
+		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
+		.begin_symbol(Some("▲"))
+		.end_symbol(Some("▼"));
+
+	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
 // endregion: --- Render Helpers

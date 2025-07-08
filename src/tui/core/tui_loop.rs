@@ -72,6 +72,7 @@ pub fn run_ui_loop(
 fn process_app_state(state: &mut AppState) {
 	// -- load runs
 	let runs = RunBmc::list_for_display(state.mm()).unwrap_or_default();
+	let prev_run_idx = state.run_idx;
 	state.runs = runs;
 
 	// -- Process Runs idx
@@ -90,6 +91,22 @@ fn process_app_state(state: &mut AppState) {
 		None => Some(0),
 		Some(n) => Some((n + offset).max(0).min(runs_len as i32 - 1)),
 	};
+
+	// -- if run changed, reset log scroll
+	if state.run_idx != prev_run_idx {
+		state.log_scroll = 0;
+	}
+
+	// -- Process log scroll
+	if let Some(code) = state.last_app_event().as_key_code() {
+		match code {
+			KeyCode::Char('i') => state.log_scroll = state.log_scroll.saturating_sub(5),
+			KeyCode::Char('k') => state.log_scroll = state.log_scroll.saturating_add(5),
+			KeyCode::Esc => state.log_scroll = 0,
+			// End is tricky, needs content height, so we do not implement it for now.
+			_ => (),
+		}
+	}
 
 	let current_run_id = state.current_run().map(|r| r.id);
 

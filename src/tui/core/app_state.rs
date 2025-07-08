@@ -5,15 +5,16 @@ use crate::tui::event::LastAppEvent;
 /// The global app state
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
-	pub(in crate::tui::core) run_idx: Option<i32>,
+	pub(in crate::tui) run_idx: Option<i32>,
+	pub(in crate::tui) log_scroll: u16,
 
 	// newest to oldest
-	pub(in crate::tui::core) runs: Vec<Run>,
+	pub(in crate::tui) runs: Vec<Run>,
 
-	pub(in crate::tui::core) tasks: Vec<Task>,
+	pub(in crate::tui) tasks: Vec<Task>,
 
-	pub(in crate::tui::core) mm: ModelManager,
-	pub(in crate::tui::core) last_app_event: LastAppEvent,
+	pub(in crate::tui) mm: ModelManager,
+	pub(in crate::tui) last_app_event: LastAppEvent,
 }
 
 /// Contrustor
@@ -21,6 +22,7 @@ impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
 		Self {
 			run_idx: None,
+			log_scroll: 0,
 			runs: Vec::new(),
 			tasks: Vec::new(),
 			mm,
@@ -29,7 +31,7 @@ impl AppState {
 	}
 }
 
-/// Setter
+/// Getter
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
 		self.run_idx.map(|idx| idx as usize)
