@@ -282,6 +282,9 @@ pub async fn run_agent(
 		}
 	}
 
+	// -- Rt Step - Tasks End
+	runtime.step_tasks_end(run_id).await?;
+
 	// -- Post-process outputs
 	let outputs = if let Some(mut captured_outputs) = captured_outputs {
 		captured_outputs.sort_by_key(|(idx, _)| *idx);
@@ -307,7 +310,14 @@ pub async fn run_agent(
 		lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all)?)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
+		// -- Rt Step - After All Start
+		runtime.step_aa_start(run_id).await?;
+
 		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
+
+		// -- Rt Step - After All End
+		runtime.step_aa_end(run_id).await?;
+
 		Some(serde_json::to_value(lua_value)?)
 	} else {
 		None
