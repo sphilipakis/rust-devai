@@ -23,7 +23,7 @@ impl StatefulWidget for RunContentView {
 
 		// -- Prepare Header Data
 		let agent_name = state.current_run_agent_name();
-		let model_name = state.current_run_model_name();
+		let model_name = state.tasks_cummulative_models();
 		let cost_txt = state.current_run_cost_txt();
 		let duration_txt = state.current_run_duration_txt();
 		let header_line = if let Some(cumul_txt) = state.tasks_cummulative_duration() {

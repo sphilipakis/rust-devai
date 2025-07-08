@@ -66,4 +66,34 @@ impl AppState {
 
 		Some(format_duration_us(cumul_us))
 	}
+
+	/// Returns a string describing the models used by the tasks of the
+	/// current run.
+	///
+	/// Rules:
+	/// - If all tasks share the same model, that model is returned.
+	/// - If several different models are present, return the first two and
+	///   append `+N` where `N` is the number of additional distinct models.
+	/// - If no task has a model (or there are no tasks), fall back to the
+	///   current run model (or `"no model"` when absent).
+	pub fn tasks_cummulative_models(&self) -> String {
+		let tasks = self.tasks();
+
+		// Collect unique models while preserving encounter order.
+		let mut uniques: Vec<String> = Vec::new();
+		for task in tasks {
+			if let Some(model) = &task.model {
+				if !uniques.contains(model) {
+					uniques.push(model.clone());
+				}
+			}
+		}
+
+		match uniques.len() {
+			0 => self.current_run_model_name(),
+			1 => uniques.first().cloned().unwrap(),
+			2 => format!("{}, {}", uniques[0], uniques[1]),
+			n => format!("{}, {} +{}", uniques[0], uniques[1], n - 2),
+		}
+	}
 }
