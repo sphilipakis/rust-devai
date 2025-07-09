@@ -6,9 +6,9 @@ use ratatui::layout::Rect;
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.
-pub struct TaskContentView {}
+pub struct TaskView {}
 
-impl StatefulWidget for TaskContentView {
+impl StatefulWidget for TaskView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -33,8 +33,9 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				.into_iter()
 				.map(|log| {
 					format!(
-						"{:<2} - {:<10} - {:<8} - {:<12} - {}",
+						"{:<3} - {:<4} - {:<10} - {:<8} - {:<15} - {}",
 						log.id,
+						log.task_id.map(|v| v.to_string()).unwrap_or_default(),
 						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
 						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
 						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),

@@ -31,7 +31,8 @@ impl AppState {
 
 			// -- RunView
 			log_scroll: 0,
-			run_tab_idx: 0,
+			// For now, use the Tasks tab ad efault
+			run_tab_idx: 1,
 
 			// Data
 			runs: Vec::new(),

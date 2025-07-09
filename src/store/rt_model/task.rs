@@ -4,6 +4,7 @@ use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
 use uuid::Uuid;
+use value_ext::JsonValueExt;
 
 // region:    --- Types
 
@@ -45,6 +46,10 @@ impl Task {
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
+
+	// pub fn tokens_prompt_total(&self) -> Option<i64> {
+	// 	self.usage?.x_get_i64("/name_or_pointer")
+	// }
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]

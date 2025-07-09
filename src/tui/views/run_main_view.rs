@@ -10,9 +10,8 @@ use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 pub struct RunMainView {}
 
 pub enum RunTab {
+	Overview,
 	Tasks,
-	BeforeAll,
-	AfterAll,
 }
 
 impl StatefulWidget for RunMainView {
@@ -22,7 +21,7 @@ impl StatefulWidget for RunMainView {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Layout Header | Logs
-		let [header_a, _space_1, tabs_a, logs_a] = Layout::default()
+		let [header_a, _space_1, tabs_a, tab_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
 				Constraint::Length(2),
@@ -37,17 +36,13 @@ impl StatefulWidget for RunMainView {
 		let selected_tab = render_tabs(tabs_a, buf, state);
 
 		match selected_tab {
+			RunTab::Overview => {
+				let v = super::RunOverviewView {};
+				v.render(tab_a, buf, state);
+			}
 			RunTab::Tasks => {
 				let v = super::RunTasksView {};
-				v.render(logs_a, buf, state);
-			}
-			RunTab::BeforeAll => {
-				let v = super::RunBeforeAllView {};
-				v.render(logs_a, buf, state);
-			}
-			RunTab::AfterAll => {
-				let v = super::RunAfterAllView {};
-				v.render(logs_a, buf, state);
+				v.render(tab_a, buf, state);
 			}
 		}
 	}
@@ -136,9 +131,8 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 
 	let titles = vec![
 		//
-		Line::raw(" Tasks "),
-		Line::raw(" Before All "),
-		Line::raw(" After All "),
+		Line::raw(" Overview "),
+		Line::raw(" Details "),
 	];
 
 	// Clamp the index
@@ -152,9 +146,8 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 		.render(area, buf);
 
 	match state.run_tab_idx {
-		0 => RunTab::Tasks,
-		1 => RunTab::BeforeAll,
-		2 => RunTab::AfterAll,
+		0 => RunTab::Overview,
+		1 => RunTab::Tasks,
 		_ => RunTab::Tasks, // Fallback
 	}
 }

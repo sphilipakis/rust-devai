@@ -1,6 +1,6 @@
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::{RectExt, num_pad_for_len};
-use crate::tui::{AppState, TaskContentView};
+use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
@@ -24,7 +24,7 @@ impl StatefulWidget for RunTasksView {
 		render_tasks_nav(tasks_nav_a, buf, state);
 
 		// -- Render task content
-		let task_content_v = TaskContentView {};
+		let task_content_v = TaskView {};
 		task_content_v.render(task_content_a, buf, state);
 	}
 }
@@ -43,7 +43,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			let label = task
 				.label
 				.clone()
-				.unwrap_or_else(|| format!("task-{}", num_pad_for_len(idx, tasks_len)));
+				.unwrap_or_else(|| format!("task-{} ({})", num_pad_for_len(idx, tasks_len), task.id));
 
 			let (mark_txt, mark_style) = if task.is_done() {
 				("✔", Style::default().fg(CLR_TXT_GREEN))
