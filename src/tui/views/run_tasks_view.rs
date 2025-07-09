@@ -1,77 +1,67 @@
-use crate::store::rt_model::LogBmc;
-use crate::tui::AppState;
+use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
+use crate::tui::{AppState, TaskContentView};
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Style, Stylize};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
 
-/// Renders the *Tasks* tab (logs list).
+/// Renders the *Tasks* tab (tasks list and content).
 pub struct RunTasksView {}
 
 impl StatefulWidget for RunTasksView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		render_logs(area, buf, state);
+		let [tasks_nav_a, task_content_a] = Layout::default()
+			.direction(Direction::Horizontal)
+			.constraints([Constraint::Max(20), Constraint::Min(0)])
+			.spacing(1)
+			.areas(area);
+
+		// -- Render tasks nav
+		render_tasks_nav(tasks_nav_a, buf, state);
+
+		// -- Render task content
+		let task_content_v = TaskContentView {};
+		task_content_v.render(task_content_a, buf, state);
 	}
 }
 
-// region:    --- Render Helpers
+fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	// -- Render background
+	Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
-fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
-	// -- Fetch Logs
-	let logs = if let Some(current_run) = state.current_run() {
-		LogBmc::list_for_display(state.mm(), current_run.id)
-	} else {
-		Ok(Vec::new())
-	};
+	// -- Create Items
+	let tasks = state.tasks();
+	let items: Vec<ListItem> = tasks
+		.iter()
+		.map(|task| {
+			let label = task.label.as_deref().unwrap_or("no-label");
 
-	// -- Prepare content
-	let content = match logs {
-		Ok(logs) => {
-			let lines: Vec<String> = logs
-				.into_iter()
-				.map(|log| {
-					format!(
-						"{:<2} - {:<10} - {:<8} - {:<12} - {}",
-						log.id,
-						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
-						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
-						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
-						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
-					)
-				})
-				.collect();
-			if lines.is_empty() {
-				"No logs for this run.".to_string()
+			let (mark_txt, mark_style) = if task.is_done() {
+				("✔", Style::default().fg(CLR_TXT_GREEN))
 			} else {
-				lines.join("\n")
-			}
-		}
-		Err(err) => format!("LogBmc::list error. {err}"),
-	};
-	let line_count = content.lines().count();
-	let area_with_margin = area.x_margin(1);
+				("▶", STL_TXT)
+			};
 
-	// -- Clamp scroll
-	let max_scroll = line_count.saturating_sub(area_with_margin.height as usize) as u16;
-	if state.log_scroll > max_scroll {
-		state.log_scroll = max_scroll;
-	}
+			let line = Line::from(vec![
+				Span::styled(mark_txt, mark_style),
+				Span::styled(" ", Style::default()),
+				Span::styled(label, STL_TXT),
+			]);
+			ListItem::new(line)
+		})
+		.collect();
 
-	// -- Render content
-	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
-	p.render(area_with_margin, buf);
+	// -- Create List Widget & State
+	let list_w = List::new(items)
+		.highlight_style(Style::default().bg(CLR_BKG_SEL).fg(CLR_TXT_SEL))
+		.highlight_spacing(HighlightSpacing::Always);
 
-	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
+	let mut list_s = ListState::default();
+	list_s.select(state.task_idx());
 
-	let scrollbar = Scrollbar::default()
-		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
-		.begin_symbol(Some("▲"))
-		.end_symbol(Some("▼"));
-
-	scrollbar.render(area, buf, &mut scrollbar_state);
+	StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
 }
-
-// endregion: --- Render Helpers

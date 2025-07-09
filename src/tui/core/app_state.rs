@@ -6,6 +6,7 @@ use crate::tui::event::LastAppEvent;
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
 	pub(in crate::tui) run_idx: Option<i32>,
+	pub(in crate::tui) task_idx: Option<i32>,
 
 	// -- RunView
 	pub(in crate::tui) log_scroll: u16,
@@ -26,6 +27,7 @@ impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
 		Self {
 			run_idx: None,
+			task_idx: None,
 
 			// -- RunView
 			log_scroll: 0,
@@ -44,6 +46,18 @@ impl AppState {
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
 		self.run_idx.map(|idx| idx as usize)
+	}
+
+	pub fn task_idx(&self) -> Option<usize> {
+		self.task_idx.map(|idx| idx as usize)
+	}
+
+	pub fn current_task(&self) -> Option<&Task> {
+		if let Some(idx) = self.task_idx {
+			self.tasks.get(idx as usize)
+		} else {
+			None
+		}
 	}
 
 	pub fn current_run(&self) -> Option<&Run> {
