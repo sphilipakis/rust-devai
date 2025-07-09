@@ -1,5 +1,5 @@
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
-use crate::tui::support::RectExt;
+use crate::tui::support::{RectExt, num_pad_for_len};
 use crate::tui::{AppState, TaskContentView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -35,10 +35,15 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Create Items
 	let tasks = state.tasks();
+	let tasks_len = tasks.len();
 	let items: Vec<ListItem> = tasks
 		.iter()
-		.map(|task| {
-			let label = task.label.as_deref().unwrap_or("no-label");
+		.enumerate()
+		.map(|(idx, task)| {
+			let label = task
+				.label
+				.clone()
+				.unwrap_or_else(|| format!("task-{}", num_pad_for_len(idx, tasks_len)));
 
 			let (mark_txt, mark_style) = if task.is_done() {
 				("✔", Style::default().fg(CLR_TXT_GREEN))
