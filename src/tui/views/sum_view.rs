@@ -57,17 +57,16 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 
 	// -- Render Left Side
 	// Agent name
-	let run_id = state.current_run().map(|r| r.id.as_i64()).unwrap_or(-1);
+	// let run_id = state.current_run().map(|r| r.id.as_i64()).unwrap_or(-1);
 	let status_a_inner = status_a.x_h_margin(1);
 
 	let mut line_1 = Line::default();
 	if ended {
 		line_1.push_span(Span::styled("✔", STL_TXT_ACT.green().bold()));
-		line_1.push_span(format!(" {run_id} - {agent_name}"));
 	} else {
 		line_1.push_span(Span::styled("▶", STL_TXT_ACT));
-		line_1.push_span(format!(" {run_id} - {agent_name}"));
 	};
+	line_1.push_span(format!(" {agent_name}"));
 
 	// Tasks
 	let mut line_2 = Line::from(vec![

@@ -1,0 +1,77 @@
+use crate::store::rt_model::LogBmc;
+use crate::tui::AppState;
+use crate::tui::support::RectExt;
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+
+/// Renders the *Tasks* tab (logs list).
+pub struct RunTasksView {}
+
+impl StatefulWidget for RunTasksView {
+	type State = AppState;
+
+	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+		render_logs(area, buf, state);
+	}
+}
+
+// region:    --- Render Helpers
+
+fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	// -- Fetch Logs
+	let logs = if let Some(current_run) = state.current_run() {
+		LogBmc::list_for_display(state.mm(), current_run.id)
+	} else {
+		Ok(Vec::new())
+	};
+
+	// -- Prepare content
+	let content = match logs {
+		Ok(logs) => {
+			let lines: Vec<String> = logs
+				.into_iter()
+				.map(|log| {
+					format!(
+						"{:<2} - {:<10} - {:<8} - {:<12} - {}",
+						log.id,
+						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
+						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
+						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
+						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
+					)
+				})
+				.collect();
+			if lines.is_empty() {
+				"No logs for this run.".to_string()
+			} else {
+				lines.join("\n")
+			}
+		}
+		Err(err) => format!("LogBmc::list error. {err}"),
+	};
+	let line_count = content.lines().count();
+	let area_with_margin = area.x_margin(1);
+
+	// -- Clamp scroll
+	let max_scroll = line_count.saturating_sub(area_with_margin.height as usize) as u16;
+	if state.log_scroll > max_scroll {
+		state.log_scroll = max_scroll;
+	}
+
+	// -- Render content
+	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
+	p.render(area_with_margin, buf);
+
+	// -- Render Scrollbar
+	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
+
+	let scrollbar = Scrollbar::default()
+		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
+		.begin_symbol(Some("▲"))
+		.end_symbol(Some("▼"));
+
+	scrollbar.render(area, buf, &mut scrollbar_state);
+}
+
+// endregion: --- Render Helpers

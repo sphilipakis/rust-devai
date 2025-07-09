@@ -1,12 +1,11 @@
-use crate::store::rt_model::LogBmc;
 use crate::tui::AppState;
-use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL};
-use crate::tui::support::{RectExt, clamp_idx_in_len};
+use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, STL_TXT_LABEL, STL_TXT_VALUE};
+use crate::tui::support::clamp_idx_in_len;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Stylize as _};
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Tabs, Widget as _};
+use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 
 pub struct RunMainView {}
 
@@ -35,9 +34,22 @@ impl StatefulWidget for RunMainView {
 
 		render_top(header_a, buf, state);
 
-		render_tabs(tabs_a, buf, state);
+		let selected_tab = render_tabs(tabs_a, buf, state);
 
-		render_logs(logs_a, buf, state);
+		match selected_tab {
+			RunTab::Tasks => {
+				let v = super::RunTasksView {};
+				v.render(logs_a, buf, state);
+			}
+			RunTab::BeforeAll => {
+				let v = super::RunBeforeAllView {};
+				v.render(logs_a, buf, state);
+			}
+			RunTab::AfterAll => {
+				let v = super::RunAfterAllView {};
+				v.render(logs_a, buf, state);
+			}
+		}
 	}
 }
 
@@ -64,7 +76,7 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Constraint::Length(10), // "Agent:" / "Model:" labels
 		Constraint::Length(20), // Values for Agent / Model
 		Constraint::Length(10), // "Duration:" / "Cost:"
-		Constraint::Length(8),  // Values for Duration / Cost
+		Constraint::Length(10), // Values for Duration / Cost
 		Constraint::Length(7),  // "Tasks:" label
 		Constraint::Length(10), // Tasks value or blank
 	];
@@ -81,14 +93,23 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.spacing(1)
 		.areas(line_1_a);
 
-	Paragraph::new("Agent:").right_aligned().render(l1_label_1, buf);
-	Paragraph::new(agent_name).render(l1_val_1, buf);
+	Paragraph::new("Agent:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l1_label_1, buf);
+	Paragraph::new(agent_name).style(STL_TXT_VALUE).render(l1_val_1, buf);
 
-	Paragraph::new("Duration:").right_aligned().render(l1_label_2, buf);
-	Paragraph::new(duration_txt).render(l1_val_2, buf);
+	Paragraph::new("Duration:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l1_label_2, buf);
+	Paragraph::new(duration_txt).style(STL_TXT_VALUE).render(l1_val_2, buf);
 
-	Paragraph::new("Tasks:").right_aligned().render(l1_label_3, buf);
-	Paragraph::new(tasks_txt).render(l1_val_3, buf);
+	Paragraph::new("Tasks:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l1_label_3, buf);
+	Paragraph::new(tasks_txt).style(STL_TXT_VALUE).render(l1_val_3, buf);
 
 	// -- Render Line 2
 	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, _l2_label_3, _l2_val_3] = Layout::default()
@@ -97,11 +118,17 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.spacing(1)
 		.areas(line_2_a);
 
-	Paragraph::new("Model:").right_aligned().render(l2_label_1, buf);
-	Paragraph::new(model_name).render(l2_val_1, buf);
+	Paragraph::new("Model:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l2_label_1, buf);
+	Paragraph::new(model_name).style(STL_TXT_VALUE).render(l2_val_1, buf);
 
-	Paragraph::new("Cost:").right_aligned().render(l2_label_2, buf);
-	Paragraph::new(cost_txt).render(l2_val_2, buf);
+	Paragraph::new("Cost:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l2_label_2, buf);
+	Paragraph::new(cost_txt).style(STL_TXT_VALUE).render(l2_val_2, buf);
 }
 
 fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
@@ -115,7 +142,6 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 	];
 
 	// Clamp the index
-	// NOTE: Here this ui component clip the value to the possible values
 	state.run_tab_idx = clamp_idx_in_len(state.run_tab_idx, titles.len());
 
 	Tabs::new(titles)
@@ -131,62 +157,6 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 		2 => RunTab::AfterAll,
 		_ => RunTab::Tasks, // Fallback
 	}
-}
-
-fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
-	// -- Fetch Logs
-	let logs = if let Some(current_run) = state.current_run() {
-		LogBmc::list_for_display(state.mm(), current_run.id)
-	} else {
-		Ok(Vec::new())
-	};
-
-	// -- Prepare content
-	let content = match logs {
-		Ok(logs) => {
-			let lines: Vec<String> = logs
-				.into_iter()
-				.map(|log| {
-					format!(
-						"{:<2} - {:<10} - {:<8} - {:<12} - {}",
-						log.id,
-						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
-						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
-						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
-						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
-					)
-				})
-				.collect();
-			if lines.is_empty() {
-				"No logs for this run.".to_string()
-			} else {
-				lines.join("\n")
-			}
-		}
-		Err(err) => format!("LogBmc::list error. {err}"),
-	};
-	let line_count = content.lines().count();
-	let area_with_margin = area.x_margin(1);
-
-	// -- Clamp scroll
-	let max_scroll = line_count.saturating_sub(area_with_margin.height as usize) as u16;
-	if state.log_scroll > max_scroll {
-		state.log_scroll = max_scroll;
-	}
-
-	// -- Render content
-	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
-	p.render(area_with_margin, buf);
-
-	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
-
-	let scrollbar = Scrollbar::default()
-		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
-		.begin_symbol(Some("▲"))
-		.end_symbol(Some("▼"));
-
-	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
 // endregion: --- Render Helpers
