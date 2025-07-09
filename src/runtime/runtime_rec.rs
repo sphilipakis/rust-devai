@@ -327,9 +327,15 @@ impl Runtime {
 
 /// Run Create/Update model
 impl Runtime {
-	pub async fn update_run_model(&self, run_id: Id, model_name: &str) -> Result<()> {
+	pub async fn update_run_model_and_concurrency(
+		&self,
+		run_id: Id,
+		model_name: &str,
+		concurrency: usize,
+	) -> Result<()> {
 		let run_u = RunForUpdate {
 			model: Some(model_name.to_string()),
+			concurrency: Some(concurrency as i32),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;

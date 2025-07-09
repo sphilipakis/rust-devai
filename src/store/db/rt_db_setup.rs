@@ -28,12 +28,13 @@ fn create_schema(con: &Connection) -> Result<()> {
 						aa_end      INTEGER,
 						end         INTEGER,
 
-						agent_name TEXT,
-						agent_path TEXT,
+						agent_name  TEXT,
+						agent_path  TEXT,
 
-						model      TEXT,
+						model       TEXT,
+						concurrency INTEGER,
 
-						total_cost REAL,
+						total_cost  REAL,
 
 						label TEXT
 

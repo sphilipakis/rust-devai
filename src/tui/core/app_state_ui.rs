@@ -21,14 +21,22 @@ impl AppState {
 	}
 
 	pub fn current_run_cost_txt(&self) -> String {
-		if let Some(run) = self.current_run() {
-			if let Some(cost) = run.total_cost {
-				format!("${}", format_float(cost))
-			} else {
-				"$...".to_string()
-			}
+		if let Some(run) = self.current_run()
+			&& let Some(cost) = run.total_cost
+		{
+			format!("${}", format_float(cost))
 		} else {
 			"$...".to_string()
+		}
+	}
+
+	pub fn current_run_concurrency_txt(&self) -> String {
+		if let Some(run) = self.current_run()
+			&& let Some(concurrency) = run.concurrency
+		{
+			concurrency.to_string()
+		} else {
+			"..".to_string()
 		}
 	}
 

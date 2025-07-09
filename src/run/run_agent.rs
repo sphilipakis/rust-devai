@@ -138,9 +138,6 @@ pub async fn run_agent(
 	);
 	let _ = runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await;
 
-	// -- Rt Update - model name
-	let _ = runtime.update_run_model(run_id, agent.model_resolved()).await;
-
 	// -- Get the Inputs and Before All data for the next stage
 	// so, if empty, we have one input of value Value::Null
 	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
@@ -187,11 +184,17 @@ pub async fn run_agent(
 			None
 		};
 
+	// extract concurrency
+	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
+
+	// -- Rt Update - model name & concurrency
+	let _ = runtime
+		.update_run_model_and_concurrency(run_id, agent.model_resolved(), concurrency)
+		.await;
+
 	// -- Run the Tasks
 	let mut join_set = JoinSet::new();
 	let mut in_progress = 0;
-
-	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
 
 	// -- Rt Step - Tasks Start
 	runtime.step_tasks_start(run_id).await?;

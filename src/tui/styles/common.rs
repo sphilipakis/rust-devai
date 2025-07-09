@@ -12,6 +12,7 @@ pub const CLR_BKG_LIGHT: Color = Color::Indexed(240);
 pub const CLR_BKG_GRAY: Color = Color::Indexed(238);
 pub const CLR_BKG_GRAY_DARK: Color = Color::Indexed(236);
 pub const CLR_BKG_GRAY_DARKER: Color = Color::Indexed(234);
+pub const CLR_BKG_BLACK: Color = Color::Indexed(0);
 
 pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 

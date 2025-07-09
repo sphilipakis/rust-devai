@@ -1,7 +1,7 @@
-use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, STL_TXT_LABEL, STL_TXT_VALUE};
 use crate::tui::support::clamp_idx_in_len;
 use crate::tui::views::{RunDetailsView, RunOverviewView};
+use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Stylize as _};
@@ -54,6 +54,7 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let agent_name = state.current_run_agent_name();
 	let model_name = state.tasks_cummulative_models();
 	let cost_txt = state.current_run_cost_txt();
+	let concurrency_txt = state.current_run_concurrency_txt();
 	let duration_txt = state.current_run_duration_txt();
 
 	// Tasks progress and optional cumulative duration.
@@ -71,8 +72,8 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Constraint::Length(20), // Values for Agent / Model
 		Constraint::Length(10), // "Duration:" / "Cost:"
 		Constraint::Length(10), // Values for Duration / Cost
-		Constraint::Length(7),  // "Tasks:" label,
-		Constraint::Length(20), // Tasks value or blank
+		Constraint::Length(13), // "Tasks:" label, Concurrency: label
+		Constraint::Length(20), // Tasks value or concurrency
 	];
 
 	let [line_1_a, line_2_a] = Layout::default()
@@ -106,7 +107,7 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new(tasks_txt).style(STL_TXT_VALUE).render(l1_val_3, buf);
 
 	// -- Render Line 2
-	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, _l2_label_3, _l2_val_3] = Layout::default()
+	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, l2_label_3, l2_val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(cols)
 		.spacing(1)
@@ -123,24 +124,31 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.right_aligned()
 		.render(l2_label_2, buf);
 	Paragraph::new(cost_txt).style(STL_TXT_VALUE).render(l2_val_2, buf);
+
+	Paragraph::new("Concurrency:")
+		.style(STL_TXT_LABEL)
+		.right_aligned()
+		.render(l2_label_3, buf);
+	Paragraph::new(concurrency_txt).style(STL_TXT_VALUE).render(l2_val_3, buf);
 }
 
 fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
-	let highlight_style = (Color::default(), CLR_BKG_SEL);
-
+	let style = (Color::default(), styles::CLR_BKG_GRAY_DARK);
 	let titles = vec![
 		//
-		Line::raw(" Overview "),
-		Line::raw(" Details "),
+		Line::styled(" Overview ", style),
+		Line::styled(" Details ", style),
 	];
 
 	// Clamp the index
 	state.run_tab_idx = clamp_idx_in_len(state.run_tab_idx, titles.len());
 
+	let highlight_style = (Color::default(), CLR_BKG_SEL);
+
 	Tabs::new(titles)
 		.highlight_style(highlight_style)
 		.select(state.run_tab_idx as usize)
-		.padding("", "")
+		.padding(" ", "")
 		.divider("")
 		.render(area, buf);
 
