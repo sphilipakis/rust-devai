@@ -389,6 +389,9 @@ async fn run_agent_task_outer(
 
 	hub.publish(format!("==== DONE (input: {label})")).await;
 
+	// -- Rt Step - Task End
+	runtime.step_task_end(run_id, task_id).await?;
+
 	Ok(run_response)
 }
 

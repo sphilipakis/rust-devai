@@ -68,6 +68,7 @@ pub struct LogForUpdate {
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct LogFilter {
 	pub run_id: Option<Id>,
+	pub task_id: Option<Id>,
 }
 
 // endregion: --- Types
@@ -107,9 +108,22 @@ impl LogBmc {
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 
-	pub fn list_for_display(mm: &ModelManager, run_id: Id) -> Result<Vec<Log>> {
+	#[allow(unused)]
+	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Log>> {
 		let list_options = ListOptions::from_order_bys("id");
-		let filter = LogFilter { run_id: Some(run_id) };
+		let filter = LogFilter {
+			run_id: Some(run_id),
+			..Default::default()
+		};
+		Self::list(mm, Some(list_options), Some(filter))
+	}
+
+	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Log>> {
+		let list_options = ListOptions::from_order_bys("id");
+		let filter = LogFilter {
+			task_id: Some(task_id),
+			..Default::default()
+		};
 		Self::list(mm, Some(list_options), Some(filter))
 	}
 }
@@ -292,7 +306,10 @@ mod tests {
 		// -- Exec
 		let order_bys = OrderBy::from("!id");
 		let list_options = ListOptions::from(order_bys);
-		let filter = LogFilter { run_id: Some(run_1_id) };
+		let filter = LogFilter {
+			run_id: Some(run_1_id),
+			..Default::default()
+		};
 		let logs: Vec<Log> = LogBmc::list(&mm, Some(list_options), Some(filter))?;
 
 		// -- Check

@@ -20,8 +20,8 @@ impl StatefulWidget for TaskView {
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Fetch Logs
-	let logs = if let Some(current_run) = state.current_run() {
-		LogBmc::list_for_display(state.mm(), current_run.id)
+	let logs = if let Some(current_task) = state.current_task() {
+		LogBmc::list_for_task(state.mm(), current_task.id)
 	} else {
 		Ok(Vec::new())
 	};
@@ -44,7 +44,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				})
 				.collect();
 			if lines.is_empty() {
-				"No logs for this run.".to_string()
+				"No logs for this task yet...".to_string()
 			} else {
 				lines.join("\n")
 			}

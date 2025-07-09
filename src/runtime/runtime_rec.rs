@@ -17,6 +17,7 @@ impl Runtime {
 		Ok(count)
 	}
 }
+
 /// Rec for all step record (like timestamp and all)
 /// All the function that "record" the progress of a Runtime execution
 impl Runtime {
