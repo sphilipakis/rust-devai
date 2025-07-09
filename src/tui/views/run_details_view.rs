@@ -1,4 +1,5 @@
-use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
+use crate::store::rt_model::TaskState;
+use crate::tui::styles;
 use crate::tui::support::{RectExt, num_pad_for_len};
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
@@ -8,9 +9,9 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
 
 /// Renders the *Tasks* tab (tasks list and content).
-pub struct RunTasksView {}
+pub struct RunDetailsView {}
 
-impl StatefulWidget for RunTasksView {
+impl StatefulWidget for RunDetailsView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -31,7 +32,7 @@ impl StatefulWidget for RunTasksView {
 
 fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Render background
-	Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
+	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	// -- Create Items
 	let tasks = state.tasks();
@@ -45,16 +46,16 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				.clone()
 				.unwrap_or_else(|| format!("task-{} ({})", num_pad_for_len(idx, tasks_len), task.id));
 
-			let (mark_txt, mark_style) = if task.is_done() {
-				("✔", Style::default().fg(CLR_TXT_GREEN))
-			} else {
-				("▶", STL_TXT)
+			let (mark_txt, mark_style) = match task.state() {
+				TaskState::Waiting => ("⏸", styles::CLR_TXT_WAITING),
+				TaskState::Running => ("▶", styles::CLR_TXT_RUNNING),
+				TaskState::Done => ("✔", styles::CLR_TXT_DONE),
 			};
 
 			let line = Line::from(vec![
 				Span::styled(mark_txt, mark_style),
 				Span::styled(" ", Style::default()),
-				Span::styled(label, STL_TXT),
+				Span::styled(label, styles::STL_TXT),
 			]);
 			ListItem::new(line)
 		})
@@ -62,7 +63,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Create List Widget & State
 	let list_w = List::new(items)
-		.highlight_style(Style::default().bg(CLR_BKG_SEL).fg(CLR_TXT_SEL))
+		.highlight_style(Style::default().bg(styles::CLR_BKG_SEL).fg(styles::CLR_TXT_SEL))
 		.highlight_spacing(HighlightSpacing::Always);
 
 	let mut list_s = ListState::default();

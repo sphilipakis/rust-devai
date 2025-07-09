@@ -11,7 +11,7 @@ pub struct RunMainView {}
 
 pub enum RunTab {
 	Overview,
-	Tasks,
+	Details,
 }
 
 impl StatefulWidget for RunMainView {
@@ -40,8 +40,8 @@ impl StatefulWidget for RunMainView {
 				let v = super::RunOverviewView {};
 				v.render(tab_a, buf, state);
 			}
-			RunTab::Tasks => {
-				let v = super::RunTasksView {};
+			RunTab::Details => {
+				let v = super::RunDetailsView {};
 				v.render(tab_a, buf, state);
 			}
 		}
@@ -72,8 +72,8 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Constraint::Length(20), // Values for Agent / Model
 		Constraint::Length(10), // "Duration:" / "Cost:"
 		Constraint::Length(10), // Values for Duration / Cost
-		Constraint::Length(7),  // "Tasks:" label
-		Constraint::Length(10), // Tasks value or blank
+		Constraint::Length(7),  // "Tasks:" label,
+		Constraint::Length(20), // Tasks value or blank
 	];
 
 	let [line_1_a, line_2_a] = Layout::default()
@@ -147,8 +147,8 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 
 	match state.run_tab_idx {
 		0 => RunTab::Overview,
-		1 => RunTab::Tasks,
-		_ => RunTab::Tasks, // Fallback
+		1 => RunTab::Details,
+		_ => RunTab::Details, // Fallback
 	}
 }
 

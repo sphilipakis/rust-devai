@@ -196,7 +196,13 @@ pub async fn run_agent(
 	// -- Rt Step - Tasks Start
 	runtime.step_tasks_start(run_id).await?;
 
-	for (input_idx, input) in inputs.clone().into_iter().enumerate() {
+	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
+	for (idx, input) in inputs.clone().into_iter().enumerate() {
+		let task_id = runtime.create_task(run_id, idx).await?;
+		input_idx_task_id_list.push((input, idx, task_id));
+	}
+
+	for (input, input_idx, task_id) in input_idx_task_id_list {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();
 		let before_all_clone = before_all.clone();
@@ -209,6 +215,7 @@ pub async fn run_agent(
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_input_response = run_agent_task_outer(
 				run_id,
+				task_id,
 				input_idx,
 				&runtime_clone,
 				&agent_clone,
@@ -336,6 +343,7 @@ pub async fn run_agent(
 #[allow(clippy::too_many_arguments)]
 async fn run_agent_task_outer(
 	run_id: Id,
+	task_id: Id,
 	input_idx: usize,
 	runtime: &Runtime,
 	agent: &Agent,
@@ -347,7 +355,7 @@ async fn run_agent_task_outer(
 	let hub = get_hub();
 
 	// -- Rt Step - Task Start
-	let task_id = runtime.step_task_start(run_id, input_idx).await?;
+	runtime.step_task_start(run_id, task_id).await?;
 
 	// -- prepare the scope_input
 	let input = serde_json::to_value(input)?;
@@ -377,9 +385,6 @@ async fn run_agent_task_outer(
 	}
 
 	hub.publish(format!("==== DONE (input: {label})")).await;
-
-	// -- Rt Step - Task Start
-	runtime.step_task_end(run_id, task_id).await?;
 
 	Ok(run_response)
 }
@@ -443,6 +448,7 @@ pub async fn run_command_agent_input_for_test(
 
 	run_agent_task_outer(
 		0.into(), // run_id,
+		0.into(), // task_id,
 		input_idx,
 		runtime,
 		agent,

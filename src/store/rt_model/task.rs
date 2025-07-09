@@ -44,9 +44,25 @@ pub struct Task {
 	pub label: Option<String>,
 }
 
+pub enum TaskState {
+	Waiting,
+	Running,
+	Done,
+}
+
 impl Task {
+	pub fn state(&self) -> TaskState {
+		if self.end.is_some() {
+			TaskState::Done
+		} else if self.start.is_some() {
+			TaskState::Running
+		} else {
+			TaskState::Waiting
+		}
+	}
+
 	pub fn is_done(&self) -> bool {
-		self.end.is_some()
+		matches!(self.state(), TaskState::Done)
 	}
 }
 
@@ -54,7 +70,6 @@ impl Task {
 pub struct TaskForCreate {
 	pub run_id: Id,
 	pub idx: i64,
-	pub start: UnixTimeUs,
 	pub label: Option<String>,
 }
 
@@ -178,7 +193,6 @@ mod tests {
 		let run_id = create_run(&mm, "run-1").await?;
 		let task_c = TaskForCreate {
 			run_id,
-			start: now_unix_time_us().into(),
 			idx: 1,
 			label: Some("Test Task".to_string()),
 		};
@@ -199,7 +213,6 @@ mod tests {
 		let run_id = create_run(&mm, "run-1").await?;
 		let task_c = TaskForCreate {
 			run_id,
-			start: now_unix_time_us().into(),
 			idx: 1,
 			label: Some("Test Task".to_string()),
 		};
@@ -227,7 +240,6 @@ mod tests {
 		for i in 0..3 {
 			let task_c = TaskForCreate {
 				run_id,
-				start: now_unix_time_us().into(),
 				idx: 1 + 1,
 				label: Some(format!("label-{i}")),
 			};
@@ -255,7 +267,6 @@ mod tests {
 		for i in 0..10 {
 			let task_c = TaskForCreate {
 				run_id,
-				start: now_unix_time_us().into(),
 				idx: i + 1,
 				label: Some(format!("label-{i}")),
 			};
@@ -283,7 +294,6 @@ mod tests {
 		for i in 0..3 {
 			let task_c = TaskForCreate {
 				run_id,
-				start: now_unix_time_us().into(),
 				idx: i + 1,
 				label: Some(format!("label-{i}")),
 			};

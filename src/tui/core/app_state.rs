@@ -53,6 +53,7 @@ impl AppState {
 		self.task_idx.map(|idx| idx as usize)
 	}
 
+	#[allow(unused)]
 	pub fn current_task(&self) -> Option<&Task> {
 		if let Some(idx) = self.task_idx {
 			self.tasks.get(idx as usize)

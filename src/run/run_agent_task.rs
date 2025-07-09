@@ -73,6 +73,9 @@ pub async fn run_agent_task(
 	let hub = get_hub();
 	let client = runtime.genai_client();
 
+	// -- Rt Step - Task Start
+	runtime.step_task_start(run_id, task_id).await?;
+
 	// -- Build the scope
 	// Note: Probably way to optimize the number of lua engine we create
 	//       However, nice to be they are fully scoped.
@@ -88,7 +91,7 @@ pub async fn run_agent_task(
 
 	// -- Execute data
 	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
-		// -- Rt Step - Start Dt Start
+		// -- Rt Step - Data Start
 		runtime.step_task_data_start(run_id, task_id).await?;
 
 		// -- Exec
@@ -96,7 +99,7 @@ pub async fn run_agent_task(
 		let data_res = serde_json::to_value(lua_value)?;
 
 		// -- Rt Step - Start Dt Start
-		runtime.step_task_data_end(run_id, task_id).await?;
+		runtime.step_task_data_start(run_id, task_id).await?;
 
 		// -- Post Process
 		// skip input if aipack action is sent
@@ -376,6 +379,9 @@ pub async fn run_agent_task(
 	} else {
 		ai_response.map(RunAgentInputResponse::AiReponse)
 	};
+
+	// -- Rt Step - Task End
+	runtime.step_task_end(run_id, task_id).await?;
 
 	Ok(res)
 }

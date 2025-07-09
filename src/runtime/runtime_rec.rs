@@ -108,27 +108,25 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub async fn step_task_start(&self, run_id: Id, idx: usize) -> Result<Id> {
-		// -- Create Task
-		let task_c = TaskForCreate {
-			run_id,
-			start: now_unix_time_us().into(),
-			idx: idx as i64,
-			label: None,
+	pub async fn step_task_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			start: Some(now_unix_time_us().into()),
+			..Default::default()
 		};
-		let id = TaskBmc::create(self.mm(), task_c)?;
+		TaskBmc::update(self.mm(), task_id, task_u)?;
 
 		// -- Add log line
 		self.rec_log_no_msg(
 			run_id,
-			Some(id),
+			Some(task_id),
 			Some(RunStep::TaskStart),
 			None,
 			Some(LogLevel::RunStep),
 		)
 		.await?;
 
-		Ok(id)
+		Ok(())
 	}
 
 	pub async fn step_task_data_start(&self, run_id: Id, task_id: Id) -> Result<()> {
@@ -327,7 +325,7 @@ impl Runtime {
 	}
 }
 
-/// Update model
+/// Run Create/Update model
 impl Runtime {
 	pub async fn update_run_model(&self, run_id: Id, model_name: &str) -> Result<()> {
 		let run_u = RunForUpdate {
@@ -337,6 +335,19 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		Ok(())
+	}
+}
+
+/// Task Create/Update model
+impl Runtime {
+	pub async fn create_task(&self, run_id: Id, idx: usize) -> Result<Id> {
+		let task_c = TaskForCreate {
+			run_id,
+			idx: idx as i64,
+			label: None,
+		};
+		let id = TaskBmc::create(self.mm(), task_c)?;
+		Ok(id)
 	}
 
 	pub async fn update_task_model(&self, _run_id: Id, task_id: Id, model_name: &str) -> Result<()> {

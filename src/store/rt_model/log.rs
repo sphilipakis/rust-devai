@@ -141,7 +141,6 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: num,
-			start: now_unix_time_us().into(),
 			label: Some(format!("task-{num}")),
 		};
 		Ok(TaskBmc::create(mm, task_c)?)

@@ -32,6 +32,10 @@ pub const CLR_TXT_SEL: Color = Color::Black;
 
 pub const CLR_TXT_GREEN: Color = Color::Green;
 
+pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
+pub const CLR_TXT_RUNNING: Color = Color::Blue;
+pub const CLR_TXT_DONE: Color = Color::Green;
+
 // -- Styles
 pub const STL_TXT: Style = Style::new();
 
