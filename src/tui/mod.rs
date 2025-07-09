@@ -8,7 +8,11 @@ mod support;
 mod term_reader;
 mod views;
 
-pub use core::*;
-pub use views::*;
+// -- Flatten for core::tui
+use core::*;
+use views::*;
+
+// -- Only export
+pub use core::start_tui;
 
 // endregion: --- Modules

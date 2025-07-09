@@ -6,7 +6,7 @@ use ratatui::layout::Rect;
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.
-pub struct TaskView {}
+pub struct TaskView;
 
 impl StatefulWidget for TaskView {
 	type State = AppState;

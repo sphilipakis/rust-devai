@@ -118,8 +118,11 @@ impl RunBmc {
 		base::list::<Self, _>(mm, list_options, None)
 	}
 
-	pub fn list_for_display(mm: &ModelManager) -> Result<Vec<Run>> {
-		let options = ListOptions::from_order_bys("!id");
+	pub fn list_for_display(mm: &ModelManager, limit: Option<i64>) -> Result<Vec<Run>> {
+		let mut options = ListOptions::from_order_bys("!id");
+		if let Some(limit) = limit {
+			options.limit = Some(limit);
+		}
 		Self::list(mm, Some(options))
 	}
 }

@@ -1,14 +1,23 @@
+use crate::tui::core::AppState;
 use crate::tui::styles::STL_TXT_ACTION;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Widget};
+use ratatui::widgets::{Paragraph, StatefulWidget, Widget};
 
 pub struct ActionView;
 
-impl Widget for ActionView {
-	fn render(self, area: Rect, buf: &mut Buffer) {
+impl StatefulWidget for ActionView {
+	type State = AppState;
+
+	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// Block::new().render(area, buf);
+
+		let n_label = if state.show_runs() {
+			"] Hide Runs Nav"
+		} else {
+			"] Show Runs Nav"
+		};
 
 		let line = Line::from(vec![
 			Span::raw("["),
@@ -18,8 +27,8 @@ impl Widget for ActionView {
 			Span::styled("q", STL_TXT_ACTION),
 			Span::raw("] Quit  "),
 			Span::raw("["),
-			Span::styled("a", STL_TXT_ACTION),
-			Span::raw("] Open Agent"),
+			Span::styled("n", STL_TXT_ACTION),
+			Span::raw(n_label),
 		]);
 
 		Paragraph::new(line).render(area, buf);

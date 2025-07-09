@@ -8,7 +8,7 @@ use ratatui::style::Stylize;
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget};
 
-pub struct SumView {}
+pub struct SumView;
 
 impl StatefulWidget for SumView {
 	type State = AppState;

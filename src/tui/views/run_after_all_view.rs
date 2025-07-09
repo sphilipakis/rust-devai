@@ -4,7 +4,7 @@ use ratatui::layout::Rect;
 use ratatui::widgets::{Paragraph, StatefulWidget, Widget as _};
 
 /// Placeholder view for *After All* tab.
-pub struct RunAfterAllView {}
+pub struct RunAfterAllView;
 
 impl StatefulWidget for RunAfterAllView {
 	type State = AppState;

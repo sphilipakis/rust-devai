@@ -5,21 +5,25 @@ use crate::tui::event::LastAppEvent;
 /// The global app state
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
-	pub(in crate::tui) run_idx: Option<i32>,
-	pub(in crate::tui) task_idx: Option<i32>,
+	pub(in crate::tui::core) run_idx: Option<i32>,
+	pub(in crate::tui::core) task_idx: Option<i32>,
 
 	// -- RunView
-	pub(in crate::tui) log_scroll: u16,
+	pub(in crate::tui::core) show_runs: bool,
+
+	// TaskView will read/edit
+	pub log_scroll: u16,
+	// RunMainView will clamp this one
 	pub run_tab_idx: i32,
 
 	// -- Data
 	// newest to oldest
-	pub(in crate::tui) runs: Vec<Run>,
-	pub(in crate::tui) tasks: Vec<Task>,
+	pub(in crate::tui::core) runs: Vec<Run>,
+	pub(in crate::tui::core) tasks: Vec<Task>,
 
 	// -- System & Event
-	pub(in crate::tui) mm: ModelManager,
-	pub(in crate::tui) last_app_event: LastAppEvent,
+	pub(in crate::tui::core) mm: ModelManager,
+	pub(in crate::tui::core) last_app_event: LastAppEvent,
 }
 
 /// Contrustor
@@ -30,6 +34,7 @@ impl AppState {
 			task_idx: None,
 
 			// -- RunView
+			show_runs: true,
 			log_scroll: 0,
 			// For now, use the Tasks tab ad efault
 			run_tab_idx: 1,
@@ -51,6 +56,10 @@ impl AppState {
 
 	pub fn task_idx(&self) -> Option<usize> {
 		self.task_idx.map(|idx| idx as usize)
+	}
+
+	pub fn show_runs(&self) -> bool {
+		self.show_runs
 	}
 
 	#[allow(unused)]

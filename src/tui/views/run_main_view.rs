@@ -1,13 +1,14 @@
 use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, STL_TXT_LABEL, STL_TXT_VALUE};
 use crate::tui::support::clamp_idx_in_len;
+use crate::tui::views::{RunDetailsView, RunOverviewView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Stylize as _};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 
-pub struct RunMainView {}
+pub struct RunMainView;
 
 pub enum RunTab {
 	Overview,
@@ -37,12 +38,10 @@ impl StatefulWidget for RunMainView {
 
 		match selected_tab {
 			RunTab::Overview => {
-				let v = super::RunOverviewView {};
-				v.render(tab_a, buf, state);
+				RunOverviewView.render(tab_a, buf, state);
 			}
 			RunTab::Details => {
-				let v = super::RunDetailsView {};
-				v.render(tab_a, buf, state);
+				RunDetailsView.render(tab_a, buf, state);
 			}
 		}
 	}

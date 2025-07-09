@@ -2,6 +2,7 @@
 
 mod app_state;
 mod app_state_ui;
+mod state_processor;
 mod tui_impl;
 mod tui_loop;
 

@@ -4,7 +4,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::widgets::StatefulWidget;
 
-pub struct RunsView {}
+pub struct RunsView;
 
 impl StatefulWidget for RunsView {
 	type State = AppState;
@@ -12,9 +12,9 @@ impl StatefulWidget for RunsView {
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// -- Layout Nav | Content
 		// Empty line on top
-		let [_, area] = Layout::default()
+		let [area] = Layout::default()
 			.direction(Direction::Vertical)
-			.constraints(vec![Constraint::Length(1), Constraint::Fill(1)])
+			.constraints(vec![Constraint::Fill(1)])
 			.areas(area);
 
 		let [nav_a, main_a] = Layout::default()
@@ -24,11 +24,9 @@ impl StatefulWidget for RunsView {
 			.areas(area);
 
 		// -- Render nav
-		let runs_nav_v = RunsNavView {};
-		runs_nav_v.render(nav_a, buf, state);
+		RunsNavView.render(nav_a, buf, state);
 
 		// -- Display the Content block
-		let run_main_v = RunMainView {};
-		run_main_v.render(main_a, buf, state);
+		RunMainView.render(main_a, buf, state);
 	}
 }

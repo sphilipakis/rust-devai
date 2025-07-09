@@ -8,7 +8,7 @@ use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
 
-pub struct RunsNavView {}
+pub struct RunsNavView;
 
 impl StatefulWidget for RunsNavView {
 	type State = AppState;
