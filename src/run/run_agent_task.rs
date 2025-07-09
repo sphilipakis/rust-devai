@@ -276,7 +276,7 @@ pub async fn run_agent_task(
 		// Compute the price
 		let price_usd = get_price(&chat_res);
 
-		// Rt Rec - Update Cost
+		// -- Rt Rec - Update Cost
 		if let Some(price_usd) = price_usd {
 			let _ = runtime.update_task_cost(run_id, task_id, price_usd).await;
 		}
@@ -305,6 +305,9 @@ pub async fn run_agent_task(
 			provider_model_iden: res_provider_model_iden,
 			..
 		} = chat_res;
+
+		// -- Rt Rec - Update Task Usage
+		runtime.update_task_usage(run_id, task_id, &usage).await?;
 
 		let content = content
 			.into_iter()

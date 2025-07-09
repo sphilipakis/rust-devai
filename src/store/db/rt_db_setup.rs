@@ -65,7 +65,15 @@ fn create_schema(con: &Connection) -> Result<()> {
 
 						model   TEXT,
 
-						usage BLOB,
+						-- Usage Raw
+						usage BLOB, -- jsonb, to have raw usage
+						-- Usage Values
+						tk_prompt_total             INTEGER,
+						tk_prompt_cached            INTEGER,
+						tk_prompt_cache_creation    INTEGER,
+						tk_completion_total         INTEGER,
+						tk_completion_reasoning     INTEGER,
+						
 						cost  REAL,
 
 						label  TEXT

@@ -349,8 +349,14 @@ impl Runtime {
 		Ok(())
 	}
 
+	pub async fn update_task_usage(&self, _run_id: Id, task_id: Id, usage: &genai::chat::Usage) -> Result<()> {
+		let task_u = TaskForUpdate::from_usage(usage);
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+		Ok(())
+	}
+
 	pub async fn update_task_cost(&self, run_id: Id, task_id: Id, cost: f64) -> Result<()> {
-		// -- Add the cost to the task_u
+		// -- Update Task
 		let task_u = TaskForUpdate {
 			cost: Some(cost),
 			..Default::default()

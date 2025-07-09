@@ -4,7 +4,6 @@ use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
 use uuid::Uuid;
-use value_ext::JsonValueExt;
 
 // region:    --- Types
 
@@ -33,9 +32,12 @@ pub struct Task {
 
 	pub model: Option<String>,
 
-	// -- Usage
-	#[field(cast_as = "json")]
-	pub usage: Option<serde_json::Value>,
+	// -- Usage values
+	pub tk_prompt_total: Option<i64>,
+	pub tk_prompt_cached: Option<i64>,
+	pub tk_prompt_cache_creation: Option<i64>,
+	pub tk_completion_total: Option<i64>,
+	pub tk_completion_reasoning: Option<i64>,
 
 	pub cost: Option<f64>,
 
@@ -46,10 +48,6 @@ impl Task {
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
 	}
-
-	// pub fn tokens_prompt_total(&self) -> Option<i64> {
-	// 	self.usage?.x_get_i64("/name_or_pointer")
-	// }
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
@@ -74,11 +72,35 @@ pub struct TaskForUpdate {
 
 	pub model: Option<String>,
 
-	#[field(cast_as = "jsonb")]
-	pub usage: Option<serde_json::Value>,
+	// -- Usage values
+	pub tk_prompt_total: Option<i32>,
+	pub tk_prompt_cached: Option<i32>,
+	pub tk_prompt_cache_creation: Option<i32>,
+	pub tk_completion_total: Option<i32>,
+	pub tk_completion_reasoning: Option<i32>,
+
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
+}
+
+impl TaskForUpdate {
+	pub fn from_usage(usage: &genai::chat::Usage) -> Self {
+		let tk_prompt_total = usage.prompt_tokens;
+		let tk_prompt_cached = usage.prompt_tokens_details.as_ref().and_then(|d| d.cached_tokens);
+		let tk_prompt_cache_creation = usage.prompt_tokens_details.as_ref().and_then(|d| d.cache_creation_tokens);
+		let tk_completion_total = usage.completion_tokens;
+		let tk_completion_reasoning = usage.completion_tokens_details.as_ref().and_then(|d| d.reasoning_tokens);
+
+		Self {
+			tk_prompt_total,
+			tk_prompt_cached,
+			tk_prompt_cache_creation,
+			tk_completion_total,
+			tk_completion_reasoning,
+			..Default::default()
+		}
+	}
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -137,7 +159,6 @@ mod tests {
 	use crate::store::rt_model::{RunBmc, RunForCreate};
 	use crate::support::time::now_unix_time_us;
 	use modql::filter::OrderBy;
-	use serde_json::json;
 
 	// region:    --- Support
 	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
@@ -187,36 +208,6 @@ mod tests {
 		// -- Exec
 		let task_u = TaskForUpdate {
 			start: Some(now_unix_time_us().into()),
-			..Default::default()
-		};
-		TaskBmc::update(&mm, id, task_u)?;
-
-		// -- Check
-		let task = TaskBmc::get(&mm, id)?;
-		assert!(task.start.is_some());
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_task_bmc_update_usage() -> Result<()> {
-		// -- Fixture
-		let mm = ModelManager::new().await?;
-		let run_id = create_run(&mm, "run-1").await?;
-		let task_c = TaskForCreate {
-			run_id,
-			start: now_unix_time_us().into(),
-			idx: 1,
-			label: Some("Test Task".to_string()),
-		};
-		let id = TaskBmc::create(&mm, task_c)?;
-
-		// -- Exec
-		let usage = json!({
-			"name-01": "value-01"
-		});
-		let task_u = TaskForUpdate {
-			usage: Some(usage),
 			..Default::default()
 		};
 		TaskBmc::update(&mm, id, task_u)?;
