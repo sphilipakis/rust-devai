@@ -1,6 +1,12 @@
 #![allow(unused)]
 use ratatui::style::{Color, Style};
 
+// - Ratatui site: https://ratatui.rs/
+//     - Paragraph / Text - https://ratatui.rs/recipes/widgets/paragraph/
+//     - Block - https://ratatui.rs/recipes/widgets/block/
+//
+// - Terminal colors: https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+
 // -- Bkg Colors
 pub const CLR_BKG_GRAY_DARK: Color = Color::Indexed(236);
 pub const CLR_BKG_GRAY_DARKER: Color = Color::Indexed(234);
@@ -9,6 +15,8 @@ pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 
 pub const CLR_BKG_ACT: Color = Color::Indexed(236);
 pub const CLR_BKG_SEL: Color = Color::Indexed(15);
+
+pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
 
 // -- Txt Colors
 

@@ -1,13 +1,20 @@
 use crate::store::rt_model::LogBmc;
 use crate::tui::AppState;
-use crate::tui::styles::CLR_BKG_GRAY_DARKER;
-use crate::tui::support::RectExt;
+use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL};
+use crate::tui::support::{RectExt, clamp_idx_in_len};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Stylize as _;
-use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+use ratatui::style::{Color, Stylize as _};
+use ratatui::text::Line;
+use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Tabs, Widget as _};
 
 pub struct RunMainView {}
+
+pub enum RunTab {
+	Tasks,
+	BeforeAll,
+	AfterAll,
+}
 
 impl StatefulWidget for RunMainView {
 	type State = AppState;
@@ -16,12 +23,20 @@ impl StatefulWidget for RunMainView {
 		Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Layout Header | Logs
-		let [header_a, logs_a] = Layout::default()
+		let [header_a, _space_1, tabs_a, logs_a] = Layout::default()
 			.direction(Direction::Vertical)
-			.constraints(vec![Constraint::Length(2), Constraint::Fill(1)])
+			.constraints(vec![
+				Constraint::Length(2),
+				Constraint::Length(1),
+				Constraint::Length(1),
+				Constraint::Fill(1),
+			])
 			.areas(area);
 
 		render_top(header_a, buf, state);
+
+		render_tabs(tabs_a, buf, state);
+
 		render_logs(logs_a, buf, state);
 	}
 }
@@ -87,6 +102,35 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	Paragraph::new("Cost:").right_aligned().render(l2_label_2, buf);
 	Paragraph::new(cost_txt).render(l2_val_2, buf);
+}
+
+fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
+	let highlight_style = (Color::default(), CLR_BKG_SEL);
+
+	let titles = vec![
+		//
+		Line::raw(" Tasks "),
+		Line::raw(" Before All "),
+		Line::raw(" After All "),
+	];
+
+	// Clamp the index
+	// NOTE: Here this ui component clip the value to the possible values
+	state.run_tab_idx = clamp_idx_in_len(state.run_tab_idx, titles.len());
+
+	Tabs::new(titles)
+		.highlight_style(highlight_style)
+		.select(state.run_tab_idx as usize)
+		.padding("", "")
+		.divider("")
+		.render(area, buf);
+
+	match state.run_tab_idx {
+		0 => RunTab::Tasks,
+		1 => RunTab::BeforeAll,
+		2 => RunTab::AfterAll,
+		_ => RunTab::Tasks, // Fallback
+	}
 }
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {

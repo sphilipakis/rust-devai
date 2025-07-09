@@ -11,6 +11,7 @@ use crate::tui::MainView;
 use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::event::ActionEvent;
 use crate::tui::event::{AppEvent, LastAppEvent};
+use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
@@ -86,16 +87,25 @@ fn process_app_state(state: &mut AppState) {
 		0
 	};
 
-	let runs_len = state.runs().len();
-	state.run_idx = match state.run_idx {
-		None => Some(0),
-		Some(n) => Some((n + offset).max(0).min(runs_len as i32 - 1)),
-	};
+	// -- Clamp the run_idx with the runs_lent
+	state.run_idx = offset_and_clamp_option_idx_in_len(&state.run_idx, offset, state.runs().len());
 
 	// -- if run changed, reset log scroll
 	if state.run_idx != prev_run_idx {
 		state.log_scroll = 0;
 	}
+
+	// -- process the Run Tabs idx
+	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
+		match code {
+			KeyCode::Char('j') => -1,
+			KeyCode::Char('l') => 1,
+			_ => 0,
+		}
+	} else {
+		0
+	};
+	state.run_tab_idx += offset;
 
 	// -- Process log scroll (keyboard & mouse)
 	if let Some(code) = state.last_app_event().as_key_code() {

@@ -6,13 +6,17 @@ use crate::tui::event::LastAppEvent;
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
 	pub(in crate::tui) run_idx: Option<i32>,
-	pub(in crate::tui) log_scroll: u16,
 
+	// -- RunView
+	pub(in crate::tui) log_scroll: u16,
+	pub run_tab_idx: i32,
+
+	// -- Data
 	// newest to oldest
 	pub(in crate::tui) runs: Vec<Run>,
-
 	pub(in crate::tui) tasks: Vec<Task>,
 
+	// -- System & Event
 	pub(in crate::tui) mm: ModelManager,
 	pub(in crate::tui) last_app_event: LastAppEvent,
 }
@@ -22,7 +26,12 @@ impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
 		Self {
 			run_idx: None,
+
+			// -- RunView
 			log_scroll: 0,
+			run_tab_idx: 0,
+
+			// Data
 			runs: Vec::new(),
 			tasks: Vec::new(),
 			mm,
