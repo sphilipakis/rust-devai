@@ -41,6 +41,12 @@ fn create_schema(con: &Connection) -> Result<()> {
 				) STRICT",
 		(), // empty list of parameters.
 	)?;
+	con.execute(
+		"
+		CREATE INDEX IF NOT EXISTS idx_run_uid ON run(uid);
+		",
+		(),
+	)?;
 
 	// -- Create the Task table
 	con.execute(
@@ -82,6 +88,12 @@ fn create_schema(con: &Connection) -> Result<()> {
 				) STRICT",
 		(), // empty list of parameters.
 	)?;
+	con.execute(
+		"
+		CREATE INDEX IF NOT EXISTS idx_task_uid ON task(uid);
+		",
+		(),
+	)?;
 
 	// -- Create the Log message
 	con.execute(
@@ -105,6 +117,12 @@ fn create_schema(con: &Connection) -> Result<()> {
 
 				) STRICT",
 		(), // empty list of parameters.
+	)?;
+	con.execute(
+		"
+		CREATE INDEX IF NOT EXISTS idx_log_uid ON log(uid);
+		",
+		(),
 	)?;
 
 	Ok(())
