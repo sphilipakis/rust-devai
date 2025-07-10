@@ -50,6 +50,8 @@ pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(Color::Blue);
 pub const STL_TXT_ACTION: Style = Style::new().fg(Color::Blue);
 
+pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(CLR_TXT_SEL);
+
 // -- TABS
 pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;
 pub fn stl_tab_dft() -> Style {

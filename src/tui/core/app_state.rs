@@ -18,8 +18,8 @@ pub struct AppState {
 	// TaskView will read/edit
 	pub log_scroll: u16,
 	pub(in crate::tui::core) task_idx: Option<i32>,
-	pub(in crate::tui::core) before_all_sel: bool,
-	pub(in crate::tui::core) after_all_sel: bool,
+	pub(in crate::tui::core) before_all_show: bool,
+	pub(in crate::tui::core) after_all_show: bool,
 
 	// -- Data
 	// newest to oldest
@@ -49,8 +49,8 @@ impl AppState {
 			// -- RunDetailsView
 			task_idx: None,
 			log_scroll: 0,
-			before_all_sel: false,
-			after_all_sel: false,
+			before_all_show: false,
+			after_all_show: false,
 
 			// -- Data
 			runs: Vec::new(),
@@ -110,13 +110,13 @@ impl AppState {
 	}
 
 	/// Returns `true` when the **before-all** pseudo-task is selected.
-	pub fn before_all_sel(&self) -> bool {
-		self.before_all_sel
+	pub fn before_all_show(&self) -> bool {
+		self.before_all_show
 	}
 
 	/// Returns `true` when the **after-all** pseudo-task is selected.
-	pub fn after_all_sel(&self) -> bool {
-		self.after_all_sel
+	pub fn after_all_show(&self) -> bool {
+		self.after_all_show
 	}
 }
 

@@ -48,11 +48,18 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.areas(area);
 
 	// region:    --- Render Before All
+	let before_style = if state.before_all_show() {
+		styles::STL_NAV_ITEM_HIGHLIGHT
+	} else {
+		Style::default()
+	};
+	let before_line = Line::default()
+		.spans(vec![
+			// ..
+			Span::raw(" Before All"),
+		])
+		.style(before_style);
 
-	let before_line = Line::default().spans(vec![
-		// ..
-		Span::raw(" Before All"),
-	]);
 	before_line.render(before_a, buf);
 
 	// endregion: --- Render Before All
@@ -96,7 +103,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Create List Widget & State
 	let list_w = List::new(items)
-		.highlight_style(Style::default().bg(styles::CLR_BKG_SEL).fg(styles::CLR_TXT_SEL))
+		.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 		.highlight_spacing(HighlightSpacing::Always);
 
 	let mut list_s = ListState::default();
@@ -108,11 +115,18 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// region:    --- Render After All
 
-	let before_line = Line::default().spans(vec![
-		// ..
-		Span::raw(" After All"),
-	]);
-	before_line.render(after_a, buf);
+	let after_style = if state.after_all_show() {
+		styles::STL_NAV_ITEM_HIGHLIGHT
+	} else {
+		Style::default()
+	};
+	let after_line = Line::default()
+		.spans(vec![
+			// ..
+			Span::raw(" After All"),
+		])
+		.style(after_style);
+	after_line.render(after_a, buf);
 
 	// endregion: --- Render After All
 }
