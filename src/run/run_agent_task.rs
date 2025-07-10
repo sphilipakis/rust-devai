@@ -76,7 +76,7 @@ pub async fn run_agent_task(
 	// -- Build the scope
 	// Note: Probably way to optimize the number of lua engine we create
 	//       However, nice to be they are fully scoped.
-	let lua_engine = runtime.new_lua_engine_with_ctx(literals)?;
+	let lua_engine = runtime.new_lua_engine_with_ctx(literals, Some(run_id), Some(task_id))?;
 
 	let lua_scope = lua_engine.create_table()?;
 	lua_scope.set("input", lua_engine.serde_to_lua_value(input.clone())?)?;
@@ -357,7 +357,7 @@ pub async fn run_agent_task(
 		// -- Rt Step - start output
 		runtime.step_task_output_start(run_id, task_id).await?;
 
-		let lua_engine = runtime.new_lua_engine_with_ctx(literals)?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(literals, Some(run_id), Some(task_id))?;
 
 		let lua_scope = lua_engine.create_table()?;
 		lua_scope.set("input", lua_engine.serde_to_lua_value(input)?)?;

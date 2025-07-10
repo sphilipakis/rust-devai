@@ -51,7 +51,7 @@ pub async fn run_agent(
 		runtime.step_ba_start(run_id).await?;
 
 		// -- Setup the Lua engine
-		let lua_engine = runtime.new_lua_engine_with_ctx(&literals)?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, Some(run_id), None)?;
 		let lua_scope = lua_engine.create_table()?;
 		let lua_inputs = inputs.clone().map(Value::Array).unwrap_or_default();
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(lua_inputs)?)?;
@@ -311,7 +311,7 @@ pub async fn run_agent(
 			Value::Null
 		};
 
-		let lua_engine = runtime.new_lua_engine_with_ctx(&literals)?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, Some(run_id), None)?;
 		let lua_scope = lua_engine.create_table()?;
 		let inputs = Value::Array(inputs);
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(inputs)?)?;

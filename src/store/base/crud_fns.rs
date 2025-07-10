@@ -10,6 +10,7 @@ use modql::field::HasSqliteFields;
 use modql::field::SqliteFields;
 use modql::filter::ListOptions;
 use rusqlite::ToSql;
+use uuid::Uuid;
 
 pub fn create<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
 where
@@ -76,6 +77,19 @@ where
 	let entity: E = db.fetch_first(&sql, [(&id)])?.ok_or("Cannot get entity")?;
 
 	Ok(entity)
+}
+
+pub fn get_uid<MC>(mm: &ModelManager, id: Id) -> Result<Uuid>
+where
+	MC: DbBmc,
+{
+	let sql = format!("SELECT uid FROM {} WHERE id = ? LIMIT 1", MC::table_ref());
+
+	// -- Exec query
+	let db = mm.db();
+	let uid: Uuid = db.exec_returning_as(&sql, (id,))?;
+
+	Ok(uid)
 }
 
 pub fn list<MC, E>(

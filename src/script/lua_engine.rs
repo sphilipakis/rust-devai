@@ -5,6 +5,7 @@ use crate::runtime::Runtime;
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use mlua::{IntoLua, Lua, Table, Value};
+use uuid::Uuid;
 
 pub struct LuaEngine {
 	lua: Lua,
@@ -39,12 +40,34 @@ impl LuaEngine {
 		Ok(engine)
 	}
 
-	pub fn new_with_ctx(runtime: Runtime, ctx: &Literals) -> Result<Self> {
+	pub fn new_with_ctx(
+		runtime: Runtime,
+		ctx: &Literals,
+		run_uid: Option<Uuid>,
+		task_uid: Option<Uuid>,
+	) -> Result<Self> {
 		let engine = LuaEngine::new(runtime)?;
 		let lua = &engine.lua;
-		let globals = lua.globals();
+
+		// -- Create and Augment CTX with the eventual uids
 		let ctx = ctx.to_lua(&engine)?;
+		let ctx = if let Value::Table(ctx) = ctx {
+			if let Some(run_uid) = run_uid {
+				ctx.set("RUN_UID", run_uid.to_string())?;
+			}
+			if let Some(task_uid) = task_uid {
+				ctx.set("TASK_UID", task_uid.to_string())?;
+			}
+			Value::Table(ctx)
+		} else {
+			ctx
+		};
+
+		// -- Set CTX as global
+		// TODO: Might need to become USERMETA data to avoid mutability
+		let globals = lua.globals();
 		globals.set("CTX", ctx)?;
+
 		Ok(engine)
 	}
 }
