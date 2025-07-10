@@ -3,7 +3,7 @@ use crate::tui::views::{RunDetailsView, RunOverviewView};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Stylize as _};
+use ratatui::style::Stylize as _;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 
@@ -21,26 +21,29 @@ impl StatefulWidget for RunMainView {
 		Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Layout Header | Logs
-		let [header_a, _space_1, tabs_a, tab_a] = Layout::default()
+		let [header_a, _space_1, tabs_a, tabs_line, tab_content_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
-				Constraint::Length(2),
-				Constraint::Length(1),
-				Constraint::Length(1),
-				Constraint::Fill(1),
+				Constraint::Length(2), // header
+				Constraint::Max(1),    // space_1
+				Constraint::Length(1), // tabs
+				Constraint::Max(1),    // tab_line
+				Constraint::Fill(1),   // tab_content
 			])
 			.areas(area);
 
+		// -- render top
 		render_top(header_a, buf, state);
 
-		let selected_tab = render_tabs(tabs_a, buf, state);
+		// --
+		let selected_tab = render_tabs(tabs_a, tabs_line, buf, state);
 
 		match selected_tab {
 			RunTab::Overview => {
-				RunOverviewView.render(tab_a, buf, state);
+				RunOverviewView.render(tab_content_a, buf, state);
 			}
 			RunTab::Details => {
-				RunDetailsView.render(tab_a, buf, state);
+				RunDetailsView.render(tab_content_a, buf, state);
 			}
 		}
 	}
@@ -140,8 +143,11 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.render(l2_val_3, buf);
 }
 
-fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
-	let style = (Color::default(), styles::CLR_BKG_GRAY_DARK);
+fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
+	let style = styles::stl_tab_dft();
+	let highlight_style = styles::stl_tab_act();
+
+	// -- Render tabs
 	let titles = vec![
 		//
 		Line::styled(" Overview ", style),
@@ -151,15 +157,20 @@ fn render_tabs(area: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
 	// Clamp the index
 	state.run_tab_idx = clamp_idx_in_len(state.run_tab_idx, titles.len());
 
-	let highlight_style = (Color::default(), styles::CLR_BKG_SEL);
-
 	Tabs::new(titles)
 		.highlight_style(highlight_style)
 		.select(state.run_tab_idx as usize)
 		.padding(" ", "")
 		.divider("")
-		.render(area, buf);
+		.render(tabs_a, buf);
 
+	// -- Render Line
+	// Trick to have a single line of tab active bkg color
+	let repeated = "▔".repeat(tabs_line_a.width as usize);
+	let line = Line::default().spans(vec![Span::raw(repeated)]).fg(styles::CLR_BKG_TAB_ACT);
+	line.render(tabs_line_a, buf);
+
+	// - Return tab selected
 	match state.run_tab_idx {
 		0 => RunTab::Overview,
 		1 => RunTab::Details,

@@ -1,5 +1,5 @@
 #![allow(unused)]
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Style, Stylize};
 
 // - Ratatui site: https://ratatui.rs/
 //     - Paragraph / Text - https://ratatui.rs/recipes/widgets/paragraph/
@@ -49,3 +49,13 @@ pub const STL_TXT_VALUE: Style = Style::new().fg(CLR_TXT_WHITE);
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(Color::Blue);
 pub const STL_TXT_ACTION: Style = Style::new().fg(Color::Blue);
+
+// -- TABS
+pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;
+pub fn stl_tab_dft() -> Style {
+	Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_300)
+}
+
+pub fn stl_tab_act() -> Style {
+	Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_WHITE).bold()
+}

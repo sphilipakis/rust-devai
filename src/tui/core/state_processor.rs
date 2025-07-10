@@ -49,7 +49,8 @@ pub fn process_app_state(state: &mut AppState) {
 		state.task_idx = if !state.tasks.is_empty() { Some(0) } else { None };
 	}
 
-	// -- Process Task idx with 'i' and 'k'
+	// -- Process Run Task idx with 'i' and 'k'
+	let tasks = state.tasks();
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
 		match code {
 			KeyCode::Char('i') => -1,
@@ -59,7 +60,7 @@ pub fn process_app_state(state: &mut AppState) {
 	} else {
 		0
 	};
-	state.task_idx = offset_and_clamp_option_idx_in_len(&state.task_idx, offset, state.tasks().len());
+	state.task_idx = offset_and_clamp_option_idx_in_len(&state.task_idx, offset, tasks.len());
 
 	// -- process the Run Tabs idx
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {

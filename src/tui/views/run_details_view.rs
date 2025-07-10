@@ -1,6 +1,6 @@
 use crate::store::rt_model::TaskState;
 use crate::tui::styles;
-use crate::tui::support::{RectExt, num_pad_for_len};
+use crate::tui::support::num_pad_for_len;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -33,7 +33,40 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Render background
 	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
-	// -- Create Items
+	// -- Layout before_all | Logs
+	let [before_a, _gap_1, tasks_label_a, tasks_a, _gap_2, after_a, _margin_bottom] = Layout::default()
+		.direction(Direction::Vertical)
+		.constraints(vec![
+			Constraint::Length(1), // before
+			Constraint::Length(1), // _gap_1
+			Constraint::Length(1), // tasks label
+			Constraint::Fill(1),   // tasks list
+			Constraint::Length(1), // _gap_2
+			Constraint::Length(1), // after
+			Constraint::Length(1), // _ (margin bottom)
+		])
+		.areas(area);
+
+	// region:    --- Render Before All
+
+	let before_line = Line::default().spans(vec![
+		// ..
+		Span::raw(" Before All"),
+	]);
+	before_line.render(before_a, buf);
+
+	// endregion: --- Render Before All
+
+	// region:    --- Render Tasks Label
+	let before_line = Line::default().spans(vec![
+		// ..
+		Span::raw(" Tasks:"),
+	]);
+	before_line.style(styles::STL_TXT_LABEL).render(tasks_label_a, buf);
+	// endregion: --- Render Tasks Label
+
+	// region:    --- Render Tasks
+
 	let tasks = state.tasks();
 	let tasks_len = tasks.len();
 	let items: Vec<ListItem> = tasks
@@ -69,5 +102,17 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let mut list_s = ListState::default();
 	list_s.select(state.task_idx());
 
-	StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
+	StatefulWidget::render(list_w, tasks_a, buf, &mut list_s);
+
+	// endregion: --- Render Tasks
+
+	// region:    --- Render After All
+
+	let before_line = Line::default().spans(vec![
+		// ..
+		Span::raw(" After All"),
+	]);
+	before_line.render(after_a, buf);
+
+	// endregion: --- Render After All
 }
