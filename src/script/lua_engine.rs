@@ -6,7 +6,6 @@ use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use crate::store::rt_model::RuntimeCtx;
 use mlua::{IntoLua, Lua, Table, Value};
-use uuid::Uuid;
 
 pub struct LuaEngine {
 	lua: Lua,
@@ -41,23 +40,21 @@ impl LuaEngine {
 		Ok(engine)
 	}
 
-	pub fn new_with_ctx(
-		runtime: Runtime,
-		ctx: &Literals,
-		run_uid: Option<Uuid>,
-		task_uid: Option<Uuid>,
-	) -> Result<Self> {
+	pub fn new_with_ctx(runtime: Runtime, ctx: &Literals, rt_ctx: RuntimeCtx) -> Result<Self> {
 		let engine = LuaEngine::new(runtime)?;
 		let lua = &engine.lua;
 
 		// -- Create and Augment CTX with the eventual uids
 		let ctx = ctx.to_lua(&engine)?;
 		let ctx = if let Value::Table(ctx) = ctx {
-			if let Some(run_uid) = run_uid {
+			if let Some(run_uid) = rt_ctx.run_uid() {
 				ctx.set("RUN_UID", run_uid.to_string())?;
 			}
-			if let Some(task_uid) = task_uid {
+			if let Some(task_uid) = rt_ctx.task_uid() {
 				ctx.set("TASK_UID", task_uid.to_string())?;
+			}
+			if let Some(stage) = rt_ctx.stage() {
+				ctx.set("STAGE", stage.to_string())?;
 			}
 			Value::Table(ctx)
 		} else {

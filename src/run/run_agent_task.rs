@@ -7,8 +7,8 @@ use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
-use crate::store::Id;
-use crate::store::rt_model::LogKing;
+use crate::store::rt_model::{LogKing, RuntimeCtx};
+use crate::store::{Id, Stage};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
 use genai::ModelIden;
@@ -73,10 +73,13 @@ pub async fn run_agent_task(
 	let hub = get_hub();
 	let client = runtime.genai_client();
 
+	// -- Build Base Rt Context
+	let rt_ctx = RuntimeCtx::from_run_task_ids(runtime, Some(run_id), Some(task_id))?;
+
 	// -- Build the scope
 	// Note: Probably way to optimize the number of lua engine we create
 	//       However, nice to be they are fully scoped.
-	let lua_engine = runtime.new_lua_engine_with_ctx(literals, Some(run_id), Some(task_id))?;
+	let lua_engine = runtime.new_lua_engine_with_ctx(literals, rt_ctx.with_stage(Stage::Data))?;
 
 	let lua_scope = lua_engine.create_table()?;
 	lua_scope.set("input", lua_engine.serde_to_lua_value(input.clone())?)?;
@@ -357,8 +360,10 @@ pub async fn run_agent_task(
 		// -- Rt Step - start output
 		runtime.step_task_output_start(run_id, task_id).await?;
 
-		let lua_engine = runtime.new_lua_engine_with_ctx(literals, Some(run_id), Some(task_id))?;
+		// -- Create the Output Lua Engine
+		let lua_engine = runtime.new_lua_engine_with_ctx(literals, rt_ctx.with_stage(Stage::Output))?;
 
+		// -- Create the scope
 		let lua_scope = lua_engine.create_table()?;
 		lua_scope.set("input", lua_engine.serde_to_lua_value(input)?)?;
 		lua_scope.set("data", lua_engine.serde_to_lua_value(data)?)?;

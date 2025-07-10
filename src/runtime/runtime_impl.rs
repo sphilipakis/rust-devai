@@ -6,9 +6,8 @@ use crate::run::{Literals, new_genai_client};
 use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::script::LuaEngine;
-use crate::store::base::DbBmc;
-use crate::store::rt_model::{RunBmc, TaskBmc};
-use crate::store::{Id, ModelManager};
+use crate::store::ModelManager;
+use crate::store::rt_model::RuntimeCtx;
 use genai::Client;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -70,16 +69,8 @@ impl Runtime {
 /// NOTE: For now, we do not keep any Lau engine in the Runtime, but just create new ones.
 ///       Later, we might have an optmized reuse strategy of lua engines (but need to be cautious as not multi-threaded)
 impl Runtime {
-	pub fn new_lua_engine_with_ctx(
-		&self,
-		ctx: &Literals,
-		run_id: Option<Id>,
-		task_id: Option<Id>,
-	) -> Result<LuaEngine> {
-		let run_uid = run_id.map(|run_id| RunBmc::get_uid(self.mm(), run_id)).transpose()?;
-		let task_uid = task_id.map(|task_id| TaskBmc::get_uid(self.mm(), task_id)).transpose()?;
-
-		LuaEngine::new_with_ctx(self.clone(), ctx, run_uid, task_uid)
+	pub fn new_lua_engine_with_ctx(&self, ctx: &Literals, rt_ctx: RuntimeCtx) -> Result<LuaEngine> {
+		LuaEngine::new_with_ctx(self.clone(), ctx, rt_ctx)
 	}
 
 	#[cfg(test)]
@@ -90,7 +81,9 @@ impl Runtime {
 
 /// Getters
 impl Runtime {
-	pub(super) fn mm(&self) -> &ModelManager {
+	// Probably need to make it more private
+	// But used in RuntimeContext (probably need to move RuntimeContext to runtime::)
+	pub fn mm(&self) -> &ModelManager {
 		&self.inner.mm
 	}
 

@@ -6,8 +6,8 @@ use crate::run::literals::Literals;
 use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
-use crate::store::Id;
-use crate::store::rt_model::LogKing;
+use crate::store::rt_model::{LogKing, RuntimeCtx};
+use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -41,6 +41,9 @@ pub async fn run_agent(
 	// -- Rt Step - Start Run
 	let run_id = runtime.step_start(agent.name(), &agent_path).await?;
 
+	// -- Build base Rt Ctx
+	let rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
+
 	// -- Run the before all
 	let BeforeAllResponse {
 		inputs,
@@ -51,7 +54,7 @@ pub async fn run_agent(
 		runtime.step_ba_start(run_id).await?;
 
 		// -- Setup the Lua engine
-		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, Some(run_id), None)?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, rt_ctx.with_stage(Stage::BeforeAll))?;
 		let lua_scope = lua_engine.create_table()?;
 		let lua_inputs = inputs.clone().map(Value::Array).unwrap_or_default();
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(lua_inputs)?)?;
@@ -311,7 +314,7 @@ pub async fn run_agent(
 			Value::Null
 		};
 
-		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, Some(run_id), None)?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, rt_ctx.with_stage(Stage::AfterAll))?;
 		let lua_scope = lua_engine.create_table()?;
 		let inputs = Value::Array(inputs);
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(inputs)?)?;

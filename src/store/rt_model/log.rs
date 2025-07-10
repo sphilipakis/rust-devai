@@ -148,7 +148,7 @@ impl LogBmc {
 			task_id,
 			kind: Some(kind),
 			step: None,
-			stage: None, // for now
+			stage: rt_ctx.stage(),
 			message: Some(msg.into()),
 		};
 		let id = LogBmc::create(mm, log_c)?;

@@ -1,8 +1,9 @@
+use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::store::Result;
 use crate::store::base::DbBmc as _;
 use crate::store::rt_model::{RunBmc, TaskBmc};
 use crate::store::{Id, ModelManager};
+use crate::store::{Result, Stage};
 use mlua::FromLua;
 use uuid::Uuid;
 
@@ -16,6 +17,7 @@ use uuid::Uuid;
 pub struct RuntimeCtx {
 	run_uid: Option<Uuid>,
 	task_uid: Option<Uuid>,
+	stage: Option<Stage>,
 }
 
 #[allow(unused)]
@@ -27,11 +29,45 @@ impl RuntimeCtx {
 	pub fn task_uid(&self) -> Option<Uuid> {
 		self.task_uid
 	}
+
+	pub fn stage(&self) -> Option<Stage> {
+		self.stage
+	}
+}
+
+/// Builder with_, ...
+impl RuntimeCtx {
+	pub fn with_stage(&self, stage: Stage) -> Self {
+		let mut ctx = self.clone();
+		ctx.stage = Some(stage);
+		ctx
+	}
 }
 
 // region:    --- Model Related
 
 impl RuntimeCtx {
+	pub fn from_run_id(runtime: &Runtime, run_id: Id) -> Result<Self> {
+		let mm = runtime.mm();
+		let run_uid = RunBmc::get_uid(mm, run_id)?;
+		Ok(RuntimeCtx {
+			run_uid: Some(run_uid),
+			task_uid: None,
+			stage: None,
+		})
+	}
+
+	pub fn from_run_task_ids(runtime: &Runtime, run_id: Option<Id>, task_id: Option<Id>) -> Result<Self> {
+		let mm = runtime.mm();
+		let run_uid = run_id.map(|run_id| RunBmc::get_uid(mm, run_id)).transpose()?;
+		let task_uid = task_id.map(|task_id| TaskBmc::get_uid(mm, task_id)).transpose()?;
+		Ok(RuntimeCtx {
+			run_uid,
+			task_uid,
+			stage: None,
+		})
+	}
+
 	pub fn get_run_id(&self, mm: &ModelManager) -> Result<Option<Id>> {
 		let id = self.run_uid.map(|v| RunBmc::get_id_for_uid(mm, v)).transpose()?;
 		Ok(id)
@@ -63,7 +99,13 @@ impl FromLua for RuntimeCtx {
 	fn from_lua(value: mlua::Value, _lua: &mlua::Lua) -> mlua::Result<Self> {
 		let run_uid = value.x_get_string("RUN_UID").and_then(|s| Uuid::parse_str(&s).ok());
 		let task_uid = value.x_get_string("TASK_UID").and_then(|s| Uuid::parse_str(&s).ok());
-		Ok(RuntimeCtx { run_uid, task_uid })
+		let stage = value.x_get_string("STAGE").and_then(|s| Stage::from_str(&s));
+
+		Ok(RuntimeCtx {
+			run_uid,
+			task_uid,
+			stage,
+		})
 	}
 }
 
