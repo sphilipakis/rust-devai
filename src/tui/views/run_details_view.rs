@@ -52,8 +52,9 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			};
 
 			let line = Line::from(vec![
+				Span::raw(" "),
 				Span::styled(mark_txt, mark_style),
-				Span::styled(" ", Style::default()),
+				Span::raw(" "),
 				Span::styled(label, styles::STL_TXT),
 			]);
 			ListItem::new(line)

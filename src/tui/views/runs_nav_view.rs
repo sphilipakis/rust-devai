@@ -53,8 +53,9 @@ impl StatefulWidget for RunsNavView {
 				// TODO: need to try to avoid clone
 				let label = run.label.clone().unwrap_or(label);
 				let line = Line::from(vec![
+					Span::raw(" "),
 					Span::styled(mark_txt, Style::default().fg(mark_color)),
-					Span::styled(" ", Style::default()),
+					Span::raw(" "),
 					Span::styled(label, styles::STL_TXT),
 				]);
 				ListItem::new(line)
