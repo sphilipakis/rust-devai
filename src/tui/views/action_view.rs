@@ -1,5 +1,5 @@
 use crate::tui::core::AppState;
-use crate::tui::styles::STL_TXT_ACTION;
+use crate::tui::styles;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
@@ -21,13 +21,13 @@ impl StatefulWidget for ActionView {
 
 		let line = Line::from(vec![
 			Span::raw("["),
-			Span::styled("r", STL_TXT_ACTION),
+			Span::styled("r", styles::STL_TXT_ACTION),
 			Span::raw("] Replay  "),
 			Span::raw("["),
-			Span::styled("q", STL_TXT_ACTION),
+			Span::styled("q", styles::STL_TXT_ACTION),
 			Span::raw("] Quit  "),
 			Span::raw("["),
-			Span::styled("n", STL_TXT_ACTION),
+			Span::styled("n", styles::STL_TXT_ACTION),
 			Span::raw(n_label),
 		]);
 

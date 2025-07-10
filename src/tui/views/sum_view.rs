@@ -1,5 +1,4 @@
 use crate::support::text::{format_duration_us, format_float};
-use crate::tui::styles::{CLR_BKG_ACT, CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACT};
 use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -27,7 +26,7 @@ impl StatefulWidget for SumView {
 }
 
 fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
-	Block::new().bg(CLR_BKG_ACT).render(area, buf);
+	Block::new().bg(styles::CLR_BKG_ACT).render(area, buf);
 
 	let [status_a, metrics_a] = Layout::default()
 		.direction(Direction::Horizontal)
@@ -70,15 +69,18 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 
 	// Tasks
 	let mut line_2 = Line::from(vec![
-		Span::styled("  Tasks: ", STL_TXT_ACT),
-		Span::styled(format!("{done_count}"), STL_TXT_ACT.green().bold()),
-		Span::styled("/", STL_TXT_ACT),
-		Span::styled(format!("{total_tasks}"), STL_TXT_ACT.bold()),
+		Span::styled("  Tasks: ", styles::STL_TXT_ACT),
+		Span::styled(format!("{done_count}"), styles::STL_TXT_ACT.green().bold()),
+		Span::styled("/", styles::STL_TXT_ACT),
+		Span::styled(format!("{total_tasks}"), styles::STL_TXT_ACT.bold()),
 	]);
 	if is_done {
-		line_2.push_span(Span::styled(" (DONE)", STL_TXT.dark_gray()));
+		line_2.push_span(Span::styled(" (DONE)", styles::STL_TXT.dark_gray()));
 	} else {
-		line_2.push_span(Span::styled(format!(" ({running} running)"), STL_TXT.dark_gray()));
+		line_2.push_span(Span::styled(
+			format!(" ({running} running)"),
+			styles::STL_TXT.dark_gray(),
+		));
 	}
 	let text = Text::from(vec![line_1, line_2]);
 	Paragraph::new(text).render(status_a_inner, buf);
@@ -88,14 +90,14 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 
 	let line_1 = Line::from(vec![
 		//
-		Span::styled(duration, STL_TXT),
+		Span::styled(duration, styles::STL_TXT),
 	]);
 	let mut line_2 = Line::default();
 	if let Some(total_cost) = total_cost {
 		let total_cost = format_float(total_cost);
-		line_2.push_span(Span::styled(format!("~${total_cost}"), STL_TXT));
+		line_2.push_span(Span::styled(format!("~${total_cost}"), styles::STL_TXT));
 	} else {
-		line_2.push_span(Span::styled("~$...", STL_TXT));
+		line_2.push_span(Span::styled("~$...", styles::STL_TXT));
 	}
 
 	let text = Text::from(vec![line_1, line_2]);
@@ -103,7 +105,7 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 }
 
 fn render_total(area: Rect, buf: &mut Buffer, state: &AppState) {
-	Block::new().bg(CLR_BKG_GRAY_DARKER).render(area, buf);
+	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	let content_a = area.x_h_margin(1);
 
@@ -125,14 +127,14 @@ fn render_total(area: Rect, buf: &mut Buffer, state: &AppState) {
 	// -- Render status
 	let line_1 = Line::from(vec![
 		//
-		Span::styled("Total Runs", STL_TXT),
+		Span::styled("Total Runs", styles::STL_TXT),
 	]);
 	let mut line_2 = Line::from(vec![
-		Span::styled("Runs: ", STL_TXT),
-		Span::styled(format!("{done_runs_count}"), STL_TXT.bold()),
+		Span::styled("Runs: ", styles::STL_TXT),
+		Span::styled(format!("{done_runs_count}"), styles::STL_TXT.bold()),
 	]);
 	if running_run > 0 {
-		line_2.push_span(Span::styled(format!(" ({running_run})"), STL_TXT.dark_gray()))
+		line_2.push_span(Span::styled(format!(" ({running_run})"), styles::STL_TXT.dark_gray()))
 	}
 	let text = Text::from(vec![line_1, line_2]);
 	Paragraph::new(text).render(content_a, buf);
@@ -141,11 +143,11 @@ fn render_total(area: Rect, buf: &mut Buffer, state: &AppState) {
 	let cost = format_float(cost);
 	let line_1 = Line::from(vec![
 		//
-		Span::styled(format_duration_us(duration_us), STL_TXT),
+		Span::styled(format_duration_us(duration_us), styles::STL_TXT),
 	]);
 	let line_2 = Line::from(vec![
 		//
-		Span::styled(format!("${cost}"), STL_TXT),
+		Span::styled(format!("${cost}"), styles::STL_TXT),
 	]);
 	let text = Text::from(vec![line_1, line_2]);
 	Paragraph::new(text).right_aligned().render(content_a, buf);
