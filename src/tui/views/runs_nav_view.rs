@@ -1,12 +1,12 @@
 use crate::support::text::format_time_local;
-use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_GRAY_DARKER, CLR_BKG_SEL, CLR_TXT, CLR_TXT_GREEN, CLR_TXT_SEL, STL_TXT};
 use crate::tui::support::RectExt;
+use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
+use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
 
 pub struct RunsNavView;
 
@@ -19,7 +19,19 @@ impl StatefulWidget for RunsNavView {
 		// -- Render background
 		Block::new().render(area, buf);
 
-		// -- Enter Items
+		// -- Render the panel label
+		let [label_a, list_a] = Layout::default()
+			.direction(Direction::Vertical)
+			.constraints([Constraint::Length(1), Constraint::Fill(1)])
+			.spacing(1)
+			.areas(area);
+
+		Paragraph::new(" Runs: ")
+			.style(styles::STL_TXT_LABEL)
+			.left_aligned()
+			.render(label_a.x_width(7), buf);
+
+		// -- Get the List Items
 		let runs = state.runs();
 		let items: Vec<ListItem> = runs
 			.iter()
@@ -58,6 +70,6 @@ impl StatefulWidget for RunsNavView {
 		let mut list_s = ListState::default();
 		list_s.select(state.run_idx());
 
-		StatefulWidget::render(list_w, area.x_margin(1), buf, &mut list_s);
+		StatefulWidget::render(list_w, list_a, buf, &mut list_s);
 	}
 }

@@ -1,7 +1,7 @@
 use crate::support::text::{format_duration_us, format_float};
-use crate::tui::AppState;
 use crate::tui::styles::{CLR_BKG_ACT, CLR_BKG_GRAY_DARKER, STL_TXT, STL_TXT_ACT};
 use crate::tui::support::RectExt;
+use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -62,9 +62,9 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 
 	let mut line_1 = Line::default();
 	if ended {
-		line_1.push_span(Span::styled("✔", STL_TXT_ACT.green().bold()));
+		line_1.push_span(Span::styled("✔", styles::CLR_TXT_DONE));
 	} else {
-		line_1.push_span(Span::styled("▶", STL_TXT_ACT));
+		line_1.push_span(Span::styled("▶", styles::CLR_TXT_RUNNING));
 	};
 	line_1.push_span(format!(" {agent_name}"));
 

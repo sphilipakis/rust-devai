@@ -1,15 +1,25 @@
 use ratatui::layout::Rect;
 
+/// Convenient Ratatui Area/Rect utility functions
+///
+/// NOTE: Here some of those function does not use Layout
+///       (we might change that later to use Ratatui functions)
+#[allow(unused)]
 pub trait RectExt {
+	// -- marings
 	fn x_margin(&self, margin: u16) -> Rect;
 	fn x_h_margin(&self, h_margin: u16) -> Rect;
 	#[allow(unused)]
 	fn x_v_margin(&self, v_margin: u16) -> Rect;
+
+	// -- Width & Height
+	fn x_width(&self, width: u16) -> Rect;
+	fn x_height(&self, height: u16) -> Rect;
 }
 
-/// NOTE: Here some of those function does not use Layout
-///       And provide direction compute (we might change that later)
 impl RectExt for Rect {
+	// region:    --- Margins
+
 	// Margin on all sides
 	fn x_margin(&self, margin: u16) -> Rect {
 		let x = (self.x + margin).min(self.x + self.width);
@@ -44,6 +54,31 @@ impl RectExt for Rect {
 			height,
 		}
 	}
+
+	// endregion: --- Margins
+
+	// region:    --- Width & Height
+
+	/// Change the width
+	fn x_width(&self, width: u16) -> Rect {
+		Rect {
+			x: self.x,
+			y: self.y,
+			width,
+			height: self.height,
+		}
+	}
+
+	// change the height
+	fn x_height(&self, height: u16) -> Rect {
+		Rect {
+			x: self.x,
+			y: self.y,
+			width: self.width,
+			height,
+		}
+	}
+	// endregion: --- Width & Height
 }
 
 // alternatively

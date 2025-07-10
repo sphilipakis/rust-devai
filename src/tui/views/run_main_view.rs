@@ -5,7 +5,7 @@ use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Stylize as _};
-use ratatui::text::Line;
+use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 
 pub struct RunMainView;
@@ -88,7 +88,14 @@ fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.spacing(1)
 		.areas(line_1_a);
 
-	Paragraph::new("Agent:")
+	let mut line_1 = Line::default();
+	if state.current_run().map(|v| v.is_done()).unwrap_or_default() {
+		line_1.push_span(Span::styled("✔", styles::CLR_TXT_DONE));
+	} else {
+		line_1.push_span(Span::styled("▶", styles::CLR_TXT_RUNNING));
+	};
+	line_1.push_span(" Agent:");
+	Paragraph::new(line_1)
 		.style(STL_TXT_LABEL)
 		.right_aligned()
 		.render(l1_label_1, buf);
