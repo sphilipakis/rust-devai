@@ -36,7 +36,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 						"{:<3} - {:<4} - {:<10} - {:<8} - {:<15} - {}",
 						log.id,
 						log.task_id.map(|v| v.to_string()).unwrap_or_default(),
-						log.level.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
+						log.kind.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
 						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
 						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
 						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())

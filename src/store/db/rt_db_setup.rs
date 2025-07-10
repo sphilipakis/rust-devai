@@ -107,11 +107,11 @@ fn create_schema(con: &Connection) -> Result<()> {
 						run_id  INTEGER NOT NULL, -- Should always belong to a run
 						task_id INTEGER,          -- Might belong to a task
 
-						level   TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
+						kind    TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
 
 						stage   TEXT, 
 
-						step   TEXT, 
+						step    TEXT, 
 						
 						message TEXT
 

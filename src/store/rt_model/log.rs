@@ -20,7 +20,7 @@ pub struct Log {
 	pub run_id: Id,
 	pub task_id: Option<Id>,
 
-	pub level: Option<LogLevel>,
+	pub kind: Option<LogKing>,
 
 	pub step: Option<RunStep>,
 
@@ -30,7 +30,7 @@ pub struct Log {
 }
 
 derive_simple_enum_type! {
-pub enum LogLevel {
+pub enum LogKing {
 	RunStep,
 	SysInfo,
 	SysWarn,
@@ -45,7 +45,7 @@ pub struct LogForCreate {
 	pub run_id: Id,
 	pub task_id: Option<Id>,
 
-	pub level: Option<LogLevel>,
+	pub kind: Option<LogKing>,
 
 	pub step: Option<RunStep>,
 
@@ -57,7 +57,7 @@ pub struct LogForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct LogForUpdate {
-	pub level: Option<LogLevel>,
+	pub kind: Option<LogKing>,
 
 	// Optionally update the processing stage for this log entry.
 	pub stage: Option<Stage>,
@@ -172,7 +172,7 @@ mod tests {
 		let log_c = LogForCreate {
 			run_id,
 			task_id: Some(task_id),
-			level: Some(LogLevel::SysInfo),
+			kind: Some(LogKing::SysInfo),
 			step: Some(RunStep::AaEnd),
 			stage: Some(Stage::AfterAll),
 			message: Some("First message".to_string()),
@@ -184,7 +184,7 @@ mod tests {
 		let log: Log = LogBmc::get(&mm, id)?;
 		assert_eq!(log.stage, Some(Stage::AfterAll));
 		assert_eq!(log.step, Some(RunStep::AaEnd));
-		assert_eq!(log.level, Some(LogLevel::SysInfo));
+		assert_eq!(log.kind, Some(LogKing::SysInfo));
 
 		Ok(())
 	}
@@ -197,7 +197,7 @@ mod tests {
 		let log_c = LogForCreate {
 			run_id,
 			task_id: None,
-			level: None,
+			kind: None,
 			stage: None,
 			step: None,
 			message: Some("Before update".to_string()),
@@ -207,7 +207,7 @@ mod tests {
 		// -- Exec
 		let log_u = LogForUpdate {
 			message: Some(format!("Updated at {}", now_unix_time_us())),
-			level: Some(LogLevel::SysWarn),
+			kind: Some(LogKing::SysWarn),
 			..Default::default()
 		};
 		LogBmc::update(&mm, id, log_u)?;
@@ -215,7 +215,7 @@ mod tests {
 		// -- Check
 		let log = LogBmc::get(&mm, id)?;
 		assert!(log.message.unwrap().starts_with("Updated"));
-		assert_eq!(log.level, Some(LogLevel::SysWarn));
+		assert_eq!(log.kind, Some(LogKing::SysWarn));
 
 		Ok(())
 	}
@@ -229,7 +229,7 @@ mod tests {
 			let log_c = LogForCreate {
 				run_id,
 				task_id: None,
-				level: None,
+				kind: None,
 				stage: None,
 				step: None,
 				message: Some(format!("msg-{i}")),
@@ -245,7 +245,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 1.into());
 		assert_eq!(log.message, Some("msg-0".to_string()));
-		assert!(log.level.is_none());
+		assert!(log.kind.is_none());
 
 		Ok(())
 	}
@@ -259,7 +259,7 @@ mod tests {
 			let log_c = LogForCreate {
 				run_id,
 				task_id: None,
-				level: if i == 2 { Some(LogLevel::SysDebug) } else { None },
+				kind: if i == 2 { Some(LogKing::SysDebug) } else { None },
 				stage: None,
 				step: None,
 				message: Some(format!("msg-{i}")),
@@ -278,7 +278,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 3.into());
 		assert_eq!(log.message, Some("msg-2".to_string()));
-		assert_eq!(log.level, Some(LogLevel::SysDebug));
+		assert_eq!(log.kind, Some(LogKing::SysDebug));
 
 		Ok(())
 	}
@@ -294,7 +294,7 @@ mod tests {
 				let log_c = LogForCreate {
 					run_id,
 					task_id: None,
-					level: if i == 2 { Some(LogLevel::SysDebug) } else { None },
+					kind: if i == 2 { Some(LogKing::SysDebug) } else { None },
 					stage: None,
 					step: None,
 					message: Some(format!("msg-{i}")),
@@ -317,7 +317,7 @@ mod tests {
 		let log = logs.first().ok_or("Should have first item")?;
 		assert_eq!(log.id, 3.into());
 		assert_eq!(log.message, Some("msg-2".to_string()));
-		assert_eq!(log.level, Some(LogLevel::SysDebug));
+		assert_eq!(log.kind, Some(LogKing::SysDebug));
 
 		Ok(())
 	}

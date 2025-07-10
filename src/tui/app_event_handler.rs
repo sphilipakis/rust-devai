@@ -4,7 +4,7 @@ use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::store::ModelManager;
-use crate::store::rt_model::{LogBmc, LogForCreate, LogLevel};
+use crate::store::rt_model::{LogBmc, LogForCreate, LogKing};
 use crate::tui::event::{ActionEvent, AppEvent, DataEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
@@ -112,7 +112,7 @@ async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()>
 				LogForCreate {
 					run_id: 0.into(),
 					task_id: None,
-					level: Some(LogLevel::SysError),
+					kind: Some(LogKing::SysError),
 					step: None,
 					stage: None,
 					message: Some(error.to_string()),

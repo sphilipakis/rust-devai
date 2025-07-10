@@ -7,7 +7,7 @@ use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
 use crate::store::Id;
-use crate::store::rt_model::LogLevel;
+use crate::store::rt_model::LogKing;
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -72,7 +72,7 @@ pub async fn run_agent(
 					.rec_log_ba(
 						run_id,
 						format!("Aipack Skip inputs at Before All section. {reason_msg}"),
-						Some(LogLevel::SysInfo),
+						Some(LogKing::SysInfo),
 					)
 					.await?;
 
@@ -136,7 +136,7 @@ pub async fn run_agent(
 		agent.model_resolved(),
 		agent.options().input_concurrency().unwrap_or(1)
 	);
-	let _ = runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await;
+	let _ = runtime.rec_log_run(run_id, msg, Some(LogKing::SysInfo)).await;
 
 	// -- Get the Inputs and Before All data for the next stage
 	// so, if empty, we have one input of value Value::Null
@@ -174,7 +174,7 @@ pub async fn run_agent(
 	);
 
 	// -- Rt Rec - Message
-	runtime.rec_log_run(run_id, msg, Some(LogLevel::SysInfo)).await?;
+	runtime.rec_log_run(run_id, msg, Some(LogKing::SysInfo)).await?;
 
 	// -- Initialize outputs for capture
 	let mut captured_outputs: Option<Vec<(usize, Value)>> =
