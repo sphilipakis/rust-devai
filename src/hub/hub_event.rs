@@ -1,5 +1,6 @@
 use crate::Error;
 use crate::exec::ExecStatusEvent;
+use crate::store::rt_model::RuntimeCtx;
 use crate::tui_v1::{PrintEvent, PromptParams};
 use derive_more::derive::From;
 use std::sync::Arc;
@@ -29,7 +30,7 @@ pub enum HubEvent {
 	Executor(ExecStatusEvent),
 
 	// -- Sent by the lua engine "print override"
-	LuaPrint(Arc<str>),
+	LuaPrint(Arc<str>, RuntimeCtx),
 
 	Print(Arc<PrintEvent>),
 

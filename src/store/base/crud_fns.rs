@@ -92,6 +92,19 @@ where
 	Ok(uid)
 }
 
+pub fn get_id_for_uid<MC>(mm: &ModelManager, uid: Uuid) -> Result<Id>
+where
+	MC: DbBmc,
+{
+	let sql = format!("SELECT id FROM {} WHERE uid = ? LIMIT 1", MC::table_ref());
+
+	// -- Exec query
+	let db = mm.db();
+	let id: Id = db.exec_returning_as(&sql, (uid,))?;
+
+	Ok(id)
+}
+
 pub fn list<MC, E>(
 	mm: &ModelManager,
 	list_options: Option<ListOptions>,

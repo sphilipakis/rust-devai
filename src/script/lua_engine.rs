@@ -4,6 +4,7 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
+use crate::store::rt_model::RuntimeCtx;
 use mlua::{IntoLua, Lua, Table, Value};
 use uuid::Uuid;
 
@@ -150,14 +151,14 @@ impl LuaEngine {
 	}
 }
 
-// region:    --- Init Globals
+// region:    --- Init Print
 
 fn init_print(lua: &Lua) -> Result<()> {
 	let globals = lua.globals();
 
 	globals.set(
 		"print",
-		lua.create_function(|_, args: mlua::Variadic<Value>| {
+		lua.create_function(move |lua, args: mlua::Variadic<Value>| {
 			let output: Vec<String> = args
 				.iter()
 				.map(|arg| match arg {
@@ -170,7 +171,14 @@ fn init_print(lua: &Lua) -> Result<()> {
 				.collect();
 
 			let text = output.join("\t"); // Mimics Lua's `print` by joining args with tabs
-			get_hub().publish_sync(HubEvent::LuaPrint(text.into()));
+
+			// -- Save it to rec db
+			// runtime.lo
+
+			// -- Send it to the pub event
+			let ctx = RuntimeCtx::extract_from_global(lua)?;
+			get_hub().publish_sync(HubEvent::LuaPrint(text.into(), ctx));
+
 			Ok(())
 		})?,
 	)?;
@@ -178,7 +186,7 @@ fn init_print(lua: &Lua) -> Result<()> {
 	Ok(())
 }
 
-// endregion: --- Init Globals
+// endregion: --- Init Print
 
 // region:    --- init_utils
 

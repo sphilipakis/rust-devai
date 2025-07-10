@@ -1,3 +1,4 @@
+use super::RuntimeCtx;
 use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, RunStep, Stage, UnixTimeUs};
@@ -81,6 +82,7 @@ impl DbBmc for LogBmc {
 	const TABLE: &'static str = "log";
 }
 
+/// Basic Cruds
 impl LogBmc {
 	#[allow(unused)]
 	pub fn create(mm: &ModelManager, log_c: LogForCreate) -> Result<Id> {
@@ -128,6 +130,32 @@ impl LogBmc {
 	}
 }
 
+/// Convenient
+impl LogBmc {
+	pub fn create_log_with_rt_ctx(
+		mm: &ModelManager,
+		rt_ctx: &RuntimeCtx,
+		kind: LogKing,
+		msg: impl Into<String>,
+	) -> Result<Id> {
+		let run_id = rt_ctx
+			.get_run_id(mm)?
+			.ok_or("Cannot create log because runtime_ctx does not have a run_id")?;
+		let task_id = rt_ctx.get_task_id(mm)?;
+
+		let log_c = LogForCreate {
+			run_id,
+			task_id,
+			kind: Some(kind),
+			step: None,
+			stage: None, // for now
+			message: Some(msg.into()),
+		};
+		let id = LogBmc::create(mm, log_c)?;
+
+		Ok(id)
+	}
+}
 // endregion: --- Bmc
 
 // region:    --- Tests

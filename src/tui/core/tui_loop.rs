@@ -42,7 +42,7 @@ pub fn run_ui_loop(
 				}
 			};
 
-			// NOTE: Handle this specific even there because we need to break the llop
+			// NOTE: Handle this specific event here because we need to break the loop
 			//       Later, handle_app_event might return a control flow enum
 			if let AppEvent::Action(ActionEvent::Quit) = &app_event {
 				let _ = terminal.clear();

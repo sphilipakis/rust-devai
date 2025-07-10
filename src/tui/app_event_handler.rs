@@ -103,6 +103,12 @@ async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()>
 			// )?;
 		}
 
+		// -- Handle Lua Action
+		// NOTE: for now, just the LuaPrint, but we will generialize it
+		HubEvent::LuaPrint(msg, rt_ctx) => {
+			LogBmc::create_log_with_rt_ctx(mm, rt_ctx, LogKing::AgentPrint, msg.as_ref())?;
+		}
+
 		// -- Error
 		HubEvent::Error { error } => {
 			// FIXME: need to have an Error table or someting

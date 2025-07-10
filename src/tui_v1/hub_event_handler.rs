@@ -34,7 +34,7 @@ pub async fn handle_hub_event(
 
 		HubEvent::RtModelChange => (), // do nothing in legacy tui.
 
-		HubEvent::LuaPrint(text) => safer_println(&text, interactive),
+		HubEvent::LuaPrint(text, _) => safer_println(&text, interactive),
 
 		HubEvent::Print(print_event) => handle_print(print_event, interactive),
 
