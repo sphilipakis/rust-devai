@@ -5,16 +5,21 @@ use crate::tui::event::LastAppEvent;
 /// The global app state
 /// IMPORTANT: We define it in this file so that some state can be private
 pub struct AppState {
-	pub(in crate::tui::core) run_idx: Option<i32>,
-	pub(in crate::tui::core) task_idx: Option<i32>,
-
-	// -- RunView
+	// -- Main View
 	pub(in crate::tui::core) show_runs: bool,
 
+	// -- RunsView
+	pub(in crate::tui::core) run_idx: Option<i32>,
+
+	// -- RunMainView will clamp this one
+	pub run_tab_idx: i32,
+
+	// -- RunDetailsView
 	// TaskView will read/edit
 	pub log_scroll: u16,
-	// RunMainView will clamp this one
-	pub run_tab_idx: i32,
+	pub(in crate::tui::core) task_idx: Option<i32>,
+	pub(in crate::tui::core) before_all_sel: bool,
+	pub(in crate::tui::core) after_all_sel: bool,
 
 	// -- Data
 	// newest to oldest
@@ -26,49 +31,55 @@ pub struct AppState {
 	pub(in crate::tui::core) last_app_event: LastAppEvent,
 }
 
-/// Contrustor
+// region:    --- Constructors
+
 impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
 		Self {
-			run_idx: None,
-			task_idx: None,
-
-			// -- RunView
+			// -- MainView
 			show_runs: true,
-			log_scroll: 0,
-			// For now, use the Tasks tab ad efault
+
+			// -- RunsView
+			run_idx: None,
+
+			// -- RunMainView
+			// For now, use the Tasks tab as default
 			run_tab_idx: 1,
 
-			// Data
+			// -- RunDetailsView
+			task_idx: None,
+			log_scroll: 0,
+			before_all_sel: false,
+			after_all_sel: false,
+
+			// -- Data
 			runs: Vec::new(),
 			tasks: Vec::new(),
+
+			// -- System & Event
 			mm,
 			last_app_event,
 		}
 	}
 }
 
-/// Getter
+// endregion: --- Constructors
+
+/// MainView states
+impl AppState {
+	pub fn show_runs(&self) -> bool {
+		self.show_runs
+	}
+}
+
+/// RunsView states
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
 		self.run_idx.map(|idx| idx as usize)
 	}
 
-	pub fn task_idx(&self) -> Option<usize> {
-		self.task_idx.map(|idx| idx as usize)
-	}
-
-	pub fn show_runs(&self) -> bool {
-		self.show_runs
-	}
-
-	#[allow(unused)]
-	pub fn current_task(&self) -> Option<&Task> {
-		if let Some(idx) = self.task_idx {
-			self.tasks.get(idx as usize)
-		} else {
-			None
-		}
+	pub fn runs(&self) -> &[Run] {
+		&self.runs
 	}
 
 	pub fn current_run(&self) -> Option<&Run> {
@@ -78,15 +89,39 @@ impl AppState {
 			None
 		}
 	}
+}
 
-	pub fn runs(&self) -> &[Run] {
-		&self.runs
+/// RunDetailsView states
+impl AppState {
+	pub fn task_idx(&self) -> Option<usize> {
+		self.task_idx.map(|idx| idx as usize)
 	}
 
 	pub fn tasks(&self) -> &[Task] {
 		&self.tasks
 	}
 
+	pub fn current_task(&self) -> Option<&Task> {
+		if let Some(idx) = self.task_idx {
+			self.tasks.get(idx as usize)
+		} else {
+			None
+		}
+	}
+
+	/// Returns `true` when the **before-all** pseudo-task is selected.
+	pub fn before_all_sel(&self) -> bool {
+		self.before_all_sel
+	}
+
+	/// Returns `true` when the **after-all** pseudo-task is selected.
+	pub fn after_all_sel(&self) -> bool {
+		self.after_all_sel
+	}
+}
+
+/// System & Event states
+impl AppState {
 	pub fn mm(&self) -> &ModelManager {
 		&self.mm
 	}

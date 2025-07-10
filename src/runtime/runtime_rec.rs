@@ -424,11 +424,12 @@ impl Runtime {
 
 		// -- For V1 terminal
 		let hub = get_hub();
-		if let Some(LogKing::SysInfo) = kind {
-			hub.publish(HubEvent::info_short(msg)).await;
-		} else {
-			hub.publish(msg).await;
-		}
+		hub.publish(msg).await;
+		// if let Some(LogKing::SysInfo) = kind {
+		// 	hub.publish(HubEvent::info_short(msg)).await;
+		// } else {
+		// 	hub.publish(msg).await;
+		// }
 
 		Ok(())
 	}
