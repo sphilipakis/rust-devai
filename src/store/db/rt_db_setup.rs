@@ -70,7 +70,7 @@ fn create_schema(con: &Connection) -> Result<()> {
 						output_end    INTEGER,
 						end           INTEGER,
 
-						model   TEXT,
+						model_ov   TEXT,
 
 						-- Usage Raw
 						usage BLOB, -- jsonb, to have raw usage

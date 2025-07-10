@@ -30,7 +30,7 @@ pub struct Task {
 	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
-	pub model: Option<String>,
+	pub model_ov: Option<String>,
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i64>,
@@ -85,7 +85,7 @@ pub struct TaskForUpdate {
 	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
-	pub model: Option<String>,
+	pub model_ov: Option<String>,
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i32>,

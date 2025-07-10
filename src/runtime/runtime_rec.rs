@@ -360,9 +360,9 @@ impl Runtime {
 		Ok(id)
 	}
 
-	pub async fn update_task_model(&self, _run_id: Id, task_id: Id, model_name: &str) -> Result<()> {
+	pub async fn update_task_model_ov(&self, _run_id: Id, task_id: Id, model_name_ov: &str) -> Result<()> {
 		let task_u = TaskForUpdate {
-			model: Some(model_name.to_string()),
+			model_ov: Some(model_name_ov.to_string()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;

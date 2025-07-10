@@ -76,6 +76,10 @@ pub async fn run_agent_task(
 	// -- Build Base Rt Context
 	let rt_ctx = RuntimeCtx::from_run_task_ids(runtime, Some(run_id), Some(task_id))?;
 
+	// -- Extract the run model resolved
+	// (for comparison later)
+	let run_model_resolved = agent.model_resolved();
+
 	// -- Build the scope
 	// Note: Probably way to optimize the number of lua engine we create
 	//       However, nice to be they are fully scoped.
@@ -245,9 +249,10 @@ pub async fn run_agent_task(
 
 	// -- Now execute the instruction
 	let model_resolved = agent.model_resolved();
-
-	// -- Rt Update Task - Model
-	runtime.update_task_model(run_id, task_id, model_resolved).await?;
+	if run_model_resolved != model_resolved {
+		// -- Rt Update Task - Model
+		runtime.update_task_model_ov(run_id, task_id, model_resolved).await?;
+	}
 
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
 		let chat_req = ChatRequest::from_messages(chat_messages);

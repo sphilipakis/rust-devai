@@ -87,21 +87,28 @@ impl AppState {
 	pub fn tasks_cummulative_models(&self) -> String {
 		let tasks = self.tasks();
 
+		// Note: Will be 'no model' if no models
+		let run_model = self.current_run_model_name();
+
 		// Collect unique models while preserving encounter order.
 		let mut uniques: Vec<String> = Vec::new();
+		let mut some_no_ov = false;
 		for task in tasks {
-			if let Some(model) = &task.model {
-				if !uniques.contains(model) {
+			if let Some(model) = &task.model_ov {
+				if model != &run_model && !uniques.contains(model) {
 					uniques.push(model.clone());
 				}
+			} else {
+				some_no_ov = true;
 			}
 		}
 
-		match uniques.len() {
-			0 => self.current_run_model_name(),
-			1 => uniques.first().cloned().unwrap(),
-			2 => format!("{}, {}", uniques[0], uniques[1]),
-			n => format!("{}, {} +{}", uniques[0], uniques[1], n - 2),
+		// NOTE: If tasks.len() == 0, uniques as well, so run_model (which is what we want. )
+		match (uniques.len(), some_no_ov) {
+			(0, _) => run_model,
+			(n, true) => format!("{run_model} +{n}"),
+			(1, false) => uniques.into_iter().next().unwrap_or_default(),
+			(n, false) => format!("{} +{}", uniques.into_iter().next().unwrap_or_default(), n - 1),
 		}
 	}
 }
