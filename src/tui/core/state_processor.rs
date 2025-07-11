@@ -17,7 +17,7 @@ pub fn process_app_state(state: &mut AppState) {
 	let runs_limit = if state.show_runs { None } else { Some(1) };
 	let runs = RunBmc::list_for_display(state.mm(), runs_limit).unwrap_or_default();
 	let prev_run_idx = state.run_idx; // to compute scroll status
-	// Make sure to select the first one (now thete there is only ones
+	// Make sure to select the first one (now there there is only ones
 	if !state.show_runs {
 		state.run_idx = Some(0);
 	}
@@ -45,29 +45,46 @@ pub fn process_app_state(state: &mut AppState) {
 		state.tasks.clear(); // Important to clear tasks if no run is selected
 	}
 
-	// -- if run changed, reset log scroll and task selection
+	// -- if run changed, reset log scroll and task selection (for RunDetailsView)
 	if state.run_idx != prev_run_idx {
+		// reset the task view states
 		state.log_scroll = 0;
-		// if there are tasks for the new run, select the first one
-		state.task_idx = if !state.tasks.is_empty() { Some(0) } else { None };
+
+		state.task_idx = None;
+		state.before_all_show = false;
+		state.before_all_show = false
 	}
 
-	// -- Process Run Task idx with 'i' and 'k'
+	// -- Initialize RunDetailsView states
+	// if all is none
+	if state.task_idx.is_none() && !state.before_all_show && !state.after_all_show {
+		// select the first task
+		if !state.tasks().is_empty() {
+			state.task_idx = Some(0);
+			state.before_all_show = false;
+			state.after_all_show = false;
+		}
+		// select before all
+		else {
+			state.task_idx = None;
+			state.before_all_show = true;
+			state.after_all_show = false;
+		}
+	}
 
+	// -- Process Tasks idx with 'i' and 'k'
 	let nav_dir = NavDir::from_up_down_key_code(
 		KeyCode::Char('i'),
 		KeyCode::Char('k'),
 		state.last_app_event().as_key_event(),
 	);
 
-	// let offset: i32 = nav_dir.map(|v| v.offset()).unwrap_or_default();
-
 	let tasks_max_idx = state.tasks().len() as i32 - 1;
 	// only do someting if we have an offset
 	if let Some(nav_dir) = nav_dir {
 		// -- Navigate or get out of tasks nav
-		if let Some(tab_idx) = state.task_idx {
-			let new_idx = tab_idx + nav_dir.offset();
+		if let Some(task_idx) = state.task_idx {
+			let new_idx = task_idx + nav_dir.offset();
 			// we show before all
 			if new_idx < 0 {
 				state.task_idx = None;
@@ -80,7 +97,9 @@ pub fn process_app_state(state: &mut AppState) {
 				state.before_all_show = false;
 				state.after_all_show = true;
 			} else {
-				state.task_idx = Some(new_idx)
+				state.before_all_show = false;
+				state.after_all_show = false;
+				state.task_idx = Some(new_idx.max(0))
 			}
 		}
 		// -- Enter task from top

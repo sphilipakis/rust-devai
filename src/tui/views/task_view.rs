@@ -121,6 +121,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Prepare content
 	let content = match logs {
 		Ok(logs) => {
+			let max_width = area.width - 3; // for the scroll bar
 			let mut lines: Vec<Line> = Vec::new();
 			for log in logs {
 				// let txt = format!(
@@ -133,7 +134,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				// 	log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
 				// );
 				// lines.push(txt.into());
-				let log_lines = render_log(log, area.width);
+				let log_lines = render_log(log, max_width);
 				lines.extend(log_lines);
 				lines.push(Line::default()); // empty line
 			}
