@@ -1,5 +1,5 @@
-use super::core::AppTx;
-use super::core::ExitTx;
+use super::AppTx;
+use super::ExitTx;
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;

@@ -1,3 +1,4 @@
+use super::app_event_handler::handle_app_event;
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
@@ -6,7 +7,6 @@ use crate::tui::AppState;
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
-use crate::tui::app_event_handler::handle_app_event;
 use crate::tui::core::state_processor::process_app_state;
 use crate::tui::event::ActionEvent;
 use crate::tui::event::{AppEvent, LastAppEvent};

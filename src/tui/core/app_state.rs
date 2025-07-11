@@ -13,15 +13,19 @@ pub struct AppState {
 	// -- RunsView
 	pub(in crate::tui::core) run_idx: Option<i32>,
 
-	// -- RunMainView will clamp this one
+	// -- RunMainView
+	// The RunMainView will clamp this one
+	// NOTE: probably need to change strategy
 	pub run_tab_idx: i32,
 
 	// -- RunDetailsView
-	// TaskView will read/edit
-	pub log_scroll: u16,
 	pub(in crate::tui::core) task_idx: Option<i32>,
 	pub(in crate::tui::core) before_all_show: bool,
 	pub(in crate::tui::core) after_all_show: bool,
+
+	// -- TaskView
+	// NOTE: probably need to change strategy
+	pub log_scroll: u16, // TaskView will need read/edit
 
 	// -- Data
 	// newest to oldest
@@ -33,7 +37,7 @@ pub struct AppState {
 	pub(in crate::tui::core) last_app_event: LastAppEvent,
 
 	// -- SysState
-	sys_state: SysState,
+	pub(in crate::tui::core) sys_state: SysState,
 	pub(in crate::tui::core) memory: u64,
 	pub(in crate::tui::core) cpu: f64,
 }
@@ -158,6 +162,7 @@ impl AppState {
 		self.memory
 	}
 
+	#[allow(unused)]
 	pub fn cpu(&self) -> f64 {
 		self.cpu
 	}

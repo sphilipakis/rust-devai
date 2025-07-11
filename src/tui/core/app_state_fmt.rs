@@ -189,8 +189,9 @@ impl AppState {
 		text::format_size_xfixed(mem)
 	}
 
+	#[allow(unused)]
 	pub fn cpu_fmt(&self) -> String {
 		let cpu = self.cpu();
-		text::format_f64(cpu)
+		format!("{}%", text::format_percentage(cpu))
 	}
 }

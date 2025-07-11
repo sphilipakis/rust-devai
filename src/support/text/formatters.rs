@@ -20,6 +20,15 @@ pub fn format_f64(val: f64) -> String {
 	format!("{:.*}", 4, rounded)
 }
 
+/// Format a floating point value as a whole-number percentage string (no `%` unit).
+///
+/// Examples:
+/// - `0.123` -> `"12"`
+/// - `1.0`   -> `"100"`
+pub fn format_percentage(val: f64) -> String {
+	((val * 100.0).round() as i64).to_string()
+}
+
 // endregion: --- Numbers
 
 // region:    --- Duration
@@ -166,6 +175,27 @@ mod tests {
 		}
 
 		// -- Check
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_text_format_percentage() -> Result<()> {
+		// -- Setup & Fixtures
+		let cases = [
+			//
+			(0.0, "0"),
+			(0.123, "12"),
+			(0.129, "13"),
+			(0.5, "50"),
+			(1.0, "100"),
+		];
+
+		// -- Exec & Check
+		for &(input, expected) in &cases {
+			let actual = format_percentage(input);
+			assert_eq!(actual, expected, "input: {input}");
+		}
 
 		Ok(())
 	}

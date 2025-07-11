@@ -1,3 +1,4 @@
+use super::term_reader::run_term_read;
 use super::tui_loop::run_ui_loop;
 use crate::Result;
 use crate::event::{Tx, new_channel};
@@ -6,17 +7,23 @@ use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
 use crate::tui::event::AppEvent;
-use crate::tui::term_reader::run_term_read;
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+use crossterm::execute;
 use derive_more::{Deref, From};
 use ratatui::DefaultTerminal;
+use std::io::stdout;
 
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
 	// -- init terminal
 	let terminal = ratatui::init();
+	// Enable mouse capture
+	execute!(stdout(), EnableMouseCapture)?;
 
 	let _ = exec_app(terminal, mm, executor_tx, args).await;
 
 	ratatui::restore();
+	// Enable mouse capture
+	execute!(stdout(), DisableMouseCapture)?;
 
 	Ok(())
 }
