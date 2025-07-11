@@ -47,7 +47,7 @@ impl FileInfo {
 	/// - `base_path` is only use with_meta true to attempt to get the meta
 	pub fn new<'a>(dir_context: &DirContext, rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
 		let path: SPath = rel_path.into();
-		let path = dir_context.path_home_into_tilde(path);
+		let path = dir_context.maybe_home_path_into_tilde(path);
 
 		let with_meta: WithMeta = with_meta.into();
 		if with_meta.with_meta {

@@ -190,9 +190,19 @@ impl DirContext {
 		Ok(base_dir.join(path))
 	}
 
-	pub fn path_home_into_tilde(&self, path: SPath) -> SPath {
+	/// Convert a potential home path to a tilde path. If not home path, return as is.
+	pub fn maybe_home_path_into_tilde(&self, path: SPath) -> SPath {
 		if path.is_absolute() && path.starts_with(self.home_dir()) {
 			path.into_replace_prefix(self.home_dir(), "~")
+		} else {
+			path
+		}
+	}
+
+	/// Convert a potential tilde path to a home path. If not tiled path, return as is.
+	pub fn maybe_tilde_path_into_home(&self, path: SPath) -> SPath {
+		if path.starts_with("~/") {
+			path.into_replace_prefix("~", self.home_dir())
 		} else {
 			path
 		}

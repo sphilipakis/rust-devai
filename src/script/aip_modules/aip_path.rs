@@ -50,8 +50,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_is_dir_fn = lua.create_function(move |_lua, path: String| path_is_dir(&rt, path))?;
 
 	// -- diff
-	let path_diff_fn =
-		lua.create_function(move |_lua, (file_path, base_path): (String, String)| path_diff(file_path, base_path))?;
+	let rt = runtime.clone();
+	let path_diff_fn = lua
+		.create_function(move |_lua, (file_path, base_path): (String, String)| path_diff(&rt, file_path, base_path))?;
 
 	// -- join
 	let path_join =
@@ -432,9 +433,10 @@ fn path_is_file(runtime: &Runtime, path: String) -> mlua::Result<bool> {
 ///   error: string // Error message
 /// }
 /// ```
-fn path_diff(file_path: String, base_path: String) -> mlua::Result<String> {
-	let file_path = SPath::from(file_path);
-	let base_path = SPath::from(base_path);
+fn path_diff(runtime: &Runtime, file_path: String, base_path: String) -> mlua::Result<String> {
+	let dir_context = runtime.dir_context();
+	let file_path = dir_context.maybe_tilde_path_into_home(SPath::from(file_path));
+	let base_path = dir_context.maybe_tilde_path_into_home(SPath::from(base_path));
 	// NOTE: Right now, using unwrap_or_default, as this should not happen
 	//       But will update simple-fs to utf8 diff by default
 	let diff = file_path.diff(base_path).map(|p| p.to_string()).unwrap_or_default();
