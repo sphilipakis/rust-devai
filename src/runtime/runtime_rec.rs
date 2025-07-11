@@ -2,7 +2,6 @@
 //! - from the run::run_agent... functions
 //! - from the tui2 in some event to save some data (print, save, ...)
 use crate::Result;
-use crate::hub::HubEvent;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::store::Id;

@@ -143,17 +143,17 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		Err(err) => format!("LogBmc::list error. {err}"),
 	};
 	let line_count = content.lines().count();
-	let area_with_margin = area.x_margin(1);
 
 	// -- Clamp scroll
-	let max_scroll = line_count.saturating_sub(area_with_margin.height as usize) as u16;
+	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
 	if state.log_scroll > max_scroll {
 		state.log_scroll = max_scroll;
 	}
 
 	// -- Render content
+	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
 	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
-	p.render(area_with_margin, buf);
+	p.render(area, buf);
 
 	// -- Render Scrollbar
 	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
