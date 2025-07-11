@@ -10,7 +10,7 @@ use crate::store::Stage;
 use crate::store::rt_model::TaskBmc;
 use crate::store::rt_model::TaskForCreate;
 use crate::store::rt_model::TaskForUpdate;
-use crate::store::rt_model::{LogBmc, LogForCreate, LogKing, RunBmc, RunForCreate, RunForUpdate};
+use crate::store::rt_model::{LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate};
 use crate::support::time::now_unix_time_us;
 
 impl Runtime {
@@ -37,7 +37,7 @@ impl Runtime {
 		)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogKind::RunStep))
 			.await?;
 
 		// -- For V1 terminal
@@ -58,7 +58,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaStart), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -73,7 +73,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::BaEnd), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -89,7 +89,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksStart), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -105,7 +105,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::TasksEnd), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -125,7 +125,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskStart),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -146,7 +146,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskDataStart),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -167,7 +167,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskDataEnd),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -188,7 +188,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskAiStart),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -209,7 +209,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskAiEnd),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -230,7 +230,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskOutputStart),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -251,7 +251,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskOutputEnd),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -272,7 +272,7 @@ impl Runtime {
 			Some(task_id),
 			Some(RunStep::TaskEnd),
 			None,
-			Some(LogKing::RunStep),
+			Some(LogKind::RunStep),
 		)
 		.await?;
 
@@ -289,7 +289,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaStart), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -305,7 +305,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::AaEnd), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -321,7 +321,7 @@ impl Runtime {
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
-		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogKing::RunStep))
+		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogKind::RunStep))
 			.await?;
 
 		Ok(())
@@ -407,7 +407,7 @@ impl Runtime {
 		step: Option<RunStep>,
 		stage: Option<Stage>,
 		msg: impl Into<String>,
-		kind: Option<LogKing>,
+		kind: Option<LogKind>,
 	) -> Result<()> {
 		let msg = msg.into();
 
@@ -439,7 +439,7 @@ impl Runtime {
 		task_id: Option<Id>,
 		step: Option<RunStep>,
 		stage: Option<Stage>,
-		kind: Option<LogKing>,
+		kind: Option<LogKind>,
 	) -> Result<()> {
 		let log_c = LogForCreate {
 			run_id,
@@ -457,11 +457,11 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub async fn rec_log_run(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKing>) -> Result<()> {
+	pub async fn rec_log_run(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKind>) -> Result<()> {
 		self.rec_log(run_id, None, None, None, msg, level).await
 	}
 
-	pub async fn rec_log_ba(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKing>) -> Result<()> {
+	pub async fn rec_log_ba(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKind>) -> Result<()> {
 		self.rec_log(run_id, None, None, Some(Stage::BeforeAll), msg, level).await
 	}
 
@@ -470,7 +470,7 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		level: Option<LogKing>,
+		level: Option<LogKind>,
 	) -> Result<()> {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Data), msg, level).await
 	}
@@ -480,7 +480,7 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		level: Option<LogKing>,
+		level: Option<LogKind>,
 	) -> Result<()> {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Ai), msg, level).await
 	}
@@ -490,12 +490,12 @@ impl Runtime {
 		run_id: Id,
 		task_id: Id,
 		msg: impl Into<String>,
-		level: Option<LogKing>,
+		level: Option<LogKind>,
 	) -> Result<()> {
 		self.rec_log(run_id, Some(task_id), None, Some(Stage::Output), msg, level).await
 	}
 
-	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKing>) -> Result<()> {
+	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKind>) -> Result<()> {
 		self.rec_log(run_id, None, None, Some(Stage::AfterAll), msg, level).await
 	}
 }

@@ -7,7 +7,7 @@ use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
-use crate::store::rt_model::{LogKing, RuntimeCtx};
+use crate::store::rt_model::{LogKind, RuntimeCtx};
 use crate::store::{Id, Stage};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
@@ -124,7 +124,7 @@ pub async fn run_agent_task(
 						run_id,
 						task_id,
 						format!("Aipack Skip input at Data stage: {label}{reason_txt}"),
-						Some(LogKing::SysInfo),
+						Some(LogKind::SysInfo),
 					)
 					.await?;
 

@@ -4,7 +4,7 @@ use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
 use crate::store::ModelManager;
-use crate::store::rt_model::{LogBmc, LogForCreate, LogKing};
+use crate::store::rt_model::{LogBmc, LogForCreate, LogKind};
 use crate::tui::event::{ActionEvent, AppEvent, DataEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
@@ -106,7 +106,7 @@ async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()>
 		// -- Handle Lua Action
 		// NOTE: for now, just the LuaPrint, but we will generialize it
 		HubEvent::LuaPrint(msg, rt_ctx) => {
-			LogBmc::create_log_with_rt_ctx(mm, rt_ctx, LogKing::AgentPrint, msg.as_ref())?;
+			LogBmc::create_log_with_rt_ctx(mm, rt_ctx, LogKind::AgentPrint, msg.as_ref())?;
 		}
 
 		// -- Error
@@ -118,7 +118,7 @@ async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()>
 				LogForCreate {
 					run_id: 0.into(),
 					task_id: None,
-					kind: Some(LogKing::SysError),
+					kind: Some(LogKind::SysError),
 					step: None,
 					stage: None,
 					message: Some(error.to_string()),

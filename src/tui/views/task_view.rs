@@ -1,8 +1,9 @@
-use crate::store::rt_model::LogBmc;
+use crate::store::rt_model::{Log, LogBmc, LogKind};
 use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.
@@ -120,29 +121,30 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Prepare content
 	let content = match logs {
 		Ok(logs) => {
-			let lines: Vec<String> = logs
-				.into_iter()
-				.map(|log| {
-					format!(
-						"{:<3} - {:<4} - {:<10} - {:<8} - {:<15} - {}",
-						log.id,
-						log.task_id.map(|v| v.to_string()).unwrap_or_default(),
-						log.kind.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
-						log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
-						log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
-						log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
-					)
-				})
-				.collect();
-			if lines.is_empty() {
-				"No logs for this task yet...".to_string()
-			} else {
-				lines.join("\n")
+			let mut lines: Vec<Line> = Vec::new();
+			for log in logs {
+				// let txt = format!(
+				// 	"{:<3} - {:<4} - {:<10} - {:<8} - {:<15} - {}",
+				// 	log.id,
+				// 	log.task_id.map(|v| v.to_string()).unwrap_or_default(),
+				// 	log.kind.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
+				// 	log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
+				// 	log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
+				// 	log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
+				// );
+				// lines.push(txt.into());
+				let log_lines = render_log(log, area.width);
+				lines.extend(log_lines);
+				lines.push(Line::default()); // empty line
 			}
+			if lines.is_empty() {
+				lines.push("No logs".into())
+			}
+			lines
 		}
-		Err(err) => format!("LogBmc::list error. {err}"),
+		Err(err) => vec![format!("LogBmc::list error. {err}").into()],
 	};
-	let line_count = content.lines().count();
+	let line_count = content.len();
 
 	// -- Clamp scroll
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
@@ -166,4 +168,73 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
-// endregion: --- Render Helpers
+// region:    --- Log Renderers
+
+fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
+	let Some(kind) = log.kind else {
+		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
+	};
+
+	let width_marker = 12;
+	let spacer = " ";
+	let width_spacer = spacer.len(); // won't work if no ASCII
+	let width_content = (max_width as usize) - width_marker - width_spacer;
+
+	// -- Mark Span
+	// TODO: need to return style as well
+	let mark_txt = match kind {
+		LogKind::RunStep => "Sys Step",
+		LogKind::SysInfo => "Sys Info",
+		LogKind::SysWarn => "Sys Warn",
+		LogKind::SysError => "Sys Error",
+		LogKind::SysDebug => "Sys Debug",
+		LogKind::AgentPrint => "Agent Print",
+	};
+	let mark_span = Span::styled(format!("{mark_txt:>width_marker$}"), styles::STL_TXT_LBL);
+
+	let msg_wrap = log.message.as_ref().map(|msg| textwrap::wrap(msg, width_content));
+
+	// -- First Content Line
+	let first_content = match (msg_wrap.as_ref(), kind) {
+		(_, LogKind::RunStep) => log.step_as_str().to_string(),
+		(Some(msg_wrap), _) => msg_wrap.first().map(|s| s.to_string()).unwrap_or_default(),
+		(_, _) => format!("No Step not MSG for log {}", log.id),
+	};
+	let first_content_span = Span::raw(first_content);
+
+	let first_line = Line::from(vec![
+		//
+		mark_span,
+		Span::raw(" "), // must be equa
+		first_content_span,
+	]);
+
+	// -- Lines
+	let mut lines = vec![first_line];
+
+	// -- Render other content line if present
+	if let Some(msg_wrap) = msg_wrap
+		&& msg_wrap.len() > 1
+	{
+		let mut msg_wrap_iter = msg_wrap.into_iter();
+		// we skip the first line, already printed
+		msg_wrap_iter.next();
+		// NOTE: for now we need to close this left_spacing because of the return type
+		//       With might be able to return a type to avoid new string
+		let left_spacing = " ".repeat(width_marker + width_spacer);
+		for line_content in msg_wrap_iter {
+			let line = Line::raw(format!("{left_spacing}{line_content}"));
+			lines.push(line)
+		}
+	}
+
+	// -- Return lines
+	lines
+}
+
+#[allow(unused)]
+fn first_line_truncate(s: &str, max: usize) -> String {
+	s.lines().next().unwrap_or("").chars().take(max).collect()
+}
+
+// endregion: --- Log Renderers

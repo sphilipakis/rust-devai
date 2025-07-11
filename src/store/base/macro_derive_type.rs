@@ -48,6 +48,8 @@ macro_rules! derive_simple_enum_type {
             derive_more::Display,
             modql::SqliteFromValue,
             modql::SqliteToValue,
+            strum::IntoStaticStr,
+            strum::AsRefStr,
             // Add or remove derives as appropriate for your use-case
             // e.g., serde::Serialize, serde::Deserialize,
         )]
