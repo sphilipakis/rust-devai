@@ -22,10 +22,10 @@ pub fn run_ui_loop(
 	app_tx: AppTx,
 	exit_tx: ExitTx,
 ) -> Result<JoinHandle<()>> {
-	let handle = tokio::spawn(async move {
-		// Initialize App State
-		let mut app_state = AppState::new(mm, LastAppEvent::default());
+	// Initialize App State (fail early, in case of SysState fail to initialize)
+	let mut app_state = AppState::new(mm, LastAppEvent::default())?;
 
+	let handle = tokio::spawn(async move {
 		loop {
 			// -- Update App State
 			process_app_state(&mut app_state);

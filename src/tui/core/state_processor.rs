@@ -6,6 +6,8 @@ use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
 pub fn process_app_state(state: &mut AppState) {
+	state.refresh_sys_state();
+
 	// -- Process Show run
 	if let Some(KeyCode::Char('n')) = state.last_app_event().as_key_code() {
 		state.show_runs = !state.show_runs

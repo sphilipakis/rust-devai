@@ -1,4 +1,4 @@
-use crate::support::text::{format_duration_us, format_float};
+use crate::support::text::{format_duration_us, format_f64};
 use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -94,7 +94,7 @@ fn render_current(area: Rect, buf: &mut Buffer, state: &AppState) {
 	]);
 	let mut line_2 = Line::default();
 	if let Some(total_cost) = total_cost {
-		let total_cost = format_float(total_cost);
+		let total_cost = format_f64(total_cost);
 		line_2.push_span(Span::styled(format!("~${total_cost}"), styles::STL_TXT));
 	} else {
 		line_2.push_span(Span::styled("~$...", styles::STL_TXT));
@@ -140,7 +140,7 @@ fn render_total(area: Rect, buf: &mut Buffer, state: &AppState) {
 	Paragraph::new(text).render(content_a, buf);
 
 	// -- Render Time
-	let cost = format_float(cost);
+	let cost = format_f64(cost);
 	let line_1 = Line::from(vec![
 		//
 		Span::styled(format_duration_us(duration_us), styles::STL_TXT),

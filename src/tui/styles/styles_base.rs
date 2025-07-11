@@ -31,7 +31,7 @@ pub const CLR_TXT: Color = Color::Indexed(255);
 
 pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
 
-pub const CLR_TXT_LABEL: Color = CLR_TXT_300;
+pub const CLR_TXT_LBL: Color = CLR_TXT_300;
 pub const CLR_TXT_SEL: Color = Color::Black;
 
 pub const CLR_TXT_GREEN: Color = Color::Green;
@@ -43,8 +43,8 @@ pub const CLR_TXT_DONE: Color = Color::Green;
 // -- Styles
 pub const STL_TXT: Style = Style::new();
 
-pub const STL_TXT_LABEL: Style = Style::new().fg(CLR_TXT_LABEL).bg(CRL_BKG_LABEL);
-pub const STL_TXT_VALUE: Style = Style::new().fg(CLR_TXT_WHITE);
+pub const STL_TXT_LBL: Style = Style::new().fg(CLR_TXT_LBL).bg(CRL_BKG_LABEL);
+pub const STL_TXT_VAL: Style = Style::new().fg(CLR_TXT_WHITE);
 
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(Color::Blue);

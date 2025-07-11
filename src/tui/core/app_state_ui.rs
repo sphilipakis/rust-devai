@@ -1,7 +1,7 @@
 //! Convenient AppState getters and formatters for the View
 //!
 // region:    --- Imports
-use crate::support::text::{format_duration_us, format_float};
+use crate::support::text::{self, format_duration_us, format_f64};
 use crate::support::time::now_unix_time_us;
 use crate::tui::AppState;
 // endregion: --- Imports
@@ -25,7 +25,7 @@ impl AppState {
 		if let Some(run) = self.current_run()
 			&& let Some(cost) = run.total_cost
 		{
-			format!("${}", format_float(cost))
+			format!("${}", format_f64(cost))
 		} else {
 			"$...".to_string()
 		}
@@ -126,7 +126,7 @@ impl AppState {
 		if let Some(task) = self.current_task()
 			&& let Some(cost) = task.cost
 		{
-			format!("${}", format_float(cost))
+			format!("${}", format_f64(cost))
 		} else {
 			"$...".to_string()
 		}
@@ -179,5 +179,18 @@ impl AppState {
 		} else {
 			Some(tk_completion.to_string())
 		}
+	}
+}
+
+/// Impl AppState formatters
+impl AppState {
+	pub fn memory_fmt(&self) -> String {
+		let mem = self.memory();
+		text::format_size_xfixed(mem)
+	}
+
+	pub fn cpu_fmt(&self) -> String {
+		let cpu = self.cpu();
+		text::format_f64(cpu)
 	}
 }

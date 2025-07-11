@@ -26,7 +26,7 @@ impl StatefulWidget for RunsNavView {
 			.areas(area);
 
 		Paragraph::new(" Runs: ")
-			.style(styles::STL_TXT_LABEL)
+			.style(styles::STL_TXT_LBL)
 			.left_aligned()
 			.render(label_a.x_width(7), buf);
 

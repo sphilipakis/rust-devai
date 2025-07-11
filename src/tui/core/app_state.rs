@@ -1,5 +1,7 @@
+use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
+use crate::tui::core::sys_state::SysState;
 use crate::tui::event::LastAppEvent;
 
 /// The global app state
@@ -29,13 +31,19 @@ pub struct AppState {
 	// -- System & Event
 	pub(in crate::tui::core) mm: ModelManager,
 	pub(in crate::tui::core) last_app_event: LastAppEvent,
+
+	// -- SysState
+	sys_state: SysState,
+	pub(in crate::tui::core) memory: u64,
+	pub(in crate::tui::core) cpu: f64,
 }
 
 // region:    --- Constructors
 
 impl AppState {
-	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Self {
-		Self {
+	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Result<Self> {
+		let sys_state = SysState::new()?;
+		Ok(Self {
 			// -- MainView
 			show_runs: true,
 
@@ -59,7 +67,12 @@ impl AppState {
 			// -- System & Event
 			mm,
 			last_app_event,
-		}
+
+			// -- SysState
+			sys_state,
+			memory: 0,
+			cpu: 0.,
+		})
 	}
 }
 
@@ -128,5 +141,24 @@ impl AppState {
 
 	pub fn last_app_event(&self) -> &LastAppEvent {
 		&self.last_app_event
+	}
+}
+
+/// SysState
+impl AppState {
+	/// This is call in the loop
+	pub(in crate::tui::core) fn refresh_sys_state(&mut self) {
+		let (memory, cpu) = self.sys_state.memory_and_cpu();
+		self.memory = memory;
+		self.cpu = cpu;
+	}
+
+	/// This is the getters of the refreshed data
+	pub fn memory(&self) -> u64 {
+		self.memory
+	}
+
+	pub fn cpu(&self) -> f64 {
+		self.cpu
 	}
 }

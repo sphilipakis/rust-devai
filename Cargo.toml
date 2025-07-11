@@ -87,6 +87,7 @@ time-tz = {version = "2.0.0", features = ["system"]}
 semver = "1.0.22"
 uuid = {version = "1.16", features = ["v4", "v7", "fast-rng"]}
 uuid-extra = "0.0.1"
+sysinfo = "0.36.0"
 
 
 [build-dependencies]

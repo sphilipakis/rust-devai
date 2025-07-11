@@ -55,22 +55,22 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Render Line 1
 	// Model
 	Paragraph::new("Model:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_1, buf);
-	Paragraph::new(model_name).style(styles::STL_TXT_VALUE).render(l1_val_1, buf);
+	Paragraph::new(model_name).style(styles::STL_TXT_VAL).render(l1_val_1, buf);
 	// Duration
 	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_2, buf);
-	Paragraph::new(duration).style(styles::STL_TXT_VALUE).render(l1_val_2, buf);
+	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(l1_val_2, buf);
 	// Cost
 	Paragraph::new("Cost:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_3, buf);
-	Paragraph::new(cost).style(styles::STL_TXT_VALUE).render(l1_val_3, buf);
+	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(l1_val_3, buf);
 
 	// -- Line 2 Layout
 	let [l2_label_1, l2_val_1] = Layout::default()
@@ -84,7 +84,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Line 2 render
 	Paragraph::new("Tokens:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l2_label_1, buf);
 	let mut txt = String::new();
@@ -106,7 +106,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			txt.push_str("...");
 		}
 	}
-	Paragraph::new(txt).style(styles::STL_TXT_VALUE).render(l2_val_1, buf);
+	Paragraph::new(txt).style(styles::STL_TXT_VAL).render(l2_val_1, buf);
 }
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {

@@ -97,22 +97,22 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	};
 	line_1.push_span(" Agent:");
 	Paragraph::new(line_1)
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_1, buf);
-	Paragraph::new(agent_name).style(styles::STL_TXT_VALUE).render(l1_val_1, buf);
+	Paragraph::new(agent_name).style(styles::STL_TXT_VAL).render(l1_val_1, buf);
 
 	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_2, buf);
-	Paragraph::new(duration_txt).style(styles::STL_TXT_VALUE).render(l1_val_2, buf);
+	Paragraph::new(duration_txt).style(styles::STL_TXT_VAL).render(l1_val_2, buf);
 
 	Paragraph::new("Tasks:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l1_label_3, buf);
-	Paragraph::new(tasks_txt).style(styles::STL_TXT_VALUE).render(l1_val_3, buf);
+	Paragraph::new(tasks_txt).style(styles::STL_TXT_VAL).render(l1_val_3, buf);
 
 	// -- Render Line 2
 	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, l2_label_3, l2_val_3] = Layout::default()
@@ -122,24 +122,22 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.areas(line_2_a);
 
 	Paragraph::new("Model:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l2_label_1, buf);
-	Paragraph::new(model_name).style(styles::STL_TXT_VALUE).render(l2_val_1, buf);
+	Paragraph::new(model_name).style(styles::STL_TXT_VAL).render(l2_val_1, buf);
 
 	Paragraph::new("Cost:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l2_label_2, buf);
-	Paragraph::new(cost_txt).style(styles::STL_TXT_VALUE).render(l2_val_2, buf);
+	Paragraph::new(cost_txt).style(styles::STL_TXT_VAL).render(l2_val_2, buf);
 
 	Paragraph::new("Concurrency:")
-		.style(styles::STL_TXT_LABEL)
+		.style(styles::STL_TXT_LBL)
 		.right_aligned()
 		.render(l2_label_3, buf);
-	Paragraph::new(concurrency_txt)
-		.style(styles::STL_TXT_VALUE)
-		.render(l2_val_3, buf);
+	Paragraph::new(concurrency_txt).style(styles::STL_TXT_VAL).render(l2_val_3, buf);
 }
 
 fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {

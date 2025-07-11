@@ -4,6 +4,7 @@ mod app_state;
 mod app_state_ui;
 mod direction;
 mod state_processor;
+mod sys_state;
 mod tui_impl;
 mod tui_loop;
 
