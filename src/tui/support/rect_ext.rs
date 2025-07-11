@@ -12,6 +12,8 @@ pub trait RectExt {
 	#[allow(unused)]
 	fn x_v_margin(&self, v_margin: u16) -> Rect;
 
+	fn x_move_top(&self, y: u16) -> Rect;
+
 	// -- Width & Height
 	fn x_width(&self, width: u16) -> Rect;
 	fn x_height(&self, height: u16) -> Rect;
@@ -56,6 +58,15 @@ impl RectExt for Rect {
 	}
 
 	// endregion: --- Margins
+
+	fn x_move_top(&self, y_offset: u16) -> Rect {
+		Rect {
+			x: self.x,
+			y: self.y + y_offset,
+			width: self.width,
+			height: self.height,
+		}
+	}
 
 	// region:    --- Width & Height
 

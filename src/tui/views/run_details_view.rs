@@ -1,6 +1,7 @@
 use crate::store::rt_model::TaskState;
 use crate::tui::styles;
 use crate::tui::support::num_pad_for_len;
+use crate::tui::views::{RunAfterAllView, RunBeforeAllView};
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -15,17 +16,23 @@ impl StatefulWidget for RunDetailsView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		let [tasks_nav_a, task_content_a] = Layout::default()
+		let [nav_a, content_a] = Layout::default()
 			.direction(Direction::Horizontal)
 			.constraints([Constraint::Max(20), Constraint::Min(0)])
 			.spacing(1)
 			.areas(area);
 
 		// -- Render tasks nav
-		render_tasks_nav(tasks_nav_a, buf, state);
+		render_tasks_nav(nav_a, buf, state);
 
 		// -- Render task content
-		TaskView.render(task_content_a, buf, state);
+		if state.before_all_show() {
+			RunBeforeAllView.render(content_a, buf, state);
+		} else if state.after_all_show() {
+			RunAfterAllView.render(content_a, buf, state);
+		} else {
+			TaskView.render(content_a, buf, state);
+		}
 	}
 }
 

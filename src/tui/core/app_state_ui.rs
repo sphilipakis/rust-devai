@@ -6,6 +6,7 @@ use crate::support::time::now_unix_time_us;
 use crate::tui::AppState;
 // endregion: --- Imports
 
+/// Implement Run Related Data extractors
 impl AppState {
 	pub fn current_run_duration_txt(&self) -> String {
 		if let Some(run) = self.current_run() {
@@ -109,6 +110,74 @@ impl AppState {
 			(n, true) => format!("{run_model} +{n}"),
 			(1, false) => uniques.into_iter().next().unwrap_or_default(),
 			(n, false) => format!("{} +{}", uniques.into_iter().next().unwrap_or_default(), n - 1),
+		}
+	}
+}
+
+/// Implement Task Related Data extractors
+impl AppState {
+	pub fn current_task_model_name(&self) -> String {
+		self.current_task()
+			.and_then(|r| r.model_ov.clone())
+			.unwrap_or_else(|| self.current_run_model_name())
+	}
+
+	pub fn current_task_cost_txt(&self) -> String {
+		if let Some(task) = self.current_task()
+			&& let Some(cost) = task.cost
+		{
+			format!("${}", format_float(cost))
+		} else {
+			"$...".to_string()
+		}
+	}
+
+	/// Returns the cumulative duration of all tasks (formatted)  
+	/// or `None` when there is **one task or fewer**.
+	pub fn current_task_duration_txt(&self) -> String {
+		if let Some(task) = self.current_task() {
+			let duration = match (task.start, task.end) {
+				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
+				(Some(start), None) => now_unix_time_us() - start.as_i64(),
+				_ => 0,
+			};
+			format_duration_us(duration)
+		} else {
+			"..".to_string()
+		}
+	}
+
+	pub fn render_task_prompt_tokens_txt(&self) -> Option<String> {
+		let task = self.current_task()?;
+		let tk_prompt = task.tk_prompt_total?;
+
+		let mut addl: Vec<String> = Vec::new();
+		if let Some(tk_cached) = task.tk_prompt_cached {
+			if tk_cached > 0 {
+				addl.push(format!("{tk_cached} cached"));
+			}
+		}
+		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation {
+			if tk_cache_creation > 0 {
+				addl.push(format!("{tk_cache_creation} cache creation"));
+			}
+		}
+
+		if !addl.is_empty() {
+			Some(format!("{tk_prompt} ({})", addl.join(", ")))
+		} else {
+			Some(tk_prompt.to_string())
+		}
+	}
+
+	pub fn render_task_completion_tokens_txt(&self) -> Option<String> {
+		let task = self.current_task()?;
+		let tk_completion = task.tk_completion_total?;
+
+		if let Some(reasonning) = task.tk_completion_reasoning {
+			Some(format!("{tk_completion} ({reasonning} reasoning)"))
+		} else {
+			Some(tk_completion.to_string())
 		}
 	}
 }

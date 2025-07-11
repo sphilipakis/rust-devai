@@ -20,7 +20,7 @@ impl StatefulWidget for RunMainView {
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
-		// -- Layout Header | Logs
+		// -- Layout Header | Tabs | Tab Content
 		let [header_a, _space_1, tabs_a, tabs_line, tab_content_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
@@ -32,12 +32,13 @@ impl StatefulWidget for RunMainView {
 			])
 			.areas(area);
 
-		// -- render top
-		render_top(header_a, buf, state);
+		// -- render header
+		render_header(header_a, buf, state);
 
-		// --
+		// -- Render tabs with line
 		let selected_tab = render_tabs(tabs_a, tabs_line, buf, state);
 
+		// -- Render the selected tab
 		match selected_tab {
 			RunTab::Overview => {
 				RunOverviewView.render(tab_content_a, buf, state);
@@ -49,9 +50,7 @@ impl StatefulWidget for RunMainView {
 	}
 }
 
-// region:    --- Render Helpers
-
-fn render_top(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Prepare Data
 	let agent_name = state.current_run_agent_name();
 	let model_name = state.tasks_cummulative_models();
@@ -177,5 +176,3 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		_ => RunTab::Details, // Fallback
 	}
 }
-
-// endregion: --- Render Helpers
