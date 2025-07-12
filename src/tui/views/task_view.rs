@@ -41,60 +41,55 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	let fist_call_width = 10;
 
-	// -- Line 1 colums
+	// -- Columns layout
 	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
 			Constraint::Length(fist_call_width), // Model / Prompt
-			Constraint::Length(22),              // Model / Prompt value
-			Constraint::Length(12),              // Duuration / Completion
-			Constraint::Length(8),               // Duuration / Completion value
-			Constraint::Length(7),               // cost
-			Constraint::Length(8),               // cost value
+			Constraint::Length(22),              //
+			Constraint::Length(12),              // Cost / Completion
+			Constraint::Length(10),              //
+			Constraint::Length(10),              // Duration
+			Constraint::Fill(1),                 //
 		])
 		.spacing(1)
 		.areas(area);
 
-	// -- Render Line 1
-	// Model
+	// -- Render Row 1
 	Paragraph::new("Model:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_1.x_line(1), buf);
+		.render(label_1.x_row(1), buf);
 	Paragraph::new(model_name)
 		.style(styles::STL_TXT_VAL)
-		.render(val_1.x_line(1), buf);
+		.render(val_1.x_row(1), buf);
 
-	// Duration
-	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(label_2.x_line(1), buf);
-	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(val_2.x_line(1), buf);
-	// Cost
 	Paragraph::new("Cost:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_3.x_line(1), buf);
-	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(val_3.x_line(1), buf);
+		.render(label_2.x_row(1), buf);
+	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(val_2.x_row(1), buf);
 
-	// -- Line 2 render
-	// Prompt
+	Paragraph::new("Duration:")
+		.style(styles::STL_TXT_LBL)
+		.right_aligned()
+		.render(label_3.x_row(1), buf);
+	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(val_3.x_row(1), buf);
+
+	// -- Render Row 2
 	Paragraph::new("Prompt:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_1.x_line(2), buf);
-	Paragraph::new(prompt_tk)
-		.style(styles::STL_TXT_VAL)
-		.render(val_1.x_line(2), buf);
+		.render(label_1.x_row(2), buf);
+	Paragraph::new(prompt_tk).style(styles::STL_TXT_VAL).render(val_1.x_row(2), buf);
 
 	Paragraph::new("Completion:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_2.x_line(2), buf);
+		.render(label_2.x_row(2), buf);
 	Paragraph::new(completion_tk)
 		.style(styles::STL_TXT_VAL)
-		.render(val_2.union(val_3).x_line(2), buf);
+		.render(val_2.union(val_3).x_row(2), buf);
 }
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
@@ -152,7 +147,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
-// region:    --- Item Renderers
+// region:    --- Ui Helpers
 
 fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
@@ -176,8 +171,8 @@ fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	ui_for_section(content, mark_txt, 12, max_width)
 }
 
-// IN PROGRESS - need to refactor so that render_log uses it, so that we can use this function to render input and output
-//               Should not have log.
+/// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
+/// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.
 fn ui_for_section(content: &str, marker_txt: &str, marker_width: usize, max_width: u16) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
@@ -222,4 +217,4 @@ fn first_line_truncate(s: &str, max: usize) -> String {
 	s.lines().next().unwrap_or("").chars().take(max).collect()
 }
 
-// endregion: --- Item Renderers
+// endregion: --- Ui Helpers

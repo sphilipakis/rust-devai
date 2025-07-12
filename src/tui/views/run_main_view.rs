@@ -1,4 +1,4 @@
-use crate::tui::support::clamp_idx_in_len;
+use crate::tui::support::{RectExt, clamp_idx_in_len};
 use crate::tui::views::{RunDetailsView, RunOverviewView};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -56,39 +56,33 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let model_name = state.tasks_cummulative_models();
 	let cost_txt = state.current_run_cost_txt();
 	let concurrency_txt = state.current_run_concurrency_txt();
-	let duration_txt = state.current_run_duration_txt();
 
 	// Tasks progress and optional cumulative duration.
 	let total_tasks = state.tasks().len();
 	let done_tasks = state.tasks().iter().filter(|t| t.is_done()).count();
-	let mut tasks_txt = format!("{done_tasks}/{total_tasks}");
+	let tasks_txt = format!("{done_tasks}/{total_tasks}");
+
+	let mut duration_txt = state.current_run_duration_txt();
 	if let Some(cumul_txt) = state.tasks_cummulative_duration() {
-		tasks_txt = format!("{tasks_txt} ({cumul_txt})");
+		duration_txt = format!("{duration_txt} ({cumul_txt})");
 	}
 
 	// -- Layout Helpers
-	// 6 columns: label / value repeated 3 times.
-	let cols = vec![
-		Constraint::Length(10), // "Agent:" / "Model:" labels
-		Constraint::Length(20), // Values for Agent / Model
-		Constraint::Length(10), // "Duration:" / "Cost:"
-		Constraint::Length(10), // Values for Duration / Cost
-		Constraint::Length(13), // "Tasks:" label, Concurrency: label
-		Constraint::Length(20), // Tasks value or concurrency
-	];
-
-	let [line_1_a, line_2_a] = Layout::default()
-		.direction(Direction::Vertical)
-		.constraints(vec![Constraint::Length(1), Constraint::Length(1)])
+	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![
+			Constraint::Length(10), // Agent/Model
+			Constraint::Length(20), //
+			Constraint::Length(7),  // Tasks/Cost
+			Constraint::Length(8),  //
+			Constraint::Length(13), // Concurrency/Duration
+			Constraint::Fill(1),    //
+		])
+		.spacing(1)
 		.areas(area);
 
-	// -- Render Line 1
-	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(cols.clone())
-		.spacing(1)
-		.areas(line_1_a);
-
+	// -- Render Row 1
+	// Agent label with marker
 	let mut line_1 = Line::default();
 	if state.current_run().map(|v| v.is_done()).unwrap_or_default() {
 		line_1.push_span(Span::styled("✔", styles::CLR_TXT_DONE));
@@ -99,45 +93,48 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new(line_1)
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l1_label_1, buf);
-	Paragraph::new(agent_name).style(styles::STL_TXT_VAL).render(l1_val_1, buf);
-
-	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(l1_label_2, buf);
-	Paragraph::new(duration_txt).style(styles::STL_TXT_VAL).render(l1_val_2, buf);
+		.render(label_1.x_row(1), buf);
+	// Agent value
+	Paragraph::new(agent_name)
+		.style(styles::STL_TXT_VAL)
+		.render(val_1.x_row(1), buf);
 
 	Paragraph::new("Tasks:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l1_label_3, buf);
-	Paragraph::new(tasks_txt).style(styles::STL_TXT_VAL).render(l1_val_3, buf);
-
-	// -- Render Line 2
-	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, l2_label_3, l2_val_3] = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(cols)
-		.spacing(1)
-		.areas(line_2_a);
-
-	Paragraph::new("Model:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(l2_label_1, buf);
-	Paragraph::new(model_name).style(styles::STL_TXT_VAL).render(l2_val_1, buf);
-
-	Paragraph::new("Cost:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(l2_label_2, buf);
-	Paragraph::new(cost_txt).style(styles::STL_TXT_VAL).render(l2_val_2, buf);
+		.render(label_2.x_row(1), buf);
+	Paragraph::new(tasks_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(1), buf);
 
 	Paragraph::new("Concurrency:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l2_label_3, buf);
-	Paragraph::new(concurrency_txt).style(styles::STL_TXT_VAL).render(l2_val_3, buf);
+		.render(label_3.x_row(1), buf);
+	Paragraph::new(concurrency_txt)
+		.style(styles::STL_TXT_VAL)
+		.render(val_3.x_row(1), buf);
+
+	// -- Render Row 2
+	Paragraph::new("Model:")
+		.style(styles::STL_TXT_LBL)
+		.right_aligned()
+		.render(label_1.x_row(2), buf);
+	Paragraph::new(model_name)
+		.style(styles::STL_TXT_VAL)
+		.render(val_1.x_row(2), buf);
+
+	Paragraph::new("Cost:")
+		.style(styles::STL_TXT_LBL)
+		.right_aligned()
+		.render(label_2.x_row(2), buf);
+	Paragraph::new(cost_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(2), buf);
+
+	Paragraph::new("Duration:")
+		.style(styles::STL_TXT_LBL)
+		.right_aligned()
+		.render(label_3.x_row(2), buf);
+	Paragraph::new(duration_txt)
+		.style(styles::STL_TXT_VAL)
+		.render(val_3.x_row(2), buf);
 }
 
 fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
