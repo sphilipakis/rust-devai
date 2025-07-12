@@ -3,7 +3,8 @@ use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::text::{Line, Span};
+use ratatui::style::Stylize as _;
+use ratatui::text::{Line, Span, ToLine};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.
@@ -35,80 +36,65 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_txt();
 	let duration = state.current_task_duration_txt();
-	let tk_prompt = state.render_task_prompt_tokens_txt();
-	let tk_completion = state.render_task_completion_tokens_txt();
+	let prompt_tk = state.render_task_prompt_tokens_fmt();
+	let completion_tk = state.render_task_completion_tokens_fmt();
 
 	let fist_call_width = 10;
 
 	// -- Line 1 colums
-	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
+	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(fist_call_width), // Model
-			Constraint::Length(20),              // Model value
-			Constraint::Length(10),              // duration
-			Constraint::Length(12),              // duration value
-			Constraint::Length(7),               // duration
-			Constraint::Length(20),              // duration value
+			Constraint::Length(fist_call_width), // Model / Prompt
+			Constraint::Length(22),              // Model / Prompt value
+			Constraint::Length(12),              // Duuration / Completion
+			Constraint::Length(8),               // Duuration / Completion value
+			Constraint::Length(7),               // cost
+			Constraint::Length(8),               // cost value
 		])
 		.spacing(1)
-		.areas(area.x_height(1));
+		.areas(area);
 
 	// -- Render Line 1
 	// Model
 	Paragraph::new("Model:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l1_label_1, buf);
-	Paragraph::new(model_name).style(styles::STL_TXT_VAL).render(l1_val_1, buf);
+		.render(label_1.x_line(1), buf);
+	Paragraph::new(model_name)
+		.style(styles::STL_TXT_VAL)
+		.render(val_1.x_line(1), buf);
+
 	// Duration
 	Paragraph::new("Duration:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l1_label_2, buf);
-	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(l1_val_2, buf);
+		.render(label_2.x_line(1), buf);
+	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(val_2.x_line(1), buf);
 	// Cost
 	Paragraph::new("Cost:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l1_label_3, buf);
-	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(l1_val_3, buf);
-
-	// -- Line 2 Layout
-	let [l2_label_1, l2_val_1] = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(vec![
-			Constraint::Length(fist_call_width), // Tokens
-			Constraint::Fill(1),
-		])
-		.spacing(1)
-		.areas(area.x_move_top(1).x_height(1));
+		.render(label_3.x_line(1), buf);
+	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(val_3.x_line(1), buf);
 
 	// -- Line 2 render
-	Paragraph::new("Tokens:")
+	// Prompt
+	Paragraph::new("Prompt:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(l2_label_1, buf);
-	let mut txt = String::new();
-	if let Some(tk_prompt) = tk_prompt {
-		txt.push_str(&format!("Prompt: {tk_prompt}"));
-	}
-	if let Some(tk_completion) = tk_completion {
-		if !txt.is_empty() {
-			txt.push_str("  ");
-		}
-		txt.push_str(&format!("Completion: {tk_completion}"));
-	}
-	if txt.is_empty() {
-		if let Some(task) = state.current_task()
-			&& task.is_done()
-		{
-			txt.push_str("No AI ran for this task.");
-		} else {
-			txt.push_str("...");
-		}
-	}
-	Paragraph::new(txt).style(styles::STL_TXT_VAL).render(l2_val_1, buf);
+		.render(label_1.x_line(2), buf);
+	Paragraph::new(prompt_tk)
+		.style(styles::STL_TXT_VAL)
+		.render(val_1.x_line(2), buf);
+
+	Paragraph::new("Completion:")
+		.style(styles::STL_TXT_LBL)
+		.right_aligned()
+		.render(label_2.x_line(2), buf);
+	Paragraph::new(completion_tk)
+		.style(styles::STL_TXT_VAL)
+		.render(val_2.union(val_3).x_line(2), buf);
 }
 
 fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
@@ -131,7 +117,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 				}
 
 				// Render log lines
-				let log_lines = render_log(log, max_width);
+				let log_lines = ui_for_log(log, max_width);
 				lines.extend(log_lines);
 				lines.push(Line::default()); // empty line (for now)
 			}
@@ -168,7 +154,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 // region:    --- Item Renderers
 
-fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
 		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
 	};
@@ -187,12 +173,12 @@ fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentPrint => "Agent Print",
 	};
 
-	render_section(content, mark_txt, 12, max_width)
+	ui_for_section(content, mark_txt, 12, max_width)
 }
 
 // IN PROGRESS - need to refactor so that render_log uses it, so that we can use this function to render input and output
 //               Should not have log.
-fn render_section(content: &str, marker_txt: &str, marker_width: usize, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_section(content: &str, marker_txt: &str, marker_width: usize, max_width: u16) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
 	let width_content = (max_width as usize) - marker_width - width_spacer;

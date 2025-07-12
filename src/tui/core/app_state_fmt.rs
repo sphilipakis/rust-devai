@@ -147,38 +147,50 @@ impl AppState {
 		}
 	}
 
-	pub fn render_task_prompt_tokens_txt(&self) -> Option<String> {
-		let task = self.current_task()?;
-		let tk_prompt = task.tk_prompt_total?;
+	pub fn render_task_prompt_tokens_fmt(&self) -> String {
+		let Some(task) = self.current_task() else {
+			return "...".to_string();
+		};
+		let Some(tk_prompt) = task.tk_prompt_total else {
+			return "...".to_string();
+		};
 
 		let mut addl: Vec<String> = Vec::new();
 		if let Some(tk_cached) = task.tk_prompt_cached {
 			if tk_cached > 0 {
-				addl.push(format!("{tk_cached} cached"));
+				addl.push(format!("{} cached", text::format_num(tk_cached)));
 			}
 		}
 		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation {
 			if tk_cache_creation > 0 {
-				addl.push(format!("{tk_cache_creation} cache creation"));
+				addl.push(format!("{} cache write", text::format_num(tk_cache_creation)));
 			}
 		}
 
+		let mut res = format!("{} tk", text::format_num(tk_prompt));
+
 		if !addl.is_empty() {
-			Some(format!("{tk_prompt} ({})", addl.join(", ")))
-		} else {
-			Some(tk_prompt.to_string())
+			res = format!("{res} ({})", addl.join(", "));
 		}
+
+		res
 	}
 
-	pub fn render_task_completion_tokens_txt(&self) -> Option<String> {
-		let task = self.current_task()?;
-		let tk_completion = task.tk_completion_total?;
+	pub fn render_task_completion_tokens_fmt(&self) -> String {
+		let Some(task) = self.current_task() else {
+			return "...".to_string();
+		};
+		let Some(tk_completion) = task.tk_completion_total else {
+			return "...".to_string();
+		};
+
+		let mut res = format!("{} tk", text::format_num(tk_completion));
 
 		if let Some(reasonning) = task.tk_completion_reasoning {
-			Some(format!("{tk_completion} ({reasonning} reasoning)"))
-		} else {
-			Some(tk_completion.to_string())
+			res = format!("{res} ({} reasoning)", text::format_num(reasonning));
 		}
+
+		res
 	}
 }
 

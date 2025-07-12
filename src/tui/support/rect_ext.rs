@@ -14,6 +14,9 @@ pub trait RectExt {
 
 	fn x_move_top(&self, y: u16) -> Rect;
 
+	// -- lines
+	fn x_line(&self, line_idx: u16) -> Rect;
+
 	// -- Width & Height
 	fn x_width(&self, width: u16) -> Rect;
 	fn x_height(&self, height: u16) -> Rect;
@@ -69,6 +72,19 @@ impl RectExt for Rect {
 	}
 
 	// region:    --- Width & Height
+
+	// region:    --- Lines
+
+	// - `line_num` starts at ``
+	fn x_line(&self, line_num: u16) -> Rect {
+		Rect {
+			x: self.x,
+			y: self.y + line_num - 1,
+			width: self.width,
+			height: 1,
+		}
+	}
+	// endregion: --- Lines
 
 	/// Change the width
 	fn x_width(&self, width: u16) -> Rect {
