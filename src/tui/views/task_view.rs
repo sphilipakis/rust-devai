@@ -1,4 +1,5 @@
-use crate::store::rt_model::{Log, LogBmc, LogKind};
+use crate::store::ModelManager;
+use crate::store::rt_model::{Log, LogBmc, LogKind, Task, TaskBmc};
 use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -9,6 +10,8 @@ use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Wid
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
+
+const MARKER_WIDTH: usize = 12;
 
 impl StatefulWidget for TaskView {
 	type State = AppState;
@@ -27,7 +30,7 @@ impl StatefulWidget for TaskView {
 		render_header(header_a, buf, state);
 
 		// don't show the steps
-		render_logs(logs_a, buf, state, false);
+		render_sections(logs_a, buf, state, false);
 	}
 }
 
@@ -92,40 +95,26 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.render(val_2.union(val_3).x_row(2), buf);
 }
 
-fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
-	// -- Fetch Logs
-	let logs = if let Some(current_task) = state.current_task() {
-		LogBmc::list_for_task(state.mm(), current_task.id)
-	} else {
-		Ok(Vec::new())
+fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
+	// -- Get the current task (return early)
+	let Some(task) = state.current_task() else {
+		Line::raw("No Current Task").render(area, buf);
+		return;
 	};
 
-	// -- Prepare content
-	let content = match logs {
-		Ok(logs) => {
-			let max_width = area.width - 3; // for the scroll bar
-			let mut lines: Vec<Line> = Vec::new();
-			for log in logs {
-				// Show or not step
-				if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
-					continue;
-				}
+	// -- Setup UI Lines
+	let mut all_lines: Vec<Line> = Vec::new();
+	let max_width = area.width - 3; // for scroll
 
-				// Render log lines
-				let log_lines = ui_for_log(log, max_width);
-				lines.extend(log_lines);
-				lines.push(Line::default()); // empty line (for now)
-			}
-			if lines.is_empty() {
-				lines.push("No logs".into())
-			}
-			lines
-		}
-		Err(err) => vec![format!("LogBmc::list error. {err}").into()],
-	};
-	let line_count = content.len();
+	// -- Add Input
+	all_lines.extend(ui_for_input(state.mm(), task, max_width));
+	all_lines.push(Line::default());
+
+	// -- Add Logs Lines
+	all_lines.extend(ui_for_logs(state.mm(), task, max_width, show_steps));
 
 	// -- Clamp scroll
+	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
 	if state.log_scroll > max_scroll {
 		state.log_scroll = max_scroll;
@@ -133,7 +122,7 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 	// -- Render content
 	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
-	let p = Paragraph::new(content).scroll((state.log_scroll, 0));
+	let p = Paragraph::new(all_lines).scroll((state.log_scroll, 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
@@ -148,6 +137,48 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 }
 
 // region:    --- Ui Helpers
+
+fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+	let marker_txt = "Input:";
+	match TaskBmc::get_input(mm, task.id) {
+		Ok(Some(input)) => match input.content {
+			Some(content) => ui_for_section(&content, marker_txt, max_width),
+			None => ui_for_section("no input found", marker_txt, max_width),
+		},
+		Ok(None) => ui_for_section("no input found", marker_txt, max_width),
+		Err(err) => ui_for_section(&format!("Error getting input. {err}"), marker_txt, max_width),
+	}
+}
+
+fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+	// -- Fetch Logs
+	let logs = LogBmc::list_for_task(mm, task.id);
+
+	let mut lines: Vec<Line> = Vec::new();
+
+	// -- Prepare content
+	match logs {
+		Ok(logs) => {
+			for log in logs {
+				// Show or not step
+				if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
+					continue;
+				}
+
+				// Render log lines
+				let log_lines = ui_for_log(log, max_width);
+				lines.extend(log_lines);
+				lines.push(Line::default()); // empty line (for now)
+			}
+			if lines.is_empty() {
+				lines.push("No logs".into())
+			}
+		}
+		Err(err) => lines.push(format!("LogBmc::list error. {err}").into()),
+	};
+
+	lines
+}
 
 fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
@@ -168,18 +199,18 @@ fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentPrint => "Agent Print",
 	};
 
-	ui_for_section(content, mark_txt, 12, max_width)
+	ui_for_section(content, mark_txt, max_width)
 }
 
 /// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
 /// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.
-fn ui_for_section(content: &str, marker_txt: &str, marker_width: usize, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_section(content: &str, marker_txt: &str, max_width: u16) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
-	let width_content = (max_width as usize) - marker_width - width_spacer;
+	let width_content = (max_width as usize) - MARKER_WIDTH - width_spacer;
 
 	// -- Mark Span
-	let mark_span = Span::styled(format!("{marker_txt:>marker_width$}"), styles::STL_TXT_LBL);
+	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), styles::STL_TXT_LBL);
 
 	let msg_wrap = textwrap::wrap(content, width_content);
 	let msg_wrap_len = msg_wrap.len();
@@ -201,7 +232,7 @@ fn ui_for_section(content: &str, marker_txt: &str, marker_width: usize, max_widt
 
 	// -- Render other content line if present
 	if msg_wrap_len > 2 {
-		let left_spacing = " ".repeat(marker_width + width_spacer);
+		let left_spacing = " ".repeat(MARKER_WIDTH + width_spacer);
 		for line_content in msg_wrap_iter {
 			let line = Line::raw(format!("{left_spacing}{line_content}"));
 			lines.push(line)

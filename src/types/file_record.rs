@@ -43,7 +43,7 @@ impl FileRecord {
 			content,
 			created_epoch_us: meta.created_epoch_us,
 			modified_epoch_us: meta.modified_epoch_us,
-			size: meta.size,
+			size: meta.size as i64,
 		})
 	}
 }

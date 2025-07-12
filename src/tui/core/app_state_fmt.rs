@@ -198,7 +198,7 @@ impl AppState {
 impl AppState {
 	pub fn memory_fmt(&self) -> String {
 		let mem = self.memory();
-		text::format_size_xfixed(mem)
+		text::format_pretty_size(mem)
 	}
 
 	#[allow(unused)]

@@ -68,47 +68,9 @@ pub fn format_time_local(epoch_us: i64) -> Result<String> {
 
 // endregion: --- Duration
 
-/// Formats a byte size as a pretty, fixed-width string with unit alignment.
-/// The output format is tailored to align nicely in monospaced tables.
-///
-/// - **B, KB, MB:** The number part is 6 characters wide.
-/// - **GB, TB, PB:** The number part is 5 characters wide.
-/// - **Bytes (B):** Displayed as an integer with a trailing space (e.g., `"   777 B "`). Total length is 10.
-/// - **KB and above:** Displayed with 2 decimal places (e.g., `"  8.78 KB"`). Total length is 9.
-///
-/// ### Examples
-///
-/// `777`       -> `"   777 B "`
-/// `8777`      -> `"  8.78 KB"`
-/// `88777`     -> `" 88.78 KB"`
-/// `888777`    -> `"888.78 KB"`
-/// `2_345_678_900` -> `" 2.35 GB"`
-///
-/// NOTE: if in simple-fs, migh call it pretty_size()
-pub fn format_size_xfixed(size_in_bytes: u64) -> String {
-	const UNITS: [&str; 6] = ["B", "KB", "MB", "GB", "TB", "PB"];
-	let mut size = size_in_bytes as f64;
-	let mut unit = 0;
-
-	// Determine which unit to use
-	while size >= 1000.0 && unit < UNITS.len() - 1 {
-		size /= 1000.0;
-		unit += 1;
-	}
-
-	let unit_str = UNITS[unit];
-
-	// Note: The logic is derived from the test cases, which have specific formatting rules.
-	if unit == 0 {
-		// Bytes: integer, pad to 6, then add " B "
-		let number_str = format!("{size_in_bytes:>6}");
-		format!("{number_str} {unit_str} ")
-	} else {
-		// Units KB or above: 2 decimals, pad to width, then add " unit"
-		let width = if unit <= 2 { 6 } else { 5 };
-		let number_str = format!("{size:>width$.2}");
-		format!("{number_str} {unit_str}")
-	}
+/// Formats 9 fix chars
+pub fn format_pretty_size(size_in_bytes: u64) -> String {
+	simple_fs::pretty_size(size_in_bytes)
 }
 
 // region:    --- Genai
@@ -150,34 +112,6 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-
-	#[test]
-	fn test_support_text_format_size_xfixed() -> Result<()> {
-		// -- Setup & Fixtures
-		let cases = [
-			(777, "   777 B "),
-			(8777, "  8.78 KB"),
-			(88777, " 88.78 KB"),
-			(888777, "888.78 KB"),
-			(888700, "888.70 KB"),
-			(200000, "200.00 KB"),
-			(2_000_000, "  2.00 MB"),
-			(2_345_678_900, " 2.35 GB"),
-			(1_234_567_890_123, " 1.23 TB"),
-			(2_345_678_900_123_456, " 2.35 PB"),
-			(0, "     0 B "),
-		];
-
-		// -- Exec
-		for &(input, expected) in &cases {
-			let actual = format_size_xfixed(input);
-			assert_eq!(actual, expected, "input: {input}");
-		}
-
-		// -- Check
-
-		Ok(())
-	}
 
 	#[test]
 	fn test_support_text_format_percentage() -> Result<()> {

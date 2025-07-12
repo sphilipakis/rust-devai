@@ -57,7 +57,7 @@ impl FileInfo {
 			if let Ok(meta) = full_path.meta() {
 				res.created_epoch_us = Some(meta.created_epoch_us);
 				res.modified_epoch_us = Some(meta.modified_epoch_us);
-				res.size = Some(meta.size);
+				res.size = Some(meta.size as i64);
 			}
 			res
 		} else {
