@@ -2,19 +2,25 @@ use crate::store::Result;
 use rusqlite::Connection;
 
 // Some notes:
-// - Right now, memory db only, might become persistent at the session level
-// - All table have `id` which is use for same db joins, and `uid` which is a uuid blob,
-//   when need to shared out of rust or accross db
-// - `id` is not with `AUTOINCREMENT` for making ids are not reused if row get deleted
+// - Currently, the database is in-memory only, but it may become persistent at the session level.
+// - All tables have an `id` used for same-db joins, and a `uid` which is a UUID blob,
+//   intended for sharing outside of Rust or across databases.
+// - `id` uses `AUTOINCREMENT` to ensure IDs are not reused if a row is deleted.
+// - `MAIN_TABLES` are the main database tables for all metadata. They are designed to be relatively small and to scale well.
+// - `CONTENT_TABLES` are designed to hold larger content and may have different trimming/cleaning strategies.
+//    - A future strategy could involve having a set of content tables per run, using the b58 run.uid suffix. This would make it very fast to clean up old ones.
+// - References between these two sets of tables are by `uid`, as they may eventually reside in different databases.
 
 pub fn recreate_db(con: &Connection) -> Result<()> {
 	create_schema(con)?;
 	Ok(())
 }
 
-// region:    --- Table SQLs
+// region:    --- Main Tables
 
-const RUN_TABLE: &str = "
+const RUN_TABLE: (&str, &str) = (
+	"run",
+	"
 CREATE TABLE IF NOT EXISTS run (
 		id     INTEGER PRIMARY KEY AUTOINCREMENT,
 		uid    BLOB NOT NULL,
@@ -42,9 +48,12 @@ CREATE TABLE IF NOT EXISTS run (
 
 		label TEXT
 
-) STRICT";
+) STRICT",
+);
 
-const TASK_TABLE: &str = "
+const TASK_TABLE: (&str, &str) = (
+	"task",
+	"
 CREATE TABLE IF NOT EXISTS task (
 		id     INTEGER PRIMARY KEY AUTOINCREMENT,
 		uid    BLOB NOT NULL,
@@ -80,9 +89,12 @@ CREATE TABLE IF NOT EXISTS task (
 
 		label  TEXT
 
-) STRICT";
+) STRICT",
+);
 
-const LOG_TABLE: &str = "
+const LOG_TABLE: (&str, &str) = (
+	"log",
+	"
 CREATE TABLE IF NOT EXISTS log (
 		id      INTEGER PRIMARY KEY AUTOINCREMENT,
 		uid     BLOB NOT NULL,
@@ -100,30 +112,85 @@ CREATE TABLE IF NOT EXISTS log (
 		step    TEXT, 
 		
 		message TEXT
-) STRICT";
+) STRICT",
+);
 
-const ALL_MAIN_TABLES: &[(&str, &str)] = &[
-	//
-	("run", RUN_TABLE),
-	("task", TASK_TABLE),
-	("log", LOG_TABLE),
-];
+const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, LOG_TABLE];
 
-// endregion: --- Table SQLs
+// endregion: --- Main Tables
+
+// region:    --- Content Tables
+
+const INPUT_TABLE: (&str, &str) = (
+	"input",
+	"
+CREATE TABLE IF NOT EXISTS input (
+		id       INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid      BLOB NOT NULL,
+
+		ctime    INTEGER NOT NULL,
+		mtime    INTEGER NOT NULL,							
+
+		task_uid INTEGER NOT NULL,
+
+		typ      TEXT, -- 'text' | 'json'
+		content  TEXT
+) STRICT",
+);
+
+const OUTPUT_TABLE: (&str, &str) = (
+	"output",
+	"
+CREATE TABLE IF NOT EXISTS output (
+		id       INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid      BLOB NOT NULL,
+
+		ctime    INTEGER NOT NULL,
+		mtime    INTEGER NOT NULL,							
+
+		task_uid INTEGER NOT NULL,
+
+		typ      TEXT, -- 'text' | 'json'
+		content  TEXT
+) STRICT",
+);
+
+const MESSAGE_TABLE: (&str, &str) = (
+	"message",
+	"
+CREATE TABLE IF NOT EXISTS message (
+		id       INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid      BLOB NOT NULL,
+
+		ctime    INTEGER NOT NULL,
+		mtime    INTEGER NOT NULL,							
+
+		task_uid INTEGER NOT NULL,
+
+		typ      TEXT, -- 'text' | 'json'
+		content  TEXT
+) STRICT",
+);
+
+const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INPUT_TABLE, OUTPUT_TABLE, MESSAGE_TABLE];
+
+// endregion: --- Content Tables
 
 // region:    --- Support
 
 fn create_schema(con: &Connection) -> Result<()> {
-	for (name, table_sql) in ALL_MAIN_TABLES {
-		con.execute(table_sql, ())?;
-		con.execute(
-			&format!(
-				"
+	for tables in [ALL_MAIN_TABLES, ALL_CONTENT_TABLES] {
+		for (name, table_sql) in tables {
+			con.execute(table_sql, ())?;
+			con.execute(
+				&format!(
+					"
 		CREATE INDEX IF NOT EXISTS idx_{name}_uid ON {name}(uid);
 		"
-			),
-			(),
-		)?;
+				),
+				(),
+			)?;
+		}
 	}
 
 	Ok(())
