@@ -11,8 +11,7 @@ use uuid::Uuid;
 ///
 /// NOTE: Right now, just support run & task uid, but should probably support stage as
 ///
-/// NOTE: This struct is exposed in the store/rt-model, so, probably need to move there
-///       in some new name like RuntimeCtx perhaps
+/// NOTE: Might want to move it to runtime/ module (not sure)
 #[derive(Debug, Clone, Default)]
 pub struct RuntimeCtx {
 	run_uid: Option<Uuid>,

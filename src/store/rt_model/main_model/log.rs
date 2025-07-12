@@ -1,6 +1,6 @@
-use super::RuntimeCtx;
 use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
+use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, ModelManager, Result, RunStep, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
