@@ -1,5 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::rt_model::{InputBmc, InputForCreate};
+use crate::store::rt_model::{Input, InputBmc, InputForCreate};
 use crate::store::{ContentTyp, Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -195,6 +195,13 @@ impl TaskBmc {
 // endregion: --- Bmc
 
 // region:    --- Bmc going to Content Model
+
+impl TaskBmc {
+	pub fn get_input(mm: &ModelManager, task_id: Id) -> Result<Option<Input>> {
+		let task_uid = TaskBmc::get_uid(mm, task_id)?;
+		InputBmc::first_for_task(mm, task_uid)
+	}
+}
 
 // endregion: --- Bmc going to Content Model
 

@@ -124,6 +124,25 @@ where
 	Ok(id)
 }
 
+pub fn first<MC, E>(
+	mm: &ModelManager,
+	list_options: Option<ListOptions>,
+	filter_fields: Option<SqliteFields>,
+) -> Result<Option<E>>
+where
+	MC: DbBmc,
+	E: SqliteFromRow + Unpin + Send,
+	E: HasSqliteFields,
+{
+	let list_options = if let Some(list_options) = list_options {
+		list_options.with_limit(1)
+	} else {
+		ListOptions::from_limit(1)
+	};
+	let entities = list::<MC, E>(mm, Some(list_options), filter_fields)?;
+	Ok(entities.into_iter().next())
+}
+
 pub fn list<MC, E>(
 	mm: &ModelManager,
 	list_options: Option<ListOptions>,

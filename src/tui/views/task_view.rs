@@ -166,20 +166,18 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
-// region:    --- Log Renderers
+// region:    --- Item Renderers
 
 fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
 		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
 	};
+	let content = match (log.message.as_ref(), log.kind.as_ref()) {
+		(_, Some(LogKind::RunStep)) => log.step_as_str(),
+		(Some(msg), _) => msg,
+		(_, _) => "No Step not MSG for log",
+	};
 
-	let width_marker = 12;
-	let spacer = " ";
-	let width_spacer = spacer.len(); // won't work if no ASCII
-	let width_content = (max_width as usize) - width_marker - width_spacer;
-
-	// -- Mark Span
-	// TODO: need to return style as well
 	let mark_txt = match kind {
 		LogKind::RunStep => "Sys Step",
 		LogKind::SysInfo => "Sys Info",
@@ -188,17 +186,27 @@ fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::SysDebug => "Sys Debug",
 		LogKind::AgentPrint => "Agent Print",
 	};
-	let mark_span = Span::styled(format!("{mark_txt:>width_marker$}"), styles::STL_TXT_LBL);
 
-	let msg_wrap = log.message.as_ref().map(|msg| textwrap::wrap(msg, width_content));
+	render_section(content, mark_txt, 12, max_width)
+}
+
+// IN PROGRESS - need to refactor so that render_log uses it, so that we can use this function to render input and output
+//               Should not have log.
+fn render_section(content: &str, marker_txt: &str, marker_width: usize, max_width: u16) -> Vec<Line<'static>> {
+	let spacer = " ";
+	let width_spacer = spacer.len(); // won't work if no ASCII
+	let width_content = (max_width as usize) - marker_width - width_spacer;
+
+	// -- Mark Span
+	let mark_span = Span::styled(format!("{marker_txt:>marker_width$}"), styles::STL_TXT_LBL);
+
+	let msg_wrap = textwrap::wrap(content, width_content);
+	let msg_wrap_len = msg_wrap.len();
 
 	// -- First Content Line
-	let first_content = match (msg_wrap.as_ref(), kind) {
-		(_, LogKind::RunStep) => log.step_as_str().to_string(),
-		(Some(msg_wrap), _) => msg_wrap.first().map(|s| s.to_string()).unwrap_or_default(),
-		(_, _) => format!("No Step not MSG for log {}", log.id),
-	};
-	let first_content_span = Span::raw(first_content);
+	let mut msg_wrap_iter = msg_wrap.into_iter();
+	let first_content = msg_wrap_iter.next().unwrap_or_default();
+	let first_content_span = Span::raw(first_content.to_string());
 
 	let first_line = Line::from(vec![
 		//
@@ -211,15 +219,8 @@ fn render_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let mut lines = vec![first_line];
 
 	// -- Render other content line if present
-	if let Some(msg_wrap) = msg_wrap
-		&& msg_wrap.len() > 1
-	{
-		let mut msg_wrap_iter = msg_wrap.into_iter();
-		// we skip the first line, already printed
-		msg_wrap_iter.next();
-		// NOTE: for now we need to close this left_spacing because of the return type
-		//       With might be able to return a type to avoid new string
-		let left_spacing = " ".repeat(width_marker + width_spacer);
+	if msg_wrap_len > 2 {
+		let left_spacing = " ".repeat(marker_width + width_spacer);
 		for line_content in msg_wrap_iter {
 			let line = Line::raw(format!("{left_spacing}{line_content}"));
 			lines.push(line)
@@ -235,4 +236,4 @@ fn first_line_truncate(s: &str, max: usize) -> String {
 	s.lines().next().unwrap_or("").chars().take(max).collect()
 }
 
-// endregion: --- Log Renderers
+// endregion: --- Item Renderers

@@ -79,11 +79,11 @@ impl InputBmc {
 	}
 
 	/// Convenience helper to list all inputs for a given task `uid`.
-	pub fn list_for_task(mm: &ModelManager, task_uid: Uuid) -> Result<Vec<Input>> {
+	pub fn first_for_task(mm: &ModelManager, task_uid: Uuid) -> Result<Option<Input>> {
 		let filter = InputFilter {
 			task_uid: Some(task_uid),
 		};
-		Self::list(mm, None, Some(filter))
+		base::first::<Self, _>(mm, None, Some(filter.sqlite_not_none_fields()))
 	}
 }
 
@@ -122,31 +122,6 @@ mod tests {
 		Ok((task.uid, Uuid::new_v4()))
 	}
 	// endregion: --- Support
-
-	#[tokio::test]
-	async fn test_model_input_bmc_create_and_list() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let (task_uid, _) = create_run_and_task(&mm).await?;
-
-		// -- Exec
-		for i in 0..3 {
-			let input_c = InputForCreate {
-				uid: Uuid::now_v7(),
-				task_uid,
-				typ: Some(ContentTyp::Text),
-				content: Some(format!("line-{i}")),
-			};
-			InputBmc::create(&mm, input_c)?;
-		}
-
-		// -- Check
-		let inputs = InputBmc::list_for_task(&mm, task_uid)?;
-		assert_eq!(inputs.len(), 3);
-		assert_eq!(inputs[0].content, Some("line-0".to_string()));
-
-		Ok(())
-	}
 }
 
 // endregion: --- Tests
