@@ -197,8 +197,8 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: num,
-			input_content: None,
 			label: Some(format!("task-{num}")),
+			input_content: None,
 		};
 		Ok(TaskBmc::create(mm, task_c)?)
 	}

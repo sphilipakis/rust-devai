@@ -140,11 +140,8 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 
 fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
-	match TaskBmc::get_input(mm, task.id) {
-		Ok(Some(input)) => match input.content {
-			Some(content) => ui_for_section(&content, marker_txt, max_width),
-			None => ui_for_section("no input found", marker_txt, max_width),
-		},
+	match TaskBmc::get_input_for_display(mm, task) {
+		Ok(Some(content)) => ui_for_section(&content, marker_txt, max_width),
 		Ok(None) => ui_for_section("no input found", marker_txt, max_width),
 		Err(err) => ui_for_section(&format!("Error getting input. {err}"), marker_txt, max_width),
 	}

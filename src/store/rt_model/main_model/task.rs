@@ -1,5 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::rt_model::{Input, InputBmc, InputForCreate};
+use crate::store::rt_model::{Input, InputBmc, InputForCreate, InputOnlyDisplay};
 use crate::store::{ContentTyp, Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -46,8 +46,14 @@ pub struct Task {
 
 	// -- Might want to have some input_short: Option<String>
 	pub input_uid: Option<Uuid>,
+	pub input_has_display: Option<bool>,
+
 	pub output_uid: Option<Uuid>,
+	pub output_has_display: Option<bool>,
 }
+
+/// Task to display
+pub struct TaskForIO {}
 
 pub enum TaskState {
 	Waiting,
@@ -75,9 +81,11 @@ impl Task {
 pub struct TaskForCreate {
 	pub run_id: Id,
 	pub idx: i64,
+
+	pub label: Option<String>,
+
 	#[field(skip)]
 	pub input_content: Option<TypedContent>,
-	pub label: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -144,17 +152,22 @@ impl TaskBmc {
 	pub fn create(mm: &ModelManager, mut task_c: TaskForCreate) -> Result<Id> {
 		let input_content = task_c.input_content.take();
 
-		// -- Add Task
+		// -- Add input_uid
 		let mut task_fields = task_c.sqlite_not_none_fields();
 		// add input_uid if presense
 		if let Some(input_uid) = input_content.as_ref().map(|v| v.uid) {
 			task_fields.push(SqliteField::new("input_uid", input_uid));
 		}
+		if let Some(input_has_display) = input_content.as_ref().map(|v| v.display.is_some()) {
+			task_fields.push(SqliteField::new("input_has_display", input_has_display));
+		}
+
+		// -- Add task
 		let id = base::create::<Self>(mm, task_fields)?;
-		let task_uid = TaskBmc::get_uid(mm, id)?;
 
 		// -- Add input Content
 		if let Some(input_content) = input_content {
+			let task_uid = TaskBmc::get_uid(mm, id)?;
 			InputBmc::create(
 				mm,
 				InputForCreate {
@@ -162,6 +175,7 @@ impl TaskBmc {
 					task_uid,
 					typ: Some(input_content.typ),
 					content: Some(input_content.content),
+					display: input_content.display,
 				},
 			)?;
 		}
@@ -197,9 +211,21 @@ impl TaskBmc {
 // region:    --- Bmc going to Content Model
 
 impl TaskBmc {
-	pub fn get_input(mm: &ModelManager, task_id: Id) -> Result<Option<Input>> {
-		let task_uid = TaskBmc::get_uid(mm, task_id)?;
-		InputBmc::first_for_task(mm, task_uid)
+	pub fn get_input_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
+		let input_has_display = task.input_has_display.unwrap_or_default();
+		let Some(input_uid) = task.input_uid.as_ref() else {
+			return Ok(None);
+		};
+
+		if input_has_display {
+			// if not found, return None
+			Ok(InputBmc::get_by_uid::<InputOnlyDisplay>(mm, *input_uid)
+				.map(|i| i.display)
+				.ok()
+				.flatten())
+		} else {
+			Ok(InputBmc::get_by_uid::<Input>(mm, *input_uid).map(|i| i.content).ok().flatten())
+		}
 	}
 }
 
@@ -235,8 +261,8 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: 1,
-			input_content: None,
 			label: Some("Test Task".to_string()),
+			input_content: None,
 		};
 
 		// -- Exec
@@ -256,8 +282,8 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: 1,
-			input_content: None,
 			label: Some("Test Task".to_string()),
+			input_content: None,
 		};
 		let id = TaskBmc::create(&mm, task_c)?;
 
@@ -284,8 +310,8 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: 1 + 1,
-				input_content: None,
 				label: Some(format!("label-{i}")),
+				input_content: None,
 			};
 			TaskBmc::create(&mm, task_c)?;
 		}
@@ -312,8 +338,8 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: i + 1,
-				input_content: None,
 				label: Some(format!("label-{i}")),
+				input_content: None,
 			};
 			TaskBmc::create(&mm, task_c)?;
 		}
@@ -340,8 +366,8 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: i + 1,
-				input_content: None,
 				label: Some(format!("label-{i}")),
+				input_content: None,
 			};
 			TaskBmc::create(&mm, task_c)?;
 		}

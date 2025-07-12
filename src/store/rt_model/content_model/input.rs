@@ -19,7 +19,26 @@ pub struct Input {
 
 	pub typ: Option<String>,
 	pub content: Option<String>,
+
+	pub display: Option<String>,
 }
+
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+pub struct InputOnlyDisplay {
+	pub id: Id,
+	pub uid: Uuid,
+
+	pub ctime: UnixTimeUs,
+	pub mtime: UnixTimeUs,
+
+	pub task_uid: Uuid,
+
+	pub display: Option<String>,
+}
+
+pub trait InputRecord {}
+impl InputRecord for Input {}
+impl InputRecord for InputOnlyDisplay {}
 
 // NOTE: Content table have uid in the ForCreate (as they are pre-linked to main)
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
@@ -29,6 +48,8 @@ pub struct InputForCreate {
 
 	pub typ: Option<ContentTyp>,
 	pub content: Option<String>,
+
+	pub display: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -64,9 +85,18 @@ impl InputBmc {
 		base::update::<Self>(mm, id, fields)
 	}
 
-	#[allow(unused)]
-	pub fn get(mm: &ModelManager, id: Id) -> Result<Input> {
-		base::get::<Self, _>(mm, id)
+	pub fn get<REC>(mm: &ModelManager, id: Id) -> Result<REC>
+	where
+		REC: HasSqliteFields + SqliteFromRow + Unpin + Send,
+	{
+		base::get::<Self, REC>(mm, id)
+	}
+
+	pub fn get_by_uid<REC>(mm: &ModelManager, uid: Uuid) -> Result<REC>
+	where
+		REC: HasSqliteFields + SqliteFromRow + Unpin + Send,
+	{
+		base::get_by_uid::<Self, REC>(mm, uid)
 	}
 
 	pub fn list(
@@ -114,8 +144,8 @@ mod tests {
 			TaskForCreate {
 				run_id,
 				idx: 1,
-				input_content: None,
 				label: Some("task".into()),
+				input_content: None,
 			},
 		)?;
 		let task = TaskBmc::get(mm, task_id)?;

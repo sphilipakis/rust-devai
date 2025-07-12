@@ -111,8 +111,8 @@ mod tests {
 			TaskForCreate {
 				run_id,
 				idx: 1,
-				input_content: None,
 				label: Some("task".into()),
+				input_content: None,
 			},
 		)?;
 		Ok(TaskBmc::get(mm, task_id)?.uid)

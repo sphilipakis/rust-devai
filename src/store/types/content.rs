@@ -9,6 +9,7 @@ pub struct TypedContent {
 	pub uid: Uuid,
 	pub typ: ContentTyp,
 	pub content: String,
+	pub display: Option<String>,
 }
 
 derive_simple_enum_type! {
@@ -29,14 +30,30 @@ impl TypedContent {
 				uid: Uuid::now_v7(),
 				typ: ContentTyp::Text,
 				content: content.to_string(),
+				display: None,
 			}),
 			other => {
+				// -- extract the potential display
+				let display = other.get("_display");
+				let display = if let Some(display) = display {
+					match display {
+						Value::Null => None,
+						Value::String(display) => Some(display.clone()),
+						other_display => match other_display.x_pretty() {
+							Ok(display) => Some(display),
+							Err(err) => Some(format!("Cannot serialize input._display: {err}")),
+						},
+					}
+				} else {
+					None
+				};
 				//
 				match other.x_pretty() {
 					Ok(content) => Some(Self {
 						uid: Uuid::now_v7(),
 						typ: ContentTyp::Json,
 						content,
+						display,
 					}),
 					Err(err) => {
 						error!("Error stringify input: {err}");
@@ -44,6 +61,7 @@ impl TypedContent {
 							uid: Uuid::now_v7(),
 							typ: ContentTyp::Json,
 							content: format!("Error stringify input: {err}"),
+							display,
 						})
 					}
 				}

@@ -353,11 +353,12 @@ impl Runtime {
 impl Runtime {
 	pub async fn create_task(&self, run_id: Id, idx: usize, input: &Value) -> Result<Id> {
 		let input_content = TypedContent::from_value(input);
+
 		let task_c = TaskForCreate {
 			run_id,
 			idx: idx as i64,
-			input_content,
 			label: None,
+			input_content,
 		};
 		let id = TaskBmc::create(self.mm(), task_c)?;
 		Ok(id)

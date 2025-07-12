@@ -98,6 +98,27 @@ where
 	Ok(entity)
 }
 
+pub fn get_by_uid<MC, E>(mm: &ModelManager, uid: Uuid) -> Result<E>
+where
+	MC: DbBmc,
+	E: SqliteFromRow + Unpin + Send,
+	E: HasSqliteFields,
+{
+	// -- Select
+	let sql = format!(
+		"SELECT {} FROM {} WHERE uid = ? LIMIT 1",
+		//
+		E::sqlite_columns_for_select(),
+		MC::table_ref(),
+	);
+
+	// -- Exec query
+	let db = mm.db();
+	let entity: E = db.fetch_first(&sql, [(&uid)])?.ok_or("Cannot get entity")?;
+
+	Ok(entity)
+}
+
 pub fn get_uid<MC>(mm: &ModelManager, id: Id) -> Result<Uuid>
 where
 	MC: DbBmc,
