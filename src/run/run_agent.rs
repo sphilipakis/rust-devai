@@ -204,7 +204,7 @@ pub async fn run_agent(
 
 	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
 	for (idx, input) in inputs.clone().into_iter().enumerate() {
-		let task_id = runtime.create_task(run_id, idx).await?;
+		let task_id = runtime.create_task(run_id, idx, &input).await?;
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
 

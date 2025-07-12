@@ -1,7 +1,8 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use crate::store::rt_model::{InputBmc, InputForCreate};
+use crate::store::{ContentTyp, Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
-use modql::field::{Fields, HasSqliteFields};
+use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
 use uuid::Uuid;
 
@@ -42,6 +43,10 @@ pub struct Task {
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
+
+	// -- Might want to have some input_short: Option<String>
+	pub input_uid: Option<Uuid>,
+	pub output_uid: Option<Uuid>,
 }
 
 pub enum TaskState {
@@ -70,6 +75,8 @@ impl Task {
 pub struct TaskForCreate {
 	pub run_id: Id,
 	pub idx: i64,
+	#[field(skip)]
+	pub input_content: Option<TypedContent>,
 	pub label: Option<String>,
 }
 
@@ -134,9 +141,32 @@ impl DbBmc for TaskBmc {
 }
 
 impl TaskBmc {
-	pub fn create(mm: &ModelManager, task_c: TaskForCreate) -> Result<Id> {
-		let fields = task_c.sqlite_not_none_fields();
-		base::create::<Self>(mm, fields)
+	pub fn create(mm: &ModelManager, mut task_c: TaskForCreate) -> Result<Id> {
+		let input_content = task_c.input_content.take();
+
+		// -- Add Task
+		let mut task_fields = task_c.sqlite_not_none_fields();
+		// add input_uid if presense
+		if let Some(input_uid) = input_content.as_ref().map(|v| v.uid) {
+			task_fields.push(SqliteField::new("input_uid", input_uid));
+		}
+		let id = base::create::<Self>(mm, task_fields)?;
+		let task_uid = TaskBmc::get_uid(mm, id)?;
+
+		// -- Add input Content
+		if let Some(input_content) = input_content {
+			InputBmc::create(
+				mm,
+				InputForCreate {
+					uid: input_content.uid,
+					task_uid,
+					typ: Some(input_content.typ),
+					content: Some(input_content.content),
+				},
+			)?;
+		}
+
+		Ok(id)
 	}
 
 	pub fn update(mm: &ModelManager, id: Id, task_u: TaskForUpdate) -> Result<usize> {
@@ -163,6 +193,10 @@ impl TaskBmc {
 }
 
 // endregion: --- Bmc
+
+// region:    --- Bmc going to Content Model
+
+// endregion: --- Bmc going to Content Model
 
 // region:    --- Tests
 
@@ -194,6 +228,7 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: 1,
+			input_content: None,
 			label: Some("Test Task".to_string()),
 		};
 
@@ -214,6 +249,7 @@ mod tests {
 		let task_c = TaskForCreate {
 			run_id,
 			idx: 1,
+			input_content: None,
 			label: Some("Test Task".to_string()),
 		};
 		let id = TaskBmc::create(&mm, task_c)?;
@@ -241,6 +277,7 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: 1 + 1,
+				input_content: None,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;
@@ -268,6 +305,7 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: i + 1,
+				input_content: None,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;
@@ -295,6 +333,7 @@ mod tests {
 			let task_c = TaskForCreate {
 				run_id,
 				idx: i + 1,
+				input_content: None,
 				label: Some(format!("label-{i}")),
 			};
 			TaskBmc::create(&mm, task_c)?;

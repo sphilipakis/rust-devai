@@ -4,6 +4,7 @@ use crate::store::ModelManager;
 use crate::store::Result;
 use crate::store::base::DbBmc;
 use crate::store::base::prep_fields::prep_fields_for_create;
+use crate::store::base::prep_fields::prep_fields_for_create_uid_included;
 use crate::store::base::prep_fields::prep_fields_for_update;
 use modql::SqliteFromRow;
 use modql::field::HasSqliteFields;
@@ -16,7 +17,25 @@ pub fn create<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
 where
 	MC: DbBmc,
 {
-	prep_fields_for_create::<MC>(&mut fields);
+	create_inner::<MC>(mm, fields, true)
+}
+
+pub fn create_uid_included<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
+where
+	MC: DbBmc,
+{
+	create_inner::<MC>(mm, fields, false)
+}
+
+fn create_inner<MC>(mm: &ModelManager, mut fields: SqliteFields, generate_uuid: bool) -> Result<Id>
+where
+	MC: DbBmc,
+{
+	if generate_uuid {
+		prep_fields_for_create::<MC>(&mut fields);
+	} else {
+		prep_fields_for_create_uid_included(&mut fields);
+	}
 
 	// -- Build sql
 	let sql = format!(

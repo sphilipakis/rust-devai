@@ -6,14 +6,18 @@ use crate::support::time::now_unix_time_us;
 use modql::field::{SqliteField, SqliteFields};
 use uuid::Uuid;
 
-/// This method must be called when a model controller intends to create its entity.
+/// This method must be called when a model controller intends to create its entity with a new uid
 pub fn prep_fields_for_create<MC>(fields: &mut SqliteFields)
 where
 	MC: DbBmc,
 {
+	fields.push(SqliteField::new("uid", Uuid::now_v7()));
+	prep_fields_for_create_uid_included(fields);
+}
+
+/// This assume the uid is included (won't be added)
+pub fn prep_fields_for_create_uid_included(fields: &mut SqliteFields) {
 	add_timestamps_for_create(fields);
-	let uid = Uuid::now_v7();
-	fields.push(SqliteField::new("uid", uid));
 }
 
 /// This method must be calledwhen a Model Controller plans to update its entity.

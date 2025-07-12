@@ -7,11 +7,13 @@ use crate::runtime::Runtime;
 use crate::store::Id;
 use crate::store::RunStep;
 use crate::store::Stage;
+use crate::store::TypedContent;
 use crate::store::rt_model::TaskBmc;
 use crate::store::rt_model::TaskForCreate;
 use crate::store::rt_model::TaskForUpdate;
 use crate::store::rt_model::{LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate};
 use crate::support::time::now_unix_time_us;
+use serde_json::Value;
 
 impl Runtime {
 	pub async fn rec_trim(&self) -> Result<usize> {
@@ -349,10 +351,12 @@ impl Runtime {
 
 /// Task Create/Update model
 impl Runtime {
-	pub async fn create_task(&self, run_id: Id, idx: usize) -> Result<Id> {
+	pub async fn create_task(&self, run_id: Id, idx: usize, input: &Value) -> Result<Id> {
+		let input_content = TypedContent::from_value(input);
 		let task_c = TaskForCreate {
 			run_id,
 			idx: idx as i64,
+			input_content,
 			label: None,
 		};
 		let id = TaskBmc::create(self.mm(), task_c)?;

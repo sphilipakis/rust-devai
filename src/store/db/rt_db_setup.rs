@@ -87,7 +87,9 @@ CREATE TABLE IF NOT EXISTS task (
 		
 		cost  REAL,
 
-		label  TEXT
+		label      TEXT,
+		input_uid  BLOB,
+		output_uid BLOB
 
 ) STRICT",
 );
@@ -131,7 +133,7 @@ CREATE TABLE IF NOT EXISTS input (
 		ctime    INTEGER NOT NULL,
 		mtime    INTEGER NOT NULL,							
 
-		task_uid INTEGER NOT NULL,
+		task_uid BLOB NOT NULL,
 
 		typ      TEXT, -- 'text' | 'json'
 		content  TEXT
