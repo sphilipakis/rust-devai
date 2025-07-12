@@ -25,7 +25,8 @@ impl StatefulWidget for TaskView {
 
 		render_header(header_a, buf, state);
 
-		render_logs(logs_a, buf, state);
+		// don't show the steps
+		render_logs(logs_a, buf, state, false);
 	}
 }
 
@@ -110,7 +111,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new(txt).style(styles::STL_TXT_VAL).render(l2_val_1, buf);
 }
 
-fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
 	// -- Fetch Logs
 	let logs = if let Some(current_task) = state.current_task() {
 		LogBmc::list_for_task(state.mm(), current_task.id)
@@ -124,19 +125,15 @@ fn render_logs(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			let max_width = area.width - 3; // for the scroll bar
 			let mut lines: Vec<Line> = Vec::new();
 			for log in logs {
-				// let txt = format!(
-				// 	"{:<3} - {:<4} - {:<10} - {:<8} - {:<15} - {}",
-				// 	log.id,
-				// 	log.task_id.map(|v| v.to_string()).unwrap_or_default(),
-				// 	log.kind.map(|v| v.to_string()).unwrap_or_else(|| "no-level".to_string()),
-				// 	log.stage.map(|v| v.to_string()).unwrap_or_else(|| "no-stage".to_string()),
-				// 	log.step.map(|v| v.to_string()).unwrap_or_else(|| "no-step".to_string()),
-				// 	log.message.map(|v| v.to_string()).unwrap_or_else(|| "no-message".to_string())
-				// );
-				// lines.push(txt.into());
+				// Show or not step
+				if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
+					continue;
+				}
+
+				// Render log lines
 				let log_lines = render_log(log, max_width);
 				lines.extend(log_lines);
-				lines.push(Line::default()); // empty line
+				lines.push(Line::default()); // empty line (for now)
 			}
 			if lines.is_empty() {
 				lines.push("No logs".into())
