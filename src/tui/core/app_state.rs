@@ -4,50 +4,64 @@ use crate::store::rt_model::{Run, Task};
 use crate::tui::core::sys_state::SysState;
 use crate::tui::event::LastAppEvent;
 
-/// The global app state
-/// IMPORTANT: We define it in this file so that some state can be private
+// region:    --- Wrapper
+
+/// Public wrapper around [`AppStateInner`].
+///
+/// Visible only to the `tui` module so it does not leak to the whole crate.
 pub struct AppState {
+	inner: AppStateInner,
+}
+
+// endregion: --- Wrapper
+
+// region:    --- Inner
+
+/// Inner representation of the application state.
+///
+/// `pub` fields are fine here because the whole struct is only visible
+/// inside `crate::tui::core`.
+pub(in crate::tui::core) struct AppStateInner {
 	// -- Main View
-	pub(in crate::tui::core) show_runs: bool,
+	pub show_runs: bool,
 
 	// -- RunsView
-	pub(in crate::tui::core) run_idx: Option<i32>,
+	pub run_idx: Option<i32>,
 
 	// -- RunMainView
-	// The RunMainView will clamp this one
-	// NOTE: probably need to change strategy
 	pub run_tab_idx: i32,
 
 	// -- RunDetailsView
-	pub(in crate::tui::core) task_idx: Option<i32>,
-	pub(in crate::tui::core) before_all_show: bool,
-	pub(in crate::tui::core) after_all_show: bool,
+	pub task_idx: Option<i32>,
+	pub before_all_show: bool,
+	pub after_all_show: bool,
 
 	// -- TaskView
-	// NOTE: probably need to change strategy
-	pub log_scroll: u16, // TaskView will need read/edit
+	pub log_scroll: u16,
 
 	// -- Data
-	// newest to oldest
-	pub(in crate::tui::core) runs: Vec<Run>,
-	pub(in crate::tui::core) tasks: Vec<Task>,
+	pub runs: Vec<Run>,
+	pub tasks: Vec<Task>,
 
 	// -- System & Event
-	pub(in crate::tui::core) mm: ModelManager,
-	pub(in crate::tui::core) last_app_event: LastAppEvent,
+	pub mm: ModelManager,
+	pub last_app_event: LastAppEvent,
 
 	// -- SysState
-	pub(in crate::tui::core) sys_state: SysState,
-	pub(in crate::tui::core) memory: u64,
-	pub(in crate::tui::core) cpu: f64,
+	pub sys_state: SysState,
+	pub memory: u64,
+	pub cpu: f64,
 }
+
+// endregion: --- Inner
 
 // region:    --- Constructors
 
 impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Result<Self> {
 		let sys_state = SysState::new()?;
-		Ok(Self {
+
+		let inner = AppStateInner {
 			// -- MainView
 			show_runs: false,
 
@@ -55,8 +69,7 @@ impl AppState {
 			run_idx: None,
 
 			// -- RunMainView
-			// For now, use the Tasks tab as default
-			run_tab_idx: 1,
+			run_tab_idx: 1, // Tasks tab by default
 
 			// -- RunDetailsView
 			task_idx: None,
@@ -76,84 +89,128 @@ impl AppState {
 			sys_state,
 			memory: 0,
 			cpu: 0.,
-		})
+		};
+
+		Ok(Self { inner })
+	}
+
+	// -- Inner accessors
+
+	/// Immutable access to the inner state (core-exclusive).
+	pub(in crate::tui::core) fn inner(&self) -> &AppStateInner {
+		&self.inner
+	}
+
+	/// Mutable access to the inner state (core-exclusive).
+	pub(in crate::tui::core) fn inner_mut(&mut self) -> &mut AppStateInner {
+		&mut self.inner
 	}
 }
 
 // endregion: --- Constructors
 
-/// MainView states
+// region:    --- MainView
+
 impl AppState {
 	pub fn show_runs(&self) -> bool {
-		self.show_runs
+		self.inner.show_runs
 	}
 }
 
-/// RunsView states
+// endregion: --- MainView
+
+// region:    --- RunsView
+
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
-		self.run_idx.map(|idx| idx as usize)
+		self.inner.run_idx.map(|idx| idx as usize)
 	}
 
 	pub fn runs(&self) -> &[Run] {
-		&self.runs
+		&self.inner.runs
 	}
 
 	pub fn current_run(&self) -> Option<&Run> {
-		if let Some(idx) = self.run_idx {
-			self.runs.get(idx as usize)
+		if let Some(idx) = self.inner.run_idx {
+			self.inner.runs.get(idx as usize)
 		} else {
 			None
 		}
 	}
 }
 
-/// RunDetailsView states
+// endregion: --- RunsView
+
+// region:    --- RunDetailsView
+
 impl AppState {
 	pub fn task_idx(&self) -> Option<usize> {
-		self.task_idx.map(|idx| idx as usize)
+		self.inner.task_idx.map(|idx| idx as usize)
 	}
 
 	pub fn tasks(&self) -> &[Task] {
-		&self.tasks
+		&self.inner.tasks
 	}
 
 	pub fn current_task(&self) -> Option<&Task> {
-		if let Some(idx) = self.task_idx {
-			self.tasks.get(idx as usize)
+		if let Some(idx) = self.inner.task_idx {
+			self.inner.tasks.get(idx as usize)
 		} else {
 			None
 		}
 	}
 }
 
-/// System & Event states
+// endregion: --- RunDetailsView
+
+// region:    --- Other simple accessors
+
 impl AppState {
+	pub fn run_tab_idx(&self) -> i32 {
+		self.inner.run_tab_idx
+	}
+
+	pub fn set_run_tab_idx(&mut self, idx: i32) {
+		self.inner.run_tab_idx = idx;
+	}
+
+	pub fn log_scroll(&self) -> u16 {
+		self.inner.log_scroll
+	}
+
+	pub fn set_log_scroll(&mut self, scroll: u16) {
+		self.inner.log_scroll = scroll;
+	}
+
 	pub fn mm(&self) -> &ModelManager {
-		&self.mm
+		&self.inner.mm
 	}
 
 	pub fn last_app_event(&self) -> &LastAppEvent {
-		&self.last_app_event
+		&self.inner.last_app_event
 	}
 }
 
-/// SysState
+// endregion: --- Other simple accessors
+
+// region:    --- SysState & Metrics
+
 impl AppState {
-	/// This is call in the loop
+	/// Called every tick of the main loop.
 	pub(in crate::tui::core) fn refresh_sys_state(&mut self) {
-		let (memory, cpu) = self.sys_state.memory_and_cpu();
-		self.memory = memory;
-		self.cpu = cpu;
+		let (memory, cpu) = self.inner.sys_state.memory_and_cpu();
+		self.inner.memory = memory;
+		self.inner.cpu = cpu;
 	}
 
-	/// This is the getters of the refreshed data
 	pub fn memory(&self) -> u64 {
-		self.memory
+		self.inner.memory
 	}
 
 	#[allow(unused)]
 	pub fn cpu(&self) -> f64 {
-		self.cpu
+		self.inner.cpu
 	}
 }
+
+// endregion: --- SysState & Metrics

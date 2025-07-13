@@ -61,7 +61,7 @@ pub fn run_ui_loop(
 			.await;
 
 			// Update the last_app_event
-			app_state.last_app_event = app_event.into();
+			app_state.inner_mut().last_app_event = app_event.into();
 		}
 	});
 	Ok(handle)

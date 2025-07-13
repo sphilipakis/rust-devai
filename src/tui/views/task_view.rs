@@ -115,17 +115,17 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 	// -- Clamp scroll
 	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
-	if state.log_scroll > max_scroll {
-		state.log_scroll = max_scroll;
+	if state.log_scroll() > max_scroll {
+		state.set_log_scroll(max_scroll);
 	}
 
 	// -- Render content
 	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
-	let p = Paragraph::new(all_lines).scroll((state.log_scroll, 0));
+	let p = Paragraph::new(all_lines).scroll((state.log_scroll(), 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll as usize);
+	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll() as usize);
 
 	let scrollbar = Scrollbar::default()
 		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)

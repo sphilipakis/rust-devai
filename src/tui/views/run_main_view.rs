@@ -156,11 +156,11 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	];
 
 	// Clamp the index
-	state.run_tab_idx = clamp_idx_in_len(state.run_tab_idx, titles.len());
+	state.set_run_tab_idx(clamp_idx_in_len(state.run_tab_idx(), titles.len()));
 
 	Tabs::new(titles)
 		.highlight_style(highlight_style)
-		.select(state.run_tab_idx as usize)
+		.select(state.run_tab_idx() as usize)
 		.padding(" ", "")
 		.divider("")
 		.render(tabs_a, buf);
@@ -172,7 +172,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	line.render(tabs_line_a, buf);
 
 	// - Return tab selected
-	match state.run_tab_idx {
+	match state.run_tab_idx() {
 		0 => RunTab::BeforeAll,
 		1 => RunTab::Tasks,
 		2 => RunTab::AfterAll, // Fallback

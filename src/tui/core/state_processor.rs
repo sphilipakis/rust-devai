@@ -1,29 +1,37 @@
-use crate::store::rt_model::RunBmc;
-use crate::store::rt_model::TaskBmc;
+use crate::store::rt_model::{RunBmc, TaskBmc};
 use crate::tui::AppState;
 use crate::tui::core::NavDir;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
+use tracing::debug;
 
 pub fn process_app_state(state: &mut AppState) {
+	// -- Refresh system metrics
 	state.refresh_sys_state();
 
-	// -- Process Show run
+	// -- Toggle runs list
 	if let Some(KeyCode::Char('n')) = state.last_app_event().as_key_code() {
-		state.show_runs = !state.show_runs
+		let show_runs = !state.inner().show_runs;
+		state.inner_mut().show_runs = show_runs;
 	}
 
-	// -- load runs
+	// -- Load runs and keep previous idx for later comparison
 	let runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
-	let prev_run_idx = state.run_idx; // to compute scroll status
-	// Make sure to select the first one (now there there is only ones
-	if !state.show_runs {
-		state.run_idx = Some(0);
-	}
-	state.runs = runs;
+	let prev_run_idx = state.inner().run_idx;
 
-	// -- Process Runs idx
-	let runs_nav_offset: i32 = if state.show_runs
+	{
+		let inner = state.inner_mut();
+
+		// When the runs panel is hidden, always pin the first run.
+		if !inner.show_runs {
+			inner.run_idx = Some(0);
+		}
+
+		inner.runs = runs;
+	}
+
+	// -- Navigation inside the runs list
+	let runs_nav_offset: i32 = if state.inner().show_runs
 		&& let Some(code) = state.last_app_event().as_key_code()
 	{
 		match code {
@@ -35,45 +43,55 @@ pub fn process_app_state(state: &mut AppState) {
 		0
 	};
 
-	// -- Clamp the run_idx with the runs_lent
-	state.run_idx = offset_and_clamp_option_idx_in_len(&state.run_idx, runs_nav_offset, state.runs().len());
+	let len_runs = state.runs().len();
+	{
+		let inner = state.inner_mut();
+		inner.run_idx = offset_and_clamp_option_idx_in_len(&inner.run_idx, runs_nav_offset, len_runs);
+	}
 
-	// -- load tasks for current run
+	// -- Load tasks for current run
 	let current_run_id = state.current_run().map(|r| r.id);
-	if let Some(run_id) = current_run_id {
-		state.tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
-	} else {
-		state.tasks.clear(); // Important to clear tasks if no run is selected
-	}
-
-	// -- if run changed, reset log scroll and task selection (for RunDetailsView)
-	if state.run_idx != prev_run_idx {
-		// reset the task view states
-		state.log_scroll = 0;
-
-		state.task_idx = None;
-		state.before_all_show = false;
-		state.before_all_show = false
-	}
-
-	// -- Initialize RunDetailsView states
-	// if all is none
-	if state.task_idx.is_none() && !state.before_all_show && !state.after_all_show {
-		// select the first task
-		if !state.tasks().is_empty() {
-			state.task_idx = Some(0);
-			state.before_all_show = false;
-			state.after_all_show = false;
-		}
-		// select before all
-		else {
-			state.task_idx = None;
-			state.before_all_show = true;
-			state.after_all_show = false;
+	{
+		if let Some(run_id) = current_run_id {
+			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
+			state.inner_mut().tasks = tasks;
+		} else {
+			state.inner_mut().tasks.clear(); // Important when no run is selected
 		}
 	}
 
-	// -- Process Tasks idx with 'i' and 'k'
+	// -- Reset some view state if run selection changed
+	if state.inner().run_idx != prev_run_idx {
+		let inner = state.inner_mut();
+		inner.log_scroll = 0;
+		inner.task_idx = None;
+		inner.before_all_show = false;
+		inner.after_all_show = false;
+	}
+
+	// -- Initialise RunDetailsView if needed
+	{
+		let need_init = {
+			let inner = state.inner();
+			inner.task_idx.is_none() && !inner.before_all_show && !inner.after_all_show
+		};
+
+		if need_init {
+			let tasks_empty = state.tasks().is_empty();
+			let inner = state.inner_mut();
+			if !tasks_empty {
+				inner.task_idx = Some(0);
+				inner.before_all_show = false;
+				inner.after_all_show = false;
+			} else {
+				inner.task_idx = None;
+				inner.before_all_show = true;
+				inner.after_all_show = false;
+			}
+		}
+	}
+
+	// -- Navigation inside the tasks list
 	let nav_dir = NavDir::from_up_down_key_code(
 		KeyCode::Char('i'),
 		KeyCode::Char('k'),
@@ -81,9 +99,13 @@ pub fn process_app_state(state: &mut AppState) {
 	);
 	let nav_tasks_offset = nav_dir.map(|n| n.offset()).unwrap_or_default();
 
-	state.task_idx = offset_and_clamp_option_idx_in_len(&state.task_idx, nav_tasks_offset, state.tasks().len());
+	let len_tasks = state.tasks().len();
+	{
+		let inner = state.inner_mut();
+		inner.task_idx = offset_and_clamp_option_idx_in_len(&inner.task_idx, nav_tasks_offset, len_tasks);
+	}
 
-	// -- process the Run Tabs idx
+	// -- Tabs navigation (Run view)
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
 		match code {
 			KeyCode::Char('j') => -1,
@@ -93,27 +115,32 @@ pub fn process_app_state(state: &mut AppState) {
 	} else {
 		0
 	};
-	state.run_tab_idx += offset;
+	state.inner_mut().run_tab_idx += offset;
 
-	// -- Process log scroll (keyboard & mouse)
+	// -- Log scroll (keyboard & mouse)
+	let current_log_scroll = state.log_scroll();
 	if let Some(code) = state.last_app_event().as_key_code() {
-		match code {
-			KeyCode::Up => state.log_scroll = state.log_scroll.saturating_sub(1),
-			KeyCode::Down => state.log_scroll = state.log_scroll.saturating_add(1),
-			KeyCode::Esc => state.log_scroll = 0,
-			_ => (),
+		let log_scroll = match code {
+			KeyCode::Up => Some(current_log_scroll.saturating_sub(1)),
+			KeyCode::Down => Some(current_log_scroll.saturating_add(1)),
+			KeyCode::Esc => Some(0),
+			_ => None,
+		};
+		if let Some(log_scroll) = log_scroll {
+			state.set_log_scroll(log_scroll);
 		}
 	}
 
+	let current_log_scroll = state.log_scroll();
 	if let Some(mouse_evt) = state.last_app_event().as_mouse_event() {
-		match mouse_evt.kind {
-			MouseEventKind::ScrollUp => {
-				state.log_scroll = state.log_scroll.saturating_sub(3);
-			}
-			MouseEventKind::ScrollDown => {
-				state.log_scroll = state.log_scroll.saturating_add(3);
-			}
-			_ => (),
+		let log_scroll = match mouse_evt.kind {
+			MouseEventKind::ScrollUp => Some(current_log_scroll.saturating_sub(3)),
+			MouseEventKind::ScrollDown => Some(current_log_scroll.saturating_add(3)),
+			_ => None,
+		};
+		debug!("!!! mouse event .. {log_scroll:?}");
+		if let Some(log_scroll) = log_scroll {
+			state.set_log_scroll(log_scroll);
 		}
 	}
 }
