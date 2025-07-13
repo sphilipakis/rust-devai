@@ -1,12 +1,11 @@
 // region:    --- Modules
 
-mod input;
-mod output;
+mod inout;
 mod message;
+mod output;
 
-pub use input::*;
-pub use output::*;
+pub use inout::*;
 pub use message::*;
+pub use output::*;
 
 // endregion: --- Modules
-

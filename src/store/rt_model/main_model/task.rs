@@ -1,5 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::rt_model::{Input, InputBmc, InputForCreate, InputOnlyDisplay};
+use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
 use crate::store::{ContentTyp, Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -168,9 +168,9 @@ impl TaskBmc {
 		// -- Add input Content
 		if let Some(input_content) = input_content {
 			let task_uid = TaskBmc::get_uid(mm, id)?;
-			InputBmc::create(
+			InoutBmc::create(
 				mm,
-				InputForCreate {
+				InoutForCreate {
 					uid: input_content.uid,
 					task_uid,
 					typ: Some(input_content.typ),
@@ -219,12 +219,12 @@ impl TaskBmc {
 
 		if input_has_display {
 			// if not found, return None
-			Ok(InputBmc::get_by_uid::<InputOnlyDisplay>(mm, *input_uid)
+			Ok(InoutBmc::get_by_uid::<InoutOnlyDisplay>(mm, *input_uid)
 				.map(|i| i.display)
 				.ok()
 				.flatten())
 		} else {
-			Ok(InputBmc::get_by_uid::<Input>(mm, *input_uid).map(|i| i.content).ok().flatten())
+			Ok(InoutBmc::get_by_uid::<Inout>(mm, *input_uid).map(|i| i.content).ok().flatten())
 		}
 	}
 }

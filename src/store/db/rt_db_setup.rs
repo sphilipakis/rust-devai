@@ -145,20 +145,23 @@ CREATE TABLE IF NOT EXISTS input (
 ) STRICT",
 );
 
-const OUTPUT_TABLE: (&str, &str) = (
-	"output",
+const INOUT_TABLE: (&str, &str) = (
+	"inout",
 	"
-CREATE TABLE IF NOT EXISTS output (
+CREATE TABLE IF NOT EXISTS inout (
 		id       INTEGER PRIMARY KEY AUTOINCREMENT,
 		uid      BLOB NOT NULL,
 
 		ctime    INTEGER NOT NULL,
 		mtime    INTEGER NOT NULL,							
 
-		task_uid INTEGER NOT NULL,
+		task_uid BLOB NOT NULL, -- might not be needed but used to guarantee on task
+
+		kind     TEXT, -- In, Out
 
 		typ      TEXT, -- 'text' | 'json'
-		content  TEXT
+		content  TEXT,
+		display  TEXT
 ) STRICT",
 );
 
@@ -179,7 +182,7 @@ CREATE TABLE IF NOT EXISTS message (
 ) STRICT",
 );
 
-const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INPUT_TABLE, OUTPUT_TABLE, MESSAGE_TABLE];
+const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INPUT_TABLE, INOUT_TABLE, MESSAGE_TABLE];
 
 // endregion: --- Content Tables
 

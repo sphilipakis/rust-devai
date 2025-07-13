@@ -1,3 +1,4 @@
+use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
 use crate::store::{ContentTyp, Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
@@ -8,7 +9,7 @@ use uuid::Uuid;
 // region:    --- Types
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
-pub struct Input {
+pub struct Inout {
 	pub id: Id,
 	pub uid: Uuid,
 
@@ -16,6 +17,8 @@ pub struct Input {
 	pub mtime: UnixTimeUs,
 
 	pub task_uid: Uuid,
+
+	pub kind: Option<InoutKind>,
 
 	pub typ: Option<String>,
 	pub content: Option<String>,
@@ -23,8 +26,15 @@ pub struct Input {
 	pub display: Option<String>,
 }
 
+derive_simple_enum_type! {
+pub enum InoutKind {
+	In,
+	Out,
+}
+}
+
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
-pub struct InputOnlyDisplay {
+pub struct InoutOnlyDisplay {
 	pub id: Id,
 	pub uid: Uuid,
 
@@ -36,13 +46,13 @@ pub struct InputOnlyDisplay {
 	pub display: Option<String>,
 }
 
-pub trait InputRecord {}
-impl InputRecord for Input {}
-impl InputRecord for InputOnlyDisplay {}
+pub trait InoutRecord {}
+impl InoutRecord for Inout {}
+impl InoutRecord for InoutOnlyDisplay {}
 
 // NOTE: Content table have uid in the ForCreate (as they are pre-linked to main)
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
-pub struct InputForCreate {
+pub struct InoutForCreate {
 	pub uid: Uuid,
 	pub task_uid: Uuid,
 
@@ -53,13 +63,13 @@ pub struct InputForCreate {
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
-pub struct InputForUpdate {
+pub struct InoutForUpdate {
 	pub typ: Option<String>,
 	pub content: Option<String>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
-pub struct InputFilter {
+pub struct InoutFilter {
 	pub task_uid: Option<Uuid>,
 }
 
@@ -67,20 +77,20 @@ pub struct InputFilter {
 
 // region:    --- Bmc
 
-pub struct InputBmc;
+pub struct InoutBmc;
 
-impl DbBmc for InputBmc {
-	const TABLE: &'static str = "input";
+impl DbBmc for InoutBmc {
+	const TABLE: &'static str = "inout";
 }
 
-impl InputBmc {
-	pub fn create(mm: &ModelManager, input_c: InputForCreate) -> Result<Id> {
+impl InoutBmc {
+	pub fn create(mm: &ModelManager, input_c: InoutForCreate) -> Result<Id> {
 		let fields = input_c.sqlite_not_none_fields();
 		base::create_uid_included::<Self>(mm, fields)
 	}
 
 	#[allow(unused)]
-	pub fn update(mm: &ModelManager, id: Id, input_u: InputForUpdate) -> Result<usize> {
+	pub fn update(mm: &ModelManager, id: Id, input_u: InoutForUpdate) -> Result<usize> {
 		let fields = input_u.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)
 	}
@@ -102,15 +112,15 @@ impl InputBmc {
 	pub fn list(
 		mm: &ModelManager,
 		list_options: Option<ListOptions>,
-		filter: Option<InputFilter>,
-	) -> Result<Vec<Input>> {
+		filter: Option<InoutFilter>,
+	) -> Result<Vec<Inout>> {
 		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 
 	/// Convenience helper to list all inputs for a given task `uid`.
-	pub fn first_for_task(mm: &ModelManager, task_uid: Uuid) -> Result<Option<Input>> {
-		let filter = InputFilter {
+	pub fn first_for_task(mm: &ModelManager, task_uid: Uuid) -> Result<Option<Inout>> {
+		let filter = InoutFilter {
 			task_uid: Some(task_uid),
 		};
 		base::first::<Self, _>(mm, None, Some(filter.sqlite_not_none_fields()))
