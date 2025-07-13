@@ -50,7 +50,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			Constraint::Length(first_call_width), // Model / Prompt
 			Constraint::Length(22),               //
 			Constraint::Length(12),               // Cost / Completion
-			Constraint::Length(16),               //
+			Constraint::Length(9),                //
 			Constraint::Length(10),               // Duration
 			Constraint::Fill(1),                  //
 		])

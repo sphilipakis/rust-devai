@@ -77,8 +77,8 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.constraints(vec![
 			Constraint::Length(11), // Agent/Model
 			Constraint::Length(22), //
-			Constraint::Length(7),  // Tasks/Cost
-			Constraint::Length(8),  //
+			Constraint::Length(9),  // Tasks/Cost
+			Constraint::Length(12), //
 			Constraint::Length(13), // Concurrency/Duration
 			Constraint::Fill(1),    //
 		])
