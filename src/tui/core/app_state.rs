@@ -49,7 +49,7 @@ impl AppState {
 		let sys_state = SysState::new()?;
 		Ok(Self {
 			// -- MainView
-			show_runs: true,
+			show_runs: false,
 
 			// -- RunsView
 			run_idx: None,

@@ -127,24 +127,6 @@ const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, LOG_TABLE];
 
 // region:    --- Content Tables
 
-const INPUT_TABLE: (&str, &str) = (
-	"input",
-	"
-CREATE TABLE IF NOT EXISTS input (
-		id       INTEGER PRIMARY KEY AUTOINCREMENT,
-		uid      BLOB NOT NULL,
-
-		ctime    INTEGER NOT NULL,
-		mtime    INTEGER NOT NULL,							
-
-		task_uid BLOB NOT NULL,
-
-		typ      TEXT, -- 'text' | 'json'
-		content  TEXT,
-		display  TEXT
-) STRICT",
-);
-
 const INOUT_TABLE: (&str, &str) = (
 	"inout",
 	"
@@ -182,7 +164,7 @@ CREATE TABLE IF NOT EXISTS message (
 ) STRICT",
 );
 
-const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INPUT_TABLE, INOUT_TABLE, MESSAGE_TABLE];
+const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INOUT_TABLE, MESSAGE_TABLE];
 
 // endregion: --- Content Tables
 

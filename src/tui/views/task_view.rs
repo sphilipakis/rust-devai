@@ -51,7 +51,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			Constraint::Length(fist_call_width), // Model / Prompt
 			Constraint::Length(22),              //
 			Constraint::Length(12),              // Cost / Completion
-			Constraint::Length(10),              //
+			Constraint::Length(16),              //
 			Constraint::Length(10),              // Duration
 			Constraint::Fill(1),                 //
 		])
@@ -193,7 +193,7 @@ fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::SysWarn => "Sys Warn",
 		LogKind::SysError => "Sys Error",
 		LogKind::SysDebug => "Sys Debug",
-		LogKind::AgentPrint => "Agent Print",
+		LogKind::AgentPrint => "Print:",
 	};
 
 	ui_for_section(content, mark_txt, max_width)
