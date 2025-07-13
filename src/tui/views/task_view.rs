@@ -4,19 +4,21 @@ use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
 
-const MARKER_WIDTH: usize = 12;
+const MARKER_WIDTH: usize = 10;
 
 impl StatefulWidget for TaskView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		let show_model_row = state.tasks().len() > 1;
+		// let show_model_row = state.tasks().len() > 1;
+		let show_model_row = true; // for now we always show
 
 		// -- Layout Header | Logs
 		let header_height = if show_model_row { 2 } else { 1 };
@@ -155,9 +157,17 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => ui_for_section(&content, marker_txt, max_width),
-		Ok(None) => ui_for_section("no input found", marker_txt, max_width),
-		Err(err) => ui_for_section(&format!("Error getting input. {err}"), marker_txt, max_width),
+		Ok(Some(content)) => ui_for_section(&content, (marker_txt, styles::STL_SECTION_MARKER_INPUT), max_width),
+		Ok(None) => ui_for_section(
+			"no input found",
+			(marker_txt, styles::STL_SECTION_MARKER_INPUT),
+			max_width,
+		),
+		Err(err) => ui_for_section(
+			&format!("Error getting input. {err}"),
+			(marker_txt, styles::STL_SECTION_MARKER_INPUT),
+			max_width,
+		),
 	}
 }
 
@@ -201,27 +211,27 @@ fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		(_, _) => "No Step not MSG for log",
 	};
 
-	let mark_txt = match kind {
-		LogKind::RunStep => "Sys Step",
-		LogKind::SysInfo => "Sys Info",
-		LogKind::SysWarn => "Sys Warn",
-		LogKind::SysError => "Sys Error",
-		LogKind::SysDebug => "Sys Debug",
-		LogKind::AgentPrint => "Print:",
+	let marker_txt_style = match kind {
+		LogKind::RunStep => ("Sys Step", styles::STL_SECTION_MARKER),
+		LogKind::SysInfo => ("Sys Info", styles::STL_SECTION_MARKER),
+		LogKind::SysWarn => ("Sys Warn", styles::STL_SECTION_MARKER),
+		LogKind::SysError => ("Sys Error", styles::STL_SECTION_MARKER),
+		LogKind::SysDebug => ("Sys Debug", styles::STL_SECTION_MARKER),
+		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
 	};
 
-	ui_for_section(content, mark_txt, max_width)
+	ui_for_section(content, marker_txt_style, max_width)
 }
 
 /// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
 /// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.
-fn ui_for_section(content: &str, marker_txt: &str, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_width: u16) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
 	let width_content = (max_width as usize) - MARKER_WIDTH - width_spacer;
 
 	// -- Mark Span
-	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), styles::STL_FIELD_LBL);
+	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), marker_style);
 
 	let msg_wrap = textwrap::wrap(content, width_content);
 	let msg_wrap_len = msg_wrap.len();
@@ -234,7 +244,7 @@ fn ui_for_section(content: &str, marker_txt: &str, max_width: u16) -> Vec<Line<'
 	let first_line = Line::from(vec![
 		//
 		mark_span,
-		Span::raw(" "), // must be equa
+		Span::raw(" "),
 		first_content_span,
 	]);
 
