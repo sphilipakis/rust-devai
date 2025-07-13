@@ -10,9 +10,9 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
 
 /// Renders the *Tasks* tab (tasks list and content).
-pub struct RunDetailsView;
+pub struct RuntTasksView;
 
-impl StatefulWidget for RunDetailsView {
+impl StatefulWidget for RuntTasksView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
