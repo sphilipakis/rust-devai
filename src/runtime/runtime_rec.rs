@@ -358,7 +358,7 @@ impl Runtime {
 			run_id,
 			idx: idx as i64,
 			label: None,
-			input_content,
+			input_content: Some(input_content),
 		};
 		let id = TaskBmc::create(self.mm(), task_c)?;
 		Ok(id)
@@ -404,11 +404,7 @@ impl Runtime {
 
 	pub async fn update_task_output(&self, task_id: Id, output: &Value) -> Result<()> {
 		let output_content = TypedContent::from_value(output);
-		if let Some(output_content) = output_content {
-			TaskBmc::update_output(self.mm(), task_id, output_content)?;
-		} else {
-			return Err("Failed to convert output to TypedContent".into());
-		}
+		TaskBmc::update_output(self.mm(), task_id, output_content)?;
 		Ok(())
 	}
 }

@@ -43,7 +43,7 @@ pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
 
-pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
+pub const CLR_TXT_BLUE: Color = Color::Indexed(45);
 pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
 pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
 
@@ -71,6 +71,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().fg(CLR_TXT_600);
 // -- Setion Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
+pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
 
 // -- Tab Styles
 pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;

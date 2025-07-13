@@ -129,6 +129,12 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 	// -- Add Logs Lines
 	all_lines.extend(ui_for_logs(state.mm(), task, max_width, show_steps));
 
+	// -- Add output if end
+	if task.output_uid.is_some() {
+		all_lines.extend(ui_for_output(state.mm(), task, max_width));
+		all_lines.push(Line::default());
+	}
+
 	// -- Clamp scroll
 	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
@@ -156,16 +162,27 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 
 fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
+	let marker_style = styles::STL_SECTION_MARKER_INPUT;
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => ui_for_section(&content, (marker_txt, styles::STL_SECTION_MARKER_INPUT), max_width),
-		Ok(None) => ui_for_section(
-			"no input found",
-			(marker_txt, styles::STL_SECTION_MARKER_INPUT),
-			max_width,
-		),
+		Ok(Some(content)) => ui_for_section(&content, (marker_txt, marker_style), max_width),
+		Ok(None) => ui_for_section("no input found", (marker_txt, marker_style), max_width),
 		Err(err) => ui_for_section(
 			&format!("Error getting input. {err}"),
-			(marker_txt, styles::STL_SECTION_MARKER_INPUT),
+			(marker_txt, marker_style),
+			max_width,
+		),
+	}
+}
+
+fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+	let marker_txt = "Output:";
+	let marker_style = styles::STL_SECTION_MARKER_OUTPUT;
+	match TaskBmc::get_output_for_display(mm, task) {
+		Ok(Some(content)) => ui_for_section(&content, (marker_txt, marker_style), max_width),
+		Ok(None) => ui_for_section("no output found", (marker_txt, marker_style), max_width),
+		Err(err) => ui_for_section(
+			&format!("Error getting output. {err}"),
+			(marker_txt, marker_style),
 			max_width,
 		),
 	}

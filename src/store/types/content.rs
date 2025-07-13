@@ -8,7 +8,7 @@ use value_ext::JsonValueExt;
 pub struct TypedContent {
 	pub uid: Uuid,
 	pub typ: ContentTyp,
-	pub content: String,
+	pub content: Option<String>,
 	pub display: Option<String>,
 }
 
@@ -21,17 +21,22 @@ pub enum ContentTyp {
 
 impl TypedContent {
 	/// New from a new Value (will create new UUID)
-	pub fn from_value(value: &Value) -> Option<Self> {
+	pub fn from_value(value: &Value) -> Self {
 		// NOTE: since Value::Null will be None, it will usually not be updated a null in the db
 		//       Might need to fix that eventually
 		match value {
-			Value::Null => None,
-			Value::String(content) => Some(Self {
+			Value::Null => Self {
 				uid: Uuid::now_v7(),
 				typ: ContentTyp::Text,
-				content: content.to_string(),
+				content: None,
 				display: None,
-			}),
+			},
+			Value::String(content) => Self {
+				uid: Uuid::now_v7(),
+				typ: ContentTyp::Text,
+				content: Some(content.to_string()),
+				display: None,
+			},
 			other => {
 				// -- extract the potential display
 				let display = other.get("_display");
@@ -49,20 +54,20 @@ impl TypedContent {
 				};
 				//
 				match other.x_pretty() {
-					Ok(content) => Some(Self {
+					Ok(content) => Self {
 						uid: Uuid::now_v7(),
 						typ: ContentTyp::Json,
-						content,
+						content: Some(content),
 						display,
-					}),
+					},
 					Err(err) => {
 						error!("Error stringify input: {err}");
-						Some(Self {
+						Self {
 							uid: Uuid::now_v7(),
 							typ: ContentTyp::Json,
-							content: format!("Error stringify input: {err}"),
+							content: Some(format!("Error stringify input: {err}")),
 							display,
-						})
+						}
 					}
 				}
 			}

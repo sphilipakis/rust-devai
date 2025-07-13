@@ -171,7 +171,7 @@ impl TaskBmc {
 					uid: input_content.uid,
 					task_uid,
 					typ: Some(input_content.typ),
-					content: Some(input_content.content),
+					content: input_content.content,
 					display: input_content.display,
 				},
 			)?;
@@ -226,6 +226,24 @@ impl TaskBmc {
 		}
 	}
 
+	/// Note: Used by tui
+	pub fn get_output_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
+		let output_has_display = task.output_has_display.unwrap_or_default();
+		let Some(output_uid) = task.output_uid.as_ref() else {
+			return Ok(None);
+		};
+
+		if output_has_display {
+			// if not found, return None
+			Ok(InoutBmc::get_by_uid::<InoutOnlyDisplay>(mm, *output_uid)
+				.map(|i| i.display)
+				.ok()
+				.flatten())
+		} else {
+			Ok(InoutBmc::get_by_uid::<Inout>(mm, *output_uid).map(|i| i.content).ok().flatten())
+		}
+	}
+
 	/// Note: used from runtime_rec
 	pub fn update_output(mm: &ModelManager, task_id: Id, content: TypedContent) -> Result<()> {
 		// -- Create the task fields
@@ -243,7 +261,7 @@ impl TaskBmc {
 				uid: content.uid,
 				task_uid,
 				typ: Some(content.typ),
-				content: Some(content.content),
+				content: content.content,
 				display: content.display,
 			},
 		)?;

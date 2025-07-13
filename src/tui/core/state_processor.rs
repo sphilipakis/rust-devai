@@ -138,7 +138,6 @@ pub fn process_app_state(state: &mut AppState) {
 			MouseEventKind::ScrollDown => Some(current_log_scroll.saturating_add(3)),
 			_ => None,
 		};
-		debug!("!!! mouse event .. {log_scroll:?}");
 		if let Some(log_scroll) = log_scroll {
 			state.set_log_scroll(log_scroll);
 		}
