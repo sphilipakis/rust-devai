@@ -52,7 +52,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		// ..
 		Span::raw(" Tasks:"),
 	]);
-	before_line.style(styles::STL_TXT_LBL).render(tasks_label_a, buf);
+	before_line.style(styles::STL_FIELD_LBL).render(tasks_label_a, buf);
 	// endregion: --- Render Tasks Label
 
 	// region:    --- Render Tasks

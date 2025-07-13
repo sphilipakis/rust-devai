@@ -95,49 +95,53 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	};
 	line_1.push_span(" Agent:");
 	Paragraph::new(line_1)
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_1.x_row(1), buf);
 	// Agent value
 	Paragraph::new(agent_name)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_1.x_row(1), buf);
 
 	Paragraph::new("Tasks:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_2.x_row(1), buf);
-	Paragraph::new(tasks_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(1), buf);
+	Paragraph::new(tasks_txt)
+		.style(styles::STL_FIELD_VAL)
+		.render(val_2.x_row(1), buf);
 
 	Paragraph::new("Concurrency:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_3.x_row(1), buf);
 	Paragraph::new(concurrency_txt)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_3.x_row(1), buf);
 
 	// -- Render Row 2
 	Paragraph::new("Model:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_1.x_row(2), buf);
 	Paragraph::new(model_name)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_1.x_row(2), buf);
 
 	Paragraph::new("Cost:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_2.x_row(2), buf);
-	Paragraph::new(cost_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(2), buf);
+	Paragraph::new(cost_txt)
+		.style(styles::STL_FIELD_VAL)
+		.render(val_2.x_row(2), buf);
 
 	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_3.x_row(2), buf);
 	Paragraph::new(duration_txt)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_3.x_row(2), buf);
 }
 

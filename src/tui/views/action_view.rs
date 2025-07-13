@@ -52,10 +52,10 @@ impl StatefulWidget for ActionView {
 		// -- Render Memory
 		Paragraph::new("Mem:")
 			.right_aligned()
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_FIELD_LBL)
 			.render(mem_lbl_a, buf);
 		Paragraph::new(state.memory_fmt())
-			.style(styles::STL_TXT_VAL)
+			.style(styles::STL_FIELD_VAL)
 			.render(mem_val_a, buf);
 
 		// -- Render CPU

@@ -66,46 +66,46 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	if show_model_row {
 		current_row += 1;
 		Paragraph::new("Model:")
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_1.x_row(current_row), buf);
 		Paragraph::new(model_name)
-			.style(styles::STL_TXT_VAL)
+			.style(styles::STL_FIELD_VAL)
 			.render(val_1.x_row(current_row), buf);
 
 		Paragraph::new("Cost:")
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_2.x_row(current_row), buf);
 		Paragraph::new(cost)
-			.style(styles::STL_TXT_VAL)
+			.style(styles::STL_FIELD_VAL)
 			.render(val_2.x_row(current_row), buf);
 
 		Paragraph::new("Duration:")
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_3.x_row(current_row), buf);
 		Paragraph::new(duration)
-			.style(styles::STL_TXT_VAL)
+			.style(styles::STL_FIELD_VAL)
 			.render(val_3.x_row(current_row), buf);
 	}
 
 	// -- Render Row for tokens
 	current_row += 1;
 	Paragraph::new("Prompt:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_1.x_row(current_row), buf);
 	Paragraph::new(prompt_tk)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_1.x_row(current_row), buf);
 
 	Paragraph::new("Completion:")
-		.style(styles::STL_TXT_LBL)
+		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_2.x_row(current_row), buf);
 	Paragraph::new(completion_tk)
-		.style(styles::STL_TXT_VAL)
+		.style(styles::STL_FIELD_VAL)
 		.render(val_2.union(val_3).x_row(current_row), buf);
 }
 
@@ -221,7 +221,7 @@ fn ui_for_section(content: &str, marker_txt: &str, max_width: u16) -> Vec<Line<'
 	let width_content = (max_width as usize) - MARKER_WIDTH - width_spacer;
 
 	// -- Mark Span
-	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), styles::STL_TXT_LBL);
+	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), styles::STL_FIELD_LBL);
 
 	let msg_wrap = textwrap::wrap(content, width_content);
 	let msg_wrap_len = msg_wrap.len();

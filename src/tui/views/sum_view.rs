@@ -55,21 +55,23 @@ impl StatefulWidget for SumView {
 
 		// -- Render
 		Paragraph::new("Total Runs:")
-			.style(styles::STL_TXT_LBL_DARK)
+			.style(styles::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_1, buf);
-		Paragraph::new(runs_fmt).style(styles::STL_TXT_VAL_DARK).render(val_1, buf);
+		Paragraph::new(runs_fmt).style(styles::STL_FIELD_VAL_DARK).render(val_1, buf);
 
 		Paragraph::new("Total Cost:")
-			.style(styles::STL_TXT_LBL_DARK)
+			.style(styles::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_2, buf);
-		Paragraph::new(cost_fmt).style(styles::STL_TXT_VAL_DARK).render(val_2, buf);
+		Paragraph::new(cost_fmt).style(styles::STL_FIELD_VAL_DARK).render(val_2, buf);
 
 		Paragraph::new("Total Duration:")
-			.style(styles::STL_TXT_LBL_DARK)
+			.style(styles::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_3, buf);
-		Paragraph::new(duration_fmt).style(styles::STL_TXT_VAL_DARK).render(val_3, buf);
+		Paragraph::new(duration_fmt)
+			.style(styles::STL_FIELD_VAL_DARK)
+			.render(val_3, buf);
 	}
 }

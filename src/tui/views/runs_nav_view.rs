@@ -24,7 +24,7 @@ impl StatefulWidget for RunsNavView {
 			.areas(area);
 
 		Paragraph::new(" Runs: ")
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_FIELD_LBL)
 			.left_aligned()
 			.render(label_a, buf);
 
@@ -62,7 +62,7 @@ impl StatefulWidget for RunsNavView {
 
 		// -- Create List Widget & State
 		let list_w = List::new(items)
-			.highlight_style(Style::default().bg(styles::CLR_BKG_SEL).fg(styles::CLR_TXT_SEL))
+			.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 			.highlight_spacing(HighlightSpacing::WhenSelected);
 
 		let mut list_s = ListState::default();
