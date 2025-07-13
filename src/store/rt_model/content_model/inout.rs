@@ -95,9 +95,11 @@ impl InoutBmc {
 		base::update::<Self>(mm, id, fields)
 	}
 
+	#[allow(unused)]
 	pub fn get<REC>(mm: &ModelManager, id: Id) -> Result<REC>
 	where
 		REC: HasSqliteFields + SqliteFromRow + Unpin + Send,
+		REC: InoutRecord,
 	{
 		base::get::<Self, REC>(mm, id)
 	}
@@ -105,10 +107,12 @@ impl InoutBmc {
 	pub fn get_by_uid<REC>(mm: &ModelManager, uid: Uuid) -> Result<REC>
 	where
 		REC: HasSqliteFields + SqliteFromRow + Unpin + Send,
+		REC: InoutRecord,
 	{
 		base::get_by_uid::<Self, REC>(mm, uid)
 	}
 
+	#[allow(unused)]
 	pub fn list(
 		mm: &ModelManager,
 		list_options: Option<ListOptions>,
@@ -117,51 +121,6 @@ impl InoutBmc {
 		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
-
-	/// Convenience helper to list all inputs for a given task `uid`.
-	pub fn first_for_task(mm: &ModelManager, task_uid: Uuid) -> Result<Option<Inout>> {
-		let filter = InoutFilter {
-			task_uid: Some(task_uid),
-		};
-		base::first::<Self, _>(mm, None, Some(filter.sqlite_not_none_fields()))
-	}
 }
 
 // endregion: --- Bmc
-
-// region:    --- Tests
-
-#[cfg(test)]
-mod tests {
-	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
-
-	use super::*;
-	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
-	use uuid::Uuid;
-
-	// region:    --- Support
-	async fn create_run_and_task(mm: &ModelManager) -> Result<(Uuid, Uuid)> {
-		let run_id = RunBmc::create(
-			mm,
-			RunForCreate {
-				agent_name: Some("run".into()),
-				agent_path: Some("path/run".into()),
-				start: None,
-			},
-		)?;
-		let task_id = TaskBmc::create(
-			mm,
-			TaskForCreate {
-				run_id,
-				idx: 1,
-				label: Some("task".into()),
-				input_content: None,
-			},
-		)?;
-		let task = TaskBmc::get(mm, task_id)?;
-		Ok((task.uid, Uuid::new_v4()))
-	}
-	// endregion: --- Support
-}
-
-// endregion: --- Tests

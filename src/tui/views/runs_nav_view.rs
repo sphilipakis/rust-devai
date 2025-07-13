@@ -1,5 +1,4 @@
 use crate::support::text::format_time_local;
-use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};

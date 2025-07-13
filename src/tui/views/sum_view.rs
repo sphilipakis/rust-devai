@@ -1,10 +1,9 @@
-use crate::support::text::{format_duration_us, format_f64};
-use crate::tui::support::{self, RectExt};
+use crate::support::text::format_duration_us;
+use crate::tui::support;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
-use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget};
 
 pub struct SumView;

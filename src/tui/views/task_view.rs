@@ -4,8 +4,7 @@ use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Stylize as _;
-use ratatui::text::{Line, Span, ToLine};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Renders the content of a task. For now, the logs.

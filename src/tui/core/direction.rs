@@ -33,6 +33,7 @@ impl NavDir {
 }
 
 /// Accessors
+#[allow(unused)]
 impl NavDir {
 	// up = -1, down = 1
 	pub fn offset(&self) -> i32 {

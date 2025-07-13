@@ -50,6 +50,7 @@ impl DbBmc for MessageBmc {
 	const TABLE: &'static str = "message";
 }
 
+#[allow(unused)]
 impl MessageBmc {
 	pub fn create(mm: &ModelManager, msg_c: MessageForCreate) -> Result<Id> {
 		let fields = msg_c.sqlite_not_none_fields();

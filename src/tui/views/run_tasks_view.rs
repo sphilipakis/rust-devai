@@ -5,7 +5,7 @@ use crate::tui::views::{RunAfterAllView, RunBeforeAllView};
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Style, Stylize};
+use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
 

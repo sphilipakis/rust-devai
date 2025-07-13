@@ -13,14 +13,14 @@ use modql::filter::ListOptions;
 use rusqlite::ToSql;
 use uuid::Uuid;
 
-pub fn create<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
+pub fn create<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
 where
 	MC: DbBmc,
 {
 	create_inner::<MC>(mm, fields, true)
 }
 
-pub fn create_uid_included<MC>(mm: &ModelManager, mut fields: SqliteFields) -> Result<Id>
+pub fn create_uid_included<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
 where
 	MC: DbBmc,
 {
@@ -145,6 +145,7 @@ where
 	Ok(id)
 }
 
+#[allow(unused)]
 pub fn first<MC, E>(
 	mm: &ModelManager,
 	list_options: Option<ListOptions>,

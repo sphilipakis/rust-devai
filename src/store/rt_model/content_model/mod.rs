@@ -2,10 +2,9 @@
 
 mod inout;
 mod message;
-mod output;
 
 pub use inout::*;
+#[allow(unused)]
 pub use message::*;
-pub use output::*;
 
 // endregion: --- Modules

@@ -1,6 +1,6 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::store::{ContentTyp, Id, ModelManager, Result, TypedContent, UnixTimeUs};
+use crate::store::{Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
@@ -51,9 +51,6 @@ pub struct Task {
 	pub output_uid: Option<Uuid>,
 	pub output_has_display: Option<bool>,
 }
-
-/// Task to display
-pub struct TaskForIO {}
 
 pub enum TaskState {
 	Waiting,
