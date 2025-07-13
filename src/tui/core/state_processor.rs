@@ -14,8 +14,7 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- load runs
-	let runs_limit = if state.show_runs { None } else { Some(1) };
-	let runs = RunBmc::list_for_display(state.mm(), runs_limit).unwrap_or_default();
+	let runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
 	let prev_run_idx = state.run_idx; // to compute scroll status
 	// Make sure to select the first one (now there there is only ones
 	if !state.show_runs {
@@ -24,7 +23,9 @@ pub fn process_app_state(state: &mut AppState) {
 	state.runs = runs;
 
 	// -- Process Runs idx
-	let runs_nav_offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
+	let runs_nav_offset: i32 = if state.show_runs
+		&& let Some(code) = state.last_app_event().as_key_code()
+	{
 		match code {
 			KeyCode::Char('w') => -1,
 			KeyCode::Char('s') => 1,

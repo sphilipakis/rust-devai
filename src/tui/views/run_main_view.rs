@@ -72,7 +72,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	}
 
 	// -- Layout Helpers
-	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
+	let [lbl_1, val_1, lbl_2, val_2, lbl_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
 			Constraint::Length(10), // Agent/Model
@@ -97,7 +97,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new(line_1)
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_1.x_row(1), buf);
+		.render(lbl_1.x_row(1), buf);
 	// Agent value
 	Paragraph::new(agent_name)
 		.style(styles::STL_TXT_VAL)
@@ -106,13 +106,13 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new("Tasks:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_2.x_row(1), buf);
+		.render(lbl_2.x_row(1), buf);
 	Paragraph::new(tasks_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(1), buf);
 
 	Paragraph::new("Concurrency:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_3.x_row(1), buf);
+		.render(lbl_3.x_row(1), buf);
 	Paragraph::new(concurrency_txt)
 		.style(styles::STL_TXT_VAL)
 		.render(val_3.x_row(1), buf);
@@ -121,7 +121,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new("Model:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_1.x_row(2), buf);
+		.render(lbl_1.x_row(2), buf);
 	Paragraph::new(model_name)
 		.style(styles::STL_TXT_VAL)
 		.render(val_1.x_row(2), buf);
@@ -129,13 +129,13 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Paragraph::new("Cost:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_2.x_row(2), buf);
+		.render(lbl_2.x_row(2), buf);
 	Paragraph::new(cost_txt).style(styles::STL_TXT_VAL).render(val_2.x_row(2), buf);
 
 	Paragraph::new("Duration:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_3.x_row(2), buf);
+		.render(lbl_3.x_row(2), buf);
 	Paragraph::new(duration_txt)
 		.style(styles::STL_TXT_VAL)
 		.render(val_3.x_row(2), buf);
