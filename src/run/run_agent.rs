@@ -202,6 +202,7 @@ pub async fn run_agent(
 	// -- Rt Step - Tasks Start
 	runtime.step_tasks_start(run_id).await?;
 
+	// -- Rt Create all tasks (with their input)
 	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
 	for (idx, input) in inputs.clone().into_iter().enumerate() {
 		let task_id = runtime.create_task(run_id, idx, &input).await?;
@@ -217,6 +218,7 @@ pub async fn run_agent(
 		let base_run_config_clone = run_base_options.clone();
 
 		// Spawn tasks up to the concurrency limit
+		let rt = runtime.clone();
 		join_set.spawn(async move {
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_input_response = run_agent_task_outer(
@@ -256,6 +258,9 @@ pub async fn run_agent(
 				// Plain value passthrough
 				FromValue::OriginalValue(value) => value,
 			};
+
+			// -- Rt Rec - Update the task output
+			rt.update_task_output(task_id, &output).await?;
 
 			Ok((input_idx, output))
 		});

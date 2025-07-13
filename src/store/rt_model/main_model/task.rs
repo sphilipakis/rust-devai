@@ -151,7 +151,7 @@ impl TaskBmc {
 
 		// -- Add input_uid
 		let mut task_fields = task_c.sqlite_not_none_fields();
-		// add input_uid if presense
+		// add input_uid if present
 		if let Some(input_uid) = input_content.as_ref().map(|v| v.uid) {
 			task_fields.push(SqliteField::new("input_uid", input_uid));
 		}
@@ -208,6 +208,7 @@ impl TaskBmc {
 // region:    --- Bmc going to Content Model
 
 impl TaskBmc {
+	/// Note: Used by tui
 	pub fn get_input_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
 		let input_has_display = task.input_has_display.unwrap_or_default();
 		let Some(input_uid) = task.input_uid.as_ref() else {
@@ -223,6 +224,34 @@ impl TaskBmc {
 		} else {
 			Ok(InoutBmc::get_by_uid::<Inout>(mm, *input_uid).map(|i| i.content).ok().flatten())
 		}
+	}
+
+	/// Note: used from runtime_rec
+	pub fn update_output(mm: &ModelManager, task_id: Id, content: TypedContent) -> Result<()> {
+		// -- Create the task fields
+		// NOTE: Manual for now (not in common TaskForUpdate, might be TaskForUpdateContent later)
+		let task_u_fields = vec![
+			SqliteField::new("output_uid", content.uid),
+			SqliteField::new("output_has_display", content.display.is_some()),
+		];
+
+		// -- Create the Inout
+		let task_uid = Self::get_uid(mm, task_id)?;
+		InoutBmc::create(
+			mm,
+			InoutForCreate {
+				uid: content.uid,
+				task_uid,
+				typ: Some(content.typ),
+				content: Some(content.content),
+				display: content.display,
+			},
+		)?;
+
+		// -- Update the tasks
+		base::update::<Self>(mm, task_id, task_u_fields.into())?;
+
+		Ok(())
 	}
 }
 

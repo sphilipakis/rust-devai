@@ -401,6 +401,16 @@ impl Runtime {
 
 		Ok(())
 	}
+
+	pub async fn update_task_output(&self, task_id: Id, output: &Value) -> Result<()> {
+		let output_content = TypedContent::from_value(output);
+		if let Some(output_content) = output_content {
+			TaskBmc::update_output(self.mm(), task_id, output_content)?;
+		} else {
+			return Err("Failed to convert output to TypedContent".into());
+		}
+		Ok(())
+	}
 }
 
 /// Rec for the log

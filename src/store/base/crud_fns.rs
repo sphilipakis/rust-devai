@@ -51,6 +51,7 @@ where
 
 	let id = db.exec_returning_num(&sql, &*values)?;
 
+	// -- Publish Change Event
 	get_hub().publish_rt_model_change_sync();
 
 	Ok(id.into())
@@ -72,6 +73,7 @@ where
 
 	let count = db.exec(&sql, &*values)?;
 
+	// -- Publish Change Event
 	get_hub().publish_rt_model_change_sync();
 
 	Ok(count)
