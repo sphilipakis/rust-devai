@@ -3,7 +3,7 @@
 // region:    --- Imports
 use crate::support::text::{self, format_duration_us, format_f64};
 use crate::support::time::now_unix_time_us;
-use crate::tui::AppState;
+use crate::tui::{AppState, support};
 // endregion: --- Imports
 
 /// Implement Run Related Data extractors
@@ -21,14 +21,9 @@ impl AppState {
 		}
 	}
 
-	pub fn current_run_cost_txt(&self) -> String {
-		if let Some(run) = self.current_run()
-			&& let Some(cost) = run.total_cost
-		{
-			format!("${}", format_f64(cost))
-		} else {
-			"$...".to_string()
-		}
+	pub fn current_run_cost_fmt(&self) -> String {
+		let cost = self.current_run().and_then(|r| r.total_cost);
+		support::ui_fmt_cost(cost)
 	}
 
 	pub fn current_run_concurrency_txt(&self) -> String {

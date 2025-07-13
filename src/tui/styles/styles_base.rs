@@ -16,7 +16,8 @@ pub const CLR_BKG_BLACK: Color = Color::Indexed(0);
 
 pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 
-pub const CRL_BKG_LABEL: Color = CLR_BKG_GRAY_DARK;
+pub const CLR_BKG_LBL: Color = CLR_BKG_GRAY_DARK;
+pub const CLR_BKG_LBL_DARK: Color = CLR_BKG_BLACK;
 
 pub const CLR_BKG_ACT: Color = Color::Indexed(236);
 pub const CLR_BKG_SEL: Color = Color::Indexed(15);
@@ -43,8 +44,11 @@ pub const CLR_TXT_DONE: Color = Color::Green;
 // -- Styles
 pub const STL_TXT: Style = Style::new();
 
-pub const STL_TXT_LBL: Style = Style::new().fg(CLR_TXT_LBL).bg(CRL_BKG_LABEL);
+pub const STL_TXT_LBL: Style = Style::new().fg(CLR_TXT_LBL).bg(CLR_BKG_LBL);
 pub const STL_TXT_VAL: Style = Style::new().fg(CLR_TXT_WHITE);
+
+pub const STL_TXT_LBL_DARK: Style = Style::new().fg(Color::Indexed(242)).bg(CLR_BKG_LBL_DARK);
+pub const STL_TXT_VAL_DARK: Style = Style::new().fg(CLR_TXT_LBL);
 
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(Color::Blue);

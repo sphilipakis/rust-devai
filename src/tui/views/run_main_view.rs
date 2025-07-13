@@ -58,7 +58,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Prepare Data
 	let agent_name = state.current_run_agent_name();
 	let model_name = state.tasks_cummulative_models();
-	let cost_txt = state.current_run_cost_txt();
+	let cost_txt = state.current_run_cost_fmt();
 	let concurrency_txt = state.current_run_concurrency_txt();
 
 	// Tasks progress and optional cumulative duration.

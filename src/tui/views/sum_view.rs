@@ -1,5 +1,5 @@
 use crate::support::text::{format_duration_us, format_f64};
-use crate::tui::support::RectExt;
+use crate::tui::support::{self, RectExt};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -18,11 +18,11 @@ impl StatefulWidget for SumView {
 			.direction(Direction::Horizontal)
 			.constraints(vec![
 				//
-				Constraint::Length(12), // Total Runs
-				Constraint::Length(8),
-				Constraint::Length(6), // Cost
-				Constraint::Length(8),
-				Constraint::Length(10), // Duration
+				Constraint::Length(11), // Total Runs
+				Constraint::Length(6),
+				Constraint::Length(11), // Cost
+				Constraint::Length(9),
+				Constraint::Length(15), // Duration
 				Constraint::Length(15),
 			])
 			.spacing(1)
@@ -32,12 +32,13 @@ impl StatefulWidget for SumView {
 
 		// -- Extract Data
 		let mut duration_us: i64 = 0;
-		let mut cost: f64 = 0.;
+		let mut cost: Option<f64> = None;
 		let mut done_runs_count = 0;
 		for run in state.runs() {
 			run.is_done().then(|| done_runs_count += 1);
 			if let Some(run_cost) = run.total_cost {
-				cost += run_cost
+				// cost += run_cost
+				cost = Some(cost.unwrap_or(0.0) + run_cost);
 			};
 			if let (Some(start), Some(end)) = (run.start, run.end) {
 				duration_us += end.as_i64() - start.as_i64();
@@ -51,25 +52,25 @@ impl StatefulWidget for SumView {
 			runs_fmt = format!("{runs_fmt} ({running_run})")
 		}
 		let duration_fmt = format_duration_us(duration_us);
-		let cost_fmt = format!("${}", format_f64(cost));
+		let cost_fmt = support::ui_fmt_cost(cost);
 
 		// -- Render
 		Paragraph::new("Total Runs:")
-			.style(styles::STL_TXT_LBL)
+			.style(styles::STL_TXT_LBL_DARK)
 			.right_aligned()
 			.render(lbl_1, buf);
-		Paragraph::new(runs_fmt).style(styles::STL_TXT_VAL).render(val_1, buf);
+		Paragraph::new(runs_fmt).style(styles::STL_TXT_VAL_DARK).render(val_1, buf);
 
-		Paragraph::new("Cost:")
-			.style(styles::STL_TXT_LBL)
+		Paragraph::new("Total Cost:")
+			.style(styles::STL_TXT_LBL_DARK)
 			.right_aligned()
 			.render(lbl_2, buf);
-		Paragraph::new(cost_fmt).style(styles::STL_TXT_VAL).render(val_2, buf);
+		Paragraph::new(cost_fmt).style(styles::STL_TXT_VAL_DARK).render(val_2, buf);
 
-		Paragraph::new("Duration:")
-			.style(styles::STL_TXT_LBL)
+		Paragraph::new("Total Duration:")
+			.style(styles::STL_TXT_LBL_DARK)
 			.right_aligned()
 			.render(lbl_3, buf);
-		Paragraph::new(duration_fmt).style(styles::STL_TXT_VAL).render(val_3, buf);
+		Paragraph::new(duration_fmt).style(styles::STL_TXT_VAL_DARK).render(val_3, buf);
 	}
 }

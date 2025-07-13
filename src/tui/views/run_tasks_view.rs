@@ -41,35 +41,13 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	// -- Layout before_all | Logs
-	let [before_a, _gap_1, tasks_label_a, tasks_a, _gap_2, after_a, _margin_bottom] = Layout::default()
+	let [tasks_label_a, tasks_a] = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints(vec![
-			Constraint::Length(1), // before
-			Constraint::Length(1), // _gap_1
 			Constraint::Length(1), // tasks label
 			Constraint::Fill(1),   // tasks list
-			Constraint::Length(1), // _gap_2
-			Constraint::Length(1), // after
-			Constraint::Length(1), // _ (margin bottom)
 		])
 		.areas(area);
-
-	// region:    --- Render Before All
-	let before_style = if state.before_all_show() {
-		styles::STL_NAV_ITEM_HIGHLIGHT
-	} else {
-		Style::default()
-	};
-	let before_line = Line::default()
-		.spans(vec![
-			// ..
-			Span::raw(" Before All"),
-		])
-		.style(before_style);
-
-	before_line.render(before_a, buf);
-
-	// endregion: --- Render Before All
 
 	// region:    --- Render Tasks Label
 	let before_line = Line::default().spans(vec![
@@ -119,21 +97,4 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	StatefulWidget::render(list_w, tasks_a, buf, &mut list_s);
 
 	// endregion: --- Render Tasks
-
-	// region:    --- Render After All
-
-	let after_style = if state.after_all_show() {
-		styles::STL_NAV_ITEM_HIGHLIGHT
-	} else {
-		Style::default()
-	};
-	let after_line = Line::default()
-		.spans(vec![
-			// ..
-			Span::raw(" After All"),
-		])
-		.style(after_style);
-	after_line.render(after_a, buf);
-
-	// endregion: --- Render After All
 }
