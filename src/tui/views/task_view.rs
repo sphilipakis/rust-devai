@@ -56,7 +56,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 			Constraint::Length(22),               //
 			Constraint::Length(12),               // Cost / Completion
 			Constraint::Length(9),                //
-			Constraint::Length(10),               // Duration
+			Constraint::Length(13),               // Duration
 			Constraint::Fill(1),                  //
 		])
 		.spacing(1)
@@ -67,16 +67,18 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	// -- Render Model Row
 	if show_model_row {
 		current_row += 1;
+
 		Paragraph::new("Model:")
 			.style(styles::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_1.x_row(current_row), buf);
+		// NOTE: here a little chack to have maximum space for model name
 		Paragraph::new(model_name)
 			.style(styles::STL_FIELD_VAL)
-			.render(val_1.x_row(current_row), buf);
+			.render(val_1.x_row(current_row).x_width(26), buf);
 
-		Paragraph::new("Cost:")
-			.style(styles::STL_FIELD_LBL)
+		// NOTE: Here we use Span to give a little bit more space to Model
+		Paragraph::new(Span::styled("  Cost:", styles::STL_FIELD_LBL))
 			.right_aligned()
 			.render(label_2.x_row(current_row), buf);
 		Paragraph::new(cost)
@@ -209,7 +211,7 @@ fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool)
 				lines.push(Line::default()); // empty line (for now)
 			}
 			if lines.is_empty() {
-				lines.push("No logs".into())
+				// lines.push("No logs".into())
 			}
 		}
 		Err(err) => lines.push(format!("LogBmc::list error. {err}").into()),
@@ -250,7 +252,10 @@ fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_
 	// -- Mark Span
 	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), marker_style);
 
+	tracing::debug!("Content for section:\n{content}");
 	let msg_wrap = textwrap::wrap(content, width_content);
+	tracing::debug!("Wrapped for section:\n{msg_wrap:?}");
+
 	let msg_wrap_len = msg_wrap.len();
 
 	// -- First Content Line
@@ -269,7 +274,7 @@ fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_
 	let mut lines = vec![first_line];
 
 	// -- Render other content line if present
-	if msg_wrap_len > 2 {
+	if msg_wrap_len > 1 {
 		let left_spacing = " ".repeat(MARKER_WIDTH + width_spacer);
 		for line_content in msg_wrap_iter {
 			let line = Line::raw(format!("{left_spacing}{line_content}"));

@@ -43,19 +43,20 @@ pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
 
-pub const CLR_TXT_BLUE: Color = Color::Indexed(45);
+pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
+pub const CLR_TXT_TEAL: Color = Color::Indexed(45);
 pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
 pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
 
 pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
-pub const CLR_TXT_RUNNING: Color = CLR_TXT_BLUE;
+pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
 
 // -- Text Styles
 pub const STL_TXT: Style = Style::new();
 
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
-pub const STL_TXT_SEL: Style = Style::new().fg(CLR_TXT_BLUE);
+pub const STL_TXT_SEL: Style = Style::new().fg(CLR_TXT_TEAL);
 pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_BLUE);
 
 // -- Nav Styles
@@ -63,6 +64,8 @@ pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color:
 
 // -- Field Styles
 pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_700);
+// For debug layout
+// pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG_PRIME).fg(CLR_TXT_700);
 pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_WHITE);
 
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
@@ -70,7 +73,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().fg(CLR_TXT_600);
 
 // -- Setion Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
-pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
+pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
 
 // -- Tab Styles

@@ -8,7 +8,6 @@ use crate::store::rt_model::{LogBmc, LogForCreate, LogKind};
 use crate::tui::event::{ActionEvent, AppEvent, DataEvent};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
-use tracing::debug;
 
 // region:    --- Public
 
@@ -20,7 +19,7 @@ pub async fn handle_app_event(
 	exit_tx: &ExitTx,
 	app_event: &AppEvent,
 ) -> Result<()> {
-	debug!("APP EVENT HANDLER - {app_event:?}");
+	// tracing::debug!("APP EVENT HANDLER - {app_event:?}");
 
 	match app_event {
 		AppEvent::Term(term_event) => {

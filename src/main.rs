@@ -26,7 +26,6 @@ use crate::store::OnceModelManager;
 use crate::tui_v1::TuiAppV1;
 use clap::{Parser, crate_version};
 use error::{Error, Result};
-use tracing::debug;
 use tracing_appender::rolling::never;
 use tracing_subscriber::EnvFilter;
 
@@ -60,8 +59,6 @@ async fn main() -> Result<()> {
 	} else {
 		None
 	};
-
-	debug!("AIP START");
 
 	// -- The OnceModelManager
 	// This way, ModelManager is only created when needed

@@ -3,7 +3,6 @@ use crate::tui::AppState;
 use crate::tui::core::NavDir;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
-use tracing::debug;
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Refresh system metrics

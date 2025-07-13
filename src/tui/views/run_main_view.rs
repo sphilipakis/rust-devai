@@ -76,9 +76,9 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.direction(Direction::Horizontal)
 		.constraints(vec![
 			Constraint::Length(11), // Agent/Model
-			Constraint::Length(22), //
-			Constraint::Length(9),  // Tasks/Cost
-			Constraint::Length(12), //
+			Constraint::Length(26), //
+			Constraint::Length(8),  // Tasks/Cost
+			Constraint::Length(9),  //
 			Constraint::Length(13), // Concurrency/Duration
 			Constraint::Fill(1),    //
 		])
