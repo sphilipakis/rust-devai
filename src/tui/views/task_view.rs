@@ -16,24 +16,27 @@ impl StatefulWidget for TaskView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		// -- Layout Header |Logs
+		let show_model_row = state.tasks().len() > 1;
+
+		// -- Layout Header | Logs
+		let header_height = if show_model_row { 2 } else { 1 };
 		let [header_a, _space_1, logs_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
-				Constraint::Length(2), // header
-				Constraint::Max(1),    // space_1
-				Constraint::Fill(1),   // logs
+				Constraint::Length(header_height), // header
+				Constraint::Max(1),                // space_1
+				Constraint::Fill(1),               // logs
 			])
 			.areas(area);
 
-		render_header(header_a, buf, state);
+		render_header(header_a, buf, state, show_model_row);
 
 		// don't show the steps
 		render_sections(logs_a, buf, state, false);
 	}
 }
 
-fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_row: bool) {
 	// -- Prepare Data
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_txt();
@@ -57,41 +60,53 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.spacing(1)
 		.areas(area);
 
-	// -- Render Row 1
-	Paragraph::new("Model:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(label_1.x_row(1), buf);
-	Paragraph::new(model_name)
-		.style(styles::STL_TXT_VAL)
-		.render(val_1.x_row(1), buf);
+	let mut current_row = 0;
 
-	Paragraph::new("Cost:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(label_2.x_row(1), buf);
-	Paragraph::new(cost).style(styles::STL_TXT_VAL).render(val_2.x_row(1), buf);
+	// -- Render Model Row
+	if show_model_row {
+		current_row += 1;
+		Paragraph::new("Model:")
+			.style(styles::STL_TXT_LBL)
+			.right_aligned()
+			.render(label_1.x_row(current_row), buf);
+		Paragraph::new(model_name)
+			.style(styles::STL_TXT_VAL)
+			.render(val_1.x_row(current_row), buf);
 
-	Paragraph::new("Duration:")
-		.style(styles::STL_TXT_LBL)
-		.right_aligned()
-		.render(label_3.x_row(1), buf);
-	Paragraph::new(duration).style(styles::STL_TXT_VAL).render(val_3.x_row(1), buf);
+		Paragraph::new("Cost:")
+			.style(styles::STL_TXT_LBL)
+			.right_aligned()
+			.render(label_2.x_row(current_row), buf);
+		Paragraph::new(cost)
+			.style(styles::STL_TXT_VAL)
+			.render(val_2.x_row(current_row), buf);
 
-	// -- Render Row 2
+		Paragraph::new("Duration:")
+			.style(styles::STL_TXT_LBL)
+			.right_aligned()
+			.render(label_3.x_row(current_row), buf);
+		Paragraph::new(duration)
+			.style(styles::STL_TXT_VAL)
+			.render(val_3.x_row(current_row), buf);
+	}
+
+	// -- Render Row for tokens
+	current_row += 1;
 	Paragraph::new("Prompt:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_1.x_row(2), buf);
-	Paragraph::new(prompt_tk).style(styles::STL_TXT_VAL).render(val_1.x_row(2), buf);
+		.render(label_1.x_row(current_row), buf);
+	Paragraph::new(prompt_tk)
+		.style(styles::STL_TXT_VAL)
+		.render(val_1.x_row(current_row), buf);
 
 	Paragraph::new("Completion:")
 		.style(styles::STL_TXT_LBL)
 		.right_aligned()
-		.render(label_2.x_row(2), buf);
+		.render(label_2.x_row(current_row), buf);
 	Paragraph::new(completion_tk)
 		.style(styles::STL_TXT_VAL)
-		.render(val_2.union(val_3).x_row(2), buf);
+		.render(val_2.union(val_3).x_row(current_row), buf);
 }
 
 fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
