@@ -16,14 +16,19 @@ impl StatefulWidget for RuntTasksView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+		let show_tasks_nav = state.tasks().len() > 1;
+
+		let tasks_nav_width = if show_tasks_nav { 20 } else { 0 };
 		let [nav_a, content_a] = Layout::default()
 			.direction(Direction::Horizontal)
-			.constraints([Constraint::Max(20), Constraint::Min(0)])
+			.constraints([Constraint::Max(tasks_nav_width), Constraint::Min(0)])
 			.spacing(1)
 			.areas(area);
 
 		// -- Render tasks nav
-		render_tasks_nav(nav_a, buf, state);
+		if show_tasks_nav {
+			render_tasks_nav(nav_a, buf, state);
+		}
 
 		// -- Render task content
 		if state.before_all_show() {
@@ -68,7 +73,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			let label = task
 				.label
 				.clone()
-				.unwrap_or_else(|| format!("task-{} ({})", num_pad_for_len(idx, tasks_len), task.id));
+				.unwrap_or_else(|| format!("task-{}", num_pad_for_len(idx, tasks_len)));
 
 			let (mark_txt, mark_style) = match task.state() {
 				TaskState::Waiting => ("⏸", styles::CLR_TXT_WAITING),

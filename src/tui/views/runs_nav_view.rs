@@ -22,13 +22,12 @@ impl StatefulWidget for RunsNavView {
 		let [label_a, list_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints([Constraint::Length(1), Constraint::Fill(1)])
-			.spacing(1)
 			.areas(area);
 
 		Paragraph::new(" Runs: ")
 			.style(styles::STL_TXT_LBL)
 			.left_aligned()
-			.render(label_a.x_width(7), buf);
+			.render(label_a, buf);
 
 		// -- Get the List Items
 		let runs = state.runs();

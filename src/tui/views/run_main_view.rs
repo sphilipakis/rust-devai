@@ -75,8 +75,8 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let [lbl_1, val_1, lbl_2, val_2, lbl_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(10), // Agent/Model
-			Constraint::Length(20), //
+			Constraint::Length(11), // Agent/Model
+			Constraint::Length(22), //
 			Constraint::Length(7),  // Tasks/Cost
 			Constraint::Length(8),  //
 			Constraint::Length(13), // Concurrency/Duration
@@ -151,7 +151,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	let titles = vec![
 		//
 		Line::styled(" Before All ", style),
-		Line::styled(" Tasks ", style),
+		Line::styled(tasks_label, style),
 		Line::styled(" After All ", style),
 	];
 

@@ -79,43 +79,9 @@ pub fn process_app_state(state: &mut AppState) {
 		KeyCode::Char('k'),
 		state.last_app_event().as_key_event(),
 	);
+	let nav_tasks_offset = nav_dir.map(|n| n.offset()).unwrap_or_default();
 
-	let tasks_max_idx = state.tasks().len() as i32 - 1;
-	// only do someting if we have an offset
-	if let Some(nav_dir) = nav_dir {
-		// -- Navigate or get out of tasks nav
-		if let Some(task_idx) = state.task_idx {
-			let new_idx = task_idx + nav_dir.offset();
-			// we show before all
-			if new_idx < 0 {
-				state.task_idx = None;
-				state.before_all_show = true;
-				state.after_all_show = false;
-			}
-			// we show after all
-			else if new_idx > tasks_max_idx {
-				state.task_idx = None;
-				state.before_all_show = false;
-				state.after_all_show = true;
-			} else {
-				state.before_all_show = false;
-				state.after_all_show = false;
-				state.task_idx = Some(new_idx.max(0))
-			}
-		}
-		// -- Enter task from top
-		else if nav_dir.is_down() && state.before_all_show {
-			state.before_all_show = false;
-			state.task_idx = Some(0);
-		}
-		// -- Enter in tasks nav from bottom
-		else if nav_dir.is_up() && state.after_all_show {
-			state.after_all_show = false;
-			state.task_idx = Some(tasks_max_idx);
-		}
-	}
-
-	//state.task_idx = offset_and_clamp_option_idx_in_len(&state.task_idx, offset, tasks.len());
+	state.task_idx = offset_and_clamp_option_idx_in_len(&state.task_idx, nav_tasks_offset, state.tasks().len());
 
 	// -- process the Run Tabs idx
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {

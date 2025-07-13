@@ -42,18 +42,18 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let prompt_tk = state.render_task_prompt_tokens_fmt();
 	let completion_tk = state.render_task_completion_tokens_fmt();
 
-	let fist_call_width = 10;
+	let first_call_width = 10;
 
 	// -- Columns layout
 	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(fist_call_width), // Model / Prompt
-			Constraint::Length(22),              //
-			Constraint::Length(12),              // Cost / Completion
-			Constraint::Length(16),              //
-			Constraint::Length(10),              // Duration
-			Constraint::Fill(1),                 //
+			Constraint::Length(first_call_width), // Model / Prompt
+			Constraint::Length(22),               //
+			Constraint::Length(12),               // Cost / Completion
+			Constraint::Length(16),               //
+			Constraint::Length(10),               // Duration
+			Constraint::Fill(1),                  //
 		])
 		.spacing(1)
 		.areas(area);
