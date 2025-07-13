@@ -1,7 +1,6 @@
 use crate::store::rt_model::TaskState;
 use crate::tui::styles;
 use crate::tui::support::num_pad_for_len;
-use crate::tui::views::{RunAfterAllView, RunBeforeAllView};
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -31,13 +30,7 @@ impl StatefulWidget for RuntTasksView {
 		}
 
 		// -- Render task content
-		if state.before_all_show() {
-			RunBeforeAllView.render(content_a, buf, state);
-		} else if state.after_all_show() {
-			RunAfterAllView.render(content_a, buf, state);
-		} else {
-			TaskView.render(content_a, buf, state);
-		}
+		TaskView.render(content_a, buf, state);
 	}
 }
 

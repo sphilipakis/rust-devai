@@ -125,16 +125,6 @@ impl AppState {
 			None
 		}
 	}
-
-	/// Returns `true` when the **before-all** pseudo-task is selected.
-	pub fn before_all_show(&self) -> bool {
-		self.before_all_show
-	}
-
-	/// Returns `true` when the **after-all** pseudo-task is selected.
-	pub fn after_all_show(&self) -> bool {
-		self.after_all_show
-	}
 }
 
 /// System & Event states
