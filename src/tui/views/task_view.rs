@@ -210,7 +210,7 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16, state: &AppState) -> Vec<Li
 			let cost = state.current_task_cost_fmt();
 			let compl = state.current_task_completion_tokens_fmt();
 			Some(format!(
-				"✔ AI model {model_name} responded.\nCost: {cost}, Completion tokens: {compl}"
+				"✔ AI model {model_name} responded.\n  Cost: {cost}, Completion tokens: {compl}"
 			))
 		}
 		_ => None,
