@@ -22,6 +22,10 @@ pub struct AppState {
 /// `pub` fields are fine here because the whole struct is only visible
 /// inside `crate::tui::core`.
 pub(in crate::tui::core) struct AppStateInner {
+	// -- Debug
+	// debug color idx
+	pub debug_clr: u8,
+
 	// -- Main View
 	pub show_runs: bool,
 
@@ -55,13 +59,15 @@ pub(in crate::tui::core) struct AppStateInner {
 
 // endregion: --- Inner
 
-// region:    --- Constructors
-
+/// Constructors
 impl AppState {
 	pub fn new(mm: ModelManager, last_app_event: LastAppEvent) -> Result<Self> {
 		let sys_state = SysState::new()?;
 
 		let inner = AppStateInner {
+			// -- Debug
+			debug_clr: 0,
+
 			// -- MainView
 			show_runs: false,
 
@@ -107,20 +113,14 @@ impl AppState {
 	}
 }
 
-// endregion: --- Constructors
-
-// region:    --- MainView
-
+/// MainView
 impl AppState {
 	pub fn show_runs(&self) -> bool {
 		self.inner.show_runs
 	}
 }
 
-// endregion: --- MainView
-
-// region:    --- RunsView
-
+/// RunsView
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
 		self.inner.run_idx.map(|idx| idx as usize)
@@ -139,10 +139,7 @@ impl AppState {
 	}
 }
 
-// endregion: --- RunsView
-
-// region:    --- RunDetailsView
-
+/// RunDetailsView
 impl AppState {
 	pub fn task_idx(&self) -> Option<usize> {
 		self.inner.task_idx.map(|idx| idx as usize)
@@ -161,10 +158,7 @@ impl AppState {
 	}
 }
 
-// endregion: --- RunDetailsView
-
-// region:    --- Other simple accessors
-
+/// Other simple accessors
 impl AppState {
 	pub fn run_tab_idx(&self) -> i32 {
 		self.inner.run_tab_idx
@@ -191,10 +185,7 @@ impl AppState {
 	}
 }
 
-// endregion: --- Other simple accessors
-
-// region:    --- SysState & Metrics
-
+/// SysState & Metrics
 impl AppState {
 	/// Called every tick of the main loop.
 	pub(in crate::tui::core) fn refresh_sys_state(&mut self) {
@@ -212,5 +203,3 @@ impl AppState {
 		self.inner.cpu
 	}
 }
-
-// endregion: --- SysState & Metrics
