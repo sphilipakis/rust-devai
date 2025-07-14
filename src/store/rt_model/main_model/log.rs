@@ -180,7 +180,7 @@ mod tests {
 
 	use super::*;
 	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
-	use crate::support::time::now_unix_time_us;
+	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
 
 	// region:    --- Support
@@ -249,7 +249,7 @@ mod tests {
 
 		// -- Exec
 		let log_u = LogForUpdate {
-			message: Some(format!("Updated at {}", now_unix_time_us())),
+			message: Some(format!("Updated at {}", now_micro())),
 			kind: Some(LogKind::SysWarn),
 			..Default::default()
 		};

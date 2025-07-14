@@ -12,7 +12,7 @@ use crate::store::rt_model::TaskBmc;
 use crate::store::rt_model::TaskForCreate;
 use crate::store::rt_model::TaskForUpdate;
 use crate::store::rt_model::{LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate};
-use crate::support::time::now_unix_time_us;
+use crate::support::time::now_micro;
 use serde_json::Value;
 
 impl Runtime {
@@ -34,7 +34,7 @@ impl Runtime {
 			RunForCreate {
 				agent_name: Some(agent_name.to_string()),
 				agent_path: Some(agent_path.to_string()),
-				start: Some(now_unix_time_us().into()),
+				start: Some(now_micro().into()),
 			},
 		)?;
 
@@ -54,7 +54,7 @@ impl Runtime {
 	pub async fn step_ba_start(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			ba_start: Some(now_unix_time_us().into()),
+			ba_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -69,7 +69,7 @@ impl Runtime {
 	pub async fn step_ba_end(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			ba_end: Some(now_unix_time_us().into()),
+			ba_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -85,7 +85,7 @@ impl Runtime {
 	pub async fn step_tasks_start(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			tasks_start: Some(now_unix_time_us().into()),
+			tasks_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -101,7 +101,7 @@ impl Runtime {
 	pub async fn step_tasks_end(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			tasks_end: Some(now_unix_time_us().into()),
+			tasks_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -116,7 +116,7 @@ impl Runtime {
 	pub async fn step_task_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			start: Some(now_unix_time_us().into()),
+			start: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -137,7 +137,7 @@ impl Runtime {
 	pub async fn step_task_data_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			data_start: Some(now_unix_time_us().into()),
+			data_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -158,7 +158,7 @@ impl Runtime {
 	pub async fn step_task_data_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			data_end: Some(now_unix_time_us().into()),
+			data_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -179,7 +179,7 @@ impl Runtime {
 	pub async fn step_task_ai_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			ai_start: Some(now_unix_time_us().into()),
+			ai_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -200,7 +200,7 @@ impl Runtime {
 	pub async fn step_task_ai_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			ai_end: Some(now_unix_time_us().into()),
+			ai_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -221,7 +221,7 @@ impl Runtime {
 	pub async fn step_task_output_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			output_start: Some(now_unix_time_us().into()),
+			output_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -242,7 +242,7 @@ impl Runtime {
 	pub async fn step_task_output_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
-			output_end: Some(now_unix_time_us().into()),
+			output_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -263,7 +263,7 @@ impl Runtime {
 	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task
 		let task_u = TaskForUpdate {
-			end: Some(now_unix_time_us().into()),
+			end: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
@@ -285,7 +285,7 @@ impl Runtime {
 	pub async fn step_aa_start(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			aa_start: Some(now_unix_time_us().into()),
+			aa_start: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -301,7 +301,7 @@ impl Runtime {
 	pub async fn step_aa_end(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			aa_end: Some(now_unix_time_us().into()),
+			aa_end: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -317,7 +317,7 @@ impl Runtime {
 	pub async fn step_end(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
-			end: Some(now_unix_time_us().into()),
+			end: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;

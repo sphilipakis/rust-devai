@@ -2,7 +2,7 @@
 //!
 // region:    --- Imports
 use crate::support::text::{self, format_duration_us, format_f64};
-use crate::support::time::now_unix_time_us;
+use crate::support::time::now_micro;
 use crate::tui::{AppState, support};
 // endregion: --- Imports
 
@@ -12,7 +12,7 @@ impl AppState {
 		if let Some(run) = self.current_run() {
 			let duration_us = match (run.start, run.end) {
 				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
-				(Some(start), None) => now_unix_time_us() - start.as_i64(),
+				(Some(start), None) => now_micro() - start.as_i64(),
 				_ => 0,
 			};
 			format_duration_us(duration_us)
@@ -62,7 +62,7 @@ impl AppState {
 		for task in tasks {
 			let du = match (task.start, task.end) {
 				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
-				(Some(start), None) => now_unix_time_us() - start.as_i64(),
+				(Some(start), None) => now_micro() - start.as_i64(),
 				_ => 0,
 			};
 			cumul_us += du;
@@ -117,7 +117,7 @@ impl AppState {
 			.unwrap_or_else(|| self.current_run_model_name())
 	}
 
-	pub fn current_task_cost_txt(&self) -> String {
+	pub fn current_task_cost_fmt(&self) -> String {
 		if let Some(task) = self.current_task()
 			&& let Some(cost) = task.cost
 		{
@@ -133,7 +133,7 @@ impl AppState {
 		if let Some(task) = self.current_task() {
 			let duration = match (task.start, task.end) {
 				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
-				(Some(start), None) => now_unix_time_us() - start.as_i64(),
+				(Some(start), None) => now_micro() - start.as_i64(),
 				_ => 0,
 			};
 			format_duration_us(duration)
@@ -142,7 +142,7 @@ impl AppState {
 		}
 	}
 
-	pub fn render_task_prompt_tokens_fmt(&self) -> String {
+	pub fn current_task_prompt_tokens_fmt(&self) -> String {
 		let Some(task) = self.current_task() else {
 			return "...".to_string();
 		};
@@ -171,7 +171,7 @@ impl AppState {
 		res
 	}
 
-	pub fn render_task_completion_tokens_fmt(&self) -> String {
+	pub fn current_task_completion_tokens_fmt(&self) -> String {
 		let Some(task) = self.current_task() else {
 			return "...".to_string();
 		};

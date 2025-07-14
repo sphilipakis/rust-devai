@@ -138,7 +138,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::support::time::now_unix_time_us;
+	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
 
 	#[tokio::test]
@@ -173,7 +173,7 @@ mod tests {
 
 		// -- Exec
 		let run_u = RunForUpdate {
-			start: Some(now_unix_time_us().into()),
+			start: Some(now_micro().into()),
 			..Default::default()
 		};
 		RunBmc::update(&mm, id, run_u)?;

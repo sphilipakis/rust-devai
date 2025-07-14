@@ -7,7 +7,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 /// Note 2: The maximum UTC epoch date that can be stored in i64 with microseconds precision
 ///         would be approximately `292277-01-09 ... UTC`.
 ///         Thus, for all practical purposes, it is sufficiently distant to be of no concern.
-pub fn now_unix_time_us() -> i64 {
+pub fn now_micro() -> i64 {
 	let now = SystemTime::now();
 	let since_the_epoch = now.duration_since(UNIX_EPOCH).unwrap_or(Duration::new(0, 0));
 

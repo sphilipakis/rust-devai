@@ -283,7 +283,7 @@ mod tests {
 
 	use super::*;
 	use crate::store::rt_model::{RunBmc, RunForCreate};
-	use crate::support::time::now_unix_time_us;
+	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
 
 	// region:    --- Support
@@ -333,7 +333,7 @@ mod tests {
 
 		// -- Exec
 		let task_u = TaskForUpdate {
-			start: Some(now_unix_time_us().into()),
+			start: Some(now_micro().into()),
 			..Default::default()
 		};
 		TaskBmc::update(&mm, id, task_u)?;

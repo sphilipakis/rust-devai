@@ -80,6 +80,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
+pub const STL_SECTION_MARKER_AI: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_YELLOW);
 pub const STL_SECTION_TXT: Style = Style::new().fg(CLR_TXT_WHITE);
 
 // -- Tab Styles

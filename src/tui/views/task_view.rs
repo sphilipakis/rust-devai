@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{Log, LogBmc, LogKind, Task, TaskBmc};
+use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::support::RectExt;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -42,10 +42,10 @@ impl StatefulWidget for TaskView {
 fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_row: bool) {
 	// -- Prepare Data
 	let model_name = state.current_task_model_name();
-	let cost = state.current_task_cost_txt();
+	let cost = state.current_task_cost_fmt();
 	let duration = state.current_task_duration_txt();
-	let prompt_tk = state.render_task_prompt_tokens_fmt();
-	let completion_tk = state.render_task_completion_tokens_fmt();
+	let prompt_tk = state.current_task_prompt_tokens_fmt();
+	let completion_tk = state.current_task_completion_tokens_fmt();
 
 	let first_call_width = 10;
 
@@ -121,6 +121,10 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 
 fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
 	// -- Get the current task (return early)
+	let Some(run) = state.current_run() else {
+		Line::raw("No Current Run").render(area, buf);
+		return;
+	};
 	let Some(task) = state.current_task() else {
 		Line::raw("No Current Task").render(area, buf);
 		return;
@@ -136,6 +140,14 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 
 	// -- Add Logs Lines
 	all_lines.extend(ui_for_logs(state.mm(), task, max_width, show_steps));
+
+	// -- Add AI Lines
+	let ai_lines = ui_for_ai(run, task, max_width, state);
+	let ai_lines_len = ai_lines.len();
+	all_lines.extend(ai_lines);
+	if ai_lines_len > 0 {
+		all_lines.push(Line::default());
+	}
 
 	// -- Add output if end
 	if task.output_uid.is_some() {
@@ -179,6 +191,35 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 			(marker_txt, marker_style),
 			max_width,
 		),
+	}
+}
+
+fn ui_for_ai(run: &Run, task: &Task, max_width: u16, state: &AppState) -> Vec<Line<'static>> {
+	let marker_txt = "AI:";
+	let marker_style = styles::STL_SECTION_MARKER_AI;
+	let model_name = task
+		.model_ov
+		.as_ref()
+		.or(run.model.as_ref())
+		.map(|v| v.as_str())
+		.unwrap_or_default();
+
+	let content = match (task.ai_start, task.ai_end) {
+		(Some(_start), None) => Some(format!("➜ Sending prompt to AI model {model_name}.")),
+		(Some(_start), Some(_end)) => {
+			let cost = state.current_task_cost_fmt();
+			let compl = state.current_task_completion_tokens_fmt();
+			Some(format!(
+				"✔ AI model {model_name} responded.\nCost: {cost}, Completion tokens: {compl}"
+			))
+		}
+		_ => None,
+	};
+
+	if let Some(content) = content {
+		ui_for_section(&content, (marker_txt, marker_style), max_width)
+	} else {
+		Vec::new()
 	}
 }
 
