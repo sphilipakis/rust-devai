@@ -1,6 +1,6 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::store::{Id, ModelManager, Result, TypedContent, UnixTimeUs};
+use crate::store::{EndState, Id, ModelManager, Result, TypedContent, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
@@ -30,6 +30,11 @@ pub struct Task {
 	pub output_start: Option<UnixTimeUs>,
 	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
+
+	// -- End state & Data
+	pub end_state: Option<EndState>,
+	pub end_err_id: Option<Id>,
+	pub end_skip_reason: Option<String>,
 
 	pub model_ov: Option<String>,
 
@@ -97,7 +102,10 @@ pub struct TaskForUpdate {
 	pub output_end: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
-	pub model_ov: Option<String>,
+	// -- End state & Data
+	pub end_state: Option<EndState>,
+	pub end_err_id: Option<Id>,
+	pub end_skip_reason: Option<String>,
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i32>,
@@ -106,6 +114,7 @@ pub struct TaskForUpdate {
 	pub tk_completion_total: Option<i32>,
 	pub tk_completion_reasoning: Option<i32>,
 
+	pub model_ov: Option<String>,
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
@@ -200,6 +209,33 @@ impl TaskBmc {
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
 		let filter = TaskFilter { run_id: Some(run_id) };
 		Self::list(mm, None, Some(filter))
+	}
+
+	pub fn add_error(mm: &ModelManager, task_id: Id, error: crate::error::Error) -> Result<()> {
+		use crate::store::ContentTyp;
+		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+
+		let task = Self::get(mm, task_id)?;
+
+		// -- Create the err rec
+		let err_c = ErrForCreate {
+			stage: None,
+			run_id: Some(task.run_id),
+			task_id: Some(task_id),
+			typ: Some(ContentTyp::Text),
+			content: Some(error.to_string()),
+		};
+		let err_id = ErrBmc::create(mm, err_c)?;
+
+		// -- Update the task
+		let task_u = TaskForUpdate {
+			end_state: Some(EndState::Err),
+			end_err_id: Some(err_id),
+			..Default::default()
+		};
+		Self::update(mm, task_id, task_u)?;
+
+		Ok(())
 	}
 }
 

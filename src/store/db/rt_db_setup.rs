@@ -38,6 +38,11 @@ CREATE TABLE IF NOT EXISTS run (
 		aa_end      INTEGER,
 		end         INTEGER,
 
+		-- End state & Data
+		end_state        TEXT,
+		end_err_id       INTEGER,
+		end_skip_reason  TEXT,
+
 		agent_name  TEXT,
 		agent_path  TEXT,
 
@@ -73,6 +78,11 @@ CREATE TABLE IF NOT EXISTS task (
 		output_start  INTEGER,
 		output_end    INTEGER,
 		end           INTEGER,
+
+		-- End state & Data
+		end_state        TEXT,
+		end_err_id       INTEGER,
+		end_skip_reason  TEXT,
 
 		model_ov   TEXT,
 
@@ -121,11 +131,36 @@ CREATE TABLE IF NOT EXISTS log (
 ) STRICT",
 );
 
-const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, LOG_TABLE];
+const ERR_TABLE: (&str, &str) = (
+	"err",
+	"
+CREATE TABLE IF NOT EXISTS err (
+		id       INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid      BLOB NOT NULL,
+
+		ctime    INTEGER NOT NULL,
+		mtime    INTEGER NOT NULL,
+
+		run_id  INTEGER, -- for now, allow null, for global errors
+		stage   TEXT,
+		task_id INTEGER,
+
+		typ      TEXT, -- 'text' | 'json'
+		content  TEXT
+) STRICT",
+);
+
+const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE];
 
 // endregion: --- Main Tables
 
 // region:    --- Content Tables
+
+// NOTE: Currently, the idea is that content tables are for "larger content" and should be efficient to delete per run.
+//       However, this concept is not fully realized yet. One idea is to have table names with a run_uid_b58 suffix,
+//       allowing for very fast deletion. Implementing this will require additional code.
+//       Also, at present, we do not have run_id or run_uid in these tables, which is problematic when we want to trim by run.
+//       At least the main tables can do that by run.
 
 const INOUT_TABLE: (&str, &str) = (
 	"inout",
@@ -147,24 +182,7 @@ CREATE TABLE IF NOT EXISTS inout (
 ) STRICT",
 );
 
-const MESSAGE_TABLE: (&str, &str) = (
-	"message",
-	"
-CREATE TABLE IF NOT EXISTS message (
-		id       INTEGER PRIMARY KEY AUTOINCREMENT,
-		uid      BLOB NOT NULL,
-
-		ctime    INTEGER NOT NULL,
-		mtime    INTEGER NOT NULL,							
-
-		task_uid INTEGER NOT NULL,
-
-		typ      TEXT, -- 'text' | 'json'
-		content  TEXT
-) STRICT",
-);
-
-const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INOUT_TABLE, MESSAGE_TABLE];
+const ALL_CONTENT_TABLES: &[(&str, &str)] = &[INOUT_TABLE];
 
 // endregion: --- Content Tables
 

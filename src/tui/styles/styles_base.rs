@@ -40,8 +40,10 @@ pub const CLR_TXT_100: Color = Color::Indexed(255);
 pub const CLR_TXT_400: Color = Color::Indexed(253);
 pub const CLR_TXT_500: Color = Color::Indexed(252);
 pub const CLR_TXT_600: Color = Color::Indexed(250);
+pub const CLR_TXT_650: Color = Color::Indexed(247);
 pub const CLR_TXT_700: Color = Color::Indexed(244);
 pub const CLR_TXT_800: Color = Color::Indexed(242);
+pub const CLR_TXT_850: Color = Color::Indexed(240);
 pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
@@ -66,12 +68,12 @@ pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_BLUE);
 pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color::Black);
 
 // -- Field Styles
-pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_700);
+pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_850);
 // For debug layout
 // pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG_PRIME).fg(CLR_TXT_700);
 // pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
 // Other good choices: 24 (dark teal) 68 (dark blue), 187 (light yellow), 182 (pinkish), 146 (purple, not that good)
-pub const STL_FIELD_VAL: Style = Style::new().fg(Color::Indexed(187));
+pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
 
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
 pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_600);

@@ -13,7 +13,7 @@ use mlua::IntoLua;
 use serde::Serialize;
 use serde_json::Value;
 use simple_fs::SPath;
-use tokio::task::JoinSet;
+use tokio::task::{JoinError, JoinSet};
 use value_ext::JsonValueExt;
 
 const DEFAULT_CONCURRENCY: usize = 1;
@@ -209,6 +209,28 @@ pub async fn run_agent(
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
 
+	// -- Function helper
+	// Here we will handle the runtime error
+	async fn process_join_set_res(
+		_rt: &Runtime,
+		join_res: core::result::Result<Result<(usize, Value)>, JoinError>,
+		in_progress: &mut usize,
+		captured_outputs: &mut Option<Vec<(usize, Value)>>,
+	) -> Result<()> {
+		//
+		*in_progress -= 1;
+		match join_res {
+			Ok(Ok((input_idx, output))) => {
+				if let Some(outputs_vec) = captured_outputs.as_mut() {
+					outputs_vec.push((input_idx, output));
+				}
+				Ok(())
+			}
+			Ok(Err(e)) => Err(e),
+			Err(e) => Err(Error::custom(format!("Error while running input. Cause {e}"))),
+		}
+	}
+
 	for (input, input_idx, task_id) in input_idx_task_id_list {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();
@@ -217,7 +239,7 @@ pub async fn run_agent(
 
 		let base_run_config_clone = run_base_options.clone();
 
-		// Spawn tasks up to the concurrency limit
+		// -- Spawn tasks up to the concurrency limit
 		let rt = runtime.clone();
 		join_set.spawn(async move {
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
@@ -270,16 +292,8 @@ pub async fn run_agent(
 		// If we've reached the concurrency limit, wait for one task to complete
 		if in_progress >= concurrency {
 			if let Some(res) = join_set.join_next().await {
-				in_progress -= 1;
-				match res {
-					Ok(Ok((input_idx, output))) => {
-						if let Some(outputs_vec) = &mut captured_outputs {
-							outputs_vec.push((input_idx, output));
-						}
-					}
-					Ok(Err(e)) => return Err(e),
-					Err(e) => return Err(Error::custom(format!("Error while running input. Cause {e}"))),
-				}
+				// Note: for now, we will stop on first error
+				process_join_set_res(runtime, res, &mut in_progress, &mut captured_outputs).await?;
 			}
 		}
 	}
@@ -287,16 +301,7 @@ pub async fn run_agent(
 	// Wait for the remaining tasks to complete
 	while in_progress > 0 {
 		if let Some(res) = join_set.join_next().await {
-			in_progress -= 1;
-			match res {
-				Ok(Ok((input_idx, output))) => {
-					if let Some(outputs_vec) = &mut captured_outputs {
-						outputs_vec.push((input_idx, output));
-					}
-				}
-				Ok(Err(e)) => return Err(e),
-				Err(e) => return Err(Error::custom(format!("Error while remaining input. Cause {e}"))),
-			}
+			process_join_set_res(runtime, res, &mut in_progress, &mut captured_outputs).await?;
 		}
 	}
 

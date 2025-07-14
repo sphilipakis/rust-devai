@@ -1,5 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use crate::store::{EndState, Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -29,6 +29,11 @@ pub struct Run {
 	// After All start/end
 	pub aa_start: Option<UnixTimeUs>,
 	pub aa_end: Option<UnixTimeUs>,
+
+	// -- End state & Data
+	pub end_state: Option<EndState>,
+	pub end_err_id: Option<Id>,
+	pub end_skip_reason: Option<String>,
 
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
@@ -76,6 +81,11 @@ pub struct RunForUpdate {
 	// After All start/end
 	pub aa_start: Option<UnixTimeUs>,
 	pub aa_end: Option<UnixTimeUs>,
+
+	// -- End state & Data
+	pub end_state: Option<EndState>,
+	pub end_err_id: Option<Id>,
+	pub end_skip_reason: Option<String>,
 
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
@@ -126,6 +136,31 @@ impl RunBmc {
 			options.limit = Some(limit);
 		}
 		Self::list(mm, Some(options))
+	}
+
+	pub fn add_error(mm: &ModelManager, run_id: Id, error: crate::error::Error) -> Result<()> {
+		use crate::store::ContentTyp;
+		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+
+		// -- Create the err rec
+		let err_c = ErrForCreate {
+			stage: None,
+			run_id: Some(run_id),
+			task_id: None,
+			typ: Some(ContentTyp::Text),
+			content: Some(error.to_string()),
+		};
+		let err_id = ErrBmc::create(mm, err_c)?;
+
+		// -- Update the run
+		let run_u = RunForUpdate {
+			end_state: Some(EndState::Err),
+			end_err_id: Some(err_id),
+			..Default::default()
+		};
+		Self::update(mm, run_id, run_u)?;
+
+		Ok(())
 	}
 }
 
