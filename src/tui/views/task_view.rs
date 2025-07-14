@@ -53,8 +53,8 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.direction(Direction::Horizontal)
 		.constraints(vec![
 			Constraint::Length(first_call_width), // Model / Prompt
-			Constraint::Length(22),               //
-			Constraint::Length(12),               // Cost / Completion
+			Constraint::Length(25),               //
+			Constraint::Length(9),                // Cost / Completion
 			Constraint::Length(9),                //
 			Constraint::Length(13),               // Duration
 			Constraint::Fill(1),                  //
@@ -104,7 +104,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.style(styles::STL_FIELD_VAL)
 		.render(val_1.x_row(current_row), buf);
 
-	Paragraph::new("Completion:")
+	Paragraph::new("Compl.:")
 		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_2.x_row(current_row), buf);
@@ -261,12 +261,12 @@ fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_
 	// -- First Content Line
 	let mut msg_wrap_iter = msg_wrap.into_iter();
 	let first_content = msg_wrap_iter.next().unwrap_or_default();
-	let first_content_span = Span::raw(first_content.to_string());
+	let first_content_span = Span::styled(first_content.to_string(), styles::STL_SECTION_TXT);
 
 	let first_line = Line::from(vec![
 		//
 		mark_span,
-		Span::raw(" "),
+		Span::raw(spacer),
 		first_content_span,
 	]);
 
@@ -277,7 +277,7 @@ fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_
 	if msg_wrap_len > 1 {
 		let left_spacing = " ".repeat(MARKER_WIDTH + width_spacer);
 		for line_content in msg_wrap_iter {
-			let line = Line::raw(format!("{left_spacing}{line_content}"));
+			let line = Line::styled(format!("{left_spacing}{line_content}"), styles::STL_SECTION_TXT);
 			lines.push(line)
 		}
 	}

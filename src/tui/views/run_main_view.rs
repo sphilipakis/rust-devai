@@ -146,8 +146,8 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 }
 
 fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
-	let style = styles::stl_tab_dft();
-	let highlight_style = styles::stl_tab_act();
+	let style = styles::STL_TAB_DEFAULT;
+	let highlight_style = styles::STL_TAB_ACTIVE;
 
 	// -- Render tabs
 	let tasks_label = if state.tasks().len() > 1 { " Tasks " } else { " Task " };

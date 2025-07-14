@@ -1,5 +1,5 @@
-#![allow(unused)]
-use ratatui::style::{Color, Style, Stylize};
+#![allow(unused)] // Ok for this file since we want to eventualy build a hollistic style structure
+use ratatui::style::{Color, Style};
 
 // NOTE: Mac Default terminal does not support true colors
 //       only 256 ANSI one.
@@ -13,6 +13,9 @@ use ratatui::style::{Color, Style, Stylize};
 
 // NOTE: The naming & structure are still work in progress.
 //       But at least as centralized as possible.
+
+// TIPS:
+// - use `Style::new().add_modifier(Modifier::BOLD);` for const and bolc
 
 // -- Bkg Colors
 pub const CLR_BKG_400: Color = Color::Indexed(236);
@@ -66,22 +69,20 @@ pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color:
 pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_700);
 // For debug layout
 // pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG_PRIME).fg(CLR_TXT_700);
-pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_WHITE);
+pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
+// pub const STL_FIELD_VAL: Style = Style::new().fg(Color::Indexed(142));
 
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
-pub const STL_FIELD_VAL_DARK: Style = Style::new().fg(CLR_TXT_600);
+pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_600);
 
 // -- Setion Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
+pub const STL_SECTION_TXT: Style = Style::new().fg(CLR_TXT_WHITE);
 
 // -- Tab Styles
 pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;
-pub fn stl_tab_dft() -> Style {
-	Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_600)
-}
 
-pub fn stl_tab_act() -> Style {
-	Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_WHITE).bold()
-}
+pub const STL_TAB_DEFAULT: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_600);
+pub const STL_TAB_ACTIVE: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400);
