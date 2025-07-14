@@ -1132,12 +1132,6 @@ aip.text.trim_end(content: string | nil): string | nil
 
 aip.text.remove_last_lines(content: string | nil, n: number): string | nil
 
-aip.text.trim(content: string | nil): string | nil
-
-aip.text.trim_start(content: string | nil): string | nil
-
-aip.text.trim_end(content: string | nil): string | nil
-
 aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): string | nil
 
 aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
