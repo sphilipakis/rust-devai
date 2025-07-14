@@ -18,8 +18,8 @@ impl StatefulWidget for TaskView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		// let show_model_row = state.tasks().len() > 1;
-		let show_model_row = true; // for now we always show
+		let show_model_row = state.tasks().len() > 1;
+		// let show_model_row = true;
 
 		// -- Layout Header | Logs
 		let header_height = if show_model_row { 2 } else { 1 };
@@ -110,7 +110,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.style(stl_field_val)
 		.render(val_1.x_row(current_row), buf);
 
-	Paragraph::new("Compl.:")
+	Paragraph::new("Compl:")
 		.style(styles::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_2.x_row(current_row), buf);

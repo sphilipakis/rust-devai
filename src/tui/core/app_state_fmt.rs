@@ -138,16 +138,16 @@ impl AppState {
 			};
 			format_duration_us(duration)
 		} else {
-			"..".to_string()
+			"...".to_string()
 		}
 	}
 
 	pub fn current_task_prompt_tokens_fmt(&self) -> String {
 		let Some(task) = self.current_task() else {
-			return "...".to_string();
+			return "... tokens".to_string();
 		};
 		let Some(tk_prompt) = task.tk_prompt_total else {
-			return "...".to_string();
+			return "... tokens".to_string();
 		};
 
 		let mut addl: Vec<String> = Vec::new();
@@ -173,10 +173,10 @@ impl AppState {
 
 	pub fn current_task_completion_tokens_fmt(&self) -> String {
 		let Some(task) = self.current_task() else {
-			return "...".to_string();
+			return "... tokens".to_string();
 		};
 		let Some(tk_completion) = task.tk_completion_total else {
-			return "...".to_string();
+			return "... tokens".to_string();
 		};
 
 		let mut res = format!("{} tk", text::format_num(tk_completion));
