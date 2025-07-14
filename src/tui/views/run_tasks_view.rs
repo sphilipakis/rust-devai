@@ -1,6 +1,6 @@
-use crate::store::rt_model::TaskState;
 use crate::tui::styles;
 use crate::tui::support::num_pad_for_len;
+use crate::tui::views::support::el_running_ico;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -68,15 +68,9 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				.clone()
 				.unwrap_or_else(|| format!("task-{}", num_pad_for_len(idx, tasks_len)));
 
-			let (mark_txt, mark_style) = match task.state() {
-				TaskState::Waiting => ("⏸", styles::CLR_TXT_WAITING),
-				TaskState::Running => ("▶", styles::CLR_TXT_RUNNING),
-				TaskState::Done => ("✔", styles::CLR_TXT_DONE),
-			};
-
 			let line = Line::from(vec![
 				Span::raw(" "),
-				Span::styled(mark_txt, mark_style),
+				el_running_ico(task),
 				Span::raw(" "),
 				Span::styled(label, styles::STL_TXT),
 			]);

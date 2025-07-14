@@ -63,7 +63,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// Tasks progress and optional cumulative duration.
 	let total_tasks = state.tasks().len();
-	let done_tasks = state.tasks().iter().filter(|t| t.is_done()).count();
+	let done_tasks = state.tasks().iter().filter(|t| t.is_ended()).count();
 	let tasks_txt = format!("{done_tasks}/{total_tasks}");
 
 	let mut duration_txt = state.current_run_duration_txt();

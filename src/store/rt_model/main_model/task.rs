@@ -1,6 +1,7 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::store::{EndState, Id, ModelManager, Result, TypedContent, UnixTimeUs};
+use crate::store::{EndState, Id, ModelManager, Result, RunningState, TypedContent, UnixTimeUs};
+use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
@@ -57,25 +58,9 @@ pub struct Task {
 	pub output_has_display: Option<bool>,
 }
 
-pub enum TaskState {
-	Waiting,
-	Running,
-	Done,
-}
-
 impl Task {
-	pub fn state(&self) -> TaskState {
-		if self.end.is_some() {
-			TaskState::Done
-		} else if self.start.is_some() {
-			TaskState::Running
-		} else {
-			TaskState::Waiting
-		}
-	}
-
-	pub fn is_done(&self) -> bool {
-		matches!(self.state(), TaskState::Done)
+	pub fn is_ended(&self) -> bool {
+		matches!(RunningState::from(self), RunningState::Ended(_))
 	}
 }
 
@@ -146,6 +131,22 @@ pub struct TaskFilter {
 
 // endregion: --- Types
 
+// region:    --- Froms
+
+impl From<&Task> for RunningState {
+	fn from(value: &Task) -> Self {
+		if value.end.is_some() {
+			RunningState::Ended(value.end_state)
+		} else if value.start.is_some() {
+			RunningState::Running
+		} else {
+			RunningState::Waiting
+		}
+	}
+}
+
+// endregion: --- Froms
+
 // region:    --- Bmc
 
 pub struct TaskBmc;
@@ -211,7 +212,7 @@ impl TaskBmc {
 		Self::list(mm, None, Some(filter))
 	}
 
-	pub fn add_error(mm: &ModelManager, task_id: Id, error: &crate::error::Error) -> Result<()> {
+	pub fn end_with_error(mm: &ModelManager, task_id: Id, error: &crate::error::Error) -> Result<()> {
 		use crate::store::ContentTyp;
 		use crate::store::rt_model::{ErrBmc, ErrForCreate};
 
@@ -229,6 +230,7 @@ impl TaskBmc {
 
 		// -- Update the task
 		let task_u = TaskForUpdate {
+			end: Some(now_micro().into()),
 			end_state: Some(EndState::Err),
 			end_err_id: Some(err_id),
 			..Default::default()

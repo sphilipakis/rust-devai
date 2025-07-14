@@ -1,5 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::{EndState, Id, ModelManager, Result, UnixTimeUs};
+use crate::store::{EndState, Id, ModelManager, Result, RunningState, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -99,6 +99,22 @@ pub struct RunForUpdate {
 }
 
 // endregion: --- Types
+
+// region:    --- Froms
+
+impl From<&Run> for RunningState {
+	fn from(value: &Run) -> Self {
+		if value.end.is_some() {
+			RunningState::Ended(value.end_state)
+		} else if value.start.is_some() {
+			RunningState::Running
+		} else {
+			RunningState::Waiting
+		}
+	}
+}
+
+// endregion: --- Froms
 
 // region:    --- Bmc
 

@@ -208,7 +208,6 @@ pub async fn run_agent(
 		let task_id = runtime.create_task(run_id, idx, &input).await?;
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
-	tracing::debug!("->> creatinng tasks {}", input_idx_task_id_list.len());
 
 	// -- Iterate and run each task (concurrency as setup)
 	for (input, task_idx, task_id) in input_idx_task_id_list {
@@ -222,7 +221,6 @@ pub async fn run_agent(
 		// -- Spawn tasks up to the concurrency limit
 		let rt = runtime.clone();
 		join_set.spawn(async move {
-			tracing::debug!("->> starting task spawn {task_id}");
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_task_response = run_agent_task_outer(
 				run_id,
@@ -478,9 +476,8 @@ async fn process_join_set_result(
 	in_progress: &mut usize,
 	captured_outputs: &mut Option<Vec<(usize, Value)>>,
 ) -> Result<()> {
-	tracing::debug!("->> process_join_set_result {join_res:?}");
-	//
 	*in_progress -= 1;
+
 	match join_res {
 		Ok(Ok(join_set_ok)) => {
 			let JoinSetOk {
@@ -505,7 +502,7 @@ async fn process_join_set_result(
 
 			// -- Rt Rec - Add task error
 			// For now, we return the error as well
-			rt.capture_err_for_task(run_id, task_id, &err)?;
+			rt.end_task_with_error(run_id, task_id, &err)?;
 			Err(err)
 		}
 		Err(join_err) => Err(Error::custom(format!("Error while running input. Cause {join_err}"))),
