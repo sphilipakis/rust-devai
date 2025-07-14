@@ -7,6 +7,7 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+use std::borrow::Cow;
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
@@ -65,8 +66,11 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	let mut current_row = 0;
 
 	// When color debug:
-	// let stl_field_val = styles::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()));
-	let stl_field_val = styles::STL_FIELD_VAL;
+	let stl_field_val = if state.debug_clr() != 0 {
+		styles::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()))
+	} else {
+		styles::STL_FIELD_VAL
+	};
 
 	// -- Render Model Row
 	if show_model_row {
@@ -255,7 +259,14 @@ fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_
 	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), marker_style);
 
 	tracing::debug!("Content for section:\n{content}");
-	let msg_wrap = textwrap::wrap(content, width_content);
+	let spaced_idented_content: Cow<str> = if content.contains("\t") {
+		// 4 spaces
+		Cow::Owned(content.replace("\t", "    "))
+	} else {
+		Cow::Borrowed(content)
+	};
+
+	let msg_wrap = textwrap::wrap(&spaced_idented_content, width_content);
 	tracing::debug!("Wrapped for section:\n{msg_wrap:?}");
 
 	let msg_wrap_len = msg_wrap.len();

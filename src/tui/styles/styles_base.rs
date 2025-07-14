@@ -70,8 +70,8 @@ pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_700);
 // For debug layout
 // pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG_PRIME).fg(CLR_TXT_700);
 // pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
-// Other good choices: 187 (light yellow), 182 (pinkish), 146 (purple)
-pub const STL_FIELD_VAL: Style = Style::new().fg(Color::Indexed(146));
+// Other good choices: 24 (dark teal) 68 (dark blue), 187 (light yellow), 182 (pinkish), 146 (purple, not that good)
+pub const STL_FIELD_VAL: Style = Style::new().fg(Color::Indexed(24));
 
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
 pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_600);
