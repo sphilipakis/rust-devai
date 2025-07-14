@@ -409,6 +409,14 @@ impl Runtime {
 	}
 }
 
+/// For Error Captures
+impl Runtime {
+	pub fn capture_err_for_task(&self, _run_id: Id, task_id: Id, err: &crate::Error) -> Result<()> {
+		TaskBmc::add_error(self.mm(), task_id, err)?;
+		Ok(())
+	}
+}
+
 /// Rec for the log
 impl Runtime {
 	async fn rec_log(

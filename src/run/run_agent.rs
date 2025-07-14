@@ -209,28 +209,7 @@ pub async fn run_agent(
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
 
-	// -- Function helper
-	// Here we will handle the runtime error
-	async fn process_join_set_res(
-		_rt: &Runtime,
-		join_res: core::result::Result<Result<(usize, Value)>, JoinError>,
-		in_progress: &mut usize,
-		captured_outputs: &mut Option<Vec<(usize, Value)>>,
-	) -> Result<()> {
-		//
-		*in_progress -= 1;
-		match join_res {
-			Ok(Ok((input_idx, output))) => {
-				if let Some(outputs_vec) = captured_outputs.as_mut() {
-					outputs_vec.push((input_idx, output));
-				}
-				Ok(())
-			}
-			Ok(Err(e)) => Err(e),
-			Err(e) => Err(Error::custom(format!("Error while running input. Cause {e}"))),
-		}
-	}
-
+	// -- Iterate and run each task (concurrency as setup)
 	for (input, input_idx, task_id) in input_idx_task_id_list {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();
@@ -284,7 +263,7 @@ pub async fn run_agent(
 			// -- Rt Rec - Update the task output
 			rt.update_task_output(task_id, &output).await?;
 
-			Ok((input_idx, output))
+			Ok((task_id, input_idx, output))
 		});
 
 		in_progress += 1;
@@ -293,7 +272,7 @@ pub async fn run_agent(
 		if in_progress >= concurrency {
 			if let Some(res) = join_set.join_next().await {
 				// Note: for now, we will stop on first error
-				process_join_set_res(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+				process_join_set_result(runtime, run_id, res, &mut in_progress, &mut captured_outputs).await?;
 			}
 		}
 	}
@@ -301,7 +280,7 @@ pub async fn run_agent(
 	// Wait for the remaining tasks to complete
 	while in_progress > 0 {
 		if let Some(res) = join_set.join_next().await {
-			process_join_set_res(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+			process_join_set_result(runtime, run_id, res, &mut in_progress, &mut captured_outputs).await?;
 		}
 	}
 
@@ -431,6 +410,36 @@ impl IntoLua for RunAgentResponse {
 }
 
 // endregion: --- RunCommandResponse
+
+// region:    --- JoinSet Support
+
+// Here we will handle the runtime error
+async fn process_join_set_result(
+	rt: &Runtime,
+	run_id: Id,
+	// (task_id, task_idx, output)
+	join_res: core::result::Result<Result<(Id, usize, Value)>, JoinError>,
+	in_progress: &mut usize,
+	captured_outputs: &mut Option<Vec<(usize, Value)>>,
+) -> Result<()> {
+	//
+	*in_progress -= 1;
+	match join_res {
+		Ok(Ok((task_id, task_idx, output))) => {
+			if let Some(outputs_vec) = captured_outputs.as_mut() {
+				outputs_vec.push((task_idx, output));
+			}
+			Ok(())
+		}
+		Ok(Err(err)) => {
+			// rt.capture_err_for_task(run_id, task_id, &err)?; // we do not have task_id here
+			Err(err)
+		}
+		Err(join_err) => Err(Error::custom(format!("Error while running input. Cause {join_err}"))),
+	}
+}
+
+// endregion: --- JoinSet Support
 
 // region:    --- Support
 

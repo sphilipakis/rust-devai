@@ -211,7 +211,7 @@ impl TaskBmc {
 		Self::list(mm, None, Some(filter))
 	}
 
-	pub fn add_error(mm: &ModelManager, task_id: Id, error: crate::error::Error) -> Result<()> {
+	pub fn add_error(mm: &ModelManager, task_id: Id, error: &crate::error::Error) -> Result<()> {
 		use crate::store::ContentTyp;
 		use crate::store::rt_model::{ErrBmc, ErrForCreate};
 
