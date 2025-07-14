@@ -208,9 +208,10 @@ pub async fn run_agent(
 		let task_id = runtime.create_task(run_id, idx, &input).await?;
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
+	tracing::debug!("->> creatinng tasks {}", input_idx_task_id_list.len());
 
 	// -- Iterate and run each task (concurrency as setup)
-	for (input, input_idx, task_id) in input_idx_task_id_list {
+	for (input, task_idx, task_id) in input_idx_task_id_list {
 		let runtime_clone = runtime.clone();
 		let agent_clone = agent.clone();
 		let before_all_clone = before_all.clone();
@@ -221,11 +222,12 @@ pub async fn run_agent(
 		// -- Spawn tasks up to the concurrency limit
 		let rt = runtime.clone();
 		join_set.spawn(async move {
+			tracing::debug!("->> starting task spawn {task_id}");
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
-			let run_input_response = run_agent_task_outer(
+			let run_task_response = run_agent_task_outer(
 				run_id,
 				task_id,
-				input_idx,
+				task_idx,
 				&runtime_clone,
 				&agent_clone,
 				before_all_clone,
@@ -233,37 +235,14 @@ pub async fn run_agent(
 				&literals,
 				&base_run_config_clone,
 			)
-			.await?;
+			.await
+			.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
 
-			// Process the output
-			let run_input_value = run_input_response.map(|v| v.into_value()).unwrap_or_default();
-			let output = match AipackCustom::from_value(run_input_value)? {
-				// if it is a skip, we skip
-				FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-					let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
-					hub.publish(HubEvent::info_short(format!(
-						"Aipack Skip input at Output stage{reason_msg}"
-					)))
-					.await;
-					Value::Null
-				}
+			let output = process_agent_response_to_output(&rt, task_id, run_task_response)
+				.await
+				.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
 
-				// Any other AipackCustom is not supported at output stage
-				FromValue::AipackCustom(other) => {
-					return Err(Error::custom(format!(
-						"Aipack custom '{}' not supported at the Output stage",
-						other.as_ref()
-					)));
-				}
-
-				// Plain value passthrough
-				FromValue::OriginalValue(value) => value,
-			};
-
-			// -- Rt Rec - Update the task output
-			rt.update_task_output(task_id, &output).await?;
-
-			Ok((task_id, input_idx, output))
+			Ok(JoinSetOk::new(run_id, task_id, task_idx, output))
 		});
 
 		in_progress += 1;
@@ -272,7 +251,7 @@ pub async fn run_agent(
 		if in_progress >= concurrency {
 			if let Some(res) = join_set.join_next().await {
 				// Note: for now, we will stop on first error
-				process_join_set_result(runtime, run_id, res, &mut in_progress, &mut captured_outputs).await?;
+				process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
 			}
 		}
 	}
@@ -280,7 +259,7 @@ pub async fn run_agent(
 	// Wait for the remaining tasks to complete
 	while in_progress > 0 {
 		if let Some(res) = join_set.join_next().await {
-			process_join_set_result(runtime, run_id, res, &mut in_progress, &mut captured_outputs).await?;
+			process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
 		}
 	}
 
@@ -413,26 +392,120 @@ impl IntoLua for RunAgentResponse {
 
 // region:    --- JoinSet Support
 
-// Here we will handle the runtime error
+type JoinSetResult = core::result::Result<JoinSetOk, JoinSetErr>;
+
+#[derive(Debug)]
+struct JoinSetOk {
+	run_id: Id,
+	task_id: Id,
+	task_idx: usize,
+	output: Value,
+}
+
+#[derive(Debug)]
+struct JoinSetErr {
+	run_id: Id,
+	task_id: Id,
+	task_idx: usize,
+	err: crate::Error,
+}
+
+impl JoinSetOk {
+	fn new(run_id: Id, task_id: Id, task_idx: usize, output: Value) -> Self {
+		Self {
+			run_id,
+			task_id,
+			task_idx,
+			output,
+		}
+	}
+}
+
+impl JoinSetErr {
+	fn new(run_id: Id, task_id: Id, task_idx: usize, err: crate::Error) -> Self {
+		Self {
+			run_id,
+			task_id,
+			task_idx,
+			err,
+		}
+	}
+}
+
+async fn process_agent_response_to_output(
+	rt: &Runtime,
+	task_id: Id,
+	run_task_response: Option<RunAgentInputResponse>,
+) -> Result<Value> {
+	let hub = get_hub();
+
+	// Process the output
+	let run_input_value = run_task_response.map(|v| v.into_value()).unwrap_or_default();
+	let output = match AipackCustom::from_value(run_input_value)? {
+		// if it is a skip, we skip
+		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
+			let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
+			hub.publish(HubEvent::info_short(format!(
+				"Aipack Skip input at Output stage{reason_msg}"
+			)))
+			.await;
+			Value::Null
+		}
+
+		// Any other AipackCustom is not supported at output stage
+		FromValue::AipackCustom(other) => {
+			return Err(Error::custom(format!(
+				"Aipack custom '{}' not supported at the Output stage",
+				other.as_ref()
+			)));
+		}
+
+		// Plain value passthrough
+		FromValue::OriginalValue(value) => value,
+	};
+
+	// -- Rt Rec - Update the task output
+	rt.update_task_output(task_id, &output).await?;
+	Ok(output)
+}
+
+// Here we process the reponse of the join set spawn
+// - Add the output
 async fn process_join_set_result(
 	rt: &Runtime,
-	run_id: Id,
 	// (task_id, task_idx, output)
-	join_res: core::result::Result<Result<(Id, usize, Value)>, JoinError>,
+	join_res: core::result::Result<JoinSetResult, JoinError>,
 	in_progress: &mut usize,
 	captured_outputs: &mut Option<Vec<(usize, Value)>>,
 ) -> Result<()> {
+	tracing::debug!("->> process_join_set_result {join_res:?}");
 	//
 	*in_progress -= 1;
 	match join_res {
-		Ok(Ok((task_id, task_idx, output))) => {
+		Ok(Ok(join_set_ok)) => {
+			let JoinSetOk {
+				run_id,
+				task_id,
+				task_idx,
+				output,
+			} = join_set_ok;
 			if let Some(outputs_vec) = captured_outputs.as_mut() {
 				outputs_vec.push((task_idx, output));
 			}
+
 			Ok(())
 		}
-		Ok(Err(err)) => {
-			// rt.capture_err_for_task(run_id, task_id, &err)?; // we do not have task_id here
+		Ok(Err(join_set_err)) => {
+			let JoinSetErr {
+				run_id,
+				task_id,
+				task_idx,
+				err,
+			} = join_set_err;
+
+			// -- Rt Rec - Add task error
+			// For now, we return the error as well
+			rt.capture_err_for_task(run_id, task_id, &err)?;
 			Err(err)
 		}
 		Err(join_err) => Err(Error::custom(format!("Error while running input. Cause {join_err}"))),

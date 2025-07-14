@@ -9,6 +9,7 @@ mod run_tasks_view;
 mod runs_nav_view;
 mod runs_view;
 mod sum_view;
+mod support;
 mod task_view;
 
 pub use action_view::*;

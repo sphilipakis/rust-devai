@@ -1,6 +1,7 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::rt_model::{ErrBmc, Log, LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::support::RectExt;
+use crate::tui::views::support;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -11,8 +12,6 @@ use std::borrow::Cow;
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
-
-const MARKER_WIDTH: usize = 10;
 
 impl StatefulWidget for TaskView {
 	type State = AppState;
@@ -35,7 +34,7 @@ impl StatefulWidget for TaskView {
 		render_header(header_a, buf, state, show_model_row);
 
 		// don't show the steps
-		render_sections(logs_a, buf, state, false);
+		render_body(logs_a, buf, state, false);
 	}
 }
 
@@ -119,7 +118,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.render(val_2.union(val_3).x_row(current_row), buf);
 }
 
-fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
+fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
 	// -- Get the current task (return early)
 	let Some(run) = state.current_run() else {
 		Line::raw("No Current Run").render(area, buf);
@@ -155,6 +154,12 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 		all_lines.push(Line::default());
 	}
 
+	// -- Add Error if present
+	if task.end_err_id.is_some() {
+		all_lines.extend(ui_for_err(state.mm(), task, max_width));
+		all_lines.push(Line::default());
+	}
+
 	// -- Clamp scroll
 	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
@@ -162,7 +167,7 @@ fn render_sections(area: Rect, buf: &mut Buffer, state: &mut AppState, show_step
 		state.set_log_scroll(max_scroll);
 	}
 
-	// -- Render content
+	// -- Render All Content
 	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
 	let p = Paragraph::new(all_lines).scroll((state.log_scroll(), 0));
 	p.render(area, buf);
@@ -184,12 +189,13 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 	let marker_txt = "Input:";
 	let marker_style = styles::STL_SECTION_MARKER_INPUT;
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => ui_for_section(&content, (marker_txt, marker_style), max_width),
-		Ok(None) => ui_for_section("no input found", (marker_txt, marker_style), max_width),
-		Err(err) => ui_for_section(
+		Ok(Some(content)) => support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None),
+		Ok(None) => support::ui_for_marker_section("no input found", (marker_txt, marker_style), max_width, None),
+		Err(err) => support::ui_for_marker_section(
 			&format!("Error getting input. {err}"),
 			(marker_txt, marker_style),
 			max_width,
+			None,
 		),
 	}
 }
@@ -217,7 +223,7 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16, state: &AppState) -> Vec<Li
 	};
 
 	if let Some(content) = content {
-		ui_for_section(&content, (marker_txt, marker_style), max_width)
+		support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None)
 	} else {
 		Vec::new()
 	}
@@ -227,12 +233,36 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 	let marker_txt = "Output:";
 	let marker_style = styles::STL_SECTION_MARKER_OUTPUT;
 	match TaskBmc::get_output_for_display(mm, task) {
-		Ok(Some(content)) => ui_for_section(&content, (marker_txt, marker_style), max_width),
-		Ok(None) => ui_for_section("no output found", (marker_txt, marker_style), max_width),
-		Err(err) => ui_for_section(
+		Ok(Some(content)) => support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None),
+		Ok(None) => support::ui_for_marker_section("no output found", (marker_txt, marker_style), max_width, None),
+		Err(err) => support::ui_for_marker_section(
 			&format!("Error getting output. {err}"),
 			(marker_txt, marker_style),
 			max_width,
+			None,
+		),
+	}
+}
+
+fn ui_for_err(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+	let Some(err_id) = task.end_err_id else {
+		return Default::default();
+	};
+	let marker_txt = "Error:";
+	let marker_style = styles::STL_SECTION_MARKER_ERR;
+	let spans_prefix = vec![Span::styled("┃ ", (styles::CLR_TXT_RED))];
+	match ErrBmc::get(mm, err_id) {
+		Ok(err_rec) => support::ui_for_marker_section(
+			&err_rec.content.unwrap_or_default(),
+			(marker_txt, marker_style),
+			max_width,
+			Some(&spans_prefix),
+		),
+		Err(err) => support::ui_for_marker_section(
+			&format!("Error getting error. {err}"),
+			(marker_txt, marker_style),
+			max_width,
+			None,
 		),
 	}
 }
@@ -286,58 +316,7 @@ fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
 	};
 
-	ui_for_section(content, marker_txt_style, max_width)
-}
-
-/// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
-/// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.
-fn ui_for_section(content: &str, (marker_txt, marker_style): (&str, Style), max_width: u16) -> Vec<Line<'static>> {
-	let spacer = " ";
-	let width_spacer = spacer.len(); // won't work if no ASCII
-	let width_content = (max_width as usize) - MARKER_WIDTH - width_spacer;
-
-	// -- Mark Span
-	let mark_span = Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), marker_style);
-
-	tracing::debug!("Content for section:\n{content}");
-	let spaced_idented_content: Cow<str> = if content.contains("\t") {
-		// 4 spaces
-		Cow::Owned(content.replace("\t", "    "))
-	} else {
-		Cow::Borrowed(content)
-	};
-
-	let msg_wrap = textwrap::wrap(&spaced_idented_content, width_content);
-	tracing::debug!("Wrapped for section:\n{msg_wrap:?}");
-
-	let msg_wrap_len = msg_wrap.len();
-
-	// -- First Content Line
-	let mut msg_wrap_iter = msg_wrap.into_iter();
-	let first_content = msg_wrap_iter.next().unwrap_or_default();
-	let first_content_span = Span::styled(first_content.to_string(), styles::STL_SECTION_TXT);
-
-	let first_line = Line::from(vec![
-		//
-		mark_span,
-		Span::raw(spacer),
-		first_content_span,
-	]);
-
-	// -- Lines
-	let mut lines = vec![first_line];
-
-	// -- Render other content line if present
-	if msg_wrap_len > 1 {
-		let left_spacing = " ".repeat(MARKER_WIDTH + width_spacer);
-		for line_content in msg_wrap_iter {
-			let line = Line::styled(format!("{left_spacing}{line_content}"), styles::STL_SECTION_TXT);
-			lines.push(line)
-		}
-	}
-
-	// -- Return lines
-	lines
+	support::ui_for_marker_section(content, marker_txt_style, max_width, None)
 }
 
 #[allow(unused)]

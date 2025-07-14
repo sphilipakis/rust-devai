@@ -48,10 +48,12 @@ pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
 
+// 12 is a good blue as well
 pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
 pub const CLR_TXT_TEAL: Color = Color::Indexed(45);
 pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
 pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
+pub const CLR_TXT_RED: Color = Color::Indexed(196);
 
 pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
@@ -82,6 +84,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
+pub const STL_SECTION_MARKER_ERR: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_RED);
 pub const STL_SECTION_MARKER_AI: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_YELLOW);
 pub const STL_SECTION_TXT: Style = Style::new().fg(CLR_TXT_WHITE);
 
