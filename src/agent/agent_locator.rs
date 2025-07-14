@@ -5,7 +5,7 @@ use crate::agent::agent_ref::{AgentRef, PartialAgentRef};
 use crate::agent::{Agent, AgentDoc, AgentOptions};
 use crate::dir_context::{DirContext, PathResolver, find_to_run_pack_dir};
 use crate::runtime::Runtime;
-use crate::support::tomls::parse_toml;
+use crate::support::tomls::parse_toml_into_json;
 use crate::types::LocalPackRef;
 use crate::{Error, Result};
 use simple_fs::{SPath, read_to_string};
@@ -107,7 +107,7 @@ pub fn load_and_merge_configs_agent_options(dir_context: &DirContext) -> Result<
 
 	for config_path in config_paths {
 		let config_content = read_to_string(&config_path)?;
-		let config_value = parse_toml(&config_content)?;
+		let config_value = parse_toml_into_json(&config_content)?;
 
 		let options = AgentOptions::from_config_value(config_value).map_err(|err| Error::Config {
 			path: config_path.to_string(),

@@ -315,14 +315,14 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::support::tomls::parse_toml;
+	use crate::support::tomls::parse_toml_into_json;
 	use mlua::{FromLua, IntoLua};
 
 	#[test]
 	fn test_options_current_with_aliases() -> Result<()> {
 		// -- Setup & Fixtures
 		let config_content = simple_fs::read_to_string("./tests-data/config/config-current-with-aliases.toml")?;
-		let config_value = serde_json::to_value(&parse_toml(&config_content)?)?;
+		let config_value = serde_json::to_value(&parse_toml_into_json(&config_content)?)?;
 
 		// -- Exec
 		let options = AgentOptions::from_config_value(config_value)?;
@@ -377,7 +377,7 @@ return {
 	fn test_options_lua_into() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = mlua::Lua::new();
-		let options = parse_toml(
+		let options = parse_toml_into_json(
 			r#"
 	model = "gpt-4o-mini"
 	temperature = 0.3

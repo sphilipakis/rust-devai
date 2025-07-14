@@ -3,7 +3,7 @@ use crate::agent::agent_options::AgentOptions;
 use crate::agent::agent_ref::AgentRef;
 use crate::agent::{Agent, AgentInner, PartKind, PromptPart, get_prompt_part_kind, get_prompt_part_options_str};
 use crate::support::md::InBlockState;
-use crate::support::tomls::parse_toml;
+use crate::support::tomls::parse_toml_into_json;
 use genai::ModelName;
 use simple_fs::{SPath, read_to_string};
 use std::path::Path;
@@ -251,7 +251,7 @@ impl AgentDoc {
 		let options_toml = buffer_to_string(options_toml);
 
 		let agent_options_ov: Option<AgentOptions> = if let Some(options_toml) = options_toml {
-			Some(AgentOptions::from_options_value(parse_toml(&options_toml)?)?)
+			Some(AgentOptions::from_options_value(parse_toml_into_json(&options_toml)?)?)
 		} else {
 			None
 		};

@@ -23,7 +23,7 @@ fn merge_values(meta_blocks: Vec<MdBlock>) -> Result<Value> {
 		match meta_block.lang.as_deref() {
 			Some("toml") => {
 				let content = meta_block.content;
-				let toml_value: toml::Value = content.parse()?;
+				let toml_value: toml::Value = toml::from_str(&content)?;
 				let json_value: Value = serde_json::to_value(toml_value)?;
 				values.push(json_value);
 			}

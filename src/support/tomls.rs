@@ -7,7 +7,7 @@ use crate::Result;
 use serde_json::Value as JsonValue;
 use toml::Value as TomlValue;
 
-pub fn parse_toml(toml_content: &str) -> Result<JsonValue> {
+pub fn parse_toml_into_json(toml_content: &str) -> Result<JsonValue> {
 	// Parse the TOML string into a TOML value
 	let toml_value: TomlValue = toml::from_str(toml_content)?;
 
