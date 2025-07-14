@@ -2,6 +2,7 @@ use crate::tui::core::AppState;
 use crate::tui::styles;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
+use ratatui::style::Stylize as _;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, StatefulWidget, Widget};
 
@@ -14,10 +15,11 @@ impl StatefulWidget for ActionView {
 		// Block::new().render(area, buf);
 
 		// -- layout
-		let [actions_a, mem_lbl_a, mem_val_a] = ratatui::layout::Layout::default()
+		let [actions_a, dbg_clr_a, mem_lbl_a, mem_val_a] = ratatui::layout::Layout::default()
 			.direction(ratatui::layout::Direction::Horizontal)
 			.constraints(vec![
 				ratatui::layout::Constraint::Fill(1),    // actions
+				ratatui::layout::Constraint::Length(5),  // debug_clr
 				ratatui::layout::Constraint::Length(5),  // mem_lbl
 				ratatui::layout::Constraint::Length(10), // mem_val
 			])
@@ -48,6 +50,14 @@ impl StatefulWidget for ActionView {
 		]);
 
 		Paragraph::new(line).render(actions_a, buf);
+
+		// -- Render debug clr
+		let dbg_clr = state.debug_clr();
+		if dbg_clr != 0 {
+			Paragraph::new(dbg_clr.to_string())
+				.fg(ratatui::style::Color::Indexed(dbg_clr))
+				.render(dbg_clr_a, buf);
+		}
 
 		// -- Render Memory
 		Paragraph::new("Mem:")

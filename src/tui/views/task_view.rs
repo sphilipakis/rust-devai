@@ -64,6 +64,10 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 
 	let mut current_row = 0;
 
+	// When color debug:
+	// let stl_field_val = styles::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()));
+	let stl_field_val = styles::STL_FIELD_VAL;
+
 	// -- Render Model Row
 	if show_model_row {
 		current_row += 1;
@@ -74,23 +78,21 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 			.render(label_1.x_row(current_row), buf);
 		// NOTE: here a little chack to have maximum space for model name
 		Paragraph::new(model_name)
-			.style(styles::STL_FIELD_VAL)
+			.style(stl_field_val)
 			.render(val_1.x_row(current_row).x_width(26), buf);
 
 		// NOTE: Here we use Span to give a little bit more space to Model
 		Paragraph::new(Span::styled("  Cost:", styles::STL_FIELD_LBL))
 			.right_aligned()
 			.render(label_2.x_row(current_row), buf);
-		Paragraph::new(cost)
-			.style(styles::STL_FIELD_VAL)
-			.render(val_2.x_row(current_row), buf);
+		Paragraph::new(cost).style(stl_field_val).render(val_2.x_row(current_row), buf);
 
 		Paragraph::new("Duration:")
 			.style(styles::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_3.x_row(current_row), buf);
 		Paragraph::new(duration)
-			.style(styles::STL_FIELD_VAL)
+			.style(stl_field_val)
 			.render(val_3.x_row(current_row), buf);
 	}
 
@@ -101,7 +103,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.right_aligned()
 		.render(label_1.x_row(current_row), buf);
 	Paragraph::new(prompt_tk)
-		.style(styles::STL_FIELD_VAL)
+		.style(stl_field_val)
 		.render(val_1.x_row(current_row), buf);
 
 	Paragraph::new("Compl.:")
@@ -109,7 +111,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.right_aligned()
 		.render(label_2.x_row(current_row), buf);
 	Paragraph::new(completion_tk)
-		.style(styles::STL_FIELD_VAL)
+		.style(stl_field_val)
 		.render(val_2.union(val_3).x_row(current_row), buf);
 }
 

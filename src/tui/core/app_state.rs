@@ -113,6 +113,21 @@ impl AppState {
 	}
 }
 
+/// Debug
+impl AppState {
+	pub fn debug_clr(&self) -> u8 {
+		self.inner.debug_clr
+	}
+
+	pub(in crate::tui::core) fn inc_debug_clr(&mut self) {
+		self.inner.debug_clr = self.inner.debug_clr.wrapping_add(1);
+	}
+
+	pub(in crate::tui::core) fn dec_debug_clr(&mut self) {
+		self.inner.debug_clr = self.inner.debug_clr.wrapping_sub(1);
+	}
+}
+
 /// MainView
 impl AppState {
 	pub fn show_runs(&self) -> bool {

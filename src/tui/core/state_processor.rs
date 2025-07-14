@@ -141,4 +141,20 @@ pub fn process_app_state(state: &mut AppState) {
 			state.set_log_scroll(log_scroll);
 		}
 	}
+
+	// -- Debug color
+	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
+		match code {
+			KeyCode::Char('-') => -1,
+			KeyCode::Char('=') => 1,
+			_ => 0,
+		}
+	} else {
+		0
+	};
+	match offset {
+		-1 => state.dec_debug_clr(),
+		1 => state.inc_debug_clr(),
+		_ => (),
+	}
 }
