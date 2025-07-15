@@ -29,7 +29,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		return;
 	};
 
-	let logs = match LogBmc::list_for_run(state.mm(), run.id) {
+	let logs = match LogBmc::list_for_run_only(state.mm(), run.id) {
 		Ok(logs) => logs,
 		Err(err) => {
 			Paragraph::new(format!("Error fetch log for run. {err}")).render(area, buf);

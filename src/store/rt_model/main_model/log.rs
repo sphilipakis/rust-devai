@@ -124,14 +124,22 @@ impl LogBmc {
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 
-	#[allow(unused)]
-	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Log>> {
-		let list_options = ListOptions::from_order_bys("id");
-		let filter = LogFilter {
-			run_id: Some(run_id),
-			..Default::default()
-		};
-		Self::list(mm, Some(list_options), Some(filter))
+	/// Returns the log for that runs that have no task_id
+	/// NOTE: For now, doing it manually, until modql support those for sqlite for filters
+	pub fn list_for_run_only(mm: &ModelManager, run_id: Id) -> Result<Vec<Log>> {
+		let where_clause = "run_id = ? AND task_id IS NULL";
+
+		let sql = format!(
+			"SELECT {} FROM {} WHERE {} ORDER BY id",
+			Log::sqlite_columns_for_select(),
+			Self::table_ref(),
+			where_clause,
+		);
+
+		let db = mm.db();
+		let entities: Vec<Log> = db.fetch_all(&sql, (run_id,))?;
+
+		Ok(entities)
 	}
 
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Log>> {
