@@ -1,6 +1,6 @@
 use crate::tui::support::{RectExt, clamp_idx_in_len};
 use crate::tui::views::support::el_running_ico;
-use crate::tui::views::{RunAfterAllView, RunBeforeAllView, RuntTasksView};
+use crate::tui::views::{RunOverviewView, RuntTasksView};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -11,9 +11,8 @@ use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
 pub struct RunMainView;
 
 pub enum RunTab {
-	BeforeAll,
+	Overview,
 	Tasks,
-	AfterAll,
 }
 
 impl StatefulWidget for RunMainView {
@@ -42,14 +41,11 @@ impl StatefulWidget for RunMainView {
 
 		// -- Render the selected tab
 		match selected_tab {
-			RunTab::BeforeAll => {
-				RunBeforeAllView.render(tab_content_a, buf, state);
+			RunTab::Overview => {
+				RunOverviewView.render(tab_content_a, buf, state);
 			}
 			RunTab::Tasks => {
 				RuntTasksView.render(tab_content_a, buf, state);
-			}
-			RunTab::AfterAll => {
-				RunAfterAllView.render(tab_content_a, buf, state);
 			}
 		}
 	}
@@ -153,9 +149,8 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 	let titles = vec![
 		//
-		Line::styled(" Before All ", style),
+		Line::styled(" Overview ", style),
 		Line::styled(tasks_label, style),
-		Line::styled(" After All ", style),
 	];
 
 	// Clamp the index
@@ -176,9 +171,8 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 	// - Return tab selected
 	match state.run_tab_idx() {
-		0 => RunTab::BeforeAll,
+		0 => RunTab::Overview,
 		1 => RunTab::Tasks,
-		2 => RunTab::AfterAll, // Fallback
 		_ => RunTab::Tasks,
 	}
 }

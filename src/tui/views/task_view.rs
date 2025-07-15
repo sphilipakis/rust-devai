@@ -183,7 +183,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
-// region:    --- Ui Helpers
+// region:    --- UI Builders
 
 fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
@@ -322,4 +322,4 @@ fn first_line_truncate(s: &str, max: usize) -> String {
 	s.lines().next().unwrap_or("").chars().take(max).collect()
 }
 
-// endregion: --- Ui Helpers
+// endregion: --- UI Builders
