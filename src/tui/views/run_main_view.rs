@@ -1,4 +1,5 @@
 use crate::tui::support::{RectExt, clamp_idx_in_len};
+use crate::tui::views::support::el_running_ico;
 use crate::tui::views::{RunAfterAllView, RunBeforeAllView, RuntTasksView};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -88,11 +89,9 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Render Row 1
 	// Agent label with marker
 	let mut line_1 = Line::default();
-	if state.current_run().map(|v| v.is_done()).unwrap_or_default() {
-		line_1.push_span(Span::styled("✔", styles::CLR_TXT_DONE));
-	} else {
-		line_1.push_span(Span::styled("▶", styles::CLR_TXT_RUNNING));
-	};
+	if let Some(run) = state.current_run() {
+		line_1.push_span(el_running_ico(run));
+	}
 	line_1.push_span(" Agent:");
 	Paragraph::new(line_1)
 		.style(styles::STL_FIELD_LBL)

@@ -329,7 +329,6 @@ mod tests {
 		let run_c = RunForCreate {
 			agent_name: Some(label.to_string()),
 			agent_path: Some(format!("path/{label}")),
-			start: None,
 		};
 		Ok(RunBmc::create(mm, run_c)?)
 	}

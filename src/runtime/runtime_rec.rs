@@ -1,6 +1,10 @@
 //! This is the Runtime Record function that are called
 //! - from the run::run_agent... functions
 //! - from the tui2 in some event to save some data (print, save, ...)
+//!
+//! NOTE:
+//! - Here many of the function are async but the probably do not need to be. Might change this later.
+
 use crate::Result;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
@@ -25,28 +29,22 @@ impl Runtime {
 /// Rec for all step record (like timestamp and all)
 /// All the function that "record" the progress of a Runtime execution
 impl Runtime {
-	pub async fn step_start(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
+	pub async fn step_run_start(&self, run_id: Id) -> Result<Id> {
 		let hub = get_hub();
 
-		// -- Create Run
-		let run_id = RunBmc::create(
+		// -- Update start time
+		RunBmc::update(
 			self.mm(),
-			RunForCreate {
-				agent_name: Some(agent_name.to_string()),
-				agent_path: Some(agent_path.to_string()),
+			run_id,
+			RunForUpdate {
 				start: Some(now_micro().into()),
+				..Default::default()
 			},
 		)?;
 
 		// -- Add log line
 		self.rec_log_no_msg(run_id, None, Some(RunStep::Start), None, Some(LogKind::RunStep))
 			.await?;
-
-		// -- For V1 terminal
-		hub.publish(format!(
-			"\n======= RUNNING: {agent_name}\n     Agent path: {agent_path}",
-		))
-		.await;
 
 		Ok(run_id)
 	}
@@ -314,7 +312,7 @@ impl Runtime {
 	}
 
 	/// Mark the run as completed.
-	pub async fn step_end(&self, run_id: Id) -> Result<()> {
+	pub async fn step_run_end(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
 		let run_u = RunForUpdate {
 			end: Some(now_micro().into()),
@@ -332,6 +330,27 @@ impl Runtime {
 
 /// Run Create/Update model
 impl Runtime {
+	pub async fn create_run(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
+		let hub = get_hub();
+
+		// -- Create Run
+		let run_id = RunBmc::create(
+			self.mm(),
+			RunForCreate {
+				agent_name: Some(agent_name.to_string()),
+				agent_path: Some(agent_path.to_string()),
+			},
+		)?;
+
+		// -- For V1 terminal
+		hub.publish(format!(
+			"\n======= RUNNING: {agent_name}\n     Agent path: {agent_path}",
+		))
+		.await;
+
+		Ok(run_id)
+	}
+
 	pub async fn update_run_model_and_concurrency(
 		&self,
 		run_id: Id,
@@ -345,6 +364,11 @@ impl Runtime {
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
+		Ok(())
+	}
+
+	pub fn end_run_with_error(&self, run_id: Id, err: &crate::Error) -> Result<()> {
+		RunBmc::end_with_error(self.mm(), run_id, err)?;
 		Ok(())
 	}
 }
@@ -407,15 +431,15 @@ impl Runtime {
 		TaskBmc::update_output(self.mm(), task_id, output_content)?;
 		Ok(())
 	}
-}
 
-/// For Error Captures
-impl Runtime {
 	pub fn end_task_with_error(&self, _run_id: Id, task_id: Id, err: &crate::Error) -> Result<()> {
 		TaskBmc::end_with_error(self.mm(), task_id, err)?;
 		Ok(())
 	}
 }
+
+/// For Error Captures
+impl Runtime {}
 
 /// Rec for the log
 impl Runtime {

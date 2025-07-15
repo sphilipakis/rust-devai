@@ -25,21 +25,55 @@ pub async fn run_agent(
 	run_base_options: &RunBaseOptions,
 	return_output_values: bool,
 ) -> Result<RunAgentResponse> {
-	let hub = get_hub();
-
 	// -- Trim the runtime db
 	// runtime.rec_trim().await?;
-
-	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
-
 	// display relative agent path if possible
 	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
 		Ok(path) => path.to_string(),
 		Err(_) => agent.file_path().to_string(),
 	};
 
+	// -- Rt Create - New run
+	let run_id = runtime.create_run(agent.name(), &agent_path).await?;
+
 	// -- Rt Step - Start Run
-	let run_id = runtime.step_start(agent.name(), &agent_path).await?;
+	let run_id = runtime.step_run_start(run_id).await?;
+
+	let run_agent_res = run_agent_inner(runtime, run_id, agent, inputs, run_base_options, return_output_values).await;
+
+	match run_agent_res.as_ref() {
+		// Nothing special when succes
+		// NOTE: Eventually we want to store the after all response as well
+		Ok(_ok_res) => {
+			// -- Rt Step - End
+			runtime.step_run_end(run_id).await?;
+		}
+		Err(err) => {
+			// -- Rt update ()
+			let res = runtime.end_run_with_error(run_id, err);
+			// -- Rt Step - End
+			runtime.step_run_end(run_id).await?;
+			res?;
+		}
+	}
+
+	run_agent_res
+}
+
+async fn run_agent_inner(
+	runtime: &Runtime,
+	run_id: Id,
+	agent: Agent,
+	inputs: Option<Vec<Value>>,
+	run_base_options: &RunBaseOptions,
+	return_output_values: bool,
+) -> Result<RunAgentResponse> {
+	let hub = get_hub();
+
+	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
+
+	// -- Rt Step - Start Run
+	let run_id = runtime.step_run_start(run_id).await?;
 
 	// -- Build base Rt Ctx
 	let rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
@@ -301,9 +335,6 @@ pub async fn run_agent(
 	} else {
 		None
 	};
-
-	// -- Rt Step - End
-	runtime.step_end(run_id).await?;
 
 	hub.publish(format!("\n======= COMPLETED: {}", agent.name())).await;
 

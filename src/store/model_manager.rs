@@ -66,7 +66,6 @@ impl ModelManager {
 			let run_c = RunForCreate {
 				agent_name: Some(format!("agent_name-{i}")),
 				agent_path: Some(format!("agent_path-{i}")),
-				start: Some(now_micro().into()),
 			};
 			let _id = RunBmc::create(self, run_c)?;
 		}

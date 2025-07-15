@@ -1,5 +1,6 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::{EndState, Id, ModelManager, Result, RunningState, UnixTimeUs};
+use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -60,7 +61,6 @@ impl Run {
 
 #[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
 pub struct RunForCreate {
-	pub start: Option<UnixTimeUs>,
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
 }
@@ -178,6 +178,32 @@ impl RunBmc {
 
 		Ok(())
 	}
+
+	pub fn end_with_error(mm: &ModelManager, run_id: Id, error: &crate::error::Error) -> Result<()> {
+		use crate::store::ContentTyp;
+		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+
+		// -- Create the err rec
+		let err_c = ErrForCreate {
+			stage: None,
+			run_id: Some(run_id),
+			task_id: None,
+			typ: Some(ContentTyp::Text),
+			content: Some(error.to_string()),
+		};
+		let err_id = ErrBmc::create(mm, err_c)?;
+
+		// -- Update the run
+		let run_u = RunForUpdate {
+			end: Some(now_micro().into()),
+			end_state: Some(EndState::Err),
+			end_err_id: Some(err_id),
+			..Default::default()
+		};
+		Self::update(mm, run_id, run_u)?;
+
+		Ok(())
+	}
 }
 
 // endregion: --- Bmc
@@ -199,7 +225,6 @@ mod tests {
 		let run_c = RunForCreate {
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
-			start: None,
 		};
 
 		// -- Exec
@@ -218,7 +243,6 @@ mod tests {
 		let run_c = RunForCreate {
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
-			start: None,
 		};
 		let id = RunBmc::create(&mm, run_c)?;
 
@@ -244,7 +268,6 @@ mod tests {
 			let run_c = RunForCreate {
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
-				start: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}
@@ -289,7 +312,6 @@ mod tests {
 			let run_c = RunForCreate {
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
-				start: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}
