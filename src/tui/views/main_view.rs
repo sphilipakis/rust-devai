@@ -19,10 +19,10 @@ impl StatefulWidget for MainView {
 		let [header_a, _gap_a, content_a, action_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
-				Constraint::Length(1),
-				Constraint::Length(1),
-				Constraint::Fill(1),
-				Constraint::Length(1),
+				Constraint::Length(1), // Header line
+				Constraint::Length(1), // Gap
+				Constraint::Fill(1),   // content
+				Constraint::Length(1), // Action bar
 			])
 			.areas(area);
 

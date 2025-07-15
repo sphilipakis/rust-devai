@@ -53,6 +53,14 @@ impl AppState {
 	/// Returns the cumulative duration of all tasks (formatted)  
 	/// or `None` when there is **one task or fewer**.
 	pub fn tasks_cummulative_duration(&self) -> Option<String> {
+		let run = self.current_run()?;
+
+		if let Some(concurrency) = run.concurrency
+			&& concurrency <= 1
+		{
+			return None;
+		};
+
 		let tasks = self.tasks();
 		if tasks.len() <= 1 {
 			return None;
