@@ -75,9 +75,6 @@ async fn run_agent_inner(
 
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
 
-	// -- Rt Step - Start Run
-	let run_id = runtime.step_run_start(run_id).await?;
-
 	// -- Build base Rt Ctx
 	let rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
 
@@ -258,6 +255,9 @@ async fn run_agent_inner(
 		// -- Spawn tasks up to the concurrency limit
 		let rt = runtime.clone();
 		join_set.spawn(async move {
+			// -- Rt Step - Task Start
+			let _ = rt.step_task_start(run_id, task_id).await;
+
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_task_response = run_agent_task_outer(
 				run_id,
@@ -360,9 +360,6 @@ async fn run_agent_task_outer(
 ) -> Result<Option<RunAgentInputResponse>> {
 	let hub = get_hub();
 
-	// -- Rt Step - Task Start
-	runtime.step_task_start(run_id, task_id).await?;
-
 	// -- prepare the scope_input
 	let input = serde_json::to_value(input)?;
 
@@ -391,9 +388,6 @@ async fn run_agent_task_outer(
 	}
 
 	hub.publish(format!("==== DONE (input: {label})")).await;
-
-	// -- Rt Step - Task End
-	runtime.step_task_end(run_id, task_id).await?;
 
 	Ok(run_response)
 }
@@ -524,6 +518,9 @@ async fn process_join_set_result(
 			if let Some(outputs_vec) = captured_outputs.as_mut() {
 				outputs_vec.push((task_idx, output));
 			}
+			// -- Rt Step - Task End
+			rt.step_task_end(run_id, task_id).await?;
+
 			// -- Rt Rec - Add task ok
 			// For now, we return the error as well
 			rt.end_task_with_ok(run_id, task_id)?;
@@ -537,6 +534,9 @@ async fn process_join_set_result(
 				task_idx: _,
 				err,
 			} = join_set_err;
+
+			// -- Rt Step - Task End
+			rt.step_task_end(run_id, task_id).await?;
 
 			// -- Rt Rec - Add task error
 			// For now, we return the error as well

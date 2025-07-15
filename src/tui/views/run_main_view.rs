@@ -145,11 +145,15 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	let highlight_style = styles::STL_TAB_ACTIVE;
 
 	// -- Render tabs
-	let tasks_label = if state.tasks().len() > 1 { " Tasks " } else { " Task " };
+	let tasks_label = if state.tasks().len() > 1 {
+		"   Tasks   "
+	} else {
+		"   Task   "
+	};
 
 	let titles = vec![
 		//
-		Line::styled(" Overview ", style),
+		Line::styled("   Overview   ", style),
 		Line::styled(tasks_label, style),
 	];
 

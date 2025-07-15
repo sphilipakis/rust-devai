@@ -1,9 +1,32 @@
+use crate::store::rt_model::{Log, LogKind};
 use crate::tui::styles;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use std::borrow::Cow;
 
 const MARKER_WIDTH: usize = 10;
+
+pub fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
+	let Some(kind) = log.kind else {
+		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
+	};
+	let content = match (log.message.as_ref(), log.kind.as_ref()) {
+		(_, Some(LogKind::RunStep)) => log.step_as_str(),
+		(Some(msg), _) => msg,
+		(_, _) => "No Step not MSG for log",
+	};
+
+	let marker_txt_style = match kind {
+		LogKind::RunStep => ("Sys Step", styles::STL_SECTION_MARKER),
+		LogKind::SysInfo => ("Sys Info", styles::STL_SECTION_MARKER),
+		LogKind::SysWarn => ("Sys Warn", styles::STL_SECTION_MARKER),
+		LogKind::SysError => ("Sys Error", styles::STL_SECTION_MARKER),
+		LogKind::SysDebug => ("Sys Debug", styles::STL_SECTION_MARKER),
+		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
+	};
+
+	ui_for_marker_section(content, marker_txt_style, max_width, None)
+}
 
 /// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
 /// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.

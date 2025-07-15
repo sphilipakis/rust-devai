@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{ErrBmc, Log, LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::rt_model::{ErrBmc, LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, styles};
@@ -279,7 +279,7 @@ fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool)
 				}
 
 				// Render log lines
-				let log_lines = ui_for_log(log, max_width);
+				let log_lines = support::ui_for_log(log, max_width);
 				lines.extend(log_lines);
 				lines.push(Line::default()); // empty line (for now)
 			}
@@ -291,28 +291,6 @@ fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool)
 	};
 
 	lines
-}
-
-fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
-	let Some(kind) = log.kind else {
-		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
-	};
-	let content = match (log.message.as_ref(), log.kind.as_ref()) {
-		(_, Some(LogKind::RunStep)) => log.step_as_str(),
-		(Some(msg), _) => msg,
-		(_, _) => "No Step not MSG for log",
-	};
-
-	let marker_txt_style = match kind {
-		LogKind::RunStep => ("Sys Step", styles::STL_SECTION_MARKER),
-		LogKind::SysInfo => ("Sys Info", styles::STL_SECTION_MARKER),
-		LogKind::SysWarn => ("Sys Warn", styles::STL_SECTION_MARKER),
-		LogKind::SysError => ("Sys Error", styles::STL_SECTION_MARKER),
-		LogKind::SysDebug => ("Sys Debug", styles::STL_SECTION_MARKER),
-		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
-	};
-
-	support::ui_for_marker_section(content, marker_txt_style, max_width, None)
 }
 
 #[allow(unused)]
