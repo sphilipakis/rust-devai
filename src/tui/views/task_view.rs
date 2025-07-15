@@ -132,30 +132,26 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	let max_width = area.width - 3; // for scroll
 
 	// -- Add Input
-	all_lines.extend(ui_for_input(state.mm(), task, max_width));
-	all_lines.push(Line::default());
+	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
 
 	// -- Add Logs Lines
-	all_lines.extend(ui_for_logs(state.mm(), task, max_width, show_steps));
+	support::extend_lines(
+		&mut all_lines,
+		ui_for_logs(state.mm(), task, max_width, show_steps),
+		false,
+	);
 
 	// -- Add AI Lines
-	let ai_lines = ui_for_ai(run, task, max_width);
-	let ai_lines_len = ai_lines.len();
-	all_lines.extend(ai_lines);
-	if ai_lines_len > 0 {
-		all_lines.push(Line::default());
-	}
+	support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
 
 	// -- Add output if end
 	if task.output_uid.is_some() {
-		all_lines.extend(ui_for_output(state.mm(), task, max_width));
-		all_lines.push(Line::default());
+		support::extend_lines(&mut all_lines, ui_for_output(state.mm(), task, max_width), true);
 	}
 
 	// -- Add Error if present
 	if task.end_err_id.is_some() {
-		all_lines.extend(ui_for_err(state.mm(), task, max_width));
-		all_lines.push(Line::default());
+		support::extend_lines(&mut all_lines, ui_for_err(state.mm(), task, max_width), true);
 	}
 
 	// -- Clamp scroll
@@ -188,7 +184,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 	let marker_style = styles::STL_SECTION_MARKER_INPUT;
 	match TaskBmc::get_input_for_display(mm, task) {
 		Ok(Some(content)) => support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None),
-		Ok(None) => support::ui_for_marker_section("no input found", (marker_txt, marker_style), max_width, None),
+		Ok(None) => Vec::new(),
 		Err(err) => support::ui_for_marker_section(
 			&format!("Error getting input. {err}"),
 			(marker_txt, marker_style),
@@ -282,9 +278,6 @@ fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool)
 				let log_lines = support::ui_for_log(log, max_width);
 				lines.extend(log_lines);
 				lines.push(Line::default()); // empty line (for now)
-			}
-			if lines.is_empty() {
-				// lines.push("No logs".into())
 			}
 		}
 		Err(err) => lines.push(format!("LogBmc::list error. {err}").into()),

@@ -1,7 +1,8 @@
-use crate::store::rt_model::{Log, LogBmc, LogKind, Run};
-use crate::tui::AppState;
+use crate::store::Stage;
+use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task};
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
+use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::Line;
@@ -40,7 +41,10 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let max_width = area.width - 3; // for scroll
 
 	// -- Add before all
-	all_lines.extend(ui_for_before_all(run, logs, max_width, true));
+	support::extend_lines(&mut all_lines, ui_for_before_all(run, logs, max_width, true), true);
+
+	// -- Add the task ui
+	support::extend_lines(&mut all_lines, ui_for_tasks(run, state.tasks(), max_width), true);
 
 	// -- Clamp scroll
 	// TODO: Needs to have it's own scroll state.
@@ -67,14 +71,14 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 }
 
 // region:    --- UI Builders
-#[allow(clippy::vec_init_then_push)]
+
 fn ui_for_before_all(_run: &Run, logs: Vec<Log>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line> = Vec::new();
 
-	all_lines.push("--- Before All ".into());
-
-	// --
 	for log in logs {
+		if !matches!(log.stage, Some(Stage::BeforeAll)) {
+			continue;
+		}
 		// Show or not step
 		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
 			continue;
@@ -89,4 +93,21 @@ fn ui_for_before_all(_run: &Run, logs: Vec<Log>, max_width: u16, show_steps: boo
 	all_lines
 }
 
+fn ui_for_tasks(_run: &Run, tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+	let mut content: Vec<String> = Vec::new();
+
+	for task in tasks {
+		let task_content = format!("Task {:?} - is ended: {}", task.idx, task.is_ended());
+		content.push(task_content);
+	}
+
+	let content = content.join("\n\n");
+
+	support::ui_for_marker_section(&content, ("Tasks", styles::STL_SECTION_MARKER), max_width, None)
+}
+
 // endregion: --- UI Builders
+
+// region:    --- Support
+
+// endregion: --- Support
