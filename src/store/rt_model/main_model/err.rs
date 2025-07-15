@@ -66,6 +66,7 @@ impl ErrBmc {
 		base::create::<Self>(mm, fields)
 	}
 
+	#[allow(unused)]
 	pub fn update(mm: &ModelManager, id: Id, err_u: ErrForUpdate) -> Result<usize> {
 		let fields = err_u.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)
@@ -75,6 +76,7 @@ impl ErrBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
+	#[allow(unused)]
 	pub fn list(
 		mm: &ModelManager,
 		list_options: Option<ListOptions>,
@@ -84,6 +86,7 @@ impl ErrBmc {
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 
+	#[allow(unused)]
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<ErrRec>> {
 		let filter = ErrFilter {
 			run_id: Some(run_id),
@@ -92,6 +95,7 @@ impl ErrBmc {
 		Self::list(mm, None, Some(filter))
 	}
 
+	#[allow(unused)]
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<ErrRec>> {
 		let filter = ErrFilter {
 			task_id: Some(task_id),

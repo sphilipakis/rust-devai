@@ -31,8 +31,6 @@ impl Runtime {
 /// All the function that "record" the progress of a Runtime execution
 impl Runtime {
 	pub async fn step_run_start(&self, run_id: Id) -> Result<Id> {
-		let hub = get_hub();
-
 		// -- Update start time
 		RunBmc::update(
 			self.mm(),

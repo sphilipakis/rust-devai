@@ -32,7 +32,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &AppState) {
 // region:    --- UI Builders
 #[allow(clippy::vec_init_then_push)]
 fn ui_for_before_all(state: &AppState) -> Vec<Line<'static>> {
-	let Some(run) = state.current_run() else {
+	let Some(_run) = state.current_run() else {
 		return Default::default();
 	};
 

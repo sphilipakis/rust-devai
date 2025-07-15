@@ -438,6 +438,7 @@ struct JoinSetOk {
 struct JoinSetErr {
 	run_id: Id,
 	task_id: Id,
+	#[allow(unused)]
 	task_idx: usize,
 	err: crate::Error,
 }
@@ -533,7 +534,7 @@ async fn process_join_set_result(
 			let JoinSetErr {
 				run_id,
 				task_id,
-				task_idx,
+				task_idx: _,
 				err,
 			} = join_set_err;
 

@@ -1,5 +1,4 @@
-use crate::store::rt_model::{Run, Task};
-use crate::store::{EndState, RunningState, UnixTimeUs};
+use crate::store::{EndState, RunningState};
 use crate::tui::styles;
 use ratatui::text::Span;
 

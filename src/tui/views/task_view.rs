@@ -5,10 +5,8 @@ use crate::tui::views::support;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
-use std::borrow::Cow;
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
@@ -141,7 +139,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	all_lines.extend(ui_for_logs(state.mm(), task, max_width, show_steps));
 
 	// -- Add AI Lines
-	let ai_lines = ui_for_ai(run, task, max_width, state);
+	let ai_lines = ui_for_ai(run, task, max_width);
 	let ai_lines_len = ai_lines.len();
 	all_lines.extend(ai_lines);
 	if ai_lines_len > 0 {
@@ -200,7 +198,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 	}
 }
 
-fn ui_for_ai(run: &Run, task: &Task, max_width: u16, state: &AppState) -> Vec<Line<'static>> {
+fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "AI:";
 	let marker_style = styles::STL_SECTION_MARKER_AI;
 	let model_name = task
@@ -248,7 +246,7 @@ fn ui_for_err(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'stati
 	};
 	let marker_txt = "Error:";
 	let marker_style = styles::STL_SECTION_MARKER_ERR;
-	let spans_prefix = vec![Span::styled("┃ ", (styles::CLR_TXT_RED))];
+	let spans_prefix = vec![Span::styled("┃ ", styles::CLR_TXT_RED)];
 	match ErrBmc::get(mm, err_id) {
 		Ok(err_rec) => support::ui_for_marker_section(
 			&err_rec.content.unwrap_or_default(),

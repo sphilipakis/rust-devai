@@ -155,6 +155,7 @@ impl RunBmc {
 		Self::list(mm, Some(options))
 	}
 
+	#[allow(unused)]
 	pub fn add_error(mm: &ModelManager, run_id: Id, error: crate::error::Error) -> Result<()> {
 		use crate::store::ContentTyp;
 		use crate::store::rt_model::{ErrBmc, ErrForCreate};
@@ -204,7 +205,7 @@ impl RunBmc {
 		Self::update(mm, run_id, run_u)?;
 
 		// -- Now update all the tasks of the run
-		// TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
+		TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
 
 		Ok(())
 	}

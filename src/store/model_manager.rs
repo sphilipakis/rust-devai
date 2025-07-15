@@ -39,7 +39,6 @@ impl ModelManager {
 
 // region:    --- OnceModelManager
 
-use crate::support::time::now_micro;
 use tokio::sync::OnceCell;
 
 #[derive(Clone, Copy)]

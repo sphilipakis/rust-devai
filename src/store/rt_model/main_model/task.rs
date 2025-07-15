@@ -252,7 +252,6 @@ impl TaskBmc {
 			..Default::default()
 		};
 		let table_name = Self::table_ref();
-		let col = TaskForUpdate::__MODQL_FIELD_METAS[0].sql_col_ref();
 
 		let update_fields = tasks_u.sqlite_not_none_fields();
 

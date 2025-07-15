@@ -1,12 +1,6 @@
-use crate::store::ModelManager;
-use crate::store::rt_model::{ErrBmc, Log, LogBmc, LogKind, Run, Task, TaskBmc};
-use crate::tui::support::RectExt;
-use crate::tui::{AppState, styles};
-use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use crate::tui::styles;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 use std::borrow::Cow;
 
 const MARKER_WIDTH: usize = 10;
