@@ -45,11 +45,14 @@ pub async fn run_agent(
 		// Nothing special when succes
 		// NOTE: Eventually we want to store the after all response as well
 		Ok(_ok_res) => {
+			// -- Run end with err
+			// NOTE: Now sure what we want to do with the error here
+			let _ = runtime.end_run_with_ok(run_id);
 			// -- Rt Step - End
 			runtime.step_run_end(run_id).await?;
 		}
 		Err(err) => {
-			// -- Rt update ()
+			// -- Rt end with err
 			let res = runtime.end_run_with_error(run_id, err);
 			// -- Rt Step - End
 			runtime.step_run_end(run_id).await?;
@@ -520,6 +523,9 @@ async fn process_join_set_result(
 			if let Some(outputs_vec) = captured_outputs.as_mut() {
 				outputs_vec.push((task_idx, output));
 			}
+			// -- Rt Rec - Add task ok
+			// For now, we return the error as well
+			rt.end_task_with_ok(run_id, task_id)?;
 
 			Ok(())
 		}
@@ -534,6 +540,7 @@ async fn process_join_set_result(
 			// -- Rt Rec - Add task error
 			// For now, we return the error as well
 			rt.end_task_with_error(run_id, task_id, &err)?;
+
 			Err(err)
 		}
 		Err(join_err) => Err(Error::custom(format!("Error while running input. Cause {join_err}"))),

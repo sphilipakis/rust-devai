@@ -155,6 +155,7 @@ impl DbBmc for TaskBmc {
 	const TABLE: &'static str = "task";
 }
 
+/// Basic CRUD
 impl TaskBmc {
 	pub fn create(mm: &ModelManager, mut task_c: TaskForCreate) -> Result<Id> {
 		let input_content = task_c.input_content.take();
@@ -204,7 +205,10 @@ impl TaskBmc {
 		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
 		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
+}
 
+/// Task Specific bmcs
+impl TaskBmc {
 	/// List the task for a given run_id
 	/// NOTE: Order id ASC (default)
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
@@ -238,6 +242,34 @@ impl TaskBmc {
 		Self::update(mm, task_id, task_u)?;
 
 		Ok(())
+	}
+
+	/// return number of affected
+	pub fn cancel_all_not_ended_for_run(mm: &ModelManager, run_id: Id) -> Result<usize> {
+		let tasks_u = TaskForUpdate {
+			end_state: Some(EndState::Cancel),
+			end: Some(now_micro().into()), // NOTE this means sometime might have end without start
+			..Default::default()
+		};
+		let table_name = Self::table_ref();
+		let col = TaskForUpdate::__MODQL_FIELD_METAS[0].sql_col_ref();
+
+		let update_fields = tasks_u.sqlite_not_none_fields();
+
+		let sql = format!(
+			"UPDATE {table_name} SET {} where run_id = ? AND end_state IS NULL",
+			update_fields.sql_setters()
+		);
+
+		let all_fields = update_fields.append(SqliteField::new("run_id", run_id));
+
+		// -- Execute the command
+		let values = all_fields.values_as_dyn_to_sql_vec();
+		let db = mm.db();
+
+		let num = db.exec(&sql, &*values)?;
+
+		Ok(num)
 	}
 }
 
@@ -399,6 +431,8 @@ mod tests {
 
 		// -- Exec
 		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()), None)?;
+
+		// -- Check
 		assert_eq!(tasks.len(), 3);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 1.into());
@@ -427,6 +461,8 @@ mod tests {
 
 		// -- Exec
 		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(ListOptions::default()), None)?;
+
+		// -- Check
 		assert_eq!(tasks.len(), 10);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 1.into());
@@ -458,6 +494,8 @@ mod tests {
 
 		// -- Exec
 		let tasks: Vec<Task> = TaskBmc::list(&mm, Some(list_options), None)?;
+
+		// -- Check
 		assert_eq!(tasks.len(), 3);
 		let task = tasks.first().ok_or("Should have first item")?;
 		assert_eq!(task.id, 3.into());
@@ -465,6 +503,52 @@ mod tests {
 		let task = tasks.get(2).ok_or("Should have third item")?;
 		assert_eq!(task.id, 1.into());
 		assert_eq!(task.label, Some("label-0".to_string()));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_task_cancel_all_not_ended_for_run() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_id = create_run(&mm, "run-1").await?;
+		for i in 0..3 {
+			let task_c = TaskForCreate {
+				run_id,
+				idx: 1 + 1,
+				label: Some(format!("label-{i}")),
+				input_content: None,
+			};
+			TaskBmc::create(&mm, task_c)?;
+		}
+		// We end the first one (yes, assume 1)
+		TaskBmc::update(
+			&mm,
+			1.into(),
+			TaskForUpdate {
+				end: Some(now_micro().into()),
+				end_state: Some(EndState::Ok),
+				..Default::default()
+			},
+		)?;
+		// helper fn
+		let count_ends_fn = || -> Result<i32> {
+			Ok(TaskBmc::list(&mm, None, Some(TaskFilter { run_id: Some(run_id) }))?
+				.into_iter()
+				.map(|t| t.end.map(|_| 1).unwrap_or_default())
+				.sum::<i32>())
+		};
+		assert_eq!(count_ends_fn()?, 1);
+
+		// -- Exec
+		TaskBmc::cancel_all_not_ended_for_run(&mm, run_id)?;
+		assert_eq!(count_ends_fn()?, 3); // how we should have 3 end
+		// check end_state
+		let states: Vec<EndState> = TaskBmc::list(&mm, None, Some(TaskFilter { run_id: Some(run_id) }))?
+			.into_iter()
+			.filter_map(|t| t.end_state)
+			.collect();
+		assert_eq!(&format!("{states:?}"), "[Ok, Cancel, Cancel]");
 
 		Ok(())
 	}

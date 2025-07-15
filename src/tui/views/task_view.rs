@@ -213,11 +213,9 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16, state: &AppState) -> Vec<Li
 	let content = match (task.ai_start, task.ai_end) {
 		(Some(_start), None) => Some(format!("➜ Sending prompt to AI model {model_name}.")),
 		(Some(_start), Some(_end)) => {
-			let cost = state.current_task_cost_fmt();
-			let compl = state.current_task_completion_tokens_fmt();
-			Some(format!(
-				"✔ AI model {model_name} responded.\n  Cost: {cost}, Completion tokens: {compl}"
-			))
+			// let cost = state.current_task_cost_fmt();
+			// let compl = state.current_task_completion_tokens_fmt();
+			Some(format!("✔ AI model {model_name} responded."))
 		}
 		_ => None,
 	};

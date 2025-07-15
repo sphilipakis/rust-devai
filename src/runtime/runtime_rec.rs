@@ -8,6 +8,7 @@
 use crate::Result;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
+use crate::store::EndState;
 use crate::store::Id;
 use crate::store::RunStep;
 use crate::store::Stage;
@@ -258,6 +259,7 @@ impl Runtime {
 		Ok(())
 	}
 
+	/// NOTE: This is a success end so the end_d
 	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task
 		let task_u = TaskForUpdate {
@@ -367,6 +369,18 @@ impl Runtime {
 		Ok(())
 	}
 
+	pub fn end_run_with_ok(&self, run_id: Id) -> Result<()> {
+		RunBmc::update(
+			self.mm(),
+			run_id,
+			RunForUpdate {
+				end_state: Some(EndState::Ok),
+				..Default::default()
+			},
+		)?;
+
+		Ok(())
+	}
 	pub fn end_run_with_error(&self, run_id: Id, err: &crate::Error) -> Result<()> {
 		RunBmc::end_with_error(self.mm(), run_id, err)?;
 		Ok(())
@@ -429,6 +443,19 @@ impl Runtime {
 	pub async fn update_task_output(&self, task_id: Id, output: &Value) -> Result<()> {
 		let output_content = TypedContent::from_value(output);
 		TaskBmc::update_output(self.mm(), task_id, output_content)?;
+		Ok(())
+	}
+
+	pub fn end_task_with_ok(&self, _run_id: Id, task_id: Id) -> Result<()> {
+		TaskBmc::update(
+			self.mm(),
+			task_id,
+			TaskForUpdate {
+				end_state: Some(EndState::Ok),
+				..Default::default()
+			},
+		)?;
+
 		Ok(())
 	}
 

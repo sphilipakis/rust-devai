@@ -1,4 +1,5 @@
 use crate::store::base::{self, DbBmc};
+use crate::store::rt_model::TaskBmc;
 use crate::store::{EndState, Id, ModelManager, Result, RunningState, UnixTimeUs};
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
@@ -201,6 +202,9 @@ impl RunBmc {
 			..Default::default()
 		};
 		Self::update(mm, run_id, run_u)?;
+
+		// -- Now update all the tasks of the run
+		// TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
 
 		Ok(())
 	}
