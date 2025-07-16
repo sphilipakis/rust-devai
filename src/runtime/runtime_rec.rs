@@ -507,6 +507,20 @@ impl Runtime {
 		TaskBmc::end_with_error(self.mm(), task_id, err)?;
 		Ok(())
 	}
+
+	/// Note: the rec log already happened (in the current design)
+	/// This does not set the end time
+	pub fn set_task_end_state_to_skip(&self, _run_id: Id, task_id: Id) -> Result<()> {
+		TaskBmc::update(
+			self.mm(),
+			task_id,
+			TaskForUpdate {
+				end_state: Some(EndState::Skip),
+				..Default::default()
+			},
+		)?;
+		Ok(())
+	}
 }
 
 /// For Error Captures
@@ -615,6 +629,7 @@ impl Runtime {
 }
 
 /// Rec for specialize event (Skip, FileSave,)
+/// NOTE: Probably shoul put the end state as well
 impl Runtime {
 	pub async fn rec_skip_task(&self, run_id: Id, task_id: Id, stage: Stage, reason: Option<String>) -> Result<()> {
 		let mm = self.mm();
@@ -650,6 +665,7 @@ impl Runtime {
 		Ok(())
 	}
 
+	/// NOTE: Probably shoul put the end state as well
 	pub async fn rec_skip_run(&self, run_id: Id, stage: Stage, reason: Option<String>) -> Result<()> {
 		let mm = self.mm();
 
