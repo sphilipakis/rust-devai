@@ -1,12 +1,12 @@
 use crate::tui::styles;
-use crate::tui::support::num_pad_for_len;
-use crate::tui::views::support::el_running_ico;
+use crate::tui::support::{RectExt, num_pad_for_len};
+use crate::tui::views::support;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, StatefulWidget, Widget as _};
+use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
 
 /// Renders the *Tasks* tab (tasks list and content).
 pub struct RuntTasksView;
@@ -15,6 +15,13 @@ impl StatefulWidget for RuntTasksView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+		// -- If not tasks, render no tasks ui
+		if state.tasks().is_empty() {
+			render_no_tasks(area, buf, state);
+			return;
+		}
+
+		// -- Render Task(s)
 		let show_tasks_nav = state.tasks().len() > 1;
 
 		let tasks_nav_width = if show_tasks_nav { 20 } else { 0 };
@@ -32,6 +39,19 @@ impl StatefulWidget for RuntTasksView {
 		// -- Render task content
 		TaskView.render(content_a, buf, state);
 	}
+}
+
+fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
+	let area = area.x_h_margin(1);
+	// For now, if no Run, do not render anything
+	let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) else {
+		Paragraph::new("No err_id for this run.").render(area, buf);
+		return;
+	};
+
+	let lines = support::ui_for_err(state.mm(), err_id, area.width.min(120));
+
+	Paragraph::new(lines).render(area, buf);
 }
 
 fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
@@ -70,7 +90,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 			let line = Line::from(vec![
 				Span::raw(" "),
-				el_running_ico(task),
+				support::el_running_ico(task),
 				Span::raw(" "),
 				Span::styled(label, styles::STL_TXT),
 			]);

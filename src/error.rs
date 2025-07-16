@@ -29,29 +29,29 @@ pub enum Error {
 	},
 
 	// -- Pack
-	#[display("Pack Identity '{origin_path}' is not valid. Cause: {cause}")]
+	#[display("Pack Identity '{origin_path}' is not valid.\nCause: {cause}")]
 	InvalidPackIdentity {
 		origin_path: String,
 		cause: String,
 	},
-	#[display("Pack namespace '{namespace}' is not valid. Cause: {cause}")]
+	#[display("Pack namespace '{namespace}' is not valid.\nCause: {cause}")]
 	InvalidNamespace {
 		namespace: String,
 		cause: &'static str,
 	},
-	#[display("Pack Name '{name}' is not valid. Cause: {cause}")]
+	#[display("Pack Name '{name}' is not valid.\nCause: {cause}")]
 	InvalidPackName {
 		name: String,
 		cause: &'static str,
 	},
 
 	// -- Channel
-	#[display("Send on channel '{name}' fail. Cause: {cause}")]
+	#[display("Send on channel '{name}' fail.\nCause: {cause}")]
 	ChannelTx {
 		name: &'static str,
 		cause: String,
 	},
-	#[display("Recieve on channel '{name}' fail. Cause: {cause}")]
+	#[display("Recieve on channel '{name}' fail.\nCause: {cause}")]
 	ChannelRx {
 		name: &'static str,
 		cause: String,
@@ -96,7 +96,7 @@ pub enum Error {
 	},
 
 	// -- Run
-	#[display("Before All Lua block did not return a valid structure. Cause: {cause}")]
+	#[display("Before All Lua block did not return a valid structure.\nCause: {cause}")]
 	BeforeAllFailWrongReturn {
 		cause: String,
 	},
@@ -107,7 +107,7 @@ pub enum Error {
 		model_iden: ModelIden,
 		env_name: String,
 	},
-	#[display("Fail to make AI Request. Cause:\n{_0}")]
+	#[display("Fail to make AI Request.\nCause: {_0}")]
 	GenAI(genai::Error),
 
 	// -- Store
