@@ -12,12 +12,15 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 	let marker_style = styles::STL_SECTION_MARKER_ERR;
 	let spans_prefix = vec![Span::styled("┃ ", styles::CLR_TXT_RED)];
 	match ErrBmc::get(mm, err_id) {
-		Ok(err_rec) => support::ui_for_marker_section(
-			&err_rec.content.unwrap_or_default(),
-			(marker_txt, marker_style),
-			max_width,
-			Some(&spans_prefix),
-		),
+		Ok(err_rec) => {
+			let content = err_rec.content.unwrap_or_default();
+			let content = if let Some(stage) = err_rec.stage {
+				format!("Error at stage {stage}.\ncontent")
+			} else {
+				content
+			};
+			support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
+		}
 		Err(err) => support::ui_for_marker_section(
 			&format!("Error getting error. {err}"),
 			(marker_txt, marker_style),
