@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{ErrBmc, LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::rt_model::{LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, styles};
@@ -150,8 +150,8 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	}
 
 	// -- Add Error if present
-	if task.end_err_id.is_some() {
-		support::extend_lines(&mut all_lines, ui_for_err(state.mm(), task, max_width), true);
+	if let Some(err_id) = task.end_err_id {
+		support::extend_lines(&mut all_lines, support::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 
 	// -- Clamp scroll
@@ -229,29 +229,6 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 		Ok(None) => support::ui_for_marker_section("no output found", (marker_txt, marker_style), max_width, None),
 		Err(err) => support::ui_for_marker_section(
 			&format!("Error getting output. {err}"),
-			(marker_txt, marker_style),
-			max_width,
-			None,
-		),
-	}
-}
-
-fn ui_for_err(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
-	let Some(err_id) = task.end_err_id else {
-		return Default::default();
-	};
-	let marker_txt = "Error:";
-	let marker_style = styles::STL_SECTION_MARKER_ERR;
-	let spans_prefix = vec![Span::styled("┃ ", styles::CLR_TXT_RED)];
-	match ErrBmc::get(mm, err_id) {
-		Ok(err_rec) => support::ui_for_marker_section(
-			&err_rec.content.unwrap_or_default(),
-			(marker_txt, marker_style),
-			max_width,
-			Some(&spans_prefix),
-		),
-		Err(err) => support::ui_for_marker_section(
-			&format!("Error getting error. {err}"),
 			(marker_txt, marker_style),
 			max_width,
 			None,

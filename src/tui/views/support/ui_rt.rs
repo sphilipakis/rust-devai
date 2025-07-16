@@ -1,10 +1,31 @@
 //! UI For Runtime Model
 //!
 
-use crate::store::rt_model::{Log, LogKind};
+use crate::store::rt_model::{ErrBmc, Log, LogKind};
+use crate::store::{Id, ModelManager};
 use crate::tui::styles;
 use crate::tui::views::support;
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
+
+pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'static>> {
+	let marker_txt = "Error:";
+	let marker_style = styles::STL_SECTION_MARKER_ERR;
+	let spans_prefix = vec![Span::styled("┃ ", styles::CLR_TXT_RED)];
+	match ErrBmc::get(mm, err_id) {
+		Ok(err_rec) => support::ui_for_marker_section(
+			&err_rec.content.unwrap_or_default(),
+			(marker_txt, marker_style),
+			max_width,
+			Some(&spans_prefix),
+		),
+		Err(err) => support::ui_for_marker_section(
+			&format!("Error getting error. {err}"),
+			(marker_txt, marker_style),
+			max_width,
+			None,
+		),
+	}
+}
 
 pub fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {

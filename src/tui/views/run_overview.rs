@@ -45,6 +45,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add the task ui
 	support::extend_lines(&mut all_lines, ui_for_tasks(run, state.tasks(), max_width), true);
+	// all_lines.extend(Vec::new());
+
+	// -- Add Error if present
+	if let Some(err_id) = run.end_err_id {
+		support::extend_lines(&mut all_lines, support::ui_for_err(state.mm(), err_id, max_width), true);
+	}
 
 	// -- Clamp scroll
 	// TODO: Needs to have it's own scroll state.
@@ -55,7 +61,6 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	}
 
 	// -- Render All Content
-	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
 	let p = Paragraph::new(all_lines).scroll((state.log_scroll(), 0));
 	p.render(area, buf);
 
@@ -75,7 +80,8 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 fn ui_for_before_all(_run: &Run, logs: Vec<Log>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line> = Vec::new();
 
-	for log in logs {
+	let mut first_section = true;
+	for log in logs.into_iter() {
 		if !matches!(log.stage, Some(Stage::BeforeAll)) {
 			continue;
 		}
@@ -84,16 +90,25 @@ fn ui_for_before_all(_run: &Run, logs: Vec<Log>, max_width: u16, show_steps: boo
 			continue;
 		}
 
+		if first_section {
+			first_section = false
+		} else {
+			all_lines.push(Line::default()); // empty line (for now)
+		}
+
 		// Render log lines
 		let log_lines = support::ui_for_log(log, max_width);
 		all_lines.extend(log_lines);
-		all_lines.push(Line::default()); // empty line (for now)
 	}
 
 	all_lines
 }
 
 fn ui_for_tasks(_run: &Run, tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+	if tasks.is_empty() {
+		return Vec::new();
+	}
+
 	let mut content: Vec<String> = Vec::new();
 
 	for task in tasks {
@@ -107,7 +122,3 @@ fn ui_for_tasks(_run: &Run, tasks: &[Task], max_width: u16) -> Vec<Line<'static>
 }
 
 // endregion: --- UI Builders
-
-// region:    --- Support
-
-// endregion: --- Support
