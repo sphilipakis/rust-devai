@@ -9,6 +9,8 @@ use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use serde_json::Value;
 
+// region:    --- Types
+
 pub struct ProcBeforeAllResponse {
 	pub before_all: Value,
 	pub agent: Agent,
@@ -28,6 +30,8 @@ impl ProcBeforeAllResponse {
 	}
 }
 
+// endregion: --- Types
+
 pub async fn process_before_all(
 	runtime: &Runtime,
 	base_rt_ctx: RuntimeCtx,
@@ -40,12 +44,9 @@ pub async fn process_before_all(
 
 	// -- Run the before all
 	let res = if agent.before_all_script().is_some() {
-		// -- Rt Step - Start Before All
-		runtime.step_ba_start(run_id).await?;
 		// execute the script
 		let res = process_before_all_script(runtime, rt_ctx, run_id, agent, literals, inputs).await;
-		// -- Rt Step - End Before All
-		runtime.step_ba_end(run_id).await?;
+
 		// return the result
 		res?
 	} else {
@@ -57,7 +58,7 @@ pub async fn process_before_all(
 		}
 	};
 
-	// -- Rt Log
+	// -- Rt Log - Legacy TUI
 	let msg = format!(
 		"Model: {} ({}). Input Concurrency: {}",
 		res.agent.model_resolved(),

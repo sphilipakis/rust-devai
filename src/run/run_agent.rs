@@ -3,12 +3,13 @@ use crate::dir_context::DirContext;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::RunBaseOptions;
 use crate::run::literals::Literals;
+use crate::run::proc_after_all::{ProcAfterAllResponse, process_after_all};
 use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
 use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
+use crate::store::Id;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
-use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -78,12 +79,10 @@ async fn run_agent_inner(
 	let base_rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
 
 	// -- Process Before All
-	let ProcBeforeAllResponse {
-		before_all,
-		agent,
-		inputs,
-		skip,
-	} = process_before_all(
+	// Rt Step - Start Before All
+	runtime.step_ba_start(run_id).await?;
+	// process
+	let res = process_before_all(
 		runtime,
 		base_rt_ctx.clone(),
 		run_id,
@@ -91,7 +90,17 @@ async fn run_agent_inner(
 		literals.clone(),
 		inputs.clone(),
 	)
-	.await?;
+	.await;
+	// TODO: Capture end error
+	// -- Rt Step - End Before All
+	runtime.step_ba_end(run_id).await?;
+
+	let ProcBeforeAllResponse {
+		before_all,
+		agent,
+		inputs,
+		skip,
+	} = res?;
 	// skip
 	if skip {
 		return Ok(RunAgentResponse::default());
@@ -126,36 +135,26 @@ async fn run_agent_inner(
 		None
 	};
 
-	// -- Run the after all
-	let after_all = if let Some(after_all_script) = agent.after_all_script() {
-		let outputs_value = if let Some(outputs) = outputs.as_ref() {
-			Value::Array(outputs.clone())
-		} else {
-			Value::Null
-		};
+	// -- Process the after all
+	// Rt Step - Start After All
+	runtime.step_aa_start(run_id).await?;
+	let res = process_after_all(
+		runtime,
+		base_rt_ctx,
+		run_id,
+		&agent,
+		literals,
+		before_all,
+		inputs,
+		outputs,
+	)
+	.await;
+	// TODO: Capture end error
+	// Rt Step - End After All
+	runtime.step_aa_end(run_id).await?;
+	let ProcAfterAllResponse { after_all, outputs } = res?;
 
-		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, base_rt_ctx.with_stage(Stage::AfterAll))?;
-		let lua_scope = lua_engine.create_table()?;
-		let inputs = Value::Array(inputs);
-		lua_scope.set("inputs", lua_engine.serde_to_lua_value(inputs)?)?;
-		// Will be Value::Null if outputs were not collected
-		lua_scope.set("outputs", lua_engine.serde_to_lua_value(outputs_value)?)?;
-		lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all)?)?;
-		lua_scope.set("options", agent.options_as_ref())?;
-
-		// -- Rt Step - After All Start
-		runtime.step_aa_start(run_id).await?;
-
-		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
-
-		// -- Rt Step - After All End
-		runtime.step_aa_end(run_id).await?;
-
-		Some(serde_json::to_value(lua_value)?)
-	} else {
-		None
-	};
-
+	// -- For legacy tui
 	hub.publish(format!("\n======= COMPLETED: {}", agent.name())).await;
 
 	Ok(RunAgentResponse { after_all, outputs })
