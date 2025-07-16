@@ -114,9 +114,24 @@ fn parse_before_all_response(custom_data: Option<Value>) -> Result<BeforeAllResp
 
 			let inputs = match all_inputs {
 				Some(Value::Array(new_inputs)) => Some(new_inputs),
+
 				// if return inputs: Null, then will be None, which will have one input of Null below
 				// > Note to cancel run, we will allow return {_aipack_: {action: "skip"}} (not supported for now)
 				Some(Value::Null) => None,
+
+				Some(Value::Object(obj)) => {
+					// If object is empty, then, might be empty list (Lua does not make the distinction),
+					// so we treat it as such
+					if obj.is_empty() {
+						None
+					} else {
+						return Err(Error::BeforeAllFailWrongReturn {
+							cause: "aip.flow.before_all_response(arg) - 'arg.inputs` must be an nil, array, or empty object. But was an object with name/value."
+								.to_string(),
+						});
+					}
+				}
+
 				Some(_) => {
 					return Err(Error::BeforeAllFailWrongReturn {
 						cause: "aip.flow.before_all_response(arg) - 'arg.inputs` must be an nil or an array"
