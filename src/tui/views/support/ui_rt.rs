@@ -47,6 +47,7 @@ pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::SysError => ("Sys Error", styles::STL_SECTION_MARKER),
 		LogKind::SysDebug => ("Sys Debug", styles::STL_SECTION_MARKER),
 		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
+		LogKind::AgentSkip => ("Skip:", styles::STL_SECTION_MARKER),
 	};
 
 	support::ui_for_marker_section(content, marker_txt_style, max_width, None)

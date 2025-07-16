@@ -100,6 +100,7 @@ async fn run_agent_inner(
 	} = res?;
 	// skip
 	if skip {
+		runtime.set_run_end_state_to_skip(run_id)?;
 		return Ok(RunAgentResponse::default());
 	}
 

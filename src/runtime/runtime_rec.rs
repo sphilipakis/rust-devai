@@ -313,10 +313,21 @@ impl Runtime {
 
 	/// Mark the run as completed (end time, end_state)
 	pub async fn step_run_end_ok(&self, run_id: Id) -> Result<()> {
+		let mm = self.mm();
+
+		let run = RunBmc::get(mm, run_id)?;
+
+		// Only update end state if none
+		let end_state = if run.end_state.is_none() {
+			Some(EndState::Ok)
+		} else {
+			None
+		};
+
 		// -- Update Run State
 		let run_u = RunForUpdate {
 			end: Some(now_micro().into()),
-			end_state: Some(EndState::Ok),
+			end_state,
 			..Default::default()
 		};
 		RunBmc::update(self.mm(), run_id, run_u)?;
@@ -402,6 +413,20 @@ impl Runtime {
 
 	pub fn set_run_end_error(&self, run_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
 		RunBmc::set_end_error(self.mm(), run_id, stage, err)?;
+		Ok(())
+	}
+
+	/// Note: the rec log already happened (in the current design)
+	/// This does not set the end time
+	pub fn set_run_end_state_to_skip(&self, run_id: Id) -> Result<()> {
+		RunBmc::update(
+			self.mm(),
+			run_id,
+			RunForUpdate {
+				end_state: Some(EndState::Skip),
+				..Default::default()
+			},
+		)?;
 		Ok(())
 	}
 }
@@ -586,5 +611,76 @@ impl Runtime {
 
 	pub async fn rec_log_aa(&self, run_id: Id, msg: impl Into<String>, level: Option<LogKind>) -> Result<()> {
 		self.rec_log(run_id, None, None, Some(Stage::AfterAll), msg, level).await
+	}
+}
+
+/// Rec for specialize event (Skip, FileSave,)
+impl Runtime {
+	pub async fn rec_skip_task(&self, run_id: Id, task_id: Id, stage: Stage, reason: Option<String>) -> Result<()> {
+		let mm = self.mm();
+
+		let reason_txt = reason.as_ref().map(|r| format!(" (Reason: {r})")).unwrap_or_default();
+
+		// -- Update the Run end_skip_reason
+		TaskBmc::update(
+			mm,
+			task_id,
+			TaskForUpdate {
+				end_skip_reason: reason.clone(),
+				..Default::default()
+			},
+		)?;
+
+		// -- Update the log
+		let log_c = LogForCreate {
+			run_id,
+			task_id: Some(task_id),
+			step: None,
+			stage: Some(stage),
+			message: reason,
+			kind: Some(LogKind::AgentSkip),
+		};
+		LogBmc::create(mm, log_c)?;
+
+		// -- publish for legacy
+		get_hub()
+			.publish(format!("Aipack Skip input at {stage} stage: {reason_txt}"))
+			.await;
+
+		Ok(())
+	}
+
+	pub async fn rec_skip_run(&self, run_id: Id, stage: Stage, reason: Option<String>) -> Result<()> {
+		let mm = self.mm();
+
+		let reason_txt = reason.as_ref().map(|r| format!(" (Reason: {r})")).unwrap_or_default();
+
+		// -- Update the Run end_skip_reason
+		RunBmc::update(
+			mm,
+			run_id,
+			RunForUpdate {
+				end_skip_reason: reason.clone(),
+				..Default::default()
+			},
+		)?;
+
+		// -- Update the log
+		let log_c = LogForCreate {
+			run_id,
+			task_id: None,
+			step: None,
+			stage: Some(stage),
+			message: reason,
+			kind: Some(LogKind::AgentSkip),
+		};
+		LogBmc::create(mm, log_c)?;
+
+		// -- publish for legacy
+		get_hub()
+			.publish(format!("Aipack Skip input at {stage} stage: {reason_txt}"))
+			.await;
+
+		Ok(())
 	}
 }

@@ -96,16 +96,8 @@ async fn process_before_all_script(
 	let before_all_response = match AipackCustom::from_value(before_all_res)? {
 		// it is an skip action
 		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-			let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
-
-			// -- Rt Log - SysInfo message
-			runtime
-				.rec_log_ba(
-					run_id,
-					format!("Aipack Skip inputs at Before All section. {reason_msg}"),
-					Some(LogKind::SysInfo),
-				)
-				.await?;
+			// -- Rt Rec - Skip Run
+			runtime.rec_skip_run(run_id, Stage::BeforeAll, reason).await?;
 
 			return Ok(ProcBeforeAllResponse::new_skip(agent, inputs));
 		}

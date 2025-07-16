@@ -38,6 +38,7 @@ pub enum LogKind {
 	SysError,
 	SysDebug,
 	AgentPrint,
+	AgentSkip,
 }
 }
 

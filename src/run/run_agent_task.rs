@@ -7,7 +7,7 @@ use crate::run::literals::Literals;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
-use crate::store::rt_model::{LogKind, RuntimeCtx};
+use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, Stage};
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
@@ -65,7 +65,7 @@ pub async fn run_agent_task(
 	task_id: Id,
 	agent: &Agent,
 	before_all_result: Value,
-	label: &str,
+	_label: &str,
 	input: Value,
 	literals: &Literals,
 	run_base_options: &RunBaseOptions,
@@ -117,17 +117,7 @@ pub async fn run_agent_task(
 
 			// If we have a skip, we can skip
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-				let reason_txt = reason.map(|r| format!(" (Reason: {r})")).unwrap_or_default();
-
-				runtime
-					.rec_log_data(
-						run_id,
-						task_id,
-						format!("Aipack Skip input at Data stage: {label}{reason_txt}"),
-						Some(LogKind::SysInfo),
-					)
-					.await?;
-
+				runtime.rec_skip_task(run_id, task_id, Stage::Data, reason).await?;
 				return Ok(None);
 			}
 
