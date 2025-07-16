@@ -1,6 +1,7 @@
 // region:    --- Modules
 mod literals;
 mod pricing;
+mod proc_before_all;
 mod run_agent_task;
 
 mod ai_response;
