@@ -1,6 +1,6 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::store::{EndState, Id, ModelManager, Result, RunningState, TypedContent, UnixTimeUs};
+use crate::store::{EndState, Id, ModelManager, Result, RunningState, Stage, TypedContent, UnixTimeUs};
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -216,7 +216,12 @@ impl TaskBmc {
 		Self::list(mm, None, Some(filter))
 	}
 
-	pub fn end_with_error(mm: &ModelManager, task_id: Id, error: &crate::error::Error) -> Result<()> {
+	pub fn set_end_error(
+		mm: &ModelManager,
+		task_id: Id,
+		stage: Option<Stage>,
+		error: &crate::error::Error,
+	) -> Result<()> {
 		use crate::store::ContentTyp;
 		use crate::store::rt_model::{ErrBmc, ErrForCreate};
 
@@ -224,7 +229,7 @@ impl TaskBmc {
 
 		// -- Create the err rec
 		let err_c = ErrForCreate {
-			stage: None,
+			stage,
 			run_id: Some(task.run_id),
 			task_id: Some(task_id),
 			typ: Some(ContentTyp::Text),

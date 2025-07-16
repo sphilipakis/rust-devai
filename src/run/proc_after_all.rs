@@ -8,10 +8,14 @@ use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, Stage};
 use serde_json::Value;
 
+// region:    --- Types
+
 pub struct ProcAfterAllResponse {
 	pub after_all: Option<Value>,
 	pub outputs: Option<Vec<Value>>,
 }
+
+// endregion: --- Types
 
 #[allow(clippy::too_many_arguments)]
 pub async fn process_after_all(

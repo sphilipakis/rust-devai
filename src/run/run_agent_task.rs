@@ -4,9 +4,9 @@ use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
+use crate::run::proc_data::{ProcDataResponse, process_data};
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::script::{AipackCustom, DataResponse, FromValue};
 use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, Stage};
 use crate::support::hbs::hbs_render;
@@ -74,91 +74,39 @@ pub async fn run_agent_task(
 	let client = runtime.genai_client();
 
 	// -- Build Base Rt Context
-	let rt_ctx = RuntimeCtx::from_run_task_ids(runtime, Some(run_id), Some(task_id))?;
+	let base_rt_ctx = RuntimeCtx::from_run_task_ids(runtime, Some(run_id), Some(task_id))?;
 
-	// -- Extract the run model resolved
-	// (for comparison later)
-	let run_model_resolved = agent.model_resolved();
+	// -- Process Data Stage
+	// Rt Step - Start Data stage
+	runtime.step_task_data_start(run_id, task_id).await?;
+	let res = process_data(
+		runtime,
+		base_rt_ctx.clone(),
+		run_id,
+		task_id,
+		agent.clone(),
+		literals,
+		&before_all_result,
+		input,
+	)
+	.await;
+	// Capture error if any
+	if let Err(err) = res.as_ref() {
+		runtime.set_task_end_error(run_id, task_id, Some(Stage::Data), err)?;
+	}
+	// Rt Step - End Data stage
+	runtime.step_task_data_end(run_id, task_id).await?;
 
-	// -- Build the scope
-	// Note: Probably way to optimize the number of lua engine we create
-	//       However, nice to be they are fully scoped.
-	let lua_engine = runtime.new_lua_engine_with_ctx(literals, rt_ctx.with_stage(Stage::Data))?;
-
-	let lua_scope = lua_engine.create_table()?;
-	lua_scope.set("input", lua_engine.serde_to_lua_value(input.clone())?)?;
-	lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all_result.clone())?)?;
-	lua_scope.set("options", agent.options_as_ref())?;
-
-	let agent_dir = agent.file_dir()?;
-	let agent_dir_str = agent_dir.as_str();
-
-	// -- Execute data
-	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
-		// -- Rt Step - Data Start
-		runtime.step_task_data_start(run_id, task_id).await?;
-
-		// -- Exec
-		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir_str]))?;
-		let data_res = serde_json::to_value(lua_value)?;
-
-		// -- Rt Step - Start Dt Start
-		runtime.step_task_data_end(run_id, task_id).await?;
-
-		// -- Post Process
-		// skip input if aipack action is sent
-		match AipackCustom::from_value(data_res)? {
-			// If it is not a AipackCustom the data is the orginal value
-			FromValue::OriginalValue(data) => DataResponse {
-				data: Some(data),
-				input: Some(input),
-				..Default::default()
-			},
-
-			// If we have a skip, we can skip
-			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-				runtime.rec_skip_task(run_id, task_id, Stage::Data, reason).await?;
-				return Ok(None);
-			}
-
-			// We have a `return aip.flow.data_response(...)``
-			FromValue::AipackCustom(AipackCustom::DataResponse(DataResponse {
-				input: input_ov,
-				data,
-				options,
-			})) => DataResponse {
-				input: input_ov.or(Some(input)),
-				data,
-				options,
-			},
-
-			FromValue::AipackCustom(other) => {
-				return Err(format!(
-					"Aipack Custom '{other_ref}' is not supported at the Data stage",
-					other_ref = other.as_ref()
-				)
-				.into());
-			}
-		}
-	} else {
-		DataResponse {
-			input: Some(input),
-			data: None,
-			options: None,
-		}
-	};
-
-	// -- Normalize the context
-	let input = input.unwrap_or(Value::Null);
-	let data = data.unwrap_or(Value::Null);
-	// here we use cow, not not clone the agent if no options
-	let agent: Cow<Agent> = if let Some(options_to_merge) = options {
-		let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
-		let options_ov = agent.options_as_ref().merge_new(options_to_merge)?;
-		Cow::Owned(agent.new_merge(options_ov)?)
-	} else {
-		Cow::Borrowed(agent)
-	};
+	let ProcDataResponse {
+		agent,
+		input,
+		data,
+		run_model_resolved,
+		skip,
+	} = res?;
+	if skip {
+		return Ok(None);
+	}
 
 	let data_scope = HashMap::from([
 		// The hbs scope data
@@ -239,7 +187,7 @@ pub async fn run_agent_task(
 
 	// -- Now execute the instruction
 	let model_resolved = agent.model_resolved();
-	if run_model_resolved != model_resolved {
+	if &run_model_resolved != model_resolved {
 		// -- Rt Update Task - Model
 		runtime.update_task_model_ov(run_id, task_id, model_resolved).await?;
 	}
@@ -356,7 +304,7 @@ pub async fn run_agent_task(
 		runtime.step_task_output_start(run_id, task_id).await?;
 
 		// -- Create the Output Lua Engine
-		let lua_engine = runtime.new_lua_engine_with_ctx(literals, rt_ctx.with_stage(Stage::Output))?;
+		let lua_engine = runtime.new_lua_engine_with_ctx(literals, base_rt_ctx.with_stage(Stage::Output))?;
 
 		// -- Create the scope
 		let lua_scope = lua_engine.create_table()?;
@@ -366,7 +314,7 @@ pub async fn run_agent_task(
 		lua_scope.set("ai_response", ai_response)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
-		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent_dir_str]))?;
+		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
 		let output_response = serde_json::to_value(lua_value)?;
 
 		// -- Rt Step - end output

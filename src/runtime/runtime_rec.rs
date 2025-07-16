@@ -503,8 +503,8 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub fn end_task_with_error(&self, _run_id: Id, task_id: Id, err: &crate::Error) -> Result<()> {
-		TaskBmc::end_with_error(self.mm(), task_id, err)?;
+	pub fn set_task_end_error(&self, _run_id: Id, task_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
+		TaskBmc::set_end_error(self.mm(), task_id, stage, err)?;
 		Ok(())
 	}
 
