@@ -8,8 +8,8 @@ use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
 use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
-use crate::store::Id;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
+use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use mlua::IntoLua;
 use serde::Serialize;
@@ -44,21 +44,15 @@ pub async fn run_agent(
 	let run_agent_res = run_agent_inner(runtime, run_id, agent, inputs, run_base_options, return_output_values).await;
 
 	match run_agent_res.as_ref() {
-		// Nothing special when succes
 		// NOTE: Eventually we want to store the after all response as well
 		Ok(_ok_res) => {
-			// -- Run end with err
-			// NOTE: Now sure what we want to do with the error here
-			let _ = runtime.end_run_with_ok(run_id);
 			// -- Rt Step - End
-			runtime.step_run_end(run_id).await?;
+			runtime.step_run_end_ok(run_id).await?;
 		}
 		Err(err) => {
 			// -- Rt end with err
-			let res = runtime.end_run_with_error(run_id, err);
-			// -- Rt Step - End
-			runtime.step_run_end(run_id).await?;
-			res?;
+			// NOTE: If the run error is already set, it won't reset it.
+			runtime.step_run_end_err(run_id, err).await?;
 		}
 	}
 
@@ -91,7 +85,10 @@ async fn run_agent_inner(
 		inputs.clone(),
 	)
 	.await;
-	// TODO: Capture end error
+	// Capture error if anyway
+	if let Err(err) = res.as_ref() {
+		runtime.set_run_end_error(run_id, Some(Stage::BeforeAll), err)?;
+	}
 	// -- Rt Step - End Before All
 	runtime.step_ba_end(run_id).await?;
 
@@ -149,7 +146,10 @@ async fn run_agent_inner(
 		outputs,
 	)
 	.await;
-	// TODO: Capture end error
+	// Capture error if anyway
+	if let Err(err) = res.as_ref() {
+		runtime.set_run_end_error(run_id, Some(Stage::AfterAll), err)?;
+	}
 	// Rt Step - End After All
 	runtime.step_aa_end(run_id).await?;
 	let ProcAfterAllResponse { after_all, outputs } = res?;

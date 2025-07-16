@@ -1,7 +1,5 @@
 use crate::store::base::{self, DbBmc};
-use crate::store::rt_model::TaskBmc;
-use crate::store::{EndState, Id, ModelManager, Result, RunningState, UnixTimeUs};
-use crate::support::time::now_micro;
+use crate::store::{EndState, Id, ModelManager, Result, RunningState, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -155,14 +153,16 @@ impl RunBmc {
 		Self::list(mm, Some(options))
 	}
 
-	#[allow(unused)]
-	pub fn add_error(mm: &ModelManager, run_id: Id, error: crate::error::Error) -> Result<()> {
+	/// Create the ErrRec and assign it to this run, and set the end state
+	/// NOTE:
+	///   - This does not set the end time (just the end_state)
+	pub fn set_end_error(mm: &ModelManager, run_id: Id, stage: Option<Stage>, error: &crate::Error) -> Result<()> {
 		use crate::store::ContentTyp;
 		use crate::store::rt_model::{ErrBmc, ErrForCreate};
 
 		// -- Create the err rec
 		let err_c = ErrForCreate {
-			stage: None,
+			stage,
 			run_id: Some(run_id),
 			task_id: None,
 			typ: Some(ContentTyp::Text),
@@ -181,34 +181,34 @@ impl RunBmc {
 		Ok(())
 	}
 
-	pub fn end_with_error(mm: &ModelManager, run_id: Id, error: &crate::error::Error) -> Result<()> {
-		use crate::store::ContentTyp;
-		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+	// pub fn end_with_error(mm: &ModelManager, run_id: Id, error: &crate::error::Error) -> Result<()> {
+	// 	use crate::store::ContentTyp;
+	// 	use crate::store::rt_model::{ErrBmc, ErrForCreate};
 
-		// -- Create the err rec
-		let err_c = ErrForCreate {
-			stage: None,
-			run_id: Some(run_id),
-			task_id: None,
-			typ: Some(ContentTyp::Text),
-			content: Some(error.to_string()),
-		};
-		let err_id = ErrBmc::create(mm, err_c)?;
+	// 	// -- Create the err rec
+	// 	let err_c = ErrForCreate {
+	// 		stage: None,
+	// 		run_id: Some(run_id),
+	// 		task_id: None,
+	// 		typ: Some(ContentTyp::Text),
+	// 		content: Some(error.to_string()),
+	// 	};
+	// 	let err_id = ErrBmc::create(mm, err_c)?;
 
-		// -- Update the run
-		let run_u = RunForUpdate {
-			end: Some(now_micro().into()),
-			end_state: Some(EndState::Err),
-			end_err_id: Some(err_id),
-			..Default::default()
-		};
-		Self::update(mm, run_id, run_u)?;
+	// 	// -- Update the run
+	// 	let run_u = RunForUpdate {
+	// 		end: Some(now_micro().into()),
+	// 		end_state: Some(EndState::Err),
+	// 		end_err_id: Some(err_id),
+	// 		..Default::default()
+	// 	};
+	// 	Self::update(mm, run_id, run_u)?;
 
-		// -- Now update all the tasks of the run
-		TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
+	// 	// -- Now update all the tasks of the run
+	// 	TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
 
-		Ok(())
-	}
+	// 	Ok(())
+	// }
 }
 
 // endregion: --- Bmc

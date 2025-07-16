@@ -252,7 +252,7 @@ fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool)
 				}
 
 				// Render log lines
-				let log_lines = support::ui_for_log(log, max_width);
+				let log_lines = support::ui_for_log(&log, max_width);
 				lines.extend(log_lines);
 				lines.push(Line::default()); // empty line (for now)
 			}

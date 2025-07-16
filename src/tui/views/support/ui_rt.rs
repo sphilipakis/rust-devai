@@ -15,7 +15,7 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 		Ok(err_rec) => {
 			let content = err_rec.content.unwrap_or_default();
 			let content = if let Some(stage) = err_rec.stage {
-				format!("Error at stage {stage}.\ncontent")
+				format!("Error at stage {stage}:\n{content}")
 			} else {
 				content
 			};
@@ -30,7 +30,7 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 	}
 }
 
-pub fn ui_for_log(log: Log, max_width: u16) -> Vec<Line<'static>> {
+pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
 		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
 	};

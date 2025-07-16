@@ -311,14 +311,47 @@ impl Runtime {
 		Ok(())
 	}
 
-	/// Mark the run as completed.
-	pub async fn step_run_end(&self, run_id: Id) -> Result<()> {
+	/// Mark the run as completed (end time, end_state)
+	pub async fn step_run_end_ok(&self, run_id: Id) -> Result<()> {
 		// -- Update Run State
+		let run_u = RunForUpdate {
+			end: Some(now_micro().into()),
+			end_state: Some(EndState::Ok),
+			..Default::default()
+		};
+		RunBmc::update(self.mm(), run_id, run_u)?;
+
+		// -- Add log line
+		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogKind::RunStep))
+			.await?;
+
+		Ok(())
+	}
+
+	/// Mark the run as ended but with error
+	/// NOTE: if the err_id is already there, just do not create a new one.
+	///       However, it not there, will create new one.
+	pub async fn step_run_end_err(&self, run_id: Id, err: &crate::Error) -> Result<()> {
+		let mm = self.mm();
+
+		let run = RunBmc::get(mm, run_id)?;
+
+		// -- if we do not have a end_err_id, we set this one
+		// Note: this will se the end_state as well
+		if run.end_err_id.is_none() {
+			RunBmc::set_end_error(mm, run_id, None, err)?;
+		}
+
+		// -- Then set the end time
+		// No need to set end_state was done by set_end_error
 		let run_u = RunForUpdate {
 			end: Some(now_micro().into()),
 			..Default::default()
 		};
-		RunBmc::update(self.mm(), run_id, run_u)?;
+		RunBmc::update(mm, run_id, run_u)?;
+
+		// -- Now update all the tasks of the run
+		TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
 
 		// -- Add log line
 		self.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogKind::RunStep))
@@ -367,20 +400,8 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub fn end_run_with_ok(&self, run_id: Id) -> Result<()> {
-		RunBmc::update(
-			self.mm(),
-			run_id,
-			RunForUpdate {
-				end_state: Some(EndState::Ok),
-				..Default::default()
-			},
-		)?;
-
-		Ok(())
-	}
-	pub fn end_run_with_error(&self, run_id: Id, err: &crate::Error) -> Result<()> {
-		RunBmc::end_with_error(self.mm(), run_id, err)?;
+	pub fn set_run_end_error(&self, run_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
+		RunBmc::set_end_error(self.mm(), run_id, stage, err)?;
 		Ok(())
 	}
 }
