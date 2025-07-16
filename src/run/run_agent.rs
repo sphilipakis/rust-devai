@@ -78,7 +78,6 @@ async fn run_agent_inner(
 	let base_rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
 
 	// -- Process Before All
-	// TODO: Here we should capture the ERROR for this stage
 	let ProcBeforeAllResponse {
 		before_all,
 		agent,
@@ -99,125 +98,25 @@ async fn run_agent_inner(
 	}
 
 	// -- Print the run info
-	let genai_info = get_genai_info(&agent);
-	// display relative agent path if possible
-	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
-		Ok(path) => path.to_string(),
-		Err(_) => agent.file_path().to_string(),
-	};
+	print_run_info(runtime, run_id, &agent).await?;
 
-	// Show the message
-	let model_str: &str = agent.model();
-	let model_resolved_str: &str = agent.model_resolved();
-	let model_info = if model_str != model_resolved_str {
-		format!("{model_str} ({model_resolved_str})")
-	} else {
-		model_resolved_str.to_string()
-	};
-	let agent_name = agent.name();
-
-	let mut agent_info: Option<String> = None;
-	if let AgentRef::PackRef(pack_ref) = agent.agent_ref() {
-		let kind_pretty = pack_ref.repo_kind.to_pretty_lower();
-		let pack_ref = pack_ref.to_string();
-		agent_info = Some(format!(" ({pack_ref} from {kind_pretty})"))
-	}
-	let agent_info = agent_info.as_deref().unwrap_or_default();
-	// TODO: might simplify message
-	let msg = format!(
-		"Running agent command: {agent_name}{agent_info}\n                 from: {agent_path}\n   with default model: {model_info}{genai_info}"
-	);
-
-	// -- Rt Rec - Message
-	runtime.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await?;
-
-	// -- Initialize outputs for capture
-	let mut captured_outputs: Option<Vec<(usize, Value)>> =
-		if agent.after_all_script().is_some() || return_output_values {
-			Some(Vec::new())
-		} else {
-			None
-		};
-
-	// extract concurrency
-	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
-
-	// -- Rt Update - model name & concurrency
-	let _ = runtime
-		.update_run_model_and_concurrency(run_id, agent.model_resolved(), concurrency)
-		.await;
-
-	// -- Run the Tasks
-	let mut join_set = JoinSet::new();
-	let mut in_progress = 0;
-
-	// -- Rt Step - Tasks Start
+	// -- Run Tasks
+	// Rt Step - Tasks Start
 	runtime.step_tasks_start(run_id).await?;
-
-	// -- Rt Create all tasks (with their input)
-	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
-	for (idx, input) in inputs.clone().into_iter().enumerate() {
-		let task_id = runtime.create_task(run_id, idx, &input).await?;
-		input_idx_task_id_list.push((input, idx, task_id));
-	}
-
-	// -- Iterate and run each task (concurrency as setup)
-	for (input, task_idx, task_id) in input_idx_task_id_list {
-		let runtime_clone = runtime.clone();
-		let agent_clone = agent.clone();
-		let before_all_clone = before_all.clone();
-		let literals = literals.clone();
-
-		let base_run_config_clone = run_base_options.clone();
-
-		// -- Spawn tasks up to the concurrency limit
-		let rt = runtime.clone();
-		join_set.spawn(async move {
-			// -- Rt Step - Task Start
-			let _ = rt.step_task_start(run_id, task_id).await;
-
-			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
-			let run_task_response = run_agent_task_outer(
-				run_id,
-				task_id,
-				task_idx,
-				&runtime_clone,
-				&agent_clone,
-				before_all_clone,
-				input,
-				&literals,
-				&base_run_config_clone,
-			)
-			.await
-			.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
-
-			let output = process_agent_response_to_output(&rt, task_id, run_task_response)
-				.await
-				.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
-
-			Ok(JoinSetOk::new(run_id, task_id, task_idx, output))
-		});
-
-		in_progress += 1;
-
-		// If we've reached the concurrency limit, wait for one task to complete
-		if in_progress >= concurrency {
-			if let Some(res) = join_set.join_next().await {
-				// Note: for now, we will stop on first error
-				process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
-			}
-		}
-	}
-
-	// Wait for the remaining tasks to complete
-	while in_progress > 0 {
-		if let Some(res) = join_set.join_next().await {
-			process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
-		}
-	}
-
-	// -- Rt Step - Tasks End
+	let captured_outputs_res = run_tasks(
+		runtime,
+		run_id,
+		&agent,
+		&literals,
+		run_base_options,
+		&before_all,
+		&inputs,
+		return_output_values,
+	)
+	.await;
+	// Rt Step - Tasks End
 	runtime.step_tasks_end(run_id).await?;
+	let captured_outputs = captured_outputs_res?;
 
 	// -- Post-process outputs
 	let outputs = if let Some(mut captured_outputs) = captured_outputs {
@@ -308,6 +207,139 @@ async fn run_agent_task_outer(
 	hub.publish(format!("==== DONE (input: {label})")).await;
 
 	Ok(run_response)
+}
+
+async fn print_run_info(runtime: &Runtime, run_id: Id, agent: &Agent) -> Result<()> {
+	let genai_info = get_genai_info(agent);
+	// display relative agent path if possible
+	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
+		Ok(path) => path.to_string(),
+		Err(_) => agent.file_path().to_string(),
+	};
+
+	// Show the message
+	let model_str: &str = agent.model();
+	let model_resolved_str: &str = agent.model_resolved();
+	let model_info = if model_str != model_resolved_str {
+		format!("{model_str} ({model_resolved_str})")
+	} else {
+		model_resolved_str.to_string()
+	};
+	let agent_name = agent.name();
+
+	let mut agent_info: Option<String> = None;
+	if let AgentRef::PackRef(pack_ref) = agent.agent_ref() {
+		let kind_pretty = pack_ref.repo_kind.to_pretty_lower();
+		let pack_ref = pack_ref.to_string();
+		agent_info = Some(format!(" ({pack_ref} from {kind_pretty})"))
+	}
+	let agent_info = agent_info.as_deref().unwrap_or_default();
+	// TODO: might simplify message
+	let msg = format!(
+		"Running agent command: {agent_name}{agent_info}\n                 from: {agent_path}\n   with default model: {model_info}{genai_info}"
+	);
+
+	// -- Rt Rec - Message
+	runtime.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await?;
+
+	Ok(())
+}
+
+/// Return the captured output if asked
+#[allow(clippy::too_many_arguments)]
+async fn run_tasks(
+	runtime: &Runtime,
+	run_id: Id,
+	agent: &Agent,
+	literals: &Literals,
+	run_base_options: &RunBaseOptions,
+	before_all: &Value,
+	inputs: &[Value],
+	return_output_values: bool,
+) -> Result<Option<Vec<(usize, Value)>>> {
+	// -- Initialize outputs for capture
+	let mut captured_outputs: Option<Vec<(usize, Value)>> =
+		if agent.after_all_script().is_some() || return_output_values {
+			Some(Vec::new())
+		} else {
+			None
+		};
+
+	// extract concurrency
+	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
+
+	// -- Rt Update - model name & concurrency
+	let _ = runtime
+		.update_run_model_and_concurrency(run_id, agent.model_resolved(), concurrency)
+		.await;
+
+	// -- Run the Tasks
+	let mut join_set = JoinSet::new();
+	let mut in_progress = 0;
+
+	// -- Rt Create all tasks (with their input)
+	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
+	for (idx, input) in inputs.iter().cloned().enumerate() {
+		let task_id = runtime.create_task(run_id, idx, &input).await?;
+		input_idx_task_id_list.push((input, idx, task_id));
+	}
+
+	// -- Iterate and run each task (concurrency as setup)
+	for (input, task_idx, task_id) in input_idx_task_id_list {
+		let runtime_clone = runtime.clone();
+		let agent_clone = agent.clone();
+		let before_all_clone = before_all.clone();
+		let literals = literals.clone();
+
+		let base_run_config_clone = run_base_options.clone();
+
+		// -- Spawn tasks up to the concurrency limit
+		let rt = runtime.clone();
+		join_set.spawn(async move {
+			// -- Rt Step - Task Start
+			let _ = rt.step_task_start(run_id, task_id).await;
+
+			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
+			let run_task_response = run_agent_task_outer(
+				run_id,
+				task_id,
+				task_idx,
+				&runtime_clone,
+				&agent_clone,
+				before_all_clone,
+				input,
+				&literals,
+				&base_run_config_clone,
+			)
+			.await
+			.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
+
+			let output = process_agent_response_to_output(&rt, task_id, run_task_response)
+				.await
+				.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
+
+			Ok(JoinSetOk::new(run_id, task_id, task_idx, output))
+		});
+
+		in_progress += 1;
+
+		// If we've reached the concurrency limit, wait for one task to complete
+		if in_progress >= concurrency {
+			if let Some(res) = join_set.join_next().await {
+				// Note: for now, we will stop on first error
+				process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+			}
+		}
+	}
+
+	// Wait for the remaining tasks to complete
+	while in_progress > 0 {
+		if let Some(res) = join_set.join_next().await {
+			process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+		}
+	}
+
+	Ok(captured_outputs)
 }
 
 // region:    --- RunCommandResponse
