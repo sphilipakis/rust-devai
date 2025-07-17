@@ -85,6 +85,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_
 // -- Setion Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
+pub const STL_SECTION_MARKER_SKIP: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
 pub const STL_SECTION_MARKER_ERR: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_RED);
 pub const STL_SECTION_MARKER_AI: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_YELLOW);

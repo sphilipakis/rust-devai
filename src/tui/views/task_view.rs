@@ -1,5 +1,5 @@
-use crate::store::ModelManager;
 use crate::store::rt_model::{LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::{EndState, ModelManager};
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, styles};
@@ -232,6 +232,9 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 }
 
 fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+	if matches!(task.end_state, Some(EndState::Skip)) {
+		return Vec::new();
+	}
 	let marker_txt = "Output:";
 	let marker_style = styles::STL_SECTION_MARKER_OUTPUT;
 	match TaskBmc::get_output_for_display(mm, task) {
