@@ -196,7 +196,8 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 
 fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "AI:";
-	let marker_style = styles::STL_SECTION_MARKER_AI;
+	let marker_style_active = styles::STL_SECTION_MARKER_AI;
+	let marker_stype_inactive = styles::STL_SECTION_MARKER;
 	let model_name = task
 		.model_ov
 		.as_ref()
@@ -204,18 +205,27 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 		.map(|v| v.as_str())
 		.unwrap_or_default();
 
-	let content = match (task.ai_start, task.ai_end) {
-		(Some(_start), None) => Some(format!("➜ Sending prompt to AI model {model_name}.")),
-		(Some(_start), Some(_end)) => {
+	let ai_stage_done = task.ai_start.is_some() && task.ai_end.is_some();
+
+	let (content, style) = match (ai_stage_done, task.ai_gen_start, task.ai_gen_end) {
+		(_, Some(_start), None) => (
+			Some(format!("➜ Sending prompt to AI model {model_name}.")),
+			marker_style_active,
+		),
+		(_, Some(_start), Some(_end)) => {
 			// let cost = state.current_task_cost_fmt();
 			// let compl = state.current_task_completion_tokens_fmt();
-			Some(format!("✔ AI model {model_name} responded."))
+			(Some(format!("✔ AI model {model_name} responded.")), marker_style_active)
 		}
-		_ => None,
+		(true, None, None) => (
+			Some(". No instruction given. GenAI Skipped.".to_string()),
+			marker_stype_inactive,
+		),
+		_ => (None, marker_stype_inactive),
 	};
 
 	if let Some(content) = content {
-		support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None)
+		support::ui_for_marker_section(&content, (marker_txt, style), max_width, None)
 	} else {
 		Vec::new()
 	}
