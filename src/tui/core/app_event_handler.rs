@@ -104,8 +104,8 @@ async fn handle_hub_event(mm: &ModelManager, hub_event: &HubEvent) -> Result<()>
 
 		// -- Handle Lua Action
 		// NOTE: for now, just the LuaPrint, but we will generialize it
-		HubEvent::LuaPrint(msg, rt_ctx) => {
-			LogBmc::create_log_with_rt_ctx(mm, rt_ctx, LogKind::AgentPrint, msg.as_ref())?;
+		HubEvent::LuaPrint(_msg) => {
+			// NOW, we do this in the aip lua print directly otherwise out of order with other log events, like skip
 		}
 
 		// -- Error

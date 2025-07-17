@@ -596,9 +596,6 @@ impl Runtime {
 	}
 }
 
-/// For Error Captures
-impl Runtime {}
-
 /// Rec for the log
 impl Runtime {
 	async fn rec_log(

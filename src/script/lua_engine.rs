@@ -4,7 +4,7 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
-use crate::store::rt_model::RuntimeCtx;
+use crate::store::rt_model::{LogKind, RuntimeCtx};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -32,7 +32,7 @@ impl LuaEngine {
 		// super::aip_flow::init_module(&lua, &runtime)?;
 
 		// -- Init print
-		init_print(&lua)?;
+		init_print(&runtime, &lua)?;
 
 		// -- Build and return
 		let engine = LuaEngine { lua, runtime };
@@ -150,8 +150,10 @@ impl LuaEngine {
 
 // region:    --- Init Print
 
-fn init_print(lua: &Lua) -> Result<()> {
+fn init_print(runtime: &Runtime, lua: &Lua) -> Result<()> {
 	let globals = lua.globals();
+
+	let rt = runtime.clone();
 
 	globals.set(
 		"print",
@@ -174,7 +176,10 @@ fn init_print(lua: &Lua) -> Result<()> {
 
 			// -- Send it to the pub event
 			let ctx = RuntimeCtx::extract_from_global(lua)?;
-			get_hub().publish_sync(HubEvent::LuaPrint(text.into(), ctx));
+			rt.rec_log_with_rt_ctx(&ctx, LogKind::AgentPrint, &text)?;
+
+			// -- For legacy tui
+			get_hub().publish_sync(HubEvent::LuaPrint(text.into()));
 
 			Ok(())
 		})?,
