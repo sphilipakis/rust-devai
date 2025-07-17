@@ -33,6 +33,9 @@ pub async fn process_ai(
 ) -> Result<ProcAiResponse> {
 	let hub = get_hub();
 
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	let data_scope = HashMap::from([
 		// The hbs scope data
 		// Note: for now, we do not add the before all
@@ -115,12 +118,12 @@ pub async fn process_ai(
 	let model_resolved = agent.model_resolved();
 	if run_model_resolved != model_resolved {
 		// -- Rt Update Task - Model
-		runtime.update_task_model_ov(run_id, task_id, model_resolved).await?;
+		rt_model.update_task_model_ov(run_id, task_id, model_resolved).await?;
 	}
 
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
 		// Rt Step Ai Gen start
-		runtime.step_task_ai_gen_start(run_id, task_id).await?;
+		rt_step.step_task_ai_gen_start(run_id, task_id).await?;
 
 		let res = process_send_to_genai(
 			runtime,
@@ -135,7 +138,7 @@ pub async fn process_ai(
 		.await;
 
 		// Rt Step Ai Gen end
-		runtime.step_task_ai_gen_end(run_id, task_id).await?;
+		rt_step.step_task_ai_gen_end(run_id, task_id).await?;
 
 		let ai_response = res?;
 		Some(ai_response)
@@ -162,13 +165,16 @@ async fn process_send_to_genai(
 ) -> Result<AiResponse> {
 	let hub = get_hub();
 
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	let chat_req = ChatRequest::from_messages(chat_messages);
 
 	hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
 		.await;
 
 	// -- Rt Step - start AI
-	runtime.step_task_ai_start(run_id, task_id).await?;
+	rt_step.step_task_ai_start(run_id, task_id).await?;
 
 	let start = Instant::now();
 	let chat_res = client
@@ -177,7 +183,7 @@ async fn process_send_to_genai(
 	let duration = start.elapsed();
 
 	// -- Rt Step - end AI
-	runtime.step_task_ai_end(run_id, task_id).await?;
+	rt_step.step_task_ai_end(run_id, task_id).await?;
 
 	// region:    --- First Info Part
 
@@ -193,7 +199,7 @@ async fn process_send_to_genai(
 
 	// -- Rt Rec - Update Cost
 	if let Some(price_usd) = price_usd {
-		let _ = runtime.update_task_cost(run_id, task_id, price_usd).await;
+		let _ = rt_model.update_task_cost(run_id, task_id, price_usd).await;
 	}
 
 	// add to info
@@ -222,7 +228,7 @@ async fn process_send_to_genai(
 	} = chat_res;
 
 	// -- Rt Rec - Update Task Usage
-	runtime.update_task_usage(run_id, task_id, &usage).await?;
+	rt_model.update_task_usage(run_id, task_id, &usage).await?;
 
 	let content = content
 		.into_iter()

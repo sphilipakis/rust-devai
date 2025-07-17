@@ -43,6 +43,9 @@ pub async fn process_data(
 	before_all: &Value,
 	input: Value,
 ) -> Result<ProcDataResponse> {
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	// -- Extract the run model resolved
 	// (for comparison later)
 	let run_model_resolved = agent.model_resolved().clone();
@@ -62,14 +65,14 @@ pub async fn process_data(
 		lua_scope.set("options", agent.options_as_ref())?;
 
 		// -- Rt Step - Data Start
-		runtime.step_task_data_start(run_id, task_id).await?;
+		rt_step.step_task_data_start(run_id, task_id).await?;
 
 		// -- Exec
 		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir.as_str()]))?;
 		let data_res = serde_json::to_value(lua_value)?;
 
 		// -- Rt Step - Start Dt Start
-		runtime.step_task_data_end(run_id, task_id).await?;
+		rt_step.step_task_data_end(run_id, task_id).await?;
 
 		// -- Post Process
 		// skip input if aipack action is sent
@@ -83,7 +86,7 @@ pub async fn process_data(
 
 			// If we have a skip, we can skip
 			FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-				runtime.rec_skip_task(run_id, task_id, Stage::Data, reason).await?;
+				rt_model.rec_skip_task(run_id, task_id, Stage::Data, reason).await?;
 				return Ok(ProcDataResponse::new_skip(agent, input, run_model_resolved));
 			}
 

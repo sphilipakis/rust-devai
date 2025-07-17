@@ -40,6 +40,8 @@ pub async fn process_before_all(
 	literals: Literals,
 	inputs: Option<Vec<Value>>,
 ) -> Result<ProcBeforeAllResponse> {
+	let rt_log = runtime.rt_log();
+
 	let rt_ctx = base_rt_ctx.with_stage(Stage::BeforeAll);
 
 	// -- Run the before all
@@ -65,7 +67,7 @@ pub async fn process_before_all(
 		res.agent.model(),
 		res.agent.options().input_concurrency().unwrap_or(1)
 	);
-	let _ = runtime.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await;
+	let _ = rt_log.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await;
 
 	Ok(res)
 }
@@ -78,6 +80,8 @@ async fn process_before_all_script(
 	literals: Literals,
 	inputs: Option<Vec<Value>>,
 ) -> Result<ProcBeforeAllResponse> {
+	let rt_model = runtime.rt_model();
+
 	// NOTE if where are here, we should have a script
 	let before_all_script = agent.before_all_script();
 	let before_all_script = before_all_script.unwrap_or_default();
@@ -97,7 +101,7 @@ async fn process_before_all_script(
 		// it is an skip action
 		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
 			// -- Rt Rec - Skip Run
-			runtime.rec_skip_run(run_id, Stage::BeforeAll, reason).await?;
+			rt_model.rec_skip_run(run_id, Stage::BeforeAll, reason).await?;
 
 			return Ok(ProcBeforeAllResponse::new_skip(agent, inputs));
 		}

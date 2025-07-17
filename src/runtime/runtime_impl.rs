@@ -5,6 +5,7 @@ use crate::hub::get_hub;
 use crate::run::{Literals, new_genai_client};
 use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
+use crate::runtime::{RtLog, RtModel, RtStep};
 use crate::script::LuaEngine;
 use crate::store::ModelManager;
 use crate::store::rt_model::RuntimeCtx;
@@ -21,7 +22,7 @@ pub struct Runtime {
 	inner: Arc<RuntimeInner>,
 }
 
-/// Constructors
+/// Constructors & Inner & Rt sub getters
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
@@ -45,6 +46,21 @@ impl Runtime {
 		let runtime = Self { inner: Arc::new(inner) };
 
 		Ok(runtime)
+	}
+
+	pub fn clone_inner(&self) -> Arc<RuntimeInner> {
+		Arc::clone(&self.inner)
+	}
+
+	pub fn rt_log(&self) -> RtLog {
+		RtLog::new(self)
+	}
+
+	pub fn rt_model(&self) -> RtModel {
+		RtModel::new(self)
+	}
+	pub fn rt_step(&self) -> RtStep {
+		RtStep::new(self)
 	}
 }
 

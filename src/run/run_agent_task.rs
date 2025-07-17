@@ -63,6 +63,9 @@ pub async fn run_agent_task(
 	literals: &Literals,
 	run_base_options: &RunBaseOptions,
 ) -> Result<Option<RunAgentInputResponse>> {
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	let client = runtime.genai_client();
 
 	// -- Build Base Rt Context
@@ -70,7 +73,7 @@ pub async fn run_agent_task(
 
 	// -- Process Data Stage
 	// Rt Step - Start Data stage
-	runtime.step_task_data_start(run_id, task_id).await?;
+	rt_step.step_task_data_start(run_id, task_id).await?;
 	let res = process_data(
 		runtime,
 		base_rt_ctx.clone(),
@@ -84,10 +87,10 @@ pub async fn run_agent_task(
 	.await;
 	// Capture error if any
 	if let Err(err) = res.as_ref() {
-		runtime.set_task_end_error(run_id, task_id, Some(Stage::Data), err)?;
+		rt_model.set_task_end_error(run_id, task_id, Some(Stage::Data), err)?;
 	}
 	// Rt Step - End Data stage
-	runtime.step_task_data_end(run_id, task_id).await?;
+	rt_step.step_task_data_end(run_id, task_id).await?;
 
 	let ProcDataResponse {
 		agent,
@@ -97,13 +100,13 @@ pub async fn run_agent_task(
 		skip,
 	} = res?;
 	if skip {
-		runtime.set_task_end_state_to_skip(run_id, task_id)?;
+		rt_model.set_task_end_state_to_skip(run_id, task_id)?;
 		return Ok(None);
 	}
 
 	// -- Execute genai if we have an instruction
 	// Rt Step - Start AI stage
-	runtime.step_task_ai_start(run_id, task_id).await?;
+	rt_step.step_task_ai_start(run_id, task_id).await?;
 	let res = process_ai(
 		runtime,
 		client,
@@ -119,11 +122,11 @@ pub async fn run_agent_task(
 	.await;
 	// Capture error if any
 	if let Err(err) = res.as_ref() {
-		runtime.set_task_end_error(run_id, task_id, Some(Stage::Ai), err)?;
+		rt_model.set_task_end_error(run_id, task_id, Some(Stage::Ai), err)?;
 	}
 	let ProcAiResponse { ai_response } = res?;
 	// Rt Step - End AI stage
-	runtime.step_task_ai_end(run_id, task_id).await?;
+	rt_step.step_task_ai_end(run_id, task_id).await?;
 
 	// -- if dry_mode res, we stop
 	if matches!(run_base_options.dry_mode(), DryMode::Res) {
@@ -132,7 +135,7 @@ pub async fn run_agent_task(
 
 	// -- Exec output
 	// -- Rt Step - start output
-	runtime.step_task_output_start(run_id, task_id).await?;
+	rt_step.step_task_output_start(run_id, task_id).await?;
 	let res = process_output(
 		runtime,
 		&base_rt_ctx,
@@ -146,10 +149,10 @@ pub async fn run_agent_task(
 	.await;
 	// Capture error if any
 	if let Err(err) = res.as_ref() {
-		runtime.set_task_end_error(run_id, task_id, Some(Stage::Output), err)?;
+		rt_model.set_task_end_error(run_id, task_id, Some(Stage::Output), err)?;
 	}
 	// -- Rt Step - end output
-	runtime.step_task_output_end(run_id, task_id).await?;
+	rt_step.step_task_output_end(run_id, task_id).await?;
 
 	res
 }

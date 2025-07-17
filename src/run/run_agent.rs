@@ -27,6 +27,9 @@ pub async fn run_agent(
 	run_base_options: &RunBaseOptions,
 	return_output_values: bool,
 ) -> Result<RunAgentResponse> {
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	// -- Trim the runtime db
 	// runtime.rec_trim().await?;
 	// display relative agent path if possible
@@ -36,10 +39,10 @@ pub async fn run_agent(
 	};
 
 	// -- Rt Create - New run
-	let run_id = runtime.create_run(agent.name(), &agent_path).await?;
+	let run_id = rt_model.create_run(agent.name(), &agent_path).await?;
 
 	// -- Rt Step - Start Run
-	let run_id = runtime.step_run_start(run_id).await?;
+	let run_id = rt_step.step_run_start(run_id).await?;
 
 	let run_agent_res = run_agent_inner(runtime, run_id, agent, inputs, run_base_options, return_output_values).await;
 
@@ -47,12 +50,12 @@ pub async fn run_agent(
 		// NOTE: Eventually we want to store the after all response as well
 		Ok(_ok_res) => {
 			// -- Rt Step - End
-			runtime.step_run_end_ok(run_id).await?;
+			rt_step.step_run_end_ok(run_id).await?;
 		}
 		Err(err) => {
 			// -- Rt end with err
 			// NOTE: If the run error is already set, it won't reset it.
-			runtime.step_run_end_err(run_id, err).await?;
+			rt_step.step_run_end_err(run_id, err).await?;
 		}
 	}
 
@@ -69,12 +72,15 @@ async fn run_agent_inner(
 ) -> Result<RunAgentResponse> {
 	let hub = get_hub();
 
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
+
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
 	let base_rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
 
 	// -- Process Before All
 	// Rt Step - Start Before All
-	runtime.step_ba_start(run_id).await?;
+	rt_step.step_ba_start(run_id).await?;
 	// process
 	let res = process_before_all(
 		runtime,
@@ -87,10 +93,10 @@ async fn run_agent_inner(
 	.await;
 	// Capture error if anyw
 	if let Err(err) = res.as_ref() {
-		runtime.set_run_end_error(run_id, Some(Stage::BeforeAll), err)?;
+		rt_model.set_run_end_error(run_id, Some(Stage::BeforeAll), err)?;
 	}
 	// -- Rt Step - End Before All
-	runtime.step_ba_end(run_id).await?;
+	rt_step.step_ba_end(run_id).await?;
 
 	let ProcBeforeAllResponse {
 		before_all,
@@ -100,7 +106,7 @@ async fn run_agent_inner(
 	} = res?;
 	// skip
 	if skip {
-		runtime.set_run_end_state_to_skip(run_id)?;
+		rt_model.set_run_end_state_to_skip(run_id)?;
 		return Ok(RunAgentResponse::default());
 	}
 
@@ -109,7 +115,7 @@ async fn run_agent_inner(
 
 	// -- Run Tasks
 	// Rt Step - Tasks Start
-	runtime.step_tasks_start(run_id).await?;
+	rt_step.step_tasks_start(run_id).await?;
 	let captured_outputs_res = run_tasks(
 		runtime,
 		run_id,
@@ -122,7 +128,7 @@ async fn run_agent_inner(
 	)
 	.await;
 	// Rt Step - Tasks End
-	runtime.step_tasks_end(run_id).await?;
+	rt_step.step_tasks_end(run_id).await?;
 	let captured_outputs = captured_outputs_res?;
 
 	// -- Post-process outputs
@@ -135,7 +141,7 @@ async fn run_agent_inner(
 
 	// -- Process After All
 	// Rt Step - Start After All
-	runtime.step_aa_start(run_id).await?;
+	rt_step.step_aa_start(run_id).await?;
 	let res = process_after_all(
 		runtime,
 		base_rt_ctx,
@@ -149,10 +155,10 @@ async fn run_agent_inner(
 	.await;
 	// Capture error if any
 	if let Err(err) = res.as_ref() {
-		runtime.set_run_end_error(run_id, Some(Stage::AfterAll), err)?;
+		rt_model.set_run_end_error(run_id, Some(Stage::AfterAll), err)?;
 	}
 	// Rt Step - End After All
-	runtime.step_aa_end(run_id).await?;
+	rt_step.step_aa_end(run_id).await?;
 	let ProcAfterAllResponse { after_all, outputs } = res?;
 
 	// -- For legacy tui
@@ -210,6 +216,8 @@ async fn run_agent_task_outer(
 }
 
 async fn print_run_info(runtime: &Runtime, run_id: Id, agent: &Agent) -> Result<()> {
+	let rt_log = runtime.rt_log();
+
 	let genai_info = get_genai_info(agent);
 	// display relative agent path if possible
 	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
@@ -240,7 +248,7 @@ async fn print_run_info(runtime: &Runtime, run_id: Id, agent: &Agent) -> Result<
 	);
 
 	// -- Rt Rec - Message
-	runtime.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await?;
+	rt_log.rec_log_run(run_id, msg, Some(LogKind::SysInfo)).await?;
 
 	Ok(())
 }
@@ -257,6 +265,8 @@ async fn run_tasks(
 	inputs: &[Value],
 	return_output_values: bool,
 ) -> Result<Option<Vec<(usize, Value)>>> {
+	let rt_model = runtime.rt_model();
+
 	// -- Initialize outputs for capture
 	let mut captured_outputs: Option<Vec<(usize, Value)>> =
 		if agent.after_all_script().is_some() || return_output_values {
@@ -269,7 +279,7 @@ async fn run_tasks(
 	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
 
 	// -- Rt Update - model name & concurrency
-	let _ = runtime
+	let _ = rt_model
 		.update_run_model_and_concurrency(run_id, agent.model_resolved(), concurrency)
 		.await;
 
@@ -280,7 +290,7 @@ async fn run_tasks(
 	// -- Rt Create all tasks (with their input)
 	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
 	for (idx, input) in inputs.iter().cloned().enumerate() {
-		let task_id = runtime.create_task(run_id, idx, &input).await?;
+		let task_id = rt_model.create_task(run_id, idx, &input).await?;
 		input_idx_task_id_list.push((input, idx, task_id));
 	}
 
@@ -296,8 +306,10 @@ async fn run_tasks(
 		// -- Spawn tasks up to the concurrency limit
 		let rt = runtime.clone();
 		join_set.spawn(async move {
+			let rt_step = rt.rt_step();
+
 			// -- Rt Step - Task Start
-			let _ = rt.step_task_start(run_id, task_id).await;
+			let _ = rt_step.step_task_start(run_id, task_id).await;
 
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
 			let run_task_response = run_agent_task_outer(
@@ -410,11 +422,13 @@ impl JoinSetErr {
 }
 
 async fn process_agent_response_to_output(
-	rt: &Runtime,
+	runtime: &Runtime,
 	task_id: Id,
 	run_task_response: Option<RunAgentInputResponse>,
 ) -> Result<Value> {
 	let hub = get_hub();
+
+	let rt_model = runtime.rt_model();
 
 	// Process the output
 	let run_input_value = run_task_response.map(|v| v.into_value()).unwrap_or_default();
@@ -442,19 +456,21 @@ async fn process_agent_response_to_output(
 	};
 
 	// -- Rt Rec - Update the task output
-	rt.update_task_output(task_id, &output).await?;
+	rt_model.update_task_output(task_id, &output).await?;
 	Ok(output)
 }
 
 // Here we process the reponse of the join set spawn
 // - Add the output
 async fn process_join_set_result(
-	rt: &Runtime,
+	runtime: &Runtime,
 	// (task_id, task_idx, output)
 	join_res: core::result::Result<JoinSetResult, JoinError>,
 	in_progress: &mut usize,
 	captured_outputs: &mut Option<Vec<(usize, Value)>>,
 ) -> Result<()> {
+	let rt_step = runtime.rt_step();
+
 	*in_progress -= 1;
 
 	match join_res {
@@ -470,7 +486,7 @@ async fn process_join_set_result(
 			}
 			// -- Rt Step - Task End
 			// ->> To remove (Should be done at the run_task..)
-			rt.step_task_end_ok(run_id, task_id).await?;
+			rt_step.step_task_end_ok(run_id, task_id).await?;
 
 			Ok(())
 		}
@@ -484,7 +500,7 @@ async fn process_join_set_result(
 
 			// -- Rt Step - Task End
 			// ->> To remove (Should be done at the run_task..)
-			rt.step_task_end_err(run_id, task_id, &err).await?;
+			rt_step.step_task_end_err(run_id, task_id, &err).await?;
 
 			Err(err)
 		}
