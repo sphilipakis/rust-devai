@@ -70,14 +70,16 @@ CREATE TABLE IF NOT EXISTS task (
 		idx    INTEGER, -- Relative to the run (as created by Run)
 		
 		-- Step Timestamps
-		start         INTEGER,
-		data_start    INTEGER,    
-		data_end      INTEGER,
-		ai_start      INTEGER,
-		ai_end        INTEGER,
-		output_start  INTEGER,
-		output_end    INTEGER,
-		end           INTEGER,
+		start          INTEGER,
+		data_start     INTEGER,    
+		data_end       INTEGER,
+		ai_start       INTEGER,
+		ai_gen_start   INTEGER,
+		ai_gen_end     INTEGER,
+		ai_end         INTEGER,
+		output_start   INTEGER,
+		output_end     INTEGER,
+		end            INTEGER,
 
 		-- End state & Data
 		end_state        TEXT,

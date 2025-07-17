@@ -96,6 +96,7 @@ pub async fn run_agent_task(
 		skip,
 	} = res?;
 	if skip {
+		runtime.set_task_end_state_to_skip(run_id, task_id)?;
 		return Ok(None);
 	}
 
@@ -119,10 +120,9 @@ pub async fn run_agent_task(
 	if let Err(err) = res.as_ref() {
 		runtime.set_task_end_error(run_id, task_id, Some(Stage::Ai), err)?;
 	}
-	let ProcAiResponse { skip, ai_response } = res?;
-	if skip {
-		return Ok(None);
-	}
+	let ProcAiResponse { ai_response } = res?;
+	// Rt Step - End AI stage
+	runtime.step_task_ai_end(run_id, task_id).await?;
 
 	// -- if dry_mode res, we stop
 	if matches!(run_base_options.dry_mode(), DryMode::Res) {

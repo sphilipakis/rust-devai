@@ -194,6 +194,48 @@ impl Runtime {
 		Ok(())
 	}
 
+	pub async fn step_task_ai_gen_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			ai_gen_start: Some(now_micro().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskAiStart),
+			None,
+			Some(LogKind::RunStep),
+		)
+		.await?;
+
+		Ok(())
+	}
+
+	pub async fn step_task_ai_gen_end(&self, run_id: Id, task_id: Id) -> Result<()> {
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			ai_gen_end: Some(now_micro().into()),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
+
+		// -- Add log line
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskAiStart),
+			None,
+			Some(LogKind::RunStep),
+		)
+		.await?;
+
+		Ok(())
+	}
+
 	pub async fn step_task_ai_end(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
@@ -257,14 +299,58 @@ impl Runtime {
 		Ok(())
 	}
 
-	/// NOTE: This is a success end so the end_d
-	pub async fn step_task_end(&self, run_id: Id, task_id: Id) -> Result<()> {
-		// -- Update Task
+	/// NOTE: Will update end_state if None
+	pub async fn step_task_end_ok(&self, run_id: Id, task_id: Id) -> Result<()> {
+		let mm = self.mm();
+
+		let task = TaskBmc::get(mm, task_id)?;
+
+		// Only update end state if none
+		let end_state = if task.end_state.is_none() {
+			Some(EndState::Ok)
+		} else {
+			None
+		};
+
+		// -- Update Task State
+		let task_u = TaskForUpdate {
+			end: Some(now_micro().into()),
+			end_state,
+			..Default::default()
+		};
+		TaskBmc::update(mm, task_id, task_u)?;
+
+		// -- Add log line
+		self.rec_log_no_msg(
+			run_id,
+			Some(task_id),
+			Some(RunStep::TaskEnd),
+			None,
+			Some(LogKind::RunStep),
+		)
+		.await?;
+
+		Ok(())
+	}
+
+	/// Note will update
+	pub async fn step_task_end_err(&self, run_id: Id, task_id: Id, err: &crate::Error) -> Result<()> {
+		let mm = self.mm();
+
+		let task = TaskBmc::get(mm, task_id)?;
+
+		// -- if we do not have a end_err_id, we set this one
+		// Note: this will se the end_state as well
+		if task.end_err_id.is_none() {
+			TaskBmc::set_end_error(mm, task_id, None, err)?;
+		}
+
+		// -- Update Task State
 		let task_u = TaskForUpdate {
 			end: Some(now_micro().into()),
 			..Default::default()
 		};
-		TaskBmc::update(self.mm(), task_id, task_u)?;
+		TaskBmc::update(mm, task_id, task_u)?;
 
 		// -- Add log line
 		self.rec_log_no_msg(
@@ -490,19 +576,6 @@ impl Runtime {
 		Ok(())
 	}
 
-	pub fn end_task_with_ok(&self, _run_id: Id, task_id: Id) -> Result<()> {
-		TaskBmc::update(
-			self.mm(),
-			task_id,
-			TaskForUpdate {
-				end_state: Some(EndState::Ok),
-				..Default::default()
-			},
-		)?;
-
-		Ok(())
-	}
-
 	pub fn set_task_end_error(&self, _run_id: Id, task_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
 		TaskBmc::set_end_error(self.mm(), task_id, stage, err)?;
 		Ok(())
@@ -629,7 +702,7 @@ impl Runtime {
 }
 
 /// Rec for specialize event (Skip, FileSave,)
-/// NOTE: Probably shoul put the end state as well
+/// NOTE: Probably should put the end state as well
 impl Runtime {
 	pub async fn rec_skip_task(&self, run_id: Id, task_id: Id, stage: Stage, reason: Option<String>) -> Result<()> {
 		let mm = self.mm();

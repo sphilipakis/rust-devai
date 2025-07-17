@@ -469,11 +469,8 @@ async fn process_join_set_result(
 				outputs_vec.push((task_idx, output));
 			}
 			// -- Rt Step - Task End
-			rt.step_task_end(run_id, task_id).await?;
-
-			// -- Rt Rec - Add task ok
-			// For now, we return the error as well
-			rt.end_task_with_ok(run_id, task_id)?;
+			// ->> To remove (Should be done at the run_task..)
+			rt.step_task_end_ok(run_id, task_id).await?;
 
 			Ok(())
 		}
@@ -486,13 +483,8 @@ async fn process_join_set_result(
 			} = join_set_err;
 
 			// -- Rt Step - Task End
-			// ->> To remove
-			rt.step_task_end(run_id, task_id).await?;
-
-			// -- Rt Rec - Add task error
-			// ->> TO remove
-			// For now, we return the error as well
-			// rt.end_task_with_error(run_id, task_id, &err)?;
+			// ->> To remove (Should be done at the run_task..)
+			rt.step_task_end_err(run_id, task_id, &err).await?;
 
 			Err(err)
 		}

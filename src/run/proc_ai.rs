@@ -15,7 +15,6 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 pub struct ProcAiResponse {
-	pub skip: bool,
 	pub ai_response: Option<AiResponse>,
 }
 
@@ -109,10 +108,7 @@ pub async fn process_ai(
 	// if dry_mode req, we stop
 	// NOTE: dry_mode will be checked also upstream
 	if matches!(run_base_options.dry_mode(), DryMode::Req) {
-		return Ok(ProcAiResponse {
-			skip: true,
-			ai_response: None,
-		});
+		return Ok(ProcAiResponse { ai_response: None });
 	}
 
 	// -- Now execute the instruction
@@ -123,118 +119,141 @@ pub async fn process_ai(
 	}
 
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
-		let chat_req = ChatRequest::from_messages(chat_messages);
+		// Rt Step Ai Gen start
+		runtime.step_task_ai_gen_start(run_id, task_id).await?;
 
-		hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
-			.await;
-
-		// -- Rt Step - start AI
-		runtime.step_task_ai_start(run_id, task_id).await?;
-
-		let start = Instant::now();
-		let chat_res = client
-			.exec_chat(model_resolved, chat_req, Some(agent.genai_chat_options()))
-			.await?;
-		let duration = start.elapsed();
-
-		// -- Rt Step - end AI
-		runtime.step_task_ai_end(run_id, task_id).await?;
-
-		// region:    --- First Info Part
-
-		let duration_msg = format!("Duration: {duration_str}", duration_str = format_duration(duration));
-		// this is for the duration in second with 3 digit for milli (for the AI Response)
-		let duration_sec = duration.as_secs_f64(); // Convert to f64
-		let duration_sec = (duration_sec * 1000.0).round() / 1000.0; // Round to 3 decimal places
-
-		let mut info = duration_msg;
-
-		// Compute the price
-		let price_usd = get_price(&chat_res);
-
-		// -- Rt Rec - Update Cost
-		if let Some(price_usd) = price_usd {
-			let _ = runtime.update_task_cost(run_id, task_id, price_usd).await;
-		}
-
-		// add to info
-		if let Some(price_usd) = price_usd {
-			info = format!("{info} | ~${price_usd}")
-		}
-
-		let usage_msg = format_usage(&chat_res.usage);
-		info = format!("{info} | {usage_msg}");
-
-		// endregion: --- First Info Part
-
-		hub.publish(format!(
-			"<- ai_response content received - {model_name} | {info}",
-			model_name = chat_res.provider_model_iden.model_name
-		))
+		let res = process_send_to_genai(
+			runtime,
+			client,
+			&agent,
+			run_base_options,
+			run_id,
+			task_id,
+			model_resolved,
+			chat_messages,
+		)
 		.await;
 
-		let ChatResponse {
-			content,
-			reasoning_content,
-			usage,
-			model_iden: res_model_iden,
-			provider_model_iden: res_provider_model_iden,
-			..
-		} = chat_res;
+		// Rt Step Ai Gen end
+		runtime.step_task_ai_gen_end(run_id, task_id).await?;
 
-		// -- Rt Rec - Update Task Usage
-		runtime.update_task_usage(run_id, task_id, &usage).await?;
-
-		let content = content
-			.into_iter()
-			.filter_map(|c| c.into_text())
-			.collect::<Vec<_>>()
-			.join("\n\n");
-
-		let ai_response_content = if content.is_empty() { None } else { Some(content) };
-		let ai_response_reasoning_content = reasoning_content;
-
-		let model_info = format_model(&agent, &res_model_iden, &res_provider_model_iden, &agent.options());
-		if run_base_options.verbose() {
-			hub.publish(format!(
-				"\n-- AI Output ({model_info})\n\n{content}\n",
-				content = ai_response_content.as_deref().unwrap_or_default()
-			))
-			.await;
-		}
-
-		let info = format!("{info} | {model_info}",);
-
-		Some(AiResponse {
-			content: ai_response_content,
-			reasoning_content: ai_response_reasoning_content,
-			model_name: res_model_iden.model_name,
-			adapter_kind: res_model_iden.adapter_kind,
-			duration_sec,
-			price_usd,
-			usage,
-			info,
-		})
+		let ai_response = res?;
+		Some(ai_response)
 	}
 	// if we do not have an instruction, just return null
 	else {
+		hub.publish("-! No instruction, skipping genai.").await;
 		None
 	};
 
-	if ai_response.is_some() {
-		// hub.publish(format!("-> AI response received: {model_resolved}")).await;
-		Ok(ProcAiResponse {
-			skip: false,
-			ai_response,
-		})
-	} else {
-		// for legacy
-		hub.publish("-! No instruction, skipping genai.").await;
-		Ok(ProcAiResponse {
-			skip: true,
-			ai_response: None,
-		})
+	Ok(ProcAiResponse { ai_response })
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn process_send_to_genai(
+	runtime: &Runtime,
+	client: &genai::Client,
+	agent: &Agent,
+	run_base_options: &RunBaseOptions,
+	run_id: Id,
+	task_id: Id,
+	model_resolved: &ModelName,
+	chat_messages: Vec<ChatMessage>,
+) -> Result<AiResponse> {
+	let hub = get_hub();
+
+	let chat_req = ChatRequest::from_messages(chat_messages);
+
+	hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
+		.await;
+
+	// -- Rt Step - start AI
+	runtime.step_task_ai_start(run_id, task_id).await?;
+
+	let start = Instant::now();
+	let chat_res = client
+		.exec_chat(model_resolved, chat_req, Some(agent.genai_chat_options()))
+		.await?;
+	let duration = start.elapsed();
+
+	// -- Rt Step - end AI
+	runtime.step_task_ai_end(run_id, task_id).await?;
+
+	// region:    --- First Info Part
+
+	let duration_msg = format!("Duration: {duration_str}", duration_str = format_duration(duration));
+	// this is for the duration in second with 3 digit for milli (for the AI Response)
+	let duration_sec = duration.as_secs_f64(); // Convert to f64
+	let duration_sec = (duration_sec * 1000.0).round() / 1000.0; // Round to 3 decimal places
+
+	let mut info = duration_msg;
+
+	// Compute the price
+	let price_usd = get_price(&chat_res);
+
+	// -- Rt Rec - Update Cost
+	if let Some(price_usd) = price_usd {
+		let _ = runtime.update_task_cost(run_id, task_id, price_usd).await;
 	}
+
+	// add to info
+	if let Some(price_usd) = price_usd {
+		info = format!("{info} | ~${price_usd}")
+	}
+
+	let usage_msg = format_usage(&chat_res.usage);
+	info = format!("{info} | {usage_msg}");
+
+	// endregion: --- First Info Part
+
+	hub.publish(format!(
+		"<- ai_response content received - {model_name} | {info}",
+		model_name = chat_res.provider_model_iden.model_name
+	))
+	.await;
+
+	let ChatResponse {
+		content,
+		reasoning_content,
+		usage,
+		model_iden: res_model_iden,
+		provider_model_iden: res_provider_model_iden,
+		..
+	} = chat_res;
+
+	// -- Rt Rec - Update Task Usage
+	runtime.update_task_usage(run_id, task_id, &usage).await?;
+
+	let content = content
+		.into_iter()
+		.filter_map(|c| c.into_text())
+		.collect::<Vec<_>>()
+		.join("\n\n");
+
+	let ai_response_content = if content.is_empty() { None } else { Some(content) };
+	let ai_response_reasoning_content = reasoning_content;
+
+	let model_info = format_model(agent, &res_model_iden, &res_provider_model_iden, &agent.options());
+	if run_base_options.verbose() {
+		hub.publish(format!(
+			"\n-- AI Output ({model_info})\n\n{content}\n",
+			content = ai_response_content.as_deref().unwrap_or_default()
+		))
+		.await;
+	}
+
+	let info = format!("{info} | {model_info}",);
+
+	Ok(AiResponse {
+		content: ai_response_content,
+		reasoning_content: ai_response_reasoning_content,
+		model_name: res_model_iden.model_name,
+		adapter_kind: res_model_iden.adapter_kind,
+		duration_sec,
+		price_usd,
+		usage,
+		info,
+	})
 }
 
 // region:    --- Support

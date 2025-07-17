@@ -17,6 +17,8 @@ pub enum RunStep {
 	TaskDataStart,
 	TaskDataEnd,
 	TaskAiStart,
+	TaskAiGenStart,
+	TaskAiGenEnd,
 	TaskAiEnd,
 	TaskOutputStart,
 	TaskOutputEnd,
