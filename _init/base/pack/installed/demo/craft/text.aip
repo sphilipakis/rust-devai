@@ -31,7 +31,7 @@ local prompt_file_rel_path = aip.path.diff(prompt_file.path, CTX.WORKSPACE_DIR)
 if #prompt_file_rel_path == 0 then
     prompt_file_rel_path = prompt_file.path
 end
-print("\nOPEN your demo@craft/text prompt file: " .. prompt_file_rel_path .. "\n\n")
+print("Executing demo@craft/text on prompt file:\n➜ " .. prompt_file_rel_path )
 
 
 -- Split the content
@@ -57,6 +57,7 @@ if should_skip ~= nil then
 end
 
 local data = {
+    prompt_file_rel_path = prompt_file_rel_path,
     first_part = first_part,
     content    = content,
     inst       = inst,
@@ -119,5 +120,5 @@ local content = preamble .. ai_content
 aip.file.save(data.path, content);
 
 -- This will be printed by aipack if it is a string
-return "File crafted: " .. data.path
+return "File crafted:\n➜ " .. data.prompt_file_rel_path
 ```
