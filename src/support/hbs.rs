@@ -2,7 +2,7 @@
 
 use crate::Result;
 use handlebars::Handlebars;
-use serde_json::Value;
+use serde::Serialize;
 use std::sync::{Arc, LazyLock};
 
 // endregion: --- Modules
@@ -15,9 +15,12 @@ static HANDLEBARS: LazyLock<Arc<Handlebars>> = LazyLock::new(|| {
 	Arc::new(handlebars)
 });
 
-pub fn hbs_render(hbs_tmpl: &str, data_root: &Value) -> Result<String> {
+pub fn hbs_render<T>(hbs_tmpl: &str, data_root: &T) -> Result<String>
+where
+	T: Serialize,
+{
 	let handlebars = &*HANDLEBARS;
-	let res = handlebars.render_template(hbs_tmpl, &data_root)?;
+	let res = handlebars.render_template(hbs_tmpl, data_root)?;
 	Ok(res)
 }
 

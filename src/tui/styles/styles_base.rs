@@ -8,6 +8,8 @@ use ratatui::style::{Color, Style};
 //     - Paragraph / Text - https://ratatui.rs/recipes/widgets/paragraph/
 //     - Block - https://ratatui.rs/recipes/widgets/block/
 //
+// - Mouse / Widget hover - https://stackoverflow.com/questions/78263467/detecting-mouse-click-events-on-blocks-when-using-ratatui
+//
 // - Terminal colors: https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
 // - Google materials colors: https://m2.material.io/design/color/the-color-system.html#tools-for-picking-colors
 
