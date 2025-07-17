@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, styles};
@@ -126,6 +126,14 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		Line::raw("No Current Task").render(area, buf);
 		return;
 	};
+	// -- Fetch Logs
+	let logs = match LogBmc::list_for_task(state.mm(), task.id) {
+		Ok(logs) => logs,
+		Err(err) => {
+			Paragraph::new(format!("LogBmc::list error. {err}")).render(area, buf);
+			return;
+		}
+	};
 
 	// -- Setup UI Lines
 	let mut all_lines: Vec<Line> = Vec::new();
@@ -134,15 +142,22 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Add Input
 	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
 
-	// -- Add Logs Lines
+	// -- Add Before AI Logs Lines
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_logs(state.mm(), task, max_width, show_steps),
+		ui_for_before_ai_logs(task, &logs, max_width, show_steps),
 		false,
 	);
 
 	// -- Add AI Lines
 	support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
+
+	// -- Add After AI Logs Lines
+	support::extend_lines(
+		&mut all_lines,
+		ui_for_after_ai_logs(task, &logs, max_width, show_steps),
+		false,
+	);
 
 	// -- Add output if end
 	if task.output_uid.is_some() {
@@ -246,29 +261,35 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 	}
 }
 
-fn ui_for_logs(mm: &ModelManager, task: &Task, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	// -- Fetch Logs
-	let logs = LogBmc::list_for_task(mm, task.id);
+fn ui_for_before_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
 
+	let logs = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
+
+	ui_for_logs(logs, max_width, show_steps)
+}
+
+fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
+
+	let logs = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
+
+	ui_for_logs(logs, max_width, show_steps)
+}
+
+fn ui_for_logs<'a>(logs: impl IntoIterator<Item = &'a Log>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
 	let mut lines: Vec<Line> = Vec::new();
-
-	// -- Prepare content
-	match logs {
-		Ok(logs) => {
-			for log in logs {
-				// Show or not step
-				if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
-					continue;
-				}
-
-				// Render log lines
-				let log_lines = support::ui_for_log(&log, max_width);
-				lines.extend(log_lines);
-				lines.push(Line::default()); // empty line (for now)
-			}
+	for log in logs {
+		// Show or not step
+		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
+			continue;
 		}
-		Err(err) => lines.push(format!("LogBmc::list error. {err}").into()),
-	};
+
+		// Render log lines
+		let log_lines = support::ui_for_log(log, max_width);
+		lines.extend(log_lines);
+		lines.push(Line::default()); // empty line (for now)
+	}
 
 	lines
 }
