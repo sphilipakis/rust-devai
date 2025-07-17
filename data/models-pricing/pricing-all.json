@@ -170,6 +170,42 @@
         "input": {
           "cache_write": null,
           "cached": null,
+          "normal": 0.2
+        },
+        "name": "gemma2-9b-it",
+        "output": 0.2
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.05
+        },
+        "name": "llama-3.1-8b-instant",
+        "output": 0.08
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.59
+        },
+        "name": "llama-3.3-70b-versatile",
+        "output": 0.79
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "meta-llama/llama-guard-4-12b",
+        "output": 0.2
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
           "normal": 0.75
         },
         "name": "deepseek-r1-distill-llama-70b",
@@ -179,37 +215,19 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.69
+          "normal": 0.2
         },
-        "name": "deepseek-r1-distill-qwen-32b-128k",
-        "output": 0.69
+        "name": "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "output": 0.6
       },
       {
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.79
+          "normal": 0.11
         },
-        "name": "qwen-2.5-32b-instruct-128k",
-        "output": 0.79
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.79
-        },
-        "name": "qwen-2.5-coder-32b-instruct-128k",
-        "output": 0.79
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.29
-        },
-        "name": "qwen-qwq-32b-(preview)-128k",
-        "output": 0.39
+        "name": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "output": 0.34
       },
       {
         "input": {
@@ -224,91 +242,19 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.04
+          "normal": 1
         },
-        "name": "llama-3.2-1b-(preview)-8k",
-        "output": 0.04
+        "name": "moonshotai/kimi-k2-instruct",
+        "output": 3
       },
       {
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.06
+          "normal": 0.29
         },
-        "name": "llama-3.2-3b-(preview)-8k",
-        "output": 0.06
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.59
-        },
-        "name": "llama-3.3-70b-versatile-128k",
-        "output": 0.79
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.05
-        },
-        "name": "llama-3.1-8b-instant-128k",
-        "output": 0.08
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.59
-        },
-        "name": "llama-3-70b-8k",
-        "output": 0.79
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.05
-        },
-        "name": "llama-3-8b-8k",
-        "output": 0.08
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.24
-        },
-        "name": "mixtral-8x7b-instruct-32k",
-        "output": 0.24
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.2
-        },
-        "name": "gemma-2-9b-8k",
-        "output": 0.2
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.2
-        },
-        "name": "llama-guard-3-8b-8k",
-        "output": 0.2
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.59
-        },
-        "name": "llama-3.3-70b-specdec-8k",
-        "output": 0.99
+        "name": "qwen/qwen3-32b",
+        "output": 0.59
       }
     ]
   },

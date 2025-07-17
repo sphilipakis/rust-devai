@@ -68,7 +68,7 @@ Also, important, do not use code comment to explain what you did. Code comments 
 local content = ai_response.content
 content = aip.md.outer_block_content_or_raw(content)
 
-aip.file.save("src/pricing/data.rs", content)
+aip.file.save("src/run/pricing/data.rs", content)
 
 return "Data saved to src/pricing/data.rs"
 
