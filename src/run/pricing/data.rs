@@ -434,29 +434,36 @@ const OPENAI: Provider = Provider {
 // Define XAI pricing
 const XAI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "grok-4",
+		input_cached: Some(0.75),
+		input_normal: 3.0,
+		output_normal: 15.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "grok-3",
-		input_cached: None,
+		input_cached: Some(0.75),
 		input_normal: 3.0,
 		output_normal: 15.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
 		name: "grok-3-mini",
-		input_cached: None,
+		input_cached: Some(0.075),
 		input_normal: 0.3,
 		output_normal: 0.5,
 		output_reasoning: None,
 	},
 	ModelPricing {
 		name: "grok-3-fast",
-		input_cached: None,
+		input_cached: Some(1.25),
 		input_normal: 5.0,
 		output_normal: 25.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
 		name: "grok-3-mini-fast",
-		input_cached: None,
+		input_cached: Some(0.15),
 		input_normal: 0.6,
 		output_normal: 4.0,
 		output_reasoning: None,

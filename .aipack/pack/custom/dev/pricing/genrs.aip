@@ -17,7 +17,7 @@ local p_utils = require("pricing_utils")
 
 local json_content = aip.file.load(p_utils.json_all_path).content
 
-local data_rs = aip.file.load("src/pricing/data.rs")
+local data_rs = aip.file.load("src/run/pricing/data.rs")
 
 return {
     json_content = json_content,
