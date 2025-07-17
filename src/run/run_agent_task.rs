@@ -4,6 +4,7 @@ use crate::run::AiResponse;
 use crate::run::literals::Literals;
 use crate::run::proc_ai::{ProcAiResponse, process_ai};
 use crate::run::proc_data::{ProcDataResponse, process_data};
+use crate::run::proc_output::process_output;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::store::rt_model::RuntimeCtx;
@@ -130,32 +131,25 @@ pub async fn run_agent_task(
 	}
 
 	// -- Exec output
+	// -- Rt Step - start output
+	runtime.step_task_output_start(run_id, task_id).await?;
+	let res = process_output(
+		runtime,
+		&base_rt_ctx,
+		agent,
+		literals,
+		data,
+		before_all_result,
+		input,
+		ai_response,
+	)
+	.await;
+	// Capture error if any
+	if let Err(err) = res.as_ref() {
+		runtime.set_task_end_error(run_id, task_id, Some(Stage::Output), err)?;
+	}
+	// -- Rt Step - end output
+	runtime.step_task_output_end(run_id, task_id).await?;
 
-	let res = if let Some(output_script) = agent.output_script() {
-		// -- Rt Step - start output
-		runtime.step_task_output_start(run_id, task_id).await?;
-
-		// -- Create the Output Lua Engine
-		let lua_engine = runtime.new_lua_engine_with_ctx(literals, base_rt_ctx.with_stage(Stage::Output))?;
-
-		// -- Create the scope
-		let lua_scope = lua_engine.create_table()?;
-		lua_scope.set("input", lua_engine.serde_to_lua_value(input)?)?;
-		lua_scope.set("data", lua_engine.serde_to_lua_value(data)?)?;
-		lua_scope.set("before_all", lua_engine.serde_to_lua_value(before_all_result)?)?;
-		lua_scope.set("ai_response", ai_response)?;
-		lua_scope.set("options", agent.options_as_ref())?;
-
-		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
-		let output_response = serde_json::to_value(lua_value)?;
-
-		// -- Rt Step - end output
-		runtime.step_task_output_end(run_id, task_id).await?;
-
-		Some(RunAgentInputResponse::OutputResponse(output_response))
-	} else {
-		ai_response.map(RunAgentInputResponse::AiReponse)
-	};
-
-	Ok(res)
+	res
 }
