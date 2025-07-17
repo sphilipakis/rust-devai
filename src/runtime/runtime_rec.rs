@@ -570,8 +570,13 @@ impl Runtime {
 		Ok(())
 	}
 
+	/// NOTE: if the .content & .display is None, then, nothing is saved
 	pub async fn update_task_output(&self, task_id: Id, output: &Value) -> Result<()> {
 		let output_content = TypedContent::from_value(output);
+		if output_content.content.is_none() && output_content.display.is_none() {
+			return Ok(()); // Nothing to update
+		}
+
 		TaskBmc::update_output(self.mm(), task_id, output_content)?;
 		Ok(())
 	}
