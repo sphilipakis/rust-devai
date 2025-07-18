@@ -88,7 +88,10 @@ pub fn replace_markers_with_default_parkers(
 /// ### Returns
 ///
 /// The truncated string, or `nil` if input `content` is `nil`.
-pub fn truncate(lua: &Lua, (content_val, max_len, ellipsis): (Value, usize, Option<String>)) -> mlua::Result<Value> {
+pub fn aip_truncate(
+	lua: &Lua,
+	(content_val, max_len, ellipsis): (Value, usize, Option<String>),
+) -> mlua::Result<Value> {
 	let Some(content) = into_option_string(content_val, "aip.text.truncate")? else {
 		return Ok(Value::Nil);
 	};

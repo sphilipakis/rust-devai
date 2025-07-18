@@ -52,11 +52,12 @@ pub struct Task {
 
 	pub label: Option<String>,
 
-	// -- Might want to have some input_short: Option<String>
 	pub input_uid: Option<Uuid>,
+	pub input_short: Option<String>,
 	pub input_has_display: Option<bool>,
 
 	pub output_uid: Option<Uuid>,
+	pub output_short: Option<String>,
 	pub output_has_display: Option<bool>,
 }
 
@@ -107,6 +108,14 @@ pub struct TaskForUpdate {
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,
+
+	pub input_uid: Option<Uuid>,
+	pub input_short: Option<String>,
+	pub input_has_display: Option<bool>,
+
+	pub output_uid: Option<Uuid>,
+	pub output_short: Option<String>,
+	pub output_has_display: Option<bool>,
 }
 
 impl TaskForUpdate {
@@ -195,32 +204,11 @@ impl TaskBmc {
 		let input_content = task_c.input_content.take();
 
 		// -- Add input_uid
-		let mut task_fields = task_c.sqlite_not_none_fields();
-		// add input_uid if present
-		if let Some(input_uid) = input_content.as_ref().map(|v| v.uid) {
-			task_fields.push(SqliteField::new("input_uid", input_uid));
-		}
-		if let Some(input_has_display) = input_content.as_ref().map(|v| v.display.is_some()) {
-			task_fields.push(SqliteField::new("input_has_display", input_has_display));
-		}
-
-		// -- Add task
+		let task_fields = task_c.sqlite_not_none_fields();
 		let id = base::create::<Self>(mm, task_fields)?;
 
 		// -- Add input Content
-		if let Some(input_content) = input_content {
-			let task_uid = TaskBmc::get_uid(mm, id)?;
-			InoutBmc::create(
-				mm,
-				InoutForCreate {
-					uid: input_content.uid,
-					task_uid,
-					typ: Some(input_content.typ),
-					content: input_content.content,
-					display: input_content.display,
-				},
-			)?;
-		}
+		Self::update_input(mm, id, input_content)?;
 
 		Ok(id)
 	}
@@ -318,11 +306,16 @@ impl TaskBmc {
 impl TaskBmc {
 	/// Note: Used by tui
 	pub fn get_input_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
-		let input_has_display = task.input_has_display.unwrap_or_default();
+		// if we do not have a input uid, perhaps, short was enough
 		let Some(input_uid) = task.input_uid.as_ref() else {
-			return Ok(None);
+			if let Some(input_short) = task.input_short.as_ref() {
+				return Ok(Some(input_short.to_string()));
+			} else {
+				return Ok(None);
+			}
 		};
 
+		let input_has_display = task.input_has_display.unwrap_or_default();
 		if input_has_display {
 			// if not found, return None
 			Ok(InoutBmc::get_by_uid::<InoutOnlyDisplay>(mm, *input_uid)
@@ -336,6 +329,10 @@ impl TaskBmc {
 
 	/// Note: Used by tui
 	pub fn get_output_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
+		if let Some(input_short) = task.input_short.as_ref() {
+			return Ok(Some(input_short.to_string()));
+		}
+
 		let output_has_display = task.output_has_display.unwrap_or_default();
 		let Some(output_uid) = task.output_uid.as_ref() else {
 			return Ok(None);
@@ -350,6 +347,49 @@ impl TaskBmc {
 		} else {
 			Ok(InoutBmc::get_by_uid::<Inout>(mm, *output_uid).map(|i| i.content).ok().flatten())
 		}
+	}
+
+	/// Update the input (called by create)
+	pub fn update_input(mm: &ModelManager, id: Id, input_content: Option<TypedContent>) -> Result<()> {
+		if let Some(input_content) = input_content
+			&& let (Some(short), has_more) = input_content.extract_short()
+		{
+			// -- update the Task
+			// NOTE: Important, if no more than short content, do not set input_uid
+			let (input_uid, input_has_display) = if has_more {
+				(Some(input_content.uid), Some(input_content.display.is_some()))
+			} else {
+				(None, None)
+			};
+
+			TaskBmc::update(
+				mm,
+				id,
+				TaskForUpdate {
+					input_uid,
+					input_has_display,
+					input_short: Some(short),
+					..Default::default()
+				},
+			)?;
+
+			// -- store in content if more than short
+			if has_more {
+				// let (short, has_more) = input_content.extract_short()
+				let task_uid = TaskBmc::get_uid(mm, id)?;
+				InoutBmc::create(
+					mm,
+					InoutForCreate {
+						uid: input_content.uid,
+						task_uid,
+						typ: Some(input_content.typ),
+						content: input_content.content,
+						display: input_content.display,
+					},
+				)?;
+			}
+		}
+		Ok(())
 	}
 
 	/// Note: used from runtime_rec

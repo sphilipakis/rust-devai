@@ -1,8 +1,11 @@
 use crate::derive_simple_enum_type;
+use crate::support::text::truncate;
 use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
 use value_ext::JsonValueExt;
+
+const SHORT_MAX_CHAR_LENGTH: usize = 256;
 
 #[derive(Debug, Clone)]
 pub struct TypedContent {
@@ -17,6 +20,25 @@ pub enum ContentTyp {
 	Json,
 	Text,
 }
+}
+
+impl TypedContent {
+	/// Return the short content, and bool if there is more content or short is all of the content
+	pub fn extract_short(&self) -> (Option<String>, bool) {
+		match (self.display.as_ref(), self.content.as_ref()) {
+			// no short at all and not more content
+			(None, None) => (None, false),
+			// twe
+			(None, Some(content)) => {
+				let (short, has_truncated) = truncate(content, SHORT_MAX_CHAR_LENGTH);
+				(Some(short.to_string()), has_truncated)
+			}
+			(Some(display), _) => {
+				let (short, has_truncated) = truncate(display, SHORT_MAX_CHAR_LENGTH);
+				(Some(short.to_string()), has_truncated)
+			}
+		}
+	}
 }
 
 impl TypedContent {

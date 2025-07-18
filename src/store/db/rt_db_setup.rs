@@ -102,9 +102,11 @@ CREATE TABLE IF NOT EXISTS task (
 		label               TEXT,
 
 		input_uid           BLOB,
+		input_short         TEXT,
 		input_has_display   INTEGER,
 
 		output_uid          BLOB,
+		output_short        TEXT,
 		output_has_display  INTEGER
 
 ) STRICT",

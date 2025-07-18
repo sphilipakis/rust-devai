@@ -54,17 +54,22 @@ pub fn extract_first_line(mut content: String) -> (String, String) {
 	}
 }
 
-pub fn truncate_with_ellipsis<'a>(s: &'a str, max_len: usize, ellipsis: &str) -> Cow<'a, str> {
-	if s.len() > max_len {
-		let truncated = &s[..max_len];
-		if ellipsis.is_empty() {
-			// no allocation needed
-			Cow::from(truncated)
-		} else {
-			Cow::from(format!("{truncated}{ellipsis}"))
-		}
+pub fn truncate_with_ellipsis<'a>(s: &'a str, max_chars: usize, ellipsis: &str) -> Cow<'a, str> {
+	let (truncated, did_truncate) = truncate(s, max_chars);
+	if did_truncate && !ellipsis.is_empty() {
+		Cow::from(format!("{truncated}{ellipsis}"))
 	} else {
-		Cow::from(s)
+		truncated
+	}
+}
+
+/// Return the truncated text (if needed), with the `truncated` flag
+pub fn truncate<'a>(s: &'a str, max_chars: usize) -> (Cow<'a, str>, bool) {
+	if s.chars().count() > max_chars {
+		let truncated: String = s.chars().take(max_chars).collect();
+		(Cow::from(truncated), true)
+	} else {
+		(Cow::from(s), false)
 	}
 }
 

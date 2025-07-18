@@ -3,6 +3,7 @@ use crate::runtime::Runtime;
 use mlua::{Lua, Table};
 
 use super::{
+	aip_truncate,
 	ensure,
 	ensure_single_ending_newline,
 	// text_common.rs
@@ -24,7 +25,6 @@ use super::{
 	trim,
 	trim_end,
 	trim_start,
-	truncate,
 };
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -37,7 +37,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	table.set("remove_first_lines", lua.create_function(remove_first_lines)?)?;
 	table.set("remove_last_lines", lua.create_function(remove_last_lines)?)?;
 	table.set("remove_last_line", lua.create_function(remove_last_line)?)?;
-	table.set("truncate", lua.create_function(truncate)?)?;
+	table.set("truncate", lua.create_function(aip_truncate)?)?;
 	table.set(
 		"replace_markers",
 		lua.create_function(replace_markers_with_default_parkers)?,
