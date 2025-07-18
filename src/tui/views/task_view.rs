@@ -160,7 +160,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	);
 
 	// -- Add output if end
-	if task.output_uid.is_some() {
+	if task.output_short.is_some() {
 		support::extend_lines(&mut all_lines, ui_for_output(state.mm(), task, max_width), true);
 	}
 

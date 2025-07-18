@@ -208,7 +208,9 @@ impl TaskBmc {
 		let id = base::create::<Self>(mm, task_fields)?;
 
 		// -- Add input Content
-		Self::update_input(mm, id, input_content)?;
+		if let Some(input_content) = input_content {
+			Self::update_input(mm, id, input_content)?;
+		}
 
 		Ok(id)
 	}
@@ -306,7 +308,8 @@ impl TaskBmc {
 impl TaskBmc {
 	/// Note: Used by tui
 	pub fn get_input_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
-		// if we do not have a input uid, perhaps, short was enough
+		// -- Case where short has full content
+		// if we do not have a input uid, short was enough so is full content
 		let Some(input_uid) = task.input_uid.as_ref() else {
 			if let Some(input_short) = task.input_short.as_ref() {
 				return Ok(Some(input_short.to_string()));
@@ -329,15 +332,17 @@ impl TaskBmc {
 
 	/// Note: Used by tui
 	pub fn get_output_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
-		if let Some(input_short) = task.input_short.as_ref() {
-			return Ok(Some(input_short.to_string()));
-		}
-
-		let output_has_display = task.output_has_display.unwrap_or_default();
+		// -- Case where short has full content
+		// if we do not have a input uid, short was enough so is full content
 		let Some(output_uid) = task.output_uid.as_ref() else {
-			return Ok(None);
+			if let Some(output_short) = task.output_short.as_ref() {
+				return Ok(Some(output_short.to_string()));
+			} else {
+				return Ok(None);
+			}
 		};
 
+		let output_has_display = task.output_has_display.unwrap_or_default();
 		if output_has_display {
 			// if not found, return None
 			Ok(InoutBmc::get_by_uid::<InoutOnlyDisplay>(mm, *output_uid)
@@ -350,10 +355,8 @@ impl TaskBmc {
 	}
 
 	/// Update the input (called by create)
-	pub fn update_input(mm: &ModelManager, id: Id, input_content: Option<TypedContent>) -> Result<()> {
-		if let Some(input_content) = input_content
-			&& let (Some(short), has_more) = input_content.extract_short()
-		{
+	pub fn update_input(mm: &ModelManager, id: Id, input_content: TypedContent) -> Result<()> {
+		if let (Some(short), has_more) = input_content.extract_short() {
 			// -- update the Task
 			// NOTE: Important, if no more than short content, do not set input_uid
 			let (input_uid, input_has_display) = if has_more {
@@ -393,30 +396,43 @@ impl TaskBmc {
 	}
 
 	/// Note: used from runtime_rec
-	pub fn update_output(mm: &ModelManager, task_id: Id, content: TypedContent) -> Result<()> {
-		// -- Create the task fields
-		// NOTE: Manual for now (not in common TaskForUpdate, might be TaskForUpdateContent later)
-		let task_u_fields = vec![
-			SqliteField::new("output_uid", content.uid),
-			SqliteField::new("output_has_display", content.display.is_some()),
-		];
+	pub fn update_output(mm: &ModelManager, id: Id, output_content: TypedContent) -> Result<()> {
+		if let (Some(short), has_more) = output_content.extract_short() {
+			// -- update the Task
+			// NOTE: Important, if no more than short content, do not set input_uid
+			let (output_uid, output_has_display) = if has_more {
+				(Some(output_content.uid), Some(output_content.display.is_some()))
+			} else {
+				(None, None)
+			};
 
-		// -- Create the Inout
-		let task_uid = Self::get_uid(mm, task_id)?;
-		InoutBmc::create(
-			mm,
-			InoutForCreate {
-				uid: content.uid,
-				task_uid,
-				typ: Some(content.typ),
-				content: content.content,
-				display: content.display,
-			},
-		)?;
+			TaskBmc::update(
+				mm,
+				id,
+				TaskForUpdate {
+					output_uid,
+					output_has_display,
+					output_short: Some(short),
+					..Default::default()
+				},
+			)?;
 
-		// -- Update the tasks
-		base::update::<Self>(mm, task_id, task_u_fields.into())?;
-
+			// -- store in content if more than short
+			if has_more {
+				// let (short, has_more) = input_content.extract_short()
+				let task_uid = TaskBmc::get_uid(mm, id)?;
+				InoutBmc::create(
+					mm,
+					InoutForCreate {
+						uid: output_content.uid,
+						task_uid,
+						typ: Some(output_content.typ),
+						content: output_content.content,
+						display: output_content.display,
+					},
+				)?;
+			}
+		}
 		Ok(())
 	}
 }

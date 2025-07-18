@@ -5,7 +5,7 @@ use tracing::error;
 use uuid::Uuid;
 use value_ext::JsonValueExt;
 
-const SHORT_MAX_CHAR_LENGTH: usize = 256;
+const SHORT_MAX_CHAR_LENGTH: usize = 64;
 
 #[derive(Debug, Clone)]
 pub struct TypedContent {
