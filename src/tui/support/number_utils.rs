@@ -18,7 +18,11 @@ pub fn offset_and_clamp_option_idx_in_len(idx: &Option<i32>, offset: i32, len: u
 	}
 }
 
-pub fn num_pad_for_len(idx: usize, len: usize) -> String {
-	let width = len.to_string().len();
+pub fn num_pad_for_len(idx: i64, len: usize) -> String {
+	let width = if len == 0 {
+		1
+	} else {
+		(len as f64).log10().floor() as usize + 1
+	};
 	format!("{:0width$}", idx + 1, width = width)
 }

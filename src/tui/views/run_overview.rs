@@ -1,11 +1,11 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task};
 use crate::tui::support::RectExt;
-use crate::tui::views::support;
+use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
 /// Placeholder view for *Before All* tab.
@@ -122,21 +122,24 @@ fn ui_for_logs(_run: &Run, logs: &[Log], stage: Option<Stage>, max_width: u16, s
 	all_lines
 }
 
-fn ui_for_tasks(_run: &Run, tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_tasks(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
 		return Vec::new();
 	}
 
-	let mut content: Vec<String> = Vec::new();
+	let mut spans_lines: Vec<Vec<Span<'static>>> = Vec::new();
+	let tasks_len = tasks.len();
 
 	for task in tasks {
-		let task_content = format!("Task {:?} - is ended: {}", task.idx, task.is_ended());
-		content.push(task_content);
+		let mut task_line = task.ui_label(tasks_len);
+		task_line.push(Span::raw("  "));
+		task_line.extend(task.ui_stage_statuses_spans());
+		spans_lines.push(task_line);
 	}
 
-	let content = content.join("\n\n");
+	let marker = new_marker("Tasks:", styles::STL_SECTION_MARKER);
 
-	support::ui_for_marker_section(&content, ("Tasks", styles::STL_SECTION_MARKER), max_width, None)
+	ui_for_marker_section(vec![marker], vec![Span::raw(" ")], spans_lines)
 }
 
 // endregion: --- UI Builders

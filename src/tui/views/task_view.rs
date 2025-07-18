@@ -198,9 +198,9 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 	let marker_txt = "Input:";
 	let marker_style = styles::STL_SECTION_MARKER_INPUT;
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None),
+		Ok(Some(content)) => support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
 		Ok(None) => Vec::new(),
-		Err(err) => support::ui_for_marker_section(
+		Err(err) => support::ui_for_marker_section_str(
 			&format!("Error getting input. {err}"),
 			(marker_txt, marker_style),
 			max_width,
@@ -240,7 +240,7 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	};
 
 	if let Some(content) = content {
-		support::ui_for_marker_section(&content, (marker_txt, style), max_width, None)
+		support::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None)
 	} else {
 		Vec::new()
 	}
@@ -250,9 +250,9 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 	let marker_txt = "Output:";
 	let marker_style = styles::STL_SECTION_MARKER_OUTPUT;
 	match TaskBmc::get_output_for_display(mm, task) {
-		Ok(Some(content)) => support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, None),
-		Ok(None) => support::ui_for_marker_section("no output found", (marker_txt, marker_style), max_width, None),
-		Err(err) => support::ui_for_marker_section(
+		Ok(Some(content)) => support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
+		Ok(None) => support::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None),
+		Err(err) => support::ui_for_marker_section_str(
 			&format!("Error getting output. {err}"),
 			(marker_txt, marker_style),
 			max_width,

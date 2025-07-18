@@ -135,7 +135,7 @@ pub struct TaskFilter {
 
 // endregion: --- Types
 
-// region:    --- Froms
+// region:    --- Running States
 
 impl From<&Task> for RunningState {
 	fn from(value: &Task) -> Self {
@@ -149,7 +149,37 @@ impl From<&Task> for RunningState {
 	}
 }
 
-// endregion: --- Froms
+impl Task {
+	pub fn data_running_state(&self) -> RunningState {
+		if self.data_end.is_some() {
+			// TODO: Need to compute correctly the end state for this stage
+			RunningState::Ended(self.end_state)
+		} else if self.data_start.is_some() {
+			RunningState::Running
+		} else {
+			match self.end_state {
+				Some(_) => RunningState::NotScheduled,
+				None => RunningState::Waiting,
+			}
+		}
+	}
+
+	pub fn ai_running_state(&self) -> RunningState {
+		if self.ai_gen_end.is_some() {
+			// TODO: Need to compute correctly the end state for this stage
+			RunningState::Ended(self.end_state)
+		} else if self.ai_gen_start.is_some() {
+			RunningState::Running
+		} else {
+			match self.end_state {
+				Some(_) => RunningState::NotScheduled,
+				None => RunningState::Waiting,
+			}
+		}
+	}
+}
+
+// endregion: --- Running States
 
 // region:    --- Bmc
 

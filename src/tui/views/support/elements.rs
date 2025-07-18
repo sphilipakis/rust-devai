@@ -6,6 +6,7 @@ pub fn el_running_ico(arg: impl Into<RunningState>) -> Span<'static> {
 	let arg = arg.into();
 
 	match arg {
+		RunningState::NotScheduled => Span::styled("·", styles::CLR_TXT_WAITING),
 		RunningState::Waiting => Span::styled("⏸", styles::CLR_TXT_WAITING),
 		RunningState::Running => Span::styled("▶", styles::CLR_TXT_RUNNING),
 		RunningState::Ended(end_state) => match end_state {

@@ -1,5 +1,5 @@
 use crate::tui::styles;
-use crate::tui::support::{RectExt, num_pad_for_len};
+use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
@@ -81,19 +81,8 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let tasks_len = tasks.len();
 	let items: Vec<ListItem> = tasks
 		.iter()
-		.enumerate()
-		.map(|(idx, task)| {
-			let label = task
-				.label
-				.clone()
-				.unwrap_or_else(|| format!("task-{}", num_pad_for_len(idx, tasks_len)));
-
-			let line = Line::from(vec![
-				Span::raw(" "),
-				support::el_running_ico(task),
-				Span::raw(" "),
-				Span::styled(label, styles::STL_TXT),
-			]);
+		.map(|task| {
+			let line = Line::from(task.ui_label(tasks_len));
 			ListItem::new(line)
 		})
 		.collect();

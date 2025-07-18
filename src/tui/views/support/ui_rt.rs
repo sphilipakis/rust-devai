@@ -19,9 +19,9 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 			} else {
 				content
 			};
-			support::ui_for_marker_section(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
+			support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
 		}
-		Err(err) => support::ui_for_marker_section(
+		Err(err) => support::ui_for_marker_section_str(
 			&format!("Error getting error. {err}"),
 			(marker_txt, marker_style),
 			max_width,
@@ -50,5 +50,5 @@ pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentSkip => ("■ Skip:", styles::STL_SECTION_MARKER_SKIP),
 	};
 
-	support::ui_for_marker_section(content, marker_txt_style, max_width, None)
+	support::ui_for_marker_section_str(content, marker_txt_style, max_width, None)
 }
