@@ -1,8 +1,8 @@
 use crate::store::rt_model::Task;
 use crate::tui::styles;
-use crate::tui::support::num_pad_for_len;
+use crate::tui::support::{StylerExt as _, num_pad_for_len};
 use crate::tui::views::support::{self, el_running_ico};
-use ratatui::style::Color;
+use ratatui::style::Stylize as _;
 use ratatui::text::Span;
 
 impl Task {
@@ -25,35 +25,35 @@ impl Task {
 		]
 	}
 
-	pub fn ui_stage_statuses_spans(&self) -> Vec<Span<'static>> {
-		let mut spans: Vec<Span<'static>> = Vec::new();
+	pub fn ui_sum_spans(&self) -> Vec<Span<'static>> {
+		let mut all_spans: Vec<Span<'static>> = Vec::new();
+
+		// -- Input
+		if let Some(input_short) = self.input_short.as_ref() {
+			let spans = vec![
+				//
+				Span::raw(" Input: ").bg(styles::CLR_BKG_400),
+				Span::raw(input_short.to_string()).bg(styles::CLR_BKG_400),
+			];
+			all_spans.extend(spans);
+
+			all_spans.push(Span::raw("  ")); // spacing for next
+		}
 
 		// -- data
 		let data_running_state = self.data_running_state();
 		let ico = el_running_ico(data_running_state);
-		let block_spans = style_bg_spans(vec![Span::raw(" "), ico, Span::raw(" Data ")], styles::CLR_BKG_400);
-		spans.extend(block_spans);
+		let block_spans = vec![Span::raw(" "), ico, Span::raw(" Data ")];
+		all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
 
-		spans.push(Span::raw("  "));
+		all_spans.push(Span::raw("  "));
 
 		// -- AI
 		let ai_running_state = self.ai_running_state();
 		let ico = el_running_ico(ai_running_state);
 		let block_spans = vec![Span::raw(" "), ico, Span::raw(" AI ")];
-		let block_spans = style_bg_spans(block_spans, styles::CLR_BKG_400);
-		spans.extend(block_spans);
+		all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
 
-		spans
+		all_spans
 	}
 }
-
-// region:    --- Support
-
-fn style_bg_spans(mut spans: Vec<Span<'static>>, bg: Color) -> Vec<Span<'static>> {
-	for span in spans.iter_mut() {
-		span.style.bg = bg.into();
-	}
-	spans
-}
-
-// endregion: --- Support

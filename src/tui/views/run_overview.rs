@@ -133,7 +133,7 @@ fn ui_for_tasks(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static
 	for task in tasks {
 		let mut task_line = task.ui_label(tasks_len);
 		task_line.push(Span::raw("  "));
-		task_line.extend(task.ui_stage_statuses_spans());
+		task_line.extend(task.ui_sum_spans());
 		spans_lines.push(task_line);
 	}
 
