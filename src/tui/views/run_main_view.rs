@@ -148,10 +148,10 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		])
 		.areas(tabs_a);
 
-	// -- Process run_tab
+	// -- Process UI Event
 	process_mouse_for_run_tab(state, tab_overview_a, tab_tasks_a);
+
 	let run_tab = state.run_tab();
-	// TODO: process last event click
 
 	// -- Compute tabs Label & style
 	let style = styles::STL_TAB_DEFAULT;
@@ -190,7 +190,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	run_tab
 }
 
-// region:    --- Event / State Processors
+// region:    --- Mouse Processing
 
 fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
 	if let Some(mouse_evt) = state.mouse_evt()
@@ -200,11 +200,8 @@ fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Re
 			state.set_run_tab(RunTab::Overview);
 		} else if mouse_evt.is_in_area(tasks_a) {
 			state.set_run_tab(RunTab::Tasks);
-		} else {
-			// -- Click outside tabs, do nothing
-			return;
 		}
 	}
 }
 
-// endregion: --- Event / State Processors
+// endregion: --- Mouse Processing

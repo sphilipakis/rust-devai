@@ -9,6 +9,13 @@ pub struct MouseEvt {
 }
 
 impl MouseEvt {
+	#[allow(unused)]
+	pub fn x(&self) -> u16 {
+		self.mouse_event.column
+	}
+	pub fn y(&self) -> u16 {
+		self.mouse_event.row
+	}
 	pub fn position(&self) -> Position {
 		Position::new(self.mouse_event.column, self.mouse_event.row)
 	}

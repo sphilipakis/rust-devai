@@ -1,12 +1,12 @@
-// /// Will return an idx within 0 and len - 1 (or 0 if len is 0)
-// /// - `len` - the length of the aray
-// pub fn clamp_idx_in_len(idx: i32, len: usize) -> i32 {
-// 	if len == 0 {
-// 		return 0; // No items, return 0
-// 	}
-// 	let max_idx = (len as i32) - 1;
-// 	idx.clamp(0, max_idx) // cannot fail
-// }
+/// Will return an idx within 0 and len - 1 (or 0 if len is 0)
+/// - `len` - the length of the aray
+pub fn clamp_idx_in_len(idx: usize, len: usize) -> usize {
+	if len == 0 {
+		return 0; // No items, return 0
+	}
+	let max_idx = (len - 1).max(0);
+	idx.clamp(0, max_idx) // cannot fail
+}
 
 /// Will return an idx within 0 and len - 1 (or 0 if len is 0)
 /// - `len` - the length of the aray

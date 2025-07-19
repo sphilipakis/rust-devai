@@ -1,5 +1,5 @@
 use crate::tui::styles;
-use crate::tui::support::RectExt;
+use crate::tui::support::{RectExt, clamp_idx_in_len};
 use crate::tui::views::support;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
@@ -32,6 +32,8 @@ impl StatefulWidget for RuntTasksView {
 			.areas(area);
 
 		// -- Render tasks nav
+		// IMPORTANT: Need to display nav first,
+		//            because it will process the mouse event for task selection.
 		if show_tasks_nav {
 			render_tasks_nav(nav_a, buf, state);
 		}
@@ -59,13 +61,16 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	// -- Layout before_all | Logs
-	let [tasks_label_a, tasks_a] = Layout::default()
+	let [tasks_label_a, tasks_list_a] = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints(vec![
 			Constraint::Length(1), // tasks label
 			Constraint::Fill(1),   // tasks list
 		])
 		.areas(area);
+
+	// -- Process UI Event
+	process_mouse_for_task_nav(state, tasks_list_a);
 
 	// region:    --- Render Tasks Label
 	let before_line = Line::default().spans(vec![
@@ -95,7 +100,22 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let mut list_s = ListState::default();
 	list_s.select(state.task_idx());
 
-	StatefulWidget::render(list_w, tasks_a, buf, &mut list_s);
+	StatefulWidget::render(list_w, tasks_list_a, buf, &mut list_s);
 
 	// endregion: --- Render Tasks
 }
+
+// region:    --- Mouse Processing
+
+fn process_mouse_for_task_nav(state: &mut AppState, nav_a: Rect) {
+	if let Some(mouse_evt) = state.mouse_evt()
+		&& mouse_evt.is_click()
+		&& mouse_evt.is_in_area(nav_a)
+	{
+		let new_idx = mouse_evt.y() - nav_a.y;
+		let new_idx = clamp_idx_in_len(new_idx as usize, state.tasks().len());
+		state.set_task_idx(Some(new_idx));
+	}
+}
+
+// endregion: --- Mouse Processing

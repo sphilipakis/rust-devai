@@ -40,7 +40,7 @@ pub(in crate::tui::core) struct AppStateInner {
 	// -- RunMainView
 	pub run_tab: RunTab,
 
-	// -- RunDetailsView
+	// -- RunTasksView
 	pub task_idx: Option<i32>,
 	pub before_all_show: bool,
 	pub after_all_show: bool,
@@ -85,7 +85,7 @@ impl AppState {
 			// -- RunMainView
 			run_tab: RunTab::Tasks, // Tasks tab by default
 
-			// -- RunDetailsView
+			// -- RunTasksView
 			task_idx: None,
 			log_scroll: 0,
 			before_all_show: false,
@@ -169,10 +169,14 @@ impl AppState {
 	}
 }
 
-/// RunDetailsView
+/// RunTasksView
 impl AppState {
 	pub fn task_idx(&self) -> Option<usize> {
 		self.inner.task_idx.map(|idx| idx as usize)
+	}
+
+	pub fn set_task_idx(&mut self, idx: Option<usize>) {
+		self.inner.task_idx = idx.map(|i| i as i32);
 	}
 
 	pub fn tasks(&self) -> &[Task] {
