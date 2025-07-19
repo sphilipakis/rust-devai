@@ -98,12 +98,17 @@ impl AppState {
 		let mut uniques: Vec<String> = Vec::new();
 		let mut some_no_ov = false;
 		for task in tasks {
-			if let Some(model) = &task.model_ov {
-				if model != &run_model && !uniques.contains(model) {
-					uniques.push(model.clone());
+			// if the model skipped before AI, then it's model does not count
+			// TODO: Probably need to process also when not skipped but no AI Process (e.g., when prompt becomes empty)
+			if !task.is_skipped_before_ai() {
+				if let Some(model) = &task.model_ov {
+					// if the model is unique and not already added, we add it
+					if model != &run_model && !uniques.contains(model) {
+						uniques.push(model.clone());
+					}
+				} else {
+					some_no_ov = true;
 				}
-			} else {
-				some_no_ov = true;
 			}
 		}
 

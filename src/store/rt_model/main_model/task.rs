@@ -65,6 +65,15 @@ impl Task {
 	pub fn is_ended(&self) -> bool {
 		matches!(RunningState::from(self), RunningState::Ended(_))
 	}
+	pub fn is_skipped_before_ai(&self) -> bool {
+		if let Some(EndState::Skip) = self.end_state
+			&& self.ai_start.is_none()
+		{
+			true
+		} else {
+			false
+		}
+	}
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]

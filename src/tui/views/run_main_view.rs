@@ -180,14 +180,6 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		.style(tab_2_style)
 		.render(tab_tasks_a, buf);
 
-	// UI DEBUG
-	// if let Some(mouse_pos) = state.mouse_pos() {
-	// 	if tabs_a.contains(mouse_pos) {
-	// 		tracing::debug!("->> pos: {mouse_pos:?}  - tabs_a: {tabs_a:?}");
-	// 		Block::new().bg(styles::CLR_BKG_PRIME).render(tabs_a, buf);
-	// 	}
-	// }
-
 	// -- Render Line
 	// Trick to have a single line of tab active bkg color
 	let repeated = "▔".repeat(tabs_line_a.width as usize);
