@@ -54,6 +54,7 @@ pub(in crate::tui::core) struct AppStateInner {
 
 	// -- System & Event
 	pub mm: ModelManager,
+	pub do_redraw: bool,
 	pub last_app_event: LastAppEvent,
 
 	// -- SysState
@@ -98,6 +99,7 @@ impl AppState {
 			// -- System & Event
 			mm,
 			last_app_event,
+			do_redraw: false,
 
 			// -- SysState
 			sys_state,
@@ -156,6 +158,10 @@ impl AppState {
 		self.inner.run_idx.map(|idx| idx as usize)
 	}
 
+	pub fn set_run_idx(&mut self, idx: Option<usize>) {
+		self.inner.run_idx = idx.map(|i| i as i32);
+	}
+
 	pub fn runs(&self) -> &[Run] {
 		&self.inner.runs
 	}
@@ -166,6 +172,14 @@ impl AppState {
 		} else {
 			None
 		}
+	}
+
+	pub fn run_tab(&self) -> RunTab {
+		self.inner.run_tab
+	}
+
+	pub fn set_run_tab(&mut self, run_tab: RunTab) {
+		self.inner.run_tab = run_tab;
 	}
 }
 
@@ -192,16 +206,19 @@ impl AppState {
 	}
 }
 
+/// System & Event
+impl AppState {
+	pub fn mm(&self) -> &ModelManager {
+		&self.inner.mm
+	}
+
+	pub fn last_app_event(&self) -> &LastAppEvent {
+		&self.inner.last_app_event
+	}
+}
+
 /// Other simple accessors
 impl AppState {
-	pub fn run_tab(&self) -> RunTab {
-		self.inner.run_tab
-	}
-
-	pub fn set_run_tab(&mut self, run_tab: RunTab) {
-		self.inner.run_tab = run_tab;
-	}
-
 	pub fn log_scroll(&self) -> u16 {
 		self.inner.log_scroll
 	}
@@ -210,12 +227,12 @@ impl AppState {
 		self.inner.log_scroll = scroll;
 	}
 
-	pub fn mm(&self) -> &ModelManager {
-		&self.inner.mm
+	pub fn should_redraw(&self) -> bool {
+		self.inner.do_redraw
 	}
 
-	pub fn last_app_event(&self) -> &LastAppEvent {
-		&self.inner.last_app_event
+	pub fn trigger_redraw(&mut self) {
+		self.inner.do_redraw = true;
 	}
 }
 

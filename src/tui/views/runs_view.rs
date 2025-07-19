@@ -24,7 +24,12 @@ impl StatefulWidget for RunsView {
 			.areas(area);
 
 		// -- Render nav
+		// IMPORTANT: Need to render this one first, as it will update run_idx
 		RunsNavView.render(nav_a, buf, state);
+
+		if state.should_redraw() {
+			return;
+		}
 
 		// -- Display the Content block
 		RunMainView.render(main_a, buf, state);

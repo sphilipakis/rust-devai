@@ -33,6 +33,14 @@ pub fn run_ui_loop(
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
 
+			// -- Trigger the redraw if needed
+			// TODO: We might want to have a timestamp so that we do not process the redraw
+			//       if another event happened before.
+			if app_state.should_redraw() {
+				app_state.inner_mut().do_redraw = false;
+				let _ = app_tx.send(AppEvent::DoRedraw).await;
+			}
+
 			// -- Get Next App Event
 			let app_event = match app_rx.recv().await {
 				Ok(r) => r,

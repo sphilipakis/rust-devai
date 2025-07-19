@@ -11,6 +11,9 @@ use derive_more::From;
 /// into `AppEvent`.
 #[derive(From, Debug)]
 pub enum AppEvent {
+	// When a UI Component changed a state that might affect other previously rendered states
+	DoRedraw,
+
 	// Terminal Read Events
 	#[from]
 	Term(crossterm::event::Event),
