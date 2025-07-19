@@ -12,13 +12,13 @@ mod tui_impl;
 
 // -- Public
 mod app_state_fmt;
-mod direction;
+mod types;
 
 // -- Cherry Flatten
 pub use app_state::AppState;
 pub use tui_impl::{AppTx, ExitTx, start_tui};
 
 // -- Public flatten
-pub use direction::*;
+pub use types::*;
 
 // endregion: --- Modules

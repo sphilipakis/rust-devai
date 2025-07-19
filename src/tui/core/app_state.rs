@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
+use crate::tui::core::RunTab;
 use crate::tui::core::sys_state::SysState;
 use crate::tui::event::LastAppEvent;
 use ratatui::layout::Position;
@@ -38,7 +39,7 @@ pub(in crate::tui::core) struct AppStateInner {
 	pub run_idx: Option<i32>,
 
 	// -- RunMainView
-	pub run_tab_idx: i32,
+	pub run_tab: RunTab,
 
 	// -- RunDetailsView
 	pub task_idx: Option<i32>,
@@ -83,7 +84,7 @@ impl AppState {
 			run_idx: None,
 
 			// -- RunMainView
-			run_tab_idx: 1, // Tasks tab by default
+			run_tab: RunTab::Tasks, // Tasks tab by default
 
 			// -- RunDetailsView
 			task_idx: None,
@@ -190,12 +191,12 @@ impl AppState {
 
 /// Other simple accessors
 impl AppState {
-	pub fn run_tab_idx(&self) -> i32 {
-		self.inner.run_tab_idx
+	pub fn run_tab(&self) -> RunTab {
+		self.inner.run_tab
 	}
 
-	pub fn set_run_tab_idx(&mut self, idx: i32) {
-		self.inner.run_tab_idx = idx;
+	pub fn set_run_tab(&mut self, run_tab: RunTab) {
+		self.inner.run_tab = run_tab;
 	}
 
 	pub fn log_scroll(&self) -> u16 {

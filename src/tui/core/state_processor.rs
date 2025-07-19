@@ -120,16 +120,14 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- Tabs navigation (Run view)
-	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {
+	if let Some(code) = state.last_app_event().as_key_code() {
+		let current_run_tab = state.run_tab();
 		match code {
-			KeyCode::Char('j') => -1,
-			KeyCode::Char('l') => 1,
-			_ => 0,
+			KeyCode::Char('j') => state.set_run_tab(current_run_tab.prev()),
+			KeyCode::Char('l') => state.set_run_tab(current_run_tab.next()),
+			_ => (),
 		}
-	} else {
-		0
 	};
-	state.inner_mut().run_tab_idx += offset;
 
 	// -- Log scroll (keyboard & mouse)
 	let current_log_scroll = state.log_scroll();

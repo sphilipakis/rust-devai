@@ -1,4 +1,5 @@
-use crate::tui::support::{RectExt, clamp_idx_in_len};
+use crate::tui::core::RunTab;
+use crate::tui::support::RectExt;
 use crate::tui::views::support::el_running_ico;
 use crate::tui::views::{RunOverviewView, RuntTasksView};
 use crate::tui::{AppState, styles};
@@ -6,14 +7,9 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph, StatefulWidget, Tabs, Widget as _};
+use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget as _};
 
 pub struct RunMainView;
-
-pub enum RunTab {
-	Overview,
-	Tasks,
-}
 
 impl StatefulWidget for RunMainView {
 	type State = AppState;
@@ -141,21 +137,41 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 }
 
 fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
+	// -- Process run_tab
+	let run_tab = state.run_tab();
+	// TODO: process last event click
+
+	// -- Layout Header | Tabs | Tab Content
+	let [_, tab_1_a, _, tab_2_a] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![
+			Constraint::Length(1),  // gap 1
+			Constraint::Length(12), // tab_1
+			Constraint::Length(1),  // gap
+			Constraint::Length(11), // tab_2
+		])
+		.areas(tabs_a);
+
+	// -- Compute tabs Label & style
 	let style = styles::STL_TAB_DEFAULT;
 	let highlight_style = styles::STL_TAB_ACTIVE;
 
-	// -- Render tabs
-	let tasks_label = if state.tasks().len() > 1 {
-		"   Tasks   "
+	let tab_1_label = "Overview";
+	let tab_1_style = if matches!(run_tab, RunTab::Overview) {
+		highlight_style
 	} else {
-		"   Task   "
+		style
+	};
+	let tab_2_label = if state.tasks().len() > 1 { "Tasks" } else { "Task" };
+	let tab_2_style = if matches!(run_tab, RunTab::Tasks) {
+		highlight_style
+	} else {
+		style
 	};
 
-	let titles = vec![
-		//
-		Line::styled("   Overview   ", style),
-		Line::styled(tasks_label, style),
-	];
+	// -- Render tabs
+	Paragraph::new(tab_1_label).centered().style(tab_1_style).render(tab_1_a, buf);
+	Paragraph::new(tab_2_label).centered().style(tab_2_style).render(tab_2_a, buf);
 
 	// UI DEBUG
 	// if let Some(mouse_pos) = state.mouse_pos() {
@@ -166,14 +182,14 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	// }
 
 	// Clamp the index
-	state.set_run_tab_idx(clamp_idx_in_len(state.run_tab_idx(), titles.len()));
+	//state.set_run_tab_idx(clamp_idx_in_len(state.run_tab_idx(), titles.len()));
 
-	Tabs::new(titles)
-		.highlight_style(highlight_style)
-		.select(state.run_tab_idx() as usize)
-		.padding(" ", "")
-		.divider("")
-		.render(tabs_a, buf);
+	// Tabs::new(titles)
+	// 	.highlight_style(highlight_style)
+	// 	.select(state.run_tab_idx() as usize)
+	// 	.padding(" ", "")
+	// 	.divider("")
+	// 	.render(tabs_a, buf);
 
 	// -- Render Line
 	// Trick to have a single line of tab active bkg color
@@ -181,10 +197,6 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	let line = Line::default().spans(vec![Span::raw(repeated)]).fg(styles::CLR_BKG_TAB_ACT);
 	line.render(tabs_line_a, buf);
 
-	// - Return tab selected
-	match state.run_tab_idx() {
-		0 => RunTab::Overview,
-		1 => RunTab::Tasks,
-		_ => RunTab::Tasks,
-	}
+	// -- Return tab selected
+	run_tab
 }
