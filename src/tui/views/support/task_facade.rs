@@ -1,3 +1,4 @@
+use crate::store::RunningState;
 use crate::store::rt_model::Task;
 use crate::support::text;
 use crate::tui::styles;
@@ -45,18 +46,27 @@ impl Task {
 		}
 
 		// -- data
-		let data_running_state = self.data_running_state();
-		let ico = el_running_ico(data_running_state);
-		let block_spans = vec![Span::raw(" "), ico, Span::raw(" Data ")];
-		all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
+		// let data_running_state = self.data_running_state();
+		// let ico = el_running_ico(data_running_state);
+		// let block_spans = vec![Span::raw(" "), ico, Span::raw(" Data ")];
+		// all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
 
-		all_spans.push(Span::raw("  "));
+		// all_spans.push(Span::raw("  "));
 
 		// -- AI
 		let ai_running_state = self.ai_running_state();
-		let ico = el_running_ico(ai_running_state);
-		let block_spans = vec![Span::raw(" "), ico, Span::raw(" AI ")];
-		all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
+		let ico = el_running_ico(ai_running_state.clone());
+		let label_style = match ai_running_state {
+			RunningState::NotScheduled | RunningState::Waiting => styles::STL_SECTION_MARKER,
+			_ => styles::STL_SECTION_MARKER_AI,
+		};
+		let spans = vec![
+			//
+			Span::raw(" "),
+			ico.fg(styles::CLR_TXT_500),
+			Span::styled(" AI ", label_style),
+		];
+		all_spans.extend(spans.x_bg(styles::CLR_BKG_400));
 
 		all_spans
 	}

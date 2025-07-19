@@ -159,6 +159,7 @@ impl From<&Task> for RunningState {
 }
 
 impl Task {
+	#[allow(unused)]
 	pub fn data_running_state(&self) -> RunningState {
 		if self.data_end.is_some() {
 			// TODO: Need to compute correctly the end state for this stage
