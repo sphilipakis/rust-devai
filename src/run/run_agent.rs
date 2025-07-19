@@ -1,13 +1,13 @@
 use crate::agent::{Agent, AgentRef};
 use crate::dir_context::DirContext;
-use crate::hub::{HubEvent, get_hub};
+use crate::hub::get_hub;
 use crate::run::RunBaseOptions;
 use crate::run::literals::Literals;
 use crate::run::proc_after_all::{ProcAfterAllResponse, process_after_all};
 use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
-use crate::run::run_agent_task::{RunAgentInputResponse, run_agent_task};
+use crate::run::run_agent_task::run_agent_task_outer;
 use crate::runtime::Runtime;
-use crate::script::{AipackCustom, FromValue, serde_value_to_lua_value, serde_values_to_lua_values};
+use crate::script::{serde_value_to_lua_value, serde_values_to_lua_values};
 use crate::store::rt_model::{LogKind, RuntimeCtx};
 use crate::store::{Id, Stage};
 use crate::{Error, Result};
@@ -16,7 +16,9 @@ use serde::Serialize;
 use serde_json::Value;
 use simple_fs::SPath;
 use tokio::task::{JoinError, JoinSet};
-use value_ext::JsonValueExt;
+
+#[cfg(test)]
+use crate::run::run_agent_task::RunAgentInputResponse;
 
 const DEFAULT_CONCURRENCY: usize = 1;
 
@@ -167,54 +169,6 @@ async fn run_agent_inner(
 	Ok(RunAgentResponse { after_all, outputs })
 }
 
-/// Run the command agent input for the run_command_agent_inputs
-/// Not public by design, should be only used in the context of run_command_agent_inputs
-#[allow(clippy::too_many_arguments)]
-async fn run_agent_task_outer(
-	run_id: Id,
-	task_id: Id,
-	input_idx: usize,
-	runtime: &Runtime,
-	agent: &Agent,
-	before_all: Value,
-	input: impl Serialize,
-	literals: &Literals,
-	run_base_options: &RunBaseOptions,
-) -> Result<Option<RunAgentInputResponse>> {
-	let hub = get_hub();
-
-	// -- prepare the scope_input
-	let input = serde_json::to_value(input)?;
-
-	// get the eventual "._label" property of the input
-	// try to get the path, name
-	let label = get_input_label(&input).unwrap_or_else(|| format!("{input_idx}"));
-	hub.publish(format!("\n==== Running input: {label}")).await;
-
-	let run_response = run_agent_task(
-		runtime,
-		run_id,
-		task_id,
-		agent,
-		before_all,
-		&label,
-		input,
-		literals,
-		run_base_options,
-	)
-	.await?;
-
-	// if the response value is a String, then, print it
-	if let Some(response_txt) = run_response.as_ref().and_then(|r| r.as_str()) {
-		// let short_text = truncate_with_ellipsis(response_txt, 72);
-		hub.publish(format!("-> Agent Output:\n\n{response_txt}\n")).await;
-	}
-
-	hub.publish(format!("==== DONE (input: {label})")).await;
-
-	Ok(run_response)
-}
-
 async fn print_run_info(runtime: &Runtime, run_id: Id, agent: &Agent) -> Result<()> {
 	let rt_log = runtime.rt_log();
 
@@ -312,7 +266,7 @@ async fn run_tasks(
 			let _ = rt_step.step_task_start(run_id, task_id).await;
 
 			// Execute the command agent (this will perform do Data, Instruction, and Output stages)
-			let run_task_response = run_agent_task_outer(
+			let res = run_agent_task_outer(
 				run_id,
 				task_id,
 				task_idx,
@@ -323,14 +277,20 @@ async fn run_tasks(
 				&literals,
 				&base_run_config_clone,
 			)
-			.await
-			.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
+			.await;
 
-			let output = process_agent_response_to_output(&rt, task_id, run_task_response)
-				.await
-				.map_err(|err| JoinSetErr::new(run_id, task_id, task_idx, err))?;
-
-			Ok(JoinSetOk::new(run_id, task_id, task_idx, output))
+			// -- Rt Step - Task End
+			match res {
+				Ok((task_idx, output)) => {
+					rt_step.step_task_end_ok(run_id, task_id).await?;
+					Ok((task_idx, output))
+				}
+				Err(err) => {
+					//
+					rt_step.step_task_end_err(run_id, task_id, &err).await?;
+					Err(err)
+				}
+			}
 		});
 
 		in_progress += 1;
@@ -338,8 +298,7 @@ async fn run_tasks(
 		// If we've reached the concurrency limit, wait for one task to complete
 		if in_progress >= concurrency {
 			if let Some(res) = join_set.join_next().await {
-				// Note: for now, we will stop on first error
-				process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+				process_join_set_res(res, &mut in_progress, &mut captured_outputs).await?;
 			}
 		}
 	}
@@ -347,11 +306,30 @@ async fn run_tasks(
 	// Wait for the remaining tasks to complete
 	while in_progress > 0 {
 		if let Some(res) = join_set.join_next().await {
-			process_join_set_result(runtime, res, &mut in_progress, &mut captured_outputs).await?;
+			process_join_set_res(res, &mut in_progress, &mut captured_outputs).await?;
 		}
 	}
 
 	Ok(captured_outputs)
+}
+
+type JoinSetResult = core::result::Result<Result<(usize, Value)>, JoinError>;
+async fn process_join_set_res(
+	res: JoinSetResult,
+	in_progress: &mut usize,
+	outputs_vec: &mut Option<Vec<(usize, Value)>>,
+) -> Result<()> {
+	*in_progress -= 1;
+	match res {
+		Ok(Ok((task_idx, output))) => {
+			if let Some(outputs_vec) = outputs_vec.as_mut() {
+				outputs_vec.push((task_idx, output));
+			}
+			Ok(())
+		}
+		Ok(Err(e)) => Err(e),
+		Err(e) => Err(Error::custom(format!("Error while running input. Cause {e}"))),
+	}
 }
 
 // region:    --- RunCommandResponse
@@ -380,134 +358,6 @@ impl IntoLua for RunAgentResponse {
 
 // region:    --- JoinSet Support
 
-type JoinSetResult = core::result::Result<JoinSetOk, JoinSetErr>;
-
-#[derive(Debug)]
-struct JoinSetOk {
-	run_id: Id,
-	task_id: Id,
-	task_idx: usize,
-	output: Value,
-}
-
-#[derive(Debug)]
-struct JoinSetErr {
-	run_id: Id,
-	task_id: Id,
-	#[allow(unused)]
-	task_idx: usize,
-	err: crate::Error,
-}
-
-impl JoinSetOk {
-	fn new(run_id: Id, task_id: Id, task_idx: usize, output: Value) -> Self {
-		Self {
-			run_id,
-			task_id,
-			task_idx,
-			output,
-		}
-	}
-}
-
-impl JoinSetErr {
-	fn new(run_id: Id, task_id: Id, task_idx: usize, err: crate::Error) -> Self {
-		Self {
-			run_id,
-			task_id,
-			task_idx,
-			err,
-		}
-	}
-}
-
-async fn process_agent_response_to_output(
-	runtime: &Runtime,
-	task_id: Id,
-	run_task_response: Option<RunAgentInputResponse>,
-) -> Result<Value> {
-	let hub = get_hub();
-
-	let rt_model = runtime.rt_model();
-
-	// Process the output
-	let run_input_value = run_task_response.map(|v| v.into_value()).unwrap_or_default();
-	let output = match AipackCustom::from_value(run_input_value)? {
-		// if it is a skip, we skip
-		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
-			let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
-			hub.publish(HubEvent::info_short(format!(
-				"Aipack Skip input at Output stage{reason_msg}"
-			)))
-			.await;
-			Value::Null
-		}
-
-		// Any other AipackCustom is not supported at output stage
-		FromValue::AipackCustom(other) => {
-			return Err(Error::custom(format!(
-				"Aipack custom '{}' not supported at the Output stage",
-				other.as_ref()
-			)));
-		}
-
-		// Plain value passthrough
-		FromValue::OriginalValue(value) => value,
-	};
-
-	// -- Rt Rec - Update the task output
-	rt_model.update_task_output(task_id, &output).await?;
-	Ok(output)
-}
-
-// Here we process the reponse of the join set spawn
-// - Add the output
-async fn process_join_set_result(
-	runtime: &Runtime,
-	// (task_id, task_idx, output)
-	join_res: core::result::Result<JoinSetResult, JoinError>,
-	in_progress: &mut usize,
-	captured_outputs: &mut Option<Vec<(usize, Value)>>,
-) -> Result<()> {
-	let rt_step = runtime.rt_step();
-
-	*in_progress -= 1;
-
-	match join_res {
-		Ok(Ok(join_set_ok)) => {
-			let JoinSetOk {
-				run_id,
-				task_id,
-				task_idx,
-				output,
-			} = join_set_ok;
-			if let Some(outputs_vec) = captured_outputs.as_mut() {
-				outputs_vec.push((task_idx, output));
-			}
-			// -- Rt Step - Task End
-			// ->> To remove (Should be done at the run_task..)
-			rt_step.step_task_end_ok(run_id, task_id).await?;
-
-			Ok(())
-		}
-		Ok(Err(join_set_err)) => {
-			let JoinSetErr {
-				run_id,
-				task_id,
-				task_idx: _,
-				err,
-			} = join_set_err;
-
-			// -- Rt Step - Task End
-			// ->> To remove (Should be done at the run_task..)
-			rt_step.step_task_end_err(run_id, task_id, &err).await?;
-
-			Err(err)
-		}
-		Err(join_err) => Err(Error::custom(format!("Error while running input. Cause {join_err}"))),
-	}
-}
-
 // endregion: --- JoinSet Support
 
 // region:    --- Support
@@ -532,6 +382,7 @@ fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> 
 // endregion: --- Support
 
 /// Workaround to expose the run_command_agent_input only for test.
+#[allow(unused)]
 #[cfg(test)]
 pub async fn run_command_agent_input_for_test(
 	input_idx: usize,
@@ -541,33 +392,27 @@ pub async fn run_command_agent_input_for_test(
 	input: impl Serialize,
 	run_base_options: &RunBaseOptions,
 ) -> Result<Option<RunAgentInputResponse>> {
+	use crate::run::run_agent_task::run_agent_task_outer;
+
 	let literals = Literals::from_runtime_and_agent_path(runtime, agent)?;
 
-	run_agent_task_outer(
-		0.into(), // run_id,
-		0.into(), // task_id,
-		input_idx,
-		runtime,
-		agent,
-		before_all,
-		input,
-		&literals,
-		run_base_options,
-	)
-	.await
+	todo!()
+	// NOTE: Need to reactive.
+	// 	run_agent_task_outer(
+	// 		0.into(), // run_id,
+	// 		0.into(), // task_id,
+	// 		input_idx,
+	// 		runtime,
+	// 		agent,
+	// 		before_all,
+	// 		input,
+	// 		&literals,
+	// 		run_base_options,
+	// 	)
+	// 	.await
 }
 
 // region:    --- Support
-
-fn get_input_label(input: &Value) -> Option<String> {
-	const LABEL_KEYS: &[&str] = &["path", "name", "label", "_label"];
-	for &key in LABEL_KEYS {
-		if let Ok(value) = input.x_get::<String>(key) {
-			return Some(value);
-		}
-	}
-	None
-}
 
 /// For the run commands info (before each input run)
 fn get_genai_info(agent: &Agent) -> String {

@@ -1,5 +1,5 @@
-use crate::Result;
 use crate::agent::Agent;
+use crate::hub::{HubEvent, get_hub};
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
 use crate::run::proc_ai::{ProcAiResponse, process_ai};
@@ -7,9 +7,116 @@ use crate::run::proc_data::{ProcDataResponse, process_data};
 use crate::run::proc_output::process_output;
 use crate::run::{DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
+use crate::script::{AipackCustom, FromValue};
 use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, Stage};
+use crate::{Error, Result};
+use serde::Serialize;
 use serde_json::Value;
+use value_ext::JsonValueExt as _;
+
+// region:    --- Run Task Outer
+
+/// Run the command agent input for the run_command_agent_inputs
+/// Not public by design, should be only used in the context of run_command_agent_inputs
+#[allow(clippy::too_many_arguments)]
+pub async fn run_agent_task_outer(
+	run_id: Id,
+	task_id: Id,
+	input_idx: usize,
+	runtime: &Runtime,
+	agent: &Agent,
+	before_all: Value,
+	input: impl Serialize,
+	literals: &Literals,
+	run_base_options: &RunBaseOptions,
+) -> Result<(usize, Value)> {
+	let hub = get_hub();
+
+	// -- prepare the scope_input
+	let input = serde_json::to_value(input)?;
+
+	// get the eventual "._label" property of the input
+	// try to get the path, name
+	let label = get_input_label(&input).unwrap_or_else(|| format!("{input_idx}"));
+	hub.publish(format!("\n==== Running input: {label}")).await;
+
+	let run_response = run_agent_task(
+		runtime,
+		run_id,
+		task_id,
+		agent,
+		before_all,
+		&label,
+		input,
+		literals,
+		run_base_options,
+	)
+	.await?;
+
+	// if the response value is a String, then, print it
+	if let Some(response_txt) = run_response.as_ref().and_then(|r| r.as_str()) {
+		// let short_text = truncate_with_ellipsis(response_txt, 72);
+		hub.publish(format!("-> Agent Output:\n\n{response_txt}\n")).await;
+	}
+
+	hub.publish(format!("==== DONE (input: {label})")).await;
+
+	let output = process_agent_response_to_output(runtime, task_id, run_response).await?;
+
+	Ok((input_idx, output))
+}
+
+async fn process_agent_response_to_output(
+	runtime: &Runtime,
+	task_id: Id,
+	run_task_response: Option<RunAgentInputResponse>,
+) -> Result<Value> {
+	let hub = get_hub();
+
+	let rt_model = runtime.rt_model();
+
+	// Process the output
+	let run_input_value = run_task_response.map(|v| v.into_value()).unwrap_or_default();
+	let output = match AipackCustom::from_value(run_input_value)? {
+		// if it is a skip, we skip
+		FromValue::AipackCustom(AipackCustom::Skip { reason }) => {
+			let reason_msg = reason.map(|reason| format!(" (Reason: {reason})")).unwrap_or_default();
+			hub.publish(HubEvent::info_short(format!(
+				"Aipack Skip input at Output stage{reason_msg}"
+			)))
+			.await;
+			Value::Null
+		}
+
+		// Any other AipackCustom is not supported at output stage
+		FromValue::AipackCustom(other) => {
+			return Err(Error::custom(format!(
+				"Aipack custom '{}' not supported at the Output stage",
+				other.as_ref()
+			)));
+		}
+
+		// Plain value passthrough
+		FromValue::OriginalValue(value) => value,
+	};
+
+	// -- Rt Rec - Update the task output
+	rt_model.update_task_output(task_id, &output).await?;
+	Ok(output)
+}
+
+fn get_input_label(input: &Value) -> Option<String> {
+	const LABEL_KEYS: &[&str] = &["path", "name", "label", "_label"];
+	for &key in LABEL_KEYS {
+		if let Ok(value) = input.x_get::<String>(key) {
+			return Some(value);
+		}
+	}
+	None
+}
+
+// endregion: --- Run Task Outer
 
 // region:    --- RunAgentInputResponse
 
