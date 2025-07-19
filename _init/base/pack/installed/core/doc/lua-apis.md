@@ -349,8 +349,9 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
-    (`created_epoch_us`, `modified_epoch_us`, `size`) for each file, potentially improving performance
+    (`ctime`, `mtime`, `size`) for each file, potentially improving performance
     if only the path information is needed. Defaults to `true`.
+  - `ctime` is creation time, `mtime` is last modification time (from the file system), both in epoch micro
 
 #### Returns
 - `list<FileInfo>`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
@@ -833,13 +834,13 @@ Parses the given path string into a structured table containing components like 
 
 #### Returns
 
-- `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+- `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 
 #### Example
 
 ```lua
 local parsed = aip.path.parse("some/folder/file.txt")
--- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", created_epoch_us = nil, ... }
+-- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", ctime = nil, ... }
 print(parsed.name) -- Output: "file.txt"
 
 local nil_result = aip.path.parse(nil)
@@ -3341,17 +3342,17 @@ Represents a file with its metadata and content. Returned by `aip.file.load` and
 
 ```ts
 {
-  path : string,             // Relative or absolute path used to load/find the file
-  dir: string,               // Parent directory of the path (empty if no parent)
-  name : string,             // File name with extension (e.g., "main.rs")
-  stem : string,             // File name without extension (e.g., "main")
-  ext  : string,             // File extension (e.g., "rs")
+  path : string,    // Relative or absolute path used to load/find the file
+  dir: string,      // Parent directory of the path (empty if no parent)
+  name : string,    // File name with extension (e.g., "main.rs")
+  stem : string,    // File name without extension (e.g., "main")
+  ext  : string,    // File extension (e.g., "rs")
 
-  created_epoch_us?: number, // Creation timestamp (microseconds since epoch), optional
-  modified_epoch_us?: number,// Modification timestamp (microseconds), optional
-  size?: number,             // File size in bytes, optional
+  ctime?: number,   // Creation timestamp (microseconds since epoch), optional
+  ctime?: number,   // Modification timestamp (microseconds), optional
+  size?: number,    // File size in bytes, optional
 
-  content: string            // The text content of the file
+  content: string   // The text content of the file
 }
 ```
 
@@ -3361,15 +3362,15 @@ Represents file metadata without content. Returned by `aip.file.list`, `aip.file
 
 ```ts
 {
-  path : string,             // Relative or absolute path
-  dir: string,               // Parent directory of the path
-  name : string,             // File name with extension
-  stem : string,             // File name without extension
-  ext  : string,             // File extension
+  path : string,     // Relative or absolute path
+  dir: string,       // Parent directory of the path
+  name : string,     // File name with extension
+  stem : string,     // File name without extension
+  ext  : string,     // File extension
 
-  created_epoch_us?: number, // Creation timestamp (microseconds), optional (if with_meta=true for list)
-  modified_epoch_us?: number,// Modification timestamp (microseconds), optional (if with_meta=true for list)
-  size?: number              // File size in bytes, optional (if with_meta=true for list)
+  ctime?: number,    // Creation timestamp (microseconds), optional (if with_meta=true for list)
+  mtime?: number,    // Modification timestamp (microseconds), optional (if with_meta=true for list)
+  size?: number      // File size in bytes, optional (if with_meta=true for list)
 }
 ```
 

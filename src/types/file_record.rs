@@ -21,8 +21,8 @@ pub struct FileRecord {
 	/// The full text content of the file
 	pub content: String,
 
-	pub created_epoch_us: i64,
-	pub modified_epoch_us: i64,
+	pub ctime: i64,
+	pub mtime: i64,
 	pub size: i64,
 }
 
@@ -41,8 +41,8 @@ impl FileRecord {
 			stem: rel_path.stem().to_string(),
 			ext: rel_path.ext().to_string(),
 			content,
-			created_epoch_us: meta.created_epoch_us,
-			modified_epoch_us: meta.modified_epoch_us,
+			ctime: meta.created_epoch_us,
+			mtime: meta.modified_epoch_us,
 			size: meta.size as i64,
 		})
 	}
@@ -60,8 +60,8 @@ impl IntoLua for FileRecord {
 		table.set("stem", self.stem)?;
 		table.set("ext", self.ext)?;
 
-		table.set("created_epoch_us", self.created_epoch_us)?;
-		table.set("modified_epoch_us", self.modified_epoch_us)?;
+		table.set("ctime", self.ctime)?;
+		table.set("ctime", self.mtime)?;
 		table.set("size", self.size)?;
 
 		table.set("content", self.content)?;

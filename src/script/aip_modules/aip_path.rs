@@ -98,13 +98,13 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ### Returns
 ///
-/// - `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `created_epoch_us`, `modified_epoch_us`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+/// - `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 ///
 /// ### Example
 ///
 /// ```lua
 /// local parsed = aip.path.parse("some/folder/file.txt")
-/// -- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", created_epoch_us = nil, ... }
+/// -- parsed will be similar to { path = "some/folder/file.txt", dir = "some/folder", name = "file.txt", stem = "file", ext = "txt", ctime = nil, ... }
 /// print(parsed.name) -- Output: "file.txt"
 ///
 /// local nil_result = aip.path.parse(nil)

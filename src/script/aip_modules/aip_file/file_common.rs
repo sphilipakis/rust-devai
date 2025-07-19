@@ -55,14 +55,14 @@ use std::io::Write;
 /// - `FileRecord: table` - A table representing the file record:
 ///   ```ts
 ///   {
-///     path : string,             // Relative path used to load the file
-///     name : string,             // File name with extension
-///     stem : string,             // File name without extension
-///     ext  : string,             // File extension
-///     created_epoch_us?: number, // Creation timestamp (microseconds)
-///     modified_epoch_us?: number,// Modification timestamp (microseconds)
-///     size?: number,             // File size in bytes
-///     content: string            // The text content of the file
+///     path : string,   // Relative path used to load the file
+///     name : string,   // File name with extension
+///     stem : string,   // File name without extension
+///     ext  : string,   // File extension
+///     ctime?: number,  // Creation timestamp (microseconds)
+///     mtime?: number,  // Modification timestamp (microseconds)
+///     size?: number,   // File size in bytes
+///     content: string  // The text content of the file
 ///   }
 ///   ```
 ///
@@ -284,13 +284,13 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 /// - `FileInfo: table` - Metadata about the file (even if it was just created).
 ///   ```ts
 ///   {
-///     path : string,             // Relative path used
-///     name : string,             // File name with extension
-///     stem : string,             // File name without extension
-///     ext  : string,             // File extension
-///     created_epoch_us?: number, // Creation timestamp (microseconds)
-///     modified_epoch_us?: number,// Modification timestamp (microseconds)
-///     size?: number              // File size in bytes
+///     path : string,   // Relative path used
+///     name : string,   // File name with extension
+///     stem : string,   // File name without extension
+///     ext  : string,   // File extension
+///     ctime?: number,  // Creation timestamp (microseconds)
+///     mtime?: number,  // Modification timestamp (microseconds)
+///     size?: number    // File size in bytes
 ///   }
 ///   ```
 ///
@@ -430,7 +430,7 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 ///     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
 ///     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
 ///   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
-///     (`created_epoch_us`, `modified_epoch_us`, `size`) for each file, potentially improving performance
+///     (`ctime`, `mtime`, `size`) for each file, potentially improving performance
 ///     if only the path information is needed. Defaults to `true`.
 ///
 /// ### Returns
@@ -438,13 +438,13 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 /// - `list<FileInfo>: table` - A Lua list (table) where each element is a `FileInfo` table:
 ///   ```ts
 ///   {
-///     path : string,             // Path (relative to base_dir or absolute)
-///     name : string,             // File name with extension
-///     stem : string,             // File name without extension
-///     ext  : string,             // File extension
-///     created_epoch_us?: number, // Creation timestamp (microseconds, if with_meta=true)
-///     modified_epoch_us?: number,// Modification timestamp (microseconds, if with_meta=true)
-///     size?: number              // File size in bytes (if with_meta=true)
+///     path : string,   // Path (relative to base_dir or absolute)
+///     name : string,   // File name with extension
+///     stem : string,   // File name without extension
+///     ext  : string,   // File extension
+///     ctime?: number,  // Creation timestamp (microseconds, if with_meta=true)
+///     mtime?: number,  // Modification timestamp (microseconds, if with_meta=true)
+///     size?: number    // File size in bytes (if with_meta=true)
 ///   }
 ///   ```
 ///   The list is empty if no files match the globs.
@@ -550,8 +550,8 @@ pub(super) fn file_list(
 ///     name : string,             // File name with extension
 ///     stem : string,             // File name without extension
 ///     ext  : string,             // File extension
-///     created_epoch_us?: number, // Creation timestamp (microseconds)
-///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     ctime?: number, // Creation timestamp (microseconds)
+///     mtime?: number,// Modification timestamp (microseconds)
 ///     size?: number,             // File size in bytes
 ///     content: string            // The text content of the file
 ///   }
@@ -645,8 +645,8 @@ pub(super) fn file_list_load(
 ///     name : string,             // File name with extension
 ///     stem : string,             // File name without extension
 ///     ext  : string,             // File extension
-///     created_epoch_us?: number, // Creation timestamp (microseconds)
-///     modified_epoch_us?: number,// Modification timestamp (microseconds)
+///     ctime?: number, // Creation timestamp (microseconds)
+///     mtime?: number,// Modification timestamp (microseconds)
 ///     size?: number              // File size in bytes
 ///   }
 ///   ```

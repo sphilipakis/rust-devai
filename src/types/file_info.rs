@@ -4,7 +4,7 @@ use serde::Serialize;
 use simple_fs::SPath;
 
 /// The FileInfo object contains the metadata of a file but not its content.
-/// The created_epoch_us, modified_epoch_us, and size metadata are generally loaded,
+/// The ctime, mtime, and size metadata are generally loaded,
 /// but this can be turned off when listing files using the `with_meta = false` option.
 #[derive(Debug, Serialize)]
 pub struct FileInfo {
@@ -15,8 +15,8 @@ pub struct FileInfo {
 	stem: String,
 	ext: String,
 
-	created_epoch_us: Option<i64>, // seconds since epoch, or nil in Lua
-	modified_epoch_us: Option<i64>,
+	ctime: Option<i64>, // seconds since epoch, or nil in Lua
+	mtime: Option<i64>,
 	size: Option<i64>, // size in bytes
 }
 
@@ -55,8 +55,8 @@ impl FileInfo {
 			let full_path = with_meta.full_path.unwrap_or(&path);
 
 			if let Ok(meta) = full_path.meta() {
-				res.created_epoch_us = Some(meta.created_epoch_us);
-				res.modified_epoch_us = Some(meta.modified_epoch_us);
+				res.ctime = Some(meta.created_epoch_us);
+				res.mtime = Some(meta.modified_epoch_us);
 				res.size = Some(meta.size as i64);
 			}
 			res
@@ -75,8 +75,8 @@ impl FileInfo {
 			stem: file.stem().to_string(),
 			ext: file.ext().to_string(),
 			// -- when created _with_meta
-			created_epoch_us: None,
-			modified_epoch_us: None,
+			ctime: None,
+			mtime: None,
 			size: None,
 		}
 	}
@@ -92,11 +92,11 @@ impl IntoLua for FileInfo {
 		table.set("name", self.name)?;
 		table.set("stem", self.stem)?;
 		table.set("ext", self.ext)?;
-		if let Some(created_epoch_us) = self.created_epoch_us {
-			table.set("created_epoch_us", created_epoch_us)?;
+		if let Some(ctime) = self.ctime {
+			table.set("ctime", ctime)?;
 		}
-		if let Some(modified_epoch_us) = self.modified_epoch_us {
-			table.set("modified_epoch_us", modified_epoch_us)?;
+		if let Some(mtime) = self.mtime {
+			table.set("mtime", mtime)?;
 		}
 		if let Some(size) = self.size {
 			table.set("size", size)?;
