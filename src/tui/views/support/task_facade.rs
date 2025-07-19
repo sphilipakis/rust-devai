@@ -1,4 +1,5 @@
 use crate::store::rt_model::Task;
+use crate::support::text;
 use crate::tui::styles;
 use crate::tui::support::{StylerExt as _, num_pad_for_len};
 use crate::tui::views::support::{self, el_running_ico};
@@ -30,10 +31,13 @@ impl Task {
 
 		// -- Input
 		if let Some(input_short) = self.input_short.as_ref() {
+			const MAX: usize = 12;
+			let input = text::truncate_with_ellipsis(input_short, MAX, "..");
+			let input = format!("{input:<width$}", width = MAX + 3);
 			let spans = vec![
 				//
-				Span::raw(" Input: ").bg(styles::CLR_BKG_400),
-				Span::raw(input_short.to_string()).bg(styles::CLR_BKG_400),
+				Span::styled(" Input: ", styles::STL_SECTION_MARKER_INPUT),
+				Span::raw(input).bg(styles::CLR_BKG_400),
 			];
 			all_spans.extend(spans);
 
