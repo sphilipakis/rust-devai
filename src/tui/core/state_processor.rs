@@ -3,7 +3,6 @@ use crate::tui::AppState;
 use crate::tui::core::NavDir;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
-use ratatui::layout::Position;
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Refresh system metrics
@@ -11,16 +10,9 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Get mouse event
 	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
-		let col = mouse_event.column;
-		let row = mouse_event.row;
-		let mouse_pos = match mouse_event.kind {
-			MouseEventKind::Moved => {
-				//
-				Some(Position::new(col, row))
-			}
-			_ => None,
-		};
-		state.inner_mut().mouse_pos = mouse_pos;
+		state.inner_mut().mouse_evt = Some(mouse_event.into());
+	} else {
+		state.inner_mut().mouse_evt = None;
 	}
 
 	// -- Toggle runs list

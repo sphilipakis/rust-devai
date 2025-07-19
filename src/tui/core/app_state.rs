@@ -1,10 +1,9 @@
 use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
-use crate::tui::core::RunTab;
 use crate::tui::core::sys_state::SysState;
+use crate::tui::core::{MouseEvt, RunTab};
 use crate::tui::event::LastAppEvent;
-use ratatui::layout::Position;
 
 // region:    --- Wrapper
 
@@ -29,8 +28,8 @@ pub(in crate::tui::core) struct AppStateInner {
 	pub debug_clr: u8,
 
 	// -- Mouse
-	// (col, row)
-	pub mouse_pos: Option<Position>,
+	/// Hold the current app mouse event wrapper (None if last event was not a mouse event)
+	pub mouse_evt: Option<MouseEvt>,
 
 	// -- Main View
 	pub show_runs: bool,
@@ -75,7 +74,7 @@ impl AppState {
 			debug_clr: 0,
 
 			// -- Mouse
-			mouse_pos: None,
+			mouse_evt: None,
 
 			// -- MainView
 			show_runs: false,
@@ -139,8 +138,8 @@ impl AppState {
 
 /// Mouse
 impl AppState {
-	pub fn mouse_pos(&self) -> Option<Position> {
-		self.inner.mouse_pos
+	pub fn mouse_evt(&self) -> Option<MouseEvt> {
+		self.inner.mouse_evt
 	}
 }
 

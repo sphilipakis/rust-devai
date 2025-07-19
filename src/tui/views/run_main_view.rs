@@ -137,20 +137,21 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 }
 
 fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut AppState) -> RunTab {
-	// -- Process run_tab
-	let run_tab = state.run_tab();
-	// TODO: process last event click
-
 	// -- Layout Header | Tabs | Tab Content
-	let [_, tab_1_a, _, tab_2_a] = Layout::default()
+	let [_, tab_overview_a, _, tab_tasks_a] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
 			Constraint::Length(1),  // gap 1
-			Constraint::Length(12), // tab_1
+			Constraint::Length(12), // tab_overview_a
 			Constraint::Length(1),  // gap
-			Constraint::Length(11), // tab_2
+			Constraint::Length(11), // tab_tasks_a
 		])
 		.areas(tabs_a);
+
+	// -- Process run_tab
+	process_mouse_for_run_tab(state, tab_overview_a, tab_tasks_a);
+	let run_tab = state.run_tab();
+	// TODO: process last event click
 
 	// -- Compute tabs Label & style
 	let style = styles::STL_TAB_DEFAULT;
@@ -170,8 +171,14 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	};
 
 	// -- Render tabs
-	Paragraph::new(tab_1_label).centered().style(tab_1_style).render(tab_1_a, buf);
-	Paragraph::new(tab_2_label).centered().style(tab_2_style).render(tab_2_a, buf);
+	Paragraph::new(tab_1_label)
+		.centered()
+		.style(tab_1_style)
+		.render(tab_overview_a, buf);
+	Paragraph::new(tab_2_label)
+		.centered()
+		.style(tab_2_style)
+		.render(tab_tasks_a, buf);
 
 	// UI DEBUG
 	// if let Some(mouse_pos) = state.mouse_pos() {
@@ -180,16 +187,6 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	// 		Block::new().bg(styles::CLR_BKG_PRIME).render(tabs_a, buf);
 	// 	}
 	// }
-
-	// Clamp the index
-	//state.set_run_tab_idx(clamp_idx_in_len(state.run_tab_idx(), titles.len()));
-
-	// Tabs::new(titles)
-	// 	.highlight_style(highlight_style)
-	// 	.select(state.run_tab_idx() as usize)
-	// 	.padding(" ", "")
-	// 	.divider("")
-	// 	.render(tabs_a, buf);
 
 	// -- Render Line
 	// Trick to have a single line of tab active bkg color
@@ -200,3 +197,22 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	// -- Return tab selected
 	run_tab
 }
+
+// region:    --- Event / State Processors
+
+fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
+	if let Some(mouse_evt) = state.mouse_evt()
+		&& mouse_evt.is_click()
+	{
+		if mouse_evt.is_in_area(overview_a) {
+			state.set_run_tab(RunTab::Overview);
+		} else if mouse_evt.is_in_area(tasks_a) {
+			state.set_run_tab(RunTab::Tasks);
+		} else {
+			// -- Click outside tabs, do nothing
+			return;
+		}
+	}
+}
+
+// endregion: --- Event / State Processors
