@@ -4,6 +4,7 @@ use super::*;
 use crate::_test_support::{assert_contains, load_inline_agent, load_test_agent, run_test_agent_with_input};
 use crate::types::FileInfo;
 use simple_fs::SPath;
+use value_ext::JsonValueExt as _;
 
 #[tokio::test]
 async fn test_run_agent_script_hello_ok() -> Result<()> {
