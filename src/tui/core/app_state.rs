@@ -1,9 +1,10 @@
 use crate::Result;
-use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
+use crate::store::{Id, ModelManager};
 use crate::tui::core::sys_state::SysState;
 use crate::tui::core::{MouseEvt, RunTab};
 use crate::tui::event::LastAppEvent;
+use crate::tui::support::offset_and_clamp_option_idx_in_len;
 
 // region:    --- Wrapper
 
@@ -36,6 +37,7 @@ pub(in crate::tui::core) struct AppStateInner {
 
 	// -- RunsView
 	pub run_idx: Option<i32>,
+	pub run_id: Option<Id>,
 
 	// -- RunMainView
 	pub run_tab: RunTab,
@@ -63,6 +65,27 @@ pub(in crate::tui::core) struct AppStateInner {
 	pub cpu: f64,
 }
 
+impl AppStateInner {
+	pub fn set_run_by_idx(&mut self, idx: i32) {
+		self.run_idx = Some(idx);
+		self.run_id = self.runs.get(idx as usize).map(|r| r.id);
+	}
+
+	pub fn set_run_by_id(&mut self, run_id: Id) {
+		let run_idx = self.runs.iter().position(|r| r.id == run_id);
+		self.run_idx = run_idx.map(|v| v as i32);
+		// For now, we set it a None if not found (need to revise strategy, can syncup with the by_idx)
+		self.run_id = run_idx.map(|_| run_id);
+	}
+
+	pub fn offset_run_idx(&mut self, offset: i32) {
+		let runs_len = self.runs.len();
+		let new_idx = offset_and_clamp_option_idx_in_len(&self.run_idx, offset, runs_len);
+		if let Some(new_idx) = new_idx {
+			self.set_run_by_idx(new_idx);
+		}
+	}
+}
 // endregion: --- Inner
 
 /// Constructors
@@ -82,6 +105,7 @@ impl AppState {
 
 			// -- RunsView
 			run_idx: None,
+			run_id: None,
 
 			// -- RunMainView
 			run_tab: RunTab::Tasks, // Tasks tab by default
@@ -159,7 +183,9 @@ impl AppState {
 	}
 
 	pub fn set_run_idx(&mut self, idx: Option<usize>) {
-		self.inner.run_idx = idx.map(|i| i as i32);
+		if let Some(idx) = idx {
+			self.inner.set_run_by_idx(idx as i32);
+		}
 	}
 
 	pub fn runs(&self) -> &[Run] {

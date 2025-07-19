@@ -8,7 +8,7 @@ pub fn process_app_state(state: &mut AppState) {
 	// -- Refresh system metrics
 	state.refresh_sys_state();
 
-	// -- Get mouse event
+	// -- Capture the mouse Event
 	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
 		state.inner_mut().mouse_evt = Some(mouse_event.into());
 	} else {
@@ -22,18 +22,44 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- Load runs and keep previous idx for later comparison
-	let runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
-	let prev_run_idx = state.inner().run_idx;
+	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
+	let has_new_runs = new_runs.len() != state.runs().len();
+	state.inner_mut().runs = new_runs;
 
-	{
-		let inner = state.inner_mut();
+	// only change if we have new runs
+	if has_new_runs {
+		let prev_run_idx = state.inner().run_idx;
+		let prev_run_id = state.inner().run_id;
 
-		// When the runs panel is hidden, always pin the first run.
-		if !inner.show_runs {
-			inner.run_idx = Some(0);
+		{
+			let inner = state.inner_mut();
+
+			// When the runs panel is hidden, always pin the latest run (first run index) run.
+			if !inner.show_runs {
+				inner.set_run_by_idx(0);
+			} else {
+				// if the prev_run_idx was at 0, then, we keep it at 0
+				if prev_run_idx == Some(0) {
+					inner.set_run_by_idx(0);
+				}
+				// otherwise, we preserve the previous id
+				else if let Some(prev_run_id) = prev_run_id {
+					inner.set_run_by_id(prev_run_id);
+				} else {
+					inner.set_run_by_idx(0);
+				}
+			}
 		}
 
-		inner.runs = runs;
+		// -- Reset some view state if run selection changed
+		// TODO: Need to check if still needed.
+		if state.inner().run_idx != prev_run_idx {
+			let inner = state.inner_mut();
+			inner.log_scroll = 0;
+			inner.task_idx = None;
+			inner.before_all_show = false;
+			inner.after_all_show = false;
+		}
 	}
 
 	// -- Navigation inside the runs list
@@ -48,11 +74,8 @@ pub fn process_app_state(state: &mut AppState) {
 	} else {
 		0
 	};
-
-	let len_runs = state.runs().len();
-	{
-		let inner = state.inner_mut();
-		inner.run_idx = offset_and_clamp_option_idx_in_len(&inner.run_idx, runs_nav_offset, len_runs);
+	if runs_nav_offset != 0 {
+		state.inner_mut().offset_run_idx(runs_nav_offset);
 	}
 
 	// -- Load tasks for current run
@@ -64,15 +87,6 @@ pub fn process_app_state(state: &mut AppState) {
 		} else {
 			state.inner_mut().tasks.clear(); // Important when no run is selected
 		}
-	}
-
-	// -- Reset some view state if run selection changed
-	if state.inner().run_idx != prev_run_idx {
-		let inner = state.inner_mut();
-		inner.log_scroll = 0;
-		inner.task_idx = None;
-		inner.before_all_show = false;
-		inner.after_all_show = false;
 	}
 
 	// -- Initialise RunDetailsView if needed
