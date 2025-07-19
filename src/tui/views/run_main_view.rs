@@ -157,6 +157,14 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		Line::styled(tasks_label, style),
 	];
 
+	// UI DEBUG
+	// if let Some(mouse_pos) = state.mouse_pos() {
+	// 	if tabs_a.contains(mouse_pos) {
+	// 		tracing::debug!("->> pos: {mouse_pos:?}  - tabs_a: {tabs_a:?}");
+	// 		Block::new().bg(styles::CLR_BKG_PRIME).render(tabs_a, buf);
+	// 	}
+	// }
+
 	// Clamp the index
 	state.set_run_tab_idx(clamp_idx_in_len(state.run_tab_idx(), titles.len()));
 

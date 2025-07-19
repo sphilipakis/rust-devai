@@ -3,6 +3,7 @@ use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
 use crate::tui::core::sys_state::SysState;
 use crate::tui::event::LastAppEvent;
+use ratatui::layout::Position;
 
 // region:    --- Wrapper
 
@@ -25,6 +26,10 @@ pub(in crate::tui::core) struct AppStateInner {
 	// -- Debug
 	// debug color idx
 	pub debug_clr: u8,
+
+	// -- Mouse
+	// (col, row)
+	pub mouse_pos: Option<Position>,
 
 	// -- Main View
 	pub show_runs: bool,
@@ -67,6 +72,9 @@ impl AppState {
 		let inner = AppStateInner {
 			// -- Debug
 			debug_clr: 0,
+
+			// -- Mouse
+			mouse_pos: None,
 
 			// -- MainView
 			show_runs: false,
@@ -125,6 +133,13 @@ impl AppState {
 
 	pub(in crate::tui::core) fn dec_debug_clr(&mut self) {
 		self.inner.debug_clr = self.inner.debug_clr.wrapping_sub(1);
+	}
+}
+
+/// Mouse
+impl AppState {
+	pub fn mouse_pos(&self) -> Option<Position> {
+		self.inner.mouse_pos
 	}
 }
 

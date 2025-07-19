@@ -3,10 +3,25 @@ use crate::tui::AppState;
 use crate::tui::core::NavDir;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
+use ratatui::layout::Position;
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Refresh system metrics
 	state.refresh_sys_state();
+
+	// -- Get mouse event
+	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
+		let col = mouse_event.column;
+		let row = mouse_event.row;
+		let mouse_pos = match mouse_event.kind {
+			MouseEventKind::Moved => {
+				//
+				Some(Position::new(col, row))
+			}
+			_ => None,
+		};
+		state.inner_mut().mouse_pos = mouse_pos;
+	}
 
 	// -- Toggle runs list
 	if let Some(KeyCode::Char('n')) = state.last_app_event().as_key_code() {
