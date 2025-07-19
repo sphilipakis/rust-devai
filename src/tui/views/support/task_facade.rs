@@ -7,6 +7,9 @@ use crate::tui::views::support::{self, el_running_ico};
 use ratatui::style::Stylize as _;
 use ratatui::text::Span;
 
+const MAX_INPUT_CHARS: usize = 12;
+const MAX_OUTPUT_CHARS: usize = 18;
+
 impl Task {
 	pub fn fmt_label(&self, tasks_len: usize) -> String {
 		let num = num_pad_for_len(self.idx.unwrap_or_default(), tasks_len);
@@ -32,17 +35,14 @@ impl Task {
 
 		// -- Input
 		if let Some(input_short) = self.input_short.as_ref() {
-			const MAX: usize = 12;
-			let input = text::truncate_with_ellipsis(input_short, MAX, "..");
-			let input = format!("{input:<width$}", width = MAX + 3);
+			let input = text::truncate_with_ellipsis(input_short, MAX_INPUT_CHARS, "..");
+			let input = format!("{input:<width$}", width = MAX_INPUT_CHARS + 3);
 			let spans = vec![
 				//
 				Span::styled(" Input: ", styles::STL_SECTION_MARKER_INPUT),
 				Span::raw(input).bg(styles::CLR_BKG_400),
 			];
 			all_spans.extend(spans);
-
-			all_spans.push(Span::raw("  ")); // spacing for next
 		}
 
 		// -- data
@@ -54,6 +54,9 @@ impl Task {
 		// all_spans.push(Span::raw("  "));
 
 		// -- AI
+		if !all_spans.is_empty() {
+			all_spans.push(Span::raw("  ")); // spacing for next
+		}
 		let ai_running_state = self.ai_running_state();
 		let ico = el_running_ico(ai_running_state.clone());
 		let label_style = match ai_running_state {
@@ -67,6 +70,25 @@ impl Task {
 			Span::styled(" AI ", label_style),
 		];
 		all_spans.extend(spans.x_bg(styles::CLR_BKG_400));
+
+		// -- output
+		if let Some(output_short) = self.output_short.as_ref() {
+			if !all_spans.is_empty() {
+				all_spans.push(Span::raw("  ")); // spacing for next
+			}
+
+			let output = text::truncate_with_ellipsis(output_short, MAX_OUTPUT_CHARS, "..");
+			let output = output.replace("\n", " ");
+			let output = format!("{output:<width$}", width = MAX_OUTPUT_CHARS + 3);
+			let spans = vec![
+				//
+				Span::styled(" Output: ", styles::STL_SECTION_MARKER_OUTPUT),
+				Span::raw(output).bg(styles::CLR_BKG_400),
+			];
+			all_spans.extend(spans);
+
+			all_spans.push(Span::raw("  ")); // spacing for next
+		}
 
 		all_spans
 	}
