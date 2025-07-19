@@ -190,7 +190,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	run_tab
 }
 
-// region:    --- Mouse Processing
+// region:    --- UI Event Processing
 
 fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
 	if let Some(mouse_evt) = state.mouse_evt()
@@ -204,4 +204,4 @@ fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Re
 	}
 }
 
-// endregion: --- Mouse Processing
+// endregion: --- UI Event Processing

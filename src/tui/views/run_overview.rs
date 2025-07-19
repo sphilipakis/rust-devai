@@ -44,7 +44,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	support::extend_lines(&mut all_lines, ui_for_before_all(run, &logs, max_width, false), true);
 
 	// -- Add the tasks ui
-	support::extend_lines(&mut all_lines, ui_for_tasks(run, state.tasks(), max_width), true);
+	support::extend_lines(&mut all_lines, ui_for_task_list(run, state.tasks(), max_width), true);
 
 	// -- Add before all
 	support::extend_lines(&mut all_lines, ui_for_after_all(run, &logs, max_width, false), true);
@@ -122,7 +122,7 @@ fn ui_for_logs(_run: &Run, logs: &[Log], stage: Option<Stage>, max_width: u16, s
 	all_lines
 }
 
-fn ui_for_tasks(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_task_list(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
 		return Vec::new();
 	}
@@ -143,3 +143,15 @@ fn ui_for_tasks(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static
 }
 
 // endregion: --- UI Builders
+
+// region:    --- UI Event Processing
+
+fn process_mouse_for_task_list(state: &mut AppState, left_offset: u16, tasks_a: Rect) {
+	if let Some(mouse_evt) = state.mouse_evt()
+		&& mouse_evt.is_click()
+	{
+		// TODO: ...
+	}
+}
+
+// endregion: --- UI Event Processing
