@@ -1,6 +1,7 @@
 use crate::store::Stage;
-use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task};
-use crate::tui::support::RectExt;
+use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
+use crate::tui::core::{DataZone, DataZones};
+use crate::tui::support::{RectExt, UiExt};
 use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -25,12 +26,12 @@ impl StatefulWidget for RunOverviewView {
 fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let mut all_lines: Vec<Line> = Vec::new();
 
-	let Some(run) = state.current_run() else {
+	let Some(run_id) = state.current_run().map(|r| r.id) else {
 		Paragraph::new("No current run").render(area, buf);
 		return;
 	};
 
-	let logs = match LogBmc::list_for_run_only(state.mm(), run.id) {
+	let logs = match LogBmc::list_for_run_only(state.mm(), run_id) {
 		Ok(logs) => logs,
 		Err(err) => {
 			Paragraph::new(format!("Error fetch log for run. {err}")).render(area, buf);
@@ -41,16 +42,21 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let max_width = area.width - 3; // for scroll
 
 	// -- Add before all
-	support::extend_lines(&mut all_lines, ui_for_before_all(run, &logs, max_width, false), true);
+	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), true);
 
 	// -- Add the tasks ui
-	support::extend_lines(&mut all_lines, ui_for_task_list(run, state.tasks(), max_width), true);
+	let tasks_list_start_y = all_lines.len() as u16;
+	let (task_list_lines, task_list_dzones) = ui_for_task_list(state.tasks(), max_width);
+	support::extend_lines(&mut all_lines, task_list_lines, true);
+
+	// -- TO UPDATE - WIP - PRocess the datazone click
+	process_mouse_for_task_list(state, task_list_dzones, area.x, area.y + tasks_list_start_y);
 
 	// -- Add before all
-	support::extend_lines(&mut all_lines, ui_for_after_all(run, &logs, max_width, false), true);
+	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), true);
 
 	// -- Add Error if present
-	if let Some(err_id) = run.end_err_id {
+	if let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) {
 		support::extend_lines(&mut all_lines, support::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 
@@ -79,15 +85,15 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 // region:    --- UI Builders
 
-fn ui_for_before_all(run: &Run, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	ui_for_logs(run, logs, Some(Stage::BeforeAll), max_width, show_steps)
+fn ui_for_before_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+	ui_for_logs(logs, Some(Stage::BeforeAll), max_width, show_steps)
 }
 
-fn ui_for_after_all(run: &Run, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	ui_for_logs(run, logs, Some(Stage::AfterAll), max_width, show_steps)
+fn ui_for_after_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+	ui_for_logs(logs, Some(Stage::AfterAll), max_width, show_steps)
 }
 
-fn ui_for_logs(_run: &Run, logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line> = Vec::new();
 
 	let mut first_section = true;
@@ -122,34 +128,68 @@ fn ui_for_logs(_run: &Run, logs: &[Log], stage: Option<Stage>, max_width: u16, s
 	all_lines
 }
 
-fn ui_for_task_list(_run: &Run, tasks: &[Task], _max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_task_list(tasks: &[Task], _max_width: u16) -> (Vec<Line<'static>>, DataZones) {
 	if tasks.is_empty() {
-		return Vec::new();
+		return (Vec::new(), DataZones::default());
 	}
 
+	let mut data_zones: Vec<DataZone> = Vec::new();
 	let mut spans_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	let tasks_len = tasks.len();
 
-	for task in tasks {
-		let mut task_line = task.ui_label(tasks_len);
-		task_line.push(Span::raw("  "));
-		task_line.extend(task.ui_sum_spans());
-		spans_lines.push(task_line);
-	}
+	let mut line: u16 = 0;
 
 	let marker = new_marker("Tasks:", styles::STL_SECTION_MARKER);
+	let marker_width = marker.width() as u16;
+	let marker_spacer = Span::raw(" ");
+	let marker_spacer_width = marker_spacer.width() as u16;
 
-	ui_for_marker_section(vec![marker], vec![Span::raw(" ")], spans_lines)
+	// NOTE: In this case, looks like a counter for the for, but line might be different in some cases.
+	#[allow(clippy::explicit_counter_loop)]
+	for task in tasks {
+		let mut task_line = task.ui_label(tasks_len);
+
+		// -- Make the data zone
+		let x = marker_width + marker_spacer_width;
+		let data_task_area = Rect {
+			x,
+			y: line,
+			width: task_line.x_total_width(),
+			height: 1,
+		};
+		let data_zone = DataZone::new_for_task(data_task_area, task.id);
+		data_zones.push(data_zone);
+
+		// -- Add Spacing
+		task_line.push(Span::raw("  "));
+
+		// -- Add Sum iteams
+		task_line.extend(task.ui_sum_spans());
+
+		spans_lines.push(task_line);
+
+		line += 1;
+	}
+
+	let lines = ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines);
+
+	(lines, data_zones.into())
 }
 
 // endregion: --- UI Builders
 
 // region:    --- UI Event Processing
 
-fn process_mouse_for_task_list(state: &mut AppState, left_offset: u16, tasks_a: Rect) {
+// NOTE: Probably need a area_offset
+fn process_mouse_for_task_list(state: &mut AppState, task_list_zones: DataZones, x_offset: u16, y_offset: u16) {
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_click()
 	{
+		let data_ref = task_list_zones.find_data_key(mouse_evt.position(), x_offset, y_offset);
+		// NOTE: now select the right data_ref
+		if let Some(data_ref) = data_ref {
+			tracing::debug!("->> data_ref: {data_ref:?}");
+		}
 		// TODO: ...
 	}
 }
