@@ -1,5 +1,5 @@
-use crate::store::RunningState;
 use crate::store::rt_model::Task;
+use crate::store::{EndState, RunningState};
 use crate::support::text;
 use crate::tui::styles;
 use crate::tui::support::{StylerExt as _, num_pad_for_len};
@@ -8,7 +8,7 @@ use ratatui::style::Stylize as _;
 use ratatui::text::Span;
 
 const MAX_INPUT_CHARS: usize = 12;
-const MAX_OUTPUT_CHARS: usize = 18;
+const MAX_OUTPUT_CHARS: usize = 24;
 
 impl Task {
 	pub fn fmt_label(&self, tasks_len: usize) -> String {
@@ -80,14 +80,37 @@ impl Task {
 			let output = text::truncate_with_ellipsis(output_short, MAX_OUTPUT_CHARS, "..");
 			let output = output.replace("\n", " ");
 			let output = format!("{output:<width$}", width = MAX_OUTPUT_CHARS + 3);
+
 			let spans = vec![
 				//
-				Span::styled(" Output: ", styles::STL_SECTION_MARKER_OUTPUT),
+				Span::styled("  Output: ", styles::STL_SECTION_MARKER_OUTPUT),
 				Span::raw(output).bg(styles::CLR_BKG_400),
 			];
 			all_spans.extend(spans);
+		}
 
-			all_spans.push(Span::raw("  ")); // spacing for next
+		// -- skip
+		if let Some(EndState::Skip) = self.end_state.as_ref() {
+			if !all_spans.is_empty() {
+				all_spans.push(Span::raw("  ")); // spacing for next
+			}
+			let label_style = styles::STL_SECTION_MARKER_SKIP;
+			let spans = if let Some(reason) = self.end_skip_reason.as_deref() {
+				let reason = text::truncate_with_ellipsis(reason, MAX_OUTPUT_CHARS, "..");
+				let reason = reason.replace("\n", " ");
+				let reason = format!("{reason:<width$}", width = MAX_OUTPUT_CHARS + 3);
+				vec![
+					//
+					Span::styled(" Skipped: ", label_style),
+					Span::raw(reason).bg(styles::CLR_BKG_400),
+				]
+			} else {
+				vec![
+					//
+					Span::styled("  Skipped", label_style),
+				]
+			};
+			all_spans.extend(spans);
 		}
 
 		all_spans
