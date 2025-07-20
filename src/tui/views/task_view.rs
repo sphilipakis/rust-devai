@@ -188,13 +188,9 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 	// -- Clamp scroll
 	let line_count = all_lines.len();
-	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
-	if state.get_scroll(SCROLL_IDEN) > max_scroll {
-		state.set_scroll(SCROLL_IDEN, max_scroll);
-	}
+	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
 
 	// -- Render All Content
-	let scroll = state.get_scroll(SCROLL_IDEN);
 	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
 	let p = Paragraph::new(all_lines).scroll((scroll, 0));
 	p.render(area, buf);

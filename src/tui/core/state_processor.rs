@@ -18,6 +18,10 @@ pub fn process_app_state(state: &mut AppState) {
 		// Find the active scroll zone
 		let zone_iden = state.inner().find_zone_for_pos(mouse_evt);
 
+		// if let Some(zone_iden) = zone_iden {
+		// 	tracing::debug!(" {zone_iden:?}");
+		// }
+
 		state.inner_mut().active_scroll_zone_iden = zone_iden;
 	} else {
 		state.inner_mut().mouse_evt = None;

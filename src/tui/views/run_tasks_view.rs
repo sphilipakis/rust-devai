@@ -72,6 +72,8 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
 }
 
 fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	const SCROLL_IDEN: ScrollIden = RunTasksView::TASKS_NAV_SCROLL_IDEN;
+
 	// -- Render background
 	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
@@ -84,12 +86,6 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		])
 		.areas(area);
 
-	// -- Set the scroll area
-	state.set_scroll_area(ScrollIden::TasksNav, tasks_list_a);
-
-	// -- Process UI Event
-	process_mouse_for_task_nav(state, tasks_list_a);
-
 	// region:    --- Render Tasks Label
 	let before_line = Line::default().spans(vec![
 		// ..
@@ -98,40 +94,53 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	before_line.style(styles::STL_FIELD_LBL).render(tasks_label_a, buf);
 	// endregion: --- Render Tasks Label
 
-	// region:    --- Render Tasks
+	// -- Get data
 
+	// -- Scroll & Select logic
+	state.set_scroll_area(ScrollIden::TasksNav, tasks_list_a);
+	// NOTE: Need to do the scroll / and select before the buil tasks UI to get the selection
+	//       To avoid a redraw. We know the number of lines.
+	let tasks_len = state.tasks().len();
+	let scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
+	process_mouse_for_task_nav(state, tasks_list_a, scroll);
+
+	// -- Build Tasks UI
 	let tasks = state.tasks();
-	let tasks_len = tasks.len();
-	let items: Vec<ListItem> = tasks
+	let task_sel_idx = state.task_idx().unwrap_or_default();
+	let all_lines: Vec<ListItem> = tasks
 		.iter()
 		.map(|task| {
-			let line = Line::from(task.ui_label(area.width, tasks_len));
+			let mut line = Line::from(task.ui_label(area.width, tasks_len));
+			if let Some(idx) = task.idx
+				&& task_sel_idx == idx as usize
+			{
+				line = line.style(styles::STL_NAV_ITEM_HIGHLIGHT);
+			};
 			ListItem::new(line)
 		})
 		.collect();
 
-	// -- Create List Widget & State
-	let list_w = List::new(items)
-		.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
+	// -- Render with widget
+	let list_w = List::new(all_lines)
+		// .highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 		.highlight_spacing(HighlightSpacing::Always);
 
-	let mut list_s = ListState::default();
-	list_s.select(state.task_idx());
+	let mut list_s = ListState::default().with_offset(scroll as usize);
+	// list_s.select(state.task_idx());
 
 	StatefulWidget::render(list_w, tasks_list_a, buf, &mut list_s);
-
-	// endregion: --- Render Tasks
 }
 
 // region:    --- Mouse Processing
 
-fn process_mouse_for_task_nav(state: &mut AppState, nav_a: Rect) {
+fn process_mouse_for_task_nav(state: &mut AppState, nav_a: Rect, offset_y: u16) {
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_click()
 		&& mouse_evt.is_in_area(nav_a)
 	{
-		let new_idx = mouse_evt.y() - nav_a.y;
+		let new_idx = mouse_evt.y() - nav_a.y + offset_y;
 		let new_idx = clamp_idx_in_len(new_idx as usize, state.tasks().len());
+
 		state.set_task_idx(Some(new_idx));
 	}
 }

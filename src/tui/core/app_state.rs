@@ -220,6 +220,21 @@ impl AppState {
 			.unwrap_or_default()
 	}
 
+	pub fn clamp_scroll(&mut self, iden: ScrollIden, line_count: usize) -> u16 {
+		let Some(scroll_zone) = self.inner.get_zone_mut(&iden) else {
+			return 0;
+		};
+		let area_height = scroll_zone.area().map(|a| a.height).unwrap_or_default();
+		let max_scroll = line_count.saturating_sub(area_height as usize) as u16;
+		let scroll = scroll_zone.scroll().unwrap_or_default();
+		if scroll > max_scroll {
+			scroll_zone.set_scroll(max_scroll);
+			max_scroll
+		} else {
+			scroll
+		}
+	}
+
 	pub fn set_scroll(&mut self, iden: ScrollIden, scroll: u16) {
 		if let Some(zone) = self.inner.get_zone_mut(&iden) {
 			zone.set_scroll(scroll);
