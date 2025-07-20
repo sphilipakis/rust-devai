@@ -1,6 +1,6 @@
 use crate::store::rt_model::{RunBmc, TaskBmc};
 use crate::tui::AppState;
-use crate::tui::core::NavDir;
+use crate::tui::core::{MouseEvt, NavDir};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
@@ -10,9 +10,33 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Capture the mouse Event
 	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
-		state.inner_mut().mouse_evt = Some(mouse_event.into());
+		let mouse_evt: MouseEvt = mouse_event.into();
+		state.inner_mut().mouse_evt = Some(mouse_evt);
+		// Here we update the persistent mouse
+		state.inner_mut().last_mouse_evt = Some(mouse_evt);
+
+		// Find the active scroll zone
+		let zone_iden = state.inner().find_zone_for_pos(mouse_evt);
+
+		state.inner_mut().active_scroll_zone_iden = zone_iden;
 	} else {
 		state.inner_mut().mouse_evt = None;
+		// Note: We do not clear the last_mouse_evt as it should remain persistent
+	}
+
+	// -- Scroll
+	if let Some(mouse_evt) = state.last_app_event().as_mouse_event()
+		&& let Some(zone_iden) = state.inner().active_scroll_zone_iden
+	{
+		match mouse_evt.kind {
+			MouseEventKind::ScrollUp => {
+				state.dec_scroll(zone_iden, 3);
+			}
+			MouseEventKind::ScrollDown => {
+				state.inc_scroll(zone_iden, 3);
+			}
+			_ => (),
+		};
 	}
 
 	// -- Toggle runs list
@@ -55,7 +79,6 @@ pub fn process_app_state(state: &mut AppState) {
 		// TODO: Need to check if still needed.
 		if state.inner().run_idx != prev_run_idx {
 			let inner = state.inner_mut();
-			inner.log_scroll = 0;
 			inner.task_idx = None;
 			inner.before_all_show = false;
 			inner.after_all_show = false;
@@ -135,31 +158,18 @@ pub fn process_app_state(state: &mut AppState) {
 		}
 	};
 
-	// -- Log scroll (keyboard & mouse)
-	let current_log_scroll = state.log_scroll();
-	if let Some(code) = state.last_app_event().as_key_code() {
-		let log_scroll = match code {
-			KeyCode::Up => Some(current_log_scroll.saturating_sub(1)),
-			KeyCode::Down => Some(current_log_scroll.saturating_add(1)),
-			KeyCode::Esc => Some(0),
-			_ => None,
-		};
-		if let Some(log_scroll) = log_scroll {
-			state.set_log_scroll(log_scroll);
-		}
-	}
-
-	let current_log_scroll = state.log_scroll();
-	if let Some(mouse_evt) = state.last_app_event().as_mouse_event() {
-		let log_scroll = match mouse_evt.kind {
-			MouseEventKind::ScrollUp => Some(current_log_scroll.saturating_sub(3)),
-			MouseEventKind::ScrollDown => Some(current_log_scroll.saturating_add(3)),
-			_ => None,
-		};
-		if let Some(log_scroll) = log_scroll {
-			state.set_log_scroll(log_scroll);
-		}
-	}
+	// -- Arrow key (keyboard & mouse)
+	// if let Some(code) = state.last_app_event().as_key_code() {
+	// 	let log_scroll = match code {
+	// 		KeyCode::Up => state.dec_scroll(iden, dec),
+	// 		KeyCode::Down => Some(current_log_scroll.saturating_add(1)),
+	// 		KeyCode::Esc => Some(0),
+	// 		_ => None,
+	// 	};
+	// 	if let Some(log_scroll) = log_scroll {
+	// 		state.set_log_scroll(log_scroll);
+	// 	}
+	// }
 
 	// -- Debug color
 	let offset: i32 = if let Some(code) = state.last_app_event().as_key_code() {

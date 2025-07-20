@@ -1,6 +1,6 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
-use crate::tui::core::DataZones;
+use crate::tui::core::{DataZones, ScrollIden};
 use crate::tui::support::RectExt;
 use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
 use crate::tui::{AppState, styles};
@@ -11,6 +11,17 @@ use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Wid
 
 /// Placeholder view for *Before All* tab.
 pub struct RunOverviewView;
+
+/// Component scroll identifiers
+impl RunOverviewView {
+	const BODY_SCROLL_IDEN: ScrollIden = ScrollIden::OverviewContent;
+
+	const SCROLL_IDENS: &[&ScrollIden] = &[&Self::BODY_SCROLL_IDEN];
+
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		state.clear_scroll_zone_areas(Self::SCROLL_IDENS);
+	}
+}
 
 impl StatefulWidget for RunOverviewView {
 	type State = AppState;
@@ -24,6 +35,11 @@ impl StatefulWidget for RunOverviewView {
 }
 
 fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	const SCROLL_IDEN: ScrollIden = RunOverviewView::BODY_SCROLL_IDEN;
+	// -- Int the scroll area
+	state.set_scroll_area(SCROLL_IDEN, area);
+
+	// -- Prep
 	let mut all_lines: Vec<Line> = Vec::new();
 
 	let Some(run_id) = state.current_run().map(|r| r.id) else {
@@ -64,16 +80,17 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// TODO: Needs to have it's own scroll state.
 	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
-	if state.log_scroll() > max_scroll {
-		state.set_log_scroll(max_scroll);
+	if state.get_scroll(SCROLL_IDEN) > max_scroll {
+		state.set_scroll(SCROLL_IDEN, max_scroll);
 	}
 
 	// -- Render All Content
-	let p = Paragraph::new(all_lines).scroll((state.log_scroll(), 0));
+	let scroll = state.get_scroll(SCROLL_IDEN);
+	let p = Paragraph::new(all_lines).scroll((scroll, 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll() as usize);
+	let mut scrollbar_state = ScrollbarState::new(line_count).position(scroll as usize);
 
 	let scrollbar = Scrollbar::default()
 		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)

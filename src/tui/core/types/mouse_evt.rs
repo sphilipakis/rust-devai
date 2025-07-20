@@ -61,3 +61,19 @@ impl From<MouseEvent> for MouseEvt {
 }
 
 // endregion: --- Froms
+
+// region:    --- Intos
+
+impl From<MouseEvt> for Position {
+	fn from(value: MouseEvt) -> Self {
+		value.position()
+	}
+}
+
+impl From<&MouseEvt> for Position {
+	fn from(value: &MouseEvt) -> Self {
+		value.position()
+	}
+}
+
+// endregion: --- Intos

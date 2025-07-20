@@ -1,5 +1,6 @@
 use crate::store::ModelManager;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::tui::core::ScrollIden;
 use crate::tui::support::RectExt;
 use crate::tui::views::support;
 use crate::tui::{AppState, styles};
@@ -10,6 +11,17 @@ use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Wid
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
+
+/// Component scroll identifiers
+impl TaskView {
+	const CONTENT_SCROLL_IDEN: ScrollIden = ScrollIden::TaskContent;
+
+	const SCROLL_IDENS: &[&ScrollIden] = &[&Self::CONTENT_SCROLL_IDEN];
+
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		state.clear_scroll_zone_areas(Self::SCROLL_IDENS);
+	}
+}
 
 impl StatefulWidget for TaskView {
 	type State = AppState;
@@ -117,6 +129,11 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 }
 
 fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {
+	const SCROLL_IDEN: ScrollIden = TaskView::CONTENT_SCROLL_IDEN;
+
+	// -- init the scroll area
+	state.set_scroll_area(SCROLL_IDEN, area);
+
 	// -- Get the current task (return early)
 	let Some(run) = state.current_run() else {
 		Line::raw("No Current Run").render(area, buf);
@@ -137,7 +154,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 	// -- Setup UI Lines
 	let mut all_lines: Vec<Line> = Vec::new();
-	let max_width = area.width - 3; // for scroll
+	let max_width = area.width - 3; // for scroll bar
 
 	// -- Add Input
 	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
@@ -172,17 +189,18 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Clamp scroll
 	let line_count = all_lines.len();
 	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
-	if state.log_scroll() > max_scroll {
-		state.set_log_scroll(max_scroll);
+	if state.get_scroll(SCROLL_IDEN) > max_scroll {
+		state.set_scroll(SCROLL_IDEN, max_scroll);
 	}
 
 	// -- Render All Content
+	let scroll = state.get_scroll(SCROLL_IDEN);
 	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
-	let p = Paragraph::new(all_lines).scroll((state.log_scroll(), 0));
+	let p = Paragraph::new(all_lines).scroll((scroll, 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(state.log_scroll() as usize);
+	let mut scrollbar_state = ScrollbarState::new(line_count).position(scroll as usize);
 
 	let scrollbar = Scrollbar::default()
 		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)

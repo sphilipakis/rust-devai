@@ -1,7 +1,7 @@
 use crate::tui::core::RunTab;
 use crate::tui::support::RectExt;
 use crate::tui::views::support::el_running_ico;
-use crate::tui::views::{RunOverviewView, RuntTasksView};
+use crate::tui::views::{RunOverviewView, RunTasksView};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -38,10 +38,12 @@ impl StatefulWidget for RunMainView {
 		// -- Render the selected tab
 		match selected_tab {
 			RunTab::Overview => {
+				RunTasksView::clear_scroll_idens(state);
 				RunOverviewView.render(tab_content_a, buf, state);
 			}
 			RunTab::Tasks => {
-				RuntTasksView.render(tab_content_a, buf, state);
+				RunOverviewView::clear_scroll_idens(state);
+				RunTasksView.render(tab_content_a, buf, state);
 			}
 		}
 	}

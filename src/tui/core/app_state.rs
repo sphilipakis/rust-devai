@@ -2,9 +2,10 @@ use crate::Result;
 use crate::store::rt_model::{Run, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{MouseEvt, RunTab};
+use crate::tui::core::{MouseEvt, RunTab, ScrollIden, ScrollZone, ScrollZones};
 use crate::tui::event::LastAppEvent;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
+use ratatui::layout::{Position, Rect};
 
 // region:    --- Wrapper
 
@@ -31,6 +32,12 @@ pub(in crate::tui::core) struct AppStateInner {
 	// -- Mouse
 	/// Hold the current app mouse event wrapper (None if last event was not a mouse event)
 	pub mouse_evt: Option<MouseEvt>,
+	/// This keep the current/last mouse event
+	pub last_mouse_evt: Option<MouseEvt>,
+
+	// -- Scroll Zones
+	pub scroll_zones: ScrollZones,
+	pub active_scroll_zone_iden: Option<ScrollIden>,
 
 	// -- Main View
 	pub show_runs: bool,
@@ -46,9 +53,6 @@ pub(in crate::tui::core) struct AppStateInner {
 	pub task_idx: Option<i32>,
 	pub before_all_show: bool,
 	pub after_all_show: bool,
-
-	// -- TaskView
-	pub log_scroll: u16,
 
 	// -- Data
 	pub runs: Vec<Run>,
@@ -85,6 +89,19 @@ impl AppStateInner {
 			self.set_run_by_idx(new_idx);
 		}
 	}
+
+	// -- Scroll Zones
+	pub fn find_zone_for_pos(&self, position: impl Into<Position>) -> Option<ScrollIden> {
+		self.scroll_zones.find_zone_for_pos(position)
+	}
+	#[allow(unused)]
+	pub fn get_zone(&self, iden: &ScrollIden) -> Option<&ScrollZone> {
+		self.scroll_zones.zones.get(iden)
+	}
+
+	pub fn get_zone_mut(&mut self, iden: &ScrollIden) -> Option<&mut ScrollZone> {
+		self.scroll_zones.zones.get_mut(iden)
+	}
 }
 // endregion: --- Inner
 
@@ -99,6 +116,11 @@ impl AppState {
 
 			// -- Mouse
 			mouse_evt: None,
+			last_mouse_evt: None,
+
+			// -- ScrollZones
+			scroll_zones: ScrollZones::default(),
+			active_scroll_zone_iden: None,
 
 			// -- MainView
 			show_runs: false,
@@ -112,7 +134,6 @@ impl AppState {
 
 			// -- RunTasksView
 			task_idx: None,
-			log_scroll: 0,
 			before_all_show: false,
 			after_all_show: false,
 
@@ -166,6 +187,64 @@ impl AppState {
 impl AppState {
 	pub fn mouse_evt(&self) -> Option<MouseEvt> {
 		self.inner.mouse_evt
+	}
+}
+
+/// Scroll
+impl AppState {
+	pub fn set_scroll_area(&mut self, iden: ScrollIden, area: Rect) {
+		if let Some(zone) = self.inner.get_zone_mut(&iden) {
+			zone.set_area(area);
+		}
+	}
+
+	pub fn clear_scroll_zone_area(&mut self, iden: &ScrollIden) {
+		if let Some(zone) = self.inner.get_zone_mut(iden) {
+			zone.clear_area();
+		}
+	}
+
+	pub fn clear_scroll_zone_areas(&mut self, idens: &[&ScrollIden]) {
+		for iden in idens {
+			self.clear_scroll_zone_area(iden);
+		}
+	}
+
+	/// Note: will return 0 if no scroll was set yet
+	pub fn get_scroll(&self, iden: ScrollIden) -> u16 {
+		self.inner
+			.scroll_zones
+			.zones
+			.get(&iden)
+			.and_then(|z| z.scroll())
+			.unwrap_or_default()
+	}
+
+	pub fn set_scroll(&mut self, iden: ScrollIden, scroll: u16) {
+		if let Some(zone) = self.inner.get_zone_mut(&iden) {
+			zone.set_scroll(scroll);
+		}
+	}
+
+	/// return the new value
+	pub fn inc_scroll(&mut self, iden: ScrollIden, inc: u16) -> u16 {
+		let val = self.get_scroll(iden);
+		let val = val.saturating_add(inc);
+		if let Some(z) = self.inner.get_zone_mut(&iden) {
+			z.set_scroll(val);
+		}
+
+		val
+	}
+
+	pub fn dec_scroll(&mut self, iden: ScrollIden, dec: u16) -> u16 {
+		let val = self.get_scroll(iden);
+		let val = val.saturating_sub(dec);
+		if let Some(z) = self.inner.get_zone_mut(&iden) {
+			z.set_scroll(val);
+		}
+
+		val
 	}
 }
 
@@ -243,16 +322,8 @@ impl AppState {
 	}
 }
 
-/// Other simple accessors
+/// Others
 impl AppState {
-	pub fn log_scroll(&self) -> u16 {
-		self.inner.log_scroll
-	}
-
-	pub fn set_log_scroll(&mut self, scroll: u16) {
-		self.inner.log_scroll = scroll;
-	}
-
 	pub fn should_redraw(&self) -> bool {
 		self.inner.do_redraw
 	}

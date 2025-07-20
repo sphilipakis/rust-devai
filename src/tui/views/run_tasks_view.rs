@@ -1,3 +1,4 @@
+use crate::tui::core::ScrollIden;
 use crate::tui::styles;
 use crate::tui::support::{RectExt, clamp_idx_in_len};
 use crate::tui::views::support;
@@ -9,9 +10,21 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
 
 /// Renders the *Tasks* tab (tasks list and content).
-pub struct RuntTasksView;
+pub struct RunTasksView;
 
-impl StatefulWidget for RuntTasksView {
+/// Component scroll identifiers
+impl RunTasksView {
+	const TASKS_NAV_SCROLL_IDEN: ScrollIden = ScrollIden::TasksNav;
+
+	const SCROLL_IDENS: &[&ScrollIden] = &[&Self::TASKS_NAV_SCROLL_IDEN];
+
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		state.clear_scroll_zone_areas(Self::SCROLL_IDENS);
+		TaskView::clear_scroll_idens(state);
+	}
+}
+
+impl StatefulWidget for RunTasksView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
@@ -36,6 +49,8 @@ impl StatefulWidget for RuntTasksView {
 		//            because it will process the mouse event for task selection.
 		if show_tasks_nav {
 			render_tasks_nav(nav_a, buf, state);
+		} else {
+			state.clear_scroll_zone_area(&RunTasksView::TASKS_NAV_SCROLL_IDEN);
 		}
 
 		// -- Render task content
@@ -68,6 +83,9 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			Constraint::Fill(1),   // tasks list
 		])
 		.areas(area);
+
+	// -- Set the scroll area
+	state.set_scroll_area(ScrollIden::TasksNav, tasks_list_a);
 
 	// -- Process UI Event
 	process_mouse_for_task_nav(state, tasks_list_a);
