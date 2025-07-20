@@ -1,14 +1,11 @@
+use crate::store::RunningState;
 use crate::store::rt_model::Task;
-use crate::store::{EndState, RunningState};
 use crate::support::text;
 use crate::tui::styles;
 use crate::tui::support::{UiExt as _, num_pad_for_len};
 use crate::tui::views::support::{self, el_running_ico};
 use ratatui::style::{Style, Stylize as _};
 use ratatui::text::Span;
-
-const MAX_INPUT_CHARS: usize = 12;
-const MAX_OUTPUT_CHARS: usize = 24;
 
 impl Task {
 	pub fn fmt_label(&self, tasks_len: usize) -> String {
@@ -46,6 +43,7 @@ impl Task {
 
 		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
 		let input_text = text::truncate_with_ellipsis(input_text, content_width - 2, "..");
+		let input_text = input_text.replace("\n", " ");
 
 		let input_text = format!("{input_text:<content_width$}");
 
@@ -53,55 +51,8 @@ impl Task {
 
 		spans
 	}
-
-	pub fn ui_output(&self, width: u16) -> Vec<Span<'static>> {
-		let mut spans = vec![
-			Span::styled(" Output:", styles::STL_SECTION_MARKER_INPUT),
-			Span::styled(" ", styles::STL_SECTION_MARKER_INPUT), // gap
-		];
-
-		let (output_text, style) = match self.output_short.as_deref() {
-			Some(output_short) => (output_short, Style::new().bg(styles::CLR_BKG_400)),
-			None => ("No output", Style::new().bg(styles::CLR_BKG_400)),
-		};
-
-		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
-		let output_text = text::truncate_with_ellipsis(output_text, content_width - 2, "..");
-
-		let output_text = format!("{output_text:<content_width$}");
-
-		spans.push(Span::styled(output_text, style));
-
-		spans
-	}
-
-	pub fn ui_sum_spans(&self) -> Vec<Span<'static>> {
-		let mut all_spans: Vec<Span<'static>> = Vec::new();
-
-		// -- Input
-		if let Some(input_short) = self.input_short.as_ref() {
-			let input = text::truncate_with_ellipsis(input_short, MAX_INPUT_CHARS, "..");
-			let input = format!("{input:<width$}", width = MAX_INPUT_CHARS + 3);
-			let spans = vec![
-				//
-				Span::styled(" Input: ", styles::STL_SECTION_MARKER_INPUT),
-				Span::raw(input).bg(styles::CLR_BKG_400),
-			];
-			all_spans.extend(spans);
-		}
-
-		// -- data
-		// let data_running_state = self.data_running_state();
-		// let ico = el_running_ico(data_running_state);
-		// let block_spans = vec![Span::raw(" "), ico, Span::raw(" Data ")];
-		// all_spans.extend(block_spans.x_bg(styles::CLR_BKG_400));
-
-		// all_spans.push(Span::raw("  "));
-
-		// -- AI
-		if !all_spans.is_empty() {
-			all_spans.push(Span::raw("  ")); // spacing for next
-		}
+	/// NOTE: This is fixed 6 char component
+	pub fn ui_ai(&self) -> Vec<Span<'static>> {
 		let ai_running_state = self.ai_running_state();
 		let ico = el_running_ico(ai_running_state.clone());
 		let label_style = match ai_running_state {
@@ -114,50 +65,55 @@ impl Task {
 			ico.fg(styles::CLR_TXT_500),
 			Span::styled(" AI ", label_style),
 		];
-		all_spans.extend(spans.x_bg(styles::CLR_BKG_400));
 
-		// -- output
-		if let Some(output_short) = self.output_short.as_ref() {
-			if !all_spans.is_empty() {
-				all_spans.push(Span::raw("  ")); // spacing for next
-			}
+		spans.x_bg(styles::CLR_BKG_400)
+	}
 
-			let output = text::truncate_with_ellipsis(output_short, MAX_OUTPUT_CHARS, "..");
-			let output = output.replace("\n", " ");
-			let output = format!("{output:<width$}", width = MAX_OUTPUT_CHARS + 3);
+	pub fn ui_output(&self, width: u16) -> Vec<Span<'static>> {
+		let mut spans = vec![
+			Span::styled("  Output:", styles::STL_SECTION_MARKER_OUTPUT),
+			Span::styled(" ", styles::STL_SECTION_MARKER_OUTPUT), // gap
+		];
 
-			let spans = vec![
-				//
-				Span::styled("  Output: ", styles::STL_SECTION_MARKER_OUTPUT),
-				Span::raw(output).bg(styles::CLR_BKG_400),
+		let (output_text, style) = match self.output_short.as_deref() {
+			Some(output_short) => (output_short, Style::new().bg(styles::CLR_BKG_400)),
+			None => ("No output", Style::new().bg(styles::CLR_BKG_400)),
+		};
+
+		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
+		let output_text = text::truncate_with_ellipsis(output_text, content_width - 2, "..");
+		let output_text = output_text.replace("\n", " ");
+
+		let output_text = format!("{output_text:<content_width$}");
+
+		spans.push(Span::styled(output_text, style));
+
+		spans
+	}
+
+	pub fn ui_skip(&self, width: u16) -> Vec<Span<'static>> {
+		if self.has_skip() {
+			let mut spans = vec![
+				Span::styled(" Skipped:", styles::STL_SECTION_MARKER_SKIP),
+				Span::styled(" ", styles::STL_SECTION_MARKER_SKIP), // gap
 			];
-			all_spans.extend(spans);
-		}
 
-		// -- skip
-		if let Some(EndState::Skip) = self.end_state.as_ref() {
-			if !all_spans.is_empty() {
-				all_spans.push(Span::raw("  ")); // spacing for next
-			}
-			let label_style = styles::STL_SECTION_MARKER_SKIP;
-			let spans = if let Some(reason) = self.end_skip_reason.as_deref() {
-				let reason = text::truncate_with_ellipsis(reason, MAX_OUTPUT_CHARS, "..");
-				let reason = reason.replace("\n", " ");
-				let reason = format!("{reason:<width$}", width = MAX_OUTPUT_CHARS + 3);
-				vec![
-					//
-					Span::styled(" Skipped: ", label_style),
-					Span::raw(reason).bg(styles::CLR_BKG_400),
-				]
-			} else {
-				vec![
-					//
-					Span::styled("  Skipped", label_style),
-				]
+			let (content, style) = match self.end_skip_reason.as_deref() {
+				Some(reason) => (reason, Style::new().bg(styles::CLR_BKG_400)),
+				None => ("Task was skipped by Lua code", Style::new().bg(styles::CLR_BKG_400)),
 			};
-			all_spans.extend(spans);
-		}
 
-		all_spans
+			let content_width = width.saturating_sub(spans.x_total_width()) as usize;
+			let content = text::truncate_with_ellipsis(content, content_width - 2, "..");
+			let content = content.replace("\n", " ");
+
+			let content = format!("{content:<content_width$}");
+
+			spans.push(Span::styled(content, style));
+
+			spans
+		} else {
+			Vec::new()
+		}
 	}
 }

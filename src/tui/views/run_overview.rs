@@ -1,7 +1,7 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
-use crate::tui::core::{DataZone, DataZones};
-use crate::tui::support::{RectExt, UiExt};
+use crate::tui::core::DataZones;
+use crate::tui::support::RectExt;
 use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -45,12 +45,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), true);
 
 	// -- Add the tasks ui
-	let tasks_list_start_y = all_lines.len() as u16;
-	let (task_list_lines, task_list_dzones) = ui_for_task_list(state.tasks(), max_width);
+	//let tasks_list_start_y = all_lines.len() as u16;
+	let task_list_lines = ui_for_task_list(state.tasks(), max_width);
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 
 	// -- TO UPDATE - WIP - PRocess the datazone click
-	process_mouse_for_task_list(state, task_list_dzones, area.x, area.y + tasks_list_start_y);
+	// process_mouse_for_task_list(state, task_list_dzones, area.x, area.y + tasks_list_start_y);
 
 	// -- Add before all
 	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), true);
@@ -128,16 +128,15 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 	all_lines
 }
 
-fn ui_for_task_list(tasks: &[Task], max_width: u16) -> (Vec<Line<'static>>, DataZones) {
+fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
-		return (Vec::new(), DataZones::default());
+		return Vec::new();
 	}
 
-	let mut data_zones: Vec<DataZone> = Vec::new();
 	let mut spans_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	let tasks_len = tasks.len();
 
-	let mut line: u16 = 0;
+	// let mut line: u16 = 0;
 
 	let marker = new_marker("Tasks:", styles::STL_SECTION_MARKER);
 	let marker_width = marker.width() as u16;
@@ -145,17 +144,19 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> (Vec<Line<'static>>, Data
 	let marker_spacer_width = marker_spacer.width() as u16;
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
+	let gap_span = Span::raw("  ");
+	let gap_width = gap_span.width() as u16;
 	// -- Layout
-	let [label_a, _, input_a, _, ai_a, _, output_a] = Layout::default()
+	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(8), // label_a
-			Constraint::Length(2), // gap
-			Constraint::Fill(1),   // input_a
-			Constraint::Length(2), // gap
-			Constraint::Length(6), // ai_a
-			Constraint::Length(2), // gap
-			Constraint::Fill(1),   // output_a
+			Constraint::Length(8),         // label_a
+			Constraint::Length(gap_width), // gap
+			Constraint::Fill(3),           // input_a
+			Constraint::Length(gap_width), // gap
+			Constraint::Length(6),         // ai_a (hardcode in task.ui_ai())
+			Constraint::Length(gap_width), // gap
+			Constraint::Fill(5),           // output_a
 		])
 		.areas(Rect::new(0, 0, content_width, 1));
 
@@ -175,30 +176,41 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> (Vec<Line<'static>>, Data
 		// let data_zone = DataZone::new_for_task(data_task_area, task.id);
 		// data_zones.push(data_zone);
 
-		// -- Add Spacing
-		task_line.push(Span::raw("  "));
+		// -- Gap
+		task_line.push(gap_span.clone());
 
 		// -- Add Input
-		let ui_input_spans = task.ui_input(input_a.width);
-		task_line.extend(ui_input_spans);
+		let input_spans = task.ui_input(input_a.width);
+		task_line.extend(input_spans);
 
-		task_line.push(Span::raw("  "));
+		// -- Gap
+		task_line.push(gap_span.clone());
 
-		// -- Add Output
-		let ui_output_spans = task.ui_output(output_a.width);
-		task_line.extend(ui_output_spans);
+		// -- Add AI
+		let ai_spans = task.ui_ai();
+		task_line.extend(ai_spans);
+
+		// -- Gap
+		task_line.push(gap_span.clone());
+
+		// -- Add Output or skip
+		if task.has_skip() {
+			let skip_spans = task.ui_skip(output_a.width);
+			task_line.extend(skip_spans);
+		} else {
+			let output_spans = task.ui_output(output_a.width);
+			task_line.extend(output_spans);
+		}
 
 		// -- Add Sum iteams
 		// task_line.extend(task.ui_sum_spans());
 
 		spans_lines.push(task_line);
 
-		line += 1;
+		// line += 1;
 	}
 
-	let lines = ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines);
-
-	(lines, data_zones.into())
+	ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines)
 }
 
 // endregion: --- UI Builders
@@ -206,14 +218,15 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> (Vec<Line<'static>>, Data
 // region:    --- UI Event Processing
 
 // NOTE: Probably need a area_offset
+#[allow(unused)]
 fn process_mouse_for_task_list(state: &mut AppState, task_list_zones: DataZones, x_offset: u16, y_offset: u16) {
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_click()
 	{
 		let data_ref = task_list_zones.find_data_key(mouse_evt.position(), x_offset, y_offset);
 		// NOTE: now select the right data_ref
-		if let Some(data_ref) = data_ref {
-			tracing::debug!("->> data_ref: {data_ref:?}");
+		if let Some(_data_ref) = data_ref {
+			// tracing::debug!("data_ref: {data_ref:?}");
 		}
 		// TODO: ...
 	}

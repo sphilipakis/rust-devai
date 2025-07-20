@@ -1,4 +1,5 @@
 //! A TUI zone representing a data entity (type, id, and eventually property/ies)
+#![allow(unused)]
 
 use crate::store::Id;
 use derive_more::From;
