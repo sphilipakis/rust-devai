@@ -5,7 +5,7 @@ use crate::tui::support::{RectExt, UiExt};
 use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
@@ -128,7 +128,7 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 	all_lines
 }
 
-fn ui_for_task_list(tasks: &[Task], _max_width: u16) -> (Vec<Line<'static>>, DataZones) {
+fn ui_for_task_list(tasks: &[Task], max_width: u16) -> (Vec<Line<'static>>, DataZones) {
 	if tasks.is_empty() {
 		return (Vec::new(), DataZones::default());
 	}
@@ -144,27 +144,52 @@ fn ui_for_task_list(tasks: &[Task], _max_width: u16) -> (Vec<Line<'static>>, Dat
 	let marker_spacer = Span::raw(" ");
 	let marker_spacer_width = marker_spacer.width() as u16;
 
+	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
+	// -- Layout
+	let [label_a, _, input_a, _, ai_a, _, output_a] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![
+			Constraint::Length(8), // label_a
+			Constraint::Length(2), // gap
+			Constraint::Fill(1),   // input_a
+			Constraint::Length(2), // gap
+			Constraint::Length(6), // ai_a
+			Constraint::Length(2), // gap
+			Constraint::Fill(1),   // output_a
+		])
+		.areas(Rect::new(0, 0, content_width, 1));
+
 	// NOTE: In this case, looks like a counter for the for, but line might be different in some cases.
 	#[allow(clippy::explicit_counter_loop)]
 	for task in tasks {
-		let mut task_line = task.ui_label(tasks_len);
+		let mut task_line = task.ui_label(label_a.width, tasks_len);
 
 		// -- Make the data zone
-		let x = marker_width + marker_spacer_width;
-		let data_task_area = Rect {
-			x,
-			y: line,
-			width: task_line.x_total_width(),
-			height: 1,
-		};
-		let data_zone = DataZone::new_for_task(data_task_area, task.id);
-		data_zones.push(data_zone);
+		// let x = marker_width + marker_spacer_width;
+		// let data_task_area = Rect {
+		// 	x,
+		// 	y: line,
+		// 	width: task_line.x_total_width(),
+		// 	height: 1,
+		// };
+		// let data_zone = DataZone::new_for_task(data_task_area, task.id);
+		// data_zones.push(data_zone);
 
 		// -- Add Spacing
 		task_line.push(Span::raw("  "));
 
+		// -- Add Input
+		let ui_input_spans = task.ui_input(input_a.width);
+		task_line.extend(ui_input_spans);
+
+		task_line.push(Span::raw("  "));
+
+		// -- Add Output
+		let ui_output_spans = task.ui_output(output_a.width);
+		task_line.extend(ui_output_spans);
+
 		// -- Add Sum iteams
-		task_line.extend(task.ui_sum_spans());
+		// task_line.extend(task.ui_sum_spans());
 
 		spans_lines.push(task_line);
 

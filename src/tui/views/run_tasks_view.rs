@@ -87,7 +87,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let items: Vec<ListItem> = tasks
 		.iter()
 		.map(|task| {
-			let line = Line::from(task.ui_label(tasks_len));
+			let line = Line::from(task.ui_label(area.width, tasks_len));
 			ListItem::new(line)
 		})
 		.collect();

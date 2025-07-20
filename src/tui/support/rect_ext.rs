@@ -14,6 +14,9 @@ pub trait RectExt {
 
 	fn x_move_top(&self, y: u16) -> Rect;
 
+	// -- Shrink
+	fn x_shrink_left(&self, width: u16) -> Rect;
+
 	// -- lines
 	fn x_row(&self, row_num: u16) -> Rect;
 
@@ -62,6 +65,21 @@ impl RectExt for Rect {
 
 	// endregion: --- Margins
 
+	// region:    --- Shrink
+
+	fn x_shrink_left(&self, width: u16) -> Rect {
+		let new_width = self.width.saturating_sub(width);
+		let x = self.x + width;
+		Rect {
+			x,
+			y: self.y,
+			width: new_width,
+			height: self.height,
+		}
+	}
+
+	// endregion: --- Shrink
+
 	fn x_move_top(&self, y_offset: u16) -> Rect {
 		Rect {
 			x: self.x,
@@ -70,8 +88,6 @@ impl RectExt for Rect {
 			height: self.height,
 		}
 	}
-
-	// region:    --- Width & Height
 
 	// region:    --- Lines
 
@@ -86,6 +102,8 @@ impl RectExt for Rect {
 		}
 	}
 	// endregion: --- Lines
+
+	// region:    --- Width & Height
 
 	/// Change the width
 	fn x_width(&self, width: u16) -> Rect {
