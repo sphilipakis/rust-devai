@@ -11,33 +11,33 @@ pub fn process_app_state(state: &mut AppState) {
 	// -- Capture the mouse Event
 	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
 		let mouse_evt: MouseEvt = mouse_event.into();
-		state.inner_mut().mouse_evt = Some(mouse_evt);
+		state.core_mut().mouse_evt = Some(mouse_evt);
 		// Here we update the persistent mouse
-		state.inner_mut().last_mouse_evt = Some(mouse_evt);
+		state.core_mut().last_mouse_evt = Some(mouse_evt);
 
 		// Find the active scroll zone
-		let zone_iden = state.inner().find_zone_for_pos(mouse_evt);
+		let zone_iden = state.core().find_zone_for_pos(mouse_evt);
 
 		// if let Some(zone_iden) = zone_iden {
 		// 	tracing::debug!(" {zone_iden:?}");
 		// }
 
-		state.inner_mut().active_scroll_zone_iden = zone_iden;
+		state.core_mut().active_scroll_zone_iden = zone_iden;
 	} else {
-		state.inner_mut().mouse_evt = None;
+		state.core_mut().mouse_evt = None;
 		// Note: We do not clear the last_mouse_evt as it should remain persistent
 	}
 
 	// -- Scroll
 	if let Some(mouse_evt) = state.last_app_event().as_mouse_event()
-		&& let Some(zone_iden) = state.inner().active_scroll_zone_iden
+		&& let Some(zone_iden) = state.core().active_scroll_zone_iden
 	{
 		match mouse_evt.kind {
 			MouseEventKind::ScrollUp => {
-				state.inner_mut().dec_scroll(zone_iden, 1);
+				state.core_mut().dec_scroll(zone_iden, 1);
 			}
 			MouseEventKind::ScrollDown => {
-				state.inner_mut().inc_scroll(zone_iden, 1);
+				state.core_mut().inc_scroll(zone_iden, 1);
 			}
 			_ => (),
 		};
@@ -45,22 +45,22 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Toggle runs list
 	if let Some(KeyCode::Char('n')) = state.last_app_event().as_key_code() {
-		let show_runs = !state.inner().show_runs;
-		state.inner_mut().show_runs = show_runs;
+		let show_runs = !state.core().show_runs;
+		state.core_mut().show_runs = show_runs;
 	}
 
 	// -- Load runs and keep previous idx for later comparison
 	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
 	let has_new_runs = new_runs.len() != state.runs().len();
-	state.inner_mut().runs = new_runs;
+	state.core_mut().runs = new_runs;
 
 	// only change if we have new runs
 	if has_new_runs {
-		let prev_run_idx = state.inner().run_idx;
-		let prev_run_id = state.inner().run_id;
+		let prev_run_idx = state.core().run_idx;
+		let prev_run_id = state.core().run_id;
 
 		{
-			let inner = state.inner_mut();
+			let inner = state.core_mut();
 
 			// When the runs panel is hidden, always pin the latest run (first run index) run.
 			if !inner.show_runs {
@@ -81,8 +81,8 @@ pub fn process_app_state(state: &mut AppState) {
 
 		// -- Reset some view state if run selection changed
 		// TODO: Need to check if still needed.
-		if state.inner().run_idx != prev_run_idx {
-			let inner = state.inner_mut();
+		if state.core().run_idx != prev_run_idx {
+			let inner = state.core_mut();
 			inner.task_idx = None;
 			inner.before_all_show = false;
 			inner.after_all_show = false;
@@ -90,7 +90,7 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- Navigation inside the runs list
-	let runs_nav_offset: i32 = if state.inner().show_runs
+	let runs_nav_offset: i32 = if state.core().show_runs
 		&& let Some(code) = state.last_app_event().as_key_code()
 	{
 		match code {
@@ -102,7 +102,7 @@ pub fn process_app_state(state: &mut AppState) {
 		0
 	};
 	if runs_nav_offset != 0 {
-		state.inner_mut().offset_run_idx(runs_nav_offset);
+		state.core_mut().offset_run_idx(runs_nav_offset);
 	}
 
 	// -- Load tasks for current run
@@ -110,22 +110,22 @@ pub fn process_app_state(state: &mut AppState) {
 	{
 		if let Some(run_id) = current_run_id {
 			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
-			state.inner_mut().tasks = tasks;
+			state.core_mut().tasks = tasks;
 		} else {
-			state.inner_mut().tasks.clear(); // Important when no run is selected
+			state.core_mut().tasks.clear(); // Important when no run is selected
 		}
 	}
 
 	// -- Initialise RunDetailsView if needed
 	{
 		let need_init = {
-			let inner = state.inner();
+			let inner = state.core();
 			inner.task_idx.is_none() && !inner.before_all_show && !inner.after_all_show
 		};
 
 		if need_init {
 			let tasks_empty = state.tasks().is_empty();
-			let inner = state.inner_mut();
+			let inner = state.core_mut();
 			if !tasks_empty {
 				inner.task_idx = Some(0);
 				inner.before_all_show = false;
@@ -148,7 +148,7 @@ pub fn process_app_state(state: &mut AppState) {
 
 	let len_tasks = state.tasks().len();
 	{
-		let inner = state.inner_mut();
+		let inner = state.core_mut();
 		inner.task_idx = offset_and_clamp_option_idx_in_len(&inner.task_idx, nav_tasks_offset, len_tasks);
 	}
 

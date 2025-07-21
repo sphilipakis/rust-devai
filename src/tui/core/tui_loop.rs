@@ -37,7 +37,7 @@ pub fn run_ui_loop(
 			// TODO: We might want to have a timestamp so that we do not process the redraw
 			//       if another event happened before.
 			if app_state.should_redraw() {
-				app_state.inner_mut().do_redraw = false;
+				app_state.core_mut().do_redraw = false;
 				let _ = app_tx.send(AppEvent::DoRedraw).await;
 			}
 
@@ -69,7 +69,7 @@ pub fn run_ui_loop(
 			.await;
 
 			// Update the last_app_event
-			app_state.inner_mut().last_app_event = app_event.into();
+			app_state.core_mut().last_app_event = app_event.into();
 		}
 	});
 	Ok(handle)
