@@ -58,6 +58,8 @@ pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
 pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
 pub const CLR_TXT_RED: Color = Color::Indexed(196);
 
+pub const CLR_TXT_HOVER: Color = CLR_TXT_BLUE;
+
 pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
@@ -94,6 +96,6 @@ pub const STL_SECTION_TXT: Style = Style::new().fg(CLR_TXT_WHITE);
 pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;
 
 pub const STL_TAB_DEFAULT: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_600);
-pub const STL_TAB_DEFAULT_HOVER: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_BLUE);
+pub const STL_TAB_DEFAULT_HOVER: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_HOVER);
 pub const STL_TAB_ACTIVE: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400);
 pub const STL_TAB_ACTIVE_HOVER: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400); // same when active

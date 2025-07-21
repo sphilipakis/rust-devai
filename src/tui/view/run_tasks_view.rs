@@ -109,15 +109,17 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Build Tasks UI
 	let tasks = state.tasks();
 	let task_sel_idx = state.task_idx().unwrap_or_default();
+	let is_mouse_in_nav = state.is_mouse_over_area(tasks_list_a);
 	let all_lines: Vec<ListItem> = tasks
 		.iter()
-		.map(|task| {
+		.enumerate()
+		.map(|(idx, task)| {
 			let mut line = Line::from(task.ui_label(area.width, tasks_len));
-			if let Some(idx) = task.idx
-				&& task_sel_idx == idx as usize
-			{
+			if task_sel_idx == idx {
 				line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
-			};
+			} else if is_mouse_in_nav && state.is_mouse_over_area(tasks_list_a.x_row((idx + 1) as u16 - scroll)) {
+				line = line.fg(style::CLR_TXT_HOVER);
+			}
 			ListItem::new(line)
 		})
 		.collect();

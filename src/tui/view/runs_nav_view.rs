@@ -1,6 +1,7 @@
 use crate::support::text::format_time_local;
 use crate::tui::core::ScrollIden;
 use crate::tui::support::clamp_idx_in_len;
+use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -57,10 +58,11 @@ impl StatefulWidget for RunsNavView {
 		// -- Build Runs UI
 		let runs = state.runs();
 		let run_sel_idx = state.run_idx().unwrap_or_default();
+		let is_mouse_in_nav = state.is_mouse_over_area(list_a);
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
-			.map(|(i, run)| {
+			.map(|(idx, run)| {
 				let (mark_txt, mark_color) = if run.is_done() {
 					("✔", style::CLR_TXT_GREEN)
 				} else {
@@ -72,7 +74,7 @@ impl StatefulWidget for RunsNavView {
 				{
 					start_fmt
 				} else {
-					format!("Run {i}")
+					format!("Run {idx}")
 				};
 
 				// TODO: need to try to avoid clone
@@ -84,8 +86,10 @@ impl StatefulWidget for RunsNavView {
 					Span::styled(label, style::STL_TXT),
 				]);
 
-				if run_sel_idx == i {
+				if run_sel_idx == idx {
 					line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
+				} else if is_mouse_in_nav && state.is_mouse_over_area(list_a.x_row((idx + 1) as u16 - scroll)) {
+					line = line.fg(style::CLR_TXT_HOVER);
 				};
 
 				ListItem::new(line)
