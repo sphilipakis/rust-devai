@@ -89,8 +89,10 @@ impl AppStateInner {
 			self.set_run_by_idx(new_idx);
 		}
 	}
+}
 
-	// -- Scroll Zones
+/// Scroll Inner impl
+impl AppStateInner {
 	pub fn find_zone_for_pos(&self, position: impl Into<Position>) -> Option<ScrollIden> {
 		self.scroll_zones.find_zone_for_pos(position)
 	}
@@ -101,6 +103,31 @@ impl AppStateInner {
 
 	pub fn get_zone_mut(&mut self, iden: &ScrollIden) -> Option<&mut ScrollZone> {
 		self.scroll_zones.zones.get_mut(iden)
+	}
+
+	pub fn get_scroll(&self, iden: ScrollIden) -> u16 {
+		self.scroll_zones.zones.get(&iden).and_then(|z| z.scroll()).unwrap_or_default()
+	}
+
+	/// return the new value
+	pub fn inc_scroll(&mut self, iden: ScrollIden, inc: u16) -> u16 {
+		let val = self.get_scroll(iden);
+		let val = val.saturating_add(inc);
+		if let Some(z) = self.get_zone_mut(&iden) {
+			z.set_scroll(val);
+		}
+
+		val
+	}
+
+	pub fn dec_scroll(&mut self, iden: ScrollIden, dec: u16) -> u16 {
+		let val = self.get_scroll(iden);
+		let val = val.saturating_sub(dec);
+		if let Some(z) = self.get_zone_mut(&iden) {
+			z.set_scroll(val);
+		}
+
+		val
 	}
 }
 // endregion: --- Inner
@@ -211,13 +238,9 @@ impl AppState {
 	}
 
 	/// Note: will return 0 if no scroll was set yet
+	#[allow(unused)]
 	pub fn get_scroll(&self, iden: ScrollIden) -> u16 {
-		self.inner
-			.scroll_zones
-			.zones
-			.get(&iden)
-			.and_then(|z| z.scroll())
-			.unwrap_or_default()
+		self.inner.get_scroll(iden)
 	}
 
 	pub fn clamp_scroll(&mut self, iden: ScrollIden, line_count: usize) -> u16 {
@@ -233,33 +256,6 @@ impl AppState {
 		} else {
 			scroll
 		}
-	}
-
-	pub fn set_scroll(&mut self, iden: ScrollIden, scroll: u16) {
-		if let Some(zone) = self.inner.get_zone_mut(&iden) {
-			zone.set_scroll(scroll);
-		}
-	}
-
-	/// return the new value
-	pub fn inc_scroll(&mut self, iden: ScrollIden, inc: u16) -> u16 {
-		let val = self.get_scroll(iden);
-		let val = val.saturating_add(inc);
-		if let Some(z) = self.inner.get_zone_mut(&iden) {
-			z.set_scroll(val);
-		}
-
-		val
-	}
-
-	pub fn dec_scroll(&mut self, iden: ScrollIden, dec: u16) -> u16 {
-		let val = self.get_scroll(iden);
-		let val = val.saturating_sub(dec);
-		if let Some(z) = self.inner.get_zone_mut(&iden) {
-			z.set_scroll(val);
-		}
-
-		val
 	}
 }
 
