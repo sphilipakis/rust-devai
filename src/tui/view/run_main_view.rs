@@ -160,20 +160,21 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	let run_tab = state.run_tab();
 
 	// -- Compute tabs Label & style
-	let style = style::STL_TAB_DEFAULT;
-	let highlight_style = style::STL_TAB_ACTIVE;
-
 	let tab_1_label = "Overview";
-	let tab_1_style = if matches!(run_tab, RunTab::Overview) {
-		highlight_style
-	} else {
-		style
+	let tab_1_style = match (run_tab == RunTab::Overview, state.is_mouse_over_area(tab_overview_a)) {
+		// (active, hover)
+		(true, true) => style::STL_TAB_ACTIVE_HOVER,
+		(true, false) => style::STL_TAB_ACTIVE,
+		(false, true) => style::STL_TAB_DEFAULT_HOVER,
+		(false, false) => style::STL_TAB_DEFAULT,
 	};
 	let tab_2_label = if state.tasks().len() > 1 { "Tasks" } else { "Task" };
-	let tab_2_style = if matches!(run_tab, RunTab::Tasks) {
-		highlight_style
-	} else {
-		style
+	let tab_2_style = match (run_tab == RunTab::Tasks, state.is_mouse_over_area(tab_tasks_a)) {
+		// (active, hover)
+		(true, true) => style::STL_TAB_ACTIVE_HOVER,
+		(true, false) => style::STL_TAB_ACTIVE,
+		(false, true) => style::STL_TAB_DEFAULT_HOVER,
+		(false, false) => style::STL_TAB_DEFAULT,
 	};
 
 	// -- Render tabs

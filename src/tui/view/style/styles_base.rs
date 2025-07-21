@@ -81,7 +81,7 @@ pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_650);
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
 pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_650);
 
-// -- Setion Styles
+// -- Section Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_700);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_SKIP: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
@@ -94,4 +94,6 @@ pub const STL_SECTION_TXT: Style = Style::new().fg(CLR_TXT_WHITE);
 pub const CLR_BKG_TAB_ACT: Color = CLR_BKG_GRAY_DARK;
 
 pub const STL_TAB_DEFAULT: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_600);
+pub const STL_TAB_DEFAULT_HOVER: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_BLUE);
 pub const STL_TAB_ACTIVE: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400);
+pub const STL_TAB_ACTIVE_HOVER: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400); // same when active
