@@ -1,5 +1,5 @@
 use crate::tui::core::AppState;
-use crate::tui::styles;
+use crate::tui::style;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize as _;
@@ -39,13 +39,13 @@ impl StatefulWidget for ActionView {
 		// -- Render Actions Bar
 		let line = Line::from(vec![
 			Span::raw("["),
-			Span::styled("r", styles::STL_TXT_ACTION),
+			Span::styled("r", style::STL_TXT_ACTION),
 			Span::raw("] Replay  "),
 			Span::raw("["),
-			Span::styled("q", styles::STL_TXT_ACTION),
+			Span::styled("q", style::STL_TXT_ACTION),
 			Span::raw("] Quit  "),
 			Span::raw("["),
-			Span::styled("n", styles::STL_TXT_ACTION),
+			Span::styled("n", style::STL_TXT_ACTION),
 			Span::raw(n_label),
 		]);
 
@@ -62,10 +62,10 @@ impl StatefulWidget for ActionView {
 		// -- Render Memory
 		Paragraph::new("Mem:")
 			.right_aligned()
-			.style(styles::STL_FIELD_LBL)
+			.style(style::STL_FIELD_LBL)
 			.render(mem_lbl_a, buf);
 		Paragraph::new(state.memory_fmt())
-			.style(styles::STL_FIELD_VAL)
+			.style(style::STL_FIELD_VAL)
 			.render(mem_val_a, buf);
 
 		// -- Render CPU

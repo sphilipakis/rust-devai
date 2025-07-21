@@ -1,7 +1,7 @@
 use crate::support::text::format_time_local;
 use crate::tui::core::ScrollIden;
 use crate::tui::support::clamp_idx_in_len;
-use crate::tui::{AppState, styles};
+use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Style, Stylize};
@@ -24,7 +24,7 @@ impl StatefulWidget for RunsNavView {
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		const SCROLL_IDEN: ScrollIden = RunsNavView::NAV_SCROLL_IDEN;
 
-		Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
+		Block::new().bg(style::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Render background
 		Block::new().render(area, buf);
@@ -37,7 +37,7 @@ impl StatefulWidget for RunsNavView {
 
 		// -- Render
 		Paragraph::new(" Runs: ")
-			.style(styles::STL_FIELD_LBL)
+			.style(style::STL_FIELD_LBL)
 			.left_aligned()
 			.render(label_a, buf);
 
@@ -62,9 +62,9 @@ impl StatefulWidget for RunsNavView {
 			.enumerate()
 			.map(|(i, run)| {
 				let (mark_txt, mark_color) = if run.is_done() {
-					("✔", styles::CLR_TXT_GREEN)
+					("✔", style::CLR_TXT_GREEN)
 				} else {
-					("▶", styles::CLR_TXT)
+					("▶", style::CLR_TXT)
 				};
 
 				let label = if let Some(start) = run.start
@@ -81,11 +81,11 @@ impl StatefulWidget for RunsNavView {
 					Span::raw(" "),
 					Span::styled(mark_txt, Style::default().fg(mark_color)),
 					Span::raw(" "),
-					Span::styled(label, styles::STL_TXT),
+					Span::styled(label, style::STL_TXT),
 				]);
 
 				if run_sel_idx == i {
-					line = line.style(styles::STL_NAV_ITEM_HIGHLIGHT);
+					line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
 				};
 
 				ListItem::new(line)

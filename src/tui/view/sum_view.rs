@@ -1,6 +1,7 @@
 use crate::support::text::format_duration_us;
+use crate::tui::AppState;
 use crate::tui::support;
-use crate::tui::{AppState, styles};
+use crate::tui::view::style;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -27,7 +28,7 @@ impl StatefulWidget for SumView {
 			.spacing(1)
 			.areas(area);
 
-		Block::new().bg(styles::CLR_BKG_BLACK).render(area, buf);
+		Block::new().bg(style::CLR_BKG_BLACK).render(area, buf);
 
 		// -- Extract Data
 		let mut duration_us: i64 = 0;
@@ -55,23 +56,21 @@ impl StatefulWidget for SumView {
 
 		// -- Render
 		Paragraph::new("Total Runs:")
-			.style(styles::STL_FIELD_LBL_DARK)
+			.style(style::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_1, buf);
-		Paragraph::new(runs_fmt).style(styles::STL_FIELD_VAL_DARK).render(val_1, buf);
+		Paragraph::new(runs_fmt).style(style::STL_FIELD_VAL_DARK).render(val_1, buf);
 
 		Paragraph::new("Total Cost:")
-			.style(styles::STL_FIELD_LBL_DARK)
+			.style(style::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_2, buf);
-		Paragraph::new(cost_fmt).style(styles::STL_FIELD_VAL_DARK).render(val_2, buf);
+		Paragraph::new(cost_fmt).style(style::STL_FIELD_VAL_DARK).render(val_2, buf);
 
 		Paragraph::new("Total Duration:")
-			.style(styles::STL_FIELD_LBL_DARK)
+			.style(style::STL_FIELD_LBL_DARK)
 			.right_aligned()
 			.render(lbl_3, buf);
-		Paragraph::new(duration_fmt)
-			.style(styles::STL_FIELD_VAL_DARK)
-			.render(val_3, buf);
+		Paragraph::new(duration_fmt).style(style::STL_FIELD_VAL_DARK).render(val_3, buf);
 	}
 }

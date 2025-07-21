@@ -3,14 +3,14 @@
 
 use crate::store::rt_model::{ErrBmc, Log, LogKind};
 use crate::store::{Id, ModelManager};
-use crate::tui::styles;
-use crate::tui::views::support;
+use crate::tui::style;
+use crate::tui::view::comp;
 use ratatui::text::{Line, Span};
 
 pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Error:";
-	let marker_style = styles::STL_SECTION_MARKER_ERR;
-	let spans_prefix = vec![Span::styled("┃ ", styles::CLR_TXT_RED)];
+	let marker_style = style::STL_SECTION_MARKER_ERR;
+	let spans_prefix = vec![Span::styled("┃ ", style::CLR_TXT_RED)];
 	match ErrBmc::get(mm, err_id) {
 		Ok(err_rec) => {
 			let content = err_rec.content.unwrap_or_default();
@@ -19,9 +19,9 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 			} else {
 				content
 			};
-			support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
+			comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
 		}
-		Err(err) => support::ui_for_marker_section_str(
+		Err(err) => comp::ui_for_marker_section_str(
 			&format!("Error getting error. {err}"),
 			(marker_txt, marker_style),
 			max_width,
@@ -41,14 +41,14 @@ pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 	};
 
 	let marker_txt_style = match kind {
-		LogKind::RunStep => ("Sys Step", styles::STL_SECTION_MARKER),
-		LogKind::SysInfo => ("Sys Info", styles::STL_SECTION_MARKER),
-		LogKind::SysWarn => ("Sys Warn", styles::STL_SECTION_MARKER),
-		LogKind::SysError => ("Sys Error", styles::STL_SECTION_MARKER),
-		LogKind::SysDebug => ("Sys Debug", styles::STL_SECTION_MARKER),
-		LogKind::AgentPrint => ("Print:", styles::STL_SECTION_MARKER),
-		LogKind::AgentSkip => ("■ Skip:", styles::STL_SECTION_MARKER_SKIP),
+		LogKind::RunStep => ("Sys Step", style::STL_SECTION_MARKER),
+		LogKind::SysInfo => ("Sys Info", style::STL_SECTION_MARKER),
+		LogKind::SysWarn => ("Sys Warn", style::STL_SECTION_MARKER),
+		LogKind::SysError => ("Sys Error", style::STL_SECTION_MARKER),
+		LogKind::SysDebug => ("Sys Debug", style::STL_SECTION_MARKER),
+		LogKind::AgentPrint => ("Print:", style::STL_SECTION_MARKER),
+		LogKind::AgentSkip => ("■ Skip:", style::STL_SECTION_MARKER_SKIP),
 	};
 
-	support::ui_for_marker_section_str(content, marker_txt_style, max_width, None)
+	super::ui_for_marker_section_str(content, marker_txt_style, max_width, None)
 }

@@ -1,5 +1,7 @@
 // region:    --- modules
 
+mod facade;
+
 mod action_view;
 mod main_view;
 mod run_main_view;
@@ -20,5 +22,8 @@ pub use runs_nav_view::*;
 pub use runs_view::*;
 pub use sum_view::*;
 pub use task_view::*;
+
+pub mod comp;
+pub mod style;
 
 // endregion: --- modules

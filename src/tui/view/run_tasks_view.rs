@@ -1,7 +1,7 @@
 use crate::tui::core::ScrollIden;
-use crate::tui::styles;
-use crate::tui::support::{RectExt, clamp_idx_in_len};
-use crate::tui::views::support;
+use crate::tui::style;
+use crate::tui::support::clamp_idx_in_len;
+use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -66,7 +66,7 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
 		return;
 	};
 
-	let lines = support::ui_for_err(state.mm(), err_id, area.width.min(120));
+	let lines = super::comp::ui_for_err(state.mm(), err_id, area.width.min(120));
 
 	Paragraph::new(lines).render(area, buf);
 }
@@ -75,7 +75,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	const SCROLL_IDEN: ScrollIden = RunTasksView::TASKS_NAV_SCROLL_IDEN;
 
 	// -- Render background
-	Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
+	Block::new().bg(style::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 	// -- Layout before_all | Logs
 	let [tasks_label_a, tasks_list_a] = Layout::default()
@@ -91,7 +91,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		// ..
 		Span::raw(" Tasks:"),
 	]);
-	before_line.style(styles::STL_FIELD_LBL).render(tasks_label_a, buf);
+	before_line.style(style::STL_FIELD_LBL).render(tasks_label_a, buf);
 	// endregion: --- Render Tasks Label
 
 	// -- Scroll & Select logic
@@ -116,7 +116,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			if let Some(idx) = task.idx
 				&& task_sel_idx == idx as usize
 			{
-				line = line.style(styles::STL_NAV_ITEM_HIGHLIGHT);
+				line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
 			};
 			ListItem::new(line)
 		})

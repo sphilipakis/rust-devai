@@ -1,8 +1,7 @@
 use crate::tui::core::RunTab;
-use crate::tui::support::RectExt;
-use crate::tui::views::support::el_running_ico;
-use crate::tui::views::{RunOverviewView, RunTasksView};
-use crate::tui::{AppState, styles};
+use crate::tui::view::support::RectExt as _;
+use crate::tui::view::{RunOverviewView, RunTasksView, comp};
+use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;
@@ -22,7 +21,7 @@ impl StatefulWidget for RunMainView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
+		Block::new().bg(style::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Layout Header | Tabs | Tab Content
 		let [header_a, _space_1, tabs_a, tabs_line, tab_content_a] = Layout::default()
@@ -91,57 +90,55 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// Agent label with marker
 	let mut line_1 = Line::default();
 	if let Some(run) = state.current_run() {
-		line_1.push_span(el_running_ico(run));
+		line_1.push_span(comp::el_running_ico(run));
 	}
 	line_1.push_span(" Agent:");
 	Paragraph::new(line_1)
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_1.x_row(1), buf);
 	// Agent value
 	Paragraph::new(agent_name)
-		.style(styles::STL_FIELD_VAL)
+		.style(style::STL_FIELD_VAL)
 		.render(val_1.x_row(1), buf);
 
 	Paragraph::new("Tasks:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_2.x_row(1), buf);
 	Paragraph::new(tasks_txt)
-		.style(styles::STL_FIELD_VAL)
+		.style(style::STL_FIELD_VAL)
 		.render(val_2.x_row(1), buf);
 
 	Paragraph::new("Concurrency:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_3.x_row(1), buf);
 	Paragraph::new(concurrency_txt)
-		.style(styles::STL_FIELD_VAL)
+		.style(style::STL_FIELD_VAL)
 		.render(val_3.x_row(1), buf);
 
 	// -- Render Row 2
 	Paragraph::new("Model:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_1.x_row(2), buf);
 	Paragraph::new(model_name)
-		.style(styles::STL_FIELD_VAL)
+		.style(style::STL_FIELD_VAL)
 		.render(val_1.x_row(2), buf);
 
 	Paragraph::new("Cost:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_2.x_row(2), buf);
-	Paragraph::new(cost_txt)
-		.style(styles::STL_FIELD_VAL)
-		.render(val_2.x_row(2), buf);
+	Paragraph::new(cost_txt).style(style::STL_FIELD_VAL).render(val_2.x_row(2), buf);
 
 	Paragraph::new("Duration:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_3.x_row(2), buf);
 	Paragraph::new(duration_txt)
-		.style(styles::STL_FIELD_VAL)
+		.style(style::STL_FIELD_VAL)
 		.render(val_3.x_row(2), buf);
 }
 
@@ -163,8 +160,8 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	let run_tab = state.run_tab();
 
 	// -- Compute tabs Label & style
-	let style = styles::STL_TAB_DEFAULT;
-	let highlight_style = styles::STL_TAB_ACTIVE;
+	let style = style::STL_TAB_DEFAULT;
+	let highlight_style = style::STL_TAB_ACTIVE;
 
 	let tab_1_label = "Overview";
 	let tab_1_style = if matches!(run_tab, RunTab::Overview) {
@@ -192,7 +189,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 	// -- Render Line
 	// Trick to have a single line of tab active bkg color
 	let repeated = "▔".repeat(tabs_line_a.width as usize);
-	let line = Line::default().spans(vec![Span::raw(repeated)]).fg(styles::CLR_BKG_TAB_ACT);
+	let line = Line::default().spans(vec![Span::raw(repeated)]).fg(style::CLR_BKG_TAB_ACT);
 	line.render(tabs_line_a, buf);
 
 	// -- Return tab selected

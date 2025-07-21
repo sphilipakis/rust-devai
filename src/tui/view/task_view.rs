@@ -1,9 +1,9 @@
 use crate::store::ModelManager;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
 use crate::tui::core::ScrollIden;
-use crate::tui::support::RectExt;
-use crate::tui::views::support;
-use crate::tui::{AppState, styles};
+use crate::tui::view::support::RectExt as _;
+use crate::tui::view::{comp, support};
+use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span};
@@ -76,9 +76,9 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 
 	// When color debug:
 	let stl_field_val = if state.debug_clr() != 0 {
-		styles::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()))
+		style::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()))
 	} else {
-		styles::STL_FIELD_VAL
+		style::STL_FIELD_VAL
 	};
 
 	// -- Render Model Row
@@ -86,7 +86,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		current_row += 1;
 
 		Paragraph::new("Model:")
-			.style(styles::STL_FIELD_LBL)
+			.style(style::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_1.x_row(current_row), buf);
 		// NOTE: here a little chack to have maximum space for model name
@@ -95,13 +95,13 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 			.render(val_1.x_row(current_row).x_width(26), buf);
 
 		// NOTE: Here we use Span to give a little bit more space to Model
-		Paragraph::new(Span::styled("  Cost:", styles::STL_FIELD_LBL))
+		Paragraph::new(Span::styled("  Cost:", style::STL_FIELD_LBL))
 			.right_aligned()
 			.render(label_2.x_row(current_row), buf);
 		Paragraph::new(cost).style(stl_field_val).render(val_2.x_row(current_row), buf);
 
 		Paragraph::new("Duration:")
-			.style(styles::STL_FIELD_LBL)
+			.style(style::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_3.x_row(current_row), buf);
 		Paragraph::new(duration)
@@ -112,7 +112,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	// -- Render Row for tokens
 	current_row += 1;
 	Paragraph::new("Prompt:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_1.x_row(current_row), buf);
 	Paragraph::new(prompt_tk)
@@ -120,7 +120,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 		.render(val_1.x_row(current_row), buf);
 
 	Paragraph::new("Compl:")
-		.style(styles::STL_FIELD_LBL)
+		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(label_2.x_row(current_row), buf);
 	Paragraph::new(completion_tk)
@@ -183,7 +183,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 	// -- Add Error if present
 	if let Some(err_id) = task.end_err_id {
-		support::extend_lines(&mut all_lines, support::ui_for_err(state.mm(), err_id, max_width), true);
+		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 
 	// -- Clamp scroll
@@ -212,11 +212,11 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
-	let marker_style = styles::STL_SECTION_MARKER_INPUT;
+	let marker_style = style::STL_SECTION_MARKER_INPUT;
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
+		Ok(Some(content)) => comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
 		Ok(None) => Vec::new(),
-		Err(err) => support::ui_for_marker_section_str(
+		Err(err) => comp::ui_for_marker_section_str(
 			&format!("Error getting input. {err}"),
 			(marker_txt, marker_style),
 			max_width,
@@ -227,8 +227,8 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'sta
 
 fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "AI:";
-	let marker_style_active = styles::STL_SECTION_MARKER_AI;
-	let marker_stype_inactive = styles::STL_SECTION_MARKER;
+	let marker_style_active = style::STL_SECTION_MARKER_AI;
+	let marker_stype_inactive = style::STL_SECTION_MARKER;
 	let model_name = task
 		.model_ov
 		.as_ref()
@@ -256,7 +256,7 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	};
 
 	if let Some(content) = content {
-		support::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None)
+		comp::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None)
 	} else {
 		Vec::new()
 	}
@@ -264,11 +264,11 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 
 fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	let marker_txt = "Output:";
-	let marker_style = styles::STL_SECTION_MARKER_OUTPUT;
+	let marker_style = style::STL_SECTION_MARKER_OUTPUT;
 	match TaskBmc::get_output_for_display(mm, task) {
-		Ok(Some(content)) => support::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
-		Ok(None) => support::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None),
-		Err(err) => support::ui_for_marker_section_str(
+		Ok(Some(content)) => comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
+		Ok(None) => comp::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None),
+		Err(err) => comp::ui_for_marker_section_str(
 			&format!("Error getting output. {err}"),
 			(marker_txt, marker_style),
 			max_width,
@@ -302,7 +302,7 @@ fn ui_for_logs<'a>(logs: impl IntoIterator<Item = &'a Log>, max_width: u16, show
 		}
 
 		// Render log lines
-		let log_lines = support::ui_for_log(log, max_width);
+		let log_lines = comp::ui_for_log(log, max_width);
 		lines.extend(log_lines);
 		lines.push(Line::default()); // empty line (for now)
 	}

@@ -1,6 +1,6 @@
 use super::{ActionView, RunsView, SumView};
-use crate::tui::views::RunMainView;
-use crate::tui::{AppState, styles};
+use crate::tui::AppState;
+use crate::tui::view::{RunMainView, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -13,7 +13,7 @@ impl StatefulWidget for MainView {
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// -- Add background
-		Block::new().bg(styles::CLR_BKG_BLACK).render(area, buf);
+		Block::new().bg(style::CLR_BKG_BLACK).render(area, buf);
 
 		// -- Layout
 		let [header_a, _gap_a, content_a, action_a] = Layout::default()

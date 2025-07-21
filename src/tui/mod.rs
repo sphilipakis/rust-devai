@@ -1,13 +1,12 @@
 // region:    --- Modules
 
 mod core;
-mod styles;
 mod support;
-mod views;
+mod view;
 
 // -- Flatten for core::tui
 use core::*;
-use views::*;
+use view::*;
 
 // -- Only export
 pub use core::start_tui;

@@ -1,5 +1,5 @@
 use crate::support::VecExt as _;
-use crate::tui::styles;
+use crate::tui::style;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use std::borrow::Cow;
@@ -36,7 +36,7 @@ pub fn ui_for_marker_section_str(
 
 	// -- First Content Line
 	let first_content = msg_wrap_iter.next().unwrap_or_default();
-	let first_content_span = Span::styled(first_content.to_string(), styles::STL_SECTION_TXT);
+	let first_content_span = Span::styled(first_content.to_string(), style::STL_SECTION_TXT);
 
 	let mut first_line = Line::from(vec![
 		//
@@ -61,7 +61,7 @@ pub fn ui_for_marker_section_str(
 				let spans_prefix = spans_prefix.to_vec();
 				spans.extend(spans_prefix.to_vec());
 			}
-			spans.push(Span::styled(line_content.into_owned(), styles::STL_SECTION_TXT));
+			spans.push(Span::styled(line_content.into_owned(), style::STL_SECTION_TXT));
 			lines.push(spans.into())
 		}
 	}

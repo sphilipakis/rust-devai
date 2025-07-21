@@ -1,9 +1,10 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::core::{DataZones, ScrollIden};
-use crate::tui::support::RectExt;
-use crate::tui::views::support::{self, new_marker, ui_for_marker_section};
-use crate::tui::{AppState, styles};
+use crate::tui::view::comp;
+use crate::tui::view::support;
+use crate::tui::view::support::RectExt as _;
+use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span};
@@ -73,7 +74,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add Error if present
 	if let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) {
-		support::extend_lines(&mut all_lines, support::ui_for_err(state.mm(), err_id, max_width), true);
+		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 
 	// -- Clamp scroll
@@ -134,7 +135,7 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 		}
 
 		// Render log lines
-		let log_lines = support::ui_for_log(log, max_width);
+		let log_lines = comp::ui_for_log(log, max_width);
 		all_lines.extend(log_lines);
 	}
 
@@ -151,7 +152,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 
 	// let mut line: u16 = 0;
 
-	let marker = new_marker("Tasks:", styles::STL_SECTION_MARKER);
+	let marker = comp::new_marker("Tasks:", style::STL_SECTION_MARKER);
 	let marker_width = marker.width() as u16;
 	let marker_spacer = Span::raw(" ");
 	let marker_spacer_width = marker_spacer.width() as u16;
@@ -223,7 +224,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		// line += 1;
 	}
 
-	ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines)
+	comp::ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines)
 }
 
 // endregion: --- UI Builders
