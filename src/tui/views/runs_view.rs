@@ -6,6 +6,13 @@ use ratatui::widgets::StatefulWidget;
 
 pub struct RunsView;
 
+impl RunsView {
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		RunsNavView::clear_scroll_idens(state);
+		RunMainView::clear_scroll_idens(state);
+	}
+}
+
 impl StatefulWidget for RunsView {
 	type State = AppState;
 

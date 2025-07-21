@@ -1,6 +1,5 @@
 use super::{ActionView, RunsView, SumView};
 use crate::tui::AppState;
-use crate::tui::core::ScrollIden;
 use crate::tui::views::RunMainView;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -32,9 +31,10 @@ impl StatefulWidget for MainView {
 
 		// -- Render main
 		if state.show_runs() {
+			RunMainView::clear_scroll_idens(state);
 			RunsView.render(content_a, buf, state);
 		} else {
-			state.clear_scroll_zone_area(&ScrollIden::RunsNav);
+			RunsView::clear_scroll_idens(state);
 			RunMainView.render(content_a, buf, state);
 		}
 

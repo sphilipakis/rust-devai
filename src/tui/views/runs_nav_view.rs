@@ -1,4 +1,5 @@
 use crate::support::text::format_time_local;
+use crate::tui::core::ScrollIden;
 use crate::tui::support::clamp_idx_in_len;
 use crate::tui::{AppState, styles};
 use ratatui::buffer::Buffer;
@@ -9,10 +10,20 @@ use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Parag
 
 pub struct RunsNavView;
 
+impl RunsNavView {
+	const NAV_SCROLL_IDEN: ScrollIden = ScrollIden::RunsNav;
+
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		state.clear_scroll_zone_area(&Self::NAV_SCROLL_IDEN);
+	}
+}
+
 impl StatefulWidget for RunsNavView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+		const SCROLL_IDEN: ScrollIden = RunsNavView::NAV_SCROLL_IDEN;
+
 		Block::new().bg(styles::CLR_BKG_GRAY_DARKER).render(area, buf);
 
 		// -- Render background
@@ -24,20 +35,28 @@ impl StatefulWidget for RunsNavView {
 			.constraints([Constraint::Length(1), Constraint::Fill(1)])
 			.areas(area);
 
-		// -- Process UI Event
-		if process_mouse_for_run_nav(state, list_a) {
-			state.trigger_redraw();
-			return;
-		}
-
 		// -- Render
 		Paragraph::new(" Runs: ")
 			.style(styles::STL_FIELD_LBL)
 			.left_aligned()
 			.render(label_a, buf);
 
-		// -- Get the List Items
+		// -- Scroll & Select logic
+		state.set_scroll_area(SCROLL_IDEN, list_a);
+		let runs_len = state.runs().len();
+		let scroll = state.clamp_scroll(SCROLL_IDEN, runs_len);
+
+		// -- Process UI Event
+		// NOTE: In this case (contrarery to the Tasks Nav),
+		//       we will trigger a redraw, because lot of state will change.
+		if process_mouse_for_run_nav(state, list_a, scroll) {
+			state.trigger_redraw();
+			return;
+		}
+
+		// -- Build Runs UI
 		let runs = state.runs();
+		let run_sel_idx = state.run_idx().unwrap_or_default();
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
@@ -58,23 +77,29 @@ impl StatefulWidget for RunsNavView {
 
 				// TODO: need to try to avoid clone
 				let label = run.label.clone().unwrap_or(label);
-				let line = Line::from(vec![
+				let mut line = Line::from(vec![
 					Span::raw(" "),
 					Span::styled(mark_txt, Style::default().fg(mark_color)),
 					Span::raw(" "),
 					Span::styled(label, styles::STL_TXT),
 				]);
+
+				if run_sel_idx == i {
+					line = line.style(styles::STL_NAV_ITEM_HIGHLIGHT);
+				};
+
 				ListItem::new(line)
 			})
 			.collect();
 
 		// -- Create List Widget & State
 		let list_w = List::new(items)
-			.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
+			//.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 			.highlight_spacing(HighlightSpacing::WhenSelected);
 
-		let mut list_s = ListState::default();
-		list_s.select(state.run_idx());
+		let mut list_s = ListState::default().with_offset(scroll as usize);
+		// NOTE: We handle section by hand, otherwise, the list preven scroll when selected
+		// list_s.select(state.run_idx());
 
 		StatefulWidget::render(list_w, list_a, buf, &mut list_s);
 	}
@@ -83,14 +108,14 @@ impl StatefulWidget for RunsNavView {
 // region:    --- Process UI Event
 
 /// Note: if run state change, then,
-fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect) -> bool {
+fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> bool {
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_click()
 		&& mouse_evt.is_in_area(nav_a)
 	{
 		let current_run_idx = state.run_idx();
 
-		let new_idx = mouse_evt.y() - nav_a.y;
+		let new_idx = mouse_evt.y() - nav_a.y + scroll;
 		let new_idx = clamp_idx_in_len(new_idx as usize, state.runs().len());
 
 		if Some(new_idx) != current_run_idx {

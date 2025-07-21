@@ -94,17 +94,16 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	before_line.style(styles::STL_FIELD_LBL).render(tasks_label_a, buf);
 	// endregion: --- Render Tasks Label
 
-	// -- Get data
-
 	// -- Scroll & Select logic
-	state.set_scroll_area(ScrollIden::TasksNav, tasks_list_a);
-
+	state.set_scroll_area(SCROLL_IDEN, tasks_list_a);
 	let tasks_len = state.tasks().len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
-	// NOTE: Need to do the process mouse (task select) before the build tasks UI to get the selection
-	//       To avoid a redraw. We know the number of lines.
-	// NOTE: Later, we might want to trigger a redraw like runs nav to be consistent and to avoid
-	//       inconsistent states (right now, tasks nav is displayed first, so, )
+
+	// -- Process UI EVent
+	// NOTE: Mouse processing (task selection) must occur before building the tasks UI to ensure the selection is up-to-date.
+	//       This avoids unnecessary redraws, since we know the number of lines.
+	// NOTE: In the future, we may want to trigger a redraw (similar to the runs nav) for consistency and to prevent
+	//       inconsistent states. For now, tasks nav is rendered first, so this approach is acceptable.
 	process_mouse_for_task_nav(state, tasks_list_a, scroll);
 
 	// -- Build Tasks UI
@@ -136,12 +135,12 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 // region:    --- Mouse Processing
 
-fn process_mouse_for_task_nav(state: &mut AppState, nav_a: Rect, offset_y: u16) {
+fn process_mouse_for_task_nav(state: &mut AppState, nav_a: Rect, scroll: u16) {
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_click()
 		&& mouse_evt.is_in_area(nav_a)
 	{
-		let new_idx = mouse_evt.y() - nav_a.y + offset_y;
+		let new_idx = mouse_evt.y() - nav_a.y + scroll;
 		let new_idx = clamp_idx_in_len(new_idx as usize, state.tasks().len());
 
 		state.set_task_idx(Some(new_idx));

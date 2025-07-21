@@ -11,6 +11,13 @@ use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget as _};
 
 pub struct RunMainView;
 
+impl RunMainView {
+	pub fn clear_scroll_idens(state: &mut AppState) {
+		RunTasksView::clear_scroll_idens(state);
+		RunOverviewView::clear_scroll_idens(state);
+	}
+}
+
 impl StatefulWidget for RunMainView {
 	type State = AppState;
 
