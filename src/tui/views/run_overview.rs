@@ -79,24 +79,20 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Clamp scroll
 	// TODO: Needs to have it's own scroll state.
 	let line_count = all_lines.len();
-	let max_scroll = line_count.saturating_sub(area.height as usize) as u16;
-	if state.get_scroll(SCROLL_IDEN) > max_scroll {
-		state.set_scroll(SCROLL_IDEN, max_scroll);
-	}
+	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
 
 	// -- Render All Content
-	let scroll = state.get_scroll(SCROLL_IDEN);
 	let p = Paragraph::new(all_lines).scroll((scroll, 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(scroll as usize);
+	let content_size = line_count.saturating_sub(area.height as usize);
+	let mut scrollbar_state = ScrollbarState::new(content_size).position(scroll as usize);
 
 	let scrollbar = Scrollbar::default()
 		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
 		.begin_symbol(Some("▲"))
 		.end_symbol(Some("▼"));
-
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 

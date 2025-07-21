@@ -98,10 +98,13 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Scroll & Select logic
 	state.set_scroll_area(ScrollIden::TasksNav, tasks_list_a);
-	// NOTE: Need to do the scroll / and select before the buil tasks UI to get the selection
-	//       To avoid a redraw. We know the number of lines.
+
 	let tasks_len = state.tasks().len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
+	// NOTE: Need to do the process mouse (task select) before the build tasks UI to get the selection
+	//       To avoid a redraw. We know the number of lines.
+	// NOTE: Later, we might want to trigger a redraw like runs nav to be consistent and to avoid
+	//       inconsistent states (right now, tasks nav is displayed first, so, )
 	process_mouse_for_task_nav(state, tasks_list_a, scroll);
 
 	// -- Build Tasks UI

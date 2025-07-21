@@ -34,10 +34,10 @@ pub fn process_app_state(state: &mut AppState) {
 	{
 		match mouse_evt.kind {
 			MouseEventKind::ScrollUp => {
-				state.dec_scroll(zone_iden, 3);
+				state.dec_scroll(zone_iden, 1);
 			}
 			MouseEventKind::ScrollDown => {
-				state.inc_scroll(zone_iden, 3);
+				state.inc_scroll(zone_iden, 1);
 			}
 			_ => (),
 		};

@@ -196,13 +196,15 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	let mut scrollbar_state = ScrollbarState::new(line_count).position(scroll as usize);
+	// Content Size is the content to be scrolled (so not visible).
+	// If 0, means more height than lines, and no scrollbar, which is what we want.
+	let content_size = line_count.saturating_sub(area.height as usize);
+	let mut scrollbar_state = ScrollbarState::new(content_size).position(scroll as usize);
 
 	let scrollbar = Scrollbar::default()
 		.orientation(ratatui::widgets::ScrollbarOrientation::VerticalRight)
 		.begin_symbol(Some("▲"))
 		.end_symbol(Some("▼"));
-
 	scrollbar.render(area, buf, &mut scrollbar_state);
 }
 
