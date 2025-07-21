@@ -1,7 +1,6 @@
 // region:    --- Modules
 
 mod core;
-mod event;
 mod styles;
 mod support;
 mod views;

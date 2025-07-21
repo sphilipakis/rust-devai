@@ -1,6 +1,7 @@
 // region:    --- Modules
 
-mod app_event_handler;
+mod app_event_handlers;
+mod event;
 mod state_processor;
 mod sys_state;
 mod term_reader;

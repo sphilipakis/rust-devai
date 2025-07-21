@@ -1,9 +1,9 @@
+use super::event::LastAppEvent;
 use crate::Result;
 use crate::store::rt_model::{Run, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::sys_state::SysState;
 use crate::tui::core::{MouseEvt, RunTab, ScrollIden, ScrollZone, ScrollZones};
-use crate::tui::event::LastAppEvent;
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use ratatui::layout::{Position, Rect};
 

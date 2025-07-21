@@ -1,3 +1,4 @@
+use super::event::AppEvent;
 use super::term_reader::run_term_read;
 use super::tui_loop::run_ui_loop;
 use crate::Result;
@@ -6,7 +7,6 @@ use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::store::ModelManager;
-use crate::tui::event::AppEvent;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use derive_more::{Deref, From};

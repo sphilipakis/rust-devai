@@ -1,4 +1,6 @@
-use super::app_event_handler::handle_app_event;
+use super::app_event_handlers::handle_app_event;
+use super::event::ActionEvent;
+use super::event::{AppEvent, LastAppEvent};
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
@@ -8,8 +10,6 @@ use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::core::state_processor::process_app_state;
-use crate::tui::event::ActionEvent;
-use crate::tui::event::{AppEvent, LastAppEvent};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
