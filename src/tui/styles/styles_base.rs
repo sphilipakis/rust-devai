@@ -28,7 +28,8 @@ pub const CLR_BKG: Color = CLR_BKG_500;
 
 pub const CLR_BKG_GRAY_DARK: Color = CLR_BKG_400;
 pub const CLR_BKG_GRAY_DARKER: Color = CLR_BKG;
-pub const CLR_BKG_BLACK: Color = Color::Indexed(0);
+// Indexed(0) get styled by the terms
+pub const CLR_BKG_BLACK: Color = CLR_BKG_600;
 
 pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 
@@ -74,16 +75,14 @@ pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color:
 // -- Field Styles
 pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG).fg(CLR_TXT_850);
 // For debug layout
-// pub const STL_FIELD_LBL: Style = Style::new().bg(CLR_BKG_PRIME).fg(CLR_TXT_700);
-// pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
 // Other good choices: 24 (dark teal) 68 (dark blue), 187 (light yellow), 182 (pinkish), 146 (purple, not that good)
-pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_600);
+pub const STL_FIELD_VAL: Style = Style::new().fg(CLR_TXT_650);
 
 pub const STL_FIELD_LBL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_800);
-pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_600);
+pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_650);
 
 // -- Setion Styles
-pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_800);
+pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_700);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
 pub const STL_SECTION_MARKER_SKIP: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
