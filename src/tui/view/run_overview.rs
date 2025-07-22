@@ -2,8 +2,7 @@ use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::AppState;
 use crate::tui::core::{DataZones, ScrollIden};
-use crate::tui::view::support::RectExt as _;
-use crate::tui::view::support::{self, UiExt as _};
+use crate::tui::view::support::{self, RectExt as _, UiExt as _};
 use crate::tui::view::{comp, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
@@ -67,14 +66,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	//let tasks_list_start_y = all_lines.len() as u16;
 	let tasks_len = state.tasks().len();
 	let task_list_lines = if tasks_len < TASKS_GRID_THRESHOLD {
-		ui_for_task_list(state.tasks(), max_width)
+		let task_list_area = area.x_shrink_from_top(all_lines.len() as u16);
+		ui_for_task_list(state.tasks(), max_width, task_list_area, 0, state)
 	} else {
 		ui_for_task_grid(state.tasks(), max_width)
 	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
-
-	// -- TO UPDATE - WIP - PRocess the datazone click
-	// process_mouse_for_task_list(state, task_list_dzones, area.x, area.y + tasks_list_start_y);
 
 	// -- Add before all
 	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), true);
@@ -149,7 +146,7 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 	all_lines
 }
 
-fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_task_list(tasks: &[Task], max_width: u16, area: Rect, scroll: u16, state: &AppState) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
 		return Vec::new();
 	}
@@ -161,6 +158,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 	let (marker, marker_spacer) = tasks_marker();
 	let marker_width = marker.x_width();
 	let marker_spacer_width = marker_spacer.x_width();
+	let marker_and_spacer_width = marker_width + marker_spacer_width;
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
 	let gap_span = Span::raw("  ");
@@ -182,8 +180,18 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 
 	// --  Build the UI lines
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
-	for task in tasks {
+	let mouse_over_area = state.is_mouse_over_area(area);
+	for (idx, task) in tasks.iter().enumerate() {
 		let mut task_line = task.ui_label(label_a.width, tasks_len);
+
+		// Hover Label
+		let el_area = area
+			.x_row((idx + 1) as u16 - scroll)
+			.x_with_x(marker_and_spacer_width)
+			.x_width(task_line.x_width());
+		if mouse_over_area && state.is_mouse_over_area(el_area) {
+			task_line = task_line.x_fg(style::CLR_TXT_HOVER);
+		}
 
 		// -- Make the data zone
 		// let x = marker_width + marker_spacer_width;

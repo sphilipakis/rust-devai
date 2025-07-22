@@ -12,9 +12,11 @@ pub trait RectExt {
 	#[allow(unused)]
 	fn x_v_margin(&self, v_margin: u16) -> Rect;
 
-	fn x_move_top(&self, y: u16) -> Rect;
+	fn x_move_down(&self, y: u16) -> Rect;
 
 	// -- Shrink
+	/// Add to the y of the area, and remove the same from the .height
+	fn x_shrink_from_top(&self, height_to_remove: u16) -> Rect;
 	fn x_shrink_left(&self, width: u16) -> Rect;
 
 	// -- Lines
@@ -25,6 +27,8 @@ pub trait RectExt {
 	fn x_bottom_right(&self, width: u16, height: u16) -> Rect;
 
 	// -- Width & Height
+	fn x_with_x(&self, x: u16) -> Rect;
+	fn x_with_y(&self, y: u16) -> Rect;
 	fn x_width(&self, width: u16) -> Rect;
 	fn x_height(&self, height: u16) -> Rect;
 }
@@ -71,6 +75,16 @@ impl RectExt for Rect {
 
 	// region:    --- Shrink
 
+	fn x_shrink_from_top(&self, height_to_remove: u16) -> Rect {
+		let new_height = self.height.saturating_sub(height_to_remove);
+		Rect {
+			x: self.x,
+			y: self.y + height_to_remove,
+			width: self.width,
+			height: new_height,
+		}
+	}
+
 	fn x_shrink_left(&self, width: u16) -> Rect {
 		let new_width = self.width.saturating_sub(width);
 		let x = self.x + width;
@@ -84,7 +98,7 @@ impl RectExt for Rect {
 
 	// endregion: --- Shrink
 
-	fn x_move_top(&self, y_offset: u16) -> Rect {
+	fn x_move_down(&self, y_offset: u16) -> Rect {
 		Rect {
 			x: self.x,
 			y: self.y + y_offset,
@@ -129,7 +143,27 @@ impl RectExt for Rect {
 
 	// endregion: --- Placement
 
-	// region:    --- Width & Height
+	// region:    --- x,y,width,height
+
+	/// Change the x position
+	fn x_with_x(&self, x: u16) -> Rect {
+		Rect {
+			x,
+			y: self.y,
+			width: self.width,
+			height: self.height,
+		}
+	}
+
+	/// Change the y position
+	fn x_with_y(&self, y: u16) -> Rect {
+		Rect {
+			x: self.x,
+			y,
+			width: self.width,
+			height: self.height,
+		}
+	}
 
 	/// Change the width
 	fn x_width(&self, width: u16) -> Rect {
@@ -150,7 +184,7 @@ impl RectExt for Rect {
 			height,
 		}
 	}
-	// endregion: --- Width & Height
+	// endregion: --- x,y,width,height
 }
 
 // alternatively
