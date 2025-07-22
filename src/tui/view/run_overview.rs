@@ -280,15 +280,17 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		// -- decide the create new lin
 		if line.x_width() + task_block.x_width() + gap_width <= content_width {
 			// We append
-			line.push(gap_span.clone());
 			line.extend(task_block);
+			line.push(gap_span.clone());
 		}
 		// otherwise create a new line
 		else {
 			// end the previous line
 			all_lines.push(line);
+			all_lines.push(vec![Span::raw("")]);
 			// start the new one
 			line = task_block;
+			line.push(gap_span.clone());
 		}
 	}
 
