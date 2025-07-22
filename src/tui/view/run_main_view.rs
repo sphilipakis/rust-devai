@@ -161,7 +161,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 	// -- Compute tabs Label & style
 	let tab_1_label = "Overview";
-	let tab_1_style = match (run_tab == RunTab::Overview, state.is_mouse_over_area(tab_overview_a)) {
+	let tab_1_style = match (run_tab == RunTab::Overview, state.is_last_mouse_over(tab_overview_a)) {
 		// (active, hover)
 		(true, true) => style::STL_TAB_ACTIVE_HOVER,
 		(true, false) => style::STL_TAB_ACTIVE,
@@ -169,7 +169,7 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		(false, false) => style::STL_TAB_DEFAULT,
 	};
 	let tab_2_label = if state.tasks().len() > 1 { "Tasks" } else { "Task" };
-	let tab_2_style = match (run_tab == RunTab::Tasks, state.is_mouse_over_area(tab_tasks_a)) {
+	let tab_2_style = match (run_tab == RunTab::Tasks, state.is_last_mouse_over(tab_tasks_a)) {
 		// (active, hover)
 		(true, true) => style::STL_TAB_ACTIVE_HOVER,
 		(true, false) => style::STL_TAB_ACTIVE,
@@ -201,11 +201,11 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
 	if let Some(mouse_evt) = state.mouse_evt()
-		&& mouse_evt.is_click()
+		&& mouse_evt.is_up()
 	{
-		if mouse_evt.is_in_area(overview_a) {
+		if mouse_evt.is_over(overview_a) {
 			state.set_run_tab(RunTab::Overview);
-		} else if mouse_evt.is_in_area(tasks_a) {
+		} else if mouse_evt.is_over(tasks_a) {
 			state.set_run_tab(RunTab::Tasks);
 		}
 	}

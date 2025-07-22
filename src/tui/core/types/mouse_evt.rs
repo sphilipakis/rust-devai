@@ -20,19 +20,14 @@ impl MouseEvt {
 		Position::new(self.mouse_event.column, self.mouse_event.row)
 	}
 
-	pub fn is_in_area(&self, area: Rect) -> bool {
+	pub fn is_over(&self, area: Rect) -> bool {
 		area.contains(self.position())
 	}
 
-	pub fn is_click(&self) -> bool {
-		matches!(self.mouse_event.kind, MouseEventKind::Up(_))
-	}
-
-	#[allow(unused)]
-	pub fn is_hover(&self) -> bool {
+	pub fn is_move(&self) -> bool {
 		match self.mouse_event.kind {
 			MouseEventKind::Moved => true,
-			// -- everything else false for now
+			// -- everything else false for now (to see the options quickly)
 			MouseEventKind::Down(_) => false,
 			MouseEventKind::Up(_) => false,
 			MouseEventKind::Drag(_) => false,
@@ -40,6 +35,22 @@ impl MouseEvt {
 			MouseEventKind::ScrollUp => false,
 			MouseEventKind::ScrollLeft => false,
 			MouseEventKind::ScrollRight => false,
+		}
+	}
+
+	pub fn is_down(&self) -> bool {
+		match self.mouse_event.kind {
+			// -- everything else false for now
+			MouseEventKind::Down(_) => true,
+			_ => false,
+		}
+	}
+
+	pub fn is_up(&self) -> bool {
+		match self.mouse_event.kind {
+			// -- everything else false for now
+			MouseEventKind::Up(_) => true,
+			_ => false,
 		}
 	}
 }

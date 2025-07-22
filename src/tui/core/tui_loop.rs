@@ -10,6 +10,7 @@ use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::core::state_processor::process_app_state;
+use crate::tui::core::{Action, RunTab};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -38,6 +39,21 @@ pub fn run_ui_loop(
 			//       if another event happened before.
 			if app_state.should_redraw() {
 				app_state.core_mut().do_redraw = false;
+				let _ = app_tx.send(AppEvent::DoRedraw).await;
+			}
+
+			// -- Do the action
+			if let Some(action) = app_state.core.take_action() {
+				match action {
+					Action::GoToTask { task_id } => {
+						if let Some(task_idx) = app_state.tasks().iter().find(|t| t.id == task_id).and_then(|t| t.idx) {
+							app_state.set_task_idx(Some(task_idx as usize));
+							// TODO: Might want to get the run_idx as well
+							app_state.set_run_tab(RunTab::Tasks);
+						}
+					}
+				}
+				// -- trigger a redraw
 				let _ = app_tx.send(AppEvent::DoRedraw).await;
 			}
 

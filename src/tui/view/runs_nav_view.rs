@@ -59,7 +59,7 @@ impl StatefulWidget for RunsNavView {
 		// -- Build Runs UI
 		let runs = state.runs();
 		let run_sel_idx = state.run_idx().unwrap_or_default();
-		let is_mouse_in_nav = state.is_mouse_over_area(list_a);
+		let is_mouse_in_nav = state.is_last_mouse_over(list_a);
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
@@ -89,7 +89,7 @@ impl StatefulWidget for RunsNavView {
 
 				if run_sel_idx == idx {
 					line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
-				} else if is_mouse_in_nav && state.is_mouse_over_area(list_a.x_row((idx + 1) as u16 - scroll)) {
+				} else if is_mouse_in_nav && state.is_last_mouse_over(list_a.x_row((idx + 1) as u16 - scroll)) {
 					line = line.fg(style::CLR_TXT_HOVER);
 				};
 
@@ -127,8 +127,8 @@ impl StatefulWidget for RunsNavView {
 /// Note: if run state change, then,
 fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> bool {
 	if let Some(mouse_evt) = state.mouse_evt()
-		&& mouse_evt.is_click()
-		&& mouse_evt.is_in_area(nav_a)
+		&& mouse_evt.is_up()
+		&& mouse_evt.is_over(nav_a)
 	{
 		let current_run_idx = state.run_idx();
 

@@ -2,7 +2,7 @@ use crate::store::rt_model::{Run, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{MouseEvt, RunTab, ScrollIden, ScrollZone, ScrollZones};
+use crate::tui::core::{Action, MouseEvt, RunTab, ScrollIden, ScrollZone, ScrollZones};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use ratatui::layout::Position;
 
@@ -46,8 +46,11 @@ pub(in crate::tui::core) struct AppStateCore {
 
 	// -- System & Event
 	pub mm: ModelManager,
-	pub do_redraw: bool,
 	pub last_app_event: LastAppEvent,
+
+	// -- Action State
+	pub do_redraw: bool, // to move to Action
+	pub do_action: Option<Action>,
 
 	// -- SysState
 	pub sys_state: SysState,
@@ -74,6 +77,10 @@ impl AppStateCore {
 		if let Some(new_idx) = new_idx {
 			self.set_run_by_idx(new_idx);
 		}
+	}
+
+	pub fn take_action(&mut self) -> Option<Action> {
+		self.do_action.take()
 	}
 }
 

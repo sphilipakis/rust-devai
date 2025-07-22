@@ -1,7 +1,7 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::AppState;
-use crate::tui::core::{DataZones, ScrollIden};
+use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::view::support::{self, RectExt as _, UiExt as _};
 use crate::tui::view::{comp, style};
 use ratatui::buffer::Buffer;
@@ -42,8 +42,6 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	state.set_scroll_area(SCROLL_IDEN, area);
 
 	// -- Prep
-	let mut all_lines: Vec<Line> = Vec::new();
-
 	let Some(run_id) = state.current_run().map(|r| r.id) else {
 		Paragraph::new("No current run").render(area, buf);
 		return;
@@ -59,32 +57,60 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	let max_width = area.width - 3; // for scroll
 
+	let mut link_zones = LinkZones::default();
+	let mut all_lines: Vec<Line> = Vec::new();
+
 	// -- Add before all
 	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), true);
+
+	link_zones.set_current_line(all_lines.len());
 
 	// -- Add the tasks ui
 	//let tasks_list_start_y = all_lines.len() as u16;
 	let tasks_len = state.tasks().len();
 	let task_list_lines = if tasks_len < TASKS_GRID_THRESHOLD {
-		let task_list_area = area.x_shrink_from_top(all_lines.len() as u16);
-		ui_for_task_list(state.tasks(), max_width, task_list_area, 0, state)
+		ui_for_task_list(state.tasks(), max_width, &mut link_zones)
 	} else {
 		ui_for_task_grid(state.tasks(), max_width)
 	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 
-	// -- Add before all
+	link_zones.set_current_line(all_lines.len());
+
+	// -- Add after all
 	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), true);
+
+	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Error if present
 	if let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) {
 		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 
+	link_zones.set_current_line(all_lines.len());
+
 	// -- Clamp scroll
 	// TODO: Needs to have it's own scroll state.
 	let line_count = all_lines.len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
+
+	// -- Debug UI
+	for zone in link_zones.into_zones() {
+		if let Some(line) = all_lines.get_mut(zone.line_idx) {
+			if state.is_last_mouse_over(area.x_row(zone.line_idx as u16 + 1 - scroll)) {
+				if let Some(spans) = line.spans.get_mut(zone.span_start..zone.span_start + zone.span_count) {
+					for span in spans {
+						span.style.fg = Some(style::CLR_TXT_HOVER);
+						if state.is_mouse_up() {
+							state.set_action(zone.action);
+							// Note: Little trick to not show hover on the next tasks tab screen
+							state.clear_mouse_evts();
+						}
+					}
+				}
+			}
+		}
+	}
 
 	// -- Render All Content
 	let p = Paragraph::new(all_lines).scroll((scroll, 0));
@@ -146,7 +172,7 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 	all_lines
 }
 
-fn ui_for_task_list(tasks: &[Task], max_width: u16, area: Rect, scroll: u16, state: &AppState) -> Vec<Line<'static>> {
+fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
 		return Vec::new();
 	}
@@ -158,7 +184,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, area: Rect, scroll: u16, sta
 	let (marker, marker_spacer) = tasks_marker();
 	let marker_width = marker.x_width();
 	let marker_spacer_width = marker_spacer.x_width();
-	let marker_and_spacer_width = marker_width + marker_spacer_width;
+	let _marker_and_spacer_width = marker_width + marker_spacer_width;
+	let marker_prefix_spans_len = marker.len() + marker_spacer.len();
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
 	let gap_span = Span::raw("  ");
@@ -180,29 +207,14 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, area: Rect, scroll: u16, sta
 
 	// --  Build the UI lines
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
-	let mouse_over_area = state.is_mouse_over_area(area);
 	for (idx, task) in tasks.iter().enumerate() {
 		let mut task_line = task.ui_label(label_a.width, tasks_len);
+		let task_id = task.id;
 
 		// Hover Label
-		let el_area = area
-			.x_row((idx + 1) as u16 - scroll)
-			.x_with_x(marker_and_spacer_width)
-			.x_width(task_line.x_width());
-		if mouse_over_area && state.is_mouse_over_area(el_area) {
-			task_line = task_line.x_fg(style::CLR_TXT_HOVER);
-		}
-
-		// -- Make the data zone
-		// let x = marker_width + marker_spacer_width;
-		// let data_task_area = Rect {
-		// 	x,
-		// 	y: line,
-		// 	width: task_line.x_total_width(),
-		// 	height: 1,
-		// };
-		// let data_zone = DataZone::new_for_task(data_task_area, task.id);
-		// data_zones.push(data_zone);
+		// +2 for the space + ico (fomrom the ui_label), 2 to take space and label text
+		// NOTE: This should probably be part of the task facade (should not make those assumption here)
+		link_zones.push_link_zone(idx, marker_prefix_spans_len + 2, 2, Action::GoToTask { task_id });
 
 		// -- Gap
 		task_line.push(gap_span.clone());
@@ -302,18 +314,18 @@ fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
 // region:    --- UI Event Processing
 
 // NOTE: Probably need a area_offset
-#[allow(unused)]
-fn process_mouse_for_task_list(state: &mut AppState, task_list_zones: DataZones, x_offset: u16, y_offset: u16) {
-	if let Some(mouse_evt) = state.mouse_evt()
-		&& mouse_evt.is_click()
-	{
-		let data_ref = task_list_zones.find_data_key(mouse_evt.position(), x_offset, y_offset);
-		// NOTE: now select the right data_ref
-		if let Some(_data_ref) = data_ref {
-			// tracing::debug!("data_ref: {data_ref:?}");
-		}
-		// TODO: ...
-	}
-}
+// #[allow(unused)]
+// fn process_mouse_for_task_list(state: &mut AppState, task_list_zones: LinkZones, x_offset: u16, y_offset: u16) {
+// 	if let Some(mouse_evt) = state.mouse_evt()
+// 		&& mouse_evt.is_click()
+// 	{
+// 		let data_ref = task_list_zones.find_data_key(mouse_evt.position(), x_offset, y_offset);
+// 		// NOTE: now select the right data_ref
+// 		if let Some(_data_ref) = data_ref {
+// 			// tracing::debug!("data_ref: {data_ref:?}");
+// 		}
+// 		// TODO: ...
+// 	}
+// }
 
 // endregion: --- UI Event Processing
