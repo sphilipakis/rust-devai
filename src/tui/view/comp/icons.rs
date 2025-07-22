@@ -18,3 +18,11 @@ pub fn el_running_ico(arg: impl Into<RunningState>) -> Span<'static> {
 		},
 	}
 }
+
+pub fn ico_scroll_up() -> Span<'static> {
+	Span::styled("▲", style::CLR_TXT_700)
+}
+
+pub fn ico_scroll_down() -> Span<'static> {
+	Span::styled("▼", style::CLR_TXT_700)
+}

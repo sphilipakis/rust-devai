@@ -267,7 +267,10 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 	let marker_style = style::STL_SECTION_MARKER_OUTPUT;
 	match TaskBmc::get_output_for_display(mm, task) {
 		Ok(Some(content)) => comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
-		Ok(None) => comp::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None),
+		Ok(None) => {
+			//comp::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None)
+			Vec::new()
+		}
 		Err(err) => comp::ui_for_marker_section_str(
 			&format!("Error getting output. {err}"),
 			(marker_txt, marker_style),

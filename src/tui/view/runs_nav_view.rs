@@ -1,6 +1,7 @@
 use crate::support::text::format_time_local;
 use crate::tui::core::ScrollIden;
 use crate::tui::support::clamp_idx_in_len;
+use crate::tui::view::comp;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
@@ -95,8 +96,9 @@ impl StatefulWidget for RunsNavView {
 				ListItem::new(line)
 			})
 			.collect();
+		let item_count = items.len();
 
-		// -- Create List Widget & State
+		// -- Create & Render List
 		let list_w = List::new(items)
 			//.highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 			.highlight_spacing(HighlightSpacing::WhenSelected);
@@ -106,6 +108,17 @@ impl StatefulWidget for RunsNavView {
 		// list_s.select(state.run_idx());
 
 		StatefulWidget::render(list_w, list_a, buf, &mut list_s);
+
+		// -- Render scroll icons
+		let item_count = item_count as u16;
+		if item_count - scroll > list_a.height {
+			let bottom_ico = list_a.x_bottom_right(1, 1);
+			comp::ico_scroll_down().render(bottom_ico, buf);
+		}
+		if scroll > 0 && item_count > list_a.height - scroll {
+			let top_ico = list_a.x_top_right(1, 1);
+			comp::ico_scroll_up().render(top_ico, buf);
+		}
 	}
 }
 

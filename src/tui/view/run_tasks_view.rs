@@ -1,6 +1,7 @@
 use crate::tui::core::ScrollIden;
 use crate::tui::style;
 use crate::tui::support::clamp_idx_in_len;
+use crate::tui::view::comp;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
@@ -110,7 +111,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let tasks = state.tasks();
 	let task_sel_idx = state.task_idx().unwrap_or_default();
 	let is_mouse_in_nav = state.is_mouse_over_area(tasks_list_a);
-	let all_lines: Vec<ListItem> = tasks
+	let items: Vec<ListItem> = tasks
 		.iter()
 		.enumerate()
 		.map(|(idx, task)| {
@@ -123,9 +124,10 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 			ListItem::new(line)
 		})
 		.collect();
+	let item_count = items.len() as u16;
 
 	// -- Render with widget
-	let list_w = List::new(all_lines)
+	let list_w = List::new(items)
 		// .highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 		.highlight_spacing(HighlightSpacing::Always);
 
@@ -133,6 +135,16 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// list_s.select(state.task_idx());
 
 	StatefulWidget::render(list_w, tasks_list_a, buf, &mut list_s);
+
+	// -- Render scroll icons
+	if item_count - scroll > tasks_list_a.height {
+		let bottom_ico = tasks_list_a.x_bottom_right(1, 1);
+		comp::ico_scroll_down().render(bottom_ico, buf);
+	}
+	if scroll > 0 && item_count > tasks_list_a.height - scroll {
+		let top_ico = tasks_list_a.x_top_right(1, 1);
+		comp::ico_scroll_up().render(top_ico, buf);
+	}
 }
 
 // region:    --- Mouse Processing

@@ -6,7 +6,7 @@ use ratatui::layout::Rect;
 ///       (we might change that later to use Ratatui functions)
 #[allow(unused)]
 pub trait RectExt {
-	// -- marings
+	// -- Margins
 	fn x_margin(&self, margin: u16) -> Rect;
 	fn x_h_margin(&self, h_margin: u16) -> Rect;
 	#[allow(unused)]
@@ -17,8 +17,12 @@ pub trait RectExt {
 	// -- Shrink
 	fn x_shrink_left(&self, width: u16) -> Rect;
 
-	// -- lines
+	// -- Lines
 	fn x_row(&self, row_num: u16) -> Rect;
+
+	// -- Placement
+	fn x_top_right(&self, width: u16, height: u16) -> Rect;
+	fn x_bottom_right(&self, width: u16, height: u16) -> Rect;
 
 	// -- Width & Height
 	fn x_width(&self, width: u16) -> Rect;
@@ -102,6 +106,28 @@ impl RectExt for Rect {
 		}
 	}
 	// endregion: --- Lines
+
+	// region:    --- Placement
+
+	fn x_bottom_right(&self, width: u16, height: u16) -> Rect {
+		Rect {
+			x: self.x + self.width - width,
+			y: self.y + self.height - height,
+			width,
+			height,
+		}
+	}
+
+	fn x_top_right(&self, width: u16, height: u16) -> Rect {
+		Rect {
+			x: self.x + self.width - width,
+			y: self.y,
+			width,
+			height,
+		}
+	}
+
+	// endregion: --- Placement
 
 	// region:    --- Width & Height
 

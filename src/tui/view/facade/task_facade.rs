@@ -78,7 +78,10 @@ impl Task {
 
 		let (output_text, style) = match self.output_short.as_deref() {
 			Some(output_short) => (output_short, Style::new().bg(style::CLR_BKG_400)),
-			None => ("No output", Style::new().bg(style::CLR_BKG_400)),
+			None => {
+				//("No output", Style::new().bg(style::CLR_BKG_400))
+				return Vec::new();
+			}
 		};
 
 		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
