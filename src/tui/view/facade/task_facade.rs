@@ -4,7 +4,7 @@ use crate::support::text;
 use crate::tui::style;
 use crate::tui::support::num_pad_for_len;
 use crate::tui::view::comp::{self, el_running_ico};
-use crate::tui::view::support::UiExt as _;
+use crate::tui::view::support::UiExt;
 use ratatui::style::{Style, Stylize as _};
 use ratatui::text::Span;
 
@@ -119,5 +119,22 @@ impl Task {
 		} else {
 			Vec::new()
 		}
+	}
+}
+
+/// For the ShortBlock facade
+impl Task {
+	pub fn ui_short_block(&self, max_num: usize) -> Vec<Span<'static>> {
+		let num = num_pad_for_len(self.idx.unwrap_or_default(), max_num);
+		let running_ico = el_running_ico(self);
+		let spans = vec![
+			//
+			Span::raw(" "),
+			running_ico,
+			Span::raw(" "),
+			Span::raw(num),
+			Span::raw(" "),
+		];
+		spans.x_bg(style::CLR_BKG_GRAY_DARK)
 	}
 }

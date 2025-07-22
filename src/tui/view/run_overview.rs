@@ -1,10 +1,10 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
+use crate::tui::AppState;
 use crate::tui::core::{DataZones, ScrollIden};
 use crate::tui::view::comp;
-use crate::tui::view::support;
 use crate::tui::view::support::RectExt as _;
-use crate::tui::{AppState, style};
+use crate::tui::view::support::{self, UiExt as _};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span};
@@ -151,11 +151,9 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 	let tasks_len = tasks.len();
 
 	// let mut line: u16 = 0;
-
-	let marker = comp::new_marker("Tasks:", style::STL_SECTION_MARKER);
-	let marker_width = marker.width() as u16;
-	let marker_spacer = Span::raw(" ");
-	let marker_spacer_width = marker_spacer.width() as u16;
+	let (marker, marker_spacer) = tasks_marker();
+	let marker_width = marker.x_total_width();
+	let marker_spacer_width = marker_spacer.x_total_width();
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
 	let gap_span = Span::raw("  ");
@@ -224,10 +222,20 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		// line += 1;
 	}
 
-	comp::ui_for_marker_section(vec![marker], vec![marker_spacer], spans_lines)
+	comp::ui_for_marker_section(marker, marker_spacer, spans_lines)
 }
 
 // endregion: --- UI Builders
+
+// region:    --- Support
+
+fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
+	let marker = vec![Span::raw("  Tasks ")];
+	let marker_spacer = vec![Span::raw("  ")];
+	(marker, marker_spacer)
+}
+
+// endregion: --- Support
 
 // region:    --- UI Event Processing
 
