@@ -1,6 +1,6 @@
 use crate::store::EndState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RunningState {
 	NotScheduled,
 	Waiting,

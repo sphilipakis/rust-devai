@@ -24,7 +24,7 @@ impl Task {
 
 		// compute & add label text and width
 		let label = self.fmt_label(tasks_len);
-		let width = (width - spans.x_total_width()) as usize;
+		let width = (width - spans.x_width()) as usize;
 		let label = format!("{label:<width$}");
 		spans.push(Span::styled(label, style::STL_TXT));
 
@@ -42,7 +42,7 @@ impl Task {
 			None => ("No input", Style::new().bg(style::CLR_BKG_400)),
 		};
 
-		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
+		let content_width = width.saturating_sub(spans.x_width()) as usize;
 		let input_text = text::truncate_with_ellipsis(input_text, content_width - 2, "..");
 		let input_text = input_text.replace("\n", " ");
 
@@ -84,7 +84,7 @@ impl Task {
 			}
 		};
 
-		let content_width = width.saturating_sub(spans.x_total_width()) as usize;
+		let content_width = width.saturating_sub(spans.x_width()) as usize;
 		let output_text = text::truncate_with_ellipsis(output_text, content_width - 2, "..");
 		let output_text = output_text.replace("\n", " ");
 
@@ -107,7 +107,7 @@ impl Task {
 				None => ("Task was skipped by Lua code", Style::new().bg(style::CLR_BKG_400)),
 			};
 
-			let content_width = width.saturating_sub(spans.x_total_width()) as usize;
+			let content_width = width.saturating_sub(spans.x_width()) as usize;
 			let content = text::truncate_with_ellipsis(content, content_width - 2, "..");
 			let content = content.replace("\n", " ");
 
@@ -126,7 +126,10 @@ impl Task {
 impl Task {
 	pub fn ui_short_block(&self, max_num: usize) -> Vec<Span<'static>> {
 		let num = num_pad_for_len(self.idx.unwrap_or_default(), max_num);
-		let running_ico = el_running_ico(self);
+		let mut running_ico = el_running_ico(self);
+		if self.is_ai_running() {
+			running_ico = running_ico.style(style::CLR_TXT_YELLOW);
+		}
 		let spans = vec![
 			//
 			Span::raw(" "),

@@ -2,13 +2,15 @@ use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::AppState;
 use crate::tui::core::{DataZones, ScrollIden};
-use crate::tui::view::comp;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::support::{self, UiExt as _};
+use crate::tui::view::{comp, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+
+const TASKS_GRID_THRESHOLD: usize = 10;
 
 /// Placeholder view for *Before All* tab.
 pub struct RunOverviewView;
@@ -63,7 +65,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add the tasks ui
 	//let tasks_list_start_y = all_lines.len() as u16;
-	let task_list_lines = ui_for_task_list(state.tasks(), max_width);
+	let tasks_len = state.tasks().len();
+	let task_list_lines = if tasks_len < TASKS_GRID_THRESHOLD {
+		ui_for_task_list(state.tasks(), max_width)
+	} else {
+		ui_for_task_grid(state.tasks(), max_width)
+	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 
 	// -- TO UPDATE - WIP - PRocess the datazone click
@@ -147,17 +154,18 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		return Vec::new();
 	}
 
-	let mut spans_lines: Vec<Vec<Span<'static>>> = Vec::new();
+	// -- Prep
 	let tasks_len = tasks.len();
 
 	// let mut line: u16 = 0;
 	let (marker, marker_spacer) = tasks_marker();
-	let marker_width = marker.x_total_width();
-	let marker_spacer_width = marker_spacer.x_total_width();
+	let marker_width = marker.x_width();
+	let marker_spacer_width = marker_spacer.x_width();
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
 	let gap_span = Span::raw("  ");
 	let gap_width = gap_span.width() as u16;
+
 	// -- Layout
 	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
 		.direction(Direction::Horizontal)
@@ -172,8 +180,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		])
 		.areas(Rect::new(0, 0, content_width, 1));
 
-	// NOTE: In this case, looks like a counter for the for, but line might be different in some cases.
-	#[allow(clippy::explicit_counter_loop)]
+	// --  Build the UI lines
+	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	for task in tasks {
 		let mut task_line = task.ui_label(label_a.width, tasks_len);
 
@@ -217,12 +225,58 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 		// -- Add Sum iteams
 		// task_line.extend(task.ui_sum_spans());
 
-		spans_lines.push(task_line);
+		all_lines.push(task_line);
 
 		// line += 1;
 	}
 
-	comp::ui_for_marker_section(marker, marker_spacer, spans_lines)
+	// -- Build the marker component
+	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
+}
+
+fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+	if tasks.is_empty() {
+		return Vec::new();
+	}
+
+	// -- Prep
+	let tasks_len = tasks.len();
+
+	// let mut line: u16 = 0;
+	let (marker, marker_spacer) = tasks_marker();
+	let marker_width = marker.x_width();
+	let marker_spacer_width = marker_spacer.x_width();
+
+	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
+	let gap_span = Span::raw(" ");
+	let gap_width = gap_span.width() as u16;
+
+	// -- Render
+	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
+	let mut line: Vec<Span<'static>> = Vec::new();
+	let max_num = tasks_len;
+	for task in tasks {
+		let task_block = task.ui_short_block(max_num);
+		// -- decide the create new lin
+		if line.x_width() + task_block.x_width() + gap_width <= content_width {
+			// We append
+			line.push(gap_span.clone());
+			line.extend(task_block);
+		}
+		// otherwise create a new line
+		else {
+			// end the previous line
+			all_lines.push(line);
+			// start the new one
+			line = task_block;
+		}
+	}
+
+	// -- add the last line
+	all_lines.push(line);
+
+	// -- Build the marker component
+	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
 }
 
 // endregion: --- UI Builders
@@ -230,8 +284,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 // region:    --- Support
 
 fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
-	let marker = vec![Span::raw("  Tasks ")];
-	let marker_spacer = vec![Span::raw("  ")];
+	let marker = vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)];
+	let marker_spacer = vec![Span::raw(" ")];
 	(marker, marker_spacer)
 }
 

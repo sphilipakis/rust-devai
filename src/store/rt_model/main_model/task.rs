@@ -61,26 +61,6 @@ pub struct Task {
 	pub output_has_display: Option<bool>,
 }
 
-impl Task {
-	pub fn is_ended(&self) -> bool {
-		matches!(RunningState::from(self), RunningState::Ended(_))
-	}
-
-	pub fn has_skip(&self) -> bool {
-		self.end_state == Some(EndState::Skip)
-	}
-
-	pub fn is_skipped_before_ai(&self) -> bool {
-		if let Some(EndState::Skip) = self.end_state
-			&& self.ai_start.is_none()
-		{
-			true
-		} else {
-			false
-		}
-	}
-}
-
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
 pub struct TaskForCreate {
 	pub run_id: Id,
@@ -160,14 +140,26 @@ pub struct TaskFilter {
 
 // region:    --- Running States
 
-impl From<&Task> for RunningState {
-	fn from(value: &Task) -> Self {
-		if value.end.is_some() {
-			RunningState::Ended(value.end_state)
-		} else if value.start.is_some() {
-			RunningState::Running
+impl Task {
+	pub fn is_ended(&self) -> bool {
+		matches!(RunningState::from(self), RunningState::Ended(_))
+	}
+
+	pub fn has_skip(&self) -> bool {
+		self.end_state == Some(EndState::Skip)
+	}
+
+	pub fn is_ai_running(&self) -> bool {
+		self.ai_running_state() == RunningState::Running
+	}
+
+	pub fn is_skipped_before_ai(&self) -> bool {
+		if let Some(EndState::Skip) = self.end_state
+			&& self.ai_start.is_none()
+		{
+			true
 		} else {
-			RunningState::Waiting
+			false
 		}
 	}
 }
@@ -199,6 +191,18 @@ impl Task {
 				Some(_) => RunningState::NotScheduled,
 				None => RunningState::Waiting,
 			}
+		}
+	}
+}
+
+impl From<&Task> for RunningState {
+	fn from(value: &Task) -> Self {
+		if value.end.is_some() {
+			RunningState::Ended(value.end_state)
+		} else if value.start.is_some() {
+			RunningState::Running
+		} else {
+			RunningState::Waiting
 		}
 	}
 }
