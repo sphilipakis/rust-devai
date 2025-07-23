@@ -89,8 +89,6 @@ pub fn process_app_state(state: &mut AppState) {
 		if state.core().run_idx != prev_run_idx {
 			let inner = state.core_mut();
 			inner.task_idx = None;
-			inner.before_all_show = false;
-			inner.after_all_show = false;
 		}
 	}
 
@@ -123,22 +121,15 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Initialise RunDetailsView if needed
 	{
-		let need_init = {
-			let inner = state.core();
-			inner.task_idx.is_none() && !inner.before_all_show && !inner.after_all_show
-		};
+		let need_init = { state.core().task_idx.is_none() };
 
 		if need_init {
 			let tasks_empty = state.tasks().is_empty();
 			let inner = state.core_mut();
 			if !tasks_empty {
 				inner.task_idx = Some(0);
-				inner.before_all_show = false;
-				inner.after_all_show = false;
 			} else {
 				inner.task_idx = None;
-				inner.before_all_show = true;
-				inner.after_all_show = false;
 			}
 		}
 	}

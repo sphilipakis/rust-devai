@@ -49,8 +49,6 @@ impl AppState {
 
 			// -- RunTasksView
 			task_idx: None,
-			before_all_show: false,
-			after_all_show: false,
 
 			// -- Data
 			runs: Vec::new(),

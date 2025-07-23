@@ -40,8 +40,6 @@ pub(in crate::tui::core) struct AppStateCore {
 
 	// -- RunTasksView
 	pub task_idx: Option<i32>,
-	pub before_all_show: bool,
-	pub after_all_show: bool,
 
 	// -- Data
 	pub runs: Vec<Run>,
