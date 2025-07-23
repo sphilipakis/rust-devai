@@ -33,6 +33,7 @@ pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
 
 pub const CLR_TXT_RED: Color = Color::Indexed(196);
 
+pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
 pub const CLR_BKG_BLUE: Color = Color::Indexed(20);
 pub const CLR_BKG_TEAL: Color = Color::Indexed(39);
 pub const CLR_BKG_YELLOW: Color = Color::Indexed(226);
@@ -59,8 +60,6 @@ pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 
 pub const CLR_BKG_ACT: Color = Color::Indexed(236);
 pub const CLR_BKG_SEL: Color = Color::Indexed(15);
-
-pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
 
 pub const CLR_BKG_RUNNING_WAIT: Color = CLR_BKG_GRAY_DARK;
 pub const CLR_BKG_RUNNING_OTHER: Color = CLR_BKG_GRAY_DARK;

@@ -111,7 +111,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				for span in hover_spans {
 					span.style.fg = Some(style::CLR_TXT_BLUE);
 					if is_grid {
-						span.style.bg = Some(style::CLR_BKG_300);
+						span.style.bg = Some(style::CLR_BKG_BLACK);
 					}
 					span.style = span.style.add_modifier(Modifier::BOLD);
 				}
