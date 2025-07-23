@@ -1,5 +1,5 @@
-use crate::store::RunningState;
 use crate::store::rt_model::Task;
+use crate::store::{EndState, RunningState};
 use crate::support::text;
 use crate::tui::style;
 use crate::tui::support::num_pad_for_len;
@@ -126,18 +126,41 @@ impl Task {
 impl Task {
 	pub fn ui_short_block(&self, max_num: usize) -> Vec<Span<'static>> {
 		let num = num_pad_for_len(self.idx.unwrap_or_default(), max_num);
-		let mut running_ico = el_running_ico(self);
-		if self.is_ai_running() {
-			running_ico = running_ico.style(style::CLR_TXT_YELLOW);
-		}
-		let spans = vec![
+		// let mut running_ico = el_running_ico(self);
+		// running_ico = running_ico.style(style::CLR_TXT_WHITE);
+		let mut spans = vec![
 			//
 			Span::raw(" "),
-			running_ico,
-			Span::raw(" "),
+			// running_ico,
+			// Span::raw(" "),
 			Span::raw(num),
 			Span::raw(" "),
 		];
-		spans.x_bg(style::CLR_BKG_GRAY_DARK)
+
+		let bg = match RunningState::from(self) {
+			RunningState::NotScheduled => style::CLR_BKG_RUNNING_WAIT,
+			RunningState::Waiting => style::CLR_BKG_RUNNING_WAIT,
+			RunningState::Running => {
+				if self.is_ai_running() {
+					style::CLR_BKG_RUNNING_AI
+				} else {
+					style::CLR_BKG_RUNNING_OTHER
+				}
+			}
+			RunningState::Ended(end_state) => match end_state {
+				Some(EndState::Ok) => style::CLR_BKG_RUNNING_DONE,
+				Some(EndState::Err) => style::CLR_BKG_RUNNING_ERR,
+				Some(EndState::Skip) => style::CLR_BKG_RUNNING_SKIP,
+				Some(EndState::Cancel) => style::CLR_BKG_RUNNING_OTHER,
+				None => style::CLR_BKG_RUNNING_OTHER,
+			},
+		};
+		// spans.x_bg(bg).x_fg(style::CLR_TXT_RED)
+		for span in spans.iter_mut() {
+			span.style.bg = Some(bg);
+			span.style.fg = Some(style::CLR_TXT_BLACK);
+		}
+
+		spans
 	}
 }

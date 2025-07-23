@@ -12,7 +12,7 @@ pub fn el_running_ico(arg: impl Into<RunningState>) -> Span<'static> {
 		RunningState::Ended(end_state) => match end_state {
 			Some(EndState::Ok) => Span::styled("✔", style::CLR_TXT_DONE),
 			Some(EndState::Cancel) => Span::styled("■", style::CLR_TXT),
-			Some(EndState::Skip) => Span::styled("■", style::CLR_TXT_BLUE),
+			Some(EndState::Skip) => Span::styled("■", style::CLR_TXT_SKIP),
 			Some(EndState::Err) => Span::styled("✘", style::CLR_TXT_RED),
 			None => Span::styled("?", style::CLR_TXT),
 		},

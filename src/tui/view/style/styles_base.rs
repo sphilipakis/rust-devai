@@ -19,6 +19,29 @@ use ratatui::style::{Color, Style};
 // TIPS:
 // - use `Style::new().add_modifier(Modifier::BOLD);` for const and bolc
 
+// -- Primary Colors
+
+pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
+pub const CLR_TXT_BLACK: Color = Color::Indexed(0);
+
+// 12 is a good blue as well
+pub const CLR_TXT_BLUE_DARK: Color = Color::Indexed(21);
+pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
+pub const CLR_TXT_TEAL: Color = Color::Indexed(45);
+pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
+pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
+
+pub const CLR_TXT_RED: Color = Color::Indexed(196);
+
+pub const CLR_BKG_BLUE: Color = Color::Indexed(20);
+pub const CLR_BKG_TEAL: Color = Color::Indexed(39);
+pub const CLR_BKG_YELLOW: Color = Color::Indexed(226);
+pub const CLR_BKG_GREEN: Color = Color::Indexed(46);
+pub const CLR_BKG_RED: Color = Color::Indexed(124);
+
+pub const CLR_TXT_SKIP: Color = Color::Indexed(222);
+pub const CLR_BKG_SKIP: Color = Color::Indexed(222);
+
 // -- Bkg Colors
 pub const CLR_BKG_400: Color = Color::Indexed(236);
 pub const CLR_BKG_500: Color = Color::Indexed(234);
@@ -38,6 +61,13 @@ pub const CLR_BKG_SEL: Color = Color::Indexed(15);
 
 pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
 
+pub const CLR_BKG_RUNNING_WAIT: Color = CLR_BKG_GRAY_DARK;
+pub const CLR_BKG_RUNNING_OTHER: Color = CLR_BKG_GRAY_DARK;
+pub const CLR_BKG_RUNNING_AI: Color = CLR_BKG_YELLOW;
+pub const CLR_BKG_RUNNING_SKIP: Color = CLR_BKG_SKIP;
+pub const CLR_BKG_RUNNING_DONE: Color = CLR_BKG_GREEN;
+pub const CLR_BKG_RUNNING_ERR: Color = CLR_BKG_RED;
+
 // -- Text Colors
 pub const CLR_TXT_100: Color = Color::Indexed(255);
 pub const CLR_TXT_400: Color = Color::Indexed(253);
@@ -48,15 +78,6 @@ pub const CLR_TXT_700: Color = Color::Indexed(244);
 pub const CLR_TXT_800: Color = Color::Indexed(242);
 pub const CLR_TXT_850: Color = Color::Indexed(240);
 pub const CLR_TXT: Color = CLR_TXT_500;
-
-pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
-
-// 12 is a good blue as well
-pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
-pub const CLR_TXT_TEAL: Color = Color::Indexed(45);
-pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
-pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
-pub const CLR_TXT_RED: Color = Color::Indexed(196);
 
 pub const CLR_TXT_HOVER: Color = CLR_TXT_BLUE;
 
@@ -86,7 +107,7 @@ pub const STL_FIELD_VAL_DARK: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_
 // -- Section Styles
 pub const STL_SECTION_MARKER: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_700);
 pub const STL_SECTION_MARKER_INPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_TEAL);
-pub const STL_SECTION_MARKER_SKIP: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_BLUE);
+pub const STL_SECTION_MARKER_SKIP: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_SKIP);
 pub const STL_SECTION_MARKER_OUTPUT: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_GREEN);
 pub const STL_SECTION_MARKER_ERR: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_RED);
 pub const STL_SECTION_MARKER_AI: Style = Style::new().bg(CLR_BKG_400).fg(CLR_TXT_YELLOW);
