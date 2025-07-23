@@ -49,6 +49,11 @@ pub fn process_app_state(state: &mut AppState) {
 		state.core_mut().show_runs = show_runs;
 	}
 
+	// -- Cycle tasks overview mode
+	if let Some(KeyCode::Char('t')) = state.last_app_event().as_key_code() {
+		state.core_mut().next_overview_tasks_mode();
+	}
+
 	// -- Load runs and keep previous idx for later comparison
 	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
 	let has_new_runs = new_runs.len() != state.runs().len();

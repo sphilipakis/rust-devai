@@ -1,7 +1,7 @@
 use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::AppState;
-use crate::tui::core::{Action, LinkZones, ScrollIden};
+use crate::tui::core::{Action, LinkZones, OverviewTasksMode, ScrollIden};
 use crate::tui::support::UiExt as _;
 use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};
@@ -40,8 +40,18 @@ impl StatefulWidget for RunOverviewView {
 
 fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	const SCROLL_IDEN: ScrollIden = RunOverviewView::BODY_SCROLL_IDEN;
-	// -- Int the scroll area
+
+	// -- Init the scroll area
 	state.set_scroll_area(SCROLL_IDEN, area);
+
+	// -- Determine tasks mode
+	let tasks_len = state.tasks().len();
+
+	let is_grid = match state.overview_tasks_mode() {
+		OverviewTasksMode::Auto => tasks_len >= TASKS_GRID_THRESHOLD,
+		OverviewTasksMode::List => false,
+		OverviewTasksMode::Grid => true,
+	};
 
 	// -- Prep
 	let Some(run_id) = state.current_run().map(|r| r.id) else {
@@ -68,15 +78,10 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add the tasks ui
-	//let tasks_list_start_y = all_lines.len() as u16;
-	let tasks_len = state.tasks().len();
-	let is_grid;
-	let task_list_lines = if tasks_len < TASKS_GRID_THRESHOLD {
-		is_grid = false;
-		ui_for_task_list(state.tasks(), max_width, &mut link_zones)
-	} else {
-		is_grid = true;
+	let task_list_lines = if is_grid {
 		ui_for_task_grid(state.tasks(), max_width, &mut link_zones)
+	} else {
+		ui_for_task_list(state.tasks(), max_width, &mut link_zones)
 	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 

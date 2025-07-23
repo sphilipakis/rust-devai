@@ -37,6 +37,7 @@ impl StatefulWidget for ActionView {
 		};
 
 		// -- Render Actions Bar
+		let overview_mode = state.overview_tasks_mode().to_string();
 		let line = Line::from(vec![
 			Span::raw("["),
 			Span::styled("r", style::STL_TXT_ACTION),
@@ -47,6 +48,10 @@ impl StatefulWidget for ActionView {
 			Span::raw("["),
 			Span::styled("n", style::STL_TXT_ACTION),
 			Span::raw(n_label),
+			Span::raw("  "),
+			Span::raw("["),
+			Span::styled("t", style::STL_TXT_ACTION),
+			Span::raw(format!("] Tasks overview: {overview_mode}  ")),
 		]);
 
 		Paragraph::new(line).render(actions_a, buf);

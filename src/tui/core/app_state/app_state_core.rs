@@ -2,7 +2,7 @@ use crate::store::rt_model::{Run, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{Action, MouseEvt, RunTab, ScrollIden, ScrollZone, ScrollZones};
+use crate::tui::core::{Action, MouseEvt, OverviewTasksMode, RunTab, ScrollIden, ScrollZone, ScrollZones};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use ratatui::layout::Position;
 
@@ -34,6 +34,9 @@ pub(in crate::tui::core) struct AppStateCore {
 
 	// -- RunMainView
 	pub run_tab: RunTab,
+
+	// -- RunOverview
+	pub overview_tasks_mode: OverviewTasksMode,
 
 	// -- RunTasksView
 	pub task_idx: Option<i32>,
@@ -81,6 +84,11 @@ impl AppStateCore {
 
 	pub fn take_action(&mut self) -> Option<Action> {
 		self.do_action.take()
+	}
+
+	pub fn next_overview_tasks_mode(&mut self) -> OverviewTasksMode {
+		self.overview_tasks_mode = self.overview_tasks_mode.next();
+		self.overview_tasks_mode
 	}
 }
 

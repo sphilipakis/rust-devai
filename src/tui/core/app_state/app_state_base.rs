@@ -4,7 +4,7 @@ use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{Action, RunTab, ScrollZones};
+use crate::tui::core::{Action, OverviewTasksMode, RunTab, ScrollZones};
 
 // region:    --- Wrapper
 
@@ -43,6 +43,9 @@ impl AppState {
 
 			// -- RunMainView
 			run_tab: RunTab::Tasks, // Tasks tab by default
+
+			// -- RunOverview
+			overview_tasks_mode: OverviewTasksMode::Auto,
 
 			// -- RunTasksView
 			task_idx: None,
@@ -135,6 +138,13 @@ impl AppState {
 
 	pub fn set_run_tab(&mut self, run_tab: RunTab) {
 		self.core.run_tab = run_tab;
+	}
+}
+
+/// OverviewView
+impl AppState {
+	pub fn overview_tasks_mode(&self) -> OverviewTasksMode {
+		self.core.overview_tasks_mode
 	}
 }
 
