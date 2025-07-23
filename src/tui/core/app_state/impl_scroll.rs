@@ -21,6 +21,12 @@ impl AppState {
 		}
 	}
 
+	pub fn set_scroll(&mut self, iden: ScrollIden, scroll: u16) {
+		if let Some(zone) = self.core.get_zone_mut(&iden) {
+			zone.set_scroll(scroll);
+		}
+	}
+
 	/// Note: will return 0 if no scroll was set yet
 	#[allow(unused)]
 	pub fn get_scroll(&self, iden: ScrollIden) -> u16 {

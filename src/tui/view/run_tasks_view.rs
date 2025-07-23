@@ -98,15 +98,19 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Scroll & Select logic
 	state.set_scroll_area(SCROLL_IDEN, tasks_list_a);
 	let tasks_len = state.tasks().len();
-	let scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
+	let mut scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
 
 	// -- Process the Action GoToTask
+	let mut selection_in_view = false;
 	if let Some(Action::GoToTask { task_id }) = state.action() {
 		if let Some(task_idx) = state.tasks().iter().position(|t| t.id == *task_id) {
 			state.set_task_idx(Some(task_idx));
+			// NOTE: This tab "consume the action"
 			state.clear_action();
+			selection_in_view = true;
 		}
 	}
+	let selection_in_view = selection_in_view;
 
 	// -- Process UI Event
 	// NOTE: Mouse processing (task selection) must occur before building the tasks UI to ensure the selection is up-to-date.
@@ -138,6 +142,23 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let list_w = List::new(items)
 		// .highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
 		.highlight_spacing(HighlightSpacing::Always);
+
+	if selection_in_view {
+		let visible_top_idx = scroll as usize;
+		let area_height = tasks_list_a.height as usize;
+
+		let visible_end_idx = visible_top_idx + area_height.saturating_sub(1);
+
+		if task_sel_idx >= visible_top_idx && task_sel_idx <= visible_end_idx {
+			// nothing to do
+		} else if task_sel_idx < visible_top_idx {
+			scroll = task_sel_idx as u16;
+			state.set_scroll(SCROLL_IDEN, scroll);
+		} else if task_sel_idx > visible_end_idx {
+			scroll = (task_sel_idx - area_height + 1) as u16;
+			state.set_scroll(SCROLL_IDEN, scroll);
+		}
+	}
 
 	let mut list_s = ListState::default().with_offset(scroll as usize);
 	// list_s.select(state.task_idx());
