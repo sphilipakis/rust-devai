@@ -25,7 +25,7 @@ pub const CLR_TXT_WHITE: Color = Color::Indexed(15);
 pub const CLR_TXT_BLACK: Color = Color::Indexed(0);
 
 // 12 is a good blue as well
-pub const CLR_TXT_BLUE_DARK: Color = Color::Indexed(21);
+pub const CLR_TXT_BLUE_DARK: Color = Color::Indexed(20);
 pub const CLR_TXT_BLUE: Color = Color::Indexed(33);
 pub const CLR_TXT_TEAL: Color = Color::Indexed(45);
 pub const CLR_TXT_YELLOW: Color = Color::Indexed(226);
@@ -39,10 +39,11 @@ pub const CLR_BKG_YELLOW: Color = Color::Indexed(226);
 pub const CLR_BKG_GREEN: Color = Color::Indexed(46);
 pub const CLR_BKG_RED: Color = Color::Indexed(124);
 
-pub const CLR_TXT_SKIP: Color = Color::Indexed(222);
-pub const CLR_BKG_SKIP: Color = Color::Indexed(222);
+pub const CLR_TXT_SKIP: Color = Color::Indexed(225);
+pub const CLR_BKG_SKIP: Color = Color::Indexed(225);
 
 // -- Bkg Colors
+pub const CLR_BKG_300: Color = Color::Indexed(238);
 pub const CLR_BKG_400: Color = Color::Indexed(236);
 pub const CLR_BKG_500: Color = Color::Indexed(234);
 pub const CLR_BKG_600: Color = Color::Indexed(232);

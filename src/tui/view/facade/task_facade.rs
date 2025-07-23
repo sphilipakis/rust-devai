@@ -2,9 +2,9 @@ use crate::store::rt_model::Task;
 use crate::store::{EndState, RunningState};
 use crate::support::text;
 use crate::tui::style;
+use crate::tui::support::UiExt as _;
 use crate::tui::support::num_pad_for_len;
 use crate::tui::view::comp::{self, el_running_ico};
-use crate::tui::view::support::UiExt;
 use ratatui::style::{Style, Stylize as _};
 use ratatui::text::Span;
 

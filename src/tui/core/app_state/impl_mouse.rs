@@ -3,9 +3,12 @@ use ratatui::layout::Rect;
 
 /// Current Mouse Evt
 impl AppState {
-	// Getter
 	pub fn mouse_evt(&self) -> Option<MouseEvt> {
 		self.core.mouse_evt
+	}
+
+	pub fn last_mouse_evt(&self) -> Option<MouseEvt> {
+		self.core.last_mouse_evt
 	}
 
 	/// Remove both the mouse_evt and last_mouse_evt

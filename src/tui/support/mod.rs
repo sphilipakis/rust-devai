@@ -5,8 +5,10 @@
 
 mod formatters;
 mod number_utils;
+mod ui_ext;
 
 pub use formatters::*;
 pub use number_utils::*;
+pub use ui_ext::*;
 
 // endregion: --- Modules

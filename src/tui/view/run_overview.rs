@@ -2,10 +2,12 @@ use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::tui::AppState;
 use crate::tui::core::{Action, LinkZones, ScrollIden};
-use crate::tui::view::support::{self, RectExt as _, UiExt as _};
+use crate::tui::support::UiExt as _;
+use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
@@ -68,10 +70,13 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Add the tasks ui
 	//let tasks_list_start_y = all_lines.len() as u16;
 	let tasks_len = state.tasks().len();
+	let is_grid;
 	let task_list_lines = if tasks_len < TASKS_GRID_THRESHOLD {
+		is_grid = false;
 		ui_for_task_list(state.tasks(), max_width, &mut link_zones)
 	} else {
-		ui_for_task_grid(state.tasks(), max_width)
+		is_grid = true;
+		ui_for_task_grid(state.tasks(), max_width, &mut link_zones)
 	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 
@@ -94,19 +99,21 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let line_count = all_lines.len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
 
-	// -- Debug UI
+	// -- Perform the Click on a link zone
 	for zone in link_zones.into_zones() {
 		if let Some(line) = all_lines.get_mut(zone.line_idx) {
-			if state.is_last_mouse_over(area.x_row(zone.line_idx as u16 + 1 - scroll)) {
-				if let Some(spans) = line.spans.get_mut(zone.span_start..zone.span_start + zone.span_count) {
-					for span in spans {
-						span.style.fg = Some(style::CLR_TXT_HOVER);
-						if state.is_mouse_up() {
-							state.set_action(zone.action);
-							// Note: Little trick to not show hover on the next tasks tab screen
-							state.clear_mouse_evts();
-						}
+			if let Some(hover_spans) = zone.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans) {
+				for span in hover_spans {
+					span.style.fg = Some(style::CLR_TXT_BLUE);
+					if is_grid {
+						span.style.bg = Some(style::CLR_BKG_300);
 					}
+					span.style = span.style.add_modifier(Modifier::BOLD);
+				}
+				if state.is_mouse_up() {
+					state.set_action(zone.action);
+					// Note: Little trick to not show hover on the next tasks tab screen
+					state.clear_mouse_evts();
 				}
 			}
 		}
@@ -211,8 +218,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		let mut task_line = task.ui_label(label_a.width, tasks_len);
 		let task_id = task.id;
 
-		// Hover Label
-		// +2 for the space + ico (fomrom the ui_label), 2 to take space and label text
+		// -- Link Zone
+		// +2 for the space + ico (from the ui_label), 2 to take space and label text
 		// NOTE: This should probably be part of the task facade (should not make those assumption here)
 		link_zones.push_link_zone(idx, marker_prefix_spans_len + 2, 2, Action::GoToTask { task_id });
 
@@ -254,7 +261,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
 }
 
-fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
 	if tasks.is_empty() {
 		return Vec::new();
 	}
@@ -266,6 +273,7 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 	let (marker, marker_spacer) = tasks_marker();
 	let marker_width = marker.x_width();
 	let marker_spacer_width = marker_spacer.x_width();
+	let marker_prefix_spans_len = marker.len() + marker_spacer.len();
 
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
 	let gap_span = Span::raw(" ");
@@ -277,7 +285,11 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 	let max_num = tasks_len;
 	for task in tasks {
 		let task_block = task.ui_short_block(max_num);
-		// -- decide the create new lin
+
+		let zone_span_start = line.len();
+		let zone_span_count = task_block.len();
+
+		// -- decide the create new line
 		if line.x_width() + task_block.x_width() + gap_width <= content_width {
 			// We append
 			line.extend(task_block);
@@ -293,6 +305,17 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16) -> Vec<Line<'static>> {
 			line = task_block;
 			// line.push(gap_span.clone());
 		}
+
+		// -- Link Zone
+		// +2 for the space + ico (fomrom the ui_label), 2 to take space and label text
+		// NOTE: This should probably be part of the task facade (should not make those assumption here)
+		let task_id = task.id;
+		link_zones.push_link_zone(
+			all_lines.len(),
+			marker_prefix_spans_len + zone_span_start,
+			zone_span_count,
+			Action::GoToTask { task_id },
+		);
 	}
 
 	// -- add the last line
