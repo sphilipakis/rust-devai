@@ -82,10 +82,6 @@ impl AppStateCore {
 		}
 	}
 
-	pub fn take_action(&mut self) -> Option<Action> {
-		self.do_action.take()
-	}
-
 	pub fn next_overview_tasks_mode(&mut self) -> OverviewTasksMode {
 		self.overview_tasks_mode = self.overview_tasks_mode.next();
 		self.overview_tasks_mode

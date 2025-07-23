@@ -4,7 +4,7 @@ use crate::store::ModelManager;
 use crate::store::rt_model::{Run, Task};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{Action, OverviewTasksMode, RunTab, ScrollZones};
+use crate::tui::core::{OverviewTasksMode, RunTab, ScrollZones};
 
 // region:    --- Wrapper
 
@@ -179,13 +179,6 @@ impl AppState {
 
 	pub fn last_app_event(&self) -> &LastAppEvent {
 		&self.core.last_app_event
-	}
-}
-
-impl AppState {
-	pub fn set_action(&mut self, action: impl Into<Action>) {
-		let action = action.into();
-		self.core.do_action = Some(action);
 	}
 }
 

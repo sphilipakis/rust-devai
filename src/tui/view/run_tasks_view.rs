@@ -1,4 +1,4 @@
-use crate::tui::core::ScrollIden;
+use crate::tui::core::{Action, ScrollIden};
 use crate::tui::style;
 use crate::tui::support::clamp_idx_in_len;
 use crate::tui::view::comp;
@@ -100,7 +100,15 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let tasks_len = state.tasks().len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
 
-	// -- Process UI EVent
+	// -- Process the Action GoToTask
+	if let Some(Action::GoToTask { task_id }) = state.action() {
+		if let Some(task_idx) = state.tasks().iter().position(|t| t.id == *task_id) {
+			state.set_task_idx(Some(task_idx));
+			state.clear_action();
+		}
+	}
+
+	// -- Process UI Event
 	// NOTE: Mouse processing (task selection) must occur before building the tasks UI to ensure the selection is up-to-date.
 	//       This avoids unnecessary redraws, since we know the number of lines.
 	// NOTE: In the future, we may want to trigger a redraw (similar to the runs nav) for consistency and to prevent

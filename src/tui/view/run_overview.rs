@@ -117,6 +117,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				}
 				if state.is_mouse_up() {
 					state.set_action(zone.action);
+					state.trigger_redraw();
 					// Note: Little trick to not show hover on the next tasks tab screen
 					state.clear_mouse_evts();
 				}

@@ -1,6 +1,6 @@
 use crate::store::rt_model::{RunBmc, TaskBmc};
 use crate::tui::AppState;
-use crate::tui::core::{MouseEvt, NavDir};
+use crate::tui::core::{Action, MouseEvt, NavDir};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
@@ -151,10 +151,16 @@ pub fn process_app_state(state: &mut AppState) {
 	);
 	let nav_tasks_offset = nav_dir.map(|n| n.offset()).unwrap_or_default();
 
-	let len_tasks = state.tasks().len();
-	{
-		let inner = state.core_mut();
-		inner.task_idx = offset_and_clamp_option_idx_in_len(&inner.task_idx, nav_tasks_offset, len_tasks);
+	if nav_tasks_offset != 0 {
+		let len_tasks = state.tasks().len();
+		let inner = state.core();
+		let new_task_idx =
+			offset_and_clamp_option_idx_in_len(&inner.task_idx, nav_tasks_offset, len_tasks).unwrap_or_default();
+		if let Some(task) = state.tasks().get(new_task_idx as usize) {
+			state.set_action(Action::GoToTask { task_id: task.id });
+			// Note: Little trick to not show the hover when navigating
+			state.clear_mouse_evts();
+		}
 	}
 
 	// -- Tabs navigation (Run view)
