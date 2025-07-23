@@ -20,8 +20,15 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 - **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
 
+### Latest BIG UPDATE 0.7.15 `--xp-tui` NEW TERMINAL UI
 
-Check out: 
+- `+` **BIG ONE**: New Terminal UI with the `--xp-tui` flag  
+    - Example: `aip run pro@coder --xp-tui` 
+    - or `aip run my-agent.aip --xp-tui`
+    - This will be the default UI in version `0.8.0`
+    - Running without `--xp-tui` will use the previous UI
+
+### Check out: 
 
 - https://aipack.ai for more information and links, [AIPACK News & Blog Posts](https://news.aipack.ai/archive)
 

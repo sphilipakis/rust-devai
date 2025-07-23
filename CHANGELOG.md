@@ -1,5 +1,14 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-07-23 - [v0.7.15](https://github.com/jeremychone/rust-devai/compare/v0.7.14...v0.7.15)
+
+- `+` **BIG ONE**: New Terminal UI with the `--xp-tui` flag  
+    - Example: `aip run pro@coder --xp-tui` 
+    - or `aip run my-agent.aip --xp-tui`
+    - This will be the default UI in version `0.8.0`
+    - Running without `--xp-tui` will use the previous UI
+- `.` Other fixes, pricing & model update (Kimi 2 on groq)
+
 ## 2025-06-23 - [v0.7.14](https://github.com/jeremychone/rust-devai/compare/v0.7.13...v0.7.14)
 
 - `-` pricing - fix gemini 2.5 lite pricing (to reflect new pricing)
