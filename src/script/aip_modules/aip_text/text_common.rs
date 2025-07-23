@@ -21,8 +21,8 @@
 //! - `aip.text.ensure(content: string | nil, {prefix? = string, suffix? = string}): string | nil`
 //! - `aip.text.ensure_single_ending_newline(content: string | nil): string | nil`
 
-use crate::script::DEFAULT_MARKERS;
 use crate::script::support::{into_option_string, into_vec_of_strings};
+use crate::script::{DEFAULT_MARKERS, LuaValueExt};
 use crate::support::Extrude;
 use crate::support::html::decode_html_entities;
 use crate::support::text::{self, EnsureOptions, truncate_with_ellipsis};
@@ -117,7 +117,7 @@ impl FromLua for EnsureOptions {
 		let suffix = table.get::<String>("suffix").ok();
 
 		for (key, _value) in table.pairs::<Value, Value>().flatten() {
-			if let Some(key) = key.as_str() {
+			if let Some(key) = key.x_as_lua_str() {
 				if key != "prefix" && key != "suffix" {
 					let msg = format!(
 						"Ensure argument contains invalid table property `{key}`. Can only contain `prefix` and/or `suffix`"

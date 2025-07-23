@@ -1,10 +1,12 @@
-use mlua::{Table, Value};
+use mlua::{BorrowedStr, Table, Value};
 
 /// Convenient Lua Value extension
 ///
 /// TODO: Will need to handle the case where the found value is not of correct type. Probably should return `Result<Option<>>`
 #[allow(unused)]
 pub trait LuaValueExt {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>>;
+
 	/// Return the Lua value for a key.
 	/// NOTE: Will return None if value is Nil
 	fn x_get_value(&self, key: &str) -> Option<Value>;
@@ -15,6 +17,10 @@ pub trait LuaValueExt {
 }
 
 impl LuaValueExt for Value {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+		self.as_string().and_then(|s| s.to_str().ok())
+	}
+
 	fn x_get_value(&self, key: &str) -> Option<Value> {
 		let table = self.as_table()?;
 		let val = table.get::<Value>(key).ok()?;
@@ -24,7 +30,7 @@ impl LuaValueExt for Value {
 	fn x_get_string(&self, key: &str) -> Option<String> {
 		let table = self.as_table()?;
 		let val = table.get::<Value>(key).ok()?;
-		let val = val.as_str()?;
+		let val = val.x_as_lua_str()?;
 		Some(val.to_string())
 	}
 
@@ -51,6 +57,10 @@ impl LuaValueExt for Value {
 }
 
 impl LuaValueExt for Option<Value> {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+		self.as_ref()?.as_string().and_then(|s| s.to_str().ok())
+	}
+
 	fn x_get_value(&self, key: &str) -> Option<Value> {
 		self.as_ref()?.x_get_value(key)
 	}
@@ -72,6 +82,10 @@ impl LuaValueExt for Option<Value> {
 }
 
 impl LuaValueExt for Table {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+		None
+	}
+
 	fn x_get_value(&self, key: &str) -> Option<Value> {
 		let val = self.get::<Value>(key).ok()?;
 		if val.is_nil() { None } else { Some(val) }
@@ -79,7 +93,7 @@ impl LuaValueExt for Table {
 
 	fn x_get_string(&self, key: &str) -> Option<String> {
 		let val = self.get::<Value>(key).ok()?;
-		let val = val.as_str()?;
+		let val = val.x_as_lua_str()?;
 		Some(val.to_string())
 	}
 
