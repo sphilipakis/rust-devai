@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use value_ext::JsonValueExt;
 
 /// Configuration for the Agent, defined in `.aipack/config.toml` and
-/// optionally overridden in the `# Config` section of the Command Agent Markdown.
+/// optionally overridden in the `# Options` section of the Command Agent Markdown.
 ///
 /// Note: The values are flattened for simplicity but may be nested in the future.
 #[derive(Debug, Clone, Deserialize, Default, Serialize)]
@@ -149,7 +149,7 @@ impl AgentOptions {
 
 // Constructors
 impl AgentOptions {
-	/// Creates a new `AgentOptions` from a Value document (either from `cargo.toml` or `# Config` section).
+	/// Creates a new `AgentOptions` from a Value document (either from `cargo.toml` or `# Options` section).
 	/// Note: It will try to first parse it with the new format (default_options), and then, with the legacy format (genai/runtime)
 	///
 	/// TODO: Needs to have another function, from_options_value for when in the new `# Options` section which will follow the section format)
@@ -163,7 +163,7 @@ impl AgentOptions {
 	}
 
 	/// Creates a new `AgentOptions` from the flatten `options` structure.
-	/// This is mostly for when the agent file as a `# Options` sections (which replaces the `# Config`)
+	/// This is mostly for when the agent file as a `# Options` sections (which replaces the `# Options`)
 	pub fn from_options_value(value: Value) -> Result<AgentOptions> {
 		let options = serde_json::from_value(value)?;
 
