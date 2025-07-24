@@ -1,5 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-07-23 - [v0.7.16](https://github.com/jeremychone/rust-devai/compare/v0.7.15...v0.7.16)
+
+- `-` tui - fix tui crash when resize to very small height
+- `-` fix issue when first run is skipped at before all with instruction (used to never show task(s) again)
+- `.` turn off debug trace when xp-tui
+- `.` core@doc - update # Options (from legacy config)
+
 ## 2025-07-23 - [v0.7.15](https://github.com/jeremychone/rust-devai/compare/v0.7.14...v0.7.15)
 
 - `+` **BIG ONE**: New Terminal UI with the `--xp-tui` flag  

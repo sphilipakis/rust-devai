@@ -42,8 +42,8 @@ async fn main() -> Result<()> {
 
 	// -- Setup debug tracing_subscriber
 	// NOTE: need to keep the handle, otherwise dropped, and nothing get added to the file
-	let _tracing_guard = if DEBUG_LOG && args.cmd.is_xp_tui() {
-		// For now, only for --xp-tui
+	let _tracing_guard = if DEBUG_LOG {
+		// For now, only for --xp-tui (&& args.cmd.is_xp_tui())
 		// if args.cmd.is_xp_tui() {
 		// Create a file appender (will write all logs to ".tmp.log" in the current dir)
 		let file_appender = never(".aip-debug-log", "file.log");
