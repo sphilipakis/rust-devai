@@ -88,7 +88,8 @@ impl AppState {
 	///   append `+N` where `N` is the number of additional distinct models.
 	/// - If no task has a model (or there are no tasks), fall back to the
 	///   current run model (or `"no model"` when absent).
-	pub fn tasks_cummulative_models(&self) -> String {
+	/// - If is string over `max_width` then, right align (NOTE: Right now only 8bit char support)
+	pub fn tasks_cummulative_models(&self, max_width: usize) -> String {
 		let tasks = self.tasks();
 
 		// Note: Will be 'no model' if no models
@@ -113,12 +114,14 @@ impl AppState {
 		}
 
 		// NOTE: If tasks.len() == 0, uniques as well, so run_model (which is what we want. )
-		match (uniques.len(), some_no_ov) {
+		let res = match (uniques.len(), some_no_ov) {
 			(0, _) => run_model,
 			(n, true) => format!("{run_model} +{n}"),
 			(1, false) => uniques.into_iter().next().unwrap_or_default(),
 			(n, false) => format!("{} +{}", uniques.into_iter().next().unwrap_or_default(), n - 1),
-		}
+		};
+
+		text::truncate_left_with_ellipsis(&res, max_width, "..").into_owned()
 	}
 }
 

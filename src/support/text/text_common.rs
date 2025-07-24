@@ -39,39 +39,6 @@ pub fn ensure(s: &str, ensure_inst: EnsureOptions) -> Cow<str> {
 		Cow::Owned(parts.concat()) // Join parts into a single owned string
 	}
 }
-// endregion: --- Ensure
-
-/// And efficient way to remove the first line.
-/// Returns: (first_line, remain), and empty string none
-/// Note: Good when big content, and the remain will not require new allocation
-pub fn extract_first_line(mut content: String) -> (String, String) {
-	if let Some(pos) = content.find('\n') {
-		let remainder = content.split_off(pos + 1); // Moves remainder to a new String, avoids shifting
-		(content, remainder)
-	} else {
-		// No newline, return whole string as first line, empty remainder
-		(content, String::new())
-	}
-}
-
-pub fn truncate_with_ellipsis<'a>(s: &'a str, max_chars: usize, ellipsis: &str) -> Cow<'a, str> {
-	let (truncated, did_truncate) = truncate(s, max_chars);
-	if did_truncate && !ellipsis.is_empty() {
-		Cow::from(format!("{truncated}{ellipsis}"))
-	} else {
-		truncated
-	}
-}
-
-/// Return the truncated text (if needed), with the `truncated` flag
-pub fn truncate<'a>(s: &'a str, max_chars: usize) -> (Cow<'a, str>, bool) {
-	if s.chars().count() > max_chars {
-		let truncated: String = s.chars().take(max_chars).collect();
-		(Cow::from(truncated), true)
-	} else {
-		(Cow::from(s), false)
-	}
-}
 
 /// Make sure that the text end with one and only one single newline
 /// Useful for code sanitization
@@ -102,6 +69,90 @@ pub fn ensure_single_ending_newline(mut text: String) -> String {
 
 	text
 }
+
+// endregion: --- Ensure
+
+/// And efficient way to remove the first line.
+/// Returns: (first_line, remain), and empty string none
+/// Note: Good when big content, and the remain will not require new allocation
+pub fn extract_first_line(mut content: String) -> (String, String) {
+	if let Some(pos) = content.find('\n') {
+		let remainder = content.split_off(pos + 1); // Moves remainder to a new String, avoids shifting
+		(content, remainder)
+	} else {
+		// No newline, return whole string as first line, empty remainder
+		(content, String::new())
+	}
+}
+// region:    --- Truncate
+
+pub fn truncate_with_ellipsis<'a>(content: &'a str, max_chars: usize, ellipsis: &str) -> Cow<'a, str> {
+	let s_len = content.chars().count();
+	let ellipsis_len = ellipsis.chars().count();
+
+	if s_len > max_chars {
+		if ellipsis_len >= max_chars {
+			// Ellipsis itself takes all the space (or more)
+			Cow::from(ellipsis.chars().take(max_chars).collect::<String>())
+		} else {
+			let keep_chars = max_chars - ellipsis_len;
+			let truncated: String = content.chars().take(keep_chars).collect();
+			Cow::from(format!("{truncated}{ellipsis}"))
+		}
+	} else {
+		Cow::from(content)
+	}
+}
+
+/// Return the truncated text (if needed), with the `truncated` flag
+pub fn truncate<'a>(content: &'a str, max_chars: usize) -> (Cow<'a, str>, bool) {
+	if content.chars().count() > max_chars {
+		let truncated: String = content.chars().take(max_chars).collect();
+		(Cow::from(truncated), true)
+	} else {
+		(Cow::from(content), false)
+	}
+}
+
+pub fn truncate_left_with_ellipsis<'a>(content: &'a str, max_chars: usize, ellipsis: &str) -> Cow<'a, str> {
+	let s_len = content.chars().count();
+	let ellipsis_len = ellipsis.chars().count();
+
+	if s_len > max_chars {
+		if ellipsis_len >= max_chars {
+			Cow::from(
+				ellipsis
+					.chars()
+					.rev()
+					.take(max_chars)
+					.collect::<String>()
+					.chars()
+					.rev()
+					.collect::<String>(),
+			)
+		} else {
+			let keep_chars = max_chars - ellipsis_len;
+			let truncated: String = content.chars().skip(s_len - keep_chars).collect();
+			Cow::from(format!("{ellipsis}{truncated}"))
+		}
+	} else {
+		Cow::from(content)
+	}
+}
+
+/// Truncate from the left, returning the truncated text (if needed), with the `truncated` flag
+#[allow(unused)]
+pub fn truncate_left<'a>(content: &'a str, max_chars: usize) -> (Cow<'a, str>, bool) {
+	let char_count = content.chars().count();
+	if char_count > max_chars {
+		let truncated: String = content.chars().skip(char_count - max_chars).collect();
+		(Cow::from(truncated), true)
+	} else {
+		(Cow::from(content), false)
+	}
+}
+
+// endregion: --- Truncate
 
 // region:    --- Replace
 

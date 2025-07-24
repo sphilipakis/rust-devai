@@ -368,7 +368,7 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		legend_line.push(Span::raw(format!(" {count_skip:<num_width$} ")));
 	}
 	if count_waiting > 0 {
-		legend_line.push(Span::styled("Waiting:", style::CLR_TXT_650));
+		legend_line.push(Span::styled("Queue:", style::CLR_TXT_650));
 		legend_line.push(Span::raw(format!(" {count_waiting:<num_width$} ")));
 	}
 	if count_err > 0 {

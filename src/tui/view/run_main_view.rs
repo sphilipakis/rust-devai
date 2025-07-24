@@ -56,9 +56,11 @@ impl StatefulWidget for RunMainView {
 }
 
 fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+	const VAL_1_WIDTH: u16 = 26; // for the agent and model column
+
 	// -- Prepare Data
 	let agent_name = state.current_run_agent_name();
-	let model_name = state.tasks_cummulative_models();
+	let model_name = state.tasks_cummulative_models(VAL_1_WIDTH as usize);
 	let cost_txt = state.current_run_cost_fmt();
 	let concurrency_txt = state.current_run_concurrency_txt();
 
@@ -76,12 +78,12 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let [lbl_1, val_1, lbl_2, val_2, lbl_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(11), // Agent/Model
-			Constraint::Length(26), //
-			Constraint::Length(8),  // Tasks/Cost
-			Constraint::Length(9),  //
-			Constraint::Length(13), // Concurrency/Duration
-			Constraint::Fill(1),    //
+			Constraint::Length(11),          // Agent/Model
+			Constraint::Length(VAL_1_WIDTH), //
+			Constraint::Length(8),           // Tasks/Cost
+			Constraint::Length(9),           //
+			Constraint::Length(13),          // Concurrency/Duration
+			Constraint::Fill(1),             //
 		])
 		.spacing(1)
 		.areas(area);
