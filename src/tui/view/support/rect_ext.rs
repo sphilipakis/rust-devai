@@ -111,12 +111,13 @@ impl RectExt for Rect {
 
 	/// Make the area height 1, at the row level from this base area.
 	/// - `row_num` starts at 1.
+	/// - Height is always 1, except if self.height is 0, in case it is 0 (to avoid ratatui crash to draw out of buffer)
 	fn x_row(&self, row_num: u16) -> Rect {
 		Rect {
 			x: self.x,
 			y: self.y + row_num - 1,
 			width: self.width,
-			height: 1,
+			height: 1.min(self.height),
 		}
 	}
 	// endregion: --- Lines
