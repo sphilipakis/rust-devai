@@ -33,6 +33,8 @@ pub static VERSION: &str = crate_version!();
 
 // endregion: --- Modules
 
+const DEBUG_LOG: bool = false;
+
 #[tokio::main]
 async fn main() -> Result<()> {
 	// -- Command arguments
@@ -40,7 +42,7 @@ async fn main() -> Result<()> {
 
 	// -- Setup debug tracing_subscriber
 	// NOTE: need to keep the handle, otherwise dropped, and nothing get added to the file
-	let _tracing_guard = if args.cmd.is_xp_tui() {
+	let _tracing_guard = if DEBUG_LOG && args.cmd.is_xp_tui() {
 		// For now, only for --xp-tui
 		// if args.cmd.is_xp_tui() {
 		// Create a file appender (will write all logs to ".tmp.log" in the current dir)
