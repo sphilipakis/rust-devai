@@ -6,7 +6,7 @@ use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Style, Stylize};
+use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
 
@@ -64,11 +64,7 @@ impl StatefulWidget for RunsNavView {
 			.iter()
 			.enumerate()
 			.map(|(idx, run)| {
-				let (mark_txt, mark_color) = if run.is_done() {
-					("✔", style::CLR_TXT_GREEN)
-				} else {
-					("▶", style::CLR_TXT)
-				};
+				let run_ico = comp::el_running_ico(run);
 
 				let label = if let Some(start) = run.start
 					&& let Ok(start_fmt) = format_time_local(start.into())
@@ -82,7 +78,7 @@ impl StatefulWidget for RunsNavView {
 				let label = run.label.clone().unwrap_or(label);
 				let mut line = Line::from(vec![
 					Span::raw(" "),
-					Span::styled(mark_txt, Style::default().fg(mark_color)),
+					run_ico,
 					Span::raw(" "),
 					Span::styled(label, style::STL_TXT),
 				]);
