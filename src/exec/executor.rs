@@ -183,6 +183,31 @@ impl Executor {
 				exec_install(init_base_and_dir_context(false).await?, install_args).await?
 			}
 
+			ExecActionEvent::CmdCheckKeys(args) => {
+				// Does not require dir_context or runtime
+				exec_check_keys(args).await?;
+			}
+
+			ExecActionEvent::CmdXelfSetup(args) => {
+				// Does not require dir_context or runtime (for now)
+				exec_xelf_setup(args).await?;
+			}
+
+			ExecActionEvent::CmdXelfUpdate(args) => {
+				// Does not require dir_context or runtime (for now)
+				exec_xelf_update(args).await?;
+			}
+
+			ExecActionEvent::OpenAgent => {
+				//
+				if let Some(agent_file_path) = self.get_agent_file_path().await {
+					open_vscode(agent_file_path).await
+				}
+			}
+
+			// -- Agent Run Related
+
+			// From the inital command run
 			// TODO: Might want to not initialize the workspace here, and let the user know. Not sure.
 			// NOTE: This is the EVent from the Command line only (when aip.agent.run, the event RunAgent is sent)
 			ExecActionEvent::CmdRun(run_args) => {
@@ -200,22 +225,7 @@ impl Executor {
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
-			ExecActionEvent::CmdCheckKeys(args) => {
-				// Does not require dir_context or runtime
-				exec_check_keys(args).await?;
-			}
-
-			ExecActionEvent::CmdXelfSetup(args) => {
-				// Does not require dir_context or runtime (for now)
-				exec_xelf_setup(args).await?;
-			}
-
-			ExecActionEvent::CmdXelfUpdate(args) => {
-				// Does not require dir_context or runtime (for now)
-				exec_xelf_update(args).await?;
-			}
-
-			// -- Interactive Events
+			// From Redo
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
@@ -238,14 +248,7 @@ impl Executor {
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
-			ExecActionEvent::OpenAgent => {
-				//
-				if let Some(agent_file_path) = self.get_agent_file_path().await {
-					open_vscode(agent_file_path).await
-				}
-			}
-
-			// -- Agent Commands
+			// From aip.agent.run
 			ExecActionEvent::RunAgent(run_agent_params) => {
 				if let Err(err) = exec_run_agent(run_agent_params).await {
 					hub.publish(Error::cc("Fail to run agent", err)).await;
