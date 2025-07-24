@@ -1,5 +1,5 @@
-use crate::store::Stage;
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
+use crate::store::{EndState, RunningState, Stage};
 use crate::tui::AppState;
 use crate::tui::core::{Action, LinkZones, OverviewTasksMode, ScrollIden};
 use crate::tui::support::UiExt as _;
@@ -289,6 +289,11 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	let mut line: Vec<Span<'static>> = Vec::new();
 	let max_num = tasks_len;
+	let mut count_done = 0;
+	let mut count_waiting = 0;
+	let mut count_skip = 0;
+	let mut count_err = 0;
+	let mut count_ai = 0;
 	for task in tasks {
 		let task_block = task.ui_short_block(max_num);
 
@@ -322,10 +327,56 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 			zone_span_count,
 			Action::GoToTask { task_id },
 		);
+
+		match RunningState::from(task) {
+			RunningState::NotScheduled => (), // this is for other state, ignore for now.
+			RunningState::Waiting => count_waiting += 1,
+			RunningState::Running => {
+				if task.is_ai_running() {
+					count_ai += 1;
+				}
+			}
+			RunningState::Ended(end_state) => match end_state {
+				Some(EndState::Ok) => count_done += 1,
+				Some(EndState::Err) => count_err += 1,
+				Some(EndState::Skip) => count_skip += 1,
+				Some(EndState::Cancel) => (), // TODO: handle cancel
+				None => (),
+			},
+		}
 	}
 
 	// -- add the last line
 	all_lines.push(line);
+
+	// -- render legend
+	// empty line
+	all_lines.push(Vec::new());
+	// build legend_line
+	let num_width = 4;
+	let mut legend_line = vec![
+		// The Done
+		Span::styled("Done:", style::CLR_BKG_RUNNING_DONE),
+		Span::raw(format!(" {count_done:<num_width$} ")),
+	];
+	if count_ai > 0 {
+		legend_line.push(Span::styled("AI:", style::CLR_BKG_RUNNING_AI));
+		legend_line.push(Span::raw(format!(" {count_ai:<num_width$} ")));
+	}
+	if count_skip > 0 {
+		legend_line.push(Span::styled("Skip:", style::CLR_BKG_RUNNING_SKIP));
+		legend_line.push(Span::raw(format!(" {count_skip:<num_width$} ")));
+	}
+	if count_waiting > 0 {
+		legend_line.push(Span::styled("Waiting:", style::CLR_TXT_650));
+		legend_line.push(Span::raw(format!(" {count_waiting:<num_width$} ")));
+	}
+	if count_err > 0 {
+		legend_line.push(Span::styled("Error:", style::CLR_BKG_RUNNING_ERR));
+		legend_line.push(Span::raw(format!(" {count_err:<num_width$} ")));
+	}
+
+	all_lines.push(legend_line);
 
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
