@@ -81,7 +81,7 @@ impl AppStateCore {
 	}
 
 	pub fn next_overview_tasks_mode(&mut self) -> OverviewTasksMode {
-		self.overview_tasks_mode = self.overview_tasks_mode.next();
+		self.overview_tasks_mode = self.overview_tasks_mode.next(self.tasks.len());
 		self.overview_tasks_mode
 	}
 }

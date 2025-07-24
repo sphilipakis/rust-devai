@@ -1,7 +1,7 @@
 use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
 use crate::store::{EndState, RunningState, Stage};
 use crate::tui::AppState;
-use crate::tui::core::{Action, LinkZones, OverviewTasksMode, ScrollIden};
+use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::support::UiExt as _;
 use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};
@@ -10,8 +10,6 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
-
-const TASKS_GRID_THRESHOLD: usize = 10;
 
 /// Placeholder view for *Before All* tab.
 pub struct RunOverviewView;
@@ -47,11 +45,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Determine tasks mode
 	let tasks_len = state.tasks().len();
 
-	let is_grid = match state.overview_tasks_mode() {
-		OverviewTasksMode::Auto => tasks_len >= TASKS_GRID_THRESHOLD,
-		OverviewTasksMode::List => false,
-		OverviewTasksMode::Grid => true,
-	};
+	let is_grid = state.overview_tasks_mode().is_grid(tasks_len);
 
 	// -- Prep
 	let Some(run_id) = state.current_run().map(|r| r.id) else {
