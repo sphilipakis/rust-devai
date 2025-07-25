@@ -15,8 +15,8 @@
 //! - `aip.agent.extract_options(value: any): table | nil`
 
 use crate::Result;
-use crate::exec::RunAgentParams;
 use crate::run::RunAgentResponse;
+use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use crate::support::event::oneshot;
@@ -122,9 +122,9 @@ pub fn aip_agent_run(
 	let (tx, rx) = oneshot::<Result<RunAgentResponse>>();
 	let run_agent_params = match run_options {
 		Some(run_options) => {
-			RunAgentParams::new_from_lua_params(runtime.clone(), agent_dir, agent_name, Some(tx), run_options, lua)?
+			RunSubAgentParams::new_from_lua_params(runtime.clone(), agent_dir, agent_name, Some(tx), run_options, lua)?
 		}
-		None => RunAgentParams::new_no_inputs(runtime.clone(), agent_dir, agent_name, Some(tx)),
+		None => RunSubAgentParams::new_no_inputs(runtime.clone(), agent_dir, agent_name, Some(tx)),
 	};
 
 	let exec_sender = runtime.executor_sender();

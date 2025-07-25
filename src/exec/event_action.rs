@@ -2,10 +2,10 @@
 //! Note: For now, the content of the variant of the ExecCommand often contain the CliArgs,
 //!       but this will eventual change to have it's own
 
-use crate::exec::RunAgentParams;
 use crate::exec::cli::{
 	CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs, XelfUpdateArgs,
 };
+use crate::run::RunSubAgentParams;
 use derive_more::From;
 
 /// Executor Action Event that needs to be performed
@@ -26,8 +26,7 @@ pub enum ExecActionEvent {
 	CmdInit(InitArgs),
 	/// This will init only the base
 	CmdInitBase,
-	/// This is the result of a CLI run
-	CmdRun(RunArgs),
+
 	CmdList(ListArgs),
 	CmdPack(PackArgs),
 	CmdInstall(InstallArgs),
@@ -39,12 +38,16 @@ pub enum ExecActionEvent {
 	CmdXelfUpdate(XelfUpdateArgs),
 
 	// -- Interactive Commands
-	Redo,
 	OpenAgent,
 
-	// -- Agent Commands
+	// -- Run Commands
+	/// This is the result of a CLI run
+	CmdRun(RunArgs),
+	/// When press r
+	Redo,
+	/// When called from
 	#[from]
-	RunAgent(RunAgentParams),
+	RunSubAgent(RunSubAgentParams),
 
 	// -- New Agent
 	CmdNew(NewArgs),

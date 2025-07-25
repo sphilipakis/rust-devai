@@ -8,7 +8,6 @@ mod exec_cmd_new;
 mod exec_cmd_pack;
 mod exec_cmd_run;
 mod exec_cmd_xelf;
-mod params;
 mod support;
 
 #[allow(unused)]
@@ -28,7 +27,6 @@ mod executor;
 pub use event_action::*;
 pub use event_status::*;
 pub use executor::*;
-pub use params::*;
 
 pub mod cli;
 pub mod init;

@@ -1,7 +1,6 @@
 //! The command executor.
 //! Will create it's own queue and listen to ExecCommand events.
 
-use crate::agent::Agent;
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
@@ -9,7 +8,6 @@ use crate::exec::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::exec::support::open_vscode;
 use crate::exec::{
 	ExecStatusEvent,
-	RunRedoCtx,
 	exec_check_keys,
 	exec_install,
 	exec_list,
@@ -20,10 +18,10 @@ use crate::exec::{
 	exec_xelf_setup, // Added import
 };
 use crate::hub::{HubEvent, get_hub};
+use crate::run::RunRedoCtx;
 use crate::runtime::Runtime;
 use crate::store::OnceModelManager;
 use crate::{Error, Result};
-use derive_more::derive::From;
 use flume::{Receiver, Sender};
 use simple_fs::SPath;
 use std::sync::Arc;
@@ -53,7 +51,7 @@ pub struct Executor {
 	/// For now, the executor keep the last redoCtx state
 	/// Note: This might change to a stack, not sure yet.
 	///       For the current feature, this is enough.
-	current_redo_ctx: Arc<Mutex<Option<RedoCtx>>>,
+	current_redo_ctx: Arc<Mutex<Option<RunRedoCtx>>>,
 
 	/// Tracks the number of active execution actions
 	/// Used to send StartExec and EndExec events only when needed
@@ -84,19 +82,15 @@ impl Executor {
 	async fn get_agent_file_path(&self) -> Option<SPath> {
 		let redo_ctx = self.current_redo_ctx.lock().await;
 
-		redo_ctx
-			.as_ref()
-			.and_then(|r| r.get_agent())
-			.map(|a| a.file_path())
-			.map(SPath::new)
+		redo_ctx.as_ref().map(|r| r.agent()).map(|a| a.file_path()).map(SPath::new)
 	}
 
-	async fn set_current_redo_ctx(&self, redo_ctx: RedoCtx) {
+	async fn set_current_redo_ctx(&self, redo_ctx: RunRedoCtx) {
 		let mut guard = self.current_redo_ctx.lock().await;
 		*guard = Some(redo_ctx);
 	}
 
-	async fn take_current_redo_ctx(&self) -> Option<RedoCtx> {
+	async fn take_current_redo_ctx(&self) -> Option<RunRedoCtx> {
 		let mut guard = self.current_redo_ctx.lock().await;
 		guard.take()
 	}
@@ -221,7 +215,7 @@ impl Executor {
 				let mm = self.once_mm.get().await?;
 				let runtime = Runtime::new(dir_ctx, exec_sender, mm).await?;
 				let redo = exec_run(run_args, runtime).await?;
-				self.set_current_redo_ctx(redo.into()).await;
+				self.set_current_redo_ctx(redo).await;
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
@@ -229,17 +223,13 @@ impl Executor {
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
-					match redo_ctx {
-						RedoCtx::RunRedoCtx(redo_ctx_orig) => {
-							// if sucessful, we recapture the redo_ctx to have the latest agent.
-							if let Some(redo_ctx) = exec_run_redo(&redo_ctx_orig).await {
-								self.set_current_redo_ctx(redo_ctx.into()).await;
-							}
-							// if fail, we set the old one to make sure it can be retried
-							else {
-								self.set_current_redo_ctx(redo_ctx_orig.into()).await;
-							}
-						}
+					// if sucessful, we recapture the redo_ctx to have the latest agent.
+					if let Some(redo_ctx) = exec_run_redo(&redo_ctx).await {
+						self.set_current_redo_ctx(redo_ctx).await;
+					}
+					// if fail, we set the old one to make sure it can be retried
+					else {
+						self.set_current_redo_ctx(redo_ctx).await;
 					}
 				} else {
 					hub.publish(HubEvent::InfoShort("Agent currently running, wait until done.".into()))
@@ -249,7 +239,7 @@ impl Executor {
 			}
 
 			// From aip.agent.run
-			ExecActionEvent::RunAgent(run_agent_params) => {
+			ExecActionEvent::RunSubAgent(run_agent_params) => {
 				if let Err(err) = exec_run_agent(run_agent_params).await {
 					hub.publish(Error::cc("Fail to run agent", err)).await;
 				}
@@ -265,29 +255,6 @@ impl Executor {
 		Ok(())
 	}
 }
-
-// region:    --- RedoCtx
-
-#[derive(From)]
-enum RedoCtx {
-	RunRedoCtx(Arc<RunRedoCtx>),
-}
-
-impl From<RunRedoCtx> for RedoCtx {
-	fn from(run_redo_ctx: RunRedoCtx) -> Self {
-		RedoCtx::RunRedoCtx(run_redo_ctx.into())
-	}
-}
-
-impl RedoCtx {
-	pub fn get_agent(&self) -> Option<&Agent> {
-		match self {
-			RedoCtx::RunRedoCtx(redo_ctx) => Some(redo_ctx.agent()),
-		}
-	}
-}
-
-// endregion: --- RedoCtx
 
 // region:    --- ExecutorSender
 

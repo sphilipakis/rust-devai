@@ -6,26 +6,26 @@ use std::sync::Arc;
 
 /// Note: Need to be cloned to able to be part of the RedoCtx
 #[derive(Debug, Clone)]
-pub struct RunCommandOptions {
-	inner: Arc<RunCommandOptionsInner>,
+pub struct RunTopAgentParams {
+	inner: Arc<ParamsInner>,
 }
 
 #[derive(Debug)]
-pub struct RunCommandOptionsInner {
+struct ParamsInner {
 	on_file_globs: Option<Vec<String>>,
 	on_inputs: Option<Vec<String>>,
 
 	base_run_options: RunBaseOptions,
 }
 
-impl From<RunCommandOptionsInner> for RunCommandOptions {
-	fn from(inner: RunCommandOptionsInner) -> Self {
+impl From<ParamsInner> for RunTopAgentParams {
+	fn from(inner: ParamsInner) -> Self {
 		Self { inner: Arc::new(inner) }
 	}
 }
 
 /// Getters
-impl RunCommandOptions {
+impl RunTopAgentParams {
 	pub fn on_file_globs(&self) -> Option<Vec<&str>> {
 		self.inner
 			.on_file_globs
@@ -43,7 +43,7 @@ impl RunCommandOptions {
 }
 
 /// Constructors
-impl RunCommandOptions {
+impl RunTopAgentParams {
 	pub fn new(args: RunArgs) -> Result<Self> {
 		// -- Validate the run_args
 		if let (Some(_), Some(_)) = (args.on_inputs.as_ref(), args.on_files.as_ref()) {
@@ -80,7 +80,7 @@ impl RunCommandOptions {
 			open: args.open,
 		};
 
-		Ok(RunCommandOptionsInner {
+		Ok(ParamsInner {
 			on_file_globs,
 			on_inputs: args.on_inputs,
 			base_run_options,

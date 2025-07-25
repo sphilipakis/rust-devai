@@ -2,53 +2,25 @@ use super::support::open_vscode;
 use crate::agent::{Agent, find_agent};
 use crate::exec::cli::RunArgs;
 use crate::hub::{HubEvent, get_hub};
-use crate::run::RunCommandOptions;
 use crate::run::run_agent;
+use crate::run::{RunRedoCtx, RunTopAgentParams};
 use crate::runtime::Runtime;
 use crate::support::jsons::into_values;
 use crate::types::FileInfo;
 use crate::{Error, Result};
 use simple_fs::{SEventKind, SPath, list_files, watch};
-use std::sync::Arc;
-
-// region:    --- RunRedoCtx
-
-/// A Context that hold the information to redo this run
-pub struct RunRedoCtx {
-	runtime: Runtime,
-	agent: Agent,
-	run_options: RunCommandOptions,
-}
-
-/// getters
-#[allow(unused)]
-impl RunRedoCtx {
-	pub fn runtime(&self) -> &Runtime {
-		&self.runtime
-	}
-
-	pub fn agent(&self) -> &Agent {
-		&self.agent
-	}
-
-	pub fn run_options(&self) -> &RunCommandOptions {
-		&self.run_options
-	}
-}
-
-// endregion: --- RunRedoCtx
 
 /// Exec for the Run command
 /// Might do a single run or a watch
-pub async fn exec_run(run_args: RunArgs, runtime: Runtime) -> Result<Arc<RunRedoCtx>> {
+pub async fn exec_run(run_args: RunArgs, runtime: Runtime) -> Result<RunRedoCtx> {
 	// NOTE - We might be able to remove this now. Will test later.
 	tokio::task::yield_now().await;
 
 	// -- First exec
-	let redo_ctx: Arc<RunRedoCtx> = exec_run_first(run_args, runtime).await?.into();
+	let redo_ctx = exec_run_first(run_args, runtime).await?;
 
 	// -- If watch, we start the watch (will be spawned and return immediately)
-	if redo_ctx.run_options.base_run_options().watch() {
+	if redo_ctx.run_options().base_run_options().watch() {
 		exec_run_watch(redo_ctx.clone());
 	}
 
@@ -62,7 +34,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 
 	let agent = find_agent(cmd_agent_name, &runtime, None)?;
 
-	let run_options = RunCommandOptions::new(run_args)?;
+	let run_options = RunTopAgentParams::new(run_args)?;
 
 	if run_options.base_run_options().open() {
 		open_vscode(agent.file_path()).await;
@@ -73,11 +45,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 		Err(err) => hub.publish(err).await,
 	};
 
-	Ok(RunRedoCtx {
-		runtime,
-		agent,
-		run_options,
-	})
+	Ok(RunRedoCtx::new(runtime, agent, run_options))
 }
 
 /// Redo the exec_run, with its context
@@ -85,11 +53,9 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 	let hub = get_hub();
 
-	let RunRedoCtx {
-		runtime,
-		agent,
-		run_options,
-	} = run_redo_ctx;
+	let runtime = run_redo_ctx.runtime();
+	let agent = run_redo_ctx.agent();
+	let run_options = run_redo_ctx.run_options();
 
 	// make sure to reload the agent
 	let agent = match find_agent(agent.name(), runtime, None) {
@@ -101,11 +67,7 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 	};
 
 	match do_run(run_options, runtime, &agent).await {
-		Ok(_) => Some(RunRedoCtx {
-			runtime: runtime.clone(),
-			agent,
-			run_options: run_options.clone(),
-		}),
+		Ok(_) => Some(RunRedoCtx::new(runtime.clone(), agent, run_options.clone())),
 		Err(err) => {
 			hub.publish(err).await;
 			None
@@ -116,9 +78,9 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 /// Exec the run watch.
 /// NOTE: This is not async, because we want to have it run in parallel
 ///       so it will spawn it's own tokio task
-pub fn exec_run_watch(redo_ctx: Arc<RunRedoCtx>) {
+pub fn exec_run_watch(redo_ctx: RunRedoCtx) {
 	tokio::spawn(async move {
-		let watcher = match watch(redo_ctx.agent.file_path()) {
+		let watcher = match watch(redo_ctx.agent().file_path()) {
 			Ok(watcher) => watcher,
 			Err(err) => {
 				get_hub().publish(Error::from(err)).await;
@@ -156,7 +118,7 @@ pub fn exec_run_watch(redo_ctx: Arc<RunRedoCtx>) {
 }
 
 /// Do one run
-async fn do_run(run_command_options: &RunCommandOptions, runtime: &Runtime, agent: &Agent) -> Result<()> {
+async fn do_run(run_command_options: &RunTopAgentParams, runtime: &Runtime, agent: &Agent) -> Result<()> {
 	let inputs = if let Some(on_inputs) = run_command_options.on_inputs() {
 		Some(into_values(on_inputs)?)
 	} else if let Some(on_file_globs) = run_command_options.on_file_globs() {

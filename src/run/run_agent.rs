@@ -1,18 +1,15 @@
 use crate::agent::{Agent, AgentRef};
 use crate::dir_context::DirContext;
 use crate::hub::get_hub;
-use crate::run::RunBaseOptions;
 use crate::run::literals::Literals;
 use crate::run::proc_after_all::{ProcAfterAllResponse, process_after_all};
 use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
 use crate::run::run_agent_task::run_agent_task_outer;
+use crate::run::{RunAgentResponse, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::script::{serde_value_to_lua_value, serde_values_to_lua_values};
 use crate::store::rt_model::{LogKind, RuntimeCtx};
 use crate::store::{Id, Stage};
 use crate::{Error, Result};
-use mlua::IntoLua;
-use serde::Serialize;
 use serde_json::Value;
 use simple_fs::SPath;
 use tokio::task::{JoinError, JoinSet};
@@ -332,34 +329,6 @@ async fn process_join_set_res(
 	}
 }
 
-// region:    --- RunCommandResponse
-
-/// The response returned by a Run Command call.
-/// TODO: Need to check why `outputs` is optional.
-///       We might want to have an array of Null if no output or nil was returned (to keep in sync with inputs).
-#[derive(Debug, Serialize, Default)]
-pub struct RunAgentResponse {
-	pub outputs: Option<Vec<Value>>,
-	pub after_all: Option<Value>,
-}
-
-impl IntoLua for RunAgentResponse {
-	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-		let table = lua.create_table()?;
-		let outputs = self.outputs.map(|v| serde_values_to_lua_values(lua, v)).transpose()?;
-		let after_all = self.after_all.map(|v| serde_value_to_lua_value(lua, v)).transpose()?;
-		table.set("outputs", outputs)?;
-		table.set("after_all", after_all)?;
-		Ok(mlua::Value::Table(table))
-	}
-}
-
-// endregion: --- RunCommandResponse
-
-// region:    --- JoinSet Support
-
-// endregion: --- JoinSet Support
-
 // region:    --- Support
 
 /// Return the display path
@@ -389,7 +358,7 @@ pub async fn run_command_agent_input_for_test(
 	runtime: &Runtime,
 	agent: &Agent,
 	before_all: Value,
-	input: impl Serialize,
+	input: impl serde::Serialize,
 	run_base_options: &RunBaseOptions,
 ) -> Result<Option<RunAgentInputResponse>> {
 	use crate::run::run_agent_task::run_agent_task_outer;

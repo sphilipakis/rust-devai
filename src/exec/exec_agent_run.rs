@@ -1,11 +1,10 @@
 use crate::agent::find_agent;
-use crate::exec::RunAgentParams;
-use crate::run::{RunBaseOptions, run_agent};
+use crate::run::{RunBaseOptions, RunSubAgentParams, run_agent};
 use crate::{Error, Result};
 
-pub async fn exec_run_agent(params: RunAgentParams) -> Result<()> {
+pub async fn exec_run_agent(params: RunSubAgentParams) -> Result<()> {
 	// Normalize inputs to JsonValue format
-	let RunAgentParams {
+	let RunSubAgentParams {
 		runtime,
 		agent_dir,
 		agent_name,

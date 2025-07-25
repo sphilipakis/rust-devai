@@ -9,7 +9,7 @@ use simple_fs::SPath;
 
 /// Options for the agent run function
 #[derive(Debug)]
-pub struct RunAgentParams {
+pub struct RunSubAgentParams {
 	pub runtime: Runtime,
 
 	pub agent_dir: Option<SPath>,
@@ -26,7 +26,7 @@ pub struct RunAgentParams {
 	pub response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
 }
 
-impl RunAgentParams {
+impl RunSubAgentParams {
 	/// Create an simple RunAgentParams with just the Runtime and agent name / path.
 	pub fn new_no_inputs(
 		runtime: Runtime,
