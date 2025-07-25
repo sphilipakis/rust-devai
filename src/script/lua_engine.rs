@@ -2,6 +2,7 @@ use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::Literals;
 use crate::runtime::Runtime;
+use crate::script::aip_modules::aip_lua;
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
@@ -157,33 +158,38 @@ fn init_print(runtime: &Runtime, lua: &Lua) -> Result<()> {
 
 	globals.set(
 		"print",
-		lua.create_function(move |lua, args: mlua::Variadic<Value>| {
-			let output: Vec<String> = args
-				.iter()
-				.map(|arg| match arg {
-					Value::String(s) => s.to_str().map(|s| s.to_string()).unwrap_or_default(),
-					Value::Number(n) => n.to_string(),
-					Value::Integer(n) => n.to_string(),
-					Value::Boolean(b) => b.to_string(),
-					_ => "<unsupported value for print args>".to_string(),
-				})
-				.collect();
-
-			let text = output.join("\t"); // Mimics Lua's `print` by joining args with tabs
-
-			// -- Save it to rec db
-			// runtime.lo
-
-			// -- Send it to the pub event
-			let ctx = RuntimeCtx::extract_from_global(lua)?;
-			rt.rec_log_with_rt_ctx(&ctx, LogKind::AgentPrint, &text)?;
-
-			// -- For legacy tui
-			get_hub().publish_sync(HubEvent::LuaPrint(text.into()));
-
-			Ok(())
-		})?,
+		lua.create_function(move |lua, args: mlua::Variadic<Value>| lua_print(lua, &rt, args))?,
 	)?;
+
+	Ok(())
+}
+
+fn lua_print(lua: &Lua, runtime: &Runtime, args: mlua::Variadic<Value>) -> mlua::Result<()> {
+	let output: Vec<String> = args
+		.into_iter()
+		.map(|arg| match arg {
+			Value::String(s) => s.to_str().map(|s| s.to_string()).unwrap_or_default(),
+			Value::Number(n) => n.to_string(),
+			Value::Integer(n) => n.to_string(),
+			Value::Boolean(b) => b.to_string(),
+			_ => {
+				let res = aip_lua::dump(lua, arg);
+				res.unwrap_or_else(|err| format!("Cannot print content. Cause: {err}"))
+			}
+		})
+		.collect();
+
+	let text = output.join("\t"); // Mimics Lua's `print` by joining args with tabs
+
+	// -- Save it to rec db
+	// runtime.lo
+
+	// -- Send it to the pub event
+	let ctx = RuntimeCtx::extract_from_global(lua)?;
+	runtime.rec_log_with_rt_ctx(&ctx, LogKind::AgentPrint, &text)?;
+
+	// -- For legacy tui
+	get_hub().publish_sync(HubEvent::LuaPrint(text.into()));
 
 	Ok(())
 }
