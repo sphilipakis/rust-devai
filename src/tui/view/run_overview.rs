@@ -257,6 +257,12 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		// line += 1;
 	}
 
+	// -- render legend
+	// empty line
+	all_lines.push(Vec::new());
+	// build legend_line
+	all_lines.push(ui_for_legend(tasks));
+
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
 }
@@ -283,11 +289,6 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	let mut line: Vec<Span<'static>> = Vec::new();
 	let max_num = tasks_len;
-	let mut count_done = 0;
-	let mut count_waiting = 0;
-	let mut count_skip = 0;
-	let mut count_err = 0;
-	let mut count_ai = 0;
 	for task in tasks {
 		let task_block = task.ui_short_block(max_num);
 
@@ -321,7 +322,40 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 			zone_span_count,
 			Action::GoToTask { task_id },
 		);
+	}
 
+	// -- add the last line
+	all_lines.push(line);
+
+	// -- render legend
+	// empty line
+	all_lines.push(Vec::new());
+	// build legend_line
+	all_lines.push(ui_for_legend(tasks));
+
+	// -- Build the marker component
+	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
+}
+
+// endregion: --- UI Builders
+
+// region:    --- Support
+
+fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
+	let marker = vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)];
+	let marker_spacer = vec![Span::raw(" ")];
+	(marker, marker_spacer)
+}
+
+fn ui_for_legend(tasks: &[Task]) -> Vec<Span<'static>> {
+	let mut count_done = 0;
+	let mut count_waiting = 0;
+	let mut count_skip = 0;
+	let mut count_err = 0;
+	let mut count_ai = 0;
+
+	// -- Process counts
+	for task in tasks {
 		match RunningState::from(task) {
 			RunningState::NotScheduled => (), // this is for other state, ignore for now.
 			RunningState::Waiting => count_waiting += 1,
@@ -340,13 +374,7 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		}
 	}
 
-	// -- add the last line
-	all_lines.push(line);
-
-	// -- render legend
-	// empty line
-	all_lines.push(Vec::new());
-	// build legend_line
+	// -- Build the UI
 	let num_width = 4;
 	let mut legend_line = vec![
 		// The Done
@@ -370,20 +398,7 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		legend_line.push(Span::raw(format!(" {count_err:<num_width$} ")));
 	}
 
-	all_lines.push(legend_line);
-
-	// -- Build the marker component
-	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
-}
-
-// endregion: --- UI Builders
-
-// region:    --- Support
-
-fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
-	let marker = vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)];
-	let marker_spacer = vec![Span::raw(" ")];
-	(marker, marker_spacer)
+	legend_line
 }
 
 // endregion: --- Support
