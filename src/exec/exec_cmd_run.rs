@@ -164,6 +164,7 @@ async fn do_run(run_command_options: &RunTopAgentParams, runtime: &Runtime, agen
 
 	run_agent(
 		runtime,
+		None,
 		agent.clone(),
 		inputs,
 		run_command_options.base_run_options(),

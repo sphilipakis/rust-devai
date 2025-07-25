@@ -14,12 +14,13 @@
 //! - `aip.agent.run(agent_name: string, options?: table): any`
 //! - `aip.agent.extract_options(value: any): table | nil`
 
-use crate::Result;
 use crate::event::new_one_shot_channel;
 use crate::run::RunAgentResponse;
 use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
+use crate::store::rt_model::RuntimeCtx;
+use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
 
@@ -45,7 +46,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.agent.run(agent_name: string, options?: table): any
+/// aip.agent.run(agent_name: string, params?: table): any
 /// ```
 ///
 /// Executes the agent specified by `agent_name`. The function waits for the called agent
@@ -57,25 +58,29 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///   (e.g., `"../my-other-agent.aip"`) or a fully qualified pack reference
 ///   (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
 ///   from the directory of the calling agent.
-/// - `options?: table`: An optional table containing input data and agent options.
-///   - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
+/// - `params?: table`: An optional table containing input data and agent options.
+///   - `inputs?: list`: Must be a list of input. e.g. `inputs = { "one", "two" }` will be two inputs
 ///   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
 ///     execution environment and can override settings defined in the called agent's `.aip` file.
 ///
 /// #### Input Examples:
 ///
 /// ```lua
-/// -- Run an agent with a single string input
-/// local response = aip.agent.run("agent-name", { inputs = "hello" })
+/// -- Run an agent with a single input
+/// local response = aip.agent.run("agent-name", { inputs = { "hello" } })
 ///
 /// -- Run an agent with multiple string inputs
 /// local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })
 ///
-/// -- Run an agent with structured inputs (e.g., file records)
+/// -- Run an agent with structured inputs (e.g., file records) and with genai options
 /// local response = aip.agent.run("agent-name", {
 ///   inputs = {
 ///     { path = "file1.txt", content = "..." },
 ///     { path = "file2.txt", content = "..." }
+///   },
+///   options = {
+///     model = "gpt-4.1-mini",
+///     input_concurrency = 5
 ///   }
 /// })
 /// ```
@@ -114,18 +119,28 @@ pub fn aip_agent_run(
 	lua: &Lua,
 	runtime: &Runtime,
 	agent_name: String,
-	run_options: Option<Value>,
+	run_params: Option<Value>,
 ) -> mlua::Result<Value> {
 	let agent_dir = get_agent_dir_from_lua(lua);
 
 	// -- Parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
 	let (tx, rx) = new_one_shot_channel::<Result<RunAgentResponse>>("agent-run");
-	let run_agent_params = match run_options {
-		Some(run_options) => {
-			RunSubAgentParams::new_from_lua_params(runtime.clone(), agent_dir, agent_name, Some(tx), run_options, lua)?
-		}
-		None => RunSubAgentParams::new_no_inputs(runtime.clone(), agent_dir, agent_name, Some(tx)),
-	};
+
+	let rt_ctx = RuntimeCtx::extract_from_global(lua)?;
+	let parent_uid = rt_ctx
+		.run_uid()
+		.ok_or(Error::custom("Cannot call agent, no parent run uid found"))?;
+
+	let run_agent_params = RunSubAgentParams::new(
+		//
+		lua,
+		runtime.clone(),
+		parent_uid,
+		agent_dir,
+		agent_name,
+		Some(tx),
+		run_params,
+	)?;
 
 	// NOTE: Needs to use the send_sync_spawn_and_block, otherwise, message not sent as it wait for this CmdRun to complete
 	runtime.executor_sender().send_sync_spawn_and_block(run_agent_params.into())?;

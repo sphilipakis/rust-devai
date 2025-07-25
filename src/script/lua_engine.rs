@@ -51,6 +51,9 @@ impl LuaEngine {
 			if let Some(run_uid) = rt_ctx.run_uid() {
 				ctx.set("RUN_UID", run_uid.to_string())?;
 			}
+			if let Some(parent_run_uid) = rt_ctx.parent_run_uid() {
+				ctx.set("PARENT_RUN_UID", parent_run_uid.to_string())?;
+			}
 			if let Some(task_uid) = rt_ctx.task_uid() {
 				ctx.set("TASK_UID", task_uid.to_string())?;
 			}

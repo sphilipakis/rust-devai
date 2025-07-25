@@ -48,6 +48,13 @@ pub struct Run {
 	pub label: Option<String>,
 }
 
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+pub struct RunForIds {
+	pub id: Id,
+	pub uid: Uuid,
+	pub parent_id: Option<Id>,
+}
+
 impl Run {
 	pub fn is_done(&self) -> bool {
 		self.end.is_some()
@@ -147,6 +154,26 @@ impl RunBmc {
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>) -> Result<Vec<Run>> {
 		base::list::<Self, _>(mm, list_options, None)
 	}
+}
+
+pub struct RunForUids {
+	#[allow(unused)]
+	pub id: Id,
+	pub uid: Uuid,
+	pub parent_uid: Option<Uuid>,
+}
+
+/// RunBmc specifics
+impl RunBmc {
+	pub fn get_uids(mm: &ModelManager, id: Id) -> Result<RunForUids> {
+		let RunForIds { id, uid, parent_id } = base::get::<Self, RunForIds>(mm, id)?;
+		let parent_uid = if let Some(parent_id) = parent_id {
+			Some(RunBmc::get_uid(mm, parent_id)?)
+		} else {
+			None
+		};
+		Ok(RunForUids { id, uid, parent_uid })
+	}
 
 	pub fn list_for_display(mm: &ModelManager, limit: Option<i64>) -> Result<Vec<Run>> {
 		let mut options = ListOptions::from_order_bys("!id");
@@ -183,35 +210,6 @@ impl RunBmc {
 
 		Ok(())
 	}
-
-	// pub fn end_with_error(mm: &ModelManager, run_id: Id, error: &crate::error::Error) -> Result<()> {
-	// 	use crate::store::ContentTyp;
-	// 	use crate::store::rt_model::{ErrBmc, ErrForCreate};
-
-	// 	// -- Create the err rec
-	// 	let err_c = ErrForCreate {
-	// 		stage: None,
-	// 		run_id: Some(run_id),
-	// 		task_id: None,
-	// 		typ: Some(ContentTyp::Text),
-	// 		content: Some(error.to_string()),
-	// 	};
-	// 	let err_id = ErrBmc::create(mm, err_c)?;
-
-	// 	// -- Update the run
-	// 	let run_u = RunForUpdate {
-	// 		end: Some(now_micro().into()),
-	// 		end_state: Some(EndState::Err),
-	// 		end_err_id: Some(err_id),
-	// 		..Default::default()
-	// 	};
-	// 	Self::update(mm, run_id, run_u)?;
-
-	// 	// -- Now update all the tasks of the run
-	// 	TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
-
-	// 	Ok(())
-	// }
 }
 
 // endregion: --- Bmc

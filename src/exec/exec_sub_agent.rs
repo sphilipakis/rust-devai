@@ -6,6 +6,7 @@ pub async fn exec_run_sub_agent(params: RunSubAgentParams) -> Result<()> {
 	// Normalize inputs to JsonValue format
 	let RunSubAgentParams {
 		runtime,
+		parent_uid,
 		agent_dir,
 		agent_name,
 		inputs,
@@ -31,7 +32,7 @@ pub async fn exec_run_sub_agent(params: RunSubAgentParams) -> Result<()> {
 	// NOTE: For now, do not inherit the parent run, But eventually mgith be past in the RunAgentParams
 	let run_base_options = RunBaseOptions::default();
 
-	let result = run_agent(&runtime, agent, inputs, &run_base_options, true)
+	let result = run_agent(&runtime, Some(parent_uid), agent, inputs, &run_base_options, true)
 		.await
 		.map_err(|e| Error::custom(format!("Failed to run agent '{agent_name}': {e}")));
 

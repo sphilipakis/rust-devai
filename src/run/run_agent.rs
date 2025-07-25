@@ -16,11 +16,13 @@ use tokio::task::{JoinError, JoinSet};
 
 #[cfg(test)]
 use crate::run::run_agent_task::RunAgentInputResponse;
+use uuid::Uuid;
 
 const DEFAULT_CONCURRENCY: usize = 1;
 
 pub async fn run_agent(
 	runtime: &Runtime,
+	parent_uid: Option<Uuid>,
 	agent: Agent,
 	inputs: Option<Vec<Value>>,
 	run_base_options: &RunBaseOptions,
@@ -38,7 +40,7 @@ pub async fn run_agent(
 	};
 
 	// -- Rt Create - New run
-	let run_id = rt_model.create_run(None, agent.name(), &agent_path).await?;
+	let run_id = rt_model.create_run(parent_uid, agent.name(), &agent_path).await?;
 
 	// -- Rt Step - Start Run
 	let run_id = rt_step.step_run_start(run_id).await?;

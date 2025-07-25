@@ -6,11 +6,14 @@ use crate::runtime::Runtime;
 use crate::script::{LuaValueExt as _, lua_value_to_serde_value};
 use mlua::{FromLua, Lua};
 use simple_fs::SPath;
+use uuid::Uuid;
 
 /// Options for the agent run function
 #[derive(Debug)]
 pub struct RunSubAgentParams {
 	pub runtime: Runtime,
+
+	pub parent_uid: Uuid,
 
 	pub agent_dir: Option<SPath>,
 
@@ -27,32 +30,25 @@ pub struct RunSubAgentParams {
 }
 
 impl RunSubAgentParams {
-	/// Create an simple RunAgentParams with just the Runtime and agent name / path.
-	pub fn new_no_inputs(
-		runtime: Runtime,
-		agent_dir: Option<SPath>,
-		agent_name: impl Into<String>,
-		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
-	) -> Self {
-		Self {
-			runtime,
-			agent_dir,
-			agent_name: agent_name.into(),
-			response_shot,
-			inputs: None,
-			agent_options: None,
-		}
-	}
-
-	pub fn new_from_lua_params(
-		runtime: Runtime,
-		agent_dir: Option<SPath>,
-		agent_name: impl Into<String>,
-		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
-		params: mlua::Value,
+	pub fn new(
 		lua: &Lua,
+		runtime: Runtime,
+		parent_uid: Uuid,
+		agent_dir: Option<SPath>,
+		agent_name: impl Into<String>,
+		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
+		params: Option<mlua::Value>,
 	) -> mlua::Result<Self> {
-		let inputs = params.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
+		let (inputs, agent_options) = if let Some(params) = params {
+			let inputs = params.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
+			let agent_options = params
+				.x_get_value("options")
+				.map(|o| AgentOptions::from_lua(o, lua))
+				.transpose()?;
+			(inputs, agent_options)
+		} else {
+			(None, None)
+		};
 
 		// extract the inputs
 		let inputs = match inputs {
@@ -65,14 +61,10 @@ impl RunSubAgentParams {
 				.into());
 			}
 		};
-		// Extract the agent options
-		let agent_options = params
-			.x_get_value("options")
-			.map(|o| AgentOptions::from_lua(o, lua))
-			.transpose()?;
 
 		Ok(Self {
 			runtime,
+			parent_uid,
 			agent_dir,
 			agent_name: agent_name.into(),
 			inputs,
