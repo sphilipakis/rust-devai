@@ -18,9 +18,14 @@ impl Task {
 		}
 	}
 
-	pub fn ui_label(&self, width: u16, tasks_len: usize) -> Vec<Span<'static>> {
+	pub fn ui_label(&self, prefix: Option<&'static str>, width: u16, tasks_len: usize) -> Vec<Span<'static>> {
 		// base spans with the running icon
-		let mut spans = vec![comp::el_running_ico(self), Span::raw(" ")];
+		let mut spans: Vec<Span<'static>> = Vec::new();
+		if let Some(prefix) = prefix {
+			spans.push(Span::raw(prefix));
+		}
+		spans.push(comp::el_running_ico(self));
+		spans.push(Span::raw(" "));
 
 		// compute & add label text and width
 		let label = self.fmt_label(tasks_len);

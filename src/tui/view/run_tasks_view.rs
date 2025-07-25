@@ -131,7 +131,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state
 		.iter()
 		.enumerate()
 		.map(|(idx, task)| {
-			let mut line = Line::from(task.ui_label(area.width, tasks_len));
+			let mut line = Line::from(task.ui_label(Some(" "), area.width, tasks_len));
 			if task_sel_idx == idx {
 				line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
 			} else if is_mouse_in_nav && state.is_last_mouse_over(tasks_list_a.x_row((idx + 1) as u16 - scroll)) {

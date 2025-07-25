@@ -221,7 +221,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 
 	// --  Build the UI lines
 	for (idx, task) in tasks.iter().enumerate() {
-		let mut task_line = task.ui_label(label_a.width, tasks_len);
+		let mut task_line = task.ui_label(None, label_a.width, tasks_len);
 		let task_id = task.id;
 
 		// -- Link Zone
