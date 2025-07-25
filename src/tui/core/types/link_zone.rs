@@ -24,6 +24,10 @@ impl LinkZones {
 		self.current_line = current_line;
 	}
 
+	pub fn inc_current_line_by(&mut self, amount: usize) {
+		self.current_line += amount;
+	}
+
 	pub fn push_link_zone(&mut self, rel_line_idx: usize, span_start: usize, span_count: usize, action: Action) {
 		let line_idx = self.current_line + rel_line_idx;
 		self.zones.push(LinkZone::new(line_idx, span_start, span_count, action));

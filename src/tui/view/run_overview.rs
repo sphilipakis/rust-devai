@@ -205,6 +205,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	all_lines.push(ui_for_legend(tasks));
 	all_lines.push(Vec::new());
 
+	link_zones.inc_current_line_by(all_lines.len());
+
 	// -- Layout
 	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
 		.direction(Direction::Horizontal)
@@ -254,9 +256,6 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 			let output_spans = task.ui_output(output_a.width);
 			task_line.extend(output_spans);
 		}
-
-		// -- Add Sum iteams
-		// task_line.extend(task.ui_sum_spans());
 
 		all_lines.push(task_line);
 
