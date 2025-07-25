@@ -1,12 +1,14 @@
 use crate::Result;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
+use crate::store::base::DbBmc;
 use crate::store::rt_model::{
 	LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate, TaskBmc, TaskForCreate, TaskForUpdate,
 };
 use crate::store::{EndState, Id, ModelManager, Stage, TypedContent};
 use derive_more::From;
 use serde_json::Value;
+use uuid::Uuid;
 
 #[derive(Debug, From)]
 pub struct RtModel<'a> {
@@ -26,13 +28,20 @@ impl<'a> RtModel<'a> {
 
 /// Run Create/Update model
 impl<'a> RtModel<'a> {
-	pub async fn create_run(&self, agent_name: &str, agent_path: &str) -> Result<Id> {
+	pub async fn create_run(&self, parent_uid: Option<Uuid>, agent_name: &str, agent_path: &str) -> Result<Id> {
 		let hub = get_hub();
+
+		let parent_id = if let Some(uid) = parent_uid {
+			Some(RunBmc::get_id_for_uid(self.mm(), uid)?)
+		} else {
+			None
+		};
 
 		// -- Create Run
 		let run_id = RunBmc::create(
 			self.mm(),
 			RunForCreate {
+				parent_id,
 				agent_name: Some(agent_name.to_string()),
 				agent_path: Some(agent_path.to_string()),
 			},

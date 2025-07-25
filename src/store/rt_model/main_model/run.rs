@@ -12,6 +12,8 @@ pub struct Run {
 	pub id: Id,
 	pub uid: Uuid,
 
+	pub parent_id: Option<Id>,
+
 	pub ctime: UnixTimeUs,
 	pub mtime: UnixTimeUs,
 
@@ -62,6 +64,7 @@ impl Run {
 pub struct RunForCreate {
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
+	pub parent_id: Option<Id>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -230,6 +233,7 @@ mod tests {
 		let run_c = RunForCreate {
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
+			parent_id: None,
 		};
 
 		// -- Exec
@@ -246,6 +250,7 @@ mod tests {
 		// -- Fixture
 		let mm = ModelManager::new().await?;
 		let run_c = RunForCreate {
+			parent_id: None,
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
 		};
@@ -271,6 +276,7 @@ mod tests {
 		let mm = ModelManager::new().await?;
 		for i in 0..3 {
 			let run_c = RunForCreate {
+				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
 			};
@@ -315,6 +321,7 @@ mod tests {
 		let mm = ModelManager::new().await?;
 		for i in 0..3 {
 			let run_c = RunForCreate {
+				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
 			};

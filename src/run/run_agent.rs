@@ -38,7 +38,7 @@ pub async fn run_agent(
 	};
 
 	// -- Rt Create - New run
-	let run_id = rt_model.create_run(agent.name(), &agent_path).await?;
+	let run_id = rt_model.create_run(None, agent.name(), &agent_path).await?;
 
 	// -- Rt Step - Start Run
 	let run_id = rt_step.step_run_start(run_id).await?;

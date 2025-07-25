@@ -63,6 +63,7 @@ impl ModelManager {
 
 		for i in 0..10 {
 			let run_c = RunForCreate {
+				parent_id: None,
 				agent_name: Some(format!("agent_name-{i}")),
 				agent_path: Some(format!("agent_path-{i}")),
 			};

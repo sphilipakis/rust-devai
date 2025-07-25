@@ -22,8 +22,10 @@ const RUN_TABLE: (&str, &str) = (
 	"run",
 	"
 CREATE TABLE IF NOT EXISTS run (
-		id     INTEGER PRIMARY KEY AUTOINCREMENT,
-		uid    BLOB NOT NULL,
+		id          INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid         BLOB NOT NULL,
+
+		parent_id   INTEGER,
 
 		ctime  INTEGER NOT NULL,
 		mtime  INTEGER NOT NULL,						

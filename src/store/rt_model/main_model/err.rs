@@ -124,6 +124,7 @@ mod tests {
 
 	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
 		let run_c = RunForCreate {
+			parent_id: None,
 			agent_name: Some(label.to_string()),
 			agent_path: Some(format!("path/{label}")),
 		};

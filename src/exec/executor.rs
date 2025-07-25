@@ -2,8 +2,8 @@
 //! Will create it's own queue and listen to ExecCommand events.
 
 use crate::exec::event_action::ExecActionEvent;
-use crate::exec::exec_agent_run::exec_run_agent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
+use crate::exec::exec_sub_agent::exec_run_sub_agent;
 use crate::exec::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::exec::support::open_vscode;
 use crate::exec::{
@@ -250,7 +250,7 @@ impl Executor {
 
 			// From aip.agent.run
 			ExecActionEvent::RunSubAgent(run_agent_params) => {
-				if let Err(err) = exec_run_agent(run_agent_params).await {
+				if let Err(err) = exec_run_sub_agent(run_agent_params).await {
 					hub.publish(Error::cc("Fail to run agent", err)).await;
 				}
 			}
