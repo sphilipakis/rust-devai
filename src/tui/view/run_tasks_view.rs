@@ -45,11 +45,22 @@ impl StatefulWidget for RunTasksView {
 			.spacing(1)
 			.areas(area);
 
+		// -- Process the go to task
+		let mut selection_in_view = false;
+		if let Some(Action::GoToTask { task_id }) = state.action() {
+			if let Some(task_idx) = state.tasks().iter().position(|t| t.id == *task_id) {
+				state.set_task_idx(Some(task_idx));
+				selection_in_view = true;
+			}
+			// Make sure we clear the action even if task_idx was not found
+			state.clear_action();
+		}
+
 		// -- Render tasks nav
 		// IMPORTANT: Need to display nav first,
 		//            because it will process the mouse event for task selection.
 		if show_tasks_nav {
-			render_tasks_nav(nav_a, buf, state);
+			render_tasks_nav(nav_a, buf, selection_in_view, state);
 		} else {
 			state.clear_scroll_zone_area(&RunTasksView::TASKS_NAV_SCROLL_IDEN);
 		}
@@ -77,7 +88,7 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
 	}
 }
 
-fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
+fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state: &mut AppState) {
 	const SCROLL_IDEN: ScrollIden = RunTasksView::TASKS_NAV_SCROLL_IDEN;
 
 	// -- Render background
@@ -104,18 +115,6 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	state.set_scroll_area(SCROLL_IDEN, tasks_list_a);
 	let tasks_len = state.tasks().len();
 	let mut scroll = state.clamp_scroll(SCROLL_IDEN, tasks_len);
-
-	// -- Process the Action GoToTask
-	let mut selection_in_view = false;
-	if let Some(Action::GoToTask { task_id }) = state.action() {
-		if let Some(task_idx) = state.tasks().iter().position(|t| t.id == *task_id) {
-			state.set_task_idx(Some(task_idx));
-			// NOTE: This tab "consume the action"
-			state.clear_action();
-			selection_in_view = true;
-		}
-	}
-	let selection_in_view = selection_in_view;
 
 	// -- Process UI Event
 	// NOTE: Mouse processing (task selection) must occur before building the tasks UI to ensure the selection is up-to-date.
