@@ -198,6 +198,13 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let gap_span = Span::raw("  ");
 	let gap_width = gap_span.width() as u16;
 
+	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
+
+	// -- render legend (on top of list)
+	// build legend_line
+	all_lines.push(ui_for_legend(tasks));
+	all_lines.push(Vec::new());
+
 	// -- Layout
 	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
 		.direction(Direction::Horizontal)
@@ -213,7 +220,6 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		.areas(Rect::new(0, 0, content_width, 1));
 
 	// --  Build the UI lines
-	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
 	for (idx, task) in tasks.iter().enumerate() {
 		let mut task_line = task.ui_label(label_a.width, tasks_len);
 		let task_id = task.id;
@@ -257,12 +263,6 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		// line += 1;
 	}
 
-	// -- render legend
-	// empty line
-	all_lines.push(Vec::new());
-	// build legend_line
-	all_lines.push(ui_for_legend(tasks));
-
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
 }
@@ -285,8 +285,14 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let gap_span = Span::raw(" ");
 	let gap_width = gap_span.width() as u16;
 
-	// -- Render
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
+
+	// -- render legend (on top of list)
+	// build legend_line
+	all_lines.push(ui_for_legend(tasks));
+	all_lines.push(Vec::new());
+
+	// -- Render tasks
 	let mut line: Vec<Span<'static>> = Vec::new();
 	let max_num = tasks_len;
 	for task in tasks {
@@ -326,12 +332,6 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 
 	// -- add the last line
 	all_lines.push(line);
-
-	// -- render legend
-	// empty line
-	all_lines.push(Vec::new());
-	// build legend_line
-	all_lines.push(ui_for_legend(tasks));
 
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
