@@ -33,7 +33,7 @@ impl Literals {
 
 		let session_str = runtime.session_str();
 
-		store.push(("SESSION", session_str.to_string()));
+		store.push(("SESSION_UID", session_str.to_string()));
 
 		if let Some(tmp_dir) = aipack_paths.tmp_dir(runtime.session()) {
 			store.push(("TMP_DIR", tmp_dir.to_string()))
@@ -131,7 +131,7 @@ mod tests {
 		let script = r#"
 return {
 		TMP_DIR                     = CTX.TMP_DIR,
-		SESSION                     = CTX.SESSION,
+		SESSION_UID                 = CTX.SESSION_UID,
 	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
 		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
 		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
@@ -150,7 +150,7 @@ return {
 
 		// -- Check
 		// check session
-		let session = res.x_get_str("SESSION")?;
+		let session = res.x_get_str("SESSION_UID")?;
 		assert_eq!(session.len(), 36);
 		assert_contains(session, "-7"); // v7
 		// check tmp_dir

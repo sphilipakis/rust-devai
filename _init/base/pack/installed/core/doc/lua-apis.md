@@ -3468,7 +3468,11 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 | CTX.AGENT_FILE_NAME      | `my-agent.aip`                                                           | The base name of the my-agent file.                               |
 | CTX.AGENT_FILE_STEM      | `my-agent`                                                               | The base name of the agent file without extension.                |
 | CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
-| CTX.SESSION              | `0196adbf-b792-7070-a5be-eec26698c065`                                   | The Session ID of this `aip run ...` until it is terminated       |
+| CTX.SESSION_UID          | `0196adbf-b792-7070-a5be-eec26698c065`                                   | The Session Unique ID for this CLI Session                        |
+| CTX.RUN_UID              | `0196adbf-b792-7070-a5be-ddc33698c065`                                   | The Run Unique ID                                                 |
+| CTX.TASK_UID             | `0196adbf-b792-7070-a5be-aac55698c065`                                   | The Task Unique ID (when in a task stage)                         |
+
+
 
 When running a pack. (when no packs, those will be all nil)
 

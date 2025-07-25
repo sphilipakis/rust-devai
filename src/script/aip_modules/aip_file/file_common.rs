@@ -1166,7 +1166,7 @@ local path = CTX.TMP_DIR .. "/{fx_path}"
 aip.file.save(path,"{fx_content}")
 return {{
    file    = aip.file.load(path),
-	 session = CTX.SESSION
+	 session = CTX.SESSION_UID
 }}
 		"#
 		);
@@ -1198,7 +1198,7 @@ return {{
 	return {{
 	   file    = aip.file.load(path),
 		 files   = files,
-		 session = CTX.SESSION
+		 session = CTX.SESSION_UID
 	}}
 			"#
 		);
