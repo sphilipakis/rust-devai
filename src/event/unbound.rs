@@ -2,6 +2,12 @@
 //! - Use flume for async/sync convenient
 //! - Implement send(impl Into)
 //! - Default to async and _sync suffix for sync
+//!
+//! A good way to wrap a Event type to provide a domain type:
+//! ```rust
+//! #[derive(Clone, From, Deref)]
+//! pub struct RunQueueTx(Tx<RunQueueEvent>);
+//! ```
 
 use crate::{Error, Result};
 
@@ -16,6 +22,7 @@ pub fn new_channel<T>(name: &'static str) -> (Tx<T>, Rx<T>) {
 // region:    --- Tx
 
 // Tx with the channel name
+#[derive(Debug)]
 pub struct Tx<T>(flume::Sender<T>, &'static str);
 
 impl<T> Tx<T> {

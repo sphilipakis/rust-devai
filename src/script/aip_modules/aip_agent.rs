@@ -127,17 +127,12 @@ pub fn aip_agent_run(
 		None => RunSubAgentParams::new_no_inputs(runtime.clone(), agent_dir, agent_name, Some(tx)),
 	};
 
-	let exec_sender = runtime.executor_sender();
-	exec_sender.send_sync(run_agent_params.into());
+	// NOTE: Needs to use the send_sync_spawn_and_block, otherwise, message not sent as it wait for this CmdRun to complete
+	runtime.executor_sender().send_sync_spawn_and_block(run_agent_params.into())?;
+	let res = rx.recv();
+	let run_agent_response = res??;
 
-	// -- Wait for the result
-	let run_agent_response = rx.recv()?;
-
-	// -- Process the result
-	let run_agent_response = run_agent_response?;
-	let run_command_response = run_agent_response.into_lua(lua)?;
-
-	Ok(run_command_response)
+	run_agent_response.into_lua(lua)
 }
 
 /// ## Lua Documentation

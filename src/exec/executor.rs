@@ -18,7 +18,7 @@ use crate::exec::{
 	exec_xelf_setup, // Added import
 };
 use crate::hub::{HubEvent, get_hub};
-use crate::run::RunRedoCtx;
+use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
 use crate::store::OnceModelManager;
 use crate::{Error, Result};
@@ -26,6 +26,7 @@ use flume::{Receiver, Sender};
 use simple_fs::SPath;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use tokio::runtime::Handle;
 use tokio::sync::Mutex;
 
 /// The executor executes all actions of the system.
@@ -56,18 +57,25 @@ pub struct Executor {
 	/// Tracks the number of active execution actions
 	/// Used to send StartExec and EndExec events only when needed
 	active_actions: Arc<AtomicUsize>,
+
+	/// NOT USED YET
+	#[allow(unused)]
+	run_queue_tx: RunQueueTx,
 }
 
 /// Contructor
 impl Executor {
 	pub fn new(once_mm: OnceModelManager) -> Self {
 		let (tx, rx) = flume::unbounded();
+		let run_executor = RunQueueExecutor::new();
+		let run_queue_tx = run_executor.start();
 		Executor {
 			once_mm,
 			action_rx: rx,
 			action_sender: ExecutorTx::new(tx),
 			current_redo_ctx: Default::default(),
 			active_actions: Arc::new(AtomicUsize::new(0)),
+			run_queue_tx,
 		}
 	}
 }
@@ -111,11 +119,13 @@ impl Executor {
 /// Runner
 impl Executor {
 	pub async fn start(self) -> Result<()> {
+		// NOTE: This pattern of Arc itself and clone per action might need to be revisited.
 		let executor = Arc::new(self);
 
 		loop {
 			let Ok(action) = executor.action_rx.recv_async().await else {
 				println!("!!!! Aipack Executor: Channel closed");
+				tracing::error!("Aipack Executor: Channel closed");
 				break;
 			};
 
@@ -273,13 +283,7 @@ impl ExecutorTx {
 		ExecutorTx { tx }
 	}
 
-	pub fn send_sync(&self, event: ExecActionEvent) {
-		let event_str: &'static str = (&event).into();
-		if let Err(err) = self.tx.send(event) {
-			get_hub().publish_err_sync(format!("Fail to send action event {event_str}"), Some(err));
-		}
-	}
-
+	/// This is preferred send when possible
 	pub async fn send(&self, event: ExecActionEvent) {
 		let event_str: &'static str = (&event).into();
 		if let Err(err) = self.tx.send_async(event).await {
@@ -287,6 +291,40 @@ impl ExecutorTx {
 				.publish_err(format!("Fail to send action event {event_str}"), Some(err))
 				.await;
 		};
+	}
+
+	/// Send the message using flume sync send.
+	///
+	/// NOTE: This uses the flume synchronous send, which works well in most scenarios.
+	///       However, when the queue handle each event in its own spawn, as tthe executor does
+	///       this will only received when the previous event is completed (this was the issue with aip_agent run).
+	///       This is why we have the send_sync_spawn_and_block below.
+	pub fn send_sync(&self, event: ExecActionEvent) {
+		let event_str: &'static str = (&event).into();
+		if let Err(err) = self.tx.send(event) {
+			get_hub().publish_err_sync(format!("Fail to send action event {event_str}"), Some(err));
+		}
+	}
+
+	/// Use this when sending to the same queue from a sync function
+	/// and we want the event to be processed in parallel
+	/// (which Executor queue allows because each event processing is its own spawn)
+	/// This should be used in all aip_... call when there are.
+	/// NOTE: Eventually, we might have another queue for running agent, so aip_agent run might use that other queue
+	pub fn send_sync_spawn_and_block(&self, event: ExecActionEvent) -> Result<()> {
+		if let Ok(handle) = Handle::try_current() {
+			//
+			tokio::task::block_in_place(|| {
+				handle.block_on(async {
+					self.send(event).await;
+				})
+			});
+			Ok(())
+		} else {
+			Err(Error::custom(
+				"Executor Tx send_sync_block_on failed because no current tokio handle",
+			))
+		}
 	}
 }
 
