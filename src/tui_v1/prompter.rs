@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::support::event::{OneShotRx, OneShotTx, oneshot};
+use crate::event::{OneShotRx, OneShotTx, new_one_shot_channel};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 // region:    --- Types
@@ -13,7 +13,7 @@ pub struct PromptParams {
 impl PromptParams {
 	pub fn new(message: impl Into<String>) -> (Self, OneShotRx<String>) {
 		let message = message.into();
-		let (tx, rx) = oneshot::<String>();
+		let (tx, rx) = new_one_shot_channel::<String>("prompt-param-one-shot");
 		(
 			Self {
 				message,
@@ -26,7 +26,7 @@ impl PromptParams {
 
 // endregion: --- Types
 
-pub async fn prompt(param: &PromptParams) -> Result<()> {
+pub async fn prompt(param: PromptParams) -> Result<()> {
 	let PromptParams { message, one_shot_res } = param;
 
 	let mut stdout = io::stdout();
@@ -38,7 +38,7 @@ pub async fn prompt(param: &PromptParams) -> Result<()> {
 
 	stdin.read_line(&mut input).await?;
 
-	one_shot_res.send_async(input).await?;
+	one_shot_res.send(input).await?;
 
 	Ok(())
 }

@@ -7,9 +7,9 @@ use crate::tui_v1::PromptParams;
 pub async fn hub_prompt(hub: &Hub, msg: impl Into<String>) -> Result<String> {
 	let (params, rx) = PromptParams::new(msg);
 
-	hub.publish(HubEvent::Prompt(params.into())).await;
+	hub.publish(HubEvent::Prompt(params)).await;
 
-	let result = rx.recv_async().await?;
+	let result = rx.recv().await?;
 
 	Ok(result)
 }

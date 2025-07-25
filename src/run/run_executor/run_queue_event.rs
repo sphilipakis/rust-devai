@@ -21,6 +21,7 @@ impl RunQueueMessage {
 }
 
 #[derive(Debug, From)]
+#[allow(clippy::large_enum_variant)]
 pub enum RunQueueAction {
 	RunTopAgent(RunTopAgentParams),
 	RunSubAgent(RunSubAgentParams),

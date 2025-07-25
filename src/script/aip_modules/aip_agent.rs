@@ -15,11 +15,11 @@
 //! - `aip.agent.extract_options(value: any): table | nil`
 
 use crate::Result;
+use crate::event::new_one_shot_channel;
 use crate::run::RunAgentResponse;
 use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::support::event::oneshot;
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
 
@@ -119,7 +119,7 @@ pub fn aip_agent_run(
 	let agent_dir = get_agent_dir_from_lua(lua);
 
 	// -- Parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
-	let (tx, rx) = oneshot::<Result<RunAgentResponse>>();
+	let (tx, rx) = new_one_shot_channel::<Result<RunAgentResponse>>("agent-run");
 	let run_agent_params = match run_options {
 		Some(run_options) => {
 			RunSubAgentParams::new_from_lua_params(runtime.clone(), agent_dir, agent_name, Some(tx), run_options, lua)?
@@ -129,7 +129,7 @@ pub fn aip_agent_run(
 
 	// NOTE: Needs to use the send_sync_spawn_and_block, otherwise, message not sent as it wait for this CmdRun to complete
 	runtime.executor_sender().send_sync_spawn_and_block(run_agent_params.into())?;
-	let res = rx.recv();
+	let res = rx.recv_sync();
 	let run_agent_response = res??;
 
 	run_agent_response.into_lua(lua)

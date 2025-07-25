@@ -39,7 +39,7 @@ pub async fn exec_run_agent(params: RunSubAgentParams) -> Result<()> {
 		Some(response_shot) => {
 			match result {
 				Ok(result) => {
-					if let Err(err) = response_shot.send_async(Ok(result)).await {
+					if let Err(err) = response_shot.send(Ok(result)).await {
 						return Err(Error::custom(format!(
 							"Failed to send response to agent '{agent_name}': {err}"
 						)));
@@ -47,7 +47,7 @@ pub async fn exec_run_agent(params: RunSubAgentParams) -> Result<()> {
 				}
 				Err(err) => {
 					// Handle the error case
-					if let Err(err) = response_shot.send_async(Err(Error::custom(err.to_string()))).await {
+					if let Err(err) = response_shot.send(Err(Error::custom(err.to_string()))).await {
 						return Err(Error::custom(format!(
 							"Failed to send response to agent '{agent_name}': {err}"
 						)));

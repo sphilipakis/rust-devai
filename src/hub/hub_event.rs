@@ -15,7 +15,7 @@ use std::sync::Arc;
 /// - and others as they come along
 ///
 /// Note: Also, more context will be added to those events for better reporting and such.
-#[derive(Debug, Clone, From)]
+#[derive(Debug, From)]
 pub enum HubEvent {
 	Message(Arc<str>),
 
@@ -33,7 +33,7 @@ pub enum HubEvent {
 
 	Print(Arc<PrintEvent>),
 
-	Prompt(Arc<PromptParams>),
+	Prompt(PromptParams),
 
 	// Used to ping the tui2 AppEvent to refresh
 	RtModelChange,
