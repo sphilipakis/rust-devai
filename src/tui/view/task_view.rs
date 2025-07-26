@@ -135,10 +135,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	state.set_scroll_area(SCROLL_IDEN, area);
 
 	// -- Get the current task (return early)
-	let Some(run) = state.current_run() else {
+	let Some(run_item) = state.current_run_item() else {
 		Line::raw("No Current Run").render(area, buf);
 		return;
 	};
+	let run = run_item.run();
+
 	let Some(task) = state.current_task() else {
 		Line::raw("No Current Task").render(area, buf);
 		return;

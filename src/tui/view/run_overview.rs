@@ -48,7 +48,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let is_grid = state.overview_tasks_mode().is_grid(tasks_len);
 
 	// -- Prep
-	let Some(run_id) = state.current_run().map(|r| r.id) else {
+	let Some(run_id) = state.current_run_item().map(|r| r.id()) else {
 		Paragraph::new("No current run").render(area, buf);
 		return;
 	};
@@ -87,7 +87,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Error if present
-	if let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) {
+	if let Some(err_id) = state.current_run_item().and_then(|r| r.run().end_err_id) {
 		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
 	}
 

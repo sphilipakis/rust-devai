@@ -1,8 +1,8 @@
-use crate::store::rt_model::{Run, Task};
+use crate::store::rt_model::Task;
 use crate::store::{Id, ModelManager};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{Action, MouseEvt, OverviewTasksMode, RunTab, ScrollIden, ScrollZone, ScrollZones};
+use crate::tui::core::{Action, MouseEvt, OverviewTasksMode, RunItem, RunTab, ScrollIden, ScrollZone, ScrollZones};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use ratatui::layout::Position;
 
@@ -42,7 +42,7 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub task_idx: Option<i32>,
 
 	// -- Data
-	pub runs: Vec<Run>,
+	pub run_items: Vec<RunItem>,
 	pub tasks: Vec<Task>,
 
 	// -- System & Event
@@ -62,18 +62,18 @@ pub(in crate::tui::core) struct AppStateCore {
 impl AppStateCore {
 	pub fn set_run_by_idx(&mut self, idx: i32) {
 		self.run_idx = Some(idx);
-		self.run_id = self.runs.get(idx as usize).map(|r| r.id);
+		self.run_id = self.run_items.get(idx as usize).map(|r| r.id());
 	}
 
 	pub fn set_run_by_id(&mut self, run_id: Id) {
-		let run_idx = self.runs.iter().position(|r| r.id == run_id);
+		let run_idx = self.run_items.iter().position(|r| r.id() == run_id);
 		self.run_idx = run_idx.map(|v| v as i32);
 		// For now, we set it a None if not found (need to revise strategy, can syncup with the by_idx)
 		self.run_id = run_idx.map(|_| run_id);
 	}
 
 	pub fn offset_run_idx(&mut self, offset: i32) {
-		let runs_len = self.runs.len();
+		let runs_len = self.run_items.len();
 		let new_idx = offset_and_clamp_option_idx_in_len(&self.run_idx, offset, runs_len);
 		if let Some(new_idx) = new_idx {
 			self.set_run_by_idx(new_idx);

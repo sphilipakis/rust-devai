@@ -1,4 +1,4 @@
-use crate::support::text::format_time_local;
+use crate::support::text::{self, format_time_local};
 use crate::tui::core::ScrollIden;
 use crate::tui::support::clamp_idx_in_len;
 use crate::tui::view::comp;
@@ -45,7 +45,7 @@ impl StatefulWidget for RunsNavView {
 
 		// -- Scroll & Select logic
 		state.set_scroll_area(SCROLL_IDEN, list_a);
-		let runs_len = state.runs().len();
+		let runs_len = state.run_items().len();
 		let scroll = state.clamp_scroll(SCROLL_IDEN, runs_len);
 
 		// -- Process UI Event
@@ -57,16 +57,19 @@ impl StatefulWidget for RunsNavView {
 		}
 
 		// -- Build Runs UI
-		let runs = state.runs();
+		let runs = state.run_items();
 		let run_sel_idx = state.run_idx().unwrap_or_default();
 		let is_mouse_in_nav = state.is_last_mouse_over(list_a);
 		let items: Vec<ListItem> = runs
 			.iter()
 			.enumerate()
-			.map(|(idx, run)| {
+			.map(|(idx, run_item)| {
+				let run = run_item.run();
 				let run_ico = comp::el_running_ico(run);
 
-				let label = if let Some(start) = run.start
+				let label = if let Some(_parent_id) = run_item.parent_id() {
+					run.agent_name.as_deref().unwrap_or("no agent name").to_string()
+				} else if let Some(start) = run.start
 					&& let Ok(start_fmt) = format_time_local(start.into())
 				{
 					start_fmt
@@ -74,10 +77,12 @@ impl StatefulWidget for RunsNavView {
 					format!("Run {idx}")
 				};
 
+				let prefix = text::spaces_up_to_10(run_item.indent() + 1);
+
 				// TODO: need to try to avoid clone
 				let label = run.label.clone().unwrap_or(label);
 				let mut line = Line::from(vec![
-					Span::raw(" "),
+					Span::raw(prefix),
 					run_ico,
 					Span::raw(" "),
 					Span::styled(label, style::STL_TXT),
@@ -129,7 +134,7 @@ fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> 
 		let current_run_idx = state.run_idx();
 
 		let new_idx = mouse_evt.y() - nav_a.y + scroll;
-		let new_idx = clamp_idx_in_len(new_idx as usize, state.runs().len());
+		let new_idx = clamp_idx_in_len(new_idx as usize, state.run_items().len());
 
 		if Some(new_idx) != current_run_idx {
 			state.set_run_idx(Some(new_idx));

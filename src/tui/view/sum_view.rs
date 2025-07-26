@@ -34,7 +34,8 @@ impl StatefulWidget for SumView {
 		let mut duration_us: i64 = 0;
 		let mut cost: Option<f64> = None;
 		let mut done_runs_count = 0;
-		for run in state.runs() {
+		for run_item in state.run_items() {
+			let run = run_item.run();
 			run.is_done().then(|| done_runs_count += 1);
 			if let Some(run_cost) = run.total_cost {
 				// cost += run_cost
@@ -44,7 +45,7 @@ impl StatefulWidget for SumView {
 				duration_us += end.as_i64() - start.as_i64();
 			}
 		}
-		let running_run = state.runs().len() - done_runs_count;
+		let running_run = state.run_items().len() - done_runs_count;
 
 		// -- Format Data
 		let mut runs_fmt = done_runs_count.to_string();

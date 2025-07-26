@@ -1,6 +1,6 @@
 use crate::store::rt_model::{RunBmc, TaskBmc};
 use crate::tui::AppState;
-use crate::tui::core::{Action, MouseEvt, NavDir};
+use crate::tui::core::{Action, MouseEvt, NavDir, build_run_items};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
@@ -56,8 +56,9 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Load runs and keep previous idx for later comparison
 	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
-	let has_new_runs = new_runs.len() != state.runs().len();
-	state.core_mut().runs = new_runs;
+	let new_run_items = build_run_items(new_runs);
+	let has_new_runs = new_run_items.len() != state.run_items().len();
+	state.core_mut().run_items = new_run_items;
 
 	// only change if we have new runs
 	if has_new_runs {
@@ -109,7 +110,7 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- Load tasks for current run
-	let current_run_id = state.current_run().map(|r| r.id);
+	let current_run_id = state.current_run_item().map(|r| r.id());
 	{
 		if let Some(run_id) = current_run_id {
 			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();

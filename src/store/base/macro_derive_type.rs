@@ -19,6 +19,7 @@ macro_rules! derive_simple_struct_type {
             Eq,
             PartialEq,
             PartialOrd,
+            std::cmp::Ord,
             derive_more::From,
             derive_more::Into,
             derive_more::Display,

@@ -1,10 +1,10 @@
 use super::AppStateCore;
 use crate::Result;
 use crate::store::ModelManager;
-use crate::store::rt_model::{Run, Task};
+use crate::store::rt_model::Task;
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{OverviewTasksMode, RunTab, ScrollZones};
+use crate::tui::core::{OverviewTasksMode, RunItem, RunTab, ScrollZones};
 
 // region:    --- Wrapper
 
@@ -51,7 +51,7 @@ impl AppState {
 			task_idx: None,
 
 			// -- Data
-			runs: Vec::new(),
+			run_items: Vec::new(),
 			tasks: Vec::new(),
 
 			// -- System & Event
@@ -118,13 +118,13 @@ impl AppState {
 		}
 	}
 
-	pub fn runs(&self) -> &[Run] {
-		&self.core.runs
+	pub fn run_items(&self) -> &[RunItem] {
+		&self.core.run_items
 	}
 
-	pub fn current_run(&self) -> Option<&Run> {
+	pub fn current_run_item(&self) -> Option<&RunItem> {
 		if let Some(idx) = self.core.run_idx {
-			self.core.runs.get(idx as usize)
+			self.core.run_items.get(idx as usize)
 		} else {
 			None
 		}

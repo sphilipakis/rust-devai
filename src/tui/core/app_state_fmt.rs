@@ -9,7 +9,8 @@ use crate::tui::{AppState, support};
 /// Implement Run Related Data extractors
 impl AppState {
 	pub fn current_run_duration_txt(&self) -> String {
-		if let Some(run) = self.current_run() {
+		if let Some(run_item) = self.current_run_item() {
+			let run = run_item.run();
 			let duration_us = match (run.start, run.end) {
 				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
 				(Some(start), None) => now_micro() - start.as_i64(),
@@ -22,13 +23,13 @@ impl AppState {
 	}
 
 	pub fn current_run_cost_fmt(&self) -> String {
-		let cost = self.current_run().and_then(|r| r.total_cost);
+		let cost = self.current_run_item().and_then(|r| r.run().total_cost);
 		support::ui_fmt_cost(cost)
 	}
 
 	pub fn current_run_concurrency_txt(&self) -> String {
-		if let Some(run) = self.current_run()
-			&& let Some(concurrency) = run.concurrency
+		if let Some(run_item) = self.current_run_item()
+			&& let Some(concurrency) = run_item.run().concurrency
 		{
 			concurrency.to_string()
 		} else {
@@ -38,22 +39,23 @@ impl AppState {
 
 	/// Returns the agent name for the current run or `"no agent"` if none.
 	pub fn current_run_agent_name(&self) -> String {
-		self.current_run()
-			.and_then(|r| r.agent_name.clone())
+		self.current_run_item()
+			.and_then(|r| r.run().agent_name.clone())
 			.unwrap_or_else(|| "no agent".to_string())
 	}
 
 	/// Returns the model name for the current run or `"no model"` if none.
 	pub fn current_run_model_name(&self) -> String {
-		self.current_run()
-			.and_then(|r| r.model.clone())
+		self.current_run_item()
+			.and_then(|r| r.run().model.clone())
 			.unwrap_or_else(|| "no model".to_string())
 	}
 
 	/// Returns the cumulative duration of all tasks (formatted)  
 	/// or `None` when there is **one task or fewer**.
 	pub fn tasks_cummulative_duration(&self) -> Option<String> {
-		let run = self.current_run()?;
+		let run_item = self.current_run_item()?;
+		let run = run_item.run();
 
 		if let Some(concurrency) = run.concurrency
 			&& concurrency <= 1

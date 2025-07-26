@@ -4,6 +4,27 @@ use num_format::ToFormattedString;
 use std::time::Duration;
 use time::{OffsetDateTime, format_description};
 
+// region:    --- Spaces
+
+pub fn spaces_up_to_10(n: u32) -> &'static str {
+	match n {
+		0 => "",
+		1 => " ",
+		2 => "  ",
+		3 => "   ",
+		4 => "    ",
+		5 => "     ",
+		6 => "      ",
+		7 => "       ",
+		8 => "        ",
+		9 => "         ",
+		10 => "          ",
+		_ => "          ",
+	}
+}
+
+// endregion: --- Spaces
+
 // region:    --- Numbers
 
 pub fn format_num(num: i64) -> String {

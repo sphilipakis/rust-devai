@@ -74,12 +74,12 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
 	let area = area.x_h_margin(1);
 	// For now, if no Run, do not render anything
 	// -- Render the Error if there is one
-	if let Some(err_id) = state.current_run().and_then(|r| r.end_err_id) {
+	if let Some(err_id) = state.current_run_item().and_then(|r| r.run().end_err_id) {
 		let lines = super::comp::ui_for_err(state.mm(), err_id, area.width.min(120));
 		Paragraph::new(lines).render(area, buf);
 	}
 	// -- Else, check if there is a skip
-	else if let Some(run_skip_reason) = state.current_run().and_then(|r| r.end_skip_reason.as_ref()) {
+	else if let Some(run_skip_reason) = state.current_run_item().and_then(|r| r.run().end_skip_reason.as_ref()) {
 		let marker = ("■ Skip:", style::STL_SECTION_MARKER_SKIP);
 		let line = ui_for_marker_section_str(run_skip_reason, marker, area.width, None);
 		Paragraph::new(line).render(area, buf);
