@@ -1,12 +1,15 @@
 // region:    --- Modules
 
-mod log;
 mod err;
+mod log;
+mod prompt;
 mod run;
 mod task;
 
-pub use log::*;
 pub use err::*;
+pub use log::*;
+#[allow(unused)]
+pub use prompt::*;
 pub use run::*;
 pub use task::*;
 

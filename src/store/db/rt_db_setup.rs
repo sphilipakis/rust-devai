@@ -156,7 +156,43 @@ CREATE TABLE IF NOT EXISTS err (
 ) STRICT",
 );
 
-const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE];
+/// The actions could be like
+/// ```js
+/// [
+///  { content: "Quit", keys: ["q", "y"]},
+///  { content: "Cancel", keys: ["esc", "#any"]},
+/// ]
+/// ```
+/// Fields could be
+/// ```js
+/// [
+///   { name: "domain", label:"Domain Name", type: "number", modifier: {min: 0, max: 99} },
+///   { name: "first_page", label:"First Page", type: "text", modifier: "single-line" }
+/// ]
+/// ```
+const PROMPT_TABLE: (&str, &str) = (
+	"prompt",
+	"
+CREATE TABLE IF NOT EXISTS prompt (
+		id      INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid     BLOB NOT NULL,
+
+		ctime   INTEGER NOT NULL,
+		mtime   INTEGER NOT NULL,							
+
+		kind    TEXT,    -- Sys, Agent (from what part of the system)
+
+		run_id  INTEGER, -- Should always belong to a run
+		task_id INTEGER, -- Might belong to a task
+
+		title   TEXT,
+		message TEXT,
+		fields  TEXT, -- will be json
+		actions TEXT -- will be json
+) STRICT",
+);
+
+const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE];
 
 // endregion: --- Main Tables
 
