@@ -91,7 +91,7 @@ impl Runtime {
 
 	#[cfg(test)]
 	pub fn new_lua_engine_without_ctx_test_only(&self) -> Result<LuaEngine> {
-		LuaEngine::new(self.clone())
+		LuaEngine::new(self.clone(), "without_ctx_test_only")
 	}
 }
 

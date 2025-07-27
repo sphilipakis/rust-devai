@@ -9,14 +9,25 @@ use crate::store::rt_model::{LogKind, RuntimeCtx};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
+	#[allow(unused)]
+	name: String,
 	lua: Lua,
 	#[allow(unused)]
 	runtime: Runtime,
 }
 
+impl Drop for LuaEngine {
+	fn drop(&mut self) {
+		// let _ = self.lua.gc_collect();
+		// tracing::debug!("LuaEngine being drop - {}", self.name);
+		// You can also do any cleanup or logging here
+	}
+}
+
 /// Constructors
 impl LuaEngine {
-	pub fn new(runtime: Runtime) -> Result<Self> {
+	pub fn new(runtime: Runtime, name: impl Into<String>) -> Result<Self> {
+		let name = name.into();
 		let lua = Lua::new();
 
 		// -- init utils (now under 'aip' namespace, and kept the 'utils')
@@ -36,13 +47,27 @@ impl LuaEngine {
 		init_print(&runtime, &lua)?;
 
 		// -- Build and return
-		let engine = LuaEngine { lua, runtime };
+		let engine = LuaEngine { name, lua, runtime };
 
 		Ok(engine)
 	}
 
 	pub fn new_with_ctx(runtime: Runtime, ctx: &Literals, rt_ctx: RuntimeCtx) -> Result<Self> {
-		let engine = LuaEngine::new(runtime)?;
+		// -- compute name
+		let mut name_buf: Vec<&str> = Vec::new();
+		if let Some(_run_uid) = rt_ctx.run_uid() {
+			name_buf.push("run")
+		}
+		if let Some(_task) = rt_ctx.task_uid() {
+			name_buf.push("task")
+		}
+		if let Some(stage) = rt_ctx.stage() {
+			let stage: &'static str = stage.into();
+			name_buf.push(stage);
+		}
+		let name = name_buf.join(" - ");
+
+		let engine = LuaEngine::new(runtime, name)?;
 		let lua = &engine.lua;
 
 		// -- Create and Augment CTX with the eventual uids
@@ -256,7 +281,7 @@ mod tests {
 	async fn test_lua_engine_eval_simple_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
-		let engine = LuaEngine::new(runtime.clone())?;
+		let engine = LuaEngine::new(runtime.clone(), "test_lua_engine_eval_simple_ok")?;
 		let fx_script = r#"
 local square_root = math.sqrt(25)
 return "Hello " .. my_name .. " - " .. square_root		
