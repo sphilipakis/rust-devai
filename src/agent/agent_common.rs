@@ -136,6 +136,13 @@ impl Agent {
 	}
 }
 
+/// Peekers
+impl Agent {
+	pub fn has_prompt_parts(&self) -> bool {
+		!self.inner.prompt_parts.is_empty()
+	}
+}
+
 // Some test implementations
 #[cfg(test)]
 mod for_test {

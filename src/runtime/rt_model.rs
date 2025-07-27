@@ -1,4 +1,5 @@
 use crate::Result;
+use crate::agent::Agent;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::store::base::DbBmc;
@@ -28,8 +29,14 @@ impl<'a> RtModel<'a> {
 
 /// Run Create/Update model
 impl<'a> RtModel<'a> {
-	pub async fn create_run(&self, parent_uid: Option<Uuid>, agent_name: &str, agent_path: &str) -> Result<Id> {
+	pub async fn create_run(&self, parent_uid: Option<Uuid>, agent: &Agent) -> Result<Id> {
 		let hub = get_hub();
+
+		let agent_path = match self.runtime.dir_context().get_display_path(agent.file_path()) {
+			Ok(path) => path.to_string(),
+			Err(_) => agent.file_path().to_string(),
+		};
+		let agent_name = agent.name();
 
 		let parent_id = if let Some(uid) = parent_uid {
 			Some(RunBmc::get_id_for_uid(self.mm(), uid)?)
@@ -44,6 +51,7 @@ impl<'a> RtModel<'a> {
 				parent_id,
 				agent_name: Some(agent_name.to_string()),
 				agent_path: Some(agent_path.to_string()),
+				has_prompt_parts: Some(agent.has_prompt_parts()),
 			},
 		)?;
 

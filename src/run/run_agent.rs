@@ -1,5 +1,4 @@
 use crate::agent::{Agent, AgentRef};
-use crate::dir_context::DirContext;
 use crate::hub::get_hub;
 use crate::run::literals::Literals;
 use crate::run::proc_after_all::{ProcAfterAllResponse, process_after_all};
@@ -11,7 +10,6 @@ use crate::store::rt_model::{LogKind, RuntimeCtx};
 use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use serde_json::Value;
-use simple_fs::SPath;
 use tokio::task::{JoinError, JoinSet};
 use uuid::Uuid;
 
@@ -31,13 +29,8 @@ pub async fn run_agent(
 	// -- Trim the runtime db
 	// runtime.rec_trim().await?;
 	// display relative agent path if possible
-	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
-		Ok(path) => path.to_string(),
-		Err(_) => agent.file_path().to_string(),
-	};
-
 	// -- Rt Create - New run
-	let run_id = rt_model.create_run(parent_uid, agent.name(), &agent_path).await?;
+	let run_id = rt_model.create_run(parent_uid, &agent).await?;
 
 	// -- Rt Step - Start Run
 	let run_id = rt_step.step_run_start(run_id).await?;
@@ -170,7 +163,7 @@ async fn print_run_info(runtime: &Runtime, run_id: Id, agent: &Agent) -> Result<
 
 	let genai_info = get_genai_info(agent);
 	// display relative agent path if possible
-	let agent_path = match get_display_path(agent.file_path(), runtime.dir_context()) {
+	let agent_path = match runtime.dir_context().get_display_path(agent.file_path()) {
 		Ok(path) => path.to_string(),
 		Err(_) => agent.file_path().to_string(),
 	};
@@ -327,27 +320,6 @@ async fn process_join_set_res(
 		Err(e) => Err(Error::custom(format!("Error while running input. Cause {e}"))),
 	}
 }
-
-// region:    --- Support
-
-/// Return the display path
-/// - If .aipack/ or relative to workspace, then, relatively to workspace
-/// - If ~/.aipack-base/ then, absolute path
-fn get_display_path(file_path: &str, dir_context: &DirContext) -> Result<SPath> {
-	let file_path = SPath::new(file_path);
-
-	if file_path.as_str().contains(".aipack-base") {
-		Ok(file_path)
-	} else {
-		let spath = match dir_context.wks_dir() {
-			Some(wks_dir) => file_path.try_diff(wks_dir)?,
-			None => file_path,
-		};
-		Ok(spath)
-	}
-}
-
-// endregion: --- Support
 
 /// Workaround to expose the run_command_agent_input only for test.
 #[allow(unused)]

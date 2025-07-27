@@ -87,6 +87,26 @@ impl DirContext {
 	}
 }
 
+/// Formatters
+impl DirContext {
+	/// Return the display path
+	/// - If .aipack/ or relative to workspace, then, relatively to workspace
+	/// - If ~/.aipack-base/ then, absolute path
+	pub fn get_display_path(&self, file_path: &str) -> Result<SPath> {
+		let file_path = SPath::new(file_path);
+
+		if file_path.as_str().contains(".aipack-base") {
+			Ok(file_path)
+		} else {
+			let spath = match self.wks_dir() {
+				Some(wks_dir) => file_path.try_diff(wks_dir)?,
+				None => file_path,
+			};
+			Ok(spath)
+		}
+	}
+}
+
 /// Resolvers
 impl DirContext {
 	/// Resolve a path from this DirContext

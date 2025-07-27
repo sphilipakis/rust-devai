@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS run (
 		parent_id   INTEGER,
 
 		ctime  INTEGER NOT NULL,
-		mtime  INTEGER NOT NULL,						
+		mtime  INTEGER NOT NULL,			
+
+		has_prompt_parts INTEGER,			
 		
 		-- Step Timestamps
 		start       INTEGER,

@@ -17,6 +17,8 @@ pub struct Run {
 	pub ctime: UnixTimeUs,
 	pub mtime: UnixTimeUs,
 
+	pub has_prompt_parts: Option<bool>,
+
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
 
@@ -69,15 +71,20 @@ impl Run {
 
 #[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
 pub struct RunForCreate {
+	pub parent_id: Option<Id>,
+
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
-	pub parent_id: Option<Id>,
+	pub has_prompt_parts: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct RunForUpdate {
 	pub start: Option<UnixTimeUs>,
 	pub end: Option<UnixTimeUs>,
+
+	// States
+	pub has_prompt: Option<bool>,
 
 	// Before All start/end
 	pub ba_start: Option<UnixTimeUs>,
@@ -232,6 +239,7 @@ mod tests {
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
 			parent_id: None,
+			has_prompt_parts: None,
 		};
 
 		// -- Exec
@@ -251,6 +259,7 @@ mod tests {
 			parent_id: None,
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
+			has_prompt_parts: None,
 		};
 		let id = RunBmc::create(&mm, run_c)?;
 
@@ -277,6 +286,7 @@ mod tests {
 				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
+				has_prompt_parts: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}
@@ -322,6 +332,7 @@ mod tests {
 				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
+				has_prompt_parts: None,
 			};
 			RunBmc::create(&mm, run_c)?;
 		}

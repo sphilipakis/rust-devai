@@ -22,33 +22,56 @@ impl TaskView {
 		state.clear_scroll_zone_areas(Self::SCROLL_IDENS);
 	}
 }
+enum HeaderMode {
+	Full,
+	TokensOnly,
+	None,
+}
 
 impl StatefulWidget for TaskView {
 	type State = AppState;
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-		let show_model_row = state.tasks().len() > 1;
+		// (run.has_prompt_parts, many_runs)
+		let header_mode = match (state.current_run_has_prompt_parts(), state.tasks().len() > 1) {
+			// For now, none has_prompt, like we have some
+			(None | Some(true), true) => HeaderMode::Full,
+			(None | Some(true), false) => HeaderMode::TokensOnly,
+			// For sure, No eadher
+			(Some(false), _) => HeaderMode::None,
+			// (None, _) => HeaderMode::None,
+		};
 		// let show_model_row = true;
 
 		// -- Layout Header | Logs
-		let header_height = if show_model_row { 2 } else { 1 };
+		let (header_height, header_spacing) = match header_mode {
+			HeaderMode::Full => (2, 1),
+			HeaderMode::TokensOnly => (1, 1),
+			HeaderMode::None => (0, 0),
+		};
+
 		let [header_a, _space_1, logs_a] = Layout::default()
 			.direction(Direction::Vertical)
 			.constraints(vec![
 				Constraint::Length(header_height), // header
-				Constraint::Max(1),                // space_1
+				Constraint::Max(header_spacing),   // space_1
 				Constraint::Fill(1),               // logs
 			])
 			.areas(area);
 
-		render_header(header_a, buf, state, show_model_row);
+		render_header(header_a, buf, state, header_mode);
 
 		// don't show the steps
 		render_body(logs_a, buf, state, false);
 	}
 }
 
-fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_row: bool) {
+fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode: HeaderMode) {
+	// Do nothing if None
+	if matches!(header_mode, HeaderMode::None) {
+		return;
+	}
+
 	// -- Prepare Data
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_fmt();
@@ -82,7 +105,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	};
 
 	// -- Render Model Row
-	if show_model_row {
+	if matches!(header_mode, HeaderMode::Full) {
 		current_row += 1;
 
 		Paragraph::new("Model:")
@@ -110,22 +133,24 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, show_model_
 	}
 
 	// -- Render Row for tokens
-	current_row += 1;
-	Paragraph::new("Prompt:")
-		.style(style::STL_FIELD_LBL)
-		.right_aligned()
-		.render(label_1.x_row(current_row), buf);
-	Paragraph::new(prompt_tk)
-		.style(stl_field_val)
-		.render(val_1.x_row(current_row), buf);
+	if matches!(header_mode, HeaderMode::Full | HeaderMode::TokensOnly) {
+		current_row += 1;
+		Paragraph::new("Prompt:")
+			.style(style::STL_FIELD_LBL)
+			.right_aligned()
+			.render(label_1.x_row(current_row), buf);
+		Paragraph::new(prompt_tk)
+			.style(stl_field_val)
+			.render(val_1.x_row(current_row), buf);
 
-	Paragraph::new("Compl:")
-		.style(style::STL_FIELD_LBL)
-		.right_aligned()
-		.render(label_2.x_row(current_row), buf);
-	Paragraph::new(completion_tk)
-		.style(stl_field_val)
-		.render(val_2.union(val_3).x_row(current_row), buf);
+		Paragraph::new("Compl:")
+			.style(style::STL_FIELD_LBL)
+			.right_aligned()
+			.render(label_2.x_row(current_row), buf);
+		Paragraph::new(completion_tk)
+			.style(stl_field_val)
+			.render(val_2.union(val_3).x_row(current_row), buf);
+	}
 }
 
 fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: bool) {

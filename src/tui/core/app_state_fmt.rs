@@ -44,6 +44,11 @@ impl AppState {
 			.unwrap_or_else(|| "no agent".to_string())
 	}
 
+	/// Returns the agent name for the current run or `"no agent"` if none.
+	pub fn current_run_has_prompt_parts(&self) -> Option<bool> {
+		self.current_run_item().and_then(|r| r.run().has_prompt_parts)
+	}
+
 	/// Returns the model name for the current run or `"no model"` if none.
 	pub fn current_run_model_name(&self) -> String {
 		self.current_run_item()
