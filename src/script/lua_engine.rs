@@ -182,7 +182,9 @@ fn lua_print(lua: &Lua, runtime: &Runtime, args: mlua::Variadic<Value>) -> mlua:
 		})
 		.collect();
 
-	let text = output.join("\t"); // Mimics Lua's `print` by joining args with tabs
+	// The standard lus print does a join on \t, but not very intuitive and expected
+	// So doing a \n join
+	let text = output.join("\n");
 
 	// -- Save it to rec db
 	// runtime.lo
