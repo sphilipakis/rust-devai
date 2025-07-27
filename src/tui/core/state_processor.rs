@@ -5,8 +5,17 @@ use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
 pub fn process_app_state(state: &mut AppState) {
+	// -- Toggle show sys state
+	if let Some(key_event) = state.last_app_event().as_key_event() {
+		if key_event.code == KeyCode::Char('M') && key_event.modifiers.contains(crossterm::event::KeyModifiers::SHIFT) {
+			state.toggle_show_sys_states();
+		}
+	}
+
 	// -- Refresh system metrics
-	state.refresh_sys_state();
+	if state.show_sys_states() {
+		state.refresh_sys_state();
+	}
 
 	// -- Capture the mouse Event
 	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {

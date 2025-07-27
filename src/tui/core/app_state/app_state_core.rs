@@ -54,6 +54,7 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub do_action: Option<Action>,
 
 	// -- SysState
+	pub show_sys_states: bool,
 	pub sys_state: SysState,
 	pub memory: u64,
 	pub cpu: f64,

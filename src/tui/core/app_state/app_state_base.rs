@@ -63,6 +63,7 @@ impl AppState {
 			do_action: None,
 
 			// -- SysState
+			show_sys_states: false,
 			sys_state,
 			memory: 0,
 			cpu: 0.,
@@ -193,11 +194,20 @@ impl AppState {
 
 /// SysState & Metrics
 impl AppState {
-	/// Called every tick of the main loop.
+	/// Called every tick of the main loop (if show_sys_states)
 	pub(in crate::tui::core) fn refresh_sys_state(&mut self) {
 		let (memory, cpu) = self.core.sys_state.memory_and_cpu();
 		self.core.memory = memory;
 		self.core.cpu = cpu;
+	}
+
+	/// Called from the app state processor on Shift M
+	pub(in crate::tui::core) fn toggle_show_sys_states(&mut self) {
+		self.core.show_sys_states = !self.core.show_sys_states;
+	}
+
+	pub fn show_sys_states(&self) -> bool {
+		self.core.show_sys_states
 	}
 
 	pub fn memory(&self) -> u64 {

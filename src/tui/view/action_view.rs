@@ -14,16 +14,18 @@ impl StatefulWidget for ActionView {
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// Block::new().render(area, buf);
 
+		let (sys_lbl, sys_val) = if state.show_sys_states() { (5, 10) } else { (0, 0) };
+
 		// -- layout
 		let [actions_a, dbg_clr_a, mem_lbl_a, mem_val_a, db_lbl_a, db_val_a] = ratatui::layout::Layout::default()
 			.direction(ratatui::layout::Direction::Horizontal)
 			.constraints(vec![
-				ratatui::layout::Constraint::Fill(1),    // actions
-				ratatui::layout::Constraint::Length(5),  // debug_clr
-				ratatui::layout::Constraint::Length(5),  // mem_lbl
-				ratatui::layout::Constraint::Length(10), // mem_val
-				ratatui::layout::Constraint::Length(5),  // db_lbl
-				ratatui::layout::Constraint::Length(10), // db_val
+				ratatui::layout::Constraint::Fill(1),         // actions
+				ratatui::layout::Constraint::Length(5),       // debug_clr
+				ratatui::layout::Constraint::Length(sys_lbl), // mem_lbl
+				ratatui::layout::Constraint::Length(sys_val), // mem_val
+				ratatui::layout::Constraint::Length(sys_lbl), // db_lbl
+				ratatui::layout::Constraint::Length(sys_val), // db_val
 			])
 			.spacing(1)
 			.areas(area);
@@ -66,34 +68,36 @@ impl StatefulWidget for ActionView {
 				.render(dbg_clr_a, buf);
 		}
 
-		// -- Render Memory
-		Paragraph::new("Mem:")
-			.right_aligned()
-			.style(style::STL_FIELD_LBL)
-			.render(mem_lbl_a, buf);
-		Paragraph::new(state.memory_fmt())
-			.style(style::STL_FIELD_VAL)
-			.render(mem_val_a, buf);
+		if state.show_sys_states() {
+			// -- Render Memory
+			Paragraph::new("Mem:")
+				.right_aligned()
+				.style(style::STL_FIELD_LBL)
+				.render(mem_lbl_a, buf);
+			Paragraph::new(state.memory_fmt())
+				.style(style::STL_FIELD_VAL)
+				.render(mem_val_a, buf);
 
-		// -- Render DB Memory
-		Paragraph::new("DB:")
-			.right_aligned()
-			.style(style::STL_FIELD_LBL)
-			.render(db_lbl_a, buf);
-		Paragraph::new(state.db_memory_fmt())
-			.style(style::STL_FIELD_VAL)
-			.render(db_val_a, buf);
+			// -- Render DB Memory
+			Paragraph::new("DB:")
+				.right_aligned()
+				.style(style::STL_FIELD_LBL)
+				.render(db_lbl_a, buf);
+			Paragraph::new(state.db_memory_fmt())
+				.style(style::STL_FIELD_VAL)
+				.render(db_val_a, buf);
 
-		// -- Render CPU
-		// NOTE: Probably need to / by number of cpus
-		//       And have post refresh to let it go down. (perhaps when mouse event)
-		// Paragraph::new("CPU:")
-		// 	.right_aligned()
-		// 	.style(styles::STL_TXT_LBL)
-		// 	.render(cpu_lbl_a, buf);
-		// Paragraph::new(state.cpu_fmt())
-		// 	.right_aligned()
-		// 	.style(styles::STL_TXT_VAL)
-		// 	.render(cpu_val_a, buf);
+			// -- Render CPU
+			// NOTE: Probably need to / by number of cpus
+			//       And have post refresh to let it go down. (perhaps when mouse event)
+			// Paragraph::new("CPU:")
+			// 	.right_aligned()
+			// 	.style(styles::STL_TXT_LBL)
+			// 	.render(cpu_lbl_a, buf);
+			// Paragraph::new(state.cpu_fmt())
+			// 	.right_aligned()
+			// 	.style(styles::STL_TXT_VAL)
+			// 	.render(cpu_val_a, buf);
+		}
 	}
 }
