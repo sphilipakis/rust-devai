@@ -6,6 +6,9 @@
 //!
 //! The `aip.json` module exposes functions to parse and stringify JSON content.
 //!
+//! IMPORTANT: By default, this suppor the parsing of jsonc content, meaning json with optional comments
+//!         
+//!
 //! ### Functions
 //!
 //! - `aip.json.parse(content: string) -> table`
@@ -381,7 +384,7 @@ mod tests {
 		};
 		let err_str = err.to_string();
 		assert_contains(&err_str, "aip.json.parse_ndjson failed");
-		assert_contains(&err_str, "At line 2");
+		assert_contains(&err_str, "line 2");
 		Ok(())
 	}
 
