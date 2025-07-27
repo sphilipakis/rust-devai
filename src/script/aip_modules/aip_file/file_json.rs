@@ -35,7 +35,9 @@ use simple_fs::ensure_file_dir;
 /// a string, number, boolean, or nil depending on the JSON content).
 /// The path is resolved relative to the workspace root.
 ///
-/// IMPORTANT: Supports comments and trailing commas.
+/// IMPORTANT:
+/// - Supports comments and trailing commas.
+/// - If file content is empty or no json content, will return Value::Nil
 ///
 /// ### Arguments
 ///
@@ -82,6 +84,9 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 			"aip.file.load_json - Failed to read json file '{path}'.\nCause: {e}",
 		))
 	})?;
+
+	// -- Make it value::Null if None
+	let json_value = json_value.unwrap_or_default();
 
 	// Convert the serde_json::Value to mlua::Value
 	let lua_value = serde_value_to_lua_value(lua, json_value)?;

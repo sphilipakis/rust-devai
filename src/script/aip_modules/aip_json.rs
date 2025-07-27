@@ -98,10 +98,17 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// }
 /// ```
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
-	match jsons::parse_jsonc_to_serde_value(&content) {
-		Ok(val) => serde_value_to_lua_value(lua, val).map_err(|e| e.into()),
-		Err(err) => Err(Error::custom(format!("aip.json.parse failed. {err}")).into()),
-	}
+	let json_value = match jsons::parse_jsonc_to_serde_value(&content) {
+		Ok(val) => val,
+		Err(err) => return Err(Error::custom(format!("aip.json.parse failed. {err}")).into()),
+	};
+
+	// -- Make it value::Null if None
+	let json_value = json_value.unwrap_or_default();
+
+	let lua_value = serde_value_to_lua_value(lua, json_value)?;
+
+	Ok(lua_value)
 }
 
 /// ## Lua Documentation

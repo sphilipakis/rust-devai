@@ -11,7 +11,7 @@ use simple_fs::SPath;
 /// - Trailing commas
 ///
 /// Note: Property names still need to be quoted.
-pub fn parse_jsonc_to_serde_value(content: &str) -> Result<serde_json::Value> {
+pub fn parse_jsonc_to_serde_value(content: &str) -> Result<Option<serde_json::Value>> {
 	static OPTIONS: ParseOptions = ParseOptions {
 		allow_comments: true,
 		allow_trailing_commas: true,
@@ -24,17 +24,11 @@ pub fn parse_jsonc_to_serde_value(content: &str) -> Result<serde_json::Value> {
 		Error::custom(format!("Fail to parse json.\nCause: {err}\nJson Content:\n{content}"))
 	})?;
 
-	let json_value = json_value.ok_or_else(|| {
-		//
-		let content = truncate_with_ellipsis(content, 300, "...");
-		Error::custom(format!("Fail to parse json. No value found.\nJson Content:\n{content}"))
-	})?;
-
 	Ok(json_value)
 }
 
 /// Read & parse a json or jsonc/trailing-commas
-pub fn load_jsons_to_serde_value(file: &SPath) -> Result<serde_json::Value> {
+pub fn load_jsons_to_serde_value(file: &SPath) -> Result<Option<serde_json::Value>> {
 	let content = simple_fs::read_to_string(file)?;
 
 	let value = parse_jsonc_to_serde_value(&content)?;
