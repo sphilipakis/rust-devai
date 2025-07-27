@@ -194,7 +194,10 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	);
 
 	// -- Add AI Lines
-	support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
+	// if the run has prompt parts or we do not know, we display the line
+	if let Some(true) | None = state.current_run_has_prompt_parts() {
+		support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
+	}
 
 	// -- Add After AI Logs Lines
 	support::extend_lines(
