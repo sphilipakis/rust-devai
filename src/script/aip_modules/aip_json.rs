@@ -12,7 +12,7 @@
 //! ### Functions
 //!
 //! - `aip.json.parse(content: string) -> table`
-//!   Parses a JSON string into a Lua table.
+//!   Parses a JSON string into a Lua table. (Supports comments and trailing commas)
 //! - `aip.json.parse_ndjson(content: string) -> table[]`
 //!   Parses a newline-delimited JSON (NDJSON) string into a list of Lua tables.
 //! - `aip.json.stringify(content: table) -> string`
@@ -28,6 +28,7 @@
 use crate::runtime::Runtime;
 use crate::script::lua_value_to_serde_value;
 use crate::script::serde_value_to_lua_value;
+use crate::support::jsons;
 use crate::{Error, Result};
 use mlua::{Lua, Table, Value};
 use simple_fs::parse_ndjson_from_reader;
@@ -65,6 +66,8 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 ///
 /// Parse a JSON string into a table that can be used in the Lua script.
 ///
+/// IMPORTANT: Supports comments and trailing commas (e.g., jsonc + trailing commas)
+///
 /// ### Arguments
 ///
 /// - `content: string` - The JSON string to parse.
@@ -95,7 +98,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// }
 /// ```
 fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
-	match serde_json::from_str::<serde_json::Value>(&content) {
+	match jsons::parse_jsonc_to_serde_value(&content) {
 		Ok(val) => serde_value_to_lua_value(lua, val).map_err(|e| e.into()),
 		Err(err) => Err(Error::custom(format!("aip.json.parse failed. {err}")).into()),
 	}
@@ -112,6 +115,9 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 ///
 /// Parses a string containing multiple JSON objects separated by newlines.
 /// Each line should be a valid JSON object. Empty lines are skipped.
+///
+/// IMPORTANT: Unlike the aip.json.parse parser, this assumes the content is fully valid JSON
+///            (no comments allowed or trailing comments)
 ///
 /// ### Arguments
 ///
@@ -278,6 +284,26 @@ mod tests {
 		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
 		let script = r#"
             local content = '{"name": "John", "age": 30}'
+            return aip.json.parse(content)
+        "#;
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("name")?, "John");
+		assert_eq!(res.x_get_i64("age")?, 30);
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_lua_json_parse_with_comment() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_modules::aip_json::init_module, "json").await?;
+		let script = r#"
+            local content = [[
+						// Some comment
+						{"name": "John", "age": 30}
+					]]
             return aip.json.parse(content)
         "#;
 		// -- Exec

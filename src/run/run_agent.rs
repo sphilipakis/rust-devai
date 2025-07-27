@@ -13,9 +13,6 @@ use crate::{Error, Result};
 use serde_json::Value;
 use simple_fs::SPath;
 use tokio::task::{JoinError, JoinSet};
-
-#[cfg(test)]
-use crate::run::run_agent_task::RunAgentInputResponse;
 use uuid::Uuid;
 
 const DEFAULT_CONCURRENCY: usize = 1;
@@ -362,25 +359,26 @@ pub async fn run_command_agent_input_for_test(
 	before_all: Value,
 	input: impl serde::Serialize,
 	run_base_options: &RunBaseOptions,
-) -> Result<Option<RunAgentInputResponse>> {
+) -> Result<Option<Value>> {
 	use crate::run::run_agent_task::run_agent_task_outer;
 
 	let literals = Literals::from_runtime_and_agent_path(runtime, agent)?;
 
-	todo!()
-	// NOTE: Need to reactive.
-	// 	run_agent_task_outer(
-	// 		0.into(), // run_id,
-	// 		0.into(), // task_id,
-	// 		input_idx,
-	// 		runtime,
-	// 		agent,
-	// 		before_all,
-	// 		input,
-	// 		&literals,
-	// 		run_base_options,
-	// 	)
-	// 	.await
+	//NOTE: Need to reactive.
+	let (idx, output) = run_agent_task_outer(
+		0.into(), // run_id,
+		0.into(), // task_id,
+		input_idx,
+		runtime,
+		agent,
+		before_all,
+		input,
+		&literals,
+		run_base_options,
+	)
+	.await?;
+
+	Ok(Some(output))
 }
 
 // region:    --- Support

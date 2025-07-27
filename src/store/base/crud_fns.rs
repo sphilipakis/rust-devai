@@ -95,7 +95,9 @@ where
 
 	// -- Exec query
 	let db = mm.db();
-	let entity: E = db.fetch_first(&sql, [(&id)])?.ok_or("Cannot get entity")?;
+	let entity: E = db
+		.fetch_first(&sql, [(&id)])?
+		.ok_or_else(|| format!("Cannot get entity '{}'", MC::TABLE))?;
 
 	Ok(entity)
 }

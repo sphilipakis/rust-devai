@@ -17,6 +17,7 @@ use crate::runtime::Runtime;
 use crate::script::lua_value_list_to_serde_values;
 use crate::script::lua_value_to_serde_value;
 use crate::script::serde_value_to_lua_value;
+use crate::support::jsons;
 use mlua::{Lua, Value};
 use simple_fs::ensure_file_dir;
 
@@ -33,6 +34,8 @@ use simple_fs::ensure_file_dir;
 /// and converts the result into a Lua value (typically a table, but can be
 /// a string, number, boolean, or nil depending on the JSON content).
 /// The path is resolved relative to the workspace root.
+///
+/// IMPORTANT: Supports comments and trailing commas.
 ///
 /// ### Arguments
 ///
@@ -74,7 +77,7 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 			.dir_context()
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 
-	let json_value = simple_fs::load_json(full_path).map_err(|e| {
+	let json_value = jsons::load_jsons_to_serde_value(&full_path).map_err(|e| {
 		Error::from(format!(
 			"aip.file.load_json - Failed to read json file '{path}'.\nCause: {e}",
 		))
@@ -99,6 +102,8 @@ pub(super) fn file_load_json(lua: &Lua, runtime: &Runtime, path: String) -> mlua
 /// Parses each non-empty line and returns a Lua list (table indexed from 1) containing the parsed Lua values.
 /// Empty lines or lines containing only whitespace are skipped.
 /// The path is resolved relative to the workspace root.
+///
+/// IMPORTANT: Contrary to the aip.file.load_json, this requires valid json lines (no comments or trailing commas supported)
 ///
 /// ### Arguments
 ///
@@ -343,6 +348,58 @@ mod tests {
 	async fn test_lua_file_load_json_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let fx_path = "other/test_load_json.json"; // Relative to tests-data/sandbox-01/
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.load_json("{fx_path}")"#), None).await?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("name")?, "Test JSON");
+		assert_eq!(res.x_get_f64("version")?, 1.2);
+		assert!(res.x_get_bool("enabled")?, "enabled should be true");
+
+		let items = res
+			.get("items")
+			.ok_or("should have items")?
+			.as_array()
+			.ok_or("should be array")?;
+		assert_eq!(items.len(), 2);
+		assert_eq!(items[0].as_str().ok_or("should have item")?, "item1");
+		assert_eq!(items[1].as_str().ok_or("should have item")?, "item2");
+
+		let nested: &serde_json::Value = res.get("nested").ok_or("should have nested")?;
+		assert_eq!(nested.x_get_str("key")?, "value");
+
+		// Check null value handling
+		let nullable = res.get("nullable").ok_or("should have nullable")?;
+		assert!(nullable.is_null(), "nullable should be json null");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_load_json_with_comment_and_trailing() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_file = create_sanbox_01_tmp_file(
+			"test_lua_file_load_json_with_comment_and_trailing.ndjson",
+			r#"
+{
+	// Here are smoe comment
+  "name": "Test JSON",
+  "version": 1.2,
+  "enabled": true,
+  "items": [
+    "item1",
+    "item2"
+  ],
+  "nested": {
+    "key": "value"
+  },
+	// Trailing comma
+  "nullable": null,
+}
+"#,
+		)?;
+		let fx_path = fx_file.as_str(); // Relative to tests-data/sandbox-01/
 
 		// -- Exec
 		let res = run_reflective_agent(&format!(r#"return aip.file.load_json("{fx_path}")"#), None).await?;
