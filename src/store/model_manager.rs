@@ -35,6 +35,17 @@ impl ModelManager {
 
 		Ok(run_count + task_count + log_count)
 	}
+
+	pub fn db_size(&self) -> Result<i64> {
+		let db = self.db();
+		let sql = r#"
+SELECT page_count * page_size as size_bytes
+FROM pragma_page_count(), pragma_page_size();		
+		"#;
+
+		let res = db.exec_returning_num(sql, ())?;
+		Ok(res)
+	}
 }
 
 // region:    --- OnceModelManager

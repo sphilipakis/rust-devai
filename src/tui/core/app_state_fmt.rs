@@ -214,6 +214,13 @@ impl AppState {
 
 /// Impl AppState formatters
 impl AppState {
+	pub fn db_memory_fmt(&self) -> String {
+		match self.mm().db_size() {
+			Ok(val) => text::format_pretty_size(val as u64),
+			Err(_) => "_".to_string(),
+		}
+	}
+
 	pub fn memory_fmt(&self) -> String {
 		let mem = self.memory();
 		text::format_pretty_size(mem)

@@ -15,13 +15,15 @@ impl StatefulWidget for ActionView {
 		// Block::new().render(area, buf);
 
 		// -- layout
-		let [actions_a, dbg_clr_a, mem_lbl_a, mem_val_a] = ratatui::layout::Layout::default()
+		let [actions_a, dbg_clr_a, mem_lbl_a, mem_val_a, db_lbl_a, db_val_a] = ratatui::layout::Layout::default()
 			.direction(ratatui::layout::Direction::Horizontal)
 			.constraints(vec![
 				ratatui::layout::Constraint::Fill(1),    // actions
 				ratatui::layout::Constraint::Length(5),  // debug_clr
 				ratatui::layout::Constraint::Length(5),  // mem_lbl
 				ratatui::layout::Constraint::Length(10), // mem_val
+				ratatui::layout::Constraint::Length(5),  // db_lbl
+				ratatui::layout::Constraint::Length(10), // db_val
 			])
 			.spacing(1)
 			.areas(area);
@@ -72,6 +74,15 @@ impl StatefulWidget for ActionView {
 		Paragraph::new(state.memory_fmt())
 			.style(style::STL_FIELD_VAL)
 			.render(mem_val_a, buf);
+
+		// -- Render DB Memory
+		Paragraph::new("DB:")
+			.right_aligned()
+			.style(style::STL_FIELD_LBL)
+			.render(db_lbl_a, buf);
+		Paragraph::new(state.db_memory_fmt())
+			.style(style::STL_FIELD_VAL)
+			.render(db_val_a, buf);
 
 		// -- Render CPU
 		// NOTE: Probably need to / by number of cpus
