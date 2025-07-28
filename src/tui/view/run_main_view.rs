@@ -156,12 +156,14 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		])
 		.areas(tabs_a);
 
-	// -- Process UI Event
-	process_mouse_for_run_tab(state, tab_overview_a, tab_tasks_a);
+	// -- Process UI Event for the tab
+	// NOTE: There would be an argument to say that this could be in the process_app_state(..)
+	//       But then, it will requires to have perhaps too much inner knowledge
+	process_for_run_tab_state(state, tab_overview_a, tab_tasks_a);
 
 	let run_tab = state.run_tab();
 
-	// -- Compute tabs Label & style
+	// -- Render Overview Tab
 	let tab_1_label = "Overview";
 	let tab_1_style = match (run_tab == RunTab::Overview, state.is_last_mouse_over(tab_overview_a)) {
 		// (active, hover)
@@ -170,24 +172,27 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 		(false, true) => style::STL_TAB_DEFAULT_HOVER,
 		(false, false) => style::STL_TAB_DEFAULT,
 	};
-	let tab_2_label = if state.tasks().len() > 1 { "Tasks" } else { "Task" };
-	let tab_2_style = match (run_tab == RunTab::Tasks, state.is_last_mouse_over(tab_tasks_a)) {
-		// (active, hover)
-		(true, true) => style::STL_TAB_ACTIVE_HOVER,
-		(true, false) => style::STL_TAB_ACTIVE,
-		(false, true) => style::STL_TAB_DEFAULT_HOVER,
-		(false, false) => style::STL_TAB_DEFAULT,
-	};
 
-	// -- Render tabs
 	Paragraph::new(tab_1_label)
 		.centered()
 		.style(tab_1_style)
 		.render(tab_overview_a, buf);
-	Paragraph::new(tab_2_label)
-		.centered()
-		.style(tab_2_style)
-		.render(tab_tasks_a, buf);
+
+	// -- Render Task (only if at least 1)
+	if !state.tasks().is_empty() {
+		let tab_2_label = if state.tasks().len() > 1 { "Tasks" } else { "Task" };
+		let tab_2_style = match (run_tab == RunTab::Tasks, state.is_last_mouse_over(tab_tasks_a)) {
+			// (active, hover)
+			(true, true) => style::STL_TAB_ACTIVE_HOVER,
+			(true, false) => style::STL_TAB_ACTIVE,
+			(false, true) => style::STL_TAB_DEFAULT_HOVER,
+			(false, false) => style::STL_TAB_DEFAULT,
+		};
+		Paragraph::new(tab_2_label)
+			.centered()
+			.style(tab_2_style)
+			.render(tab_tasks_a, buf);
+	}
 
 	// -- Render Line
 	// Trick to have a single line of tab active bkg color
@@ -201,7 +206,13 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 // region:    --- UI Event Processing
 
-fn process_mouse_for_run_tab(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
+fn process_for_run_tab_state(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
+	// -- Set the tab to Overview if not tasks
+	if state.tasks().is_empty() {
+		state.set_run_tab(RunTab::Overview);
+		return;
+	}
+	// -- Otherwise process the mouse
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_up()
 	{
