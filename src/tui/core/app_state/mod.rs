@@ -1,6 +1,8 @@
 // region:    --- Modules
 
 mod impl_action;
+mod impl_fmt;
+mod impl_model_state;
 mod impl_mouse;
 mod impl_scroll;
 

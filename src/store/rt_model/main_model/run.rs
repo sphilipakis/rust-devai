@@ -17,6 +17,7 @@ pub struct Run {
 	pub ctime: UnixTimeUs,
 	pub mtime: UnixTimeUs,
 
+	pub has_task_stages: Option<bool>,
 	pub has_prompt_parts: Option<bool>,
 
 	pub start: Option<UnixTimeUs>,
@@ -76,6 +77,7 @@ pub struct RunForCreate {
 	pub agent_name: Option<String>,
 	pub agent_path: Option<String>,
 	pub has_prompt_parts: Option<bool>,
+	pub has_task_stages: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
@@ -239,6 +241,7 @@ mod tests {
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
 			parent_id: None,
+			has_task_stages: None,
 			has_prompt_parts: None,
 		};
 
@@ -259,6 +262,7 @@ mod tests {
 			parent_id: None,
 			agent_name: Some("Test Run".to_string()),
 			agent_path: Some("test/path".to_string()),
+			has_task_stages: None,
 			has_prompt_parts: None,
 		};
 		let id = RunBmc::create(&mm, run_c)?;
@@ -286,6 +290,7 @@ mod tests {
 				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
+				has_task_stages: None,
 				has_prompt_parts: None,
 			};
 			RunBmc::create(&mm, run_c)?;
@@ -332,6 +337,7 @@ mod tests {
 				parent_id: None,
 				agent_name: Some(format!("label-{i}")),
 				agent_path: Some(format!("path/label-{i}")),
+				has_task_stages: None,
 				has_prompt_parts: None,
 			};
 			RunBmc::create(&mm, run_c)?;

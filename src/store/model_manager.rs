@@ -77,6 +77,7 @@ impl ModelManager {
 				parent_id: None,
 				agent_name: Some(format!("agent_name-{i}")),
 				agent_path: Some(format!("agent_path-{i}")),
+				has_task_stages: None,
 				has_prompt_parts: None,
 			};
 			let _id = RunBmc::create(self, run_c)?;

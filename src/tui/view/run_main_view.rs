@@ -208,7 +208,10 @@ fn render_tabs(tabs_a: Rect, tabs_line_a: Rect, buf: &mut Buffer, state: &mut Ap
 
 fn process_for_run_tab_state(state: &mut AppState, overview_a: Rect, tasks_a: Rect) {
 	// -- Set the tab to Overview if not tasks
-	if state.tasks().is_empty() {
+	// NOTE: here we are conservative.
+	if let Some(false) = state.current_run_has_task_stages()
+		&& state.tasks().is_empty()
+	{
 		state.set_run_tab(RunTab::Overview);
 		return;
 	}

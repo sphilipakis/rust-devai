@@ -12,7 +12,6 @@ mod app_state;
 mod tui_impl;
 
 // -- Public
-mod app_state_fmt;
 mod types;
 
 // -- Cherry Flatten

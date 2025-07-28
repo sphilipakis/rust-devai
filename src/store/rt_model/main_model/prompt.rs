@@ -119,6 +119,7 @@ mod tests {
 			parent_id: None,
 			agent_name: Some(label.to_string()),
 			agent_path: Some(format!("path/{label}")),
+			has_task_stages: None,
 			has_prompt_parts: None,
 		};
 		Ok(RunBmc::create(mm, run_c)?)

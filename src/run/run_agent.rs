@@ -105,7 +105,7 @@ async fn run_agent_inner(
 	print_run_info(runtime, run_id, &agent).await?;
 
 	// -- Run Tasks
-	let (inputs, outputs) = if inputs.is_some() || agent.has_some_task_stages() {
+	let (inputs, outputs) = if inputs.is_some() || agent.has_task_stages() {
 		// IMPORTANT - if if input is None or empty, we create a array of one nil, so that we can one task since we have some task stage
 		let inputs = match inputs {
 			Some(inputs) => {

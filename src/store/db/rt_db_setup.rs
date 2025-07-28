@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS run (
 		ctime  INTEGER NOT NULL,
 		mtime  INTEGER NOT NULL,			
 
-		has_prompt_parts INTEGER,			
+		has_prompt_parts INTEGER,
+		has_task_stages  INTEGER,			
 		
 		-- Step Timestamps
 		start       INTEGER,

@@ -51,6 +51,7 @@ impl<'a> RtModel<'a> {
 				parent_id,
 				agent_name: Some(agent_name.to_string()),
 				agent_path: Some(agent_path.to_string()),
+				has_task_stages: Some(agent.has_task_stages()),
 				has_prompt_parts: Some(agent.has_prompt_parts()),
 			},
 		)?;
