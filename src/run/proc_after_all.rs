@@ -25,7 +25,7 @@ pub async fn process_after_all(
 	agent: &Agent,
 	literals: Literals,
 	before_all: Value,
-	inputs: Vec<Value>,
+	inputs: Option<Vec<Value>>,
 	outputs: Option<Vec<Value>>,
 ) -> Result<ProcAfterAllResponse> {
 	let rt_step = runtime.rt_step();
@@ -39,7 +39,7 @@ pub async fn process_after_all(
 
 		let lua_engine = runtime.new_lua_engine_with_ctx(&literals, base_rt_ctx.with_stage(Stage::AfterAll))?;
 		let lua_scope = lua_engine.create_table()?;
-		let inputs = Value::Array(inputs);
+		let inputs = inputs.map(Value::Array).unwrap_or(Value::Null);
 		lua_scope.set("inputs", lua_engine.serde_to_lua_value(inputs)?)?;
 		// Will be Value::Null if outputs were not collected
 		lua_scope.set("outputs", lua_engine.serde_to_lua_value(outputs_value)?)?;

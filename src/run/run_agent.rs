@@ -105,29 +105,47 @@ async fn run_agent_inner(
 	print_run_info(runtime, run_id, &agent).await?;
 
 	// -- Run Tasks
-	// Rt Step - Tasks Start
-	rt_step.step_tasks_start(run_id).await?;
-	let captured_outputs_res = run_tasks(
-		runtime,
-		run_id,
-		&agent,
-		&literals,
-		run_base_options,
-		&before_all,
-		&inputs,
-		return_output_values,
-	)
-	.await;
-	// Rt Step - Tasks End
-	rt_step.step_tasks_end(run_id).await?;
-	let captured_outputs = captured_outputs_res?;
+	let (inputs, outputs) = if inputs.is_some() || agent.has_some_task_stages() {
+		// IMPORTANT - if if input is None or empty, we create a array of one nil, so that we can one task since we have some task stage
+		let inputs = match inputs {
+			Some(inputs) => {
+				if inputs.is_empty() {
+					vec![Value::Null]
+				} else {
+					inputs
+				}
+			}
+			None => vec![Value::Null],
+		};
 
-	// -- Post-process outputs
-	let outputs = if let Some(mut captured_outputs) = captured_outputs {
-		captured_outputs.sort_by_key(|(idx, _)| *idx);
-		Some(captured_outputs.into_iter().map(|(_, v)| v).collect::<Vec<_>>())
+		// Rt Step - Tasks Start
+		rt_step.step_tasks_start(run_id).await?;
+		let captured_outputs_res = run_tasks(
+			runtime,
+			run_id,
+			&agent,
+			&literals,
+			run_base_options,
+			&before_all,
+			&inputs,
+			return_output_values,
+		)
+		.await;
+		// Rt Step - Tasks End
+		rt_step.step_tasks_end(run_id).await?;
+		let captured_outputs = captured_outputs_res?;
+
+		// -- Post-process outputs
+		let outputs = if let Some(mut captured_outputs) = captured_outputs {
+			captured_outputs.sort_by_key(|(idx, _)| *idx);
+			Some(captured_outputs.into_iter().map(|(_, v)| v).collect::<Vec<_>>())
+		} else {
+			None
+		};
+
+		(Some(inputs), outputs)
 	} else {
-		None
+		(inputs, None)
 	};
 
 	// -- Process After All

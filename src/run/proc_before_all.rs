@@ -14,7 +14,7 @@ use serde_json::Value;
 pub struct ProcBeforeAllResponse {
 	pub before_all: Value,
 	pub agent: Agent,
-	pub inputs: Vec<Value>,
+	pub inputs: Option<Vec<Value>>,
 	pub skip: bool,
 }
 
@@ -23,8 +23,7 @@ impl ProcBeforeAllResponse {
 		ProcBeforeAllResponse {
 			before_all: Value::Null,
 			agent,
-			// to be consistent, but should not be needed
-			inputs: inputs.unwrap_or_else(|| vec![Value::Null]),
+			inputs,
 			skip: true,
 		}
 	}
@@ -55,7 +54,8 @@ pub async fn process_before_all(
 		ProcBeforeAllResponse {
 			before_all: Value::Null,
 			agent,
-			inputs: inputs.unwrap_or_else(|| vec![Value::Null]),
+			// Now return empty array if no inputs
+			inputs,
 			skip: false,
 		}
 	};
@@ -88,7 +88,7 @@ async fn process_before_all_script(
 	// -- Setup the Lua engine
 	let lua_engine = runtime.new_lua_engine_with_ctx(&literals, rt_ctx)?;
 	let lua_scope = lua_engine.create_table()?;
-	let lua_inputs = inputs.clone().map(Value::Array).unwrap_or_default();
+	let lua_inputs = inputs.clone().map(Value::Array).unwrap_or(Value::Null);
 	lua_scope.set("inputs", lua_engine.serde_to_lua_value(lua_inputs)?)?;
 	lua_scope.set("options", agent.options_as_ref())?;
 
@@ -154,7 +154,6 @@ async fn process_before_all_script(
 
 	// -- Get the Inputs and Before All data for the next stage
 	// so, if empty, we have one input of value Value::Null
-	let inputs = inputs.unwrap_or_else(|| vec![Value::Null]);
 	let before_all = before_all.unwrap_or_default();
 
 	Ok(ProcBeforeAllResponse {

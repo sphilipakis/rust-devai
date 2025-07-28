@@ -141,6 +141,10 @@ impl Agent {
 	pub fn has_prompt_parts(&self) -> bool {
 		!self.inner.prompt_parts.is_empty()
 	}
+
+	pub fn has_some_task_stages(&self) -> bool {
+		!self.inner.prompt_parts.is_empty() || self.inner.data_script.is_some() || self.inner.output_script.is_some()
+	}
 }
 
 // Some test implementations
