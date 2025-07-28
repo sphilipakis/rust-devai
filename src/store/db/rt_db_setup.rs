@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS prompt (
 
 		kind    TEXT,    -- Sys, Agent (from what part of the system)
 
-		run_id  INTEGER, -- Should always belong to a run
+		run_id  INTEGER, -- Might belong to a run
 		task_id INTEGER, -- Might belong to a task
 
 		title   TEXT,
@@ -194,7 +194,29 @@ CREATE TABLE IF NOT EXISTS prompt (
 ) STRICT",
 );
 
-const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE];
+// Content:
+// marker: {type: "Marker", content: { label: "Pin", label_color: "red", content = "15 files uploaded"}}
+// aip.task.pin("work-summary", 0, { type = "Marker", content = {label = }} )
+const PIN_TABLE: (&str, &str) = (
+	"pin",
+	"
+CREATE TABLE IF NOT EXISTS pin (
+		id        INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid       BLOB NOT NULL,
+
+		ctime     INTEGER NOT NULL,
+		mtime     INTEGER NOT NULL,							
+
+		run_id    INTEGER NOT NULL, -- Should always belong to a run
+		task_id   INTEGER,          -- Might belong to a task
+	  
+		iden      TEXT NOT NULL,    -- The identifier of this pin. Unique for this run/task
+		priority  REAL,             -- The priority (if none, will be last)
+		content   TEXT              -- JSON UI Component
+) STRICT",
+);
+
+const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE];
 
 // endregion: --- Main Tables
 
