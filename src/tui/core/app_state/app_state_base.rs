@@ -35,7 +35,7 @@ impl AppState {
 			active_scroll_zone_iden: None,
 
 			// -- MainView
-			show_runs: false,
+			show_runs: true,
 
 			// -- RunsView
 			run_idx: None,
