@@ -4,7 +4,7 @@ use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
-use modql::filter::ListOptions;
+use modql::filter::{ListOptions, OrderBys};
 use uuid::Uuid;
 
 // endregion: --- Modules
@@ -87,7 +87,12 @@ impl PinBmc {
 			run_id: Some(run_id),
 			..Default::default()
 		};
-		Self::list(mm, None, Some(filter))
+
+		// Sort by priority (nulls last), then by creation time.
+		let order_bys = OrderBys::from(vec!["priority IS NULL", "priority", "ctime"]);
+		let list_options = ListOptions::from(order_bys);
+
+		Self::list(mm, Some(list_options), Some(filter))
 	}
 
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Pin>> {
@@ -95,7 +100,12 @@ impl PinBmc {
 			task_id: Some(task_id),
 			..Default::default()
 		};
-		Self::list(mm, None, Some(filter))
+
+		// Sort by priority (nulls last), then by creation time.
+		let order_bys = OrderBys::from(vec!["priority IS NULL", "priority", "ctime"]);
+		let list_options = ListOptions::from(order_bys);
+
+		Self::list(mm, Some(list_options), Some(filter))
 	}
 
 	// --- Extras (needed for Lua `aip.pin` API)
@@ -292,6 +302,83 @@ mod tests {
 		let pin = pins.first().ok_or("Should have first item")?;
 		assert_eq!(pin.id, 3.into());
 		assert_eq!(pin.run_id, run_1_id);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_pin_bmc_list_for_run() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = ModelManager::new().await?;
+		let run_1_id = create_run(&mm, "run-1").await?;
+		let run_2_id = create_run(&mm, "run-2").await?;
+
+		// Pins for run 1 - create out of order to test sorting
+		PinBmc::create(
+			&mm,
+			PinForCreate {
+				run_id: run_1_id,
+				task_id: None,
+				iden: Some("pin-1.2".to_string()),
+				priority: Some(2.0),
+				content: None,
+			},
+		)?;
+		PinBmc::create(
+			&mm,
+			PinForCreate {
+				run_id: run_1_id,
+				task_id: None,
+				iden: Some("pin-1.1".to_string()),
+				priority: Some(1.0),
+				content: None,
+			},
+		)?;
+		PinBmc::create(
+			&mm,
+			PinForCreate {
+				run_id: run_1_id,
+				task_id: None,
+				iden: Some("pin-1.none".to_string()),
+				priority: None,
+				content: None,
+			},
+		)?;
+
+		// Pin for run 2
+		PinBmc::create(
+			&mm,
+			PinForCreate {
+				run_id: run_2_id,
+				task_id: None,
+				iden: Some("pin-2.1".to_string()),
+				priority: Some(1.0),
+				content: None,
+			},
+		)?;
+
+		// -- Exec
+		let pins = PinBmc::list_for_run(&mm, run_1_id)?;
+
+		// -- Check
+		assert_eq!(pins.len(), 3);
+		// Check run_id for all
+		for pin in &pins {
+			assert_eq!(pin.run_id, run_1_id);
+		}
+
+		// Check order and priorities
+		let pin0 = pins.first().ok_or("Should have pin 0")?;
+		assert_eq!(pin0.iden.as_deref(), Some("pin-1.1"));
+		assert_eq!(pin0.priority, Some(1.0));
+
+		let pin1 = pins.get(1).ok_or("Should have pin 1")?;
+		assert_eq!(pin1.iden.as_deref(), Some("pin-1.2"));
+		assert_eq!(pin1.priority, Some(2.0));
+
+		let pin2 = pins.get(2).ok_or("Should have pin 2")?;
+		assert_eq!(pin2.iden.as_deref(), Some("pin-1.none"));
+		assert_eq!(pin2.priority, None);
 
 		Ok(())
 	}
