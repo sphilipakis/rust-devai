@@ -1,35 +1,30 @@
-//! UI For Runtime Model
-//!
-
-use crate::store::rt_model::{ErrBmc, Log, LogKind};
-use crate::store::{Id, ModelManager};
+use crate::store::rt_model::{Log, LogKind};
 use crate::tui::style;
 use crate::tui::view::comp;
-use ratatui::text::{Line, Span};
+use ratatui::text::Line;
 
-pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'static>> {
-	let marker_txt = "Error:";
-	let marker_style = style::STL_SECTION_MARKER_ERR;
-	let spans_prefix = vec![Span::styled("┃ ", style::CLR_TXT_RED)];
-	match ErrBmc::get(mm, err_id) {
-		Ok(err_rec) => {
-			let content = err_rec.content.unwrap_or_default();
-			let content = if let Some(stage) = err_rec.stage {
-				format!("Error at stage {stage}:\n{content}")
-			} else {
-				content
-			};
-			comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix))
+pub fn ui_for_logs<'a>(
+	logs: impl IntoIterator<Item = &'a Log>,
+	max_width: u16,
+	show_steps: bool,
+) -> Vec<Line<'static>> {
+	let mut lines: Vec<Line> = Vec::new();
+	for log in logs {
+		// Show or not step
+		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
+			continue;
 		}
-		Err(err) => comp::ui_for_marker_section_str(
-			&format!("Error getting error. {err}"),
-			(marker_txt, marker_style),
-			max_width,
-			None,
-		),
+
+		// Render log lines
+		let log_lines = comp::ui_for_log(log, max_width);
+		lines.extend(log_lines);
+		lines.push(Line::default()); // empty line (for now)
 	}
+
+	lines
 }
 
+/// Return the lines for a single log entity
 pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
 		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];

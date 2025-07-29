@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{Log, LogBmc, LogKind, Run, Task, TaskBmc};
+use crate::store::rt_model::{Log, LogBmc, LogKind, PinBmc, Run, Task, TaskBmc};
 use crate::tui::core::ScrollIden;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
@@ -170,6 +170,16 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		Line::raw("No Current Task").render(area, buf);
 		return;
 	};
+
+	// -- Fetch Pins
+	let pins = match PinBmc::list_for_task(state.mm(), task.id) {
+		Ok(pins) => pins,
+		Err(err) => {
+			Paragraph::new(format!("PinBmc::list error. {err}")).render(area, buf);
+			return;
+		}
+	};
+
 	// -- Fetch Logs
 	let logs = match LogBmc::list_for_task(state.mm(), task.id) {
 		Ok(logs) => logs,
@@ -315,7 +325,7 @@ fn ui_for_before_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: 
 
 	let logs = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
 
-	ui_for_logs(logs, max_width, show_steps)
+	comp::ui_for_logs(logs, max_width, show_steps)
 }
 
 fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
@@ -323,24 +333,7 @@ fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: b
 
 	let logs = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
 
-	ui_for_logs(logs, max_width, show_steps)
-}
-
-fn ui_for_logs<'a>(logs: impl IntoIterator<Item = &'a Log>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	let mut lines: Vec<Line> = Vec::new();
-	for log in logs {
-		// Show or not step
-		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
-			continue;
-		}
-
-		// Render log lines
-		let log_lines = comp::ui_for_log(log, max_width);
-		lines.extend(log_lines);
-		lines.push(Line::default()); // empty line (for now)
-	}
-
-	lines
+	comp::ui_for_logs(logs, max_width, show_steps)
 }
 
 #[allow(unused)]

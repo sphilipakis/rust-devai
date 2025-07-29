@@ -165,11 +165,14 @@ fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: b
 			continue;
 		}
 
-		if first_section {
-			first_section = false
-		} else {
-			all_lines.push(Line::default()); // empty line (for now)
-		}
+		// if first_section {
+		// 	first_section = false;
+		// } else {
+		// 	all_lines.push(Line::default()); // empty line (for now)
+		// 	all_lines.push(Line::default()); // empty line (for now)
+		// 	all_lines.push(Line::default()); // empty line (for now)
+		// 	all_lines.push(Line::default()); // empty line (for now)
+		// }
 
 		// Render log lines
 		let log_lines = comp::ui_for_log(log, max_width);
