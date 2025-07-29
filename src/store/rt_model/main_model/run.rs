@@ -70,7 +70,7 @@ impl Run {
 	// }
 }
 
-#[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
 pub struct RunForCreate {
 	pub parent_id: Option<Id>,
 

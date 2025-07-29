@@ -18,7 +18,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::store::rt_model::{PinBmc, PinForCreate, RuntimeCtx};
+use crate::store::rt_model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
 use mlua::{Lua, Table, Value};
 
 /// Registers the `run.pin` and `task.pin` helpers in Lua.
@@ -57,6 +57,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 // region:    --- Support
 
 /// Shared implementation for both `run.pin` and `task.pin`.
+/// TODO: Need to do more verification.
 fn create_pin(
 	lua: &Lua,
 	runtime: &Runtime,
@@ -66,15 +67,14 @@ fn create_pin(
 	content: Option<Value>,
 ) -> Result<i64> {
 	let ctx = RuntimeCtx::extract_from_global(lua)?;
+	let iden = iden.ok_or("aip...pin(identifier, priority, content) require identifier as first argument")?;
+	let priority =
+		priority.ok_or("aip...pin(identifier, priority, content)  require priority (number) as second argument")?;
 
 	let mm = runtime.mm();
 	let (run_id, task_id) = {
 		let run_id = ctx.get_run_id(mm)?.ok_or("Cannot create pin – no RUN context available")?;
-		let task_id = if for_task {
-			Some(ctx.get_task_id(mm)?.ok_or("Cannot create pin – no TASK context available")?)
-		} else {
-			None
-		};
+		let task_id = if for_task { ctx.get_task_id(mm)? } else { None };
 		(run_id, task_id)
 	};
 
@@ -88,15 +88,28 @@ fn create_pin(
 		}
 	};
 
-	let pin_c = PinForCreate {
-		run_id,
-		task_id,
-		iden,
-		priority,
-		content: content_str,
+	let id = if for_task {
+		let task_id = task_id.ok_or("Cannot create Pin for Task, no task_id found")?;
+		let pin_c = PinForTaskSave {
+			run_id,
+			task_id,
+			iden,
+			priority: Some(priority),
+			content: content_str,
+		};
+
+		PinBmc::save_task_pin(mm, pin_c)?
+	} else {
+		let pin_c = PinForRunSave {
+			run_id,
+			iden,
+			priority: Some(priority),
+			content: content_str,
+		};
+
+		PinBmc::save_run_pin(mm, pin_c)?
 	};
 
-	let id = PinBmc::create(mm, pin_c)?;
 	Ok(id.as_i64())
 }
 

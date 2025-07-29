@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 // endregion: --- Modules
 
-// region:    --- Types
+// region:    --- Public Types
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
 pub struct Pin {
@@ -27,19 +27,25 @@ pub struct Pin {
 	pub content: Option<String>,
 }
 
-#[derive(Debug, Clone, Fields, SqliteFromRow)]
-pub struct PinForCreate {
+/// Used by aip_.. to do the save
+/// Not to be send to the data save layer
+#[derive(Debug, Clone)]
+pub struct PinForRunSave {
 	pub run_id: Id,
-	pub task_id: Option<Id>,
+	pub iden: String,
 
-	pub iden: Option<String>,
 	pub priority: Option<f64>,
 	pub content: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
-pub struct PinForUpdate {
-	pub iden: Option<String>,
+/// Used by aip_.. to do the save
+/// Not to be send to the data save layer
+#[derive(Debug, Clone)]
+pub struct PinForTaskSave {
+	pub run_id: Id,
+	pub task_id: Id,
+	pub iden: String,
+
 	pub priority: Option<f64>,
 	pub content: Option<String>,
 }
@@ -50,7 +56,71 @@ pub struct PinFilter {
 	pub task_id: Option<Id>,
 }
 
-// endregion: --- Types
+// endregion: --- Public Types
+
+// region:    --- Private Types
+
+/// This is private to this module
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+struct PinForCreate {
+	pub run_id: Id,
+	pub task_id: Option<Id>,
+
+	pub iden: String,
+	pub priority: Option<f64>,
+	pub content: Option<String>,
+}
+
+/// This is private to thie module
+#[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
+struct PinForUpdate {
+	pub priority: Option<f64>,
+	pub content: Option<String>,
+}
+
+impl From<PinForRunSave> for PinForCreate {
+	fn from(pin_s: PinForRunSave) -> Self {
+		Self {
+			run_id: pin_s.run_id,
+			task_id: None,
+			iden: pin_s.iden,
+			priority: pin_s.priority,
+			content: pin_s.content,
+		}
+	}
+}
+
+impl From<PinForRunSave> for PinForUpdate {
+	fn from(pin_s: PinForRunSave) -> Self {
+		Self {
+			priority: pin_s.priority,
+			content: pin_s.content,
+		}
+	}
+}
+
+impl From<PinForTaskSave> for PinForCreate {
+	fn from(pin_s: PinForTaskSave) -> Self {
+		Self {
+			run_id: pin_s.run_id,
+			task_id: Some(pin_s.task_id),
+			iden: pin_s.iden,
+			priority: pin_s.priority,
+			content: pin_s.content,
+		}
+	}
+}
+
+impl From<PinForTaskSave> for PinForUpdate {
+	fn from(pin_s: PinForTaskSave) -> Self {
+		Self {
+			priority: pin_s.priority,
+			content: pin_s.content,
+		}
+	}
+}
+
+// endregion: --- Private Types
 
 // region:    --- Bmc
 
@@ -60,28 +130,47 @@ impl DbBmc for PinBmc {
 	const TABLE: &'static str = "pin";
 }
 
-#[allow(unused)]
+/// Public Bmcs
+/// NOTE: The save_.._pin are here to create or update the pin by identifier.
+/// TODO: In the future, the save_.. probaby need to handle the create_already_exist case
+///       to be safe when/if full concurrent access to db write will be enabled.
 impl PinBmc {
-	pub fn create(mm: &ModelManager, pin_c: PinForCreate) -> Result<Id> {
-		let fields = pin_c.sqlite_not_none_fields();
-		base::create::<Self>(mm, fields)
+	// -- Save
+	pub fn save_run_pin(mm: &ModelManager, pin_s: PinForRunSave) -> Result<Id> {
+		let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
+
+		let id = if let Some(pin_id) = pin_id {
+			Self::update(mm, pin_id, pin_s.into())?;
+			pin_id
+		} else {
+			Self::create(mm, pin_s.into())?
+		};
+
+		Ok(id)
 	}
 
-	pub fn update(mm: &ModelManager, id: Id, pin_u: PinForUpdate) -> Result<usize> {
-		let fields = pin_u.sqlite_not_none_fields();
-		base::update::<Self>(mm, id, fields)
+	pub fn save_task_pin(mm: &ModelManager, pin_s: PinForTaskSave) -> Result<Id> {
+		let pin_id = Self::get_task_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
+
+		let id = if let Some(pin_id) = pin_id {
+			Self::update(mm, pin_id, pin_s.into())?;
+			pin_id
+		} else {
+			Self::create(mm, pin_s.into())?
+		};
+
+		Ok(id)
 	}
 
+	// -- Read helpers (unchanged)
+
+	#[allow(unused)]
 	pub fn get(mm: &ModelManager, id: Id) -> Result<Pin> {
 		base::get::<Self, _>(mm, id)
 	}
 
-	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>, filter: Option<PinFilter>) -> Result<Vec<Pin>> {
-		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
-		base::list::<Self, _>(mm, list_options, filter_fields)
-	}
-
 	// Convenience helpers
+	#[allow(unused)]
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Pin>> {
 		let filter = PinFilter {
 			run_id: Some(run_id),
@@ -95,6 +184,7 @@ impl PinBmc {
 		Self::list(mm, Some(list_options), Some(filter))
 	}
 
+	#[allow(unused)]
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Pin>> {
 		let filter = PinFilter {
 			task_id: Some(task_id),
@@ -107,12 +197,40 @@ impl PinBmc {
 
 		Self::list(mm, Some(list_options), Some(filter))
 	}
+}
 
-	// --- Extras (needed for Lua `aip.pin` API)
+/// Private
+impl PinBmc {
+	fn create(mm: &ModelManager, pin_c: PinForCreate) -> Result<Id> {
+		let fields = pin_c.sqlite_not_none_fields();
+		base::create::<Self>(mm, fields)
+	}
 
-	/// Fetch a pin by its `uid` (convenience wrapper).
-	pub fn get_by_uid(mm: &ModelManager, uid: Uuid) -> Result<Pin> {
-		base::get_by_uid::<Self, _>(mm, uid)
+	fn update(mm: &ModelManager, id: Id, pin_c: PinForCreate) -> Result<usize> {
+		let fields = pin_c.sqlite_not_none_fields();
+		base::update::<Self>(mm, id, fields)
+	}
+
+	// return the pin ID
+	pub fn get_run_pin_by_iden(mm: &ModelManager, run_id: Id, iden: &str) -> Result<Option<Id>> {
+		let sql = "SELECT id FROM pin WHERE run_id = ? AND iden = ?";
+		let id = mm.db().exec_returning_as_optional::<i64>(sql, (run_id, iden))?;
+
+		Ok(id.map(|id| id.into()))
+	}
+
+	// return the pin ID
+	pub fn get_task_pin_by_iden(mm: &ModelManager, task_id: Id, iden: &str) -> Result<Option<Id>> {
+		let sql = "SELECT id FROM pin WHERE task_id = ? AND iden = ?";
+		let id = mm.db().exec_returning_as_optional::<i64>(sql, (task_id, iden))?;
+
+		Ok(id.map(|id| id.into()))
+	}
+
+	// App should only get for run or for task lists
+	fn list(mm: &ModelManager, list_options: Option<ListOptions>, filter: Option<PinFilter>) -> Result<Vec<Pin>> {
+		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
+		base::list::<Self, _>(mm, list_options, filter_fields)
 	}
 }
 
@@ -125,51 +243,25 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
-	use crate::support::time::now_micro;
+	use crate::_test_support;
 	use modql::filter::OrderBy;
 
-	// region:    --- Support
-
-	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
-		let run_c = RunForCreate {
-			parent_id: None,
-			agent_name: Some(label.to_string()),
-			agent_path: Some(format!("path/{label}")),
-			has_task_stages: None,
-			has_prompt_parts: None,
-		};
-		Ok(RunBmc::create(mm, run_c)?)
-	}
-
-	async fn create_task(mm: &ModelManager, run_id: Id, idx: i64) -> Result<Id> {
-		let task_c = TaskForCreate {
-			run_id,
-			idx,
-			label: Some(format!("task-{idx}")),
-			input_content: None,
-		};
-		Ok(TaskBmc::create(mm, task_c)?)
-	}
-
-	// endregion: --- Support
-
 	#[tokio::test]
-	async fn test_model_pin_bmc_create() -> Result<()> {
+	async fn test_model_pin_bmc_save_task_pin() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = ModelManager::new().await?;
-		let run_id = create_run(&mm, "run-1").await?;
-		let task_id = create_task(&mm, run_id, 1).await?;
+		let run_id = _test_support::create_run(&mm, "run-1")?;
+		let task_id = _test_support::create_task(&mm, run_id, 1)?;
 
 		// -- Exec
-		let pin_c = PinForCreate {
+		let pin_c = PinForTaskSave {
 			run_id,
-			task_id: Some(task_id),
-			iden: Some("work-summary".to_string()),
+			task_id,
+			iden: "work-summary".to_string(),
 			priority: Some(0.5),
 			content: Some(r#"{"type":"Marker","content":"First Pin"}"#.to_string()),
 		};
-		let id = PinBmc::create(&mm, pin_c)?;
+		let id = PinBmc::save_task_pin(&mm, pin_c)?;
 
 		// -- Check
 		assert_eq!(id.as_i64(), 1);
@@ -181,49 +273,18 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_model_pin_bmc_update() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let run_id = create_run(&mm, "run-1").await?;
-		let pin_c = PinForCreate {
-			run_id,
-			task_id: None,
-			iden: Some("pin-1".to_string()),
-			priority: None,
-			content: Some("Old content".to_string()),
-		};
-		let id = PinBmc::create(&mm, pin_c)?;
-
-		// -- Exec
-		let pin_u = PinForUpdate {
-			content: Some(format!("Updated at {}", now_micro())),
-			priority: Some(1.0),
-			..Default::default()
-		};
-		PinBmc::update(&mm, id, pin_u)?;
-
-		// -- Check
-		let pin = PinBmc::get(&mm, id)?;
-		assert!(pin.content.unwrap().starts_with("Updated"));
-		assert_eq!(pin.priority, Some(1.0));
-
-		Ok(())
-	}
-
-	#[tokio::test]
 	async fn test_model_pin_bmc_list_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = ModelManager::new().await?;
-		let run_id = create_run(&mm, "run-1").await?;
+		let run_id = _test_support::create_run(&mm, "run-1")?;
 		for i in 0..3 {
-			let pin_c = PinForCreate {
+			let pin_c = PinForRunSave {
 				run_id,
-				task_id: None,
-				iden: Some(format!("pin-{i}")),
+				iden: format!("pin-{i}"),
 				priority: Some(i as f64),
 				content: Some(format!("content-{i}")),
 			};
-			PinBmc::create(&mm, pin_c)?;
+			PinBmc::save_run_pin(&mm, pin_c)?;
 		}
 
 		// -- Exec
@@ -242,16 +303,15 @@ mod tests {
 	async fn test_model_pin_bmc_list_order_by() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = ModelManager::new().await?;
-		let run_id = create_run(&mm, "run-1").await?;
+		let run_id = _test_support::create_run(&mm, "run-1")?;
 		for i in 0..3 {
-			let pin_c = PinForCreate {
+			let pin_c = PinForRunSave {
 				run_id,
-				task_id: None,
-				iden: Some(format!("pin-{i}")),
+				iden: format!("pin-{i}"),
 				priority: Some(i as f64),
 				content: Some(format!("content-{i}")),
 			};
-			PinBmc::create(&mm, pin_c)?;
+			PinBmc::save_run_pin(&mm, pin_c)?;
 		}
 
 		let order_bys = OrderBy::from("!id");
@@ -273,18 +333,17 @@ mod tests {
 	async fn test_model_pin_bmc_list_with_filter() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = ModelManager::new().await?;
-		let run_1_id = create_run(&mm, "run-1").await?;
-		let run_2_id = create_run(&mm, "run-2").await?;
+		let run_1_id = _test_support::create_run(&mm, "run-1")?;
+		let run_2_id = _test_support::create_run(&mm, "run-2")?;
 		for run_id in [run_1_id, run_2_id] {
 			for i in 0..3 {
-				let pin_c = PinForCreate {
+				let pin_c = PinForRunSave {
 					run_id,
-					task_id: None,
-					iden: Some(format!("pin-{i}")),
+					iden: format!("pin-{i}"),
 					priority: None,
 					content: Some(format!("content-{i}")),
 				};
-				PinBmc::create(&mm, pin_c)?;
+				PinBmc::save_run_pin(&mm, pin_c)?;
 			}
 		}
 
@@ -310,48 +369,54 @@ mod tests {
 	async fn test_model_pin_bmc_list_for_run() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = ModelManager::new().await?;
-		let run_1_id = create_run(&mm, "run-1").await?;
-		let run_2_id = create_run(&mm, "run-2").await?;
+		let run_1_id = _test_support::create_run(&mm, "run-1")?;
+		let run_2_id = _test_support::create_run(&mm, "run-2")?;
 
 		// Pins for run 1 - create out of order to test sorting
-		PinBmc::create(
+		PinBmc::save_run_pin(
 			&mm,
-			PinForCreate {
+			PinForRunSave {
 				run_id: run_1_id,
-				task_id: None,
-				iden: Some("pin-1.2".to_string()),
+				iden: "pin-1.2".to_string(),
 				priority: Some(2.0),
 				content: None,
 			},
 		)?;
-		PinBmc::create(
+		// twice the same ot make sure only update
+		PinBmc::save_run_pin(
 			&mm,
-			PinForCreate {
+			PinForRunSave {
 				run_id: run_1_id,
-				task_id: None,
-				iden: Some("pin-1.1".to_string()),
+				iden: "pin-1.2".to_string(),
+				priority: Some(2.0),
+				content: None,
+			},
+		)?;
+		PinBmc::save_run_pin(
+			&mm,
+			PinForRunSave {
+				run_id: run_1_id,
+				iden: "pin-1.1".to_string(),
 				priority: Some(1.0),
 				content: None,
 			},
 		)?;
-		PinBmc::create(
+		PinBmc::save_run_pin(
 			&mm,
-			PinForCreate {
+			PinForRunSave {
 				run_id: run_1_id,
-				task_id: None,
-				iden: Some("pin-1.none".to_string()),
+				iden: "pin-1.none".to_string(),
 				priority: None,
 				content: None,
 			},
 		)?;
 
 		// Pin for run 2
-		PinBmc::create(
+		PinBmc::save_run_pin(
 			&mm,
-			PinForCreate {
+			PinForRunSave {
 				run_id: run_2_id,
-				task_id: None,
-				iden: Some("pin-2.1".to_string()),
+				iden: "pin-2.1".to_string(),
 				priority: Some(1.0),
 				content: None,
 			},
