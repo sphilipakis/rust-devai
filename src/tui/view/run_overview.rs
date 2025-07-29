@@ -200,12 +200,8 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
 
-	// -- render legend (on top of list)
-	// build legend_line
-	all_lines.push(ui_for_legend(tasks));
-	all_lines.push(Vec::new());
-
-	link_zones.inc_current_line_by(all_lines.len());
+	// Not used in this case
+	// link_zones.inc_current_line_by(all_lines.len());
 
 	// -- Layout
 	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
@@ -262,6 +258,11 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		// line += 1;
 	}
 
+	// -- render legend (on bottom)
+	// build legend_line
+	all_lines.push(Vec::new());
+	all_lines.push(ui_for_legend(tasks));
+
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
 }
@@ -285,11 +286,6 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let gap_width = gap_span.width() as u16;
 
 	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
-
-	// -- render legend (on top of list)
-	// build legend_line
-	all_lines.push(ui_for_legend(tasks));
-	all_lines.push(Vec::new());
 
 	// -- Render tasks
 	let mut line: Vec<Span<'static>> = Vec::new();
@@ -331,6 +327,11 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 
 	// -- add the last line
 	all_lines.push(line);
+
+	// -- render legend (on top of list)
+	// build legend_line
+	all_lines.push(Vec::new());
+	all_lines.push(ui_for_legend(tasks));
 
 	// -- Build the marker component
 	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
