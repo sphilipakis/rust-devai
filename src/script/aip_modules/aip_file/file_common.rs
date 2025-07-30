@@ -2,20 +2,25 @@
 //!
 //! ---
 //!
-//! ## Lua documentation
+//! ## Lua API
 //!
-//! The `aip.file` module exposes functions to interact with the file system.
+//! The `aip.file` module exposes helper functions that allow Lua scripts to
+//! interact with the file-system in a workspace-aware and pack-aware manner.
+//!
+//! Whenever rich metadata is returned, the Rust structs
+//! [`FileInfo`] and [`FileRecord`] are used.  Refer to their documentation for
+//! the detailed field list instead of duplicating it here.
 //!
 //! ### Functions
 //!
-//! - `aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord`
-//! - `aip.file.save(rel_path: string, content: string)`
-//! - `aip.file.append(rel_path: string, content: string)`
-//! - `aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty: boolean}): FileInfo`
-//! - `aip.file.exists(path: string): boolean`
-//! - `aip.file.list(include_globs: string | list, options?: {base_dir: string, absolute: boolean, with_meta: boolean}): list<FileInfo>`
-//! - `aip.file.list_load(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): list<FileRecord>`
-//! - `aip.file.first(include_globs: string | list, options?: {base_dir: string, absolute: boolean}): FileInfo | nil`
+//! - `aip.file.load(rel_path: string, options?)                : FileRecord`
+//! - `aip.file.save(rel_path: string, content: string)         : FileInfo`        
+//! - `aip.file.append(rel_path: string, content: string)`      : FileInfo`
+//! - `aip.file.ensure_exists(path: string, content?, options?) : FileInfo`
+//! - `aip.file.exists(path: string)                            : boolean`
+//! - `aip.file.list(globs: string | list, options?)            : list<FileInfo>`
+//! - `aip.file.list_load(globs: string | list, options?)       : list<FileRecord>`
+//! - `aip.file.first(globs: string | list, options?)           : FileInfo | nil`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
@@ -34,7 +39,7 @@ use std::io::Write;
 
 /// ## Lua Documentation
 ///
-/// Load a File Record object with its content.
+/// Loads a [`FileRecord`] with its content.
 ///
 /// ```lua
 /// -- API Signature
@@ -52,19 +57,7 @@ use std::io::Write;
 ///
 /// ### Returns
 ///
-/// - `FileRecord: table` - A table representing the file record:
-///   ```ts
-///   {
-///     path : string,   // Relative path used to load the file
-///     name : string,   // File name with extension
-///     stem : string,   // File name without extension
-///     ext  : string,   // File extension
-///     ctime?: number,  // Creation timestamp (microseconds)
-///     mtime?: number,  // Modification timestamp (microseconds)
-///     size?: number,   // File size in bytes
-///     content: string  // The text content of the file
-///   }
-///   ```
+/// - `FileRecord`: A [`FileRecord`] object.
 ///
 /// ### Example
 ///
@@ -120,11 +113,11 @@ pub(super) fn file_load(
 
 /// ## Lua Documentation
 ///
-/// Save string content to a file at the specified path.
+/// Saves string content to a file, returning a [`FileInfo`] object.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.save(rel_path: string, content: string)
+/// aip.file.save(rel_path: string, content: string): FileInfo
 /// ```
 ///
 /// Writes the provided `content` string to the file specified by `rel_path`.
@@ -141,7 +134,7 @@ pub(super) fn file_load(
 ///
 /// ### Returns
 ///
-/// Does not return anything upon success.
+/// - `FileInfo`: A [`FileInfo`] object for the saved file.
 ///
 /// ### Example
 ///
@@ -166,7 +159,7 @@ pub(super) fn file_load(
 ///   error: string // Error message (e.g., save file protection, permission denied, ...)
 /// }
 /// ```
-pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
+pub(super) fn file_save(lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<mlua::Value> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 
@@ -179,19 +172,22 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 
 	write(&full_path, content).map_err(|err| Error::custom(format!("Fail to save file {rel_path}.\nCause {err}")))?;
 
-	let rel_path = full_path.diff(wks_dir).unwrap_or(full_path);
+	let rel_path = full_path.diff(wks_dir).unwrap_or_else(|| full_path.clone());
 	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
 
-	Ok(())
+	let file_info = FileInfo::new(runtime.dir_context(), full_path, true);
+	let file_info = file_info.into_lua(lua)?;
+
+	Ok(file_info)
 }
 
 /// ## Lua Documentation
 ///
-/// Append string content to a file at the specified path.
+/// Appends string content to a file, returning an updated [`FileInfo`] object.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.append(rel_path: string, content: string)
+/// aip.file.append(rel_path: string, content: string): FileInfo
 /// ```
 ///
 /// Appends the provided `content` string to the end of the file specified by `rel_path`.
@@ -205,7 +201,7 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 ///
 /// ### Returns
 ///
-/// Does not return anything upon success.
+/// - `FileInfo`: The updated [`FileInfo`] for the file.
 ///
 /// ### Example
 ///
@@ -230,10 +226,16 @@ pub(super) fn file_save(_lua: &Lua, runtime: &Runtime, rel_path: String, content
 ///   error: string // Error message (e.g., permission denied, I/O error)
 /// }
 /// ```
-pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<()> {
+pub(super) fn file_append(
+	lua: &Lua,
+	runtime: &Runtime,
+	rel_path: String,
+	content: String,
+) -> mlua::Result<mlua::Value> {
 	let path = runtime
 		.dir_context()
 		.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
+
 	ensure_file_dir(&path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
@@ -247,13 +249,18 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 	// NOTE: Could be too many prints
 	// get_hub().publish_sync(format!("-> Lua aip.file.append called on: {}", rel_path));
 
-	Ok(())
+	let file_info = FileInfo::new(runtime.dir_context(), path, true);
+	let file_info = file_info.into_lua(lua)?;
+
+	Ok(file_info)
 }
 
 /// ## Lua Documentation
 ///
-/// Ensure a file exists at the given path. If it doesn't exist, create it with optional content.
-/// If it exists, optionally overwrite its content if it's currently empty.
+/// Ensures a file exists, returning its [`FileInfo`].
+///
+/// If the file does not exist, it's created with optional content.
+/// If it exists and is empty, it can be optionally overwritten.
 ///
 /// ```lua
 /// -- API Signature
@@ -281,18 +288,7 @@ pub(super) fn file_append(_lua: &Lua, runtime: &Runtime, rel_path: String, conte
 ///
 /// ### Returns
 ///
-/// - `FileInfo: table` - Metadata about the file (even if it was just created).
-///   ```ts
-///   {
-///     path : string,   // Relative path used
-///     name : string,   // File name with extension
-///     stem : string,   // File name without extension
-///     ext  : string,   // File extension
-///     ctime?: number,  // Creation timestamp (microseconds)
-///     mtime?: number,  // Modification timestamp (microseconds)
-///     size?: number    // File size in bytes
-///   }
-///   ```
+/// - `FileInfo`: The [`FileInfo`] for the file.
 ///
 /// ### Example
 ///
@@ -356,7 +352,7 @@ pub(super) fn file_ensure_exists(
 
 /// ## Lua Documentation
 ///
-/// Checks if the specified path exists.
+/// Checks if a file or directory exists at the given path.
 ///
 /// ```lua
 /// -- API Signature
@@ -401,7 +397,7 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 
 /// ## Lua Documentation
 ///
-/// List file metadata (`FileInfo`) matching glob patterns.
+/// Lists file metadata ([`FileInfo`]) matching glob patterns.
 ///
 /// ```lua
 /// -- API Signature
@@ -435,19 +431,7 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 ///
 /// ### Returns
 ///
-/// - `list<FileInfo>: table` - A Lua list (table) where each element is a `FileInfo` table:
-///   ```ts
-///   {
-///     path : string,   // Path (relative to base_dir or absolute)
-///     name : string,   // File name with extension
-///     stem : string,   // File name without extension
-///     ext  : string,   // File extension
-///     ctime?: number,  // Creation timestamp (microseconds, if with_meta=true)
-///     mtime?: number,  // Modification timestamp (microseconds, if with_meta=true)
-///     size?: number    // File size in bytes (if with_meta=true)
-///   }
-///   ```
-///   The list is empty if no files match the globs.
+/// - `list<FileInfo>`: A list of [`FileInfo`] objects. Returns an empty list if no files match.
 ///
 /// ### Example
 ///
@@ -513,7 +497,7 @@ pub(super) fn file_list(
 
 /// ## Lua Documentation
 ///
-/// List and load files (`FileRecord`) matching glob patterns.
+/// Lists and loads files ([`FileRecord`]) matching glob patterns.
 ///
 /// ```lua
 /// -- API Signature
@@ -543,20 +527,8 @@ pub(super) fn file_list(
 ///
 /// ### Returns
 ///
-/// - `list<FileRecord>: table` - A Lua list (table) where each element is a `FileRecord` table:
-///   ```ts
-///   {
-///     path : string,             // Relative or absolute path used
-///     name : string,             // File name with extension
-///     stem : string,             // File name without extension
-///     ext  : string,             // File extension
-///     ctime?: number, // Creation timestamp (microseconds)
-///     mtime?: number,// Modification timestamp (microseconds)
-///     size?: number,             // File size in bytes
-///     content: string            // The text content of the file
-///   }
-///   ```
-///   The list is empty if no files match the globs.
+/// - `list<FileRecord>`: A list of [`FileRecord`] objects, each with content.
+///   Returns an empty list if no files match.
 ///
 /// ### Example
 ///
@@ -609,7 +581,7 @@ pub(super) fn file_list_load(
 
 /// ## Lua Documentation
 ///
-/// Find the first file matching glob patterns and return its metadata (`FileInfo`).
+/// Finds the first file matching glob patterns and returns its [`FileInfo`].
 ///
 /// ```lua
 /// -- API Signature
@@ -638,19 +610,7 @@ pub(super) fn file_list_load(
 ///
 /// ### Returns
 ///
-/// - `FileInfo: table | nil` - If a matching file is found, returns a `FileInfo` table:
-///   ```ts
-///   {
-///     path : string,             // Path (relative to base_dir or absolute)
-///     name : string,             // File name with extension
-///     stem : string,             // File name without extension
-///     ext  : string,             // File extension
-///     ctime?: number, // Creation timestamp (microseconds)
-///     mtime?: number,// Modification timestamp (microseconds)
-///     size?: number              // File size in bytes
-///   }
-///   ```
-///   If no matching file is found, returns `nil`.
+/// - `FileInfo | nil`: A [`FileInfo`] object for the first matching file, or `nil` if no match is found.
 ///
 /// ### Example
 ///

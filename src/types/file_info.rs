@@ -47,12 +47,19 @@ impl FileInfo {
 	/// - `base_path` is only use with_meta true to attempt to get the meta
 	pub fn new<'a>(dir_context: &DirContext, rel_path: impl Into<SPath>, with_meta: impl Into<WithMeta<'a>>) -> Self {
 		let path: SPath = rel_path.into();
+		// make it tild home
 		let path = dir_context.maybe_home_path_into_tilde(path);
 
 		let with_meta: WithMeta = with_meta.into();
 		if with_meta.with_meta {
+			// Here we preserve the ~ format if there is one
 			let mut res = FileInfo::from_path(path.clone());
-			let full_path = with_meta.full_path.unwrap_or(&path);
+
+			// Here to resolve the ~ for the full_path.meta
+			let full_path = match with_meta.full_path {
+				Some(full_path) => full_path.clone(),
+				None => dir_context.maybe_tilde_path_into_home(path),
+			};
 
 			if let Ok(meta) = full_path.meta() {
 				res.ctime = Some(meta.created_epoch_us);

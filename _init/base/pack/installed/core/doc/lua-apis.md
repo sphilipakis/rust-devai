@@ -208,7 +208,7 @@ Writes the `content` string to the file specified by `rel_path`. Overwrites exis
 - `content: string`: The string content to write.
 
 #### Returns
-Does not return anything upon success.
+- FileInfo: Metadata ([FileInfo](#filemeta)) about the saved file.
 
 #### Example
 ```lua

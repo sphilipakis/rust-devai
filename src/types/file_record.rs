@@ -61,7 +61,7 @@ impl IntoLua for FileRecord {
 		table.set("ext", self.ext)?;
 
 		table.set("ctime", self.ctime)?;
-		table.set("ctime", self.mtime)?;
+		table.set("mtime", self.mtime)?;
 		table.set("size", self.size)?;
 
 		table.set("content", self.content)?;
