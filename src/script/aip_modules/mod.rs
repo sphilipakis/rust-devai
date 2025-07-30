@@ -9,11 +9,11 @@ pub mod aip_git;
 pub mod aip_hash; // Added new hash module
 pub mod aip_hbs;
 pub mod aip_html;
-pub mod aip_run_task;
 pub mod aip_json;
 pub mod aip_lua;
 pub mod aip_md;
 pub mod aip_path;
+pub mod aip_pin;
 pub mod aip_rust;
 pub mod aip_semver;
 pub mod aip_text;

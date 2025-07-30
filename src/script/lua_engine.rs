@@ -2,7 +2,7 @@ use crate::Result;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::Literals;
 use crate::runtime::Runtime;
-use crate::script::aip_modules::{aip_lua, aip_run_task};
+use crate::script::aip_modules::{aip_lua, aip_pin};
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
@@ -258,7 +258,7 @@ fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 
 	// aip.run and aip.task is a little special to register because
 	// two sub lua modules (aip.run and aip.task) in the same rust module
-	let aip_run_task = aip_run_task::init_module(lua_vm, runtime)?;
+	let aip_run_task = aip_pin::init_module(lua_vm, runtime)?;
 	for pair in aip_run_task.pairs::<String, Value>() {
 		let (key, value) = pair?;
 		table.set(key, value)?;
