@@ -8,8 +8,8 @@
 //!
 //! - `aip.file.load_json(path: string): table | value`
 //! - `aip.file.load_ndjson(path: string): table`
-//! - `aip.file.append_json_line(path: string, data: value)`
-//! - `aip.file.append_json_lines(path: string, data: list)`
+//! - `aip.file.append_json_line(path: string, data: value): FileInfo`
+//! - `aip.file.append_json_lines(path: string, data: list): FileInfo`
 
 use crate::Error;
 use crate::dir_context::PathResolver;

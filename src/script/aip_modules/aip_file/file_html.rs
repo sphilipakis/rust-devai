@@ -1,3 +1,19 @@
+#![allow(clippy::doc_markdown)]
+//! Defines HTML-related helpers for the `aip.file` Lua module.
+//!
+//! ---
+//!
+//! ## Lua documentation for `aip.file` HTML helpers
+//!
+//! ### Functions
+//!
+//! - `aip.file.save_html_to_md(html_path: string, dest?: DestOptions): FileInfo`  
+//! - `aip.file.save_html_to_slim(html_path: string, dest?: DestOptions): FileInfo`  
+//!
+//! These helpers load an HTML file, transform it (conversion to Markdown or
+//! slimming), save the result, and return the [`FileInfo`] describing the
+//! newly-created file.
+//!
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
@@ -28,7 +44,7 @@ use std::fs::{read_to_string, write};
 /// - `html_path: string`  
 ///   Path to the source HTML file, relative to the workspace root.
 ///
-/// - `dest: string | table (optional)`  
+/// - `dest: DestOptions (optional)`  
 ///   Destination path or options table:
 ///
 ///   - `string`  
@@ -114,7 +130,7 @@ pub(super) fn file_save_html_to_md(
 /// - `html_path: string`  
 ///   Path to the source HTML file, relative to the workspace root.
 ///
-/// - `dest: string | table (optional)`  
+/// - `dest: DestOptions (optional)`  
 ///   Destination path or options table for the output `.html` file:
 ///
 ///   - `nil`: Saves as `[original_name]-slim.html` in the same directory.

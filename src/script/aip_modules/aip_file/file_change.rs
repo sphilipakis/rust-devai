@@ -1,3 +1,17 @@
+#![allow(clippy::doc_markdown)]
+//! Defines change-saving helpers for the `aip.file` Lua module.
+//!
+//! ---
+//!
+//! ## Lua documentation for `aip.file` change helpers
+//!
+//! ### Functions
+//!
+//! - `aip.file.save_changes(rel_path: string, changes: string): FileInfo`  
+//!
+//! The helper applies an *aip change-block* to a file, saves it, and returns
+//! the resulting [`FileInfo`].
+//!
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
