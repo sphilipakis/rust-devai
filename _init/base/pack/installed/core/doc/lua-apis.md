@@ -1243,6 +1243,8 @@ aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): stri
 
 aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 
+aip.text.format_size(bytes: integer | nil): string | nil
+
 aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
 
 aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
@@ -1609,6 +1611,25 @@ Removes trailing whitespace and adds a single newline if needed. Returns `\n` if
 #### Error
 
 This function does not typically error.
+
+### aip.text.format_size
+
+Formats a byte count (in bytes) into a human-readable, fixed-width string (9 characters, right-aligned).  
+If `bytes` is `nil`, the function returns `nil`.
+
+```lua
+-- API Signature
+aip.text.format_size(bytes: integer | nil): string | nil
+```
+
+### Examples
+
+```lua
+aip.text.format_size(777)          -- "   777 B "
+aip.text.format_size(8_777)        -- "  8.78 KB"
+aip.text.format_size(5_242_880)    -- "  5.24 MB"
+aip.text.format_size(nil)          -- nil
+```
 
 ### aip.text.extract_line_blocks
 

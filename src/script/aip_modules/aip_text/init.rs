@@ -25,6 +25,8 @@ use super::{
 	trim,
 	trim_end,
 	trim_start,
+	// text_formatter.rs
+	format_size,
 };
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -52,6 +54,9 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	// --- Functions from text_split.rs
 	table.set("split_first", lua.create_function(split_first)?)?;
 	table.set("split_last", lua.create_function(split_last)?)?;
+
+	// --- Functions from text_formatter.rs
+	table.set("format_size", lua.create_function(format_size)?)?;
 
 	// --- Functions from text_split_lines.rs
 	table.set("split_first_line", lua.create_function(split_first_line)?)?;
