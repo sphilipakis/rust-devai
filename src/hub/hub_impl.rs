@@ -39,14 +39,14 @@ impl Hub {
 
 		match self.tx.send(event).await {
 			Ok(_) => (),
-			Err(err) => println!("AIPACK INTERNAL ERROR - failed to send event to hub - {err}"),
+			Err(err) => tracing::warn!("AIPACK INTERNAL WARNING - failed to send event to hub - {err}"),
 		}
 	}
 
 	pub fn publish_sync(&self, event: impl Into<HubEvent>) {
 		match self.tx.send_sync(event) {
 			Ok(_) => (),
-			Err(err) => println!("AIPACK INTERNAL ERROR - failed to send event to hub - {err}"),
+			Err(err) => tracing::warn!("AIPACK INTERNAL WARNING - failed to send event to hub - {err}"),
 		}
 	}
 }
