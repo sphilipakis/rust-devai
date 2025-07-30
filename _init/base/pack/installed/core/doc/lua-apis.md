@@ -129,9 +129,11 @@ aip.file.load_json(path: string): table | value
 
 aip.file.load_ndjson(path: string): list<table>
 
-aip.file.append_json_line(path: string, data: value)
+aip.file.append_json_line(path: string, data: value): FileInfo
 
-aip.file.append_json_lines(path: string, data: list)
+aip.file.append_json_lines(path: string, data: list): FileInfo
+
+aip.file.save_changes(path: string, changes: string): FileInfo
 
 aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>
 
@@ -234,7 +236,7 @@ Appends `content` to the end of the file at `rel_path`. Creates the file and dir
 - `content: string`: The string content to append.
 
 #### Returns
-Does not return anything upon success.
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
 ```lua
@@ -562,7 +564,7 @@ Converts `data` to JSON and appends it, followed by a newline (`\n`), to the fil
 - `data: value`: Lua data (table, string, number, boolean, nil) to append.
 
 #### Returns
-Does not return anything upon success.
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
 ```lua
