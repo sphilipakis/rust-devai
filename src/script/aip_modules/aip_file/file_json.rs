@@ -18,7 +18,8 @@ use crate::script::lua_value_list_to_serde_values;
 use crate::script::lua_value_to_serde_value;
 use crate::script::serde_value_to_lua_value;
 use crate::support::jsons;
-use mlua::{Lua, Value};
+use crate::types::FileInfo;
+use mlua::{IntoLua, Lua, Value};
 use simple_fs::ensure_file_dir;
 
 /// ## Lua Documentation
@@ -191,7 +192,7 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 ///
 /// ### Returns
 ///
-/// Does not return anything upon success.
+/// - `FileInfo`: The updated [`FileInfo`] for the file.
 ///
 /// ### Example
 ///
@@ -220,7 +221,7 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 ///   error: string // Error message (e.g., conversion error, serialization error, file I/O error)
 /// }
 /// ```
-pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
+pub(super) fn file_append_json_line(lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<Value> {
 	// Resolve the path relative to the workspace directory
 	let full_path =
 		runtime
@@ -238,13 +239,14 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	// Append using simple_fs
-	simple_fs::append_json_line(full_path, &json_value).map_err(|e| {
+	simple_fs::append_json_line(full_path.clone(), &json_value).map_err(|e| {
 		Error::from(format!(
 			"aip.file.append_json_line - Failed to append json line to  '{path}'.\nCause: {e}",
 		))
 	})?;
 
-	Ok(())
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
 }
 
 /// ## Lua Documentation
@@ -274,7 +276,7 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 ///
 /// ### Returns
 ///
-/// Does not return anything upon success.
+/// - `FileInfo`: The updated [`FileInfo`] for the file.
 ///
 /// ### Example
 ///
@@ -309,7 +311,7 @@ pub(super) fn file_append_json_line(_lua: &Lua, runtime: &Runtime, path: String,
 ///   error: string // Error message (e.g., data not a table/list, conversion error, serialization error, file I/O error)
 /// }
 /// ```
-pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<()> {
+pub(super) fn file_append_json_lines(lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<Value> {
 	// -- Get the json values
 	let json_values = lua_value_list_to_serde_values(data).map_err(|e| {
 		Error::from(format!(
@@ -325,13 +327,14 @@ pub(super) fn file_append_json_lines(_lua: &Lua, runtime: &Runtime, path: String
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	// -- Append using simple_fs
-	simple_fs::append_json_lines(full_path, &json_values).map_err(|e| {
+	simple_fs::append_json_lines(full_path.clone(), &json_values).map_err(|e| {
 		Error::from(format!(
 			"aip.file.append_json_lines - Failed to append json line to  '{path}'.\nCause: {e}",
 		))
 	})?;
 
-	Ok(())
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
 }
 
 // region:    --- Tests
@@ -629,10 +632,24 @@ invalid json line here
 		let fx_data2 = r#"{name = "item2", active = true, tags = {"a", "b"}}"#;
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data1})"#), None).await?;
-		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data2})"#), None).await?;
+		let res1 = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_line("{fx_path}", {fx_data1})"#),
+			None,
+		)
+		.await?;
+		let res2 = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_line("{fx_path}", {fx_data2})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res1.x_get_str("path")?, fx_path);
+		assert_eq!(res2.x_get_str("path")?, fx_path);
+		assert!(res2.x_get_i64("size")? > res1.x_get_i64("size")?);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
@@ -659,9 +676,18 @@ invalid json line here
 		let fx_data = r#"{appended = "yes", value = nil}"#;
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_line("{fx_path}", {fx_data})"#), None).await?;
+		let res = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_line("{fx_path}", {fx_data})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res.x_get_str("path")?, fx_path);
+		assert!(res.x_get_i64("size")? > initial_content.len() as i64);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
@@ -696,9 +722,18 @@ invalid json line here
         "#;
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+		let res = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_lines("{fx_path}", {fx_data})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res.x_get_str("path")?, fx_path);
+		assert!(res.x_get_i64("size")? > 0);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
@@ -731,9 +766,18 @@ invalid json line here
         "#;
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+		let res = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_lines("{fx_path}", {fx_data})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res.x_get_str("path")?, fx_path);
+		assert!(res.x_get_i64("size")? > initial_content.len() as i64);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();
@@ -758,9 +802,18 @@ invalid json line here
 		let fx_data = r#"{}"#; // Empty list
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {fx_data})"#), None).await?;
+		let res = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_lines("{fx_path}", {fx_data})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res.x_get_str("path")?, fx_path);
+		assert_eq!(res.x_get_i64("size")?, 0);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		assert_eq!(content, "", "File should be empty");
@@ -790,9 +843,18 @@ invalid json line here
 		lua_list.push('}');
 
 		// -- Exec
-		run_reflective_agent(&format!(r#"aip.file.append_json_lines("{fx_path}", {lua_list})"#), None).await?;
+		let res = run_reflective_agent(
+			&format!(r#"return aip.file.append_json_lines("{fx_path}", {lua_list})"#),
+			None,
+		)
+		.await?;
 
 		// -- Check
+		// Check FileInfo
+		assert_eq!(res.x_get_str("path")?, fx_path);
+		assert!(res.x_get_i64("size")? > 0);
+
+		// Check content
 		let full_path = format!("tests-data/sandbox-01/{fx_path}");
 		let content = read_to_string(&full_path)?;
 		let lines: Vec<&str> = content.lines().collect();

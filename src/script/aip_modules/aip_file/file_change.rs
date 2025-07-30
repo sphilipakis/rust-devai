@@ -4,11 +4,58 @@ use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::support::check_access_write;
 use crate::support::text;
-use mlua::Lua;
-use simple_fs::ensure_file_dir;
+use crate::types::FileInfo;
+use mlua::{IntoLua, Lua, Value};
+use simple_fs::{SPath, ensure_file_dir};
 use std::fs::write;
 
-pub(super) fn file_save_changes(_lua: &Lua, runtime: &Runtime, rel_path: String, changes: String) -> mlua::Result<()> {
+/// ## Lua Documentation
+///
+/// Applies a set of changes to a file and saves it, returning [`FileInfo`].
+///
+/// This function is typically used with `aip.rust.find_items` which can generate
+/// a changes string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.save_changes(rel_path: string, changes: string): FileInfo
+/// ```
+///
+/// ### Arguments
+///
+/// - `rel_path: string` - The path to the file to be changed.
+/// - `changes: string` - The change block string.
+///
+/// ### Returns
+///
+/// - `FileInfo` - A [`FileInfo`] object for the saved file.
+///
+/// ### Example
+///
+/// ```lua
+/// local changes = aip.rust.find_items(
+///   {
+///     file = "src/main.rs",
+///     find = {
+///       kind = "fn",
+///       name = "main"
+///     }
+///   },
+///   {
+///     replace = {
+///       with = "pub fn main() { .. }"
+///     }
+///   })
+/// if changes then
+///   aip.file.save_changes("src/main.rs", changes)
+/// end
+/// ```
+pub(super) fn file_save_changes(
+	lua: &Lua,
+	runtime: &Runtime,
+	rel_path: String,
+	changes: String,
+) -> mlua::Result<Value> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 
@@ -28,8 +75,9 @@ pub(super) fn file_save_changes(_lua: &Lua, runtime: &Runtime, rel_path: String,
 
 	write(&full_path, content).map_err(|err| Error::custom(format!("Fail to save file {rel_path}.\nCause {err}")))?;
 
-	let rel_path = full_path.diff(wks_dir).unwrap_or(full_path);
-	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
+	let rel_path_for_hub = full_path.diff(wks_dir).unwrap_or_else(|| full_path.clone());
+	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path_for_hub}"));
 
-	Ok(())
+	let file_info = FileInfo::new(runtime.dir_context(), SPath::new(rel_path), &full_path);
+	file_info.into_lua(lua)
 }
