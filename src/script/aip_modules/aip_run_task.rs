@@ -18,8 +18,10 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
+use crate::script::LuaValueExt;
 use crate::store::rt_model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
-use mlua::{Lua, Table, Value};
+use mlua::{Lua, Table, Value, Variadic};
+use serde_json;
 
 /// Registers the `run.pin` and `task.pin` helpers in Lua.
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -28,11 +30,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	// -- run.pin
 	{
 		let rt = runtime.clone();
-		let run_fn = lua.create_function(
-			move |lua, (iden, priority, content): (Option<String>, Option<f64>, Option<Value>)| {
-				create_pin(lua, &rt, /*for_task*/ false, iden, priority, content).map_err(mlua::Error::external)
-			},
-		)?;
+		let run_fn = lua.create_function(move |lua, args: Variadic<Value>| {
+			create_pin(lua, &rt, /*for_task*/ false, args).map_err(mlua::Error::external)
+		})?;
 		let run_tbl = lua.create_table()?;
 		run_tbl.set("pin", run_fn)?;
 		table.set("run", run_tbl)?;
@@ -41,11 +41,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	// -- task.pin
 	{
 		let rt = runtime.clone();
-		let task_fn = lua.create_function(
-			move |lua, (iden, priority, content): (Option<String>, Option<f64>, Option<Value>)| {
-				create_pin(lua, &rt, /*for_task*/ true, iden, priority, content).map_err(mlua::Error::external)
-			},
-		)?;
+		let task_fn = lua.create_function(move |lua, args: Variadic<Value>| {
+			create_pin(lua, &rt, /*for_task*/ true, args).map_err(mlua::Error::external)
+		})?;
 		let task_tbl = lua.create_table()?;
 		task_tbl.set("pin", task_fn)?;
 		table.set("task", task_tbl)?;
@@ -56,20 +54,86 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 // region:    --- Support
 
-/// Shared implementation for both `run.pin` and `task.pin`.
-/// TODO: Need to do more verification.
-fn create_pin(
-	lua: &Lua,
-	runtime: &Runtime,
-	for_task: bool,
-	iden: Option<String>,
+// -- PinCommand
+// Captures the parsed arguments provided to the Lua `...pin(..)` helpers.
+struct PinCommand {
+	iden: String,
 	priority: Option<f64>,
-	content: Option<Value>,
-) -> Result<i64> {
+	content: String,
+}
+
+impl PinCommand {
+	/// Parses the variadic Lua arguments for the two supported signatures:
+	///
+	/// 1. `pin(iden, priority, content)`
+	/// 2. `pin(iden, content)`
+	///
+	/// Returns an informative error if the arguments do not match either form.
+	fn from_lua_variadic(args: Variadic<Value>) -> Result<Self> {
+		match args.len() {
+			2 => {
+				let iden = args
+					.first()
+					.and_then(Value::x_as_lua_str)
+					.ok_or("aip...pin(iden, content) – expected <string> for parameter `iden`.")?;
+
+				let content = args.get(1).ok_or("aip...pin(iden, content) – expected content.")?;
+				let content = Self::value_to_string(content)?;
+
+				Ok(Self {
+					iden: iden.to_string(),
+					priority: None,
+					content,
+				})
+			}
+			3 => {
+				let iden = args
+					.first()
+					.and_then(Value::x_as_lua_str)
+					.ok_or("aip...pin(iden, priority, content) – expected <string> for parameter `iden`.")?;
+
+				let priority = args
+					.get(1)
+					.and_then(Value::x_as_f64)
+					.ok_or("aip...pin(iden, priority, content) – expected <number> for parameter `priority`.")?;
+
+				let content = args.get(2).ok_or("aip...pin(iden, priority, content) – expected content.")?;
+				let content = Self::value_to_string(content)?;
+
+				Ok(Self {
+					iden: iden.to_string(),
+					priority: Some(priority),
+					content,
+				})
+			}
+			_ => Err(crate::Error::custom(
+				"aip...pin(...) – expected 2 or 3 parameters: (iden, content) or (iden, priority, content).",
+			)),
+		}
+	}
+
+	/// Converts a Lua `Value` into a `String` representation, serialising to JSON
+	/// when the value is not already a string.
+	fn value_to_string(val: &Value) -> Result<String> {
+		match val {
+			Value::String(s) => Ok(s.to_str()?.to_string()),
+			Value::Nil => Err(crate::Error::custom(
+				"aip...pin – `content` cannot be nil. Provide a string or any serialisable value.",
+			)),
+			other => {
+				let json_val = serde_json::to_value(other)
+					.map_err(|e| crate::Error::custom(format!("Cannot serialise content: {e}")))?;
+				Ok(json_val.to_string())
+			}
+		}
+	}
+}
+
+/// Shared implementation for both `run.pin` and `task.pin`.
+fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<i64> {
+	let cmd = PinCommand::from_lua_variadic(args)?;
+
 	let ctx = RuntimeCtx::extract_from_global(lua)?;
-	let iden = iden.ok_or("aip...pin(identifier, priority, content) require identifier as first argument")?;
-	let priority =
-		priority.ok_or("aip...pin(identifier, priority, content)  require priority (number) as second argument")?;
 
 	let mm = runtime.mm();
 	let (run_id, task_id) = {
@@ -78,33 +142,25 @@ fn create_pin(
 		(run_id, task_id)
 	};
 
-	let content_str = match content {
-		None | Some(Value::Nil) => None,
-		Some(Value::String(s)) => Some(s.to_str()?.to_string()),
-		Some(other) => {
-			let json_val = serde_json::to_value(&other)
-				.map_err(|e| crate::Error::custom(format!("Cannot serialise content: {e}")))?;
-			Some(json_val.to_string())
-		}
-	};
-
 	let id = if for_task {
-		let task_id = task_id.ok_or("Cannot create Pin for Task, no task_id found")?;
+		let task_id = task_id.ok_or(
+			"Cannot call 'aip.task.pin(...)' in a before all or after all code block.\nCall `aip.run.pin(..)`'",
+		)?;
 		let pin_c = PinForTaskSave {
 			run_id,
 			task_id,
-			iden,
-			priority: Some(priority),
-			content: content_str,
+			iden: cmd.iden,
+			priority: cmd.priority,
+			content: Some(cmd.content),
 		};
 
 		PinBmc::save_task_pin(mm, pin_c)?
 	} else {
 		let pin_c = PinForRunSave {
 			run_id,
-			iden,
-			priority: Some(priority),
-			content: content_str,
+			iden: cmd.iden,
+			priority: cmd.priority,
+			content: Some(cmd.content),
 		};
 
 		PinBmc::save_run_pin(mm, pin_c)?
@@ -130,7 +186,7 @@ mod tests {
 		// -- Setup & Fixtures
 		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
 		let fx_code = r#"
-aip.run.pin("some-iden", 0, "Some pin content")		
+aip.run.pin("some-iden", "Some pin content")		
 return "OK"
 			"#;
 
@@ -142,7 +198,28 @@ return "OK"
 		// check pins
 		let pins = PinBmc::list_for_run(runtime.mm(), 0.into())?;
 		assert_eq!(pins.len(), 1);
-		assert_eq!(pins[0].content.as_deref().unwrap_or_default(), "Some pin content");
+		assert_eq!(pins[0].content.as_deref().unwrap_or_default(), "\"Some pin content\"");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread")]
+	async fn test_lua_run_pin_with_priority() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let fx_code = r#"
+aip.run.pin("some-iden", 0.7, "Other content")
+return "OK"
+		"#;
+
+		// -- Exec
+		let res = run_reflective_agent_with_runtime(fx_code, None, runtime.clone()).await?;
+
+		// -- Check
+		assert_eq!(res.as_str().unwrap_or_default(), "OK");
+		let pins = PinBmc::list_for_run(runtime.mm(), 0.into())?;
+		assert_eq!(pins.len(), 1);
+		assert_eq!(pins[0].priority, Some(0.7));
 
 		Ok(())
 	}

@@ -3,7 +3,7 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
-use modql::field::{Fields, HasSqliteFields};
+use modql::field::{Fields, HasFields as _, HasSqliteFields};
 use modql::filter::{ListOptions, OrderBys};
 use uuid::Uuid;
 
@@ -150,7 +150,7 @@ impl PinBmc {
 	}
 
 	pub fn save_task_pin(mm: &ModelManager, pin_s: PinForTaskSave) -> Result<Id> {
-		let pin_id = Self::get_task_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
+		let pin_id = Self::get_task_pin_by_iden(mm, pin_s.task_id, &pin_s.iden)?;
 
 		let id = if let Some(pin_id) = pin_id {
 			Self::update(mm, pin_id, pin_s.into())?;
@@ -169,22 +169,31 @@ impl PinBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
-	// Convenience helpers
-	#[allow(unused)]
+	/// List for run
+	/// NOTE: Manual since we have the IS NULL
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Pin>> {
-		let filter = PinFilter {
-			run_id: Some(run_id),
-			..Default::default()
-		};
-
 		// Sort by priority (nulls last), then by creation time.
 		let order_bys = OrderBys::from(vec!["priority IS NULL", "priority", "ctime"]);
 		let list_options = ListOptions::from(order_bys);
 
-		Self::list(mm, Some(list_options), Some(filter))
+		let order_by = list_options
+			.order_bys
+			.map(|ob| ob.join_for_sql())
+			.unwrap_or_else(|| "id".to_string());
+
+		let sql = format!(
+			"SELECT {} FROM {} WHERE run_id = ? AND task_id IS NULL ORDER BY {order_by}",
+			Pin::sql_columns(),
+			PinBmc::table_ref()
+		);
+
+		let db = mm.db();
+		let entities: Vec<Pin> = db.fetch_all(&sql, (run_id,))?;
+
+		Ok(entities)
 	}
 
-	#[allow(unused)]
+	/// List for task
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Pin>> {
 		let filter = PinFilter {
 			task_id: Some(task_id),
@@ -195,7 +204,9 @@ impl PinBmc {
 		let order_bys = OrderBys::from(vec!["priority IS NULL", "priority", "ctime"]);
 		let list_options = ListOptions::from(order_bys);
 
-		Self::list(mm, Some(list_options), Some(filter))
+		let filter = filter.sqlite_not_none_fields();
+
+		base::list::<Self, _>(mm, Some(list_options), Some(filter))
 	}
 }
 
@@ -226,12 +237,6 @@ impl PinBmc {
 
 		Ok(id.map(|id| id.into()))
 	}
-
-	// App should only get for run or for task lists
-	fn list(mm: &ModelManager, list_options: Option<ListOptions>, filter: Option<PinFilter>) -> Result<Vec<Pin>> {
-		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
-		base::list::<Self, _>(mm, list_options, filter_fields)
-	}
 }
 
 // endregion: --- Bmc
@@ -244,7 +249,6 @@ mod tests {
 
 	use super::*;
 	use crate::_test_support;
-	use modql::filter::OrderBy;
 
 	#[tokio::test]
 	async fn test_model_pin_bmc_save_task_pin() -> Result<()> {
@@ -268,99 +272,6 @@ mod tests {
 		let pin: Pin = PinBmc::get(&mm, id)?;
 		assert_eq!(pin.task_id, Some(task_id));
 		assert_eq!(pin.priority, Some(0.5));
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_pin_bmc_list_simple() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let run_id = _test_support::create_run(&mm, "run-1")?;
-		for i in 0..3 {
-			let pin_c = PinForRunSave {
-				run_id,
-				iden: format!("pin-{i}"),
-				priority: Some(i as f64),
-				content: Some(format!("content-{i}")),
-			};
-			PinBmc::save_run_pin(&mm, pin_c)?;
-		}
-
-		// -- Exec
-		let pins: Vec<Pin> = PinBmc::list(&mm, Some(ListOptions::default()), None)?;
-
-		// -- Check
-		assert_eq!(pins.len(), 3);
-		let pin = pins.first().ok_or("Should have first item")?;
-		assert_eq!(pin.id, 1.into());
-		assert_eq!(pin.iden, Some("pin-0".to_string()));
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_pin_bmc_list_order_by() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let run_id = _test_support::create_run(&mm, "run-1")?;
-		for i in 0..3 {
-			let pin_c = PinForRunSave {
-				run_id,
-				iden: format!("pin-{i}"),
-				priority: Some(i as f64),
-				content: Some(format!("content-{i}")),
-			};
-			PinBmc::save_run_pin(&mm, pin_c)?;
-		}
-
-		let order_bys = OrderBy::from("!id");
-		let list_options = ListOptions::from(order_bys);
-
-		// -- Exec
-		let pins: Vec<Pin> = PinBmc::list(&mm, Some(list_options), None)?;
-
-		// -- Check
-		assert_eq!(pins.len(), 3);
-		let pin = pins.first().ok_or("Should have first item")?;
-		assert_eq!(pin.id, 3.into());
-		assert_eq!(pin.iden, Some("pin-2".to_string()));
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_pin_bmc_list_with_filter() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let run_1_id = _test_support::create_run(&mm, "run-1")?;
-		let run_2_id = _test_support::create_run(&mm, "run-2")?;
-		for run_id in [run_1_id, run_2_id] {
-			for i in 0..3 {
-				let pin_c = PinForRunSave {
-					run_id,
-					iden: format!("pin-{i}"),
-					priority: None,
-					content: Some(format!("content-{i}")),
-				};
-				PinBmc::save_run_pin(&mm, pin_c)?;
-			}
-		}
-
-		// -- Exec
-		let order_bys = OrderBy::from("!id");
-		let list_options = ListOptions::from(order_bys);
-		let filter = PinFilter {
-			run_id: Some(run_1_id),
-			..Default::default()
-		};
-		let pins: Vec<Pin> = PinBmc::list(&mm, Some(list_options), Some(filter))?;
-
-		// -- Check
-		assert_eq!(pins.len(), 3);
-		let pin = pins.first().ok_or("Should have first item")?;
-		assert_eq!(pin.id, 3.into());
-		assert_eq!(pin.run_id, run_1_id);
 
 		Ok(())
 	}

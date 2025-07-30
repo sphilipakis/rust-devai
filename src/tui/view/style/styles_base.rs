@@ -1,5 +1,5 @@
 #![allow(unused)] // Ok for this file since we want to eventualy build a hollistic style structure
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
 
 // NOTE: Mac Default terminal does not support true colors
 //       only 256 ANSI one.
@@ -120,3 +120,8 @@ pub const STL_TAB_DEFAULT: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_T
 pub const STL_TAB_DEFAULT_HOVER: Style = Style::new().bg(CLR_BKG_GRAY_DARKER).fg(CLR_TXT_HOVER);
 pub const STL_TAB_ACTIVE: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400);
 pub const STL_TAB_ACTIVE_HOVER: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_TXT_400); // same when active
+
+// -- Section Styles
+//pub const STL_PIN_MARKER: Style = Style::new().bg(Color::Indexed(23)).fg(CLR_TXT_600);
+
+pub const STL_PIN_MARKER: Style = Style::new().bg(CLR_BKG_500).fg(Color::Indexed(122));

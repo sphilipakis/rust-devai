@@ -1,5 +1,5 @@
 use crate::store::ModelManager;
-use crate::store::rt_model::{Log, LogBmc, LogKind, PinBmc, Run, Task, TaskBmc};
+use crate::store::rt_model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
 use crate::tui::core::ScrollIden;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
@@ -171,7 +171,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		return;
 	};
 
-	// -- Fetch Pins
+	// -- Load Pins
 	let pins = match PinBmc::list_for_task(state.mm(), task.id) {
 		Ok(pins) => pins,
 		Err(err) => {
@@ -180,7 +180,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		}
 	};
 
-	// -- Fetch Logs
+	// -- Load Logs
 	let logs = match LogBmc::list_for_task(state.mm(), task.id) {
 		Ok(logs) => logs,
 		Err(err) => {
@@ -192,6 +192,10 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Setup UI Lines
 	let mut all_lines: Vec<Line> = Vec::new();
 	let max_width = area.width - 3; // for scroll bar
+
+	// -- Add the pins
+	// ui_for_pins add empty line after, so no ned to ad it again
+	support::extend_lines(&mut all_lines, comp::ui_for_pins(&pins, max_width), false);
 
 	// -- Add Input
 	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
@@ -325,7 +329,7 @@ fn ui_for_before_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: 
 
 	let logs = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
 
-	comp::ui_for_logs(logs, max_width, show_steps)
+	comp::ui_for_logs(logs, max_width, None, show_steps)
 }
 
 fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
@@ -333,7 +337,7 @@ fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: b
 
 	let logs = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
 
-	comp::ui_for_logs(logs, max_width, show_steps)
+	comp::ui_for_logs(logs, max_width, None, show_steps)
 }
 
 #[allow(unused)]

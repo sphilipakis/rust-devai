@@ -195,7 +195,7 @@ where
 			.iter()
 			.map(|f| format!("\"{}\" = ?", f.iden)) // won't work with rel.col
 			.collect::<Vec<_>>()
-			.join(", ");
+			.join(" AND ");
 
 		let sql = format!(
 			"SELECT {} FROM {} WHERE {} ORDER BY {order_by} LIMIT {limit} ",

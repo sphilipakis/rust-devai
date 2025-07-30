@@ -1,4 +1,4 @@
-use crate::store::rt_model::{Log, LogBmc, LogKind, Task};
+use crate::store::rt_model::{Log, LogBmc, PinBmc, Task};
 use crate::store::{EndState, RunningState, Stage};
 use crate::tui::AppState;
 use crate::tui::core::{Action, LinkZones, ScrollIden};
@@ -53,6 +53,16 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		return;
 	};
 
+	// -- Load Pins
+	let pins = match PinBmc::list_for_run(state.mm(), run_id) {
+		Ok(pins) => pins,
+		Err(err) => {
+			Paragraph::new(format!("PinBmc::list error. {err}")).render(area, buf);
+			return;
+		}
+	};
+
+	// -- Load logs
 	let logs = match LogBmc::list_for_run_only(state.mm(), run_id) {
 		Ok(logs) => logs,
 		Err(err) => {
@@ -61,13 +71,19 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		}
 	};
 
+	// -- Setup lines
 	let max_width = area.width - 3; // for scroll
 
 	let mut link_zones = LinkZones::default();
 	let mut all_lines: Vec<Line> = Vec::new();
 
+	// -- Add the pins
+	// ui_for_pins add empty line after, so no ned to ad it again
+	support::extend_lines(&mut all_lines, comp::ui_for_pins(&pins, max_width), false);
+
 	// -- Add before all
-	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), true);
+	// Here false for add empty end line because logs add it for each log section
+	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), false);
 
 	link_zones.set_current_line(all_lines.len());
 
@@ -82,7 +98,8 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add after all
-	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), true);
+	// Here false for add empty end line because logs add it for each log section
+	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), false);
 
 	link_zones.set_current_line(all_lines.len());
 
@@ -137,49 +154,11 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 // region:    --- UI Builders
 
 fn ui_for_before_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	ui_for_logs(logs, Some(Stage::BeforeAll), max_width, show_steps)
+	comp::ui_for_logs(logs, max_width, Some(Stage::BeforeAll), show_steps)
 }
 
 fn ui_for_after_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	ui_for_logs(logs, Some(Stage::AfterAll), max_width, show_steps)
-}
-
-fn ui_for_logs(logs: &[Log], stage: Option<Stage>, max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	let mut all_lines: Vec<Line> = Vec::new();
-
-	let mut first_section = true;
-	for log in logs {
-		// Show or not step
-		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
-			continue;
-		}
-
-		if stage.is_some() && log.stage.is_none() {
-			continue;
-		}
-
-		if let Some(stage) = stage
-			&& let Some(log_stage) = log.stage
-			&& stage != log_stage
-		{
-			continue;
-		}
-
-		// if first_section {
-		// 	first_section = false;
-		// } else {
-		// 	all_lines.push(Line::default()); // empty line (for now)
-		// 	all_lines.push(Line::default()); // empty line (for now)
-		// 	all_lines.push(Line::default()); // empty line (for now)
-		// 	all_lines.push(Line::default()); // empty line (for now)
-		// }
-
-		// Render log lines
-		let log_lines = comp::ui_for_log(log, max_width);
-		all_lines.extend(log_lines);
-	}
-
-	all_lines
+	comp::ui_for_logs(logs, max_width, Some(Stage::AfterAll), show_steps)
 }
 
 fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {

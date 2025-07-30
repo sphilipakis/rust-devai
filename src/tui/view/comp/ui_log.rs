@@ -1,27 +1,36 @@
+use crate::store::Stage;
 use crate::store::rt_model::{Log, LogKind};
 use crate::tui::style;
 use crate::tui::view::comp;
 use ratatui::text::Line;
 
+/// NOTE: Add empty line after each log section
 pub fn ui_for_logs<'a>(
 	logs: impl IntoIterator<Item = &'a Log>,
 	max_width: u16,
+	stage: Option<Stage>,
 	show_steps: bool,
 ) -> Vec<Line<'static>> {
-	let mut lines: Vec<Line> = Vec::new();
+	let mut all_lines: Vec<Line> = Vec::new();
 	for log in logs {
-		// Show or not step
+		// -- Show or not step
 		if !show_steps && matches!(log.kind, Some(LogKind::RunStep)) {
+			continue;
+		}
+
+		// -- Show or not stage
+		// if stage in arg, but no log stage, then skip
+		if stage.is_some() && stage != log.stage {
 			continue;
 		}
 
 		// Render log lines
 		let log_lines = comp::ui_for_log(log, max_width);
-		lines.extend(log_lines);
-		lines.push(Line::default()); // empty line (for now)
+		all_lines.extend(log_lines);
+		all_lines.push(Line::default()); // empty line (for now)
 	}
 
-	lines
+	all_lines
 }
 
 /// Return the lines for a single log entity

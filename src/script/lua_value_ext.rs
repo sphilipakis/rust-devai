@@ -6,6 +6,9 @@ use mlua::{BorrowedStr, Table, Value};
 #[allow(unused)]
 pub trait LuaValueExt {
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>>;
+	/// Note: Will round if floating number
+	fn x_as_i64(&self) -> Option<i64>;
+	fn x_as_f64(&self) -> Option<f64>;
 
 	/// Return the Lua value for a key.
 	/// NOTE: Will return None if value is Nil
@@ -19,6 +22,21 @@ pub trait LuaValueExt {
 impl LuaValueExt for Value {
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
 		self.as_string().and_then(|s| s.to_str().ok())
+	}
+
+	fn x_as_i64(&self) -> Option<i64> {
+		match self {
+			Value::Integer(num) => Some(*num),
+			Value::Number(num) => Some(num.round() as i64),
+			_ => None,
+		}
+	}
+	fn x_as_f64(&self) -> Option<f64> {
+		match self {
+			Value::Integer(num) => Some(*num as f64),
+			Value::Number(num) => Some(*num),
+			_ => None,
+		}
 	}
 
 	fn x_get_value(&self, key: &str) -> Option<Value> {
@@ -61,6 +79,15 @@ impl LuaValueExt for Option<Value> {
 		self.as_ref()?.as_string().and_then(|s| s.to_str().ok())
 	}
 
+	fn x_as_i64(&self) -> Option<i64> {
+		let val = self.as_ref()?;
+		val.x_as_i64()
+	}
+	fn x_as_f64(&self) -> Option<f64> {
+		let val = self.as_ref()?;
+		val.x_as_f64()
+	}
+
 	fn x_get_value(&self, key: &str) -> Option<Value> {
 		self.as_ref()?.x_get_value(key)
 	}
@@ -83,6 +110,13 @@ impl LuaValueExt for Option<Value> {
 
 impl LuaValueExt for Table {
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+		None
+	}
+
+	fn x_as_i64(&self) -> Option<i64> {
+		None
+	}
+	fn x_as_f64(&self) -> Option<f64> {
 		None
 	}
 
