@@ -174,14 +174,17 @@ aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 Loads the file specified by `rel_path` and returns a [FileRecord](#filerecord) object containing the file's metadata and its content.
 
 #### Arguments
+
 - `rel_path: string`: The path to the file, relative to the `base_dir` or workspace root.
 - `options?: table`: An optional table containing:
   - `base_dir: string` (optional): The base directory from which `rel_path` is resolved. Defaults to the workspace root. Pack references (e.g., `ns@pack/`) can be used.
 
 #### Returns
+
 - `FileRecord`: A [FileRecord](#filerecord) table representing the file.
 
 #### Example
+
 ```lua
 local readme = aip.file.load("doc/README.md")
 print(readme.path)    -- Output: "doc/README.md" (relative path used)
@@ -192,6 +195,7 @@ print(agent_file.path) -- Output: "agent.aip" (relative to the resolved base_dir
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the file cannot be found, read, or metadata retrieved, or if `base_dir` is invalid.
 
 ### aip.file.save
@@ -206,18 +210,22 @@ aip.file.save(rel_path: string, content: string)
 Writes the `content` string to the file specified by `rel_path`. Overwrites existing files. Creates directories as needed. Restricts saving outside the workspace or shared base directory for security.
 
 #### Arguments
+
 - `rel_path: string`: The path relative to the workspace root.
 - `content: string`: The string content to write.
 
 #### Returns
+
 - FileInfo: Metadata ([FileInfo](#filemeta)) about the saved file.
 
 #### Example
+
 ```lua
 aip.file.save("docs/new_feature.md", "# New Feature\n\nDetails.")
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on write failure, permission issues, path restrictions, or if no workspace context.
 
 ### aip.file.append
@@ -232,18 +240,22 @@ aip.file.append(rel_path: string, content: string)
 Appends `content` to the end of the file at `rel_path`. Creates the file and directories if they don't exist.
 
 #### Arguments
+
 - `rel_path: string`: The path relative to the workspace root.
 - `content: string`: The string content to append.
 
 #### Returns
+
 - `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
+
 ```lua
 aip.file.append("logs/app.log", "INFO: User logged in.\n")
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on write failure, permission issues, or I/O errors.
 
 ### aip.file.ensure_exists
@@ -258,15 +270,18 @@ aip.file.ensure_exists(path: string, content?: string, options?: {content_when_e
 Checks if the file exists. If not, creates it with `content`. If it exists and `options.content_when_empty` is true and the file is empty (or whitespace only), writes `content`. Intended for files, not directories.
 
 #### Arguments
+
 - `path: string`: The path relative to the workspace root.
 - `content?: string` (optional): Content to write. Defaults to empty string.
 - `options?: table` (optional):
   - `content_when_empty?: boolean` (optional): If true, the `content` will be written to the file if the file is empty (or only contains whitespace). Defaults to `false`.
 
 #### Returns
+
 - `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
+
 ```lua
 -- Create config if needed, with default content
 local default_config = "-- Default Settings --\nenabled=true"
@@ -281,6 +296,7 @@ aip.file.ensure_exists("src/module.lua", "-- TODO", {content_when_empty = true})
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on creation/write failure, permission issues, or metadata retrieval failure.
 
 ### aip.file.exists
@@ -297,13 +313,16 @@ Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
 
 #### Arguments
 
+
 - `path: string`: The path string to check for existence. Can be relative, absolute, or a pack reference.
 
 #### Returns
 
+
 - `boolean`: Returns `true` if a file or directory exists at the specified path, `false` otherwise.
 
 #### Example
+
 
 ```lua
 if aip.file.exists("README.md") then
@@ -316,6 +335,7 @@ end
 ```
 
 #### Error
+
 
 Returns an error (Lua table `{ error: string }`) if the path string cannot be resolved (e.g., invalid pack reference, invalid path format).
 
@@ -344,6 +364,7 @@ aip.file.list(
 Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileInfo](#filemeta) objects (metadata only, no content).
 
 #### Arguments
+
 - `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
 - `options?: table` (optional):
   - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
@@ -356,9 +377,11 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
   - `ctime` is creation time, `mtime` is last modification time (from the file system), both in epoch micro
 
 #### Returns
+
 - `list<FileInfo>`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
 
 #### Example
+
 ```lua
 -- List all Markdown files in the 'docs' directory (relative paths)
 local doc_files = aip.file.list("*.md", { base_dir = "docs" })
@@ -384,6 +407,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, glob matching error, or metadata retrieval error (if `with_meta=true`).
 
 ### aip.file.list_load
@@ -406,6 +430,7 @@ loads the content of each matching file, and returns a list of [FileRecord](#fil
 Each [FileRecord](#filerecord) contains both metadata and the file content.
 
 #### Arguments
+
 - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
 - `options?: table` (optional) - A table containing options:
@@ -416,9 +441,11 @@ Each [FileRecord](#filerecord) contains both metadata and the file content.
     Note: The exact path stored in [FileRecord](#filerecord).path depends on internal resolution logic, especially if paths resolve outside `base_dir`.
 
 #### Returns
+
 - `list<FileRecord>`: A Lua list of [FileRecord](#filerecord) tables. Empty if no files match the globs.
 
 #### Example
+
 ```lua
 -- Load all Markdown files in the 'docs' directory
 local doc_files = aip.file.list_load("*.md", { base_dir = "docs" })
@@ -435,6 +462,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, glob matching error, or file read/metadata error.
 
 ### aip.file.first
@@ -457,6 +485,7 @@ It stops searching as soon as the first matching file is found and returns its [
 If no matching file is found, it returns `nil`.
 
 #### Arguments
+
 - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
 - `options?: table` (optional) - A table containing options:
@@ -466,9 +495,11 @@ If no matching file is found, it returns `nil`.
     If `false` (default), the `path` will be relative to the `base_dir`. Similar to `aip.file.list`, paths outside `base_dir` become absolute.
 
 #### Returns
+
 - `FileInfo | nil`: If a matching file is found, returns a [FileInfo](#filemeta) table. If no matching file is found, returns `nil`.
 
 #### Example
+
 ```lua
 -- Find the first '.aip' file in a pack
 local agent_meta = aip.file.first("*.aip", { base_dir = "ns@pack/" })
@@ -489,6 +520,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, error during search *before* first match, or metadata retrieval error for the first match.
 
 ### aip.file.load_json
@@ -503,12 +535,15 @@ aip.file.load_json(path: string): table | value
 Loads the file at `path` (relative to workspace), parses it as JSON, and converts it to a Lua value.
 
 #### Arguments
+
 - `path: string`: Path to the JSON file, relative to workspace root.
 
 #### Returns
+
 - `table | value`: Lua value representing the parsed JSON.
 
 #### Example
+
 ```lua
 -- Assuming 'config.json' contains {"port": 8080, "enabled": true}
 local config = aip.file.load_json("config.json")
@@ -516,6 +551,7 @@ print(config.port) -- Output: 8080
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if file not found/read, content is invalid JSON, or conversion fails.
 
 ### aip.file.load_ndjson
@@ -530,12 +566,15 @@ aip.file.load_ndjson(path: string): list<table>
 Loads the file at `path` (relative to workspace), parses each non-empty line as JSON, and returns a Lua list of the parsed values. Empty lines are skipped.
 
 #### Arguments
+
 - `path: string`: Path to the NDJSON file, relative to workspace root.
 
 #### Returns
+
 - `list<table>`: Lua list containing parsed values from each line.
 
 #### Example
+
 ```lua
 -- Assuming 'logs.ndjson' contains:
 -- {"level": "info", "msg": "Started"}
@@ -546,6 +585,7 @@ print(logs[1].msg) -- Output: Started
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if file not found/read, any line has invalid JSON, or conversion fails.
 
 ### aip.file.append_json_line
@@ -560,19 +600,23 @@ aip.file.append_json_line(path: string, data: value)
 Converts `data` to JSON and appends it, followed by a newline (`\n`), to the file at `path` (relative to workspace). Creates file/directories if needed.
 
 #### Arguments
+
 - `path: string`: Path to the target file, relative to workspace root.
 - `data: value`: Lua data (table, string, number, boolean, nil) to append.
 
 #### Returns
+
 - `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
+
 ```lua
 aip.file.append_json_line("output.ndjson", {user = "test", score = 100})
 -- Appends '{"score":100,"user":"test"}\n' to output.ndjson
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on conversion/serialization failure, directory creation failure, or file write/permission error.
 
 ### aip.file.append_json_lines
@@ -587,13 +631,16 @@ aip.file.append_json_lines(path: string, data: list)
 Iterates through the `data` list, converts each element to JSON, and appends it followed by a newline (`\n`) to the file at `path` (relative to workspace). Creates file/directories if needed. Uses buffering.
 
 #### Arguments
+
 - `path: string`: Path to the target file, relative to workspace root.
 - `data: list`: Lua list (table with sequential integer keys from 1) of values to append.
 
 #### Returns
+
 Does not return anything upon success.
 
 #### Example
+
 ```lua
 local users = { {user = "alice"}, {user = "bob"} }
 aip.file.append_json_lines("users.ndjson", users)
@@ -601,6 +648,7 @@ aip.file.append_json_lines("users.ndjson", users)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `data` is not a list, conversion/serialization fails for any element, directory creation fails, or file write/permission error.
 
 ### aip.file.load_md_sections
@@ -618,13 +666,16 @@ aip.file.load_md_sections(
 Reads the markdown file at `path` (relative to workspace) and splits it into sections based on headings (`#`). Returns a list of [MdSection](#mdsection) objects. Optionally filters by exact heading `name` (case-sensitive, excluding `#`).
 
 #### Arguments
+
 - `path: string`: Path to the markdown file, relative to workspace root.
 - `headings?: string | list<string>` (optional): Heading name(s) to filter by.
 
 #### Returns
+
 - `list<MdSection>`: A Lua list of [MdSection](#mdsection) tables. Includes content before the first heading if no filter applied. Empty if file empty or no matching sections.
 
 #### Example
+
 ```lua
 -- Load all sections
 local all_sections = aip.file.load_md_sections("doc/readme.md")
@@ -637,6 +688,7 @@ local sections = aip.file.load_md_sections("doc/readme.md", {"Summary", "Conclus
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if file not found/read, `headings` invalid, or parsing/conversion error.
 
 ### aip.file.load_md_split_first
@@ -651,9 +703,11 @@ aip.file.load_md_split_first(path: string): {before: string, first: MdSection, a
 Reads the file at `path` (relative to workspace) and divides it into: content before the first heading (`before`), the first heading section (`first`), and content from the second heading onwards (`after`).
 
 #### Arguments
+
 - `path: string`: Path to the markdown file, relative to workspace root.
 
 #### Returns
+
 - `table`: A table containing the three parts:
   ```ts
   {
@@ -664,6 +718,7 @@ Reads the file at `path` (relative to workspace) and divides it into: content be
   ```
 
 #### Example
+
 ```lua
 local split = aip.file.load_md_split_first("doc/structure.md")
 print("--- BEFORE ---")
@@ -675,6 +730,7 @@ print(split.after)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if file not found/read, or parsing/conversion error.
 
 ### aip.file.save_html_to_md
@@ -693,6 +749,7 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 
 #### Arguments
 
+
 - `html_path: string`
   Path to the source HTML file, relative to the workspace root.
 
@@ -708,10 +765,12 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 
 #### Returns
 
+
 - `FileInfo`
   Metadata ([FileInfo](#filemeta)) about the created Markdown file.
 
 #### Example
+
 
 ```lua
 -- Default (replaces .html with .md):
@@ -731,6 +790,7 @@ aip.file.save_html_to_md("docs/page.html", {
 
 #### Error
 
+
 Returns an error (Lua table `{ error: string }`) if file I/O, parsing, conversion, or destination resolution fails.
 
 ### aip.file.save_html_to_slim
@@ -749,6 +809,7 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 
 #### Arguments
 
+
 - `html_path: string`
   Path to the source HTML file, relative to the workspace root.
 
@@ -764,10 +825,12 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 
 #### Returns
 
+
 - `FileInfo`
   Metadata ([FileInfo](#filemeta)) about the created slimmed HTML file.
 
 #### Example
+
 
 ```lua
 -- Default (saves as original-slim.html):
@@ -787,6 +850,7 @@ aip.file.save_html_to_slim("web/page.html", { suffix = "_light" })
 ```
 
 #### Error
+
 
 Returns an error (Lua table `{ error: string }`) if file I/O, slimming, or destination resolution fails.
 
@@ -832,13 +896,16 @@ Parses the given path string into a structured table containing components like 
 
 #### Arguments
 
+
 - `path: string | nil`: The path string to parse. If `nil`, the function returns `nil`.
 
 #### Returns
 
+
 - `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 
 #### Example
+
 
 ```lua
 local parsed = aip.path.parse("some/folder/file.txt")
@@ -850,6 +917,7 @@ local nil_result = aip.path.parse(nil)
 ```
 
 #### Error
+
 
 Returns an error (Lua table `{ error: string }`) if the path string is provided but is invalid and cannot be parsed into a valid SPath object.
 
@@ -871,13 +939,16 @@ aip.path.split(path: string): (parent: string, filename: string)
 Splits the given path into its parent directory and filename components.
 
 #### Arguments
+
 - `path: string`: The path to split.
 
 #### Returns
+
 - `parent: string`: The parent directory path (empty string if no parent).
 - `filename: string`: The filename component (empty string if no filename).
 
 #### Example
+
 ```lua
 local parent, filename = aip.path.split("folder/file.txt")
 print(parent)   -- Output: "folder"
@@ -889,6 +960,7 @@ print(filename) -- Output: "justafile.md"
 ```
 
 #### Error
+
 Does not typically error.
 
 ### aip.path.join
@@ -909,13 +981,16 @@ is joined with `base` using system-appropriate path logic (which also normalizes
 
 
 #### Arguments
+
 - `base: string`: The initial base path.
 - `...parts: string | string[]` (variadic): One or more path segments to process and append. Each part can be a single string or a Lua list (table) of strings.
 
 #### Returns
+
 - `string`: A new string representing the combined and normalized path.
 
 #### Example
+
 ```lua
 -- Example 1: Basic join
 print(aip.path.join("dir1/", "file1.txt"))             -- Output: "dir1/file1.txt"
@@ -941,6 +1016,7 @@ print(aip.path.join("a/", "b/", "c/"))                  -- Output: "a/b/c/"
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if any of the `parts` arguments cannot be converted to a string or a list of strings (e.g., passing a boolean or a function).
 
 
@@ -956,12 +1032,15 @@ aip.path.resolve(path: string): string
 Resolves relative paths (`.`, `..`), absolute paths, and pack references (`ns@pack/`, `ns@pack$base/`, `ns@pack$workspace/`) to a normalized, typically absolute, path.
 
 #### Arguments
+
 - `path: string`: The path string to resolve.
 
 #### Returns
+
 - `string`: The resolved and normalized path.
 
 #### Example
+
 ```lua
 local resolved_path = aip.path.resolve("./agent-script/../agent.aip")
 -- Output: /path/to/workspace/agent.aip (example)
@@ -971,6 +1050,7 @@ local resolved_pack_path = aip.path.resolve("ns@pack/some/file.txt")
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the path cannot be resolved (e.g., invalid pack reference, invalid format).
 
 ### aip.path.exists
@@ -985,18 +1065,22 @@ aip.path.exists(path: string): boolean
 Checks existence after resolving the path relative to the workspace or pack structure.
 
 #### Arguments
+
 - `path: string`: The path string to check.
 
 #### Returns
+
 - `boolean`: `true` if exists, `false` otherwise.
 
 #### Example
+
 ```lua
 if aip.path.exists("README.md") then print("Exists") end
 if aip.path.exists("ns@pack/main.aip") then print("Pack agent exists") end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.is_file
@@ -1011,17 +1095,21 @@ aip.path.is_file(path: string): boolean
 Checks after resolving the path relative to the workspace or pack structure.
 
 #### Arguments
+
 - `path: string`: The path string to check.
 
 #### Returns
+
 - `boolean`: `true` if it's an existing file, `false` otherwise.
 
 #### Example
+
 ```lua
 if aip.path.is_file("config.toml") then print("Is a file") end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.is_dir
@@ -1036,17 +1124,21 @@ aip.path.is_dir(path: string): boolean
 Checks after resolving the path relative to the workspace or pack structure.
 
 #### Arguments
+
 - `path: string`: The path string to check.
 
 #### Returns
+
 - `boolean`: `true` if it's an existing directory, `false` otherwise.
 
 #### Example
+
 ```lua
 if aip.path.is_dir("src/") then print("Is a directory") end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the path cannot be resolved.
 
 ### aip.path.diff
@@ -1061,13 +1153,16 @@ aip.path.diff(file_path: string, base_path: string): string
 Calculates the relative path string that navigates from `base_path` to `file_path`.
 
 #### Arguments
+
 - `file_path: string`: The target path.
 - `base_path: string`: The starting path.
 
 #### Returns
+
 - `string`: The relative path. Empty if paths are the same or cannot be computed (e.g., different drives).
 
 #### Example
+
 ```lua
 print(aip.path.diff("/a/b/c/file.txt", "/a/b/")) -- Output: "c/file.txt"
 print(aip.path.diff("/a/b/", "/a/b/c/file.txt")) -- Output: "../.."
@@ -1075,6 +1170,7 @@ print(aip.path.diff("folder/file.txt", "folder")) -- Output: "file.txt"
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if paths are invalid.
 
 ### aip.path.parent
@@ -1089,18 +1185,22 @@ aip.path.parent(path: string): string | nil
 Gets the parent directory component.
 
 #### Arguments
+
 - `path: string`: The path string.
 
 #### Returns
+
 - `string | nil`: The parent directory path, or `nil` if no parent (e.g., for ".", "/", "C:/").
 
 #### Example
+
 ```lua
 print(aip.path.parent("some/path/file.txt")) -- Output: "some/path"
 print(aip.path.parent("."))                  -- Output: nil
 ```
 
 #### Error
+
 Does not typically error.
 
 
@@ -1162,12 +1262,15 @@ aip.text.escape_decode(content: string | nil): string | nil
 Useful for decoding responses from LLMs that might HTML-encode output.
 
 #### Arguments
+
 - `content: string | nil`: The content to HTML-decode. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The decoded string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if decoding fails (and content was not `nil`).
 
 ### aip.text.escape_decode_if_needed
@@ -1182,12 +1285,15 @@ aip.text.escape_decode_if_needed(content: string | nil): string | nil
 A more conservative version of `escape_decode` for cases where only specific entities need decoding.
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The potentially decoded string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if decoding fails (and content was not `nil`).
 
 ### aip.text.split_first
@@ -1200,14 +1306,17 @@ aip.text.split_first(content: string | nil, sep: string): (string | nil, string 
 ```
 
 #### Arguments
+
 - `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
 - `sep: string`: The separator string.
 
 #### Returns
+
 - `string | nil`: The part before the first separator. `nil` if `content` was `nil` or separator not found.
 - `string | nil`: The part after the first separator. `nil` if `content` was `nil` or separator not found. Empty string if separator is at the end.
 
 #### Example
+
 ```lua
 local content = "first part===second part"
 local first, second = aip.text.split_first(content, "===")
@@ -1216,6 +1325,7 @@ local first, second = aip.text.split_first(content, "===")
 ```
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.split_last
@@ -1228,14 +1338,17 @@ aip.text.split_last(content: string | nil, sep: string): (string | nil, string |
 ```
 
 #### Arguments
+
 - `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
 - `sep: string`: The separator string.
 
 #### Returns
+
 - `string | nil`: The part before the last separator. `nil` if `content` was `nil` or separator not found.
 - `string | nil`: The part after the last separator. `nil` if `content` was `nil` or separator not found. Empty string if separator is at the end.
 
 #### Example
+
 ```lua
 local content = "some == text == more"
 local first, second = aip.text.split_last(content, "==")
@@ -1249,6 +1362,7 @@ local first, second = aip.text.split_last(content, "++")
 ```
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.remove_first_line
@@ -1261,12 +1375,15 @@ aip.text.remove_first_line(content: string | nil): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The content with the first line removed, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.remove_first_lines
@@ -1279,13 +1396,16 @@ aip.text.remove_first_lines(content: string | nil, n: number): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `n: number`: The number of lines to remove.
 
 #### Returns
+
 - `string | nil`: The content with the first `n` lines removed, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.remove_last_line
@@ -1298,12 +1418,15 @@ aip.text.remove_last_line(content: string | nil): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The content with the last line removed, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.remove_last_lines
@@ -1316,13 +1439,16 @@ aip.text.remove_last_lines(content: string | nil, n: number): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `n: number`: The number of lines to remove.
 
 #### Returns
+
 - `string | nil`: The content with the last `n` lines removed, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.trim
@@ -1335,12 +1461,15 @@ aip.text.trim(content: string | nil): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.trim_start
@@ -1353,12 +1482,15 @@ aip.text.trim_start(content: string | nil): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.trim_end
@@ -1371,12 +1503,15 @@ aip.text.trim_end(content: string | nil): string | nil
 ```
 
 #### Arguments
+
 - `content: string | nil`: The string to trim. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The trimmed string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.truncate
@@ -1391,14 +1526,17 @@ aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): st
 If `content` length exceeds `max_len`, truncates and appends `ellipsis` (if provided).
 
 #### Arguments
+
 - `content: string | nil`: The content to truncate. If `nil`, the function returns `nil`.
 - `max_len: number`: The maximum length of the result.
 - `ellipsis?: string` (optional): String to append if truncated (e.g., "...").
 
 #### Returns
+
 - `string | nil`: The truncated string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.replace_markers
@@ -1413,13 +1551,16 @@ aip.text.replace_markers(content: string | nil, new_sections: list): string | ni
 Replaces occurrences of `<<START>>...<<END>>` blocks sequentially with items from `new_sections`. Items in `new_sections` can be strings or tables with a `.content` field.
 
 #### Arguments
+
 - `content: string | nil`: The content containing `<<START>>...<<END>>` markers. If `nil`, the function returns `nil`.
 - `new_sections: list`: A Lua list of strings or tables to replace the markers.
 
 #### Returns
+
 - `string | nil`: The string with markers replaced, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.ensure
@@ -1434,13 +1575,16 @@ aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): stri
 Adds the prefix/suffix only if the content doesn't already start/end with it.
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 - `options: table`: A table with optional `prefix` and `suffix` string keys.
 
 #### Returns
+
 - `string | nil`: The ensured string, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.ensure_single_ending_newline
@@ -1455,12 +1599,15 @@ aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 Removes trailing whitespace and adds a single newline if needed. Returns `\n` if content is empty. Useful for code normalization.
 
 #### Arguments
+
 - `content: string | nil`: The content to process. If `nil`, the function returns `nil`.
 
 #### Returns
+
 - `string | nil`: The string ending with a single newline, or `nil` if the input `content` was `nil`.
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.extract_line_blocks
@@ -1475,6 +1622,7 @@ aip.text.extract_line_blocks(content: string | nil, options: {starts_with: strin
 Extracts blocks of consecutive lines from `content` where each line begins with `options.starts_with`.
 
 #### Arguments
+
 - `content: string | nil`: The content to extract from. If `nil`, the function returns `(nil, nil)`.
 - `options: table`:
   - `starts_with: string` (required): The prefix indicating a line block.
@@ -1482,10 +1630,12 @@ Extracts blocks of consecutive lines from `content` where each line begins with 
   - `first?: number` (optional): Limits the number of blocks extracted. Remaining lines (if any) contribute to the extruded content if `extrude` is set.
 
 #### Returns
+
 - `list<string> | nil`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix. `nil` if input `content` was `nil`.
 - `string | nil`: The remaining content if `extrude = "content"`, otherwise `nil`. `nil` if input `content` was `nil`.
 
 #### Example
+
 ```lua
 local text = "> Block 1 Line 1\n> Block 1 Line 2\nSome other text\n> Block 2"
 local blocks, remain = aip.text.extract_line_blocks(text, {starts_with = ">", extrude = "content"})
@@ -1494,6 +1644,7 @@ local blocks, remain = aip.text.extract_line_blocks(text, {starts_with = ">", ex
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if arguments are invalid (and content was not `nil`).
 
 ### aip.text.split_first_line
@@ -1508,14 +1659,17 @@ aip.text.split_first_line(content: string | nil, sep: string): (string | nil, st
 The separator line itself is not included in either part.
 
 #### Arguments
+
 - `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
 - `sep: string`: The exact string the line must match.
 
 #### Returns
+
 - `string | nil`: The part before the first matching line. `nil` if `content` was `nil`. Empty string if the first matching line was the first line.
 - `string | nil`: The part after the first matching line. `nil` if `content` was `nil` or no line matched `sep`. Empty string if the first matching line was the last line.
 
 #### Example
+
 ```lua
 local text = "line one\n---\nline two\n---\nline three"
 local first, second = aip.text.split_first_line(text, "---")
@@ -1532,6 +1686,7 @@ local first, second = aip.text.split_first_line("no separator", "---")
 ```
 
 #### Error
+
 This function does not typically error.
 
 ### aip.text.split_last_line
@@ -1546,14 +1701,17 @@ aip.text.split_last_line(content: string | nil, sep: string): (string | nil, str
 The separator line itself is not included in either part.
 
 #### Arguments
+
 - `content: string | nil`: The string to split. If `nil`, the function returns `(nil, nil)`.
 - `sep: string`: The exact string the line must match.
 
 #### Returns
+
 - `string | nil`: The part before the last matching line. `nil` if `content` was `nil` or no line matched `sep`.
 - `string | nil`: The part after the last matching line. `nil` if `content` was `nil` or no line matched `sep`. Empty string if the last matching line was the last line.
 
 #### Example
+
 ```lua
 local text = "line one\n---\nline two\n---\nline three"
 local first, second = aip.text.split_last_line(text, "---")
@@ -1570,6 +1728,7 @@ local first, second = aip.text.split_last_line("no separator", "---")
 ```
 
 #### Error
+
 This function does not typically error.
 
 
@@ -1608,6 +1767,7 @@ aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): 
 Parses `md_content` and extracts fenced code blocks (``` ```).
 
 #### Arguments
+
 - `md_content: string`: The markdown content.
 - `options?: string | table` (optional):
   - If string: Filter blocks by this language identifier.
@@ -1616,10 +1776,12 @@ Parses `md_content` and extracts fenced code blocks (``` ```).
     - `extrude?: "content"`: If set, also return content outside the extracted blocks.
 
 #### Returns
+
 - If `extrude` is not set: `list<MdBlock>`: A Lua list of [MdBlock](#mdblock) objects.
 - If `extrude = "content"`: `(list<MdBlock>, string)`: A tuple containing the list of [MdBlock](#mdblock) objects and the remaining content string.
 
 #### Example
+
 ```lua
 local md = "```rust\nfn main() {}\n```\nSome text.\n```lua\nprint('hi')\n```"
 local rust_blocks = aip.md.extract_blocks(md, "rust")
@@ -1631,6 +1793,7 @@ local lua_blocks, remain = aip.md.extract_blocks(md, {lang = "lua", extrude = "c
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on invalid options or parsing errors.
 
 ### aip.md.extract_meta
@@ -1645,15 +1808,18 @@ aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
 Finds all ```toml #!meta ... ``` blocks, parses their TOML content, merges them into a single Lua table, and returns the table along with the original content stripped of the meta blocks.
 
 #### Arguments
+
 - `md_content: string`: The markdown content.
 
 #### Returns
+
 - `table`: Merged metadata from all `#!meta` blocks (empty object if not found)
 - `string`: Original content with meta blocks removed.
 
 If `md_content` the return will be `(nil, nil)`
 
 #### Example
+
 ```lua
 local content = "Intro.\n```toml\n#!meta\ntitle=\"T\"\n```\nMain.\n```toml\n#!meta\nauthor=\"A\"\n```"
 local meta, remain = aip.md.extract_meta(content)
@@ -1662,6 +1828,7 @@ local meta, remain = aip.md.extract_meta(content)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if any meta block contains invalid TOML.
 
 ### aip.md.outer_block_content_or_raw
@@ -1676,12 +1843,15 @@ aip.md.outer_block_content_or_raw(md_content: string): string
 If `md_content` starts and ends with a fenced code block (```), returns the content inside. Otherwise, returns the original `md_content`. Useful for processing LLM responses.
 
 #### Arguments
+
 - `md_content: string`: The markdown content.
 
 #### Returns
+
 - `string`: Content inside the outer block, or the original string.
 
 #### Example
+
 ```lua
 local block = "```rust\ncontent\n```"
 local raw = "no block"
@@ -1717,18 +1887,22 @@ aip.json.parse(content: string): table | value
 ```
 
 #### Arguments
+
 - `content: string`: The JSON string to parse.
 
 #### Returns
+
 - `table | value`: A Lua value representing the parsed JSON.
 
 #### Example
+
 ```lua
 local obj = aip.json.parse('{"name": "John", "age": 30}')
 print(obj.name) -- Output: John
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `content` is not valid JSON.
 
 ### aip.json.parse_ndjson
@@ -1743,12 +1917,15 @@ aip.json.parse_ndjson(content: string): list<table>
 Parses each non-empty line as a separate JSON object/value.
 
 #### Arguments
+
 - `content: string`: The NDJSON string.
 
 #### Returns
+
 - `list<table>`: A Lua list containing the parsed value from each line.
 
 #### Example
+
 ```lua
 local ndjson = '{"id":1}\n{"id":2}'
 local items = aip.json.parse_ndjson(ndjson)
@@ -1757,6 +1934,7 @@ print(items[2].id) -- Output: 2
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if any line contains invalid JSON.
 
 ### aip.json.stringify
@@ -1769,12 +1947,15 @@ aip.json.stringify(content: table): string
 ```
 
 #### Arguments
+
 - `content: table`: The Lua table/value to stringify.
 
 #### Returns
+
 - `string`: A single-line JSON string representation.
 
 #### Example
+
 ```lua
 local obj = {name = "John", age = 30}
 local json_str = aip.json.stringify(obj)
@@ -1782,6 +1963,7 @@ local json_str = aip.json.stringify(obj)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized.
 
 ### aip.json.stringify_pretty
@@ -1794,12 +1976,15 @@ aip.json.stringify_pretty(content: table): string
 ```
 
 #### Arguments
+
 - `content: table`: The Lua table/value to stringify.
 
 #### Returns
+
 - `string`: A formatted JSON string with newlines and indentation.
 
 #### Example
+
 ```lua
 local obj = {name = "John", age = 30}
 local json_str = aip.json.stringify_pretty(obj)
@@ -1811,6 +1996,7 @@ local json_str = aip.json.stringify_pretty(obj)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized.
 
 ### aip.json.stringify_to_line (Deprecated)
@@ -1848,12 +2034,15 @@ aip.web.get(url: string): WebResponse
 ```
 
 #### Arguments
+
 - `url: string`: The URL to request.
 
 #### Returns
+
 - `WebResponse`: A [WebResponse](#webresponse) table containing the result.
 
 #### Example
+
 ```lua
 local response = aip.web.get("https://httpbin.org/get")
 if response.success then
@@ -1866,6 +2055,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the request cannot be initiated (e.g., network error, invalid URL). Check `response.success` for HTTP-level errors (non-2xx status).
 
 ### aip.web.post
@@ -1880,13 +2070,16 @@ aip.web.post(url: string, data: string | table): WebResponse
 Sends `data` in the request body. If `data` is a string, `Content-Type` is `text/plain`. If `data` is a table, it's serialized to JSON and `Content-Type` is `application/json`.
 
 #### Arguments
+
 - `url: string`: The URL to request.
 - `data: string | table`: Data to send in the body.
 
 #### Returns
+
 - `WebResponse`: A [WebResponse](#webresponse) table containing the result.
 
 #### Example
+
 ```lua
 -- POST plain text
 local r1 = aip.web.post("https://httpbin.org/post", "plain text data")
@@ -1899,6 +2092,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the request cannot be initiated or data serialization fails. Check `response.success` for HTTP-level errors.
 
 ### aip.web.parse_url
@@ -1914,9 +2108,11 @@ Parses the given URL string and extracts its various components.
 
 #### Arguments
 
+
 - `url: string | nil`: The URL string to parse. If `nil` is provided, the function returns `nil`.
 
-#### Returns (`table | nil`)
+#### Returns
+ (`table | nil`)
 
 - If the `url` is a valid string, returns a table with the following fields:
   - `scheme: string` (e.g., "http", "https")
@@ -1932,6 +2128,7 @@ Parses the given URL string and extracts its various components.
 - If the input `url` is `nil`, the function returns `nil`.
 
 #### Example
+
 
 ```lua
 local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path/to/page.html?param1=val#fragment")
@@ -1954,6 +2151,7 @@ local nil_result = aip.web.parse_url(nil)
 
 #### Error
 
+
 Returns an error (Lua table `{ error: string }`) if the `url` string is provided but is invalid and cannot be parsed.
 
 
@@ -1968,10 +2166,12 @@ aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 
 #### Arguments
 
+
 - `href: string | nil`: The href string to resolve. This can be an absolute URL, a scheme-relative URL, an absolute path, or a relative path. If `nil`, the function returns `nil`.
 - `base_url: string`: The base URL string against which to resolve the `href`. Must be a valid absolute URL.
 
-#### Returns (`string | nil`)
+#### Returns
+ (`string | nil`)
 
 - If `href` is `nil`, returns `nil`.
 - If `href` is already an absolute URL (e.g., "https://example.com/page"), it's returned as is.
@@ -1979,6 +2179,7 @@ aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 - Returns the resolved absolute URL string.
 
 #### Example
+
 
 ```lua
 local base = "https://example.com/docs/path/"
@@ -2008,6 +2209,7 @@ print(aip.web.resolve_href(nil, base))
 ```
 
 #### Error
+
 
 Returns an error (Lua table `{ error: string }`) if:
 - `base_url` is not a valid absolute URL.
@@ -2043,9 +2245,11 @@ aip.uuid.new(): string
 
 #### Returns
 
+
 `string`: The generated UUIDv4 as a string (e.g., "f47ac10b-58cc-4372-a567-0e02b2c3d479").
 
 #### Example
+
 
 ```lua
 local id = aip.uuid.new()
@@ -2063,9 +2267,11 @@ aip.uuid.new_v4(): string
 
 #### Returns
 
+
 `string`: The generated UUIDv4 as a string (e.g., "f47ac10b-58cc-4372-a567-0e02b2c3d479").
 
 #### Example
+
 
 ```lua
 local id_v4 = aip.uuid.new_v4()
@@ -2083,9 +2289,11 @@ aip.uuid.new_v7(): string
 
 #### Returns
 
+
 `string`: The generated UUIDv7 as a string.
 
 #### Example
+
 
 ```lua
 local id_v7 = aip.uuid.new_v7()
@@ -2103,9 +2311,11 @@ aip.uuid.new_v4_b64(): string
 
 #### Returns
 
+
 `string`: The Base64 encoded UUIDv4 string.
 
 #### Example
+
 
 ```lua
 local id_v4_b64 = aip.uuid.new_v4_b64()
@@ -2123,9 +2333,11 @@ aip.uuid.new_v4_b64u(): string
 
 #### Returns
 
+
 `string`: The URL-safe Base64 encoded (no padding) UUIDv4 string.
 
 #### Example
+
 
 ```lua
 local id_v4_b64u = aip.uuid.new_v4_b64u()
@@ -2143,9 +2355,11 @@ aip.uuid.new_v4_b58(): string
 
 #### Returns
 
+
 `string`: The Base58 encoded UUIDv4 string.
 
 #### Example
+
 
 ```lua
 local id_v4_b58 = aip.uuid.new_v4_b58()
@@ -2163,9 +2377,11 @@ aip.uuid.new_v7_b64(): string
 
 #### Returns
 
+
 `string`: The Base64 encoded UUIDv7 string.
 
 #### Example
+
 
 ```lua
 local id_v7_b64 = aip.uuid.new_v7_b64()
@@ -2183,9 +2399,11 @@ aip.uuid.new_v7_b64u(): string
 
 #### Returns
 
+
 `string`: The URL-safe Base64 encoded (no padding) UUIDv7 string.
 
 #### Example
+
 
 ```lua
 local id_v7_b64u = aip.uuid.new_v7_b64u()
@@ -2203,9 +2421,11 @@ aip.uuid.new_v7_b58(): string
 
 #### Returns
 
+
 `string`: The Base58 encoded UUIDv7 string.
 
 #### Example
+
 
 ```lua
 local id_v7_b58 = aip.uuid.new_v7_b58()
@@ -2225,13 +2445,16 @@ aip.uuid.to_time_epoch_ms(value: string | nil): integer | nil
 
 #### Arguments
 
+
 - `value: string | nil`: The UUID string or `nil`.
 
 #### Returns
 
+
 `integer | nil`: Milliseconds since Unix epoch, or `nil`.
 
 #### Example
+
 
 ```lua
 local v7_uuid_str = aip.uuid.new_v7()
@@ -2275,12 +2498,15 @@ aip.lua.dump(value: any): string
 Provides a detailed string representation of any Lua value, useful for debugging.
 
 #### Arguments
+
 - `value: any`: The Lua value to dump.
 
 #### Returns
+
 - `string`: A string representation of the value.
 
 #### Example
+
 ```lua
 local tbl = { key = "value", nested = { num = 42 } }
 print(aip.lua.dump(tbl))
@@ -2288,6 +2514,7 @@ print(aip.lua.dump(tbl))
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if the value cannot be converted to string.
 
 
@@ -2316,6 +2543,7 @@ Executes the agent specified by `agent_name`. The function waits for the called 
 to complete and returns its result. This allows for chaining agents together.
 
 #### Arguments
+
 
 - `agent_name: string`: The name of the agent to run. This can be a relative path
   (e.g., `"../my-other-agent.aip"`) or a fully qualified pack reference
@@ -2346,6 +2574,7 @@ local response = aip.agent.run("agent-name", {
 
 #### Returns
 
+
 The result of the agent execution. The type of the returned value depends on the agent's output:
 
 - If the agent produces an AI response without a specific output script, it returns a table representing the `AiResponse` object.
@@ -2362,6 +2591,7 @@ The result of the agent execution. The type of the returned value depends on the
 ```
 
 #### Error
+
 
 Returns an error if:
 - The `agent_name` is invalid or the agent file cannot be located/loaded.
@@ -2397,9 +2627,11 @@ the function returns `nil`.
 
 #### Arguments
 
+
 - `value: any`: The Lua value from which to extract options.
 
 #### Returns
+
 
 A new Lua table containing the extracted options, or `nil` if the input
 was `nil` or not a table.
@@ -2435,6 +2667,7 @@ to override the default behavior of passing all initial inputs to the agent.
 
 #### Arguments
 
+
 - `data: table` - A table defining the new inputs and options for the agent execution cycle.
   ```ts
   type BeforeAllData = {
@@ -2446,6 +2679,7 @@ to override the default behavior of passing all initial inputs to the agent.
   related types: [AgentOptions](#agentoptions)
 
 #### Example
+
 
 ```lua
 local result = aip.flow.before_all_response({
@@ -2460,6 +2694,7 @@ local result = aip.flow.before_all_response({
 ```
 
 #### Error
+
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -2478,6 +2713,7 @@ or returning additional arbitrary data.
 
 #### Arguments
 
+
 - `data: table` - A table defining the new input, options, and/or other data for the current cycle.
   ```ts
   type DataData = {
@@ -2490,6 +2726,7 @@ or returning additional arbitrary data.
 
 #### Example
 
+
 ```lua
 -- Use a transformed input and override the model for this cycle
 return aip.flow.data_response({
@@ -2501,6 +2738,7 @@ return aip.flow.data_response({
 ```
 
 #### Error
+
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -2518,10 +2756,12 @@ to instruct AIPACK to skip processing the current input value and move to the ne
 
 #### Arguments
 
+
 - `reason: string (optional)`: An optional string providing the reason for skipping the input cycle.
   This reason might be logged or displayed depending on the AIPACK execution context.
 
 #### Example
+
 
 ```lua
 -- Skip processing if the input is nil or empty
@@ -2533,6 +2773,7 @@ end
 ```
 
 #### Error
+
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -2558,13 +2799,16 @@ aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse | {err
 Executes the command using the system shell. On Windows, wraps with `cmd /C`.
 
 #### Arguments
+
 - `cmd_name: string`: Command name or path.
 - `args?: string | list<string>` (optional): Arguments as a single string or list of strings.
 
 #### Returns
+
 - `CmdResponse`: A [CmdResponse](#cmdresponse) table with stdout, stderr, and exit code, even if the exit code is non-zero.
 
 #### Example
+
 ```lua
 -- Single string argument
 local r1 = aip.cmd.exec("echo", "hello world")
@@ -2584,6 +2828,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string, stdout?: string, stderr?: string, exit?: number }`) only if the process *fails to start* (e.g., command not found, permission issue). Non-zero exit codes from the command itself are captured in the [CmdResponse](#cmdresponse) and do not cause a Lua error by default.
 
 ## aip.semver
@@ -2614,15 +2859,18 @@ aip.semver.compare(version1: string, operator: string, version2: string): boolea
 Compares versions according to SemVer rules (prerelease < release, build metadata ignored).
 
 #### Arguments
+
 - `version1: string`: First version string.
 - `operator: string`: Comparison operator (`<`, `<=`, `=`, `==`, `>=`, `>`, `!=`, `~=`).
 - `version2: string`: Second version string.
 
 #### Returns
+
 - `boolean`: `true` if the comparison holds, `false` otherwise.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 print(aip.semver.compare("1.2.3", ">", "1.2.0"))     -- Output: true
 print(aip.semver.compare("1.0.0-alpha", "<", "1.0.0")) -- Output: true
@@ -2635,6 +2883,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if operator is invalid or versions are not valid SemVer strings.
 
 ### aip.semver.parse
@@ -2647,13 +2896,16 @@ aip.semver.parse(version: string): {major: number, minor: number, patch: number,
 ```
 
 #### Arguments
+
 - `version: string`: The SemVer string to parse.
 
 #### Returns
+
 - `table`: A table containing `major`, `minor`, `patch`, `prerelease` (string or nil), and `build` (string or nil) components.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 local v = aip.semver.parse("1.2.3-beta.1+build.123")
 print(v.major, v.minor, v.patch) -- Output: 1 2 3
@@ -2667,6 +2919,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `version` is not a valid SemVer string.
 
 ### aip.semver.is_prerelease
@@ -2679,13 +2932,16 @@ aip.semver.is_prerelease(version: string): boolean | {error: string}
 ```
 
 #### Arguments
+
 - `version: string`: The SemVer string to check.
 
 #### Returns
+
 - `boolean`: `true` if it has a prerelease component (e.g., `-alpha`), `false` otherwise.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 print(aip.semver.is_prerelease("1.2.3-beta"))      -- Output: true
 print(aip.semver.is_prerelease("1.2.3"))         -- Output: false
@@ -2698,6 +2954,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if `version` is not a valid SemVer string.
 
 ### aip.semver.valid
@@ -2710,12 +2967,15 @@ aip.semver.valid(version: string): boolean
 ```
 
 #### Arguments
+
 - `version: string`: The string to validate.
 
 #### Returns
+
 - `boolean`: `true` if valid, `false` otherwise.
 
 #### Example
+
 ```lua
 print(aip.semver.valid("1.2.3"))          -- Output: true
 print(aip.semver.valid("1.2.3-alpha.1"))   -- Output: true
@@ -2724,6 +2984,7 @@ print(aip.semver.valid("invalid"))       -- Output: false
 ```
 
 #### Error
+
 This function does not typically error, returning `false` for invalid formats.
 
 ## aip.rust
@@ -2748,13 +3009,16 @@ aip.rust.prune_to_declarations(code: string): string | {error: string}
 Replaces function bodies with `{ ... }`, preserving comments, whitespace, and non-function code structures.
 
 #### Arguments
+
 - `code: string`: The Rust code to prune.
 
 #### Returns
+
 - `string`: The pruned Rust code string on success.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 local rust_code = "fn greet(name: &str) {\n  println!(\"Hello, {}!\", name);\n}\n\nstruct Data;"
 local pruned = aip.rust.prune_to_declarations(rust_code)
@@ -2762,6 +3026,7 @@ local pruned = aip.rust.prune_to_declarations(rust_code)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if pruning fails.
 
 ## aip.html
@@ -2788,13 +3053,16 @@ aip.html.slim(html_content: string): string | {error: string}
 Removes `<script>`, `<link>`, `<style>`, `<svg>`, comments, empty lines, and most attributes (keeps `class`, `aria-label`, `href`).
 
 #### Arguments
+
 - `html_content: string`: The HTML content string.
 
 #### Returns
+
 - `string`: The cleaned HTML string on success.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 local html = "<script>alert('hi')</script><p class='c' style='color:red'>Hello</p>"
 local cleaned = aip.html.slim(html)
@@ -2802,6 +3070,7 @@ local cleaned = aip.html.slim(html)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if pruning fails.
 
 ### aip.html.to_md
@@ -2815,14 +3084,17 @@ aip.html.to_md(html_content: string): string | {error: string}
 
 #### Arguments
 
+
 - `html_content: string`: The HTML content to be converted.
 
 #### Returns
+
 
 - `string`: The Markdown representation of the HTML content.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 
 ```lua
 local markdown_content = aip.html.to_md("<h1>Hello</h1><p>World</p>")
@@ -2830,6 +3102,7 @@ local markdown_content = aip.html.to_md("<h1>Hello</h1><p>World</p>")
 ```
 
 #### Error
+
 
 Returns an error (Lua table `{ error: string }`) if the HTML content fails to be converted to Markdown.
 
@@ -2855,13 +3128,16 @@ aip.git.restore(path: string): string | {error: string, stdout?: string, stderr?
 Restores the specified file or directory path to its state from the Git index.
 
 #### Arguments
+
 - `path: string`: The file or directory path to restore (relative to workspace root).
 
 #### Returns
+
 - `string`: Standard output from the `git restore` command on success.
 - `{error: string, stdout?: string, stderr?: string, exit?: number}`: An error table if the command fails (e.g., path not known to Git, non-zero exit code, stderr output). This error table is similar to a [CmdResponse](#cmdresponse) but includes an additional `error` field.
 
 #### Example
+
 ```lua
 -- Restore a modified file
 local result = aip.git.restore("src/main.rs")
@@ -2875,6 +3151,7 @@ end
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string, stdout?: string, stderr?: string, exit?: number }`) if the `git restore` command encounters an issue, such as the path not being known to Git, insufficient permissions, or the command returning a non-zero exit code with stderr output.
 
 ## aip.hash
@@ -2909,13 +3186,16 @@ aip.hash.sha256(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA256 hash, hex-encoded.
 
 #### Example
+
 
 ```lua
 local hex_hash = aip.hash.sha256("hello world")
@@ -2924,6 +3204,7 @@ print(hex_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha256_b58
@@ -2937,13 +3218,16 @@ aip.hash.sha256_b58(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA256 hash, Base58-encoded.
 
 #### Example
+
 
 ```lua
 local b58_hash = aip.hash.sha256_b58("hello world")
@@ -2952,6 +3236,7 @@ print(b58_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha256_b64
@@ -2965,13 +3250,16 @@ aip.hash.sha256_b64(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA256 hash, standard Base64-encoded.
 
 #### Example
+
 
 ```lua
 local b64_hash = aip.hash.sha256_b64("hello world")
@@ -2980,6 +3268,7 @@ print(b64_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha256_b64u
@@ -2993,13 +3282,16 @@ aip.hash.sha256_b64u(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA256 hash, URL-safe Base64-encoded without padding.
 
 #### Example
+
 
 ```lua
 local b64u_hash = aip.hash.sha256_b64u("hello world")
@@ -3008,6 +3300,7 @@ print(b64u_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha512
@@ -3021,13 +3314,16 @@ aip.hash.sha512(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA512 hash, hex-encoded.
 
 #### Example
+
 
 ```lua
 local hex_hash = aip.hash.sha512("hello world")
@@ -3036,6 +3332,7 @@ print(hex_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha512_b58
@@ -3049,13 +3346,16 @@ aip.hash.sha512_b58(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA512 hash, Base58-encoded.
 
 #### Example
+
 
 ```lua
 local b58_hash = aip.hash.sha512_b58("hello world")
@@ -3064,6 +3364,7 @@ print(b58_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha512_b64
@@ -3077,13 +3378,16 @@ aip.hash.sha512_b64(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA512 hash, standard Base64-encoded.
 
 #### Example
+
 
 ```lua
 local b64_hash = aip.hash.sha512_b64("hello world")
@@ -3092,6 +3396,7 @@ print(b64_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.sha512_b64u
@@ -3105,13 +3410,16 @@ aip.hash.sha512_b64u(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The SHA512 hash, URL-safe Base64-encoded without padding.
 
 #### Example
+
 
 ```lua
 local b64u_hash = aip.hash.sha512_b64u("hello world")
@@ -3120,6 +3428,7 @@ print(b64u_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.blake3
@@ -3133,13 +3442,16 @@ aip.hash.blake3(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The Blake3 hash, hex-encoded.
 
 #### Example
+
 
 ```lua
 local hex_hash = aip.hash.blake3("hello world")
@@ -3148,6 +3460,7 @@ print(hex_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.blake3_b58
@@ -3161,13 +3474,16 @@ aip.hash.blake3_b58(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The Blake3 hash, Base58-encoded.
 
 #### Example
+
 
 ```lua
 local b58_hash = aip.hash.blake3_b58("hello world")
@@ -3176,6 +3492,7 @@ print(b58_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.blake3_b64
@@ -3189,13 +3506,16 @@ aip.hash.blake3_b64(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The Blake3 hash, standard Base64-encoded.
 
 #### Example
+
 
 ```lua
 local b64_hash = aip.hash.blake3_b64("hello world")
@@ -3204,6 +3524,7 @@ print(b64_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 ### aip.hash.blake3_b64u
@@ -3217,13 +3538,16 @@ aip.hash.blake3_b64u(input: string): string
 
 #### Arguments
 
+
 - `input: string`: The string to hash.
 
 #### Returns
 
+
 `string`: The Blake3 hash, URL-safe Base64-encoded without padding.
 
 #### Example
+
 
 ```lua
 local b64u_hash = aip.hash.blake3_b64u("hello world")
@@ -3232,6 +3556,7 @@ print(b64u_hash)
 ```
 
 #### Error
+
 This function does not typically error if the input is a string.
 
 
@@ -3257,14 +3582,17 @@ aip.hbs.render(content: string, data: any): string | {error: string}
 Converts Lua `data` to JSON internally and renders the Handlebars `content` template.
 
 #### Arguments
+
 - `content: string`: The Handlebars template string.
 - `data: any`: The data as a Lua value (table, number, string, boolean, nil). Note that function types or userdata are not supported.
 
 #### Returns
+
 - `string`: The rendered template string on success.
 - `{error: string}`: An error table on failure (data conversion or template rendering).
 
 #### Example
+
 ```lua
 local template = "Hello, {{name}}!"
 local data = {name = "World"}
@@ -3291,6 +3619,7 @@ print(content_list)
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) if Lua data cannot be converted to JSON or if Handlebars rendering fails.
 
 ## aip.code
@@ -3315,14 +3644,17 @@ aip.code.comment_line(lang_ext: string, comment_content: string): string | {erro
 Formats `comment_content` as a single-line comment based on `lang_ext`.
 
 #### Arguments
+
 - `lang_ext: string`: File extension or language identifier (e.g., "rs", "lua", "py", "js", "css", "html"). Case-insensitive.
 - `comment_content: string`: The text to put inside the comment.
 
 #### Returns
+
 - `string`: The formatted comment line (without trailing newline) on success.
 - `{error: string}`: An error table on failure.
 
 #### Example
+
 ```lua
 print(aip.code.comment_line("rs", "TODO: Refactor"))  -- Output: // TODO: Refactor
 print(aip.code.comment_line("py", "Add validation"))  -- Output: # Add validation
@@ -3331,6 +3663,7 @@ print(aip.code.comment_line("html", "Main content"))  -- Output: <!-- Main conte
 ```
 
 #### Error
+
 Returns an error (Lua table `{ error: string }`) on conversion or formatting issues.
 
 
