@@ -1,10 +1,11 @@
 use crate::support::VecExt as _;
 use crate::tui::style;
+use crate::tui::support::UiExt;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use std::borrow::Cow;
 
-pub const MARKER_WIDTH: usize = 10;
+const MARKER_MIN_WIDTH: usize = 10;
 
 /// This is the task view record section with the marker and content, for each log line, or for input, output, (pins in the future)
 /// NOTE: Probably can make Line lifetime same as content (to avoid string duplication). But since needs to be indented, probably not a big win.
@@ -16,7 +17,8 @@ pub fn ui_for_marker_section_str(
 ) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
-	let width_content = (max_width as usize) - MARKER_WIDTH - width_spacer;
+	let marker_width = marker_width_for_marker_txt(marker_txt);
+	let width_content = (max_width as usize) - marker_width - width_spacer;
 
 	// -- Mark Span
 	let mark_span = new_marker(marker_txt, marker_style);
@@ -54,7 +56,7 @@ pub fn ui_for_marker_section_str(
 
 	// -- Render other content line if present
 	if msg_wrap_len > 1 {
-		let left_spacing = " ".repeat(MARKER_WIDTH + width_spacer);
+		let left_spacing = " ".repeat(marker_width + width_spacer);
 		for line_content in msg_wrap_iter {
 			let mut spans: Vec<Span<'static>> = vec![Span::raw(left_spacing.to_string())];
 			if let Some(spans_prefix) = content_prefix {
@@ -71,7 +73,8 @@ pub fn ui_for_marker_section_str(
 }
 
 pub fn new_marker(marker_txt: &str, marker_style: Style) -> Span<'static> {
-	Span::styled(format!("{marker_txt:>MARKER_WIDTH$}"), marker_style)
+	let marker_width = marker_width_for_marker_txt(marker_txt);
+	Span::styled(format!("{marker_txt:>marker_width$}"), marker_style)
 }
 
 /// Will merge the content Lines with the marker spans and spacers
@@ -98,9 +101,12 @@ pub fn ui_for_marker_section(
 	if content_len == 1 {
 		return vec![marker_spans.extended(spacer_spans).extended(first_content_spans).into()];
 	} else {
+		let marker_width = marker_width_for_marker_spans(&marker_spans);
+		let left_indent = " ".repeat(marker_width);
+
 		// add the first line
 		all_lines.push(marker_spans.extended(spacer_spans.clone()).extended(first_content_spans).into());
-		let left_indent = " ".repeat(MARKER_WIDTH);
+
 		for spans_line in content_spans_lines_iter {
 			let spans = vec![Span::raw(left_indent.to_string())]
 				.extended(spacer_spans.clone())
@@ -111,3 +117,15 @@ pub fn ui_for_marker_section(
 
 	all_lines
 }
+
+// region:    --- Support
+
+fn marker_width_for_marker_txt(marker_txt: &str) -> usize {
+	marker_txt.chars().count().max(MARKER_MIN_WIDTH)
+}
+
+fn marker_width_for_marker_spans(marker_spans: &[Span]) -> usize {
+	marker_spans.x_width().max(MARKER_MIN_WIDTH as u16) as usize
+}
+
+// endregion: --- Support
