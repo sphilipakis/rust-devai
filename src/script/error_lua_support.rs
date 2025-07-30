@@ -29,7 +29,7 @@ fn process_stack_with_script(stack: &str, script: &str) -> String {
 	let script_lines: Vec<&str> = script.lines().collect();
 	let mut buff: Vec<Cow<str>> = Vec::new();
 
-	let rx = regex!(r#"\[string .*?\]:([\d]+)(:|>)"#);
+	let rx = regex!(r#"src/script/lua_engine\s*\.[^\n]*:(\d+):"#);
 
 	for line in stack.lines() {
 		if rx.is_match(line) {
