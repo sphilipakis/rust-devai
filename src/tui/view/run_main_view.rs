@@ -214,7 +214,11 @@ fn process_for_run_tab_state(state: &mut AppState, overview_a: Rect, tasks_a: Re
 	{
 		state.set_run_tab(RunTab::Overview);
 		return;
+	} else if state.current_run_has_skip() && state.tasks().is_empty() {
+		state.set_run_tab(RunTab::Overview);
+		return;
 	}
+
 	// -- Otherwise process the mouse
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_up()
