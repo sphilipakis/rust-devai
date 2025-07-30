@@ -3,14 +3,13 @@ use crate::store::{EndState, RunningState};
 use crate::support::text;
 use crate::tui::style;
 use crate::tui::support::UiExt as _;
-use crate::tui::support::num_pad_for_len;
 use crate::tui::view::comp::{self, el_running_ico};
 use ratatui::style::{Style, Stylize as _};
 use ratatui::text::Span;
 
 impl Task {
 	pub fn fmt_label(&self, tasks_len: usize) -> String {
-		let num = num_pad_for_len(self.idx.unwrap_or_default(), tasks_len);
+		let num = text::num_pad_for_len(self.idx.unwrap_or_default(), tasks_len);
 		if let Some(label) = self.label.as_ref() {
 			format!("{num} - {label}")
 		} else {
@@ -130,7 +129,7 @@ impl Task {
 /// For the ShortBlock facade
 impl Task {
 	pub fn ui_short_block(&self, max_num: usize) -> Vec<Span<'static>> {
-		let num = num_pad_for_len(self.idx.unwrap_or_default(), max_num);
+		let num = text::num_pad_for_len(self.idx.unwrap_or_default(), max_num);
 		// let mut running_ico = el_running_ico(self);
 		// running_ico = running_ico.style(style::CLR_TXT_WHITE);
 		let mut spans = vec![

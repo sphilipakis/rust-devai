@@ -17,12 +17,3 @@ pub fn offset_and_clamp_option_idx_in_len(idx: &Option<i32>, offset: i32, len: u
 		(_, None) => Some(0),
 	}
 }
-
-pub fn num_pad_for_len(idx: i64, max_num: usize) -> String {
-	let width = if max_num == 0 {
-		1
-	} else {
-		(max_num as f64).log10().floor() as usize + 1
-	};
-	format!("{:0width$}", idx + 1, width = width)
-}
