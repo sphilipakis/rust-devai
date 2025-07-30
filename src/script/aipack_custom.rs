@@ -120,10 +120,10 @@ fn parse_before_all_response(custom_data: Option<Value>) -> Result<BeforeAllResp
 				Some(Value::Null) => None,
 
 				Some(Value::Object(obj)) => {
-					// If object is empty, then, might be empty list (Lua does not make the distinction),
-					// so we treat it as such
+					// IMPORTANT: If object is empty, means empty list (because lua list/dict is same)
+					// NOTE: This allows before all to set inputs to empty (since None means do not change it)
 					if obj.is_empty() {
-						None
+						Some(Vec::new())
 					} else {
 						return Err(Error::BeforeAllFailWrongReturn {
 							cause: "aip.flow.before_all_response(arg) - 'arg.inputs` must be an nil, array, or empty object. But was an object with name/value."

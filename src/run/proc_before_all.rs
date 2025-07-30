@@ -11,6 +11,7 @@ use serde_json::Value;
 
 // region:    --- Types
 
+#[derive(Debug)]
 pub struct ProcBeforeAllResponse {
 	pub before_all: Value,
 	pub agent: Agent,
@@ -46,10 +47,7 @@ pub async fn process_before_all(
 	// -- Run the before all
 	let res = if agent.before_all_script().is_some() {
 		// execute the script
-		let res = process_before_all_script(runtime, rt_ctx, run_id, agent, literals, inputs).await;
-
-		// return the result
-		res?
+		process_before_all_script(runtime, rt_ctx, run_id, agent, literals, inputs).await?
 	} else {
 		ProcBeforeAllResponse {
 			before_all: Value::Null,
@@ -126,7 +124,7 @@ async fn process_before_all_script(
 			)));
 		}
 
-		// just plane value
+		// just plain value
 		FromValue::OriginalValue(value) => BeforeAllResponse {
 			inputs,
 			before_all: Some(value),
