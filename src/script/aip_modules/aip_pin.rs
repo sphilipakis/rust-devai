@@ -20,7 +20,8 @@ use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use crate::store::rt_model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
-use mlua::{Lua, Table, Value, Variadic};
+use crate::types::uc;
+use mlua::{FromLua, Lua, Table, Value, Variadic};
 use serde_json;
 
 /// Registers the `run.pin` and `task.pin` helpers in Lua.
@@ -69,16 +70,19 @@ impl PinCommand {
 	/// 2. `pin(iden, content)`
 	///
 	/// Returns an informative error if the arguments do not match either form.
-	fn from_lua_variadic(args: Variadic<Value>) -> Result<Self> {
+	fn from_lua_variadic(lua: &Lua, args: Variadic<Value>) -> Result<Self> {
 		match args.len() {
 			2 => {
+				let mut args = args.into_iter();
 				let iden = args
-					.first()
-					.and_then(Value::x_as_lua_str)
+					.next()
+					.ok_or("aip...pin(iden, content) – expected <string> for parameter `iden`.")?;
+				let iden = iden
+					.x_as_lua_str()
 					.ok_or("aip...pin(iden, content) – expected <string> for parameter `iden`.")?;
 
-				let content = args.get(1).ok_or("aip...pin(iden, content) – expected content.")?;
-				let content = Self::value_to_string(content)?;
+				let content = args.next().ok_or("aip...pin(iden, content) – expected content.")?;
+				let content = Self::value_to_uc_string(lua, content)?;
 
 				Ok(Self {
 					iden: iden.to_string(),
@@ -87,18 +91,21 @@ impl PinCommand {
 				})
 			}
 			3 => {
+				let mut args = args.into_iter();
 				let iden = args
-					.first()
-					.and_then(Value::x_as_lua_str)
-					.ok_or("aip...pin(iden, priority, content) – expected <string> for parameter `iden`.")?;
+					.next()
+					.ok_or("aip...pin(iden, content) – expected <string> for parameter `iden`.")?;
+				let iden = iden
+					.x_as_lua_str()
+					.ok_or("aip...pin(iden, content) – expected <string> for parameter `iden`.")?;
 
 				let priority = args
-					.get(1)
-					.and_then(Value::x_as_f64)
+					.next()
+					.and_then(|v| v.x_as_f64())
 					.ok_or("aip...pin(iden, priority, content) – expected <number> for parameter `priority`.")?;
 
-				let content = args.get(2).ok_or("aip...pin(iden, priority, content) – expected content.")?;
-				let content = Self::value_to_string(content)?;
+				let content = args.next().ok_or("aip...pin(iden, content) – expected content.")?;
+				let content = Self::value_to_uc_string(lua, content)?;
 
 				Ok(Self {
 					iden: iden.to_string(),
@@ -112,26 +119,20 @@ impl PinCommand {
 		}
 	}
 
-	/// Converts a Lua `Value` into a `String` representation, serialising to JSON
-	/// when the value is not already a string.
-	fn value_to_string(val: &Value) -> Result<String> {
-		match val {
-			Value::String(s) => Ok(s.to_str()?.to_string()),
-			Value::Nil => Err(crate::Error::custom(
-				"aip...pin – `content` cannot be nil. Provide a string or any serialisable value.",
-			)),
-			other => {
-				let json_val = serde_json::to_value(other)
-					.map_err(|e| crate::Error::custom(format!("Cannot serialise content: {e}")))?;
-				Ok(json_val.to_string())
-			}
-		}
+	/// Convert into a UC Component
+	/// For now, only support uc::Marker
+	fn value_to_uc_string(lua: &Lua, val: Value) -> Result<String> {
+		let uc_comp = uc::Marker::from_lua(val, lua)?;
+		let json_string = serde_json::to_string_pretty(&uc_comp)
+			.map_err(|err| crate::Error::cc("Cannot seralize uc component", err))?;
+
+		Ok(json_string)
 	}
 }
 
 /// Shared implementation for both `run.pin` and `task.pin`.
 fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<i64> {
-	let cmd = PinCommand::from_lua_variadic(args)?;
+	let cmd = PinCommand::from_lua_variadic(lua, args)?;
 
 	let ctx = RuntimeCtx::extract_from_global(lua)?;
 

@@ -13,6 +13,7 @@ mod support;
 mod aipack_custom;
 mod lua_engine;
 mod lua_json;
+mod lua_uc;
 mod lua_value_ext;
 
 pub use aipack_custom::*;
