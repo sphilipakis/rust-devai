@@ -33,7 +33,7 @@ impl AppState {
 		{
 			concurrency.to_string()
 		} else {
-			"..".to_string()
+			"-".to_string()
 		}
 	}
 
@@ -48,7 +48,7 @@ impl AppState {
 	pub fn current_run_model_name(&self) -> String {
 		self.current_run_item()
 			.and_then(|r| r.run().model.clone())
-			.unwrap_or_else(|| "no model".to_string())
+			.unwrap_or_else(|| "-".to_string())
 	}
 
 	/// Returns the cumulative duration of all tasks (formatted)  
