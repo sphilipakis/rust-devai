@@ -41,7 +41,7 @@ tracing-subscriber = {version = "0.3", features = ["env-filter"]}
 tracing-appender = "0.2"
 # -- DB
 rusqlite = { version = "0.37.0", features = ["bundled", "uuid", "serde_json", "serialize"] }
-modql = { version = "0.5.0-alpha.5", features = ["with-rusqlite"]}
+modql = { version = "0.5.0-alpha.6", features = ["with-rusqlite"]}
 # -- Parsers & Formatters
 logos = "0.15"
 aho-corasick = "1.1.3"

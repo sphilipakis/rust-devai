@@ -27,6 +27,50 @@ where
 	create_inner::<MC>(mm, fields, false)
 }
 
+pub fn create_where_not_exists<MC>(
+	mm: &ModelManager,
+	mut fields: SqliteFields,
+	not_exists_fields: SqliteFields,
+	not_exists_extra_static: Option<&str>, // hack for now for the task_id IS NULL
+) -> Result<Option<Id>>
+where
+	MC: DbBmc,
+{
+	prep_fields_for_create::<MC>(&mut fields);
+
+	let table = MC::table_ref();
+	let columns = fields.sql_columns();
+	let placeholders = fields.sql_placeholders();
+	let mut where_clause = not_exists_fields
+		.fields()
+		.iter()
+		.map(|f| format!("\"{}\" = ?", f.iden)) // won't work with rel.col
+		.collect::<Vec<_>>()
+		.join(" AND ");
+
+	if let Some(extra_static) = not_exists_extra_static {
+		where_clause.push_str(&format!(" AND {extra_static}"));
+	}
+
+	let sql = format!(
+		"
+INSERT INTO {table} ({columns}) SELECT {placeholders}
+WHERE NOT EXISTS (
+		SELECT 1 FROM {table} where {where_clause}
+)
+RETURNING id",
+	);
+
+	// -- Execute the command
+	let fields = fields.extended(not_exists_fields);
+	let values = fields.values_as_dyn_to_sql_vec();
+	let db = mm.db();
+
+	let id: Option<i64> = db.exec_returning_as_optional(&sql, &*values)?;
+
+	Ok(id.map(|id| id.into()))
+}
+
 fn create_inner<MC>(mm: &ModelManager, mut fields: SqliteFields, generate_uuid: bool) -> Result<Id>
 where
 	MC: DbBmc,
@@ -37,7 +81,6 @@ where
 		prep_fields_for_create_uid_included(&mut fields);
 	}
 
-	// -- Build sql
 	let sql = format!(
 		"INSERT INTO {} ({}) VALUES ({}) RETURNING id",
 		MC::table_ref(),

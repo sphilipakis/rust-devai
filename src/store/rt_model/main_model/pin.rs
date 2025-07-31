@@ -3,7 +3,7 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
-use modql::field::{Fields, HasFields as _, HasSqliteFields};
+use modql::field::{Fields, HasFields as _, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
 use uuid::Uuid;
 
@@ -131,11 +131,13 @@ impl DbBmc for PinBmc {
 }
 
 /// Public Bmcs
-/// NOTE: The save_.._pin are here to create or update the pin by identifier.
-/// TODO: In the future, the save_.. probaby need to handle the create_already_exist case
-///       to be safe when/if full concurrent access to db write will be enabled.
 impl PinBmc {
-	// -- Save
+	/// NOTE: Here we use a double-check approach to avoid using a transaction and to work around
+	///       the limitations of SQLite's RETURNING id constraints with CTE and conflict handling.
+	/// - First, we check if a pin already exists and update it if found.
+	/// - If not, we attempt to create one, but ensure we do not create a duplicate if the iden for this run already exists.
+	///   - If creation did not occur (i.e., it was created concurrently), we assume it was created concurrently and try to update.
+	///   - NOTE: There is an argument for not updating if it was created concurrently.
 	pub fn save_run_pin(mm: &ModelManager, pin_s: PinForRunSave) -> Result<Id> {
 		let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
 
@@ -143,7 +145,28 @@ impl PinBmc {
 			Self::update(mm, pin_id, pin_s.into())?;
 			pin_id
 		} else {
-			Self::create(mm, pin_s.into())?
+			let pin_c: PinForCreate = pin_s.clone().into();
+
+			// -- Attempt to create
+			let fields = pin_c.sqlite_not_none_fields();
+			let where_not_exists_fields = SqliteFields::new(vec![
+				SqliteField::new("run_id", pin_s.run_id),
+				SqliteField::new("iden", pin_s.iden.clone()),
+			]);
+
+			let may_id =
+				base::create_where_not_exists::<Self>(mm, fields, where_not_exists_fields, Some("task_id IS NULL"))?;
+
+			if let Some(id) = may_id {
+				id
+			} else {
+				let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
+				let pin_id = pin_id.ok_or(format!("Should have returned a pin id for pin: {}", pin_s.iden))?;
+				// NOTE: we might not want to update here. This was was perhaps late?
+				Self::update(mm, pin_id, pin_s.into())?;
+
+				pin_id
+			}
 		};
 
 		Ok(id)
@@ -249,6 +272,31 @@ mod tests {
 
 	use super::*;
 	use crate::_test_support;
+
+	#[tokio::test]
+	async fn test_model_pin_bmc_save_run_pin() -> Result<()> {
+		// -- Setup & Fixtures
+		let mm = ModelManager::new().await?;
+		let run_id = _test_support::create_run(&mm, "run-1")?;
+
+		// -- Exec
+		let pin_c = PinForRunSave {
+			run_id,
+			iden: "work-summary".to_string(),
+			priority: Some(0.5),
+			content: Some("content 01".to_string()),
+		};
+		let id = PinBmc::save_run_pin(&mm, pin_c)?;
+
+		// -- Check
+		assert_eq!(id.as_i64(), 1);
+		let pin: Pin = PinBmc::get(&mm, id)?;
+		assert_eq!(pin.run_id, run_id);
+		assert_eq!(pin.priority, Some(0.5));
+		assert_eq!(pin.content.as_deref(), Some("content 01"));
+
+		Ok(())
+	}
 
 	#[tokio::test]
 	async fn test_model_pin_bmc_save_task_pin() -> Result<()> {

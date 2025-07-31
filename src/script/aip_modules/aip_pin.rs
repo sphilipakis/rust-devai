@@ -8,10 +8,10 @@
 //!
 //! ### Functions
 //!
-//! - `aip.run.pin(iden?: string, priority?: number, content?: any): integer`  
+//! - `aip.run.pin(iden?: string, priority?: number, content?: any)`  
 //!   Creates a pin attached to the current **run** (requires `CTX.RUN_UID` to be set).
 //!
-//! - `aip.task.pin(iden?: string, priority?: number, content?: any): integer`  
+//! - `aip.task.pin(iden?: string, priority?: number, content?: any)`  
 //!   Creates a pin attached to the current **task** (requires both `CTX.RUN_UID` and `CTX.TASK_UID`).
 //!
 //! The functions return the numeric database identifier of the created pin.
@@ -131,7 +131,7 @@ impl PinCommand {
 }
 
 /// Shared implementation for both `run.pin` and `task.pin`.
-fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<i64> {
+fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<()> {
 	let cmd = PinCommand::from_lua_variadic(lua, args)?;
 
 	let ctx = RuntimeCtx::extract_from_global(lua)?;
@@ -143,7 +143,7 @@ fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value
 		(run_id, task_id)
 	};
 
-	let id = if for_task {
+	if for_task {
 		let task_id = task_id.ok_or(
 			"Cannot call 'aip.task.pin(...)' in a before all or after all code block.\nCall `aip.run.pin(..)`'",
 		)?;
@@ -167,7 +167,7 @@ fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value
 		PinBmc::save_run_pin(mm, pin_c)?
 	};
 
-	Ok(id.as_i64())
+	Ok(())
 }
 
 // endregion: --- Support
