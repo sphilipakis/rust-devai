@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## WIP - [v0.7.17](https://github.com/jeremychone/rust-devai/compare/v0.7.16...v0.7.17)
+## 2025-07-21 - [v0.7.17](https://github.com/jeremychone/rust-devai/compare/v0.7.16...v0.7.17)
 
 - `+` pin - added `aip.run.pin(..)` and `aip.task.pin(..)` with text and first Marker Universal Component  `{label, content}`
 - `+` tui - nested runs (sub agents)
