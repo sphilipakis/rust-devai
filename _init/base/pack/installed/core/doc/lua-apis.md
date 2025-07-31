@@ -876,6 +876,8 @@ aip.path.diff(file_path: string, base_path: string): string
 
 aip.path.parent(path: string): string | nil
 
+aip.path.matches_glob(path: string | nil, globs: string | list<string>): boolean | nil
+
 aip.path.join(base: string, ...parts: string | string[]): string
 
 aip.path.parse(path: string | nil): table | nil
@@ -1203,6 +1205,56 @@ print(aip.path.parent("."))                  -- Output: nil
 
 Does not typically error.
 
+
+### aip.path.matches_glob
+
+Checks if a path matches one or more glob patterns.
+
+```lua
+-- API Signature
+aip.path.matches_glob(path: string | nil, globs: string | list<string>): boolean | nil
+```
+
+Determines whether the provided `path` matches any of the glob patterns given
+in `globs`. The function returns `nil` when `path` is `nil`.  
+If `globs` is an empty string or an empty list, the result is `false`.
+
+#### Arguments
+
+- `path: string | nil`  
+  The path to test. If `nil`, the function returns `nil`.
+
+- `globs: string | list<string>`  
+  A single glob pattern string or a Lua list of pattern strings.  
+  Standard wildcards (`*`, `?`, `**`, `[]`) are supported.
+
+#### Returns
+
+- `boolean | nil`  
+  `true`  – when the `path` matches at least one pattern.  
+  `false` – when it matches none.  
+  `nil`   – when the supplied `path` was `nil`.
+
+#### Example
+
+```lua
+-- Single pattern
+print(aip.path.matches_glob("src/main.rs", "**/*.rs"))            -- true
+
+-- Multiple patterns
+print(aip.path.matches_glob("README.md", {"*.md", "*.txt"}))      -- true
+
+-- No match
+print(aip.path.matches_glob("image.png", {"*.jpg", "*.gif"}))     -- false
+
+-- Nil path
+print(aip.path.matches_glob(nil, "*.rs"))                         -- nil
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `globs` is not a string
+or a list of strings.
 
 ## aip.text
 
