@@ -1,5 +1,35 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## WIP - [v0.7.17](https://github.com/jeremychone/rust-devai/compare/v0.7.16...v0.7.17)
+
+- `+` pin - added `aip.run.pin(..)` and `aip.task.pin(..)` with text and first Marker Universal Component  `{label, content}`
+- `+` tui - nested runs (sub agents)
+- `+` aip.text - add aip.text.format_size(..) for formatting bytes (fixed 9 chars format)
+- `+` lua - add aip.path.matches_glob(...)
+- `^` json - added default support for jsonc (except for newline json)
+- `^` lua - aip.file.save_change ..json return FileInfo
+- `^` lua - aip.file save, append now returns FileInfo
+- `^` tui - overview - add legend to list mode
+- `^` tui - run overview - added tasks legend
+- `-` before all - allow to set inputs to empty array with inputs = {} on the before_all_response
+- `-` lua - fix error reporting (put back the line with error which did not match with mlua 0.11.1)
+- `-` run agent - Fix `aip.agent.run(..)`
+- `-` tui - fix overview link zones
+- `!` ctx.session_uid now (before ctx.session)
+- `.` tui - update headers display when no task/model/cost (still need to do parent agent totals)
+- `.` tui - overview - tasks legend back at the bottom of list/grid
+- `.` tui - now task tab stay selected
+- `.` tui - run tab overview when no tasks
+- `.` tui - show_runs true by default
+- `.` tui sys info memory - toggle on shift + m
+- `.` lua print - now when multiple args, join on \n and not \t
+- `.` aip json - now empty content ia Value::Nil (does not throw error)
+- `.` tui - fix task label prefix
+- `.` lua_engine - refactor print to print object now (aip lua dump)
+- `.` tui - overview tasks mode - fancy toggle next logic
+- `.` tui - truncate model name, queue (rather than waiting)
+- `.` tui - run nav view - fix run icon to show run past state
+
 ## 2025-07-23 - [v0.7.16](https://github.com/jeremychone/rust-devai/compare/v0.7.15...v0.7.16)
 
 - `-` tui - fix tui crash when resize to very small height
