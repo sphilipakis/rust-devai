@@ -24,7 +24,7 @@ use crate::runtime::Runtime;
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::types::FileInfo;
 use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
-use simple_fs::SPath;
+use simple_fs::{SPath, get_glob_set};
 use std::path::Path;
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -65,6 +65,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	// -- parent
 	let path_parent_fn = lua.create_function(move |_lua, path: String| path_parent(path))?;
 
+	// -- matches_glob
+	let path_matches_glob_fn =
+		lua.create_function(move |_lua, (path, globs): (Value, Value)| path_matches_glob(path, globs))?;
+
 	// -- Add all functions to the module
 	table.set("parse", path_parse_fn)?;
 	table.set("resolve", path_resolve_fn)?;
@@ -74,6 +78,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("is_dir", path_is_dir_fn)?;
 	table.set("diff", path_diff_fn)?;
 	table.set("parent", path_parent_fn)?;
+	table.set("matches_glob", path_matches_glob_fn)?;
 	table.set("split", path_split_fn)?;
 
 	Ok(table)
@@ -529,6 +534,23 @@ fn path_parent(path: String) -> mlua::Result<Option<String>> {
 		},
 		None => Ok(None),
 	}
+}
+
+fn path_matches_glob(path: Value, globs: Value) -> mlua::Result<Value> {
+	let Some(path) = into_option_string(path, "aip.path.matches_glob")? else {
+		return Ok(Value::Nil);
+	};
+
+	let patterns = into_vec_of_strings(globs, "aip.path.matches_glob")?;
+	if patterns.is_empty() {
+		return Ok(Value::Boolean(false));
+	}
+
+	let glob_refs: Vec<&str> = patterns.iter().map(|s| s.as_str()).collect();
+	let glob_set = get_glob_set(&glob_refs).map_err(|err| crate::Error::custom(err.to_string()))?;
+
+	let is_match = glob_set.is_match(&path);
+	Ok(Value::Boolean(is_match))
 }
 
 // endregion: --- Lua Functions
