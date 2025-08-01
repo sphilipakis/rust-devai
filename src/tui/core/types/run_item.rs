@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 pub struct RunItem {
 	run: Run,
-	#[allow(unused)]
 	indent: u32,
 }
 /// This build the flat list of RunItem with the following rules
@@ -32,12 +31,7 @@ pub fn build_run_items(runs: Vec<Run>) -> Vec<RunItem> {
 	}
 
 	// -- Recursively Flatten
-	fn push_with_children(
-		out: &mut Vec<RunItem>,
-		children_map: &mut HashMap<Id, Vec<Run>>,
-		run: Run,
-		indent: u32,
-	) {
+	fn push_with_children(out: &mut Vec<RunItem>, children_map: &mut HashMap<Id, Vec<Run>>, run: Run, indent: u32) {
 		let id = run.id;
 		out.push(RunItem::new(run, indent));
 

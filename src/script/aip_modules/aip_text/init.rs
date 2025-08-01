@@ -10,6 +10,8 @@ use super::{
 	escape_decode,
 	escape_decode_if_needed,
 	extract_line_blocks,
+	// text_formatter.rs
+	format_size,
 	remove_first_line,
 	remove_first_lines,
 	remove_last_line,
@@ -25,8 +27,6 @@ use super::{
 	trim,
 	trim_end,
 	trim_start,
-	// text_formatter.rs
-	format_size,
 };
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
