@@ -1,7 +1,7 @@
 use crate::store::Id;
 use crate::store::rt_model::Run;
 use crate::tui::core::RunItem;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Default, Clone)]
 pub struct RunItemStore {
@@ -32,13 +32,16 @@ impl RunItemStore {
 
 	/// Returns all children (direct and indirect) for a given `RunItem`.
 	pub fn all_children<'a>(&'a self, parent_item: &RunItem) -> Vec<&'a RunItem> {
-		self.items
-			.iter()
-			.filter(|item| item.ancestors().contains(&parent_item.id()))
-			.collect()
+		let children_ids: HashSet<Id> = parent_item.all_children_ids().iter().copied().collect();
+		if children_ids.is_empty() {
+			return Vec::new();
+		}
+
+		self.items.iter().filter(|item| children_ids.contains(&item.id())).collect()
 	}
 }
 
+/// Contrustor
 impl RunItemStore {
 	pub fn new(runs: Vec<Run>) -> Self {
 		// -- Early Exit
@@ -97,6 +100,42 @@ impl RunItemStore {
 			for run in remaining {
 				// Note: orphans will have an empty ancestor list (besides themselve)
 				push_with_children(&mut flat, &mut HashMap::new(), run, 0, &[]);
+			}
+		}
+
+		// -- Populate `all_children_ids` for each `RunItem`
+		//    Iterate in reverse order (from children to parents) to build the `all_children_ids` map.
+		let mut all_children_ids_by_id: HashMap<Id, Vec<Id>> = HashMap::new();
+
+		// Create a map of items by parent_id for efficient lookup of direct children.
+		let mut direct_children_by_parent_id: HashMap<Id, Vec<Id>> = HashMap::new();
+		for item in &flat {
+			if let Some(parent_id) = item.parent_id() {
+				direct_children_by_parent_id.entry(parent_id).or_default().push(item.id());
+			}
+		}
+
+		for item in flat.iter().rev() {
+			let mut all_children_ids = Vec::new();
+
+			// Look up direct children.
+			if let Some(mut direct_children) = direct_children_by_parent_id.get(&item.id()).cloned() {
+				direct_children.sort(); // Sort to be consistent with original logic
+				for child_id in &direct_children {
+					all_children_ids.push(*child_id);
+					// Add grandchildren from the map we are building.
+					if let Some(grand_children_ids) = all_children_ids_by_id.get(child_id) {
+						all_children_ids.extend_from_slice(grand_children_ids);
+					}
+				}
+			}
+			all_children_ids_by_id.insert(item.id(), all_children_ids);
+		}
+
+		// Now, update the `all_children_ids` for each item in the `flat` vec.
+		for item in &mut flat {
+			if let Some(ids) = all_children_ids_by_id.get(&item.id()) {
+				item.all_children_ids = ids.clone();
 			}
 		}
 

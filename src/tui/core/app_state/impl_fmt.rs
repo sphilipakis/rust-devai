@@ -23,7 +23,27 @@ impl AppState {
 	}
 
 	pub fn current_run_cost_fmt(&self) -> String {
-		let cost = self.current_run_item().and_then(|r| r.run().total_cost);
+		let cost = if let Some(run_item) = self.current_run_item() {
+			// NOTE: Not very elegant, but works.
+			let mut cost = run_item.run().total_cost;
+			if run_item.has_children() {
+				let children = self.all_run_children(run_item);
+				let addl_cost: f64 = children.iter().filter_map(|r| r.run().total_cost).sum();
+				if let Some(c) = cost.as_mut() {
+					*c += addl_cost;
+					cost
+				} else if addl_cost != 0. {
+					Some(addl_cost)
+				} else {
+					None
+				}
+			} else {
+				None
+			}
+		} else {
+			None
+		};
+
 		support::ui_fmt_cost(cost)
 	}
 

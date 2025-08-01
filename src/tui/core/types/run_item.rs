@@ -6,6 +6,7 @@ pub struct RunItem {
 	run: Run,
 	indent: u32,
 	ancestors: Vec<Id>,
+	pub(in crate::tui::core) all_children_ids: Vec<Id>,
 }
 
 // region:    --- RunItem Impl
@@ -17,6 +18,7 @@ impl RunItem {
 			run,
 			indent,
 			ancestors,
+			all_children_ids: Vec::new(),
 		}
 	}
 }
@@ -39,6 +41,19 @@ impl RunItem {
 		self.run.parent_id
 	}
 
+	pub fn has_children(&self) -> bool {
+		!self.all_children_ids.is_empty()
+	}
+
+	#[allow(unused)]
+	pub fn has_parent(&self) -> bool {
+		self.parent_id().is_some()
+	}
+
+	pub fn all_children_ids(&self) -> &[Id] {
+		&self.all_children_ids
+	}
+
 	#[allow(unused)]
 	pub fn is_top_run(&self) -> bool {
 		self.indent == 0
@@ -48,6 +63,7 @@ impl RunItem {
 		self.parent_id().is_none()
 	}
 
+	#[allow(unused)]
 	pub fn ancestors(&self) -> &[Id] {
 		&self.ancestors
 	}
