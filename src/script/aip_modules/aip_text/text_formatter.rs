@@ -1,6 +1,7 @@
 // region:    --- Formatters
 
 use mlua::{Lua, Value};
+use simple_fs::PrettySizeOptions;
 
 /// ## Lua Documentation
 ///
@@ -25,7 +26,7 @@ use mlua::{Lua, Value};
 /// ### Returns
 ///
 /// A formatted size string, or `nil` if `bytes` is `nil`.
-pub fn format_size(lua: &Lua, bytes_val: Value) -> mlua::Result<Value> {
+pub fn format_size(lua: &Lua, (bytes_val, options): (Value, Option<Value>)) -> mlua::Result<Value> {
 	let bytes: u64 = match bytes_val {
 		Value::Nil => return Ok(Value::Nil),
 		Value::Integer(i) => i.max(0) as u64,
@@ -38,8 +39,15 @@ pub fn format_size(lua: &Lua, bytes_val: Value) -> mlua::Result<Value> {
 			});
 		}
 	};
+	let options = if let Some(options) = options
+		&& let Some(lowest_unit) = options.as_string()
+	{
+		PrettySizeOptions::from(lowest_unit.to_string_lossy())
+	} else {
+		PrettySizeOptions::default()
+	};
 
-	let pretty = crate::support::text::format_pretty_size(bytes);
+	let pretty = crate::support::text::format_pretty_size(bytes, Some(options));
 	lua.create_string(&pretty).map(Value::String)
 }
 
@@ -64,7 +72,7 @@ mod tests {
 			let script = format!("return aip.text.format_size({bytes})");
 			let res = eval_lua(&lua, &script)?;
 			let lua_str = res.as_str().ok_or("Should be string")?;
-			let expected = format_pretty_size(bytes as u64);
+			let expected = format_pretty_size(bytes as u64, None);
 			assert_eq!(lua_str, expected);
 		}
 

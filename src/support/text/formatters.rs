@@ -1,6 +1,7 @@
 use crate::Result;
 use genai::chat::Usage;
 use num_format::ToFormattedString;
+use simple_fs::PrettySizeOptions;
 use std::time::Duration;
 use time::{OffsetDateTime, format_description};
 
@@ -105,8 +106,9 @@ pub fn format_time_local(epoch_us: i64) -> Result<String> {
 // endregion: --- Duration
 
 /// Formats 9 fix chars
-pub fn format_pretty_size(size_in_bytes: u64) -> String {
-	simple_fs::pretty_size(size_in_bytes)
+pub fn format_pretty_size(size_in_bytes: u64, options: Option<PrettySizeOptions>) -> String {
+	let options = options.unwrap_or_default();
+	simple_fs::pretty_size_with_options(size_in_bytes, options)
 }
 
 // region:    --- Genai

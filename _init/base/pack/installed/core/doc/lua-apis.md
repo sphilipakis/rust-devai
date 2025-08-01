@@ -1295,7 +1295,7 @@ aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): stri
 
 aip.text.ensure_single_ending_newline(content: string | nil): string | nil
 
-aip.text.format_size(bytes: integer | nil): string | nil
+aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil -- lowest_size_unit default "B"
 
 aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
 
@@ -1669,9 +1669,11 @@ This function does not typically error.
 Formats a byte count (in bytes) into a human-readable, fixed-width string (9 characters, right-aligned).  
 If `bytes` is `nil`, the function returns `nil`.
 
+Optional lowest unit size to be used (by default "B" for Bytes)
+
 ```lua
 -- API Signature
-aip.text.format_size(bytes: integer | nil): string | nil
+aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil
 ```
 
 ### Examples
