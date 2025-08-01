@@ -35,10 +35,10 @@ impl AppState {
 				} else if addl_cost != 0. {
 					Some(addl_cost)
 				} else {
-					None
+					cost
 				}
 			} else {
-				None
+				cost
 			}
 		} else {
 			None
