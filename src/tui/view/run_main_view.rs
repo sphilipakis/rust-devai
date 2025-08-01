@@ -65,12 +65,31 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let concurrency_txt = state.current_run_concurrency_txt();
 
 	// Tasks progress and optional cumulative duration.
-	let total_tasks = state.tasks().len();
-	let done_tasks = state.tasks().iter().filter(|t| t.is_ended()).count();
-	let tasks_txt = if total_tasks == 0 {
-		"-".to_string()
+
+	let (items_label, items_txt) = if let Some(run_item) = state.current_run_item()
+		&& run_item.has_children()
+	{
+		let children_runs = state.all_run_children(run_item);
+		let total_items = children_runs.len();
+		// let done_items = children_runs.into_iter().filter(|&ri| ri.run().is_done()).count();
+		let items_txt = if total_items == 0 {
+			"-".to_string()
+		} else if run_item.run().is_done() {
+			format!("✔ {total_items}")
+		} else {
+			format!("▶ {total_items}")
+		};
+
+		("Agents:", items_txt)
 	} else {
-		format!("{done_tasks}/{total_tasks}")
+		let total_items = state.tasks().len();
+		let done_items = state.tasks().iter().filter(|t| t.is_ended()).count();
+		let items_txt = if total_items == 0 {
+			"-".to_string()
+		} else {
+			format!("{done_items}/{total_items}")
+		};
+		("Tasks:", items_txt)
 	};
 
 	let mut duration_txt = state.current_run_duration_txt();
@@ -108,11 +127,11 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		.style(style::STL_FIELD_VAL)
 		.render(val_1.x_row(1), buf);
 
-	Paragraph::new("Tasks:")
+	Paragraph::new(items_label)
 		.style(style::STL_FIELD_LBL)
 		.right_aligned()
 		.render(lbl_2.x_row(1), buf);
-	Paragraph::new(tasks_txt)
+	Paragraph::new(items_txt)
 		.style(style::STL_FIELD_VAL)
 		.render(val_2.x_row(1), buf);
 
