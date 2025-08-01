@@ -4,7 +4,7 @@ use crate::store::ModelManager;
 use crate::store::rt_model::Task;
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{OverviewTasksMode, RunTab, ScrollZones};
+use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 
 // region:    --- Wrapper
 
@@ -51,7 +51,7 @@ impl AppState {
 			task_idx: None,
 
 			// -- Data
-			run_items: Vec::new(),
+			run_item_store: RunItemStore::default(),
 			tasks: Vec::new(),
 
 			// -- System & Event

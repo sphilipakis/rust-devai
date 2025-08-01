@@ -13,15 +13,25 @@ impl AppState {
 	}
 
 	pub fn run_items(&self) -> &[RunItem] {
-		&self.core.run_items
+		self.core.run_item_store.items()
 	}
 
 	pub fn current_run_item(&self) -> Option<&RunItem> {
 		if let Some(idx) = self.core.run_idx {
-			self.core.run_items.get(idx as usize)
+			self.core.run_item_store.items().get(idx as usize)
 		} else {
 			None
 		}
+	}
+
+	#[allow(unused)]
+	pub fn all_run_children<'a>(&'a self, run_item: &RunItem) -> Vec<&'a RunItem> {
+		self.core.run_item_store.all_children(run_item)
+	}
+
+	#[allow(unused)]
+	pub fn is_root_run(&self, run_item: &RunItem) -> bool {
+		run_item.is_root()
 	}
 
 	pub fn run_tab(&self) -> RunTab {
