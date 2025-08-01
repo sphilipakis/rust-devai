@@ -30,6 +30,7 @@ use crate::script::LuaValueExt;
 use crate::script::aip_modules::aip_file::support::{
 	base_dir_and_globs, check_access_write, compute_base_dir, create_file_records, list_files_with_options,
 };
+use crate::script::support::into_option_string;
 use crate::support::{AsStrsExt, files};
 use crate::types::{FileInfo, FileRecord};
 use mlua::{FromLua, IntoLua, Lua, Value};
@@ -393,6 +394,67 @@ pub(super) fn file_ensure_exists(
 /// ```
 pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<bool> {
 	Ok(crate::script::support::path_exits(runtime, &path))
+}
+
+/// ## Lua Documentation
+///
+/// Retrieves file metadata ([`FileInfo`]) for the specified path.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.info(path: string): FileInfo | nil
+/// ```
+///
+/// If the given `path` exists, this function returns a [`FileInfo`] object
+/// containing the file metadata (no content).  
+/// If the path cannot be resolved or the file does not exist, it returns `nil`.
+///
+/// ### Arguments
+///
+/// - `path: string` – The file or directory path. Can be relative, absolute,
+///   or use pack references (`ns@pack/...`, `ns@pack$workspace/...`, etc.).
+///
+/// ### Returns
+///
+/// - `FileInfo | nil`: Metadata for the file, or `nil` when not found.
+///
+/// ### Example
+///
+/// ```lua
+/// local meta = aip.file.info("README.md")
+/// if meta then
+///   print("Size:", meta.size)
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error only if the path cannot be resolved (invalid pack
+/// reference, invalid format, …). If the path resolves successfully but the
+/// file does not exist, the function simply returns `nil`.
+pub(super) fn file_info(lua: &Lua, runtime: &Runtime, path: Value) -> mlua::Result<Value> {
+	let Some(path) = into_option_string(path, "aip.text.replace_markers")? else {
+		return Ok(Value::Nil);
+	};
+
+	// Empty string ‑> nil directly.
+	if path.trim().is_empty() {
+		return Ok(Value::Nil);
+	}
+
+	let rel_path = SPath::new(path);
+	let full_path =
+		runtime
+			.dir_context()
+			.resolve_path(runtime.session(), rel_path.clone(), PathResolver::WksDir, None)?;
+
+	if !full_path.is_file() {
+		return Ok(Value::Nil);
+	}
+
+	// TODO: Might want to put it ~ in case absolute and home based
+	let file_info = FileInfo::new(runtime.dir_context(), rel_path, &full_path);
+	file_info.into_lua(lua)
 }
 
 /// ## Lua Documentation
@@ -905,6 +967,30 @@ mod tests {
 			let res = eval_lua(&lua, &code)?;
 			assert!(res.as_bool().ok_or("Result should be a bool")?, "Should exist: {path}");
 		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_info_ok() -> Result<()> {
+		// -- Exec
+		let fx_path = "./agent-script/agent-hello.aip";
+		let res = run_reflective_agent(&format!(r#"return aip.file.info("{fx_path}")"#), None).await?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("name")?, "agent-hello.aip");
+		assert_eq!(res.x_get_str("path")?, fx_path);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_info_not_found() -> Result<()> {
+		// -- Exec
+		let res = run_reflective_agent(r#"return aip.file.info("not/a/file.txt")"#, None).await?;
+
+		// -- Check
+		assert_eq!(res, serde_json::Value::Null, "Should have returned null");
 
 		Ok(())
 	}

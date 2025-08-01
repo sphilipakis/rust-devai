@@ -2,8 +2,8 @@ use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::file_change::file_save_changes;
 use crate::script::aip_modules::aip_file::file_common::{
-	EnsureExistsOptions, file_append, file_ensure_exists, file_exists, file_first, file_list, file_list_load,
-	file_load, file_save,
+	EnsureExistsOptions, file_append, file_ensure_exists, file_exists, file_first, file_info, file_list,
+	file_list_load, file_load, file_save,
 };
 use crate::script::aip_modules::aip_file::file_hash::{
 	file_hash_blake3, file_hash_blake3_b58u, file_hash_blake3_b64, file_hash_blake3_b64u, file_hash_sha256,
@@ -48,6 +48,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	// -- exists
 	let rt = runtime.clone();
 	let file_exists_fn = lua.create_function(move |lua, path: String| file_exists(lua, &rt, path))?;
+
+	// -- info
+	let rt = runtime.clone();
+	let file_info_fn = lua.create_function(move |lua, path: Value| file_info(lua, &rt, path))?;
 
 	// -- list
 	let rt = runtime.clone();
@@ -151,6 +155,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("append", file_append_fn)?;
 	table.set("ensure_exists", file_ensure_exists_fn)?;
 	table.set("exists", file_exists_fn)?;
+	table.set("info", file_info_fn)?;
 	table.set("list", file_list_fn)?;
 	table.set("list_load", file_list_load_fn)?;
 	table.set("first", file_first_fn)?;
