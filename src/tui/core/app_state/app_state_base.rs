@@ -4,7 +4,7 @@ use crate::store::ModelManager;
 use crate::store::rt_model::Task;
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
-use crate::tui::core::{OverviewTasksMode, RunItem, RunTab, ScrollZones};
+use crate::tui::core::{OverviewTasksMode, RunTab, ScrollZones};
 
 // region:    --- Wrapper
 
@@ -104,39 +104,6 @@ impl AppState {
 impl AppState {
 	pub fn show_runs(&self) -> bool {
 		self.core.show_runs
-	}
-}
-
-/// RunsView
-impl AppState {
-	pub fn run_idx(&self) -> Option<usize> {
-		self.core.run_idx.map(|idx| idx as usize)
-	}
-
-	pub fn set_run_idx(&mut self, idx: Option<usize>) {
-		if let Some(idx) = idx {
-			self.core.set_run_by_idx(idx as i32);
-		}
-	}
-
-	pub fn run_items(&self) -> &[RunItem] {
-		&self.core.run_items
-	}
-
-	pub fn current_run_item(&self) -> Option<&RunItem> {
-		if let Some(idx) = self.core.run_idx {
-			self.core.run_items.get(idx as usize)
-		} else {
-			None
-		}
-	}
-
-	pub fn run_tab(&self) -> RunTab {
-		self.core.run_tab
-	}
-
-	pub fn set_run_tab(&mut self, run_tab: RunTab) {
-		self.core.run_tab = run_tab;
 	}
 }
 
