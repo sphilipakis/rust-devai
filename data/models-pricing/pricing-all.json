@@ -88,6 +88,270 @@
       }
     ]
   },
+  "fireworks": {
+    "models": [
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "qwen3-235b-a22b-thinking-2507",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.45
+        },
+        "name": "qwen3-coder-480b-a35b-instruct",
+        "output": 1.8,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "qwen3-235b-a22b-instruct-2507",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "kimi-k2-instruct",
+        "output": 2.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "deepseek-r1-0528",
+        "output": 8,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "qwen3-235b-a22b",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "qwen3-30b-a3b",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "llama4-maverick-instruct-basic",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "llama4-scout-instruct-basic",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "deepseek-r1",
+        "output": 8,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "llama-v3p1-405b-instruct",
+        "output": 3,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "qwen2p5-vl-32b-instruct",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "deepseek-v3",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "deepseek-v3-0324",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "llama-v3p1-8b-instruct",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "llama-v3p3-70b-instruct",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.1
+        },
+        "name": "glm-4p5-air",
+        "output": 0.1,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.5
+        },
+        "name": "qwen3-coder-30b-a3b-instruct",
+        "output": 0.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.1
+        },
+        "name": "qwen3-30b-a3b-thinking-2507",
+        "output": 0.1,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.55
+        },
+        "name": "glm-4p5",
+        "output": 2.19,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "sentientfoundation-serverless/dobby-mini-unhinged-plus-llama-3-1-8b",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.55
+        },
+        "name": "deepseek-r1-basic",
+        "output": 2.19,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "sentientfoundation/dobby-unhinged-llama-3-3-70b-new",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "firesearch-ocr-v6",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "llama-v3p1-70b-instruct",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.2
+        },
+        "name": "mixtral-8x22b-instruct",
+        "output": 1.2,
+        "recent": false
+      }
+    ]
+  },
   "gemini": {
     "models": [
       {
