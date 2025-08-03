@@ -11,6 +11,13 @@ use genai::chat::Usage;
 /// # Returns
 /// * `Option<f64>` - The calculated price in USD, or None if the provider or model was not found
 pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<f64> {
+	// Since not api from genai yet, extract the eventual namespace of the modelname
+	let model_name = match model_name.splitn(2, "::").collect::<Vec<_>>().as_slice() {
+		[_, after] => after,
+		[only] => only,
+		_ => model_name, // fallback, though this shouldn't be reached
+	};
+
 	// Find the provider
 	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
 

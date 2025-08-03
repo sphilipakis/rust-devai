@@ -96,6 +96,197 @@ const DEEPSEEK: Provider = Provider {
 	models: DEEPSEEK_MODELS,
 };
 
+// Define Fireworks pricing
+const FIREWORKS_MODELS: &[ModelPricing] = &[
+	ModelPricing {
+		name: "qwen3-235b-a22b-thinking-2507",
+		input_cached: None,
+		input_normal: 0.22,
+		output_normal: 0.88,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-coder-480b-a35b-instruct",
+		input_cached: None,
+		input_normal: 0.45,
+		output_normal: 1.8,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-235b-a22b-instruct-2507",
+		input_cached: None,
+		input_normal: 0.22,
+		output_normal: 0.88,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "kimi-k2-instruct",
+		input_cached: None,
+		input_normal: 0.6,
+		output_normal: 2.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "deepseek-r1-0528",
+		input_cached: None,
+		input_normal: 3.0,
+		output_normal: 8.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-235b-a22b",
+		input_cached: None,
+		input_normal: 0.22,
+		output_normal: 0.88,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-30b-a3b",
+		input_cached: None,
+		input_normal: 0.15,
+		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama4-maverick-instruct-basic",
+		input_cached: None,
+		input_normal: 0.22,
+		output_normal: 0.88,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama4-scout-instruct-basic",
+		input_cached: None,
+		input_normal: 0.15,
+		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "deepseek-r1",
+		input_cached: None,
+		input_normal: 3.0,
+		output_normal: 8.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-v3p1-405b-instruct",
+		input_cached: None,
+		input_normal: 3.0,
+		output_normal: 3.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen2p5-vl-32b-instruct",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "deepseek-v3",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "deepseek-v3-0324",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-v3p1-8b-instruct",
+		input_cached: None,
+		input_normal: 0.2,
+		output_normal: 0.2,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-v3p3-70b-instruct",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "glm-4p5-air",
+		input_cached: None,
+		input_normal: 0.1,
+		output_normal: 0.1,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-coder-30b-a3b-instruct",
+		input_cached: None,
+		input_normal: 0.5,
+		output_normal: 0.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-30b-a3b-thinking-2507",
+		input_cached: None,
+		input_normal: 0.1,
+		output_normal: 0.1,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "glm-4p5",
+		input_cached: None,
+		input_normal: 0.55,
+		output_normal: 2.19,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "sentientfoundation-serverless/dobby-mini-unhinged-plus-llama-3-1-8b",
+		input_cached: None,
+		input_normal: 0.2,
+		output_normal: 0.2,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "deepseek-r1-basic",
+		input_cached: None,
+		input_normal: 0.55,
+		output_normal: 2.19,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "sentientfoundation/dobby-unhinged-llama-3-3-70b-new",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "firesearch-ocr-v6",
+		input_cached: None,
+		input_normal: 0.2,
+		output_normal: 0.2,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "llama-v3p1-70b-instruct",
+		input_cached: None,
+		input_normal: 0.9,
+		output_normal: 0.9,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "mixtral-8x22b-instruct",
+		input_cached: None,
+		input_normal: 1.2,
+		output_normal: 1.2,
+		output_reasoning: None,
+	},
+];
+
+const FIREWORKS: Provider = Provider {
+	name: "fireworks",
+	models: FIREWORKS_MODELS,
+};
+
 // Define Gemini pricing
 const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
@@ -475,4 +666,4 @@ const XAI: Provider = Provider {
 	models: XAI_MODELS,
 };
 
-pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI];
+pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI, FIREWORKS];
