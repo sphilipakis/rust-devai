@@ -53,9 +53,10 @@ Important notes:
 
 - [`FileInfo`](#filemeta) (for `aip.file..`) (FileInfo + `.content`)
 - [`FileRecord`](#filerecord) (for `aip.file..`)
+- [`FileStats`](#filestats) (for `aip.file..`)
 - [`WebResponse`](#webresponse) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
-- [`MdBlock`](#mdsection) (for `aip.md..`)
+- [`MdBlock`](#mdblock) (for `aip.md..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`
 
@@ -561,6 +562,72 @@ end
 Returns an error only if the path cannot be resolved (invalid pack
 reference, invalid format, …). If the path resolves successfully but the
 file does not exist, the function simply returns `nil`.
+
+### aip.file.stats
+
+Calculates aggregate statistics for a set of files matching glob patterns.
+
+```lua
+-- API Signature
+aip.file.stats(
+  include_globs: string | list<string> | nil,
+  options?: {
+    base_dir?: string,
+    absolute?: boolean
+  }
+): FileStats | nil
+```
+
+Finds files matching the `include_globs` patterns within the specified `base_dir` (or workspace root)
+and returns aggregate statistics about these files in a `FileStats` object.
+If `include_globs` is `nil` or no files match the patterns, returns `nil`.
+
+#### Arguments
+
+- `include_globs: string | list<string> | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
+  If `nil`, the function returns `nil`.
+  Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+- `options?: table` (optional) - A table containing options:
+  - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
+    Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
+  - `absolute?: boolean` (optional): Affects how files are resolved internally, but the statistics remain the same regardless.
+
+#### Returns
+
+- `FileStats`: A `FileStats` object containing aggregate statistics about the matching files.
+- `nil` if `include_globs` is `nil`
+
+If no files if ound a FileStats will all 0 will be returned.
+
+#### Example
+
+```lua
+-- Get statistics for all Markdown files in the 'docs' directory
+local stats = aip.file.stats("*.md", { base_dir = "docs" })
+if stats then
+  print("Number of files:", stats.number_of_files)
+  print("Total size:", stats.total_size)
+  print("First created:", stats.ctime_first)
+  print("Last modified:", stats.mtime_last)
+end
+
+-- Get statistics for all '.aip' files in a specific pack
+local agent_stats = aip.file.stats("**/*.aip", { base_dir = "ns@pack/" })
+if agent_stats then
+  print("Total agent files:", agent_stats.number_of_files)
+end
+
+-- Nil globs return nil
+local nil_stats = aip.file.stats(nil)
+print(nil_stats) -- Output: nil
+```
+
+#### Error
+
+Returns an error if:
+- `include_globs` is not a string, a list of strings, or `nil`.
+- `base_dir` cannot be resolved (e.g., invalid pack reference).
+- An error occurs during file system traversal or glob matching.
 
 ### aip.file.load_json
 
@@ -3821,6 +3888,21 @@ Represents file metadata without content. Returned by `aip.file.list`, `aip.file
   mtime?: number,    // Modification timestamp (microseconds), optional (if with_meta=true for list)
   size?: number      // File size in bytes, optional (if with_meta=true for list)
 }
+
+### FileStats
+
+Aggregated statistics for a collection of files. Returned by `aip.file.stats`.
+
+```ts
+{
+  total_size: number,      // Total size of all matched files in bytes
+  number_of_files: number, // Number of files matched
+  ctime_first: number,     // Creation timestamp of the oldest file (microseconds since epoch)
+  ctime_last: number,      // Creation timestamp of the newest file (microseconds since epoch)
+  mtime_first: number,     // Modification timestamp of the oldest file (microseconds since epoch)
+  mtime_last: number       // Modification timestamp of the newest file (microseconds since epoch)
+}
+```
 ```
 
 ### DestOptions

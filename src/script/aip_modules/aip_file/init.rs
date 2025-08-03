@@ -2,7 +2,7 @@ use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::file_change::file_save_changes;
 use crate::script::aip_modules::aip_file::file_read::{
-	file_exists, file_first, file_info, file_list, file_list_load, file_load,
+	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
 };
 use crate::script::aip_modules::aip_file::file_write::{
 	file_append, file_ensure_exists, file_save, EnsureExistsOptions,
@@ -68,6 +68,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let file_first_fn =
 		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_first(lua, &rt, globs, options))?;
+
+	// -- stats
+	let rt = runtime.clone();
+	let file_stats_fn =
+		lua.create_function(move |lua, (globs, options): (Value, Option<Value>)| file_stats(lua, &rt, globs, options))?;
 
 	// -- load_json
 	let rt = runtime.clone();
@@ -159,6 +164,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("list", file_list_fn)?;
 	table.set("list_load", file_list_load_fn)?;
 	table.set("first", file_first_fn)?;
+	table.set("stats", file_stats_fn)?;
 	table.set("load_json", file_load_json_fn)?;
 	table.set("load_ndjson", file_load_ndjson_fn)?;
 	table.set("append_json_line", file_append_json_line_fn)?;

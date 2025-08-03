@@ -1,26 +1,3 @@
-//! Defines file reading functions for the `aip.file` Lua module.
-//!
-//! ---
-//!
-//! ## Lua API
-//!
-//! The `aip.file` module exposes helper functions that allow Lua scripts to
-//! interact with the file-system in a workspace-aware and pack-aware manner.
-//! This module specifically contains the read operations.
-//!
-//! Whenever rich metadata is returned, the Rust structs
-//! [`FileInfo`] and [`FileRecord`] are used.  Refer to their documentation for
-//! the detailed field list instead of duplicating it here.
-//!
-//! ### Functions
-//!
-//! - `aip.file.load(rel_path: string, options?)                : FileRecord`
-//! - `aip.file.exists(path: string)                            : boolean`
-//! - `aip.file.info(path: string)                              : FileInfo | nil`
-//! - `aip.file.list(globs: string | list, options?)            : list<FileInfo>`
-//! - `aip.file.list_load(globs: string | list, options?)       : list<FileRecord>`
-//! - `aip.file.first(globs: string | list, options?)           : FileInfo | nil`
-
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
@@ -29,9 +6,142 @@ use crate::script::aip_modules::aip_file::support::{
 };
 use crate::script::support::into_option_string;
 use crate::support::AsStrsExt;
-use crate::types::{FileInfo, FileRecord};
+use crate::types::{FileInfo, FileRecord, FileStats};
 use mlua::{IntoLua, Lua, Value};
-use simple_fs::{SPath, iter_files};
+use simple_fs::{SMeta, SPath, iter_files};
+
+/// ## Lua Documentation
+///
+/// Calculates aggregate statistics for a set of files matching glob patterns.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.stats(
+///   include_globs: string | list<string> | nil,
+///   options?: {
+///     base_dir?: string,
+///     absolute?: boolean
+///   }
+/// ): FileStats | nil
+/// ```
+///
+/// Finds files matching the `include_globs` patterns within the specified `base_dir` (or workspace root)
+/// and returns aggregate statistics about these files in a `FileStats` object.
+/// If `include_globs` is `nil` or no files match the patterns, returns `nil`.
+///
+/// ### Arguments
+///
+/// - `include_globs: string | list<string> | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
+///   If `nil`, the function returns `nil`.
+///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+/// - `options?: table` (optional) - A table containing options:
+///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
+///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
+///   - `absolute?: boolean` (optional): Affects how files are resolved internally, but the statistics remain the same regardless.
+///
+/// ### Returns
+///
+/// - `FileStats`: A `FileStats` object containing aggregate statistics about the matching files.
+/// - `nil` if `include_globs` is `nil`
+///
+/// If no files if ound a FileStats will all 0 will be returned.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Get statistics for all Markdown files in the 'docs' directory
+/// local stats = aip.file.stats("*.md", { base_dir = "docs" })
+/// if stats then
+///   print("Number of files:", stats.number_of_files)
+///   print("Total size:", stats.total_size)
+///   print("First created:", stats.ctime_first)
+///   print("Last modified:", stats.mtime_last)
+/// end
+///
+/// -- Get statistics for all '.aip' files in a specific pack
+/// local agent_stats = aip.file.stats("**/*.aip", { base_dir = "ns@pack/" })
+/// if agent_stats then
+///   print("Total agent files:", agent_stats.number_of_files)
+/// end
+///
+/// -- Nil globs return nil
+/// local nil_stats = aip.file.stats(nil)
+/// print(nil_stats) -- Output: nil
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - `include_globs` is not a string, a list of strings, or `nil`.
+/// - `base_dir` cannot be resolved (e.g., invalid pack reference).
+/// - An error occurs during file system traversal or glob matching.
+///
+pub(super) fn file_stats(
+	lua: &Lua,
+	runtime: &Runtime,
+	include_globs: Value,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
+	// Handle nil globs
+	if include_globs.is_nil() {
+		return Ok(Value::Nil);
+	}
+
+	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
+	let absolute = options.x_get_bool("absolute").unwrap_or(false);
+
+	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
+
+	if spaths.is_empty() {
+		return FileStats::default().into_lua(lua);
+	}
+
+	// We need metadata to compute stats
+	let smetas: Vec<SMeta> = spaths.into_iter().filter_map(|spath| spath.meta().ok()).collect();
+
+	// Compute aggregate statistics
+	let mut total_size: u64 = 0;
+	let mut number_of_files: u64 = 0;
+	let mut ctime_first: Option<i64> = None;
+	let mut ctime_last: Option<i64> = None;
+	let mut mtime_first: Option<i64> = None;
+	let mut mtime_last: Option<i64> = None;
+
+	for smeta in smetas {
+		number_of_files += 1;
+
+		total_size += smeta.size;
+		let ctime = smeta.created_epoch_us;
+		let mtime = smeta.modified_epoch_us;
+
+		if ctime_first.is_none() || ctime < ctime_first.unwrap() {
+			ctime_first = Some(ctime);
+		}
+		if ctime_last.is_none() || ctime > ctime_last.unwrap() {
+			ctime_last = Some(ctime);
+		}
+
+		if mtime_first.is_none() || mtime < mtime_first.unwrap() {
+			mtime_first = Some(mtime);
+		}
+		if mtime_last.is_none() || mtime > mtime_last.unwrap() {
+			mtime_last = Some(mtime);
+		}
+	}
+
+	let file_stats = FileStats {
+		total_size,
+		number_of_files,
+		ctime_first: ctime_first.unwrap_or(0),
+		ctime_last: ctime_last.unwrap_or(0),
+		mtime_first: mtime_first.unwrap_or(0),
+		mtime_last: mtime_last.unwrap_or(0),
+	};
+
+	let res = file_stats.into_lua(lua)?;
+
+	Ok(res)
+}
 
 /// ## Lua Documentation
 ///
