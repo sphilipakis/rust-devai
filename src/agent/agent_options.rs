@@ -24,25 +24,23 @@ pub struct AgentOptions {
 	model_aliases: Option<ModelAliases>,
 }
 
-// region:    --- Froms
-
-/// This is what is use to go from a aipack AgentOptions to the genai ChatOptions
-impl From<&AgentOptions> for ChatOptions {
-	fn from(agent_options: &AgentOptions) -> Self {
-		let mut chat_options = ChatOptions::default();
+impl AgentOptions {
+	pub fn to_genai_options(&self, chat_options: Option<&ChatOptions>) -> ChatOptions {
+		let mut chat_options = match chat_options {
+			Some(opts) => opts.clone(),
+			None => ChatOptions::default(),
+		};
 		// temperature
-		if let Some(temp) = agent_options.temperature() {
+		if let Some(temp) = self.temperature() {
 			chat_options.temperature = Some(temp);
 		}
 		// top_p
-		if let Some(top_p) = agent_options.top_p() {
+		if let Some(top_p) = self.top_p() {
 			chat_options.top_p = Some(top_p);
 		}
 		chat_options
 	}
 }
-
-// endregion: --- Froms
 
 // region:    --- ModelAliases
 

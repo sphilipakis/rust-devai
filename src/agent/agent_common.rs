@@ -30,7 +30,8 @@ impl Agent {
 		})?;
 		let model_resolved = inner.agent_options.resolve_model().map(|v| v.into()).unwrap_or(model.clone());
 
-		let chat_options = ChatOptions::from(&*inner.agent_options);
+		// -- Initial genai chat_options
+		let chat_options = inner.agent_options.to_genai_options(None);
 
 		Ok(Agent {
 			inner,
@@ -52,7 +53,7 @@ impl Agent {
 		let model_resolved = options.resolve_model().map(|v| v.into()).unwrap_or(model.clone());
 
 		// -- Build the genai chat optoins
-		let chat_options = ChatOptions::from(&options);
+		let chat_options = options.to_genai_options(Some(&self.genai_chat_options));
 
 		// -- Returns
 		Ok(Agent {

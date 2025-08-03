@@ -177,9 +177,8 @@ async fn process_send_to_genai(
 	rt_step.step_task_ai_start(run_id, task_id).await?;
 
 	let start = Instant::now();
-	let chat_res = client
-		.exec_chat(model_resolved, chat_req, Some(agent.genai_chat_options()))
-		.await?;
+	let chat_options = agent.genai_chat_options();
+	let chat_res = client.exec_chat(model_resolved, chat_req, Some(chat_options)).await?;
 	let duration = start.elapsed();
 
 	// -- Rt Step - end AI
