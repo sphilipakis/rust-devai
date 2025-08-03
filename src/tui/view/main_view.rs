@@ -1,12 +1,14 @@
 use super::{ActionView, RunsView, SumView};
+use crate::store::rt_model::ErrRec;
 use crate::tui::AppState;
 use crate::tui::view::{RunMainView, style};
 use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
-use ratatui::widgets::{Block, StatefulWidget, Widget};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Padding, Paragraph, StatefulWidget, Widget};
 
-pub struct MainView {}
+pub struct MainView;
 
 impl StatefulWidget for MainView {
 	type State = AppState;
@@ -14,6 +16,11 @@ impl StatefulWidget for MainView {
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// -- Add background
 		Block::new().bg(style::CLR_BKG_BLACK).render(area, buf);
+
+		if let Some(err_rec) = state.sys_err_rec() {
+			render_err(err_rec, buf, area);
+			return;
+		}
 
 		// -- Layout
 		let [header_a, _gap_a, content_a, action_a] = Layout::default()
@@ -42,4 +49,46 @@ impl StatefulWidget for MainView {
 		let action_v = ActionView {};
 		action_v.render(action_a, buf, state);
 	}
+}
+
+fn render_err(err_rec: &ErrRec, buf: &mut Buffer, area: Rect) {
+	let [content_a, _gap] = Layout::default()
+		.direction(Direction::Vertical)
+		.constraints(vec![
+			Constraint::Fill(1), // content
+			Constraint::Max(1),  // gap
+		])
+		.areas(area);
+
+	let err_msg = err_rec
+		.content
+		.as_deref()
+		.unwrap_or("Some unknown error happened. Quit and restart");
+	Paragraph::new(err_msg)
+		.block(
+			Block::bordered()
+				.border_style(style::CLR_TXT_RED)
+				.padding(Padding::new(1, 1, 1, 1))
+				.title("  ERROR  ")
+				.title_alignment(Alignment::Center),
+		)
+		.centered()
+		.render(content_a, buf);
+
+	let line: Vec<Span> = vec![
+		Span::raw("Press ["),
+		Span::styled("q", style::CLR_BKG_BLUE),
+		Span::raw("] to quit and restart"),
+	];
+
+	let [_, content_a, _] = Layout::default()
+		.direction(Direction::Vertical)
+		.constraints(vec![
+			Constraint::Fill(1),   //
+			Constraint::Length(1), // content
+			Constraint::Length(1),
+		])
+		.areas(content_a);
+
+	Paragraph::new(Line::from(line)).centered().render(content_a, buf);
 }

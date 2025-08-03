@@ -1,8 +1,7 @@
 use crate::store::base::{self, DbBmc};
 use crate::store::{ContentTyp, Id, ModelManager, Result, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
-use modql::field::{Fields, HasSqliteFields};
-use modql::filter::ListOptions;
+use modql::field::{Fields, HasFields as _, HasSqliteFields};
 use uuid::Uuid;
 
 // region:    --- Types
@@ -76,32 +75,19 @@ impl ErrBmc {
 		base::get::<Self, _>(mm, id)
 	}
 
-	#[allow(unused)]
-	pub fn list(
-		mm: &ModelManager,
-		list_options: Option<ListOptions>,
-		filter: Option<ErrFilter>,
-	) -> Result<Vec<ErrRec>> {
-		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
-		base::list::<Self, _>(mm, list_options, filter_fields)
-	}
+	/// Used by the TUI to get system err (not from run or task)
+	pub fn first_system_err(mm: &ModelManager) -> Result<Option<ErrRec>> {
+		let sql = format!(
+			"SELECT {} FROM {} WHERE run_id IS NULL AND task_id IS NULL ORDER BY id  LIMIT 1 ",
+			ErrRec::sql_columns(),
+			Self::table_ref(),
+		);
 
-	#[allow(unused)]
-	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<ErrRec>> {
-		let filter = ErrFilter {
-			run_id: Some(run_id),
-			..Default::default()
-		};
-		Self::list(mm, None, Some(filter))
-	}
+		// -- Exec query
+		let db = mm.db();
+		let entities: Vec<ErrRec> = db.fetch_all(&sql, ())?;
 
-	#[allow(unused)]
-	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<ErrRec>> {
-		let filter = ErrFilter {
-			task_id: Some(task_id),
-			..Default::default()
-		};
-		Self::list(mm, None, Some(filter))
+		Ok(entities.into_iter().next())
 	}
 }
 
@@ -118,7 +104,6 @@ mod tests {
 	use super::*;
 	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
 	use crate::support::time::now_micro;
-	use modql::filter::OrderBy;
 
 	// region:    --- Support
 
@@ -199,107 +184,6 @@ mod tests {
 
 		Ok(())
 	}
-
-	#[tokio::test]
-	async fn test_model_err_bmc_list_simple() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		for i in 0..3 {
-			let err_c = ErrForCreate {
-				stage: None,
-				run_id: None,
-				task_id: None,
-				typ: Some(ContentTyp::Text),
-				content: Some(format!("err-{i}")),
-			};
-			ErrBmc::create(&mm, err_c)?;
-		}
-
-		// -- Exec
-		let errs: Vec<ErrRec> = ErrBmc::list(&mm, Some(ListOptions::default()), None)?;
-
-		// -- Check
-		assert_eq!(errs.len(), 3);
-		let err_rec = errs.first().ok_or("Should have first item")?;
-		assert_eq!(err_rec.id, 1.into());
-		assert_eq!(err_rec.content, Some("err-0".to_string()));
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_err_bmc_list_order_by() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		for i in 0..3 {
-			let err_c = ErrForCreate {
-				stage: None,
-				run_id: None,
-				task_id: None,
-				typ: if i == 2 {
-					Some(ContentTyp::Json)
-				} else {
-					Some(ContentTyp::Text)
-				},
-				content: Some(format!("err-{i}")),
-			};
-			ErrBmc::create(&mm, err_c)?;
-		}
-
-		let order_bys = OrderBy::from("!id");
-		let list_options = ListOptions::from(order_bys);
-
-		// -- Exec
-		let errs: Vec<ErrRec> = ErrBmc::list(&mm, Some(list_options), None)?;
-
-		// -- Check
-		assert_eq!(errs.len(), 3);
-		let err_rec = errs.first().ok_or("Should have first item")?;
-		assert_eq!(err_rec.id, 3.into());
-		assert_eq!(err_rec.content, Some("err-2".to_string()));
-		assert_eq!(err_rec.typ, Some("Json".to_string()));
-
-		Ok(())
-	}
-
-	#[tokio::test]
-	async fn test_model_err_bmc_list_with_filter() -> Result<()> {
-		// -- Setup & Fixtures
-		let mm = ModelManager::new().await?;
-		let run_1_id = create_run(&mm, "run-1").await?;
-		let run_2_id = create_run(&mm, "run-2").await?;
-		for run_id in [run_1_id, run_2_id] {
-			for i in 0..3 {
-				let err_c = ErrForCreate {
-					stage: None,
-					run_id: Some(run_id),
-					task_id: None,
-					typ: Some(ContentTyp::Text),
-					content: Some(format!("err-{i}")),
-				};
-				ErrBmc::create(&mm, err_c)?;
-			}
-		}
-
-		let order_bys = OrderBy::from("!id");
-		let list_options = ListOptions::from(order_bys);
-		let filter = ErrFilter {
-			run_id: Some(run_1_id),
-			..Default::default()
-		};
-
-		// -- Exec
-		let errs: Vec<ErrRec> = ErrBmc::list(&mm, Some(list_options), Some(filter))?;
-
-		// -- Check
-		assert_eq!(errs.len(), 3);
-		let err_rec = errs.first().ok_or("Should have first item")?;
-		assert_eq!(err_rec.run_id, Some(run_1_id));
-
-		Ok(())
-	}
 }
-
-// endregion: --- Tests
 
 // endregion: --- Tests

@@ -1,4 +1,4 @@
-use crate::store::rt_model::{RunBmc, TaskBmc};
+use crate::store::rt_model::{ErrBmc, RunBmc, TaskBmc};
 use crate::tui::AppState;
 use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
@@ -65,6 +65,7 @@ pub fn process_app_state(state: &mut AppState) {
 
 	// -- Load runs and keep previous idx for later comparison
 	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
+	let runs_len = new_runs.len();
 	let has_new_runs = new_runs.len() != state.run_items().len();
 	let run_item_store = RunItemStore::new(new_runs);
 	state.core_mut().run_item_store = run_item_store;
@@ -99,6 +100,16 @@ pub fn process_app_state(state: &mut AppState) {
 		if state.core().run_idx != prev_run_idx {
 			let inner = state.core_mut();
 			inner.task_idx = None;
+		}
+	}
+
+	// -- Fetch System Error
+	// NOTE: For now, we will assume that system errors are before the first run
+	// TODO: Eventually, this might not be true, as user could break the config.toml.
+	if runs_len == 0 {
+		// For now, ignore potential infra erro
+		if let Ok(sys_err) = ErrBmc::first_system_err(state.mm()) {
+			state.core_mut().sys_err = sys_err
 		}
 	}
 

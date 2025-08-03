@@ -58,4 +58,18 @@ impl ExecActionEvent {
 		// thanks to strum::IntoStaticStr
 		self.into()
 	}
+
+	/// Return true if this event is part of a TUI
+	/// NOTE: this is for the executor, but we might want to change this eventually
+	pub fn is_tui(&self) -> bool {
+		match self {
+			ExecActionEvent::CmdRun(run_args) => run_args.xp_tui,
+			// TODO: Those need to be handled
+			// (might not be an issue for now, because this is for error handling
+			// and error that are not run related happen at start)
+			// ExecActionEvent::Redo => todo!(),
+			// ExecActionEvent::RunSubAgent(run_sub_agent_params) => todo!(),
+			_ => false,
+		}
+	}
 }

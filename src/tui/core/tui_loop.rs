@@ -93,8 +93,7 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 	terminal.draw(|frame| {
 		let area = frame.area();
 
-		let main_view = MainView {};
-		frame.render_stateful_widget(main_view, area, app_state);
+		frame.render_stateful_widget(MainView, area, app_state);
 	})?;
 
 	Ok(())

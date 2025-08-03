@@ -1,4 +1,4 @@
-use crate::store::rt_model::Task;
+use crate::store::rt_model::{ErrRec, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::sys_state::SysState;
@@ -56,6 +56,7 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub do_action: Option<Action>,
 
 	// -- SysState
+	pub sys_err: Option<ErrRec>,
 	pub show_sys_states: bool,
 	pub sys_state: SysState,
 	pub memory: u64,

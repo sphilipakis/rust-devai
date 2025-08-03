@@ -21,6 +21,7 @@ use crate::hub::{HubEvent, get_hub};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
 use crate::store::OnceModelManager;
+use crate::store::rt_model::{ErrBmc, ErrForCreate};
 use crate::{Error, Result};
 use flume::{Receiver, Sender};
 use simple_fs::SPath;
@@ -132,12 +133,33 @@ impl Executor {
 			let xt = executor.clone();
 
 			let action_str = action.as_str();
+			let is_tui = action.is_tui();
 			// Spawn a new async task for each action
 
 			tokio::spawn(async move {
-				if let Err(err) = xt.perform_action(action).await {
+				// -- exec the action
+				let res = xt.perform_action(action).await;
+
+				// -- Handle error
+				if let Err(err) = res {
+					// if tui, then, store it in the db
+					if is_tui && let Ok(mm) = xt.once_mm.get().await {
+						let msg = format!("Fail to perform action '{action_str}'.\nCause: {err}");
+						let _ = ErrBmc::create(
+							&mm,
+							ErrForCreate {
+								stage: None,
+								run_id: None,
+								task_id: None,
+								typ: None,
+								content: Some(msg),
+							},
+						);
+					};
+
+					// NOTE: Traditional cli
 					get_hub()
-						.publish(format!("Fail to perform action '{action_str}'. Cause: {err}"))
+						.publish(Error::cc(format!("Fail to perform action '{action_str}'"), err))
 						.await;
 				}
 			});
@@ -216,9 +238,13 @@ impl Executor {
 			// NOTE: This is the EVent from the Command line only (when aip.agent.run, the event RunAgent is sent)
 			ExecActionEvent::CmdRun(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
-				// Here we init base if version changed. This was we make sure doc and all work as expected
+				// Here we init base if version changed.
+				// This way we make sure doc and all work as expected
 				init_base(false).await?;
 				// NOTE: We might want to change this at some point and not require a Workspace to run (since now we have the base)
+				// NOTE: 2025-08-02 - Actually, the .aipack/ is useful to mark a project as a folder.
+				//                    Perhaps we will warn the user when run AIPACK and not .aipack/ in current folder
+				//                    but in the parent to avoid confusing behavior
 				let dir_ctx = init_wks(None, false).await?;
 
 				let exec_sender = self.sender();
