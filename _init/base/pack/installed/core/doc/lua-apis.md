@@ -125,6 +125,8 @@ aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: s
 
 aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 
+aip.file.info(path: string): FileInfo | nil
+
 aip.file.load_json(path: string): table | value
 
 aip.file.load_ndjson(path: string): list<table>
@@ -522,6 +524,43 @@ end
 #### Error
 
 Returns an error (Lua table `{ error: string }`) on invalid arguments, resolution failure, error during search *before* first match, or metadata retrieval error for the first match.
+
+### aip.file.info
+
+Retrieves file metadata ([`FileInfo`](#filemeta)) for the specified path.
+
+```lua
+-- API Signature
+aip.file.info(path: string): FileInfo | nil
+```
+
+If the given `path` exists, this function returns a [`FileInfo`](#filemeta) object
+containing the file metadata (no content).  
+If the path cannot be resolved or the file does not exist, it returns `nil`.
+
+#### Arguments
+
+- `path: string` – The file or directory path. Can be relative, absolute,
+  or use pack references (`ns@pack/...`, `ns@pack$workspace/...`, etc.).
+
+#### Returns
+
+- `FileInfo | nil`: Metadata for the file, or `nil` when not found.
+
+#### Example
+
+```lua
+local meta = aip.file.info("README.md")
+if meta then
+  print("Size:", meta.size)
+end
+```
+
+#### Error
+
+Returns an error only if the path cannot be resolved (invalid pack
+reference, invalid format, …). If the path resolves successfully but the
+file does not exist, the function simply returns `nil`.
 
 ### aip.file.load_json
 
