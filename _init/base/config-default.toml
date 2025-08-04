@@ -70,11 +70,11 @@ flash-low     = "gemini-2.5-flash-low"
 flash-medium  = "gemini-2.5-flash-medium"
 flash-high    = "gemini-2.5-flash-high"
 lite          = "gemini-2.5-flash-lite-preview-06-17"
-# -- Fireworks
-qwen3-coder   = "fireworks::qwen3-coder-480b-a35b-instruct"
-qwen3         = "fireworks::qwen3-235b-a22b-instruct-2507"
-qwen3-thinker = "fireworks::accounts/fireworks/models/qwen3-235b-a22b-thinking-2507"
-kimi-k2       = "fireworks::kimi-k2-instruct"
+# -- Fireworks (namespaced with `fireworks::_model_name`
+qwen-coder    = "fireworks::qwen3-coder-480b-a35b-instruct"
+qwen          = "fireworks::qwen3-235b-a22b-instruct-2507"
+qwen-thinker  = "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507" # can be full fireworks name
+kimi          = "fireworks::kimi-k2-instruct"
 glm           = "fireworks::glm-4p5"
 glm-air       = "fireworks::glm-4p5-air"
 # -- DeepSeek (from deepseek.com)
