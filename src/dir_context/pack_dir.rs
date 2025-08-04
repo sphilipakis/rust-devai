@@ -1,4 +1,5 @@
-use super::{DirContext, RepoKind};
+use super::DirContext;
+use crate::dir_context::aipack_paths::RepoKind;
 use crate::support::files::list_dirs;
 use crate::support::paths;
 use crate::types::PackRef;

@@ -1,11 +1,13 @@
 use crate::Result;
-use crate::dir_context::{AipackBaseDir, AipackPaths, DirContext};
+use crate::dir_context::{
+	AipackBaseDir, AipackPaths, CONFIG_BASE_DEFAULT_FILE_NAME, CONFIG_BASE_USER_FILE_NAME, DirContext,
+};
 use crate::exec::init::assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
 use crate::support::files::safer_delete_dir;
 use simple_fs::{SPath, ensure_dir};
-use std::fs::write;
+use std::fs::{self, write};
 use std::io::BufRead;
 
 /// Init the aipack base if needed,
@@ -18,14 +20,14 @@ pub async fn init_base_and_dir_context(force: bool) -> Result<DirContext> {
 	Ok(dir_context)
 }
 
-/// `force` - except for `config.toml`
+/// `force`
 pub async fn init_base(force: bool) -> Result<()> {
 	let hub = get_hub();
 	// -- Check that the home dir exists
 
 	let mut new = false;
-	// -- Create the missing folders
 
+	// -- Create the missing folders
 	let base_dir = AipackBaseDir::new()?;
 	if ensure_dir(base_dir.path())? {
 		new = true;
@@ -33,13 +35,17 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Determine version
 	let is_new_version = check_is_new_version(&base_dir).await?;
+
 	// if new version, then, force update
 	let force = is_new_version || force;
 
+	// -- Clean legacy bae content
+	// NOTE: Might be time to remove this one.
 	if force {
 		clean_legacy_base_content(&base_dir).await?;
 	}
 
+	// -- Display user update
 	if new {
 		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", &*base_dir))
 			.await;
@@ -51,19 +57,8 @@ pub async fn init_base(force: bool) -> Result<()> {
 		}
 	}
 
-	// -- Create the config file (only if not present)
-	// Note: For now, "config.toml" is not force, no matter what
-	let config_path = base_dir.join("config.toml");
-	if !config_path.exists() {
-		let config_zfile = assets::extract_base_config_toml_zfile()?;
-		write(&config_path, config_zfile.content)?;
-		hub.publish(format!(
-			"-> {label:<18} '{path}'",
-			label = "Create config file",
-			path = config_path
-		))
-		.await;
-	}
+	// -- Update the config
+	update_base_configs(&base_dir, force)?;
 
 	// -- Init the doc
 	let doc_paths = assets::extract_base_doc_file_paths()?;
@@ -124,6 +119,63 @@ If there is no match with the current version, this file will be recreated, and 
 	}
 
 	Ok(is_new)
+}
+
+fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
+	let hub = get_hub();
+
+	// -- Update config-default.toml
+	// If force (update version) or does not exist
+	let config_default_path = base_dir.join(CONFIG_BASE_DEFAULT_FILE_NAME);
+	if force || !config_default_path.exists() {
+		let config_zfile = assets::extract_base_config_default_toml_zfile()?;
+		write(&config_default_path, config_zfile.content)?;
+		hub.publish_sync(format!(
+			"-> {label:<18} '{path}'",
+			label = "Create config default file",
+			path = config_default_path
+		));
+	}
+
+	// -- Update config-user.toml
+	// ONLY if it DOES NOT EXISTS
+	let config_user_path = base_dir.join(CONFIG_BASE_USER_FILE_NAME);
+	if !config_user_path.exists() {
+		let config_zfile = assets::extract_base_config_user_toml_zfile()?;
+		write(&config_user_path, config_zfile.content)?;
+		hub.publish_sync(format!(
+			"-> {label:<18} '{path}'",
+			label = "Create config user file",
+			path = config_user_path
+		));
+	}
+
+	// -- Update the eventual legach config.toml
+	let legacy_config_path = base_dir.join("config.toml");
+	if legacy_config_path.exists() {
+		// rename to config-deprecated.toml
+		let deprecated_config_path = base_dir.join("config-deprecated.toml");
+		match fs::rename(&legacy_config_path, &deprecated_config_path) {
+			Ok(_) => {
+				//
+				hub.publish_sync(format!(
+					"-> {label:<18} '{path}'\nSee ~/.aipack-base/config-default.toml",
+					label = "Rename legacy config file",
+					path = deprecated_config_path
+				));
+			}
+			Err(err) => {
+				//
+				hub.publish_sync(format!(
+					"-> {label:<18} '{path}'.\nCause: {err}",
+					label = "Failed to rename legacy config file",
+					path = legacy_config_path
+				));
+			}
+		}
+	}
+
+	Ok(())
 }
 
 async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {

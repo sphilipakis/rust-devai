@@ -1,0 +1,21 @@
+# Customize or override the `./config-default.toml` properties
+# 
+# This will be merged on top of `./config-default.toml` to provide the 
+# base configuration for all aip runs. 
+#
+# For documentation, see `./config-default.toml`.
+
+[options]
+
+# model       = "gpt-4.1"
+
+# temperature = 0.0
+
+# input_concurrency = 2
+
+
+# Customize global model aliases here.
+#
+# See alias documentation at `./config-default.toml`
+[options.model_aliases]
+# my-model = "gpt-4.1-nano"

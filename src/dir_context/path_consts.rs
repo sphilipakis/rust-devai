@@ -11,6 +11,9 @@ pub const AIPACK_DIR_NAME: &str = ".aipack";
 
 pub const CONFIG_FILE_NAME: &str = "config.toml";
 
+pub const CONFIG_BASE_DEFAULT_FILE_NAME: &str = "config-default.toml";
+pub const CONFIG_BASE_USER_FILE_NAME: &str = "config-user.toml";
+
 // -- Common Path (for .aipack/ and ~/.aipack-base/)
 
 // TODO: probably need to add a common lua, or perhaps allow `require("jc@utils/lua/somefile")`

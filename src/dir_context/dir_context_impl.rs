@@ -1,4 +1,4 @@
-use super::AipackPaths;
+use crate::dir_context::aipack_paths::AipackPaths;
 use crate::dir_context::resolve_pack_ref_base_path;
 use crate::runtime::Session;
 use crate::support::files::{current_dir, home_dir};

@@ -1,5 +1,7 @@
+use super::path_consts::PACK_CUSTOM;
 use super::path_consts::PACK_INSTALLED;
-use super::path_consts::{CONFIG_FILE_NAME, PACK_CUSTOM};
+use crate::dir_context::CONFIG_BASE_DEFAULT_FILE_NAME;
+use crate::dir_context::CONFIG_BASE_USER_FILE_NAME;
 use crate::dir_context::path_consts::{AIPACK_DIR_NAME, PACK_DOWNLOAD};
 use crate::dir_context::{AipackBaseDir, AipackWksDir};
 use crate::runtime::Session;
@@ -176,18 +178,25 @@ impl AipackPaths {
 	// NOTE: get_wks_config_toml_path moved to AipackWksDir as get_config_toml_path
 	// NOTE: get_wks_pack_custom_dir moved to AipackWksDir as get_pack_custom_dir
 
-	/// Returns the paths to the base config and optionally the workspace config TOML file.
-	/// The base config path is always returned first.
+	/// Returns the paths to the base default, base user, and optionally the workspace config TOML file.
+	/// The `~/.aipack-base/` config path is always returned first.
 	/// The workspace config path is returned only if `.aipack/config.toml` exists.
 	pub fn get_wks_config_toml_paths(&self) -> Result<Vec<SPath>> {
 		let mut paths = Vec::with_capacity(2);
 
-		// Base config path
-		let base_config_path = self.aipack_base_dir.join(CONFIG_FILE_NAME);
-		// Add base path even if it doesn't exist, config loading handles that.
-		paths.push(base_config_path);
+		// -- Add Base config default path
+		// NOTE: This is required, so will fail later if no exists.
+		let base_config_default_path = self.aipack_base_dir.join(CONFIG_BASE_DEFAULT_FILE_NAME);
+		// Add base path even if it doesn't exist, config loading handles that (error out)
+		paths.push(base_config_default_path);
 
-		// Workspace config path (optional)
+		// -- Add Base config user path (optional)
+		let base_config_user_path = self.aipack_base_dir.join(CONFIG_BASE_USER_FILE_NAME);
+		if base_config_user_path.exists() {
+			paths.push(base_config_user_path);
+		}
+
+		// -- Add Workspace config path (optional)
 		if let Some(aipack_wks_dir) = self.aipack_wks_dir() {
 			let wks_config_path = aipack_wks_dir.get_config_toml_path()?;
 			// Only add workspace path if the file actually exists.

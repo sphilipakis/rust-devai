@@ -13,6 +13,7 @@ pub use aipack_paths::*;
 pub use aipack_wks_dir::*; // Export new type
 pub use dir_context_impl::*;
 pub use pack_dir::*;
-pub use path_resolvers::*;
+pub use path_consts::*;
+pub use path_resolvers::*; // Export path constants
 
 // endregion: --- Modules

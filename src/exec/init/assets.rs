@@ -51,8 +51,12 @@ pub fn extract_template_zfile(path: &str) -> Result<ZFile> {
 
 // region:    --- Base ZFiles
 
-pub fn extract_base_config_toml_zfile() -> Result<ZFile> {
-	extract_base_zfile("config.toml")
+pub fn extract_base_config_default_toml_zfile() -> Result<ZFile> {
+	extract_base_zfile("config-default.toml")
+}
+
+pub fn extract_base_config_user_toml_zfile() -> Result<ZFile> {
+	extract_base_zfile("config-user.toml")
 }
 
 pub fn extract_base_doc_file_paths() -> Result<Vec<String>> {
