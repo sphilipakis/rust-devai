@@ -1,5 +1,22 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-08-04 - [v0.7.18](https://github.com/jeremychone/rust-devai/compare/v0.7.17...v0.7.18)
+
+- `!` base config tomls - now have `~/.aipack-base/config-default.toml` and `~/.aipack-base/config-user.toml`
+    - Old `~/.aipack-base/config.toml` will be renamed to `~/.aipack-base/config-deprecated.toml` and won't be used (can be deleted)
+    - Default model aliases updated. 
+- `+` NEW Lua API - `aip.file.info(file_path): FileInfo` to get the FileInfo of a give file. 
+- `+` NEW Lua API - `aip.file.stats(globs): FileStats` (`{total_size, number_of_files, ctime_first, ...}`)
+- `+` NEW genai provider - Now support fireworks.ai (and its pricing)
+    - namespaced like `fireworks::glm-4p5` or full fireworks name like `accounts/fireworks/models/glm-4p5`
+- `+` NEW genai provider - Now support together.ai (no pricing yet). 
+    - namespaced like `together::together::Qwen/Qwen3-235B-A22B-Instruct-2507-tput`
+- `^` `aip.text.format_size` - add lowest_unit support with `..format_size(2344333, "MB")`
+- `-` sys error - implement sys error when tui and error happen before first run
+- `-` tui - fix tasks 'no current tasks' state issue when changing sub run
+- `-` tui - fix agent run cost not displaying when no sub agents
+- `-` model pin - fix the pin run save concurrency issue
+
 ## 2025-07-21 - [v0.7.17](https://github.com/jeremychone/rust-devai/compare/v0.7.16...v0.7.17)
 
 - `+` pin - added `aip.run.pin(..)` and `aip.task.pin(..)` with text and first Marker Universal Component  `{label, content}`
