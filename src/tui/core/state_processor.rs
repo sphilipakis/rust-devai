@@ -134,7 +134,15 @@ pub fn process_app_state(state: &mut AppState) {
 	{
 		if let Some(run_id) = current_run_id {
 			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
+			let tasks_len = tasks.len();
 			state.core_mut().tasks = tasks;
+			// Important to avoid the "no current task" where there is ne.
+			// Need to reset task_idx to 0 if current task_idx is > that tasks
+			if let Some(current_task_idx) = state.core().task_idx
+				&& current_task_idx > tasks_len as i32 - 1
+			{
+				state.set_task_idx(Some(0));
+			}
 		} else {
 			state.core_mut().tasks.clear(); // Important when no run is selected
 		}
