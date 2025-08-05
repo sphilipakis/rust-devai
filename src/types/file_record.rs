@@ -53,6 +53,7 @@ impl FileRecord {
 impl IntoLua for FileRecord {
 	fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+		table.set("_type", "FileRecord")?;
 
 		table.set("path", self.path)?;
 		table.set("dir", self.dir)?;

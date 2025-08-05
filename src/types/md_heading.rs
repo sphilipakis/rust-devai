@@ -101,6 +101,8 @@ impl MdHeading {
 impl IntoLua for MdHeading {
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+		table.set("_type", "MdHeading")?;
+
 		let name = self.name().to_string();
 		table.set("content", self.content)?;
 		table.set("level", self.level)?;

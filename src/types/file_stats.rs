@@ -23,6 +23,8 @@ use mlua::{IntoLua, Lua};
 impl IntoLua for FileStats {
 	fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+		table.set("_type", "FileStats")?;
+
 		table.set("total_size", self.total_size)?;
 		table.set("number_of_files", self.number_of_files)?;
 		table.set("ctime_first", self.ctime_first)?;

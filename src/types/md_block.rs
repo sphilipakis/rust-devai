@@ -25,6 +25,8 @@ impl IntoLua for MdBlock {
 	/// Converts the `MdBlock` instance into a Lua Value
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+		table.set("_type", "MdBlock")?;
+
 		table.set("lang", self.lang)?;
 		table.set("content", self.content)?;
 		Ok(mlua::Value::Table(table))

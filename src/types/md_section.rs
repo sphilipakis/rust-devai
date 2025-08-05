@@ -54,6 +54,8 @@ impl MdSection {
 impl IntoLua for MdSection {
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
+		table.set("_type", "MdSection")?;
+
 		let heading_raw = self.heading_raw();
 
 		table.set("content", self.content)?;
