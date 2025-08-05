@@ -1,5 +1,6 @@
 // region:    --- Formatters
 
+use crate::script::LuaValueExt as _;
 use mlua::{Lua, Value};
 use simple_fs::PrettySizeOptions;
 
@@ -16,12 +17,17 @@ use simple_fs::PrettySizeOptions;
 /// ```lua
 /// -- API Signature
 /// aip.text.format_size(bytes: integer | nil): string | nil
+/// aip.text.format_size(bytes: integer | nil, options: string | {lowest_unit: string, trim: boolean} | nil): string | nil
 /// ```
 ///
 /// ### Arguments
 ///
 /// - `bytes: integer | nil`: The number of bytes to format.  
 ///   Accepts both Lua `integer` and `number` (floats are truncated).
+/// - `options: string | {lowest_unit: string, trim: boolean} | nil`:
+///   Either a string representing the lowest unit (like "MB"), or a table with:
+///   - `lowest_unit: string` (optional): The lowest unit to display (e.g.,"MB")
+///   - `trim: boolean` (optional): Whether to trim whitespace from the result (default: false)
 ///
 /// ### Returns
 ///
@@ -39,16 +45,50 @@ pub fn format_size(lua: &Lua, (bytes_val, options): (Value, Option<Value>)) -> m
 			});
 		}
 	};
-	let options = if let Some(options) = options
-		&& let Some(lowest_unit) = options.as_string()
-	{
-		PrettySizeOptions::from(lowest_unit.to_string_lossy())
-	} else {
-		PrettySizeOptions::default()
-	};
 
-	let pretty = crate::support::text::format_pretty_size(bytes, Some(options));
-	lua.create_string(&pretty).map(Value::String)
+	let format_options = FormatSizeOptions::new(options);
+	let pretty_options = format_options.lowest_unit.as_deref().map(PrettySizeOptions::from);
+
+	let pretty = crate::support::text::format_pretty_size(bytes, pretty_options);
+	let result = if format_options.trim {
+		pretty.trim().to_string()
+	} else {
+		pretty
+	};
+	lua.create_string(&result).map(Value::String)
+}
+
+#[derive(Debug, Default)]
+struct FormatSizeOptions {
+	lowest_unit: Option<String>,
+	trim: bool,
+}
+
+impl FormatSizeOptions {
+	fn new(val: Option<Value>) -> Self {
+		let Some(val) = val else {
+			return Default::default();
+		};
+
+		// If it's a string, treat it as lowest_unit
+		if let Some(s) = val.x_as_lua_str() {
+			return FormatSizeOptions {
+				lowest_unit: Some(s.to_string()),
+				trim: false,
+			};
+		}
+
+		// If it's a table, extract properties
+		if let Some(table) = val.as_table() {
+			let lowest_unit = table.x_get_string("lowest_unit");
+			let trim = table.x_get_bool("trim").unwrap_or(false);
+
+			return FormatSizeOptions { lowest_unit, trim };
+		}
+
+		// If it's neither string nor table, return default
+		Default::default()
+	}
 }
 
 // region:    --- Tests
@@ -90,6 +130,51 @@ mod tests {
 
 		// -- Check
 		assert!(res.is_null(), "Expected nil return for nil input");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_format_size_with_options_string() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text").await?;
+
+		// -- Exec & Check
+		let script = r#"return aip.text.format_size(1500, "KB")"#;
+		let res = eval_lua(&lua, script)?;
+		let lua_str = res.as_str().ok_or("Should be string")?;
+		let expected = format_pretty_size(1500, Some(simple_fs::PrettySizeOptions::from("KB")));
+		assert_eq!(lua_str, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_format_size_with_options_table() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text").await?;
+
+		// -- Exec & Check
+		let script = r#"return aip.text.format_size(1500, {lowest_unit = "KB", trim = true})"#;
+		let res = eval_lua(&lua, script)?;
+		let lua_str = res.as_str().ok_or("Should be string")?;
+		let expected = format_pretty_size(1500, Some(simple_fs::PrettySizeOptions::from("KB")));
+		assert_eq!(lua_str, expected.trim());
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_text_format_size_with_options_table_default_trim() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_text::init_module, "text").await?;
+
+		// -- Exec & Check
+		let script = r#"return aip.text.format_size(1500, {lowest_unit = "KB"})"#;
+		let res = eval_lua(&lua, script)?;
+		let lua_str = res.as_str().ok_or("Should be string")?;
+		let expected = format_pretty_size(1500, Some(simple_fs::PrettySizeOptions::from("KB")));
+		assert_eq!(lua_str, expected);
 
 		Ok(())
 	}
