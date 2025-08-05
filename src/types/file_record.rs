@@ -1,12 +1,11 @@
 use crate::dir_context::DirContext;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use simple_fs::SPath;
 use std::fs::read_to_string;
 
 /// FileRecord contains the metadata information about the file (name, ext, etc.) as well as the content.
-#[derive(Serialize)]
 pub struct FileRecord {
 	/// The path, might and will probably be relative
 	pub path: String,
@@ -47,6 +46,34 @@ impl FileRecord {
 		})
 	}
 }
+
+// region:    --- Serde Serializer
+
+impl Serialize for FileRecord {
+	fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		use serde::ser::SerializeStruct;
+		// 10 fields: _type + 9 struct fields
+		let mut state = serializer.serialize_struct("FileRecord", 10)?;
+		state.serialize_field("_type", "FileRecord")?;
+
+		state.serialize_field("path", &self.path)?;
+		state.serialize_field("dir", &self.dir)?;
+		state.serialize_field("name", &self.name)?;
+		state.serialize_field("stem", &self.stem)?;
+		state.serialize_field("ext", &self.ext)?;
+		state.serialize_field("content", &self.content)?;
+		state.serialize_field("ctime", &self.ctime)?;
+		state.serialize_field("mtime", &self.mtime)?;
+		state.serialize_field("size", &self.size)?;
+
+		state.end()
+	}
+}
+
+// endregion: --- Serde Serializer
 
 // region:    --- Lua
 

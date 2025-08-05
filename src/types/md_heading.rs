@@ -1,5 +1,6 @@
 use derive_more::{Debug, Display};
 use mlua::IntoLua;
+use serde::{Serialize, Serializer};
 use std::str::CharIndices;
 
 #[derive(Display, Debug)]
@@ -95,6 +96,29 @@ impl MdHeading {
 		self.content
 	}
 }
+
+// region:    --- Serde Serializer
+
+impl Serialize for MdHeading {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		use serde::ser::SerializeStruct;
+		let mut state = serializer.serialize_struct("MdHeading", 4)?;
+
+		state.serialize_field("_type", "MdHeading")?;
+		state.serialize_field("content", &self.content)?;
+		state.serialize_field("level", &self.level)?;
+
+		let name = self.name();
+		state.serialize_field("name", name)?;
+
+		state.end()
+	}
+}
+
+// endregion: --- Serde Serializer
 
 // region:    --- Lua
 

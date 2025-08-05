@@ -16,6 +16,33 @@ pub struct FileStats {
 	pub mtime_last: i64,
 }
 
+// region:    --- Serde Serializer
+
+use serde::{Serialize, Serializer};
+
+impl Serialize for FileStats {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		use serde::ser::SerializeStruct;
+		// Max 7 fields (total_size, number_of_files, ctime_first, ctime_last, mtime_first, mtime_last, _type)
+		let mut state = serializer.serialize_struct("FileStats", 7)?;
+
+		state.serialize_field("_type", "FileStats")?;
+		state.serialize_field("total_size", &self.total_size)?;
+		state.serialize_field("number_of_files", &self.number_of_files)?;
+		state.serialize_field("ctime_first", &self.ctime_first)?;
+		state.serialize_field("ctime_last", &self.ctime_last)?;
+		state.serialize_field("mtime_first", &self.mtime_first)?;
+		state.serialize_field("mtime_last", &self.mtime_last)?;
+
+		state.end()
+	}
+}
+
+// endregion: --- Serde Serializer
+
 // region:    --- Lua
 
 use mlua::{IntoLua, Lua};

@@ -1,12 +1,14 @@
 use crate::dir_context::DirContext;
 use mlua::{IntoLua, Lua};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use simple_fs::SPath;
 
 /// The FileInfo object contains the metadata of a file but not its content.
 /// The ctime, mtime, and size metadata are generally loaded,
 /// but this can be turned off when listing files using the `with_meta = false` option.
-#[derive(Debug, Serialize)]
+///
+/// NOTE: Just json serializer to add the _type..
+#[derive(Debug)]
 pub struct FileInfo {
 	path: String,
 	/// The dir/parent path of this file from path (will be empty if no parent of the rel path)
@@ -88,6 +90,40 @@ impl FileInfo {
 		}
 	}
 }
+
+// region:    --- Serde Serializer
+
+impl Serialize for FileInfo {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		use serde::ser::SerializeStruct;
+		// Max 9 fields (path, dir, name, stem, ext, ctime, mtime, size, _type)
+		let mut state = serializer.serialize_struct("FileInfo", 9)?;
+
+		state.serialize_field("_type", "FileInfo")?;
+		state.serialize_field("path", &self.path)?;
+		state.serialize_field("dir", &self.dir)?;
+		state.serialize_field("name", &self.name)?;
+		state.serialize_field("stem", &self.stem)?;
+		state.serialize_field("ext", &self.ext)?;
+
+		if let Some(ctime) = self.ctime {
+			state.serialize_field("ctime", &ctime)?;
+		}
+		if let Some(mtime) = self.mtime {
+			state.serialize_field("mtime", &mtime)?;
+		}
+		if let Some(size) = self.size {
+			state.serialize_field("size", &size)?;
+		}
+
+		state.end()
+	}
+}
+
+// endregion: --- Serde Serializer
 
 // region:    --- Lua
 

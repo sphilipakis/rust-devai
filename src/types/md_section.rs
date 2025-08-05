@@ -1,5 +1,6 @@
 use crate::types::MdHeading;
 use mlua::IntoLua;
+use serde::{Serialize, Serializer};
 
 #[derive(Debug)]
 pub struct MdSection {
@@ -48,6 +49,29 @@ impl MdSection {
 			.map_or_else(|| "".to_string(), |h| h.content().to_string() + "\n")
 	}
 }
+
+// region:    --- Serde Serializer
+
+impl Serialize for MdSection {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		use serde::ser::SerializeStruct;
+		// Max 3 fields (content, heading, _type)
+		let mut state = serializer.serialize_struct("MdSection", 3)?;
+		state.serialize_field("_type", "MdSection")?;
+
+		state.serialize_field("content", &self.content)?;
+		if let Some(heading) = &self.heading {
+			state.serialize_field("heading", heading)?;
+		}
+
+		state.end()
+	}
+}
+
+// endregion: --- Serde Serializer
 
 // region:    --- Lua
 
