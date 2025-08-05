@@ -12,6 +12,7 @@ use crate::{Error, Result};
 use serde_json::Value;
 use tokio::task::{JoinError, JoinSet};
 use uuid::Uuid;
+use value_ext::JsonValueExt;
 
 const DEFAULT_CONCURRENCY: usize = 1;
 
@@ -108,10 +109,20 @@ async fn run_agent_inner(
 	let (inputs, outputs) = if inputs.as_ref().is_some_and(|v| !v.is_empty()) || agent.has_task_stages() {
 		// IMPORTANT - if if input is None or empty, we create a array of one nil, so that we can one task since we have some task stage
 		let inputs = match inputs {
-			Some(inputs) => {
+			Some(mut inputs) => {
 				if inputs.is_empty() {
 					vec![Value::Null]
 				} else {
+					// -- Add the eventual _display for _type FileInfo or FileRecord
+					for input in inputs.iter_mut() {
+						let is_file_item = matches!(input.x_get_str("_type"), Ok("FileRecord") | Ok("FileInfo"));
+						if is_file_item
+							&& input.get("_display").is_none()
+							&& let Ok(path) = input.x_get_str("path").map(|v| v.to_string())
+						{
+							let _ = input.x_insert("_display", path);
+						}
+					}
 					inputs
 				}
 			}
