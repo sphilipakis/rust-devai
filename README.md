@@ -10,7 +10,7 @@
 
 Open-source Agentic Runtime to run, build, and share AI Packs.
 
-- **Simple & Powerful** – 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs in a single [aip-doc page](https://aipack.ai/doc/lua-apis).  
+- **Simple & Powerful** – 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs on a single [aip-doc page](https://aipack.ai/doc/lua-apis).  
 
 - **Light & Lean** – No bloat, **< 20MB**, **single executable**, **ZERO dependencies**.  
 
@@ -52,7 +52,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 ### Install From Binaries
 
-Mac, Linux, Windows, ARM & x86 platforms are supported. See blow how to install the binaries. 
+Mac, Linux, Windows, ARM & x86 platforms are supported. See below how to install the binaries. 
 
 _(More info at [aipack.ai/doc/install](https://aipack.ai/doc/install))_
 
@@ -118,13 +118,13 @@ cd /path/to/my/project/
 # Initialize workspace .aipack/ and ~/.aipack-base
 aip init
 
-# Make sure to export the desired API key (no spaces around `=` unix convention)
+# Make sure to export the desired API key (no spaces around `=` Unix convention)
 export OPENAI_API_KEY="sk...."
 export ANTHROPIC_API_KEY="...."
 export GEMINI_API_KEY="..."
 # For more keys, see below
 
-# Check the keys you setup
+# Check the keys you set up
 aip check-keys
 
 # To proofread your README.md (namespace: demo, pack_name: proof)
@@ -185,7 +185,7 @@ COHERE_API_KEY
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports many top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
 - Top new features: (see full details [CHANGELOG](CHANGELOG.md))
-  - **2025-04-13 (v0.7.0) - BIG RELEASE - Windows Support (x86 & Arm), and more**
+  - **2025-04-13 (v0.7.0) - BIG RELEASE - Windows Support (x86 & ARM), and more**
   - 2025-04-08 (v0.6.17) - Binaries available (mac/linux), pro@coder, pro@rust10x
   - 2025-03-28 - (v0.6.15) - new: `aip check-keys`
   - 2025-03-25 (v0.6.14) - agent - add `aip.flow.data_response({input?, data?, options?})` (e.g., model override by input)
@@ -213,7 +213,7 @@ COHERE_API_KEY
   - Full path `~/.aipack-base/pack/installed/demo/proof/main.aip`
   - You can pass input to your agent using:
     - `-f "path/with/optional/**/glob.*" -f "README.md"` (the Lua code will receive a `{path = .., name =..}` FileInfo-like structure as input)
-    -  `-i "some string" -i "another input"` (the Lua code will receive these strings as input)
+    - `-i "some string" -i "another input"` (the Lua code will receive these strings as input)
     - Each input triggers one run of the agent.
 - `aip run some/path/to/agent`
   - If the path ends with `.aip`, it's treated as a direct file run.
