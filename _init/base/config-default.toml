@@ -77,5 +77,9 @@ qwen-thinker  = "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507" # can 
 kimi          = "fireworks::kimi-k2-instruct"
 glm           = "fireworks::glm-4p5"
 glm-air       = "fireworks::glm-4p5-air"
+gpt-oss       = "fireworks::gpt-oss-120b"
+gpt-oss-120b  = "fireworks::gpt-oss-120b"
+gpt-oss-small = "fireworks::gpt-oss-20b"
+gpt-oss-20b   = "fireworks::gpt-oss-20b"
 # -- DeepSeek (from deepseek.com)
 r1            = "deepseek-reasoner"

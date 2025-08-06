@@ -99,6 +99,20 @@ const DEEPSEEK: Provider = Provider {
 // Define Fireworks pricing
 const FIREWORKS_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "gpt-oss-120b",
+		input_cached: None,
+		input_normal: 0.1,
+		output_normal: 0.1,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-oss-20b",
+		input_cached: None,
+		input_normal: 0.1,
+		output_normal: 0.1,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "qwen3-235b-a22b-thinking-2507",
 		input_cached: None,
 		input_normal: 0.22,
@@ -124,6 +138,27 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 		input_cached: None,
 		input_normal: 0.6,
 		output_normal: 2.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "glm-4p5-air",
+		input_cached: None,
+		input_normal: 0.22,
+		output_normal: 0.88,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "qwen3-coder-30b-a3b-instruct",
+		input_cached: None,
+		input_normal: 0.15,
+		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "glm-4p5",
+		input_cached: None,
+		input_normal: 0.55,
+		output_normal: 2.19,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -211,20 +246,6 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "glm-4p5-air",
-		input_cached: None,
-		input_normal: 0.1,
-		output_normal: 0.1,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "qwen3-coder-30b-a3b-instruct",
-		input_cached: None,
-		input_normal: 0.5,
-		output_normal: 0.5,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "qwen3-30b-a3b-thinking-2507",
 		input_cached: None,
 		input_normal: 0.1,
@@ -232,17 +253,10 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "glm-4p5",
+		name: "qwen3-30b-a3b-instruct-2507",
 		input_cached: None,
-		input_normal: 0.55,
-		output_normal: 2.19,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "sentientfoundation-serverless/dobby-mini-unhinged-plus-llama-3-1-8b",
-		input_cached: None,
-		input_normal: 0.2,
-		output_normal: 0.2,
+		input_normal: 0.5,
+		output_normal: 0.5,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -250,13 +264,6 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 		input_cached: None,
 		input_normal: 0.55,
 		output_normal: 2.19,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "sentientfoundation/dobby-unhinged-llama-3-3-70b-new",
-		input_cached: None,
-		input_normal: 0.9,
-		output_normal: 0.9,
 		output_reasoning: None,
 	},
 	ModelPricing {

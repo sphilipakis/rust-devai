@@ -94,6 +94,26 @@
         "input": {
           "cache_write": null,
           "cached": null,
+          "normal": 0.1
+        },
+        "name": "gpt-oss-120b",
+        "output": 0.1,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.1
+        },
+        "name": "gpt-oss-20b",
+        "output": 0.1,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
           "normal": 0.22
         },
         "name": "qwen3-235b-a22b-thinking-2507",
@@ -128,6 +148,36 @@
         },
         "name": "kimi-k2-instruct",
         "output": 2.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "glm-4p5-air",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "qwen3-coder-30b-a3b-instruct",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.55
+        },
+        "name": "glm-4p5",
+        "output": 2.19,
         "recent": true
       },
       {
@@ -256,7 +306,7 @@
           "cached": null,
           "normal": 0.1
         },
-        "name": "glm-4p5-air",
+        "name": "qwen3-30b-a3b-thinking-2507",
         "output": 0.1,
         "recent": true
       },
@@ -266,39 +316,9 @@
           "cached": null,
           "normal": 0.5
         },
-        "name": "qwen3-coder-30b-a3b-instruct",
+        "name": "qwen3-30b-a3b-instruct-2507",
         "output": 0.5,
         "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.1
-        },
-        "name": "qwen3-30b-a3b-thinking-2507",
-        "output": 0.1,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.55
-        },
-        "name": "glm-4p5",
-        "output": 2.19,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.2
-        },
-        "name": "sentientfoundation-serverless/dobby-mini-unhinged-plus-llama-3-1-8b",
-        "output": 0.2,
-        "recent": false
       },
       {
         "input": {
@@ -308,16 +328,6 @@
         },
         "name": "deepseek-r1-basic",
         "output": 2.19,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.9
-        },
-        "name": "sentientfoundation/dobby-unhinged-llama-3-3-70b-new",
-        "output": 0.9,
         "recent": false
       },
       {

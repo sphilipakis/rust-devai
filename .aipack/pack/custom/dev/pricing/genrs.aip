@@ -40,7 +40,7 @@ Here is the `data.rs` file to update
 {{data.data_rs.content}}
 ```
 
-Important, we have to keep the `data.rs` types as is, just update the values. Keep the whitepsaces too. 
+Important, we have to keep the `data.rs` types as is, just update/add the values that need to be added. Keep the whitepsaces too. 
 
 Some very IMPORTANT rules when updateding `data.rs`, 
 

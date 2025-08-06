@@ -94,7 +94,7 @@ From this content for the {{data.provider}}:
 - For Fireworks models: 
     - For the Fireworks models, the model name is after the `/models/fireworks/`. So, `/models/fireworks/qwen3-coder-480b-a35b-instruct` the model name will be `qwen3-coder-480b-a35b-instruct`
     - For the Fireworks models, when only one price, it means same price for input and output. 
-    - For the fireworks models, have only the qwen3, Kimi, lama 4, and gml 4 are to be flagged recent, the rest flagged recent = false. 
+    - For the fireworks models, have only the gpt-oss, qwen3, Kimi, lama 4, and gml 4 are to be flagged recent, the rest flagged recent = false. 
 - For Anthropic Models (Claude), the `.` should be replaced by `-`
 - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
