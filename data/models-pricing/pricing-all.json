@@ -26,7 +26,8 @@
           "normal": 3
         },
         "name": "claude-3-7-sonnet",
-        "output": 15
+        "output": 15, 
+        "recent": false
       },
       {
         "input": {
