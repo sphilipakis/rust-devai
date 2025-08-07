@@ -19,6 +19,8 @@ local base_dir = p_utils.base_dir
 -- XAI       - https://console.x.ai/team/5577cfb2-dfde-4893-9817-4eb4de1d4098/models
 -- FIREWORKS - Login with filter https://app.fireworks.ai/models?filter=LLM&serverless=true, 
 --             Static https://fireworks.ai/pricing#serverless-pricing
+-- TOGETHER  - login models price: https://api.together.ai/models
+--             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
    {name = "openai",    do_json = false,  url = ""},
@@ -29,8 +31,9 @@ local inputs = {
 
    {name = "xai",       do_json = false,  url = ""}, 
 
-   {name = "groq",      do_json = true,  url = ""},
-   {name = "fireworks", do_json = false,  url = ""}
+   {name = "groq",      do_json = false,  url = ""},
+   {name = "fireworks", do_json = false,  url = ""},
+   {name = "together",  do_json = true,  url = ""}
 }
 
 -- Agument inputs
@@ -108,10 +111,18 @@ From this content for the {{data.provider}}:
     - For the Fireworks models, the model name is after the `/models/fireworks/`. So, `/models/fireworks/qwen3-coder-480b-a35b-instruct` the model name will be `qwen3-coder-480b-a35b-instruct`
     - For the Fireworks models, when only one price, it means same price for input and output. 
     - For the fireworks models, have only the gpt-oss, qwen3, Kimi, lama 4, and gml 4 are to be flagged recent, the rest flagged recent = false. 
+- For Together Models:
+    - For together models only add models that have pricing. 
+    - For together models, when one price, means it is the same for input / output
+    - For the together models, the model name is what is in the model name section. make sure to use that name that match the one of the pricing. 
+    - The together model names are in the <h1>Names</h1> section. 
+    - Set the flag `recent: true` only for the model names that match the `<h1>recent</h1>` list, and all the other should be `recent: false`
+    - Also, only extract the models about Llama, qwen, deepseek, glm, gemma, mixtral, mistral, and openai. 
 - For Anthropic Models (Claude), the `.` should be replaced by `-`
 - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
-- For Anthropic models (Cluade), make sure you get the model names from the model is, and remove the `-2025...`
+- For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
+- For Anthropic models (Claude), `claude-3-7-sonnet` need to be marked as `recent: false`
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
 - For Gemini models, do not add the audio or tts model.
 - but for gemini model, keep the `.` in the name.

@@ -26,8 +26,7 @@
           "normal": 3
         },
         "name": "claude-3-7-sonnet",
-        "output": 15, 
-        "recent": false
+        "output": 15
       },
       {
         "input": {
@@ -36,7 +35,8 @@
           "normal": 3
         },
         "name": "claude-3-5-sonnet",
-        "output": 15
+        "output": 15,
+        "recent": false
       },
       {
         "input": {
@@ -800,6 +800,420 @@
         },
         "name": "o4-mini (flex processing)",
         "output": 2.2
+      }
+    ]
+  },
+  "together": {
+    "models": [
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.25
+        },
+        "name": "deepcogito/cogito-v2-preview-deepseek-671b",
+        "output": 1.25,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3
+        },
+        "name": "deepseek-ai/deepseek-r1",
+        "output": 7,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.55
+        },
+        "name": "deepseek-ai/deepseek-r1-0528-tput",
+        "output": 2.19,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2
+        },
+        "name": "deepseek-ai/deepseek-r1-distill-llama-70b",
+        "output": 2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.18
+        },
+        "name": "deepseek-ai/deepseek-r1-distill-qwen-1.5b",
+        "output": 0.18,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.6
+        },
+        "name": "deepseek-ai/deepseek-r1-distill-qwen-14b",
+        "output": 1.6,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.25
+        },
+        "name": "deepseek-ai/deepseek-v3",
+        "output": 1.25,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.8
+        },
+        "name": "google/gemma-2-27b-it",
+        "output": 0.8,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.02
+        },
+        "name": "google/gemma-3n-e4b-it",
+        "output": 0.04,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "meta-llama/llama-2-70b-hf",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.88
+        },
+        "name": "meta-llama/llama-3-70b-chat-hf",
+        "output": 0.88,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "meta-llama/llama-3-8b-chat-hf",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.06
+        },
+        "name": "meta-llama/llama-3.2-3b-instruct-turbo",
+        "output": 0.06,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.88
+        },
+        "name": "meta-llama/llama-3.3-70b-instruct-turbo",
+        "output": 0.88,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.27
+        },
+        "name": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
+        "output": 0.85,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.18
+        },
+        "name": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "output": 0.59,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.88
+        },
+        "name": "meta-llama/meta-llama-3-70b-instruct-turbo",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.1
+        },
+        "name": "meta-llama/meta-llama-3-8b-instruct-lite",
+        "output": 0.1,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 3.5
+        },
+        "name": "meta-llama/meta-llama-3.1-405b-instruct-turbo",
+        "output": 3.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.88
+        },
+        "name": "meta-llama/meta-llama-3.1-70b-instruct-turbo",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.18
+        },
+        "name": "meta-llama/meta-llama-3.1-8b-instruct-turbo",
+        "output": 0.18,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "mistralai/mistral-7b-instruct-v0.1",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "mistralai/mistral-7b-instruct-v0.2",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "mistralai/mistral-7b-instruct-v0.3",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.8
+        },
+        "name": "mistralai/mistral-small-24b-instruct-2501",
+        "output": 0.8,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "mistralai/mixtral-8x7b-instruct-v0.1",
+        "output": 0.6,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "nousresearch/nous-hermes-2-mixtral-8x7b-dpo",
+        "output": 0.6,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.88
+        },
+        "name": "nvidia/llama-3.1-nemotron-70b-instruct-hf",
+        "output": 0.88,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "openai/gpt-oss-120b",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.05
+        },
+        "name": "openai/gpt-oss-20b",
+        "output": 0.2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.2
+        },
+        "name": "qwen/qwq-32b",
+        "output": 1.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.9
+        },
+        "name": "qwen/qwen2-72b-instruct",
+        "output": 0.9,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.2
+        },
+        "name": "qwen/qwen2-vl-72b-instruct",
+        "output": 1.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.2
+        },
+        "name": "qwen/qwen2.5-72b-instruct-turbo",
+        "output": 1.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.3
+        },
+        "name": "qwen/qwen2.5-7b-instruct-turbo",
+        "output": 0.3,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.95
+        },
+        "name": "qwen/qwen2.5-vl-72b-instruct",
+        "output": 8,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "qwen/qwen3-235b-a22b-fp8-tput",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "qwen/qwen3-235b-a22b-instruct-2507-tput",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.65
+        },
+        "name": "qwen/qwen3-235b-a22b-thinking-2507",
+        "output": 3,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2
+        },
+        "name": "qwen/qwen3-coder-480b-a35b-instruct-fp8",
+        "output": 2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "zai-org/glm-4.5-air-fp8",
+        "output": 1.1,
+        "recent": true
       }
     ]
   },
