@@ -588,11 +588,52 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5",
+        "output": 10,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.025,
+          "normal": 0.25
+        },
+        "name": "gpt-5-mini",
+        "output": 2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.005,
+          "normal": 0.05
+        },
+        "name": "gpt-5-nano",
+        "output": 0.4,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5-chat-latest",
+        "output": 10,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.5,
           "normal": 2
         },
         "name": "gpt-4.1",
-        "output": 8
+        "output": 8,
+        "recent": false
       },
       {
         "input": {
@@ -601,7 +642,8 @@
           "normal": 0.4
         },
         "name": "gpt-4.1-mini",
-        "output": 1.6
+        "output": 1.6,
+        "recent": false
       },
       {
         "input": {
@@ -610,16 +652,8 @@
           "normal": 0.1
         },
         "name": "gpt-4.1-nano",
-        "output": 0.4
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 37.5,
-          "normal": 75
-        },
-        "name": "gpt-4.5-preview",
-        "output": 150
+        "output": 0.4,
+        "recent": false
       },
       {
         "input": {
@@ -628,7 +662,8 @@
           "normal": 2.5
         },
         "name": "gpt-4o",
-        "output": 10
+        "output": 10,
+        "recent": false
       },
       {
         "input": {
@@ -637,7 +672,8 @@
           "normal": 2.5
         },
         "name": "gpt-4o-audio-preview",
-        "output": 10
+        "output": 10,
+        "recent": false
       },
       {
         "input": {
@@ -646,7 +682,8 @@
           "normal": 5
         },
         "name": "gpt-4o-realtime-preview",
-        "output": 20
+        "output": 20,
+        "recent": false
       },
       {
         "input": {
@@ -655,7 +692,8 @@
           "normal": 0.15
         },
         "name": "gpt-4o-mini",
-        "output": 0.6
+        "output": 0.6,
+        "recent": false
       },
       {
         "input": {
@@ -664,7 +702,8 @@
           "normal": 0.15
         },
         "name": "gpt-4o-mini-audio-preview",
-        "output": 0.6
+        "output": 0.6,
+        "recent": false
       },
       {
         "input": {
@@ -673,7 +712,8 @@
           "normal": 0.6
         },
         "name": "gpt-4o-mini-realtime-preview",
-        "output": 2.4
+        "output": 2.4,
+        "recent": false
       },
       {
         "input": {
@@ -682,7 +722,8 @@
           "normal": 15
         },
         "name": "o1",
-        "output": 60
+        "output": 60,
+        "recent": true
       },
       {
         "input": {
@@ -691,7 +732,8 @@
           "normal": 150
         },
         "name": "o1-pro",
-        "output": 600
+        "output": 600,
+        "recent": true
       },
       {
         "input": {
@@ -700,7 +742,8 @@
           "normal": 20
         },
         "name": "o3-pro",
-        "output": 80
+        "output": 80,
+        "recent": true
       },
       {
         "input": {
@@ -709,7 +752,18 @@
           "normal": 2
         },
         "name": "o3",
-        "output": 8
+        "output": 8,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 2.5,
+          "normal": 10
+        },
+        "name": "o3-deep-research",
+        "output": 40,
+        "recent": true
       },
       {
         "input": {
@@ -718,7 +772,18 @@
           "normal": 1.1
         },
         "name": "o4-mini",
-        "output": 4.4
+        "output": 4.4,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.5,
+          "normal": 2
+        },
+        "name": "o4-mini-deep-research",
+        "output": 8,
+        "recent": true
       },
       {
         "input": {
@@ -727,7 +792,8 @@
           "normal": 1.1
         },
         "name": "o3-mini",
-        "output": 4.4
+        "output": 4.4,
+        "recent": true
       },
       {
         "input": {
@@ -736,7 +802,8 @@
           "normal": 1.1
         },
         "name": "o1-mini",
-        "output": 4.4
+        "output": 4.4,
+        "recent": true
       },
       {
         "input": {
@@ -745,7 +812,8 @@
           "normal": 1.5
         },
         "name": "codex-mini-latest",
-        "output": 6
+        "output": 6,
+        "recent": false
       },
       {
         "input": {
@@ -754,7 +822,8 @@
           "normal": 0.15
         },
         "name": "gpt-4o-mini-search-preview",
-        "output": 0.6
+        "output": 0.6,
+        "recent": false
       },
       {
         "input": {
@@ -763,7 +832,8 @@
           "normal": 2.5
         },
         "name": "gpt-4o-search-preview",
-        "output": 10
+        "output": 10,
+        "recent": false
       },
       {
         "input": {
@@ -772,34 +842,8 @@
           "normal": 3
         },
         "name": "computer-use-preview",
-        "output": 12
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 1.25,
-          "normal": 5
-        },
-        "name": "gpt-image-1",
-        "output": null
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.25,
-          "normal": 1
-        },
-        "name": "o3 (flex processing)",
-        "output": 4
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.138,
-          "normal": 0.55
-        },
-        "name": "o4-mini (flex processing)",
-        "output": 2.2
+        "output": 12,
+        "recent": true
       }
     ]
   },
