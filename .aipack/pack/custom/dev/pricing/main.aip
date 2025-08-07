@@ -37,6 +37,7 @@ local inputs = {
 -- Agument inputs
 for _, input in ipairs(inputs) do
     input.md_path = base_dir .. "/.data/pricing-" .. input.name .. ".md"
+    input.html_path = base_dir .. "/.data/pricing-" .. input.name .. ".html"
     input.json_path = base_dir .. "/.data/pricing-" .. input.name .. ".json"
 end
 
@@ -48,29 +49,40 @@ return aipack.before_all_response({
 # Data
 
 ```lua
-local md_path = input.md_path
+local md_path   = input.md_path
 local json_path = input.json_path
+local html_path = input.html_path
 
 if not input.do_json  then
     return aipack.skip("" .. input.name .. " marked as do_json = false, so skipping")
 end
 
-local rem_url = input.url
+if not aip.path.exists(html_path) then 
+    return aipack.skip("" .. input.name .. " no html " .. html_path .. " so skipping")
+end 
 
-if not aip.path.exists(md_path) then 
-    local req = {
-        jsonrpc = "2.0",
-        method = "get_md",
-        params = { url = rem_url },
-        id = 1
-    }
+local slim_html = aip.file.save_html_to_slim(html_path)
+aip.file.save_html_to_md(slim_html.path, md_path)
 
-    -- Yes, it will require to have this mini rpc service (just wrapper on top of puppeteer)
-    local res = aip.web.post("http://localhost:3000/jsonrpc", req)
 
-    local content = res.content.result.content
-    aip.file.save(md_path, content)
-end
+-- local rem_url = input.url
+-- if not aip.path.exists(md_path) then 
+--     local req = {
+--         jsonrpc = "2.0",
+--         method = "get_md",
+--         params = { url = rem_url },
+--         id = 1
+--     }
+-- 
+--     -- Yes, it will require to have this mini rpc service (just wrapper on top of puppeteer)
+--     local res = aip.web.post("http://localhost:3000/jsonrpc", req)
+-- 
+--     local content = res.content.result.content
+--     aip.file.save(md_path, content)
+-- end
+
+
+
 
 local file = aip.file.load(md_path)
 

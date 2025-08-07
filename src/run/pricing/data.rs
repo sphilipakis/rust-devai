@@ -101,15 +101,15 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 	ModelPricing {
 		name: "gpt-oss-120b",
 		input_cached: None,
-		input_normal: 0.1,
-		output_normal: 0.1,
+		input_normal: 0.15,
+		output_normal: 0.6,
 		output_reasoning: None,
 	},
 	ModelPricing {
 		name: "gpt-oss-20b",
 		input_cached: None,
-		input_normal: 0.1,
-		output_normal: 0.1,
+		input_normal: 0.07,
+		output_normal: 0.3,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -264,13 +264,6 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 		input_cached: None,
 		input_normal: 0.55,
 		output_normal: 2.19,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "firesearch-ocr-v6",
-		input_cached: None,
-		input_normal: 0.2,
-		output_normal: 0.2,
 		output_reasoning: None,
 	},
 	ModelPricing {

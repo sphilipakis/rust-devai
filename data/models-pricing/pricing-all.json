@@ -94,20 +94,20 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.1
+          "normal": 0.15
         },
         "name": "gpt-oss-120b",
-        "output": 0.1,
+        "output": 0.6,
         "recent": true
       },
       {
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.1
+          "normal": 0.07
         },
         "name": "gpt-oss-20b",
-        "output": 0.1,
+        "output": 0.3,
         "recent": true
       },
       {
@@ -184,10 +184,10 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 3
+          "normal": 3.0
         },
         "name": "deepseek-r1-0528",
-        "output": 8,
+        "output": 8.0,
         "recent": false
       },
       {
@@ -234,20 +234,20 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 3
+          "normal": 3.0
         },
         "name": "deepseek-r1",
-        "output": 8,
+        "output": 8.0,
         "recent": false
       },
       {
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 3
+          "normal": 3.0
         },
         "name": "llama-v3p1-405b-instruct",
-        "output": 3,
+        "output": 3.0,
         "recent": false
       },
       {
@@ -328,16 +328,6 @@
         },
         "name": "deepseek-r1-basic",
         "output": 2.19,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.2
-        },
-        "name": "firesearch-ocr-v6",
-        "output": 0.2,
         "recent": false
       },
       {
