@@ -1,6 +1,6 @@
 # Options
 ```toml
-model = "claude"
+model = "gpt-5"
 ```
 
 # Description
