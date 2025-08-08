@@ -18,6 +18,8 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.hash`](#aiphash): Hashing utilities (SHA256, SHA512, Blake3) with various encodings.
 - [`aip.lua`](#aiplua): Some lua helpers (for now only `.dump(data)`).
 - [`aip.agent`](#aipagent): Running other AIPACK agents.
+- [`aip.run`](#aiprun): Run-level pin helper (attach pins to the current run).
+- [`aip.task`](#aiptask): Task-level pin helper (attach pins to the current task).
 - [`aip.flow`](#aipflow): Controlling agent execution flow.
 - [`aip.cmd`](#aipcmd): Executing system commands.
 - [`aip.semver`](#aipsemver): Semantic versioning operations.
@@ -2816,6 +2818,112 @@ the function returns `nil`.
 
 A new Lua table containing the extracted options, or `nil` if the input
 was `nil` or not a table.
+
+
+## aip.task
+
+Functions for recording pins at the task level (attached to the current task of the current run).
+
+### Functions Summary
+
+```lua
+aip.task.pin(iden: string, content: any)
+aip.task.pin(iden: string, priority: number, content: any)
+```
+
+### aip.task.pin
+
+Creates a pin attached to the current task. Requires that both CTX.RUN_UID and CTX.TASK_UID are available (i.e., must be called during a task cycle, not in before_all or after_all).
+
+```lua
+-- API Signatures
+aip.task.pin(iden: string, content: any)
+aip.task.pin(iden: string, priority: number, content: any)
+```
+
+Records a pin for the current task. When the optional priority is provided, it will be stored along with the pin.
+
+#### Arguments
+
+- `iden: string`
+  Identifier (name) for this pin.
+
+- `priority: number (optional)`
+  Optional numeric priority to associate with the pin.
+
+- `content: any`
+  Arbitrary content to associate with the pin (string, table, etc.).
+
+#### Returns
+
+- Nothing. This function records the pin as a side effect.
+
+#### Example
+
+```lua
+-- Simple pin (no priority)
+aip.task.pin("review", "Needs follow-up")
+
+-- Pin with priority
+aip.task.pin("checkpoint", 0.7, { step = 3, note = "after validation" })
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if called outside a task context (no `CTX.TASK_UID`), if there is no run context, or if arguments are invalid.
+
+
+## aip.run
+
+Functions for recording pins at the run level (attached to the overall run).
+
+### Functions Summary
+
+```lua
+aip.run.pin(iden: string, content: any)
+aip.run.pin(iden: string, priority: number, content: any)
+```
+
+### aip.run.pin
+
+Creates a pin attached to the current run. Requires that CTX.RUN_UID is available.
+
+```lua
+-- API Signatures
+aip.run.pin(iden: string, content: any)
+aip.run.pin(iden: string, priority: number, content: any)
+```
+
+Records a pin for the current run. When the optional priority is provided, it will be stored along with the pin.
+
+#### Arguments
+
+- `iden: string`
+  Identifier (name) for this pin.
+
+- `priority: number (optional)`
+  Optional numeric priority to associate with the pin.
+
+- `content: any`
+  Arbitrary content to associate with the pin (string, table, etc.).
+
+#### Returns
+
+- Nothing. This function records the pin as a side effect.
+
+#### Example
+
+```lua
+-- Simple pin (no priority)
+aip.run.pin("summary", "Run started successfully")
+
+-- Pin with priority
+aip.run.pin("quality-score", 0.85, { score = 0.85, rationale = "good coverage" })
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if there is no run context (no `CTX.RUN_UID`) or if arguments are invalid.
 
 
 ## aip.flow
