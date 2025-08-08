@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-08-08 - [v0.7.19](https://github.com/jeremychone/rust-devai/compare/v0.7.18...v0.7.19)
+
+- `^` pricing - add gpt-5, gpt-5-mini, gpt-5-nano pricing
+- `^` pricing - add GPT-OSS models (Fireworks) and include in config-default.toml
+- `^` pricing - update Together AI and OpenAI GPT-5 pricing; refresh Anthropic and Groq; update pricing-all.json and pricing/data.rs
+- `.` pricing - update Fireworks GPT-OSS
+- `^` `aip.text.format_size` - add `{trim = true}`
+- `^` inputs - FileInfo and FileRecord now default _display to path when not provided
+- `^` types - implement custom serializer to include _type metadata, types like FileInfo, FileRecord,
+- `.` lua-apis - update aip.run/task pin APIs
+- `.` keys - add Nebius API key to known systems
+
 ## 2025-08-04 - [v0.7.18](https://github.com/jeremychone/rust-devai/compare/v0.7.17...v0.7.18)
 
 - `!` base config tomls - now have `~/.aipack-base/config-default.toml` and `~/.aipack-base/config-user.toml`
