@@ -10,10 +10,10 @@
 #            Groq: "deepseek-r1-distill-llama-70b", "llama3-8b-8192", "llama-3.3-70b-versatile"
 #             xAI: "grok-beta"
 #       Anthropic: "claude-3-7-sonnet-latest", "claude-3-5-haiku-latest"
-#          OpenAI: "o3-mini", "o3-mini-high", "o3-mini-low", "gpt-4o", "gpt-4o-mini"
-#          Gemini: "gemini-2.0-flash", "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b" 
+#          OpenAI: "gpt-5", "gpt-5-mini", "gpt-5-nano", or with suffixes "gpt-5-mini-low"
+#          Gemini: "gemini-2.0-pro-exp-02-05", "gemini-1.5-pro", "gemini-1.5-flash-8b" 
 #        DeepSeek: "deepseek-chat" "deepseek-reasoner" (from deepseek.com)
-model = "gpt-4.1-nano" # or an alias below (e.g. "fast", "cost-saver")
+model = "gpt-5-nano" # or an alias below (e.g. "fast", "cost-saver")
 
 # Temperature (by default unset)
 # temperature = 0.0
@@ -26,7 +26,7 @@ model = "gpt-4.1-nano" # or an alias below (e.g. "fast", "cost-saver")
 # Note: It is important to have `model_aliases` as a property of `default_options` as shown below.
 [default_options.model_aliases]
 standard = "gpt-4o"
-high     = "o3-mini-high"
-low      = "o3-mini-low"
-fast     = "gemini-2.0-flash"
-claude   = "claude-3-5-sonnet-20241022"
+high     = "gpt-5-high"
+low      = "gpt-5-low"
+flash    = "gemini-2.5-flash"
+claude   = "claude-sonnet-4-20250514"

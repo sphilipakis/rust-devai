@@ -4,7 +4,7 @@ function template()
 ```toml
 #!meta parametric block
 
-model_aliases = {pro = "claude-3-7-sonnet-latest", high = "o3-mini-high", low = "o3-mini-low", cheap = "gpt-4o-mini", fast = "gemini-2.0-flash"}
+model_aliases = {pro = "claude-sonnet-4-20250514", high = "gpt-5-high", low = "gpt-5-mini-low", cheap = "gpt-5-nano-low", fast = "gemini-2.0-flash"}
 
 model = "cheap"
 ```
