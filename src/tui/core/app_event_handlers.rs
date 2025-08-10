@@ -22,7 +22,8 @@ pub async fn handle_app_event(
 	// tracing::debug!("APP EVENT HANDLER - {app_event:?}");
 
 	match app_event {
-		AppEvent::DoRedraw => (), // nothing special, this will trigger a redraw
+		AppEvent::DoRedraw => (),  // nothing special, this will trigger a redraw
+		AppEvent::Tick(_ts) => (), // nothing, just will do a refresh if needed
 
 		AppEvent::Term(term_event) => {
 			handle_term_event(term_event, app_tx).await?;

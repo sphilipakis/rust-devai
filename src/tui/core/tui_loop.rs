@@ -5,6 +5,7 @@ use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
 use crate::store::ModelManager;
+use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
@@ -53,6 +54,12 @@ pub fn run_ui_loop(
 			if app_state.should_redraw() {
 				app_state.core_mut().do_redraw = false;
 				let _ = app_tx.send(AppEvent::DoRedraw).await;
+			}
+
+			if app_state.running_tick_count().is_some() {
+				// tokio sleep 200ms
+				tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+				let _ = app_tx.send(AppEvent::Tick(now_micro())).await;
 			}
 
 			// -- Get Next App Event

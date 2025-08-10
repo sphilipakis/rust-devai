@@ -47,6 +47,9 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub run_item_store: RunItemStore,
 	pub tasks: Vec<Task>,
 
+	/// Time of when the current run started
+	pub running_tick_start: Option<i64>,
+
 	// -- System & Event
 	pub mm: ModelManager,
 	pub last_app_event: LastAppEvent,
@@ -56,7 +59,7 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub do_action: Option<Action>,
 
 	// -- SysState
-	pub tick_now: i64,
+	pub time: i64,
 	pub sys_err: Option<ErrRec>,
 	pub show_sys_states: bool,
 	pub sys_state: SysState,

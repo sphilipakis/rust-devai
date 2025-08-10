@@ -3,6 +3,7 @@ use super::SysState;
 use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::Task;
+use crate::support::time::now_micro;
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 
@@ -41,6 +42,8 @@ impl AppState {
 			run_idx: None,
 			run_id: None,
 
+			running_tick_start: None,
+
 			// -- RunMainView
 			run_tab: RunTab::Tasks, // Tasks tab by default
 
@@ -63,7 +66,7 @@ impl AppState {
 			do_action: None,
 
 			// -- SysState
-			tick_now: 0,
+			time: now_micro(), // the current time
 			sys_err: None,
 			show_sys_states: false,
 			sys_state,

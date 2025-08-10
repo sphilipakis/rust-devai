@@ -114,8 +114,10 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Render Row 1
 	// Agent label with marker
 	let mut line_1 = Line::default();
-	if let Some(run) = state.current_run_item() {
-		line_1.push_span(comp::el_running_ico(run));
+	if let Some(run_item) = state.current_run_item() {
+		if matches!(state.running_tick_flag(), Some(true) | None) {
+			line_1.push_span(comp::el_running_ico(run_item));
+		}
 	}
 	line_1.push_span(" Agent:");
 	Paragraph::new(line_1)

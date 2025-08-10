@@ -1,9 +1,26 @@
+use crate::support::time::tick_count;
 use crate::tui::core::{AppState, RunItem, RunTab};
 
 /// RunsView
 impl AppState {
 	pub fn run_idx(&self) -> Option<usize> {
 		self.core.run_idx.map(|idx| idx as usize)
+	}
+
+	pub fn running_tick_count(&self) -> Option<i64> {
+		let running_start = self.core().running_tick_start?;
+
+		let duration_micro = (self.core().time - running_start).max(0);
+		let ticks = tick_count(duration_micro, 0.2);
+
+		Some(ticks)
+	}
+
+	/// Running tick flag (true/false) when running
+	pub fn running_tick_flag(&self) -> Option<bool> {
+		let ticks = self.running_tick_count()?;
+
+		Some((ticks / 3) % 2 == 0)
 	}
 
 	pub fn set_run_idx(&mut self, idx: Option<usize>) {

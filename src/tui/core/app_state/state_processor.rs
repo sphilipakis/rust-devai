@@ -7,7 +7,7 @@ use crossterm::event::{KeyCode, MouseEventKind};
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Process tick
-	state.core.tick_now = now_micro();
+	state.core.time = now_micro();
 
 	// -- Toggle show sys state
 	if let Some(key_event) = state.last_app_event().as_key_event() {
@@ -196,6 +196,23 @@ pub fn process_app_state(state: &mut AppState) {
 			_ => (),
 		}
 	};
+
+	// -- Update running tick
+	let run_items = state.run_items();
+	if !run_items.is_empty() {
+		let is_one_running = run_items.iter().any(|r| r.is_running());
+
+		// If running and no running start, then, set the running_start
+		if is_one_running && state.core.running_tick_start.is_none() {
+			state.core.running_tick_start = Some(now_micro())
+		}
+		// Make sure to turn it off if not running
+		else if !is_one_running {
+			state.core.running_tick_start = None
+		}
+	} else {
+		state.core.running_tick_start = None; // No run selected
+	}
 
 	// -- Arrow key (keyboard & mouse)
 	// if let Some(code) = state.last_app_event().as_key_code() {

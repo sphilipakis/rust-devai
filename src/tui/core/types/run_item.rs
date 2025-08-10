@@ -37,8 +37,13 @@ impl RunItem {
 	pub fn indent(&self) -> u32 {
 		self.indent
 	}
+
 	pub fn parent_id(&self) -> Option<Id> {
 		self.run.parent_id
+	}
+
+	pub fn is_running(&self) -> bool {
+		!self.run.is_done()
 	}
 
 	pub fn has_children(&self) -> bool {

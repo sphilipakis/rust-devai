@@ -29,6 +29,9 @@ pub enum AppEvent {
 	// Hub Event
 	#[from]
 	Hub(HubEvent),
+
+	// Just a tick event (with a now time micro of when this was sent)
+	Tick(i64),
 }
 
 #[derive(Debug)]
