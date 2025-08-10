@@ -1,7 +1,7 @@
+use super::SysState;
 use crate::store::rt_model::{ErrRec, Task};
 use crate::store::{Id, ModelManager};
 use crate::tui::core::event::LastAppEvent;
-use crate::tui::core::sys_state::SysState;
 use crate::tui::core::{
 	Action, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones,
 };
@@ -56,6 +56,7 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub do_action: Option<Action>,
 
 	// -- SysState
+	pub tick_now: i64,
 	pub sys_err: Option<ErrRec>,
 	pub show_sys_states: bool,
 	pub sys_state: SysState,

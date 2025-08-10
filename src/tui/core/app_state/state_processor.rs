@@ -1,10 +1,14 @@
 use crate::store::rt_model::{ErrBmc, RunBmc, TaskBmc};
+use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crossterm::event::{KeyCode, MouseEventKind};
 
 pub fn process_app_state(state: &mut AppState) {
+	// -- Process tick
+	state.core.tick_now = now_micro();
+
 	// -- Toggle show sys state
 	if let Some(key_event) = state.last_app_event().as_key_event() {
 		if key_event.code == KeyCode::Char('M') && key_event.modifiers.contains(crossterm::event::KeyModifiers::SHIFT) {

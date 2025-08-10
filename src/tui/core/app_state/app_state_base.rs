@@ -1,9 +1,9 @@
 use super::AppStateCore;
+use super::SysState;
 use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::Task;
 use crate::tui::core::event::LastAppEvent;
-use crate::tui::core::sys_state::SysState;
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 
 // region:    --- Wrapper
@@ -63,6 +63,7 @@ impl AppState {
 			do_action: None,
 
 			// -- SysState
+			tick_now: 0,
 			sys_err: None,
 			show_sys_states: false,
 			sys_state,

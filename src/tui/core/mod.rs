@@ -2,8 +2,6 @@
 
 mod app_event_handlers;
 mod event;
-mod state_processor;
-mod sys_state;
 mod term_reader;
 mod tui_loop;
 

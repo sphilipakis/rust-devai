@@ -9,7 +9,7 @@ use crate::tui::AppState;
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
-use crate::tui::core::state_processor::process_app_state;
+use crate::tui::core::app_state::process_app_state;
 use crate::tui::core::{Action, RunTab};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
