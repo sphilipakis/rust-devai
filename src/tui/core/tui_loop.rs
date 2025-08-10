@@ -56,18 +56,39 @@ pub fn run_ui_loop(
 				let _ = app_tx.send(AppEvent::DoRedraw).await;
 			}
 
-			if app_state.running_tick_count().is_some() {
-				// tokio sleep 200ms
-				tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-				let _ = app_tx.send(AppEvent::Tick(now_micro())).await;
-			}
-
 			// -- Get Next App Event
-			let app_event = match app_rx.recv().await {
-				Ok(r) => r,
-				Err(err) => {
-					error!("UI LOOP ERROR. Cause: {err}");
-					continue;
+			let app_event = {
+				// -- First we try to see if there one already in the que
+				let evt = match app_rx.try_recv() {
+					Ok(r) => r,
+					Err(err) => {
+						error!("UI LOOP ERROR. Cause: {err}");
+						continue;
+					}
+				};
+
+				match evt {
+					// No need to do the running tick
+					Some(evt) => evt,
+					None => {
+						// If we have a running tick, we sleep a little and end a tick event
+						if app_state.running_tick_count().is_some() {
+							// tokio sleep 100ms
+							// NOTE: This will slightly reduce UI responsiveness during a running tick.
+							// TODO: Implement a separate tick_timer to handle waiting and sending back the tick.
+							tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+							let _ = app_tx.send(AppEvent::Tick(now_micro())).await;
+						}
+
+						// Then, we wait for next event
+						match app_rx.recv().await {
+							Ok(evt) => evt,
+							Err(err) => {
+								error!("UI LOOP ERROR. Cause: {err}");
+								continue;
+							}
+						}
+					}
 				}
 			};
 
