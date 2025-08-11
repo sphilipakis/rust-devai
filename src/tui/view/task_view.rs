@@ -278,7 +278,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 					if let Some(line) = all_lines.get_mut(z.line_idx) {
 						if let Some(hover_spans) = z.spans_slice_mut(&mut line.spans) {
 							for span in hover_spans {
-								span.style.fg = Some(style::CLR_TXT_HOVER_SHOW);
+								span.style.fg = Some(style::CLR_TXT_HOVER_TO_CLIP);
 							}
 						}
 					}

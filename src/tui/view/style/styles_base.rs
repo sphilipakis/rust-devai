@@ -80,7 +80,7 @@ pub const CLR_TXT_850: Color = Color::Indexed(240);
 pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_HOVER: Color = CLR_TXT_BLUE;
-pub const CLR_TXT_HOVER_SHOW: Color = Color::Indexed(51);
+pub const CLR_TXT_HOVER_TO_CLIP: Color = Color::Indexed(51);
 
 pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;

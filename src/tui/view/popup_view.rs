@@ -70,8 +70,13 @@ impl StatefulWidget for PopupOverlay {
 		// Clear only the popup area so its interior is solid and does not bleed underlying content.
 		Clear.render(popup_a, buf);
 
+		// Text style
+		// TODO: need to make it property (for now, hardcode to clip)
+		let txt_style = style::CLR_TXT_HOVER_TO_CLIP;
+
 		// Render the popup content with a bordered block and black background inside the popup only.
 		let para = Paragraph::new(Text::from(popup.content.clone()))
+			.style(txt_style)
 			.block(
 				Block::bordered()
 					.border_style(style::CLR_TXT_WHITE)
