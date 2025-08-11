@@ -1,6 +1,6 @@
 use crate::store::ModelManager;
 use crate::store::rt_model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
-use crate::tui::core::{LinkZones, ScrollIden};
+use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
 use crate::tui::{AppState, style};
@@ -207,8 +207,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	);
 	link_zones.set_current_line(all_lines.len());
 
-	// -- Add Input
-	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
+	// -- Add Input (with hover/click to copy)
+	support::extend_lines(
+		&mut all_lines,
+		ui_for_input(state.mm(), task, max_width, &mut link_zones),
+		false,
+	);
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Before AI Logs Lines (with hover zones)
@@ -234,9 +238,15 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		false,
 	);
 
-	// -- Add output if end
+	// -- Add output if end (with hover/click to copy)
 	if task.output_short.is_some() {
-		support::extend_lines(&mut all_lines, ui_for_output(state.mm(), task, max_width), true);
+		// Ensure zones are anchored to the first output line
+		link_zones.set_current_line(all_lines.len());
+		support::extend_lines(
+			&mut all_lines,
+			ui_for_output(state.mm(), task, max_width, &mut link_zones),
+			false,
+		);
 	}
 	link_zones.set_current_line(all_lines.len());
 
@@ -320,18 +330,46 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 // region:    --- UI Builders
 
-fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
 	let marker_style = style::STL_SECTION_MARKER_INPUT;
+
 	match TaskBmc::get_input_for_display(mm, task) {
-		Ok(Some(content)) => comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
+		Ok(Some(content)) => {
+			let lines = comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None);
+
+			let mut out: Vec<Line<'static>> = Vec::new();
+
+			// Grouped zones across the whole Input section.
+			let gid = link_zones.start_group();
+			for (i, line) in lines.into_iter().enumerate() {
+				let span_len = line.spans.len();
+				if span_len > 0 {
+					let span_start = span_len - 1;
+					link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
+				}
+				out.push(line);
+			}
+
+			// Separator line (no zones)
+			out.push(Line::default());
+
+			out
+		}
 		Ok(None) => Vec::new(),
-		Err(err) => comp::ui_for_marker_section_str(
-			&format!("Error getting input. {err}"),
-			(marker_txt, marker_style),
-			max_width,
-			None,
-		),
+		Err(err) => {
+			// Render error unchanged and keep a trailing separator for layout consistency.
+			let mut out = comp::ui_for_marker_section_str(
+				&format!("Error getting input. {err}"),
+				(marker_txt, marker_style),
+				max_width,
+				None,
+			);
+			if !out.is_empty() {
+				out.push(Line::default());
+			}
+			out
+		}
 	}
 }
 
@@ -372,21 +410,46 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	}
 }
 
-fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
 	let marker_txt = "Output:";
 	let marker_style = style::STL_SECTION_MARKER_OUTPUT;
+
 	match TaskBmc::get_output_for_display(mm, task) {
-		Ok(Some(content)) => comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None),
-		Ok(None) => {
-			//comp::ui_for_marker_section_str("no output found", (marker_txt, marker_style), max_width, None)
-			Vec::new()
+		Ok(Some(content)) => {
+			let lines = comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None);
+
+			let mut out: Vec<Line<'static>> = Vec::new();
+
+			// Grouped zones across the whole Output section.
+			let gid = link_zones.start_group();
+			for (i, line) in lines.into_iter().enumerate() {
+				let span_len = line.spans.len();
+				if span_len > 0 {
+					let span_start = span_len - 1;
+					link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
+				}
+				out.push(line);
+			}
+
+			// Separator line (no zones)
+			out.push(Line::default());
+
+			out
 		}
-		Err(err) => comp::ui_for_marker_section_str(
-			&format!("Error getting output. {err}"),
-			(marker_txt, marker_style),
-			max_width,
-			None,
-		),
+		Ok(None) => Vec::new(),
+		Err(err) => {
+			// Render error unchanged and keep a trailing separator for layout consistency.
+			let mut out = comp::ui_for_marker_section_str(
+				&format!("Error getting output. {err}"),
+				(marker_txt, marker_style),
+				max_width,
+				None,
+			);
+			if !out.is_empty() {
+				out.push(Line::default());
+			}
+			out
+		}
 	}
 }
 
