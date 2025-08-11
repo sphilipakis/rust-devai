@@ -11,7 +11,7 @@ use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::core::app_state::process_app_state;
-use crate::tui::core::{Action, RunTab};
+use crate::tui::core::{Action, RunTab, PingTimerTx, start_ping_timer};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -26,6 +26,9 @@ pub fn run_ui_loop(
 ) -> Result<JoinHandle<()>> {
 	// Initialize App State (fail early, in case of SysState fail to initialize)
 	let mut app_state = AppState::new(mm, LastAppEvent::default())?;
+
+	// Start the ping timer (debouncer) and get its input tx
+	let ping_tx: PingTimerTx = start_ping_timer(app_tx.clone())?;
 
 	let handle = tokio::spawn(async move {
 		loop {
@@ -71,13 +74,9 @@ pub fn run_ui_loop(
 					// No need to do the running tick
 					Some(evt) => evt,
 					None => {
-						// If we have a running tick, we sleep a little and end a tick event
+						// If we have a running tick, notify the ping timer (debounced).
 						if app_state.running_tick_count().is_some() {
-							// tokio sleep 100ms
-							// NOTE: This will slightly reduce UI responsiveness during a running tick.
-							// TODO: Implement a separate tick_timer to handle waiting and sending back the tick.
-							tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-							let _ = app_tx.send(AppEvent::Tick(now_micro())).await;
+							let _ = ping_tx.send(now_micro()).await;
 						}
 
 						// Then, we wait for next event
@@ -126,3 +125,4 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 
 	Ok(())
 }
+
