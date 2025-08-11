@@ -1,13 +1,41 @@
 use crate::store::rt_model::{ErrBmc, RunBmc, TaskBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
-use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore};
+use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
+use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
+use std::time::Duration;
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Process tick
 	state.core.time = now_micro();
+
+	// -- Process actions (clipboard, show-text popup, tab switch)
+	process_actions(state);
+
+	// -- Expire timed popups
+	if let Some(popup) = state.popup() {
+		if let PopupMode::Timed(duration) = &popup.mode {
+			if let Some(start) = state.core().popup_start_us {
+				let elapsed = state.core().time.saturating_sub(start);
+				if elapsed >= duration.as_micros() as i64 {
+					state.clear_popup();
+				}
+			}
+		}
+	}
+
+	// -- Dismiss user popups on Esc
+	if let Some(key_event) = state.last_app_event().as_key_event() {
+		if key_event.code == KeyCode::Esc {
+			if let Some(popup) = state.popup() {
+				if matches!(popup.mode, PopupMode::User) {
+					state.clear_popup();
+				}
+			}
+		}
+	}
 
 	// -- Toggle show sys state
 	if let Some(key_event) = state.last_app_event().as_key_event() {
@@ -243,3 +271,59 @@ pub fn process_app_state(state: &mut AppState) {
 		_ => (),
 	}
 }
+
+// region:    --- Action Processing
+
+fn process_actions(state: &mut AppState) {
+	if let Some(action) = state.action().cloned() {
+		match action {
+			Action::ToClipboardCopy(content) => {
+				// Ensure we have a clipboard instance
+				let ensure_clipboard: Result<(), String> = if state.core().clipboard.is_some() {
+					Ok(())
+				} else {
+					match arboard::Clipboard::new() {
+						Ok(cb) => {
+							state.core_mut().clipboard = Some(cb);
+							Ok(())
+						}
+						Err(err) => Err(format!("Clipboard init error: {err}")),
+					}
+				};
+
+				let popup_msg = match ensure_clipboard {
+					Ok(()) => {
+						if let Some(cb) = state.core_mut().clipboard.as_mut() {
+							match cb.set_text(content) {
+								Ok(()) => "Copied to clipboard".to_string(),
+								Err(err) => format!("Clipboard error: {err}"),
+							}
+						} else {
+							"Clipboard unavailable".to_string()
+						}
+					}
+					Err(msg) => msg,
+				};
+
+				state.set_popup(PopupView {
+					content: popup_msg,
+					mode: PopupMode::Timed(Duration::from_millis(1000)),
+				});
+				state.clear_action();
+			}
+			Action::ShowText => {
+				state.set_popup(PopupView {
+					content: "Click on Content".to_string(),
+					mode: PopupMode::Timed(Duration::from_millis(1000)),
+				});
+				state.clear_action();
+			}
+			Action::GoToTask { .. } => {
+				// Switch to Tasks tab; keep the action so the view can select and clear it.
+				state.set_run_tab(RunTab::Tasks);
+			}
+		}
+	}
+}
+
+// endregion: --- Action Processing

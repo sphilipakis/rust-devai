@@ -1,7 +1,7 @@
 use super::{ActionView, RunsView, SumView};
 use crate::store::rt_model::ErrRec;
 use crate::tui::AppState;
-use crate::tui::view::{RunMainView, style};
+use crate::tui::view::{RunMainView, PopupOverlay, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -48,6 +48,9 @@ impl StatefulWidget for MainView {
 		// -- Render action
 		let action_v = ActionView {};
 		action_v.render(action_a, buf, state);
+
+		// -- Render popup overlay last (on top)
+		PopupOverlay.render(area, buf, state);
 	}
 }
 
@@ -92,3 +95,4 @@ fn render_err(err_rec: &ErrRec, buf: &mut Buffer, area: Rect) {
 
 	Paragraph::new(Line::from(line)).centered().render(content_a, buf);
 }
+

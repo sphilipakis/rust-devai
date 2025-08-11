@@ -17,6 +17,9 @@ pub struct LinkZones {
 
 	/// The zones, keyed by their data reference.
 	zones: Vec<LinkZone>,
+
+	/// Optional grouping for section-wide hover selection.
+	next_group_id: u32,
 }
 
 impl LinkZones {
@@ -33,6 +36,32 @@ impl LinkZones {
 		self.zones.push(LinkZone::new(line_idx, span_start, span_count, action));
 	}
 
+	/// Start a new group and return its id. Zones pushed with this id will be treated as a section.
+	pub fn start_group(&mut self) -> u32 {
+		let id = self.next_group_id;
+		self.next_group_id = self.next_group_id.wrapping_add(1);
+		id
+	}
+
+	/// Push a zone that belongs to a group (section-wide hover/click).
+	pub fn push_group_zone(
+		&mut self,
+		rel_line_idx: usize,
+		span_start: usize,
+		span_count: usize,
+		group_id: u32,
+		action: Action,
+	) {
+		let line_idx = self.current_line + rel_line_idx;
+		self.zones.push(LinkZone::new_with_group(
+			line_idx,
+			span_start,
+			span_count,
+			Some(group_id),
+			action,
+		));
+	}
+
 	pub fn into_zones(self) -> Vec<LinkZone> {
 		self.zones
 	}
@@ -42,12 +71,13 @@ impl LinkZones {
 
 // region:    --- DataZone
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct LinkZone {
 	pub line_idx: usize,
 	pub span_start: usize,
 	pub span_count: usize,
 	pub action: Action,
+	pub group_id: Option<u32>,
 }
 
 /// Constructor
@@ -59,6 +89,23 @@ impl LinkZone {
 			span_start,
 			span_count,
 			action,
+			group_id: None,
+		}
+	}
+
+	pub fn new_with_group(
+		line_idx: usize,
+		span_start: usize,
+		span_count: usize,
+		group_id: Option<u32>,
+		action: Action,
+	) -> Self {
+		Self {
+			line_idx,
+			span_start,
+			span_count,
+			action,
+			group_id,
 		}
 	}
 }
@@ -92,6 +139,11 @@ impl LinkZone {
 		} else {
 			None
 		}
+	}
+
+	/// Return a mutable slice for this zone span range on a given line's spans.
+	pub fn spans_slice_mut<'a>(&self, spans: &'a mut [Span<'static>]) -> Option<&'a mut [Span<'static>]> {
+		spans.get_mut(self.span_start..self.span_start + self.span_count)
 	}
 }
 // endregion: --- DataZone

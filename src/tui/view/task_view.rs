@@ -1,11 +1,12 @@
 use crate::store::ModelManager;
 use crate::store::rt_model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
-use crate::tui::core::ScrollIden;
+use crate::tui::core::{LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
 use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
@@ -193,17 +194,28 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	let mut all_lines: Vec<Line> = Vec::new();
 	let max_width = area.width - 3; // for scroll bar
 
+	// -- Link zones accumulator for hover/click over logs
+	let mut link_zones = LinkZones::default();
+
 	// -- Add the pins
+	link_zones.set_current_line(all_lines.len());
 	// ui_for_pins add empty line after, so no ned to ad it again
-	support::extend_lines(&mut all_lines, comp::ui_for_pins(&pins, max_width), false);
+	support::extend_lines(
+		&mut all_lines,
+		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones),
+		false,
+	);
+	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Input
 	support::extend_lines(&mut all_lines, ui_for_input(state.mm(), task, max_width), true);
+	link_zones.set_current_line(all_lines.len());
 
-	// -- Add Before AI Logs Lines
+	// -- Add Before AI Logs Lines (with hover zones)
+	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_before_ai_logs(task, &logs, max_width, show_steps),
+		ui_for_before_ai_logs(task, &logs, max_width, show_steps, &mut link_zones),
 		false,
 	);
 
@@ -212,11 +224,13 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	if let Some(true) | None = state.current_run_has_prompt_parts() {
 		support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
 	}
+	link_zones.set_current_line(all_lines.len());
 
-	// -- Add After AI Logs Lines
+	// -- Add After AI Logs Lines (with hover zones)
+	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_after_ai_logs(task, &logs, max_width, show_steps),
+		ui_for_after_ai_logs(task, &logs, max_width, show_steps, &mut link_zones),
 		false,
 	);
 
@@ -224,24 +238,76 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	if task.output_short.is_some() {
 		support::extend_lines(&mut all_lines, ui_for_output(state.mm(), task, max_width), true);
 	}
+	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Error if present
 	if let Some(err_id) = task.end_err_id {
 		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
 	}
+	link_zones.set_current_line(all_lines.len());
 
 	// -- Clamp scroll
 	let line_count = all_lines.len();
 	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
 
+	// -- Perform hover/click over link zones
+	let zones = link_zones.into_zones();
+
+	// First pass: detect which zone (if any) is hovered.
+	let mut hovered_idx: Option<usize> = None;
+	for (i, zone) in zones.iter().enumerate() {
+		if let Some(line) = all_lines.get_mut(zone.line_idx) {
+			if zone
+				.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
+				.is_some()
+			{
+				hovered_idx = Some(i);
+				break;
+			}
+		}
+	}
+
+	// Second pass: apply hover style to the hovered zone or the whole section group.
+	if let Some(i) = hovered_idx {
+		let action = zones[i].action.clone();
+		let group_id = zones[i].group_id;
+
+		match group_id {
+			Some(gid) => {
+				for z in zones.iter().filter(|z| z.group_id == Some(gid)) {
+					if let Some(line) = all_lines.get_mut(z.line_idx) {
+						if let Some(hover_spans) = z.spans_slice_mut(&mut line.spans) {
+							for span in hover_spans {
+								span.style.fg = Some(style::CLR_TXT_HOVER_SHOW);
+							}
+						}
+					}
+				}
+			}
+			None => {
+				if let Some(line) = all_lines.get_mut(zones[i].line_idx) {
+					if let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans) {
+						for span in hover_spans {
+							span.style.fg = Some(style::CLR_TXT_BLUE);
+							span.style = span.style.add_modifier(Modifier::BOLD);
+						}
+					}
+				}
+			}
+		}
+
+		if state.is_mouse_up() {
+			state.set_action(action);
+			state.trigger_redraw();
+			state.clear_mouse_evts();
+		}
+	}
+
 	// -- Render All Content
-	// Block::new().bg(styles::CLR_BKG_PRIME).render(area, buf);
 	let p = Paragraph::new(all_lines).scroll((scroll, 0));
 	p.render(area, buf);
 
 	// -- Render Scrollbar
-	// Content Size is the content to be scrolled (so not visible).
-	// If 0, means more height than lines, and no scrollbar, which is what we want.
 	let content_size = line_count.saturating_sub(area.height as usize);
 	let mut scrollbar_state = ScrollbarState::new(content_size).position(scroll as usize);
 
@@ -324,20 +390,28 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16) -> Vec<Line<'st
 	}
 }
 
-fn ui_for_before_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+fn ui_for_before_ai_logs(
+	task: &Task,
+	logs: &[Log],
+	max_width: u16,
+	show_steps: bool,
+	link_zones: &mut LinkZones,
+) -> Vec<Line<'static>> {
 	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
-
-	let logs = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
-
-	comp::ui_for_logs(logs, max_width, None, show_steps)
+	let iter = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
+	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones)
 }
 
-fn ui_for_after_ai_logs(task: &Task, logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
+fn ui_for_after_ai_logs(
+	task: &Task,
+	logs: &[Log],
+	max_width: u16,
+	show_steps: bool,
+	link_zones: &mut LinkZones,
+) -> Vec<Line<'static>> {
 	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
-
-	let logs = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
-
-	comp::ui_for_logs(logs, max_width, None, show_steps)
+	let iter = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
+	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones)
 }
 
 #[allow(unused)]

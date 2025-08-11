@@ -78,13 +78,22 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let mut all_lines: Vec<Line> = Vec::new();
 
 	// -- Add the pins
+	link_zones.set_current_line(all_lines.len());
 	// ui_for_pins add empty line after, so no ned to ad it again
-	support::extend_lines(&mut all_lines, comp::ui_for_pins(&pins, max_width), false);
+	support::extend_lines(
+		&mut all_lines,
+		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones),
+		false,
+	);
 
 	// -- Add before all
 	// Here false for add empty end line because logs add it for each log section
-	support::extend_lines(&mut all_lines, ui_for_before_all(&logs, max_width, false), false);
-
+	link_zones.set_current_line(all_lines.len());
+	support::extend_lines(
+		&mut all_lines,
+		ui_for_before_all(&logs, max_width, false, &mut link_zones),
+		false,
+	);
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add the tasks ui
@@ -99,8 +108,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add after all
 	// Here false for add empty end line because logs add it for each log section
-	support::extend_lines(&mut all_lines, ui_for_after_all(&logs, max_width, false), false);
-
+	link_zones.set_current_line(all_lines.len());
+	support::extend_lines(
+		&mut all_lines,
+		ui_for_after_all(&logs, max_width, false, &mut link_zones),
+		false,
+	);
 	link_zones.set_current_line(all_lines.len());
 
 	// -- Add Error if present
@@ -116,23 +129,63 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let scroll = state.clamp_scroll(SCROLL_IDEN, line_count);
 
 	// -- Perform the Click on a link zone
-	for zone in link_zones.into_zones() {
+	let zones = link_zones.into_zones();
+
+	// First pass: detect which zone (if any) is hovered.
+	let mut hovered_idx: Option<usize> = None;
+	for (i, zone) in zones.iter().enumerate() {
 		if let Some(line) = all_lines.get_mut(zone.line_idx) {
-			if let Some(hover_spans) = zone.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans) {
-				for span in hover_spans {
-					span.style.fg = Some(style::CLR_TXT_BLUE);
-					if is_grid {
-						span.style.bg = Some(style::CLR_BKG_BLACK);
+			if zone
+				.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
+				.is_some()
+			{
+				hovered_idx = Some(i);
+				break;
+			}
+		}
+	}
+
+	// Second pass: apply hover style to the hovered zone or the whole section group.
+	if let Some(i) = hovered_idx {
+		let action = zones[i].action.clone();
+		let group_id = zones[i].group_id;
+
+		match group_id {
+			Some(gid) => {
+				for z in zones.iter().filter(|z| z.group_id == Some(gid)) {
+					if let Some(line) = all_lines.get_mut(z.line_idx) {
+						if let Some(hover_spans) = z.spans_slice_mut(&mut line.spans) {
+							for span in hover_spans {
+								span.style.fg = Some(style::CLR_TXT_HOVER_SHOW);
+								if is_grid {
+									span.style.bg = Some(style::CLR_BKG_BLACK);
+								}
+								// span.style = span.style.add_modifier(Modifier::BOLD);
+							}
+						}
 					}
-					span.style = span.style.add_modifier(Modifier::BOLD);
-				}
-				if state.is_mouse_up() {
-					state.set_action(zone.action);
-					state.trigger_redraw();
-					// Note: Little trick to not show hover on the next tasks tab screen
-					state.clear_mouse_evts();
 				}
 			}
+			None => {
+				if let Some(line) = all_lines.get_mut(zones[i].line_idx) {
+					if let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans) {
+						for span in hover_spans {
+							span.style.fg = Some(style::CLR_TXT_BLUE);
+							if is_grid {
+								span.style.bg = Some(style::CLR_BKG_BLACK);
+							}
+							span.style = span.style.add_modifier(Modifier::BOLD);
+						}
+					}
+				}
+			}
+		}
+
+		if state.is_mouse_up() {
+			state.set_action(action);
+			state.trigger_redraw();
+			// Note: Little trick to not show hover on the next tasks tab screen
+			state.clear_mouse_evts();
 		}
 	}
 
@@ -153,12 +206,12 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 // region:    --- UI Builders
 
-fn ui_for_before_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	comp::ui_for_logs(logs, max_width, Some(Stage::BeforeAll), show_steps)
+fn ui_for_before_all(logs: &[Log], max_width: u16, show_steps: bool, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
+	comp::ui_for_logs_with_hover(logs.iter(), max_width, Some(Stage::BeforeAll), show_steps, link_zones)
 }
 
-fn ui_for_after_all(logs: &[Log], max_width: u16, show_steps: bool) -> Vec<Line<'static>> {
-	comp::ui_for_logs(logs, max_width, Some(Stage::AfterAll), show_steps)
+fn ui_for_after_all(logs: &[Log], max_width: u16, show_steps: bool, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
+	comp::ui_for_logs_with_hover(logs.iter(), max_width, Some(Stage::AfterAll), show_steps, link_zones)
 }
 
 fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {

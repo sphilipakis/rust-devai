@@ -12,6 +12,7 @@ mod runs_view;
 mod sum_view;
 mod support;
 mod task_view;
+mod popup_view;
 
 pub use action_view::*;
 pub use main_view::*;
@@ -22,8 +23,10 @@ pub use runs_nav_view::*;
 pub use runs_view::*;
 pub use sum_view::*;
 pub use task_view::*;
+pub use popup_view::*;
 
 pub mod comp;
 pub mod style;
 
 // endregion: --- modules
+

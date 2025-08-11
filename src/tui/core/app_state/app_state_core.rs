@@ -5,8 +5,10 @@ use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::{
 	Action, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones,
 };
-use crate::tui::support::offset_and_clamp_option_idx_in_len;
+use crate::tui::support;
+use crate::tui::view::PopupView;
 use ratatui::layout::Position;
+use arboard::Clipboard;
 
 /// Inner representation of the application state.
 ///
@@ -65,6 +67,13 @@ pub(in crate::tui::core) struct AppStateCore {
 	pub sys_state: SysState,
 	pub memory: u64,
 	pub cpu: f64,
+
+	// -- Clipboard
+	pub clipboard: Option<Clipboard>,
+
+	// -- Popup
+	pub popup: Option<PopupView>,
+	pub popup_start_us: Option<i64>,
 }
 
 impl AppStateCore {
@@ -82,7 +91,7 @@ impl AppStateCore {
 
 	pub fn offset_run_idx(&mut self, offset: i32) {
 		let runs_len = self.run_item_store.items().len();
-		let new_idx = offset_and_clamp_option_idx_in_len(&self.run_idx, offset, runs_len);
+		let new_idx = support::offset_and_clamp_option_idx_in_len(&self.run_idx, offset, runs_len);
 		if let Some(new_idx) = new_idx {
 			self.set_run_by_idx(new_idx);
 		}

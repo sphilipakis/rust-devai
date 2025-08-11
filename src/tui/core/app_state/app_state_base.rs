@@ -6,6 +6,7 @@ use crate::store::rt_model::Task;
 use crate::support::time::now_micro;
 use crate::tui::core::event::LastAppEvent;
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
+use crate::tui::view::PopupView;
 
 // region:    --- Wrapper
 
@@ -72,6 +73,13 @@ impl AppState {
 			sys_state,
 			memory: 0,
 			cpu: 0.,
+
+			// -- Clipboard
+			clipboard: None,
+
+			// -- Popup
+			popup: None,
+			popup_start_us: None,
 		};
 
 		Ok(Self { core: inner })
@@ -163,3 +171,21 @@ impl AppState {
 		self.core.do_redraw = true;
 	}
 }
+
+/// Popup
+impl AppState {
+	pub fn popup(&self) -> Option<&PopupView> {
+		self.core.popup.as_ref()
+	}
+
+	pub fn set_popup(&mut self, popup: PopupView) {
+		self.core.popup_start_us = Some(self.core.time);
+		self.core.popup = Some(popup);
+	}
+
+	pub fn clear_popup(&mut self) {
+		self.core.popup = None;
+		self.core.popup_start_us = None;
+	}
+}
+

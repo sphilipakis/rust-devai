@@ -11,7 +11,7 @@ use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::core::app_state::process_app_state;
-use crate::tui::core::{Action, RunTab, PingTimerTx, start_ping_timer};
+use crate::tui::core::{PingTimerTx, start_ping_timer};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -34,19 +34,6 @@ pub fn run_ui_loop(
 		loop {
 			// -- Update App State
 			process_app_state(&mut app_state);
-
-			// -- Do the action
-			// Just show the right tab/view
-			if let Some(action) = app_state.action() {
-				match action {
-					Action::GoToTask { .. } => {
-						app_state.set_run_tab(RunTab::Tasks);
-					}
-				}
-				// -- trigger a redraw
-				// NOTE: Now that we do not fully exec the action here, we cannot trigger a redraw here
-				// let _ = app_tx.send(AppEvent::DoRedraw).await;
-			}
 
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
