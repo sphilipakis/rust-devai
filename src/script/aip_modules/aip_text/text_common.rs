@@ -117,13 +117,12 @@ impl FromLua for EnsureOptions {
 		let suffix = table.get::<String>("suffix").ok();
 
 		for (key, _value) in table.pairs::<Value, Value>().flatten() {
-			if let Some(key) = key.x_as_lua_str() {
-				if key != "prefix" && key != "suffix" {
-					let msg = format!(
-						"Ensure argument contains invalid table property `{key}`. Can only contain `prefix` and/or `suffix`"
-					);
-					return Err(mlua::Error::RuntimeError(msg));
-				}
+			if let Some(k) = key.x_as_lua_str()
+				&& k != "prefix" && k != "suffix" {
+				let msg = format!(
+					"Ensure argument contains invalid table property `{k}`. Can only contain `prefix` and/or `suffix`"
+				);
+				return Err(mlua::Error::RuntimeError(msg));
 			}
 		}
 

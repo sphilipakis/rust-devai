@@ -187,10 +187,10 @@ pub fn aip_agent_extract_options(lua: &Lua, value: Value) -> mlua::Result<Value>
 			let keys_to_copy = ["model", "model_aliases", "input_comcurrency", "temperature", "top_p"];
 
 			for key in keys_to_copy.iter() {
-				if let Some(val) = table.x_get_value(key) {
-					if val != Value::Nil {
-						result_table.set(*key, val)?;
-					}
+				if let Some(val) = table.x_get_value(key)
+					&& val != Value::Nil
+				{
+					result_table.set(*key, val)?;
 				}
 			}
 

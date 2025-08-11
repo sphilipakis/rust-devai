@@ -134,14 +134,13 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// First pass: detect which zone (if any) is hovered.
 	let mut hovered_idx: Option<usize> = None;
 	for (i, zone) in zones.iter().enumerate() {
-		if let Some(line) = all_lines.get_mut(zone.line_idx) {
-			if zone
+		if let Some(line) = all_lines.get_mut(zone.line_idx)
+			&& zone
 				.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
 				.is_some()
-			{
-				hovered_idx = Some(i);
-				break;
-			}
+		{
+			hovered_idx = Some(i);
+			break;
 		}
 	}
 
@@ -153,29 +152,29 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		match group_id {
 			Some(gid) => {
 				for z in zones.iter().filter(|z| z.group_id == Some(gid)) {
-					if let Some(line) = all_lines.get_mut(z.line_idx) {
-						if let Some(hover_spans) = z.spans_slice_mut(&mut line.spans) {
-							for span in hover_spans {
-								span.style.fg = Some(style::CLR_TXT_HOVER_TO_CLIP);
-								if is_grid {
-									span.style.bg = Some(style::CLR_BKG_BLACK);
-								}
-								// span.style = span.style.add_modifier(Modifier::BOLD);
+					if let Some(line) = all_lines.get_mut(z.line_idx)
+						&& let Some(hover_spans) = z.spans_slice_mut(&mut line.spans)
+					{
+						for span in hover_spans {
+							span.style.fg = Some(style::CLR_TXT_HOVER_TO_CLIP);
+							if is_grid {
+								span.style.bg = Some(style::CLR_BKG_BLACK);
 							}
+							// span.style = span.style.add_modifier(Modifier::BOLD);
 						}
 					}
 				}
 			}
 			None => {
-				if let Some(line) = all_lines.get_mut(zones[i].line_idx) {
-					if let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans) {
-						for span in hover_spans {
-							span.style.fg = Some(style::CLR_TXT_BLUE);
-							if is_grid {
-								span.style.bg = Some(style::CLR_BKG_BLACK);
-							}
-							span.style = span.style.add_modifier(Modifier::BOLD);
+				if let Some(line) = all_lines.get_mut(zones[i].line_idx)
+					&& let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans)
+				{
+					for span in hover_spans {
+						span.style.fg = Some(style::CLR_TXT_BLUE);
+						if is_grid {
+							span.style.bg = Some(style::CLR_BKG_BLACK);
 						}
+						span.style = span.style.add_modifier(Modifier::BOLD);
 					}
 				}
 			}

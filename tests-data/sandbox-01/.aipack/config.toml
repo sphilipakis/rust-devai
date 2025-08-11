@@ -18,4 +18,4 @@ model = "gpt-5-mini-low"
 
 # Define your own model aliases for any model/provider you have access to, and they can be used in place of the model name.
 # This can also be overridden or complemented in the `# Options` section of the aipack.
-model_aliases = { cost-saver = "deepseek-chat", standard = "gpt-5-mini-low", coder = "claude-3-7-sonnet-latest", high-thinker = "o3-mini-high"}
+model_aliases = { cost-saver = "deepseek-chat", standard = "gpt-5-mini-low", coder = "claude-3-7-sonnet-latest", high-thinker = "gpt-5-high"}

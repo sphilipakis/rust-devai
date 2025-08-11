@@ -47,16 +47,17 @@ pub async fn handle_app_event(
 // region:    --- Handlers
 
 async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
-	if let Event::Key(key) = term_event {
-		if let KeyEventKind::Press = key.kind {
-			let mod_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-			match (key.code, mod_ctrl) {
-				(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
-				(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
-				_ => (),
-			}
+	if let Event::Key(key) = term_event
+		&& let KeyEventKind::Press = key.kind
+	{
+		let mod_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+		match (key.code, mod_ctrl) {
+			(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
+			(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
+			_ => (),
 		}
 	}
+
 	Ok(())
 }
 

@@ -171,14 +171,12 @@ fn extract_md_blocks_and_content(content: &str, extrude: bool) -> Result<(Vec<Md
 				}
 			}
 			Action::CaptureInContent => {
-				if first_block_line {
-					if let Some(prev_line) = previous_line {
-						if extrude {
-							content.push(prev_line);
-						}
-						// TODO: Should assess if we need to change state here, or implement a new Action::CaptureInContentAndPrevLine
-						first_block_line = false;
+				if first_block_line && let Some(prev_line) = previous_line {
+					if extrude {
+						content.push(prev_line);
 					}
+					// TODO: Should assess if we need to change state here, or implement a new Action::CaptureInContentAndPrevLine
+					first_block_line = false;
 				}
 
 				if extrude {

@@ -29,13 +29,11 @@ impl InReader {
 
 		tokio::spawn(async move {
 			loop {
-				// FIXME: remove unwrap
-				if event::poll(Duration::from_millis(100)).expect("Could not read/poll stdin") {
-					if let Ok(Event::Key(key_event)) = event::read() {
-						if let Err(err) = tx.send_async(key_event).await {
-							println!("InReader ERROR - sending key_event - {err}");
-						};
-					}
+				if event::poll(Duration::from_millis(100)).expect("Could not read/poll stdin")
+					&& let Ok(Event::Key(key_event)) = event::read()
+					&& let Err(err) = tx.send_async(key_event).await
+				{
+					println!("InReader ERROR - sending key_event - {err}");
 				}
 
 				// Prevent CPU exhaustion

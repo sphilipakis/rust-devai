@@ -52,14 +52,14 @@ impl Runtime {
 		Arc::clone(&self.inner)
 	}
 
-	pub fn rt_log(&self) -> RtLog {
+	pub fn rt_log(&self) -> RtLog<'_> {
 		RtLog::new(self)
 	}
 
-	pub fn rt_model(&self) -> RtModel {
+	pub fn rt_model(&self) -> RtModel<'_> {
 		RtModel::new(self)
 	}
-	pub fn rt_step(&self) -> RtStep {
+	pub fn rt_step(&self) -> RtStep<'_> {
 		RtStep::new(self)
 	}
 }

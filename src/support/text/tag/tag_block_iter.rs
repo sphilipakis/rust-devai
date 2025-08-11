@@ -60,10 +60,10 @@ impl<'a> TagBlockIter<'a> {
 		}
 
 		// Append any remaining content after the last tag if extruding
-		if let Some(Extrude::Content) = self.extrude {
-			if last_processed_idx < self.input.len() {
-				extruded_content.push_str(&self.input[last_processed_idx..]);
-			}
+		if let Some(Extrude::Content) = self.extrude
+			&& last_processed_idx < self.input.len()
+		{
+			extruded_content.push_str(&self.input[last_processed_idx..]);
 		}
 
 		(blocks, extruded_content)
@@ -93,3 +93,4 @@ impl Iterator for TagBlockIter<'_> {
 mod tests;
 
 // endregion: --- Tests
+

@@ -189,15 +189,15 @@ impl AppState {
 		};
 
 		let mut addl: Vec<String> = Vec::new();
-		if let Some(tk_cached) = task.tk_prompt_cached {
-			if tk_cached > 0 {
-				addl.push(format!("{} cached", text::format_num(tk_cached)));
-			}
+		if let Some(tk_cached) = task.tk_prompt_cached
+			&& tk_cached > 0
+		{
+			addl.push(format!("{} cached", text::format_num(tk_cached)));
 		}
-		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation {
-			if tk_cache_creation > 0 {
-				addl.push(format!("{} cache write", text::format_num(tk_cache_creation)));
-			}
+		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation
+			&& tk_cache_creation > 0
+		{
+			addl.push(format!("{} cache write", text::format_num(tk_cache_creation)));
 		}
 
 		let mut res = format!("{} tk", text::format_num(tk_prompt));

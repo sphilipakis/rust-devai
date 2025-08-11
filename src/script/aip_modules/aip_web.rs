@@ -166,13 +166,11 @@ fn web_resolve_href(lua: &Lua, (href_val, base_url_str): (Value, String)) -> mlu
 	};
 
 	// Attempt to parse href_str as a standalone, absolute URL.
-	if let Ok(parsed_href_url) = Url::parse(&href_str) {
-		if !parsed_href_url.scheme().is_empty() {
-			// It's already an absolute URL with a scheme.
-			return Ok(Value::String(lua.create_string(&href_str)?));
-		}
-		// If it parsed but has no scheme (e.g. "//example.com/path", "/path", "path"),
-		// it should be joined with the base_url.
+	if let Ok(parsed_href_url) = Url::parse(&href_str)
+		&& !parsed_href_url.scheme().is_empty()
+	{
+		// It's already an absolute URL with a scheme.
+		return Ok(Value::String(lua.create_string(&href_str)?));
 	}
 	// If parsing href_str failed, it's treated as a path segment to be joined with base_url.
 
@@ -781,3 +779,4 @@ return aip.web.resolve_href("?key=val", "https://base.com/page.html")
 }
 
 // endregion: --- Tests
+

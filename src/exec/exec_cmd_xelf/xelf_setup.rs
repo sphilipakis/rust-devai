@@ -245,54 +245,54 @@ async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 		.await;
 
 	// -- Check & Setup env
-	if let Some(home_sh_env_path) = os::get_os_env_file_path() {
-		if home_sh_env_path.exists() {
-			// -- get the home sh env content or empty string if not
-			// NOTE: This will eventually create the file is not present
-			let content = if home_sh_env_path.exists() {
-				read_to_string(&home_sh_env_path)?
-			} else {
-				"".to_string()
-			};
+	if let Some(home_sh_env_path) = os::get_os_env_file_path()
+		&& home_sh_env_path.exists()
+	{
+		// -- get the home sh env content or empty string if not
+		// NOTE: This will eventually create the file is not present
+		let content = if home_sh_env_path.exists() {
+			read_to_string(&home_sh_env_path)?
+		} else {
+			"".to_string()
+		};
 
-			if content.contains(".aipack-base") {
+		if content.contains(".aipack-base") {
+			hub.publish(format!(
+				"-! {:<18} '{home_sh_env_path}' seems to have the .aipack-base path setup. So, skipping further setup.",
+				"Setup PATH"
+			))
+			.await;
+		}
+		// -- Create the file if we have a os_source_line for this OS
+		else if let Some(os_source_line) = os_source_line(&target_env_script_path) {
+			let action_str = if content.is_empty() { "create" } else { "update" };
+
+			let user_response = hub_prompt(
+				hub,
+				format!(
+					"\nDo you want to {action_str} the '{home_sh_env_path}' with the required aipack-base/bin path: Y/n "
+				),
+			)
+			.await?;
+			if term::is_input_yes(&user_response) {
+				let content = format!("{}\n\n{}\n", content.trim_end(), os_source_line);
+				write(&home_sh_env_path, content)?;
 				hub.publish(format!(
-					"-! {:<18} '{home_sh_env_path}' seems to have the .aipack-base path setup. So, skipping further setup.",
+					"-> {:<18} Added '{os_source_line}' in file '{home_sh_env_path}'",
 					"Setup PATH"
 				))
 				.await;
-			}
-			// -- Create the file if we have a os_source_line for this OS
-			else if let Some(os_source_line) = os_source_line(&target_env_script_path) {
-				let action_str = if content.is_empty() { "create" } else { "update" };
-
-				let user_response = hub_prompt(
-					hub,
-					format!(
-						"\nDo you want to {action_str} the '{home_sh_env_path}' with the required aipack-base/bin path: Y/n "
-					),
-				)
-				.await?;
-				if term::is_input_yes(&user_response) {
-					let content = format!("{}\n\n{}\n", content.trim_end(), os_source_line);
-					write(&home_sh_env_path, content)?;
-					hub.publish(format!(
-						"-> {:<18} Added '{os_source_line}' in file '{home_sh_env_path}'",
-						"Setup PATH"
-					))
-					.await;
-				} else {
-					hub.publish(format!(
-						"-! Answer was not 'Y' so skipping updating '{home_sh_env_path}'"
-					))
-					.await;
-				}
 			} else {
 				hub.publish(format!(
-					"-! No source line for the current OS. Skipping updating '{home_sh_env_path}'"
+					"-! Answer was not 'Y' so skipping updating '{home_sh_env_path}'"
 				))
 				.await;
 			}
+		} else {
+			hub.publish(format!(
+				"-! No source line for the current OS. Skipping updating '{home_sh_env_path}'"
+			))
+			.await;
 		}
 	}
 

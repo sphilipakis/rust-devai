@@ -60,10 +60,10 @@ pub fn list_dirs(base_dir: impl AsRef<Path>, depth: usize, only_leaf: bool) -> V
 
 			// If only_leaf is true, we only want directories exactly at the specified depth.
 			// Otherwise, include all directories up to and including the max depth.
-			if !only_leaf || current_depth == depth {
-				if let Ok(spath) = SPath::from_walkdir_entry(entry) {
-					dirs.push(spath);
-				}
+			if (!only_leaf || current_depth == depth)
+				&& let Ok(spath) = SPath::from_walkdir_entry(entry)
+			{
+				dirs.push(spath);
 			}
 		}
 	}

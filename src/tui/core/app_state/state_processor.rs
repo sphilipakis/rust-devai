@@ -15,33 +15,28 @@ pub fn process_app_state(state: &mut AppState) {
 	process_actions(state);
 
 	// -- Expire timed popups
-	if let Some(popup) = state.popup() {
-		if let PopupMode::Timed(duration) = &popup.mode {
-			if let Some(start) = state.core().popup_start_us {
-				let elapsed = state.core().time.saturating_sub(start);
-				if elapsed >= duration.as_micros() as i64 {
-					state.clear_popup();
-				}
-			}
-		}
+	if let Some(PopupMode::Timed(duration)) = state.popup().map(|p| &p.mode)
+		&& let Some(start) = state.core().popup_start_us
+		&& state.core().time.saturating_sub(start) >= duration.as_micros() as i64
+	{
+		state.clear_popup();
 	}
 
 	// -- Dismiss user popups on Esc
-	if let Some(key_event) = state.last_app_event().as_key_event() {
-		if key_event.code == KeyCode::Esc {
-			if let Some(popup) = state.popup() {
-				if matches!(popup.mode, PopupMode::User) {
-					state.clear_popup();
-				}
-			}
-		}
+	if let Some(key_event) = state.last_app_event().as_key_event()
+		&& key_event.code == KeyCode::Esc
+		&& let Some(popup) = state.popup()
+		&& matches!(popup.mode, PopupMode::User)
+	{
+		state.clear_popup();
 	}
 
 	// -- Toggle show sys state
-	if let Some(key_event) = state.last_app_event().as_key_event() {
-		if key_event.code == KeyCode::Char('M') && key_event.modifiers.contains(crossterm::event::KeyModifiers::SHIFT) {
-			state.toggle_show_sys_states();
-		}
+	if let Some(key_event) = state.last_app_event().as_key_event()
+		&& key_event.code == KeyCode::Char('M')
+		&& key_event.modifiers.contains(crossterm::event::KeyModifiers::SHIFT)
+	{
+		state.toggle_show_sys_states();
 	}
 
 	// -- Refresh system metrics

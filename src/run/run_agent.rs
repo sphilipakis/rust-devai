@@ -314,10 +314,10 @@ async fn run_tasks(
 		in_progress += 1;
 
 		// If we've reached the concurrency limit, wait for one task to complete
-		if in_progress >= concurrency {
-			if let Some(res) = join_set.join_next().await {
-				process_join_set_res(res, &mut in_progress, &mut captured_outputs).await?;
-			}
+		if in_progress >= concurrency
+			&& let Some(res) = join_set.join_next().await
+		{
+			process_join_set_res(res, &mut in_progress, &mut captured_outputs).await?;
 		}
 	}
 

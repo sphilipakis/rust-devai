@@ -12,24 +12,24 @@ pub struct EnsureOptions {
 	pub suffix: Option<String>,
 }
 
-pub fn ensure(s: &str, ensure_inst: EnsureOptions) -> Cow<str> {
+pub fn ensure(s: &str, ensure_inst: EnsureOptions) -> Cow<'_, str> {
 	let mut parts: Vec<&str> = Vec::new();
 
 	// Add start prefix if needed
-	if let Some(start) = ensure_inst.prefix.as_deref() {
-		if !s.starts_with(start) {
-			parts.push(start);
-		}
+	if let Some(start) = ensure_inst.prefix.as_deref()
+		&& !s.starts_with(start)
+	{
+		parts.push(start);
 	}
 
 	// Always include the main string
 	parts.push(s);
 
 	// Add end suffix if needed
-	if let Some(end) = ensure_inst.suffix.as_deref() {
-		if !s.ends_with(end) {
-			parts.push(end);
-		}
+	if let Some(end) = ensure_inst.suffix.as_deref()
+		&& !s.ends_with(end)
+	{
+		parts.push(end);
 	}
 
 	// If no changes were made, return the original string as borrowed

@@ -73,6 +73,7 @@ struct PinForCreate {
 
 /// This is private to thie module
 #[derive(Debug, Clone, Fields, SqliteFromRow, Default)]
+#[allow(unused)]
 struct PinForUpdate {
 	pub priority: Option<f64>,
 	pub content: Option<String>,

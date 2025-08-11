@@ -20,7 +20,7 @@ impl<'a> RtStep<'a> {
 		self.runtime.mm()
 	}
 
-	fn rt_log(&self) -> RtLog {
+	fn rt_log(&self) -> RtLog<'_> {
 		RtLog::new(self.runtime)
 	}
 }

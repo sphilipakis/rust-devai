@@ -19,14 +19,14 @@ use std::str::FromStr;
 pub fn check_access_write(full_path: &SPath, wks_dir: &SPath) -> Result<()> {
 	// Check that if three is .., it ist still in a .aipack-base
 	// TODO: Would probably need to check that it can only write in it's own support folder
-	if let Some(rel_path) = full_path.diff(wks_dir) {
-		if rel_path.as_str().starts_with("..") {
-			// allow the .aipack-base
-			if !full_path.as_str().contains(".aipack-base") {
-				return Err(Error::custom(format!(
-					"Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
-				)));
-			}
+	if let Some(rel_path) = full_path.diff(wks_dir)
+		&& rel_path.as_str().starts_with("..")
+	{
+		// allow the .aipack-base
+		if !full_path.as_str().contains(".aipack-base") {
+			return Err(Error::custom(format!(
+				"Save file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}` or to the .aipack-base.\nCannot save file out of workspace or aipack base at this point"
+			)));
 		}
 	}
 	Ok(())

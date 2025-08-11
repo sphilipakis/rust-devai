@@ -65,11 +65,11 @@ pub fn prompt_select(stdout: &mut Stdout, prompt: &str, options: &[&str]) -> Res
 					break Ok(current_selection);
 				}
 				KeyCode::Char(c) => {
-					if let Some(digit) = c.to_digit(10) {
-						if digit > 0 && digit <= num_options as u32 {
-							current_selection = (digit - 1) as usize;
-							break Ok(current_selection);
-						}
+					if let Some(digit) = c.to_digit(10)
+						&& digit > 0 && digit <= num_options as u32
+					{
+						current_selection = (digit - 1) as usize;
+						break Ok(current_selection);
 					}
 				}
 				KeyCode::Esc => {

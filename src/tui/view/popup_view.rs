@@ -99,12 +99,13 @@ impl StatefulWidget for PopupOverlay {
 			Paragraph::new("x").render(x_area, buf);
 
 			// Process click on 'x'
-			if let Some(mouse_evt) = state.mouse_evt() {
-				if mouse_evt.is_up() && mouse_evt.is_over(x_area) {
-					state.clear_popup();
-					state.trigger_redraw();
-					state.clear_mouse_evts();
-				}
+			if let Some(mouse_evt) = state.mouse_evt()
+				&& mouse_evt.is_up()
+				&& mouse_evt.is_over(x_area)
+			{
+				state.clear_popup();
+				state.trigger_redraw();
+				state.clear_mouse_evts();
 			}
 		}
 	}

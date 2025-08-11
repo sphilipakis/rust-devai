@@ -10,7 +10,7 @@ use std::borrow::Cow;
 /// # Returns
 ///
 /// A `String` containing the extracted content between the first and last ```
-pub fn outer_block_content_or_raw(content: &str) -> Cow<str> {
+pub fn outer_block_content_or_raw(content: &str) -> Cow<'_, str> {
 	if !content.starts_with("```") {
 		return content.into();
 	}
@@ -251,3 +251,4 @@ End text.",
 		assert_eq!(result, format!("{fx_content}\n"));
 	}
 }
+

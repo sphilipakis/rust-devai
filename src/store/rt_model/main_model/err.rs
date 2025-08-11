@@ -44,6 +44,7 @@ pub struct ErrForUpdate {
 }
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
+#[allow(unused)]
 pub struct ErrFilter {
 	pub run_id: Option<Id>,
 	pub task_id: Option<Id>,

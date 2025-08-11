@@ -72,17 +72,13 @@ pub fn ui_for_logs_with_hover<'a>(
 
 	for log in logs {
 		// -- Filter by stage if provided
-		if let Some(s) = stage {
-			if log.stage != Some(s) {
-				continue;
-			}
+		if let Some(s) = stage && log.stage != Some(s) {
+			continue;
 		}
 
 		// -- Filter steps when requested
-		if !show_steps {
-			if let Some(LogKind::RunStep) = log.kind {
-				continue;
-			}
+		if !show_steps && let Some(LogKind::RunStep) = log.kind {
+			continue;
 		}
 
 		// Prepare the original (pre-format) content to be copied on click.
