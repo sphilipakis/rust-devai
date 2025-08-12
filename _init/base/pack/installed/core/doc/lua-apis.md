@@ -148,6 +148,8 @@ aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
 aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
 
+aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
+
 aip.file.hash_sha256(path: string): string
 aip.file.hash_sha256_b64(path: string): string
 aip.file.hash_sha256_b64u(path: string): string
@@ -961,6 +963,65 @@ aip.file.save_html_to_slim("web/page.html", { suffix = "_light" })
 
 
 Returns an error (Lua table `{ error: string }`) if file I/O, slimming, or destination resolution fails.
+
+
+### aip.file.save_docx_to_md
+
+Loads a DOCX file, converts its content to Markdown, and saves it.
+
+```lua
+-- API Signature
+aip.file.save_docx_to_md(
+  docx_path: string,
+  dest?: string | table
+): FileInfo
+```
+
+#### Arguments
+
+
+- `docx_path: string`
+  Path to the source DOCX file, relative to the workspace root.
+
+- `dest?: string | table (optional)`
+  Destination path or options table ([DestOptions](#destoptions)):
+
+  - `string`
+    Path to save the `.md` file (relative or absolute).
+  - `table` ([DestOptions](#destoptions)):
+      - `base_dir?: string`: Base directory for resolving the destination.
+      - `file_name?: string`: Custom file name for the Markdown output.
+      - `suffix?: string`: Suffix appended to the source file stem before `.md`.
+
+#### Returns
+
+
+- `FileInfo`
+  Metadata ([FileInfo](#filemeta)) about the created Markdown file.
+
+#### Example
+
+
+```lua
+-- Default (replaces .docx with .md):
+aip.file.save_docx_to_md("docs/spec.docx")
+-- Result: docs/spec.md
+
+-- Using a custom string path:
+aip.file.save_docx_to_md("docs/spec.docx", "out/spec.md")
+
+-- Using options table:
+aip.file.save_docx_to_md("docs/spec.docx", {
+  base_dir = "output",
+  suffix = "_v2",
+})
+-- Assuming source was 'docs/spec.docx', result might be 'output/spec_v2.md'
+```
+
+#### Error
+
+
+Returns an error (Lua table `{ error: string }`) if file I/O, parsing/conversion, or destination resolution fails.
 
 
 ## aip.path

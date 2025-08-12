@@ -4,6 +4,7 @@ mod file_write;
 mod file_change;
 mod file_hash;
 mod file_html;
+mod file_docx;
 mod file_json;
 mod file_md;
 mod support;
