@@ -13,7 +13,7 @@ use crate::script::aip_modules::aip_file::file_hash::{
 	file_hash_sha512_b64, file_hash_sha512_b64u,
 };
 use crate::script::aip_modules::aip_file::file_html::{file_save_html_to_md, file_save_html_to_slim};
-use crate::script::aip_modules::aip_file::file_docx::file_save_docx_to_md;
+use crate::script::aip_modules::aip_file::file_docx::{file_save_docx_to_md, file_load_docx_as_md};
 use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
 };
@@ -122,6 +122,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		file_save_docx_to_md(lua, &rt, docx_path, dest_options)
 	})?;
 
+	// -- load_docx_as_md
+	let rt = runtime.clone();
+	let file_load_docx_as_md_fn =
+		lua.create_function(move |lua, (docx_path,): (String,)| file_load_docx_as_md(lua, &rt, docx_path))?;
+
 	// -- save_chages
 	let rt = runtime.clone();
 	let file_save_changes_fn =
@@ -181,6 +186,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("save_html_to_md", file_save_html_to_md_fn)?;
 	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
 	table.set("save_docx_to_md", file_save_docx_to_md_fn)?;
+	table.set("load_docx_as_md", file_load_docx_as_md_fn)?;
 	table.set("save_changes", file_save_changes_fn)?;
 
 	// -- Add file hash functions

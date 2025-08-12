@@ -150,6 +150,8 @@ aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
 
 aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 
+aip.file.load_docx_as_md(docx_path: string): string
+
 aip.file.hash_sha256(path: string): string
 aip.file.hash_sha256_b64(path: string): string
 aip.file.hash_sha256_b64u(path: string): string
@@ -1022,6 +1024,37 @@ aip.file.save_docx_to_md("docs/spec.docx", {
 
 
 Returns an error (Lua table `{ error: string }`) if file I/O, parsing/conversion, or destination resolution fails.
+
+
+### aip.file.load_docx_as_md
+
+Loads a DOCX file, converts its content to Markdown, and returns a Markdown string.
+
+```lua
+-- API Signature
+aip.file.load_docx_as_md(docx_path: string): string
+```
+
+#### Arguments
+
+- `docx_path: string`
+  Path to the source DOCX file, relative to the workspace root.
+
+#### Returns
+
+- `string`
+  The Markdown content converted from the DOCX file.
+
+#### Example
+
+```lua
+local md = aip.file.load_docx_as_md("docs/spec.docx")
+print(string.sub(md, 1, 80)) -- prints the first 80 characters of the converted Markdown
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the DOCX file cannot be found/read or if the conversion to Markdown fails.
 
 
 ## aip.path

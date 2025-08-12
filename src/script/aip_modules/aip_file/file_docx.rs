@@ -7,6 +7,7 @@
 //! ### Functions
 //!
 //! - `aip.file.save_docx_to_md(docx_path: string, dest?: DestOptions): FileInfo`
+//! - `aip.file.load_docx_as_md(docx_path: string): string`
 //!
 //! This helper loads a DOCX file, converts it to Markdown, saves the result,
 //! and returns the [`FileInfo`] describing the newly-created file.
@@ -101,4 +102,45 @@ pub(super) fn file_save_docx_to_md(
 
 	let meta = FileInfo::new(runtime.dir_context(), rel_md, &full_md);
 	meta.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Loads a DOCX file, converts it to Markdown, and returns the Markdown content as a string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.load_docx_as_md(docx_path: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `docx_path: string`
+///   Path to the source DOCX file, relative to the workspace root.
+///
+/// ### Returns
+///
+/// - `string`
+///   The Markdown content converted from the DOCX file.
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The DOCX file cannot be found or read,
+/// - The DOCX cannot be converted to Markdown.
+pub(super) fn file_load_docx_as_md(lua: &Lua, runtime: &Runtime, docx_path: String) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+
+	// -- resolve source path
+	let rel_docx = SPath::new(docx_path.clone());
+	let full_docx = dir_context.resolve_path(runtime.session(), rel_docx, PathResolver::WksDir, None)?;
+
+	// -- convert to Markdown using support::docx
+	let md_content = crate::support::docx::docx_convert(Path::new(full_docx.as_str())).map_err(|e| {
+		Error::Custom(format!(
+			"Failed to convert DOCX file '{docx_path}' to Markdown. Cause: {e}"
+		))
+	})?;
+
+	md_content.into_lua(lua)
 }
