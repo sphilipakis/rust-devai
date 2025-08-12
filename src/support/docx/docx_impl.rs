@@ -10,6 +10,7 @@ use zip::ZipArchive;
 
 struct Styles {
 	title: bool,       //w:pStyle empty w:val="includes title"
+	subtitle: bool,    // w:pStyle empty w:val="includes subtitle"
 	header: bool,      // w:pStyle empty w:val="includes heading"
 	header_level: u32, // The level
 	bold: bool,        //w:b empty
@@ -24,6 +25,7 @@ impl Styles {
 	pub fn default() -> Self {
 		Styles {
 			title: false,
+			subtitle: false,
 			header: false,
 			header_level: 0,
 			strike: false,
@@ -161,11 +163,15 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 				}
 				b"w:pStyle" => {
 					if let Some(val) = get_attr(&e, b"w:val") {
-						if val.to_lowercase().contains("title") {
+						let val_lower = val.to_lowercase();
+						if val_lower.contains("subtitle") {
+							styles.subtitle = true;
+							styles.indent = 0;
+						} else if val_lower.contains("title") {
 							styles.title = true;
 							styles.indent = 0;
 							styles.header_level = 1;
-						} else if val.to_lowercase().contains("heading") {
+						} else if val_lower.contains("heading") {
 							// parse num
 							let num_str = &val["heading".len()..];
 							let num: u32 = num_str.parse().unwrap_or(5);
@@ -217,6 +223,13 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 					let line = format!("{header_prefix} {}", text);
 					push_and_update(&mut markdown, &line, &mut trailing_newlines, &mut started);
 					styles.title = false;
+					continue;
+				}
+				if styles.subtitle {
+					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines, &mut started);
+					let line = format!("**{}**", text.trim());
+					push_and_update(&mut markdown, &line, &mut trailing_newlines, &mut started);
+					styles.subtitle = false;
 					continue;
 				}
 				if styles.header {
