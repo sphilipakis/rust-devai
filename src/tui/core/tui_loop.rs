@@ -61,8 +61,10 @@ pub fn run_ui_loop(
 					// No need to do the running tick
 					Some(evt) => evt,
 					None => {
-						// If we have a running tick, notify the ping timer (debounced).
-						if app_state.running_tick_count().is_some() {
+						// Send a ping event (to the ping_tx debouncer)
+						// - running tick
+						// - or if we still have a timed popup (to eventually remove it)
+						if app_state.running_tick_count().is_some() || app_state.popup().is_some_and(|p| p.is_timed()) {
 							let _ = ping_tx.send(now_micro()).await;
 						}
 
@@ -112,4 +114,3 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 
 	Ok(())
 }
-

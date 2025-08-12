@@ -45,6 +45,39 @@ fn get_attr(e: &quick_xml::events::BytesStart, key: &[u8]) -> Option<String> {
 	None
 }
 
+// Track trailing newlines to efficiently ensure a blank line before block elements (e.g., headings).
+fn count_trailing_newlines(s: &str) -> u8 {
+	let mut cnt = 0u8;
+	for b in s.as_bytes().iter().rev() {
+		if *b == b'\n' {
+			cnt += 1;
+			if cnt == 2 {
+				break;
+			}
+		} else {
+			break;
+		}
+	}
+	cnt
+}
+
+fn push_and_update(markdown: &mut String, s: &str, trailing_newlines: &mut u8) {
+	markdown.push_str(s);
+	let n = count_trailing_newlines(s);
+	if n > 0 {
+		*trailing_newlines = n;
+	} else {
+		*trailing_newlines = 0;
+	}
+}
+
+fn ensure_blank_line_before_block(markdown: &mut String, trailing_newlines: &mut u8) {
+	while *trailing_newlines < 2 {
+		markdown.push('\n');
+		*trailing_newlines += 1;
+	}
+}
+
 /// convert docx into markdown
 /// usuage:
 /// ```rs
@@ -70,6 +103,7 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 	let mut reader = Reader::from_str(&xml_content);
 	let mut buf = Vec::new();
 	let mut markdown = String::new();
+	let mut trailing_newlines: u8 = 0;
 
 	let mut table_rows: Vec<Vec<String>> = Vec::new();
 	let mut current_row: Vec<String> = Vec::new();
@@ -167,25 +201,30 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 					continue;
 				}
 				if styles.title {
+					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines);
 					let header_prefix = "#".repeat(styles.header_level as usize);
-					markdown.push_str(&format!("{header_prefix} {}", text));
+					let line = format!("{header_prefix} {}", text);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines);
 					styles.title = false;
 					continue;
 				}
 				if styles.header {
+					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines);
 					let header_prefix = "#".repeat(styles.header_level as usize);
-					markdown.push_str(&format!("{header_prefix} {}", text));
+					let line = format!("{header_prefix} {}", text);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines);
 					styles.header = false;
 					continue;
 				}
 				if styles.indent > 0 {
 					let indent_num = styles.indent.saturating_sub(1);
 					let indent = "  ".repeat(indent_num as usize);
-					markdown.push_str(&format!("{}- {}", indent, text));
+					let line = format!("{}- {}", indent, text);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines);
 					styles.indent = -1;
 					continue;
 				}
-				markdown.push_str(&text);
+				push_and_update(&mut markdown, &text, &mut trailing_newlines);
 			}
 			Ok(Event::End(e)) => match e.name().as_ref() {
 				b"w:tbl" => {
@@ -196,8 +235,9 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 						} else {
 							Vec::new()
 						};
-						markdown.push_str(&to_markdown_table(&headers, &data_rows));
-						markdown.push('\n');
+						let tbl_md = to_markdown_table(&headers, &data_rows);
+						push_and_update(&mut markdown, &tbl_md, &mut trailing_newlines);
+						push_and_update(&mut markdown, "\n", &mut trailing_newlines);
 						table_rows = Vec::new();
 						styles = Styles::default();
 					}
@@ -208,10 +248,10 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 				}
 				b"w:p" => {
 					if styles.indent == -1 {
+						push_and_update(&mut markdown, "  \n", &mut trailing_newlines);
 						styles.indent = 0;
-						markdown.push_str("  \n");
 					} else {
-						markdown.push_str("\n\n");
+						push_and_update(&mut markdown, "\n\n", &mut trailing_newlines);
 					}
 				}
 				_ => {}

@@ -25,6 +25,12 @@ pub struct PopupView {
 	pub mode: PopupMode,
 }
 
+impl PopupView {
+	pub fn is_timed(&self) -> bool {
+		matches!(self.mode, PopupMode::Timed(_))
+	}
+}
+
 // endregion: --- Types
 
 // region:    --- Overlay Widget
