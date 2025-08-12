@@ -49,11 +49,12 @@ lazy-regex = "3.4.1"
 num-format = "0.4.4"
 humantime = "2.1.0"
 textwrap = "0.16"
-# -- HTML 
+# -- HTML & XML
 html-escape = "0.2"
 html-helpers = { version = "0.0.9" }
-htmd = "0.2.1"
+htmd = "0.3.0"
 url = "2.5.4"
+quick-xml = "0.38"
 # -- Web
 reqwest = {version = "0.12", default-features = false, features = ["json", "rustls-tls"]}
 # -- Template & Scripting
@@ -91,7 +92,7 @@ time-tz = {version = "2.0.0", features = ["system"]}
 semver = "1.0.22"
 uuid = {version = "1.16", features = ["v4", "v7", "fast-rng"]}
 uuid-extra = "0.0.2"
-sysinfo = "0.36.0"
+sysinfo = "0.37.0"
 extend = "1.2.0"
 
 

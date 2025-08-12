@@ -14,6 +14,7 @@ pub use vec_ext::*;
 
 pub mod code;
 pub mod cred;
+pub mod docx;
 pub mod files;
 pub mod hbs;
 pub mod html;
