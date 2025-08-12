@@ -61,9 +61,15 @@ fn count_trailing_newlines(s: &str) -> u8 {
 	cnt
 }
 
-fn push_and_update(markdown: &mut String, s: &str, trailing_newlines: &mut u8) {
-	markdown.push_str(s);
-	let n = count_trailing_newlines(s);
+fn push_and_update(markdown: &mut String, s: &str, trailing_newlines: &mut u8, started: &mut bool) {
+	let s_to_add = if !*started { s.trim_start() } else { s };
+
+	if !*started && !s_to_add.is_empty() {
+		*started = true;
+	}
+
+	markdown.push_str(s_to_add);
+	let n = count_trailing_newlines(s_to_add);
 	if n > 0 {
 		*trailing_newlines = n;
 	} else {
@@ -71,7 +77,11 @@ fn push_and_update(markdown: &mut String, s: &str, trailing_newlines: &mut u8) {
 	}
 }
 
-fn ensure_blank_line_before_block(markdown: &mut String, trailing_newlines: &mut u8) {
+fn ensure_blank_line_before_block(markdown: &mut String, trailing_newlines: &mut u8, started: &mut bool) {
+	// Avoid leading blank lines at the very beginning.
+	if !*started {
+		return;
+	}
 	while *trailing_newlines < 2 {
 		markdown.push('\n');
 		*trailing_newlines += 1;
@@ -104,6 +114,7 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 	let mut buf = Vec::new();
 	let mut markdown = String::new();
 	let mut trailing_newlines: u8 = 0;
+	let mut started: bool = false;
 
 	let mut table_rows: Vec<Vec<String>> = Vec::new();
 	let mut current_row: Vec<String> = Vec::new();
@@ -201,18 +212,18 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 					continue;
 				}
 				if styles.title {
-					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines);
+					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines, &mut started);
 					let header_prefix = "#".repeat(styles.header_level as usize);
 					let line = format!("{header_prefix} {}", text);
-					push_and_update(&mut markdown, &line, &mut trailing_newlines);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines, &mut started);
 					styles.title = false;
 					continue;
 				}
 				if styles.header {
-					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines);
+					ensure_blank_line_before_block(&mut markdown, &mut trailing_newlines, &mut started);
 					let header_prefix = "#".repeat(styles.header_level as usize);
 					let line = format!("{header_prefix} {}", text);
-					push_and_update(&mut markdown, &line, &mut trailing_newlines);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines, &mut started);
 					styles.header = false;
 					continue;
 				}
@@ -220,11 +231,11 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 					let indent_num = styles.indent.saturating_sub(1);
 					let indent = "  ".repeat(indent_num as usize);
 					let line = format!("{}- {}", indent, text);
-					push_and_update(&mut markdown, &line, &mut trailing_newlines);
+					push_and_update(&mut markdown, &line, &mut trailing_newlines, &mut started);
 					styles.indent = -1;
 					continue;
 				}
-				push_and_update(&mut markdown, &text, &mut trailing_newlines);
+				push_and_update(&mut markdown, &text, &mut trailing_newlines, &mut started);
 			}
 			Ok(Event::End(e)) => match e.name().as_ref() {
 				b"w:tbl" => {
@@ -236,8 +247,8 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 							Vec::new()
 						};
 						let tbl_md = to_markdown_table(&headers, &data_rows);
-						push_and_update(&mut markdown, &tbl_md, &mut trailing_newlines);
-						push_and_update(&mut markdown, "\n", &mut trailing_newlines);
+						push_and_update(&mut markdown, &tbl_md, &mut trailing_newlines, &mut started);
+						push_and_update(&mut markdown, "\n", &mut trailing_newlines, &mut started);
 						table_rows = Vec::new();
 						styles = Styles::default();
 					}
@@ -248,10 +259,10 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 				}
 				b"w:p" => {
 					if styles.indent == -1 {
-						push_and_update(&mut markdown, "  \n", &mut trailing_newlines);
+						push_and_update(&mut markdown, "  \n", &mut trailing_newlines, &mut started);
 						styles.indent = 0;
 					} else {
-						push_and_update(&mut markdown, "\n\n", &mut trailing_newlines);
+						push_and_update(&mut markdown, "\n\n", &mut trailing_newlines, &mut started);
 					}
 				}
 				_ => {}
