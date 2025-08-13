@@ -28,6 +28,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.git`](#aipgit): Basic Git operations.
 - [`aip.hbs`](#aiphbs): Handlebars template rendering.
 - [`aip.code`](#aipcode): Code commenting utilities.
+- [`aip.time`](#aiptime): Time and date utilities (now, parse/format, epoch conversions).
 
 #### File Path supported
 
@@ -2751,6 +2752,16 @@ local invalid_millis = aip.uuid.to_time_epoch_ms("not-a-uuid")
 
 local nil_millis = aip.uuid.to_time_epoch_ms(nil)
 -- nil_millis will be nil
+```
+
+## aip.time
+
+```lua
+aip.time.now_epoch_ms(): integer      -- current time in ms since Unix epoch (UTC)
+aip.time.now_epoch_us(): integer      -- current time in µs since Unix epoch (UTC)
+aip.time.now_iso(tz?: string): string -- ISO 8601/RFC 3339; default UTC, optional IANA tz
+aip.time.format_epoch_ms(epoch_ms: integer, fmt?: string, tz?: string): string | {error: string} -- format ms to string (default ISO; UTC if tz omitted)
+aip.time.parse(date_str: string, fmt?: string, tz?: string): integer | {error: string}           -- parse string to epoch ms; RFC 3339 by default; tz used when input has no offset
 ```
 
 ## aip.lua
