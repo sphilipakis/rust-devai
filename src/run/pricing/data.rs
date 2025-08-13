@@ -18,6 +18,13 @@ pub struct Provider {
 // Define Anthropic pricing
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "claude-opus-4-1",
+		input_cached: Some(1.5),
+		input_normal: 15.0,
+		output_normal: 75.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "claude-opus-4",
 		input_cached: Some(1.5),
 		input_normal: 15.0,
@@ -53,7 +60,7 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-3-opus",
+		name: "claude-opus-3",
 		input_cached: Some(1.5),
 		input_normal: 15.0,
 		output_normal: 75.0,
@@ -504,13 +511,6 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-4.5-preview",
-		input_cached: Some(37.5),
-		input_normal: 75.0,
-		output_normal: 150.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gpt-4o",
 		input_cached: Some(1.25),
 		input_normal: 2.5,
@@ -613,13 +613,6 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		input_cached: None,
 		input_normal: 3.0,
 		output_normal: 12.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gpt-image-1",
-		input_cached: Some(1.25),
-		input_normal: 5.0,
-		output_normal: 0.0,
 		output_reasoning: None,
 	},
 	ModelPricing {

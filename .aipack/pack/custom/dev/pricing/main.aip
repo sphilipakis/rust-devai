@@ -16,6 +16,7 @@ local base_dir = p_utils.base_dir
 
 -- GROQ      - https://console.groq.com/docs/models pricing: https://groq.com/pricing/
 -- OPENAI    - https://platform.openai.com/docs/pricing/
+-- ANTHROPIC - https://docs.anthropic.com/en/docs/about-claude/models/overview
 -- XAI       - https://console.x.ai/team/5577cfb2-dfde-4893-9817-4eb4de1d4098/models
 -- FIREWORKS - Login with filter https://app.fireworks.ai/models?filter=LLM&serverless=true, 
 --             Static https://fireworks.ai/pricing#serverless-pricing
@@ -27,7 +28,7 @@ local inputs = {
    
    {name = "gemini",    do_json = false,  url = "https://ai.google.dev/pricing"},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = false,  url = "https://docs.anthropic.com/en/docs/about-claude/models/overview"},
+   {name = "anthropic", do_json = true,  url = ""},
 
    {name = "xai",       do_json = false,  url = ""}, 
 
@@ -123,8 +124,7 @@ From this content for the {{data.provider}}:
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
 - For Anthropic Modes
     - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
-    - For Anthropic models (Claude), `claude-3-7-sonnet` and `opus-4` need to be marked as `recent: false`
-    - For Anthropic models (Claude), only sonnet 4 and opus 4.1 should be marked a `recent: true`
+    - For Anthropic models (Claude), only sonnet 4 and opus 4.1 are recent: true, all others are recent: false
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
 - For Gemini models, do not add the audio or tts model.
 - but for gemini model, keep the `.` in the name.
