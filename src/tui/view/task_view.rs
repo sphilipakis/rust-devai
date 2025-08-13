@@ -252,7 +252,11 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 	// -- Add Error if present
 	if let Some(err_id) = task.end_err_id {
-		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
+		support::extend_lines(
+			&mut all_lines,
+			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones),
+			true,
+		);
 	}
 	link_zones.set_current_line(all_lines.len());
 

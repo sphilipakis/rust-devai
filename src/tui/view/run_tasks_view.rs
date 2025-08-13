@@ -1,4 +1,4 @@
-use crate::tui::core::{Action, ScrollIden};
+use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::style;
 use crate::tui::support::clamp_idx_in_len;
 use crate::tui::view::comp::{self, ui_for_marker_section_str};
@@ -6,6 +6,7 @@ use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::Modifier;
 use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
@@ -70,12 +71,68 @@ impl StatefulWidget for RunTasksView {
 	}
 }
 
-fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &AppState) {
+fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let area = area.x_h_margin(1);
-	// For now, if no Run, do not render anything
 	// -- Render the Error if there is one
 	if let Some(err_id) = state.current_run_item().and_then(|r| r.run().end_err_id) {
-		let lines = super::comp::ui_for_err(state.mm(), err_id, area.width.min(120));
+		let mut link_zones = LinkZones::default();
+		link_zones.set_current_line(0);
+
+		let mut lines = super::comp::ui_for_err_with_hover(state.mm(), err_id, area.width.min(120), &mut link_zones);
+
+		// -- Simple hover/click processing (no scroll in this view)
+		let scroll: u16 = 0;
+		let zones = link_zones.into_zones();
+
+		// Detect hovered zone
+		let mut hovered_idx: Option<usize> = None;
+		for (i, zone) in zones.iter().enumerate() {
+			if let Some(line) = lines.get_mut(zone.line_idx)
+				&& zone
+					.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
+					.is_some()
+			{
+				hovered_idx = Some(i);
+				break;
+			}
+		}
+
+		// Apply hover style and process click
+		if let Some(i) = hovered_idx {
+			let action = zones[i].action.clone();
+			let group_id = zones[i].group_id;
+
+			match group_id {
+				Some(gid) => {
+					for z in zones.iter().filter(|z| z.group_id == Some(gid)) {
+						if let Some(line) = lines.get_mut(z.line_idx)
+							&& let Some(hover_spans) = z.spans_slice_mut(&mut line.spans)
+						{
+							for span in hover_spans {
+								span.style.fg = Some(style::CLR_TXT_HOVER_TO_CLIP);
+							}
+						}
+					}
+				}
+				None => {
+					if let Some(line) = lines.get_mut(zones[i].line_idx)
+						&& let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans)
+					{
+						for span in hover_spans {
+							span.style.fg = Some(style::CLR_TXT_BLUE);
+							span.style = span.style.add_modifier(Modifier::BOLD);
+						}
+					}
+				}
+			}
+
+			if state.is_mouse_up() {
+				state.set_action(action);
+				state.trigger_redraw();
+				state.clear_mouse_evts();
+			}
+		}
+
 		Paragraph::new(lines).render(area, buf);
 	}
 	// -- Else, check if there is a skip

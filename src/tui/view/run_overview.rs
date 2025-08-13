@@ -118,7 +118,11 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add Error if present
 	if let Some(err_id) = state.current_run_item().and_then(|r| r.run().end_err_id) {
-		support::extend_lines(&mut all_lines, comp::ui_for_err(state.mm(), err_id, max_width), true);
+		support::extend_lines(
+			&mut all_lines,
+			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones),
+			true,
+		);
 	}
 
 	link_zones.set_current_line(all_lines.len());
