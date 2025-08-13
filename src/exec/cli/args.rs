@@ -83,9 +83,9 @@ impl CliCommand {
 		}
 	}
 
-	pub fn is_xp_tui(&self) -> bool {
+	pub fn is_tui(&self) -> bool {
 		match self {
-			CliCommand::Run(run_args) => run_args.xp_tui,
+			CliCommand::Run(run_args) => run_args.is_tui(),
 			CliCommand::Init(_) => false,
 			CliCommand::InitBase => false,
 			//CliCommand::New(_) => false,
@@ -141,11 +141,21 @@ pub struct RunArgs {
 	#[arg(short = 's', long = "single-shot", alias = "ni")]
 	pub single_shot: bool,
 
-	/// The new TUI
+	/// 0.7.x tui flag
 	#[arg(long = "xp-tui")]
-	pub xp_tui: bool,
+	xp_tui: bool,
+
+	/// The Old Terminal (for 0.8.x)
+	#[arg(long = "old-term")]
+	old_term: bool,
 }
 
+impl RunArgs {
+	pub fn is_tui(&self) -> bool {
+		self.xp_tui // for 0.7.x
+		// !self.old_term // for 0.8.x
+	}
+}
 /// Arguments for the `pack` subcommand
 #[derive(Parser, Debug)]
 pub struct PackArgs {

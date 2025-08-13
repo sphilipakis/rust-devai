@@ -43,8 +43,6 @@ async fn main() -> Result<()> {
 	// -- Setup debug tracing_subscriber
 	// NOTE: need to keep the handle, otherwise dropped, and nothing get added to the file
 	let _tracing_guard = if DEBUG_LOG {
-		// For now, only for --xp-tui (&& args.cmd.is_xp_tui())
-		// if args.cmd.is_xp_tui() {
 		// Create a file appender (will write all logs to ".tmp.log" in the current dir)
 		let file_appender = never(".aip-debug-log", "file.log");
 		let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -82,7 +80,7 @@ async fn main() -> Result<()> {
 	// -- Start UI
 	// NOTE: For now, if interactive, we go to new TUI
 	//       Otherwise, if non interactive, we go to v1
-	if args.cmd.is_interactive() && args.cmd.is_xp_tui() {
+	if args.cmd.is_interactive() && args.cmd.is_tui() {
 		let mm = once_mm.get().await?;
 		tui::start_tui(mm, exec_sender, args).await?;
 	} else {
