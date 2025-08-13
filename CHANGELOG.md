@@ -1,5 +1,18 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-08-12 - [v0.7.20](https://github.com/jeremychone/rust-devai/compare/v0.7.19...v0.7.20)
+
+- `+` BIG ONE, tui, Copy to clipboard sections
+- `+` aip.file.load_docx_as_md(...)
+- `+` aip.file.save_docx_to_md, first pass
+- `^` aip.file.list.., now sort by globs (end-weighted)
+- `.` pricing, update Anthropic, GPT
+- `.` tui, timed popup view gets removed even if user/data event
+- `.` genai to 0.4.0-alpha-12 for minimal support for GPT-5...
+- `.` many TUI tune-ups
+- `.` config default, TOML, GPT-5 only
+
 ## 2025-08-08 - [v0.7.19](https://github.com/jeremychone/rust-devai/compare/v0.7.18...v0.7.19)
 
 - `^` pricing - add gpt-5, gpt-5-mini, gpt-5-nano pricing
