@@ -723,7 +723,7 @@
         },
         "name": "o1",
         "output": 60,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -733,7 +733,7 @@
         },
         "name": "o1-pro",
         "output": 600,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -743,7 +743,7 @@
         },
         "name": "o3-pro",
         "output": 80,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -753,7 +753,7 @@
         },
         "name": "o3",
         "output": 8,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -763,7 +763,7 @@
         },
         "name": "o3-deep-research",
         "output": 40,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -773,7 +773,7 @@
         },
         "name": "o4-mini",
         "output": 4.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -783,7 +783,7 @@
         },
         "name": "o4-mini-deep-research",
         "output": 8,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -793,7 +793,7 @@
         },
         "name": "o3-mini",
         "output": 4.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -803,7 +803,7 @@
         },
         "name": "o1-mini",
         "output": 4.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -843,7 +843,7 @@
         },
         "name": "computer-use-preview",
         "output": 12,
-        "recent": true
+        "recent": false
       }
     ]
   },

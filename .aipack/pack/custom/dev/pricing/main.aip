@@ -23,7 +23,7 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = true,  url = ""},
+   {name = "openai",    do_json = false,  url = ""},
    
    {name = "gemini",    do_json = false,  url = "https://ai.google.dev/pricing"},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
@@ -121,8 +121,10 @@ From this content for the {{data.provider}}:
 - For Anthropic Models (Claude), the `.` should be replaced by `-`
 - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
 - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
-- For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
-- For Anthropic models (Claude), `claude-3-7-sonnet` need to be marked as `recent: false`
+- For Anthropic Modes
+    - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
+    - For Anthropic models (Claude), `claude-3-7-sonnet` and `opus-4` need to be marked as `recent: false`
+    - For Anthropic models (Claude), only sonnet 4 and opus 4.1 should be marked a `recent: true`
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
 - For Gemini models, do not add the audio or tts model.
 - but for gemini model, keep the `.` in the name.
@@ -133,7 +135,7 @@ From this content for the {{data.provider}}:
     - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
     - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
     - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 
-    - For openAI models, the -4o, 4.1, and codex family models are `recent: false`
+    - For openAI models, only gpt-5 has `recent: true`, all other model `recent: false`
 - Do not put in code block, just the raw json, pretty formatted.
 - If caching price not available, set to `null`
 - If price has text and audio, take the text price
