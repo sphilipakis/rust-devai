@@ -90,7 +90,7 @@ pub(super) fn file_stats(
 	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
+	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, false)?;
 
 	if spaths.is_empty() {
 		return FileStats::default().into_lua(lua);
@@ -412,7 +412,7 @@ pub(super) fn file_list(
 	// Default is true, as we want convenient APIs, and offer user way to optimize it
 	let with_meta = options.x_get_bool("with_meta").unwrap_or(true);
 
-	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
+	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, true)?;
 
 	let file_infos: Vec<FileInfo> = spaths
 		.into_iter()
@@ -498,7 +498,7 @@ pub(super) fn file_list_load(
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute)?;
+	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, true)?;
 
 	let file_records = create_file_records(runtime, spaths, base_path.as_ref(), absolute)?;
 

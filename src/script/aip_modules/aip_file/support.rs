@@ -217,6 +217,7 @@ pub fn list_files_with_options(
 	base_path: Option<&SPath>,
 	include_globs: &[&str],
 	absolute: bool,
+	glob_sort: bool,
 ) -> Result<Vec<SPath>> {
 	let base_path = match base_path {
 		Some(base_path) => base_path.clone(),
@@ -253,6 +254,13 @@ pub fn list_files_with_options(
 		})
 		.collect::<simple_fs::Result<Vec<SPath>>>()
 		.map_err(|err| crate::Error::cc("Cannot list files to base", err))?;
+
+	// sort by the globs (mke sure we use this files paths not the one before)
+	let sfiles = if glob_sort {
+		simple_fs::sort_by_globs(sfiles, include_globs, true)?
+	} else {
+		sfiles
+	};
 
 	Ok(sfiles)
 }
