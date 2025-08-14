@@ -2757,11 +2757,19 @@ local nil_millis = aip.uuid.to_time_epoch_ms(nil)
 ## aip.time
 
 ```lua
-aip.time.now_epoch_ms(): integer      -- current time in ms since Unix epoch (UTC)
-aip.time.now_epoch_us(): integer      -- current time in µs since Unix epoch (UTC)
-aip.time.now_iso(tz?: string): string -- ISO 8601/RFC 3339; default UTC, optional IANA tz
-aip.time.format_epoch_ms(epoch_ms: integer, fmt?: string, tz?: string): string | {error: string} -- format ms to string (default ISO; UTC if tz omitted)
-aip.time.parse(date_str: string, fmt?: string, tz?: string): integer | {error: string}           -- parse string to epoch ms; RFC 3339 by default; tz used when input has no offset
+aip.time.now_iso_utc(): string            -- RFC 3339 UTC (seconds precision)
+
+aip.time.now_iso_local(): string          -- RFC 3339 local time (seconds precision)
+
+aip.time.now_iso_utc_micro(): string      -- RFC 3339 UTC (microseconds)
+
+aip.time.now_iso_local_micro(): string    -- RFC 3339 local time (microseconds)
+
+aip.time.now_utc_micro(): integer         -- epoch microseconds (UTC)
+
+aip.time.today_utc(): string              -- "YYYY-MM-DD" (UTC)
+
+aip.time.today_local(): string            -- "YYYY-MM-DD" (local)
 ```
 
 ## aip.lua
@@ -4101,6 +4109,7 @@ Represents file metadata without content. Returned by `aip.file.list`, `aip.file
   mtime?: number,    // Modification timestamp (microseconds), optional (if with_meta=true for list)
   size?: number      // File size in bytes, optional (if with_meta=true for list)
 }
+```
 
 ### FileStats
 
@@ -4115,7 +4124,6 @@ Aggregated statistics for a collection of files. Returned by `aip.file.stats`.
   mtime_first: number,     // Modification timestamp of the oldest file (microseconds since epoch)
   mtime_last: number       // Modification timestamp of the newest file (microseconds since epoch)
 }
-```
 ```
 
 ### DestOptions
