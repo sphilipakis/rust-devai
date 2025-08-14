@@ -148,6 +148,8 @@ aip.file.load_md_split_first(path: string): {before: string, first: MdSection, a
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
 aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
+aip.file.load_html_as_slim(html_path: string): string
+aip.file.load_html_as_md(html_path: string, options?: table): string
 
 aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 
@@ -971,6 +973,80 @@ aip.file.save_html_to_slim("web/page.html", { slim = false })
 
 
 Returns an error (Lua table `{ error: string }`) if file I/O, slimming, or destination resolution fails.
+
+
+### aip.file.load_html_as_slim
+
+Loads an HTML file, "slims" its content (removes scripts, styles, comments, etc.), and returns the slimmed HTML string.
+
+```lua
+-- API Signature
+aip.file.load_html_as_slim(html_path: string): string
+```
+
+#### Arguments
+
+- `html_path: string`
+  Path to the source HTML file, relative to the workspace root.
+
+#### Returns
+
+- `string`
+  The slimmed HTML content.
+
+#### Example
+
+```lua
+local slim = aip.file.load_html_as_slim("web/page.html")
+-- For example, ensure scripts are removed:
+print(string.find(slim, "<script") == nil)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the HTML file cannot be found/read or if slimming fails.
+
+
+### aip.file.load_html_as_md
+
+Loads an HTML file, optionally "trims" (slims) its content, converts it to Markdown, and returns the Markdown string.
+
+```lua
+-- API Signature
+aip.file.load_html_as_md(
+  html_path: string,
+  options?: { trim?: boolean } -- default true. When true, slim HTML before converting to Markdown.
+): string
+```
+
+#### Arguments
+
+- `html_path: string`
+  Path to the source HTML file, relative to the workspace root.
+
+- `options?: table`
+  - `trim?: boolean` (default: true)
+    When `true`, trims/slims the HTML (removes scripts, styles, comments, etc.) before conversion.
+    Note: For compatibility, `slim` can also be used instead of `trim`.
+
+#### Returns
+
+- `string`
+  The Markdown content converted from the (optionally slimmed) HTML.
+
+#### Example
+
+```lua
+-- Default (slims first, then converts)
+local md1 = aip.file.load_html_as_md("docs/page.html")
+
+-- No slimming before conversion
+local md2 = aip.file.load_html_as_md("docs/page.html", { trim = false })
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the HTML file cannot be found/read, if slimming fails (when enabled), or if the conversion to Markdown fails.
 
 
 ### aip.file.save_docx_to_md
