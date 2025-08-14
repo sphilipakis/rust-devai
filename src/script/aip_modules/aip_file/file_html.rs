@@ -54,7 +54,7 @@ use std::fs::{read_to_string, write};
 ///       - `base_dir?: string`: Base directory for resolving the destination.
 ///       - `file_name?: string`: Custom file name for the Markdown output.
 ///       - `suffix?: string`: Suffix appended to the source file stem before `.md`.
-///       - `slim?: boolean`: If `true`, slims HTML (removes scripts, etc.) before conversion. Defaults to `false`.
+///       - `slim?: boolean`: Default true. When `true`, slims HTML (removes scripts, etc.) before conversion to markdown. Defaults to `false`.
 ///
 /// ### Returns
 ///
@@ -89,9 +89,9 @@ pub(super) fn file_save_html_to_md(
 	// TODO: Avoid the clone there, the resolve_dest_path should take &DestOptions
 	let dest_options: DestOptions = DestOptions::from_lua(dest.clone(), lua)?;
 	let do_slim = if let DestOptions::Custom(c) = dest_options {
-		c.slim.unwrap_or(false)
+		c.slim.unwrap_or(true)
 	} else {
-		false
+		true
 	};
 
 	// -- resolve and read source
