@@ -217,6 +217,47 @@ pub(super) fn file_save_html_to_slim(
 	meta.into_lua(lua)
 }
 
+/// ## Lua Documentation
+///
+/// Loads an HTML file, "slims" its content (removes scripts, styles, comments, etc.),
+/// and returns the slimmed HTML as a string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.load_html_as_slim(html_path: string): string
+/// ```
+///
+/// ### Arguments
+///
+/// - `html_path: string`
+///   Path to the source HTML file, relative to the workspace root.
+///
+/// ### Returns
+///
+/// - `string`
+///   The slimmed HTML content.
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The HTML file cannot be found or read,
+/// - The HTML content cannot be slimmed.
+pub(super) fn file_load_html_as_slim(lua: &Lua, runtime: &Runtime, html_path: String) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+
+	// -- resolve and read source
+	let rel_html = SPath::new(html_path.clone());
+	let full_html = dir_context.resolve_path(runtime.session(), rel_html, PathResolver::WksDir, None)?;
+	let html_content = read_to_string(&full_html)
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+
+	// -- slim HTML
+	let slim_html_content = crate::support::html::slim(html_content)
+		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?;
+
+	slim_html_content.into_lua(lua)
+}
+
 // region:    --- Tests
 
 #[cfg(test)]

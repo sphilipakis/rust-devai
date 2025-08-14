@@ -1,23 +1,25 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::file_change::file_save_changes;
-use crate::script::aip_modules::aip_file::file_read::{
-	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
-};
-use crate::script::aip_modules::aip_file::file_write::{
-	file_append, file_ensure_exists, file_save, EnsureExistsOptions,
-};
+use crate::script::aip_modules::aip_file::file_docx::{file_load_docx_as_md, file_save_docx_to_md};
 use crate::script::aip_modules::aip_file::file_hash::{
 	file_hash_blake3, file_hash_blake3_b58u, file_hash_blake3_b64, file_hash_blake3_b64u, file_hash_sha256,
 	file_hash_sha256_b58u, file_hash_sha256_b64, file_hash_sha256_b64u, file_hash_sha512, file_hash_sha512_b58u,
 	file_hash_sha512_b64, file_hash_sha512_b64u,
 };
-use crate::script::aip_modules::aip_file::file_html::{file_save_html_to_md, file_save_html_to_slim};
-use crate::script::aip_modules::aip_file::file_docx::{file_save_docx_to_md, file_load_docx_as_md};
+use crate::script::aip_modules::aip_file::file_html::{
+	file_load_html_as_slim, file_save_html_to_md, file_save_html_to_slim,
+};
 use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
 };
 use crate::script::aip_modules::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
+use crate::script::aip_modules::aip_file::file_read::{
+	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
+};
+use crate::script::aip_modules::aip_file::file_write::{
+	EnsureExistsOptions, file_append, file_ensure_exists, file_save,
+};
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -116,6 +118,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		file_save_html_to_slim(lua, &rt, html_path, dest_options)
 	})?;
 
+	// -- load_html_as_slim
+	let rt = runtime.clone();
+	let file_load_html_as_slim_fn =
+		lua.create_function(move |lua, (html_path,): (String,)| file_load_html_as_slim(lua, &rt, html_path))?;
+
 	// -- save_docx_to_md
 	let rt = runtime.clone();
 	let file_save_docx_to_md_fn = lua.create_function(move |lua, (docx_path, dest_options): (String, Value)| {
@@ -185,6 +192,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
 	table.set("save_html_to_md", file_save_html_to_md_fn)?;
 	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
+	table.set("load_html_as_slim", file_load_html_as_slim_fn)?;
 	table.set("save_docx_to_md", file_save_docx_to_md_fn)?;
 	table.set("load_docx_as_md", file_load_docx_as_md_fn)?;
 	table.set("save_changes", file_save_changes_fn)?;
