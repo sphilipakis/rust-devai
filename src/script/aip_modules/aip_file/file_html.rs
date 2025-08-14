@@ -1,4 +1,3 @@
-#![allow(clippy::doc_markdown)]
 //! Defines HTML-related helpers for the `aip.file` Lua module.
 //!
 //! ---
@@ -18,8 +17,8 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 
-use crate::types::FileInfo;
-use mlua::{IntoLua, Lua, Value};
+use crate::types::{DestOptions, FileInfo};
+use mlua::{FromLua as _, IntoLua, Lua, Value};
 use simple_fs::SPath;
 use std::fs::{read_to_string, write};
 
@@ -34,7 +33,8 @@ use std::fs::{read_to_string, write};
 ///   dest?: string | {
 ///     base_dir?: string,
 ///     file_name?: string,
-///     suffix?: string
+///     suffix?: string,
+///     slim?: boolean
 ///   }
 /// ): FileInfo
 /// ```
@@ -54,6 +54,7 @@ use std::fs::{read_to_string, write};
 ///       - `base_dir?: string`: Base directory for resolving the destination.
 ///       - `file_name?: string`: Custom file name for the Markdown output.
 ///       - `suffix?: string`: Suffix appended to the source file stem before `.md`.
+///       - `slim?: boolean`: If `true`, slims HTML (removes scripts, etc.) before conversion. Defaults to `false`.
 ///
 /// ### Returns
 ///
@@ -73,6 +74,7 @@ use std::fs::{read_to_string, write};
 /// aip.file.save_html_to_md("docs/page.html", {
 ///   base_dir = "output",
 ///   suffix = "_v2",
+///   slim = true,
 /// })
 /// ```
 pub(super) fn file_save_html_to_md(
@@ -83,11 +85,28 @@ pub(super) fn file_save_html_to_md(
 ) -> mlua::Result<Value> {
 	let dir_context = runtime.dir_context();
 
+	// -- get dest options
+	// TODO: Avoid the clone there, the resolve_dest_path should take &DestOptions
+	let dest_options: DestOptions = DestOptions::from_lua(dest.clone(), lua)?;
+	let do_slim = if let DestOptions::Custom(c) = dest_options {
+		c.slim.unwrap_or(false)
+	} else {
+		false
+	};
+
 	// -- resolve and read source
 	let rel_html = SPath::new(html_path.clone());
 	let full_html = dir_context.resolve_path(runtime.session(), rel_html.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
 		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+
+	// -- slim if requested
+	let html_content = if do_slim {
+		crate::support::html::slim(html_content)
+			.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?
+	} else {
+		html_content
+	};
 
 	// -- convert to Markdown
 	let md_content = crate::support::html::to_md(html_content).map_err(|e| {
@@ -461,6 +480,44 @@ mod tests {
 	}
 
 	// endregion: --- Tests for save_html_to_slim
+
+	#[tokio::test]
+	async fn test_script_aip_file_save_html_to_md_with_slim() -> Result<()> {
+		// -- Setup & Fixtures
+		const FX_HTML_WITH_STYLE: &str = r#"
+<!DOCTYPE html>
+<html><head><title>Test Page</title><style>#some-id { content: "this should not appear"; }</style></head>
+<body><h1>Main Title</h1><p>Some paragraph.</p></body></html>"#;
+
+		let fx_html_path = create_sanbox_01_tmp_file(
+			"test_script_aip_file_save_html_to_md_with_slim.html",
+			FX_HTML_WITH_STYLE,
+		)?;
+
+		let fx_md_dir = ".tmp/test-save-html-to-md-slim/";
+		let fx_md_name = "output.md";
+		let expected_md_path = SPath::new(fx_md_dir).join(fx_md_name);
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save_html_to_md("{}", {{base_dir = "{}", file_name = "{}", slim = true}})"#,
+			fx_html_path, fx_md_dir, fx_md_name
+		);
+		let res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		assert_eq!(res.x_get_str("path")?, expected_md_path.as_str());
+
+		let md_full_path = resolve_sandbox_01_path(&expected_md_path);
+		let md_content = sfs_read_to_string(&md_full_path)?;
+
+		assert_contains(&md_content, "# Main Title");
+		assert_not_contains(&md_content, "this should not appear");
+
+		// -- Cleanup
+		clean_sanbox_01_tmp_file(md_full_path)?;
+		Ok(())
+	}
 }
 
 // endregion: --- Tests

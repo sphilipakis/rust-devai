@@ -13,13 +13,15 @@ use simple_fs::SPath;
 /// - `string`: A path (relative or absolute) specifying where to save the Markdown file.
 ///
 /// - `table`: A custom options table with any of the following optional fields:
-///     - `base_dir: string`  
+///     - `base_dir: string`
 ///       Base directory (workspace-relative) to resolve the destination path.
-///     - `file_name: string`  
+///     - `file_name: string`
 ///       Custom file name (with or without extension) for the Markdown output.
-///     - `suffix: string`  
-///       Suffix appended to the source file stem before the `.md` extension.  
+///     - `suffix: string`
+///       Suffix appended to the source file stem before the `.md` extension.
 ///       e.g., with `suffix = "_v2"`, `index.html` → `index_v2.md`.
+///     - `slim: boolean`
+///       If `true`, slim the HTML content (remove scripts, styles, comments) before converting to Markdown. Defaults to `false`.
 ///
 /// ```lua
 /// -- Example usages
@@ -34,6 +36,7 @@ use simple_fs::SPath;
 ///     base_dir = "output",
 ///     file_name = "renamed.md",
 ///     suffix = "_v2",
+///     slim = true,
 /// })
 /// ```
 pub enum DestOptions {
@@ -53,6 +56,8 @@ pub struct OptionsCustom {
 	pub file_name: Option<String>,
 	/// Suffix appended to the source file stem before `.md`.
 	pub suffix: Option<String>,
+	/// If `true`, slims the HTML before converting to markdown.
+	pub slim: Option<bool>,
 }
 
 impl FromLua for DestOptions {
@@ -69,11 +74,13 @@ impl FromLua for DestOptions {
 				let base_dir = table.x_get_string("base_dir").map(|s| SPath::new(&s));
 				let file_name = table.x_get_string("file_name");
 				let suffix = table.x_get_string("suffix");
+				let slim = table.x_get_bool("slim");
 
 				Ok(DestOptions::Custom(OptionsCustom {
 					base_dir,
 					file_name,
 					suffix,
+					slim,
 				}))
 			}
 
@@ -81,7 +88,7 @@ impl FromLua for DestOptions {
 				from: other.type_name(),
 				to: "DestOptions".to_string(),
 				message: Some(
-					"Destination Options argument can be nil, a string path, or { base_dir?, file_name?, suffix? }"
+					"Destination Options argument can be nil, a string path, or { base_dir?, file_name?, suffix?, slim? }"
 						.into(),
 				),
 			}),

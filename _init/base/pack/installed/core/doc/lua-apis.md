@@ -935,6 +935,7 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
       - `base_dir?: string`: Base directory for resolving the destination. If provided without `file_name` or `suffix`, the output will be `[original_name].html` in this directory.
       - `file_name?: string`: Custom file name for the slimmed HTML output.
       - `suffix?: string`: Suffix appended to the source file stem (e.g., `_slimmed`).
+      - `slim?: boolean`: If true (default), slims HTML before saving; if false, saves the original HTML content without slimming.
 
 #### Returns
 
@@ -960,6 +961,10 @@ aip.file.save_html_to_slim("web/page.html", { base_dir = "slim_output" })
 -- Using options table (suffix):
 aip.file.save_html_to_slim("web/page.html", { suffix = "_light" })
 -- Assuming source was 'web/page.html', result might be 'web/page_light.html'
+
+-- Using options table (no slimming):
+aip.file.save_html_to_slim("web/page.html", { slim = false })
+-- Result: web/page.html (original content saved)
 ```
 
 #### Error
