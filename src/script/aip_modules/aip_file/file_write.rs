@@ -18,7 +18,7 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::script::aip_modules::aip_file::support::check_access_write;
+use crate::script::aip_modules::aip_file::support::{check_access_delete, check_access_write};
 use crate::types::FileInfo;
 use mlua::{FromLua, IntoLua, Lua, Value};
 use simple_fs::ensure_file_dir;
@@ -93,6 +93,60 @@ pub(super) fn file_save(lua: &Lua, runtime: &Runtime, rel_path: String, content:
 	let file_info = file_info.into_lua(lua)?;
 
 	Ok(file_info)
+}
+
+/// ## Lua Documentation
+///
+/// Deletes a file, returning a boolean indicating success.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.delete(path: string): boolean
+/// ```
+///
+/// Attempts to delete the file specified by `path`.
+/// The path is resolved relative to the workspace root. If the file does not exist, returns `false`.
+///
+/// Security:
+/// - Deleting files is only allowed within the current workspace directory.
+/// - Deleting files under the shared base directory (`~/.aipack-base/`) is not allowed.
+///
+/// ### Arguments
+///
+/// - `path: string` - The path to the file to delete, relative to the workspace root.
+///
+/// ### Returns
+///
+/// - `boolean`: `true` if a file was deleted, `false` if the file did not exist.
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The path attempts to delete outside the allowed workspace directory.
+/// - The target is in the `.aipack-base` folder (always forbidden).
+/// - The file cannot be deleted due to permissions or other I/O errors.
+/// - The operation requires a workspace context, but none is found.
+pub(super) fn file_delete(lua: &Lua, runtime: &Runtime, rel_path: String) -> mlua::Result<mlua::Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.delete requires a aipack workspace setup")?;
+
+	check_access_delete(&full_path, wks_dir)?;
+
+	let removed = if full_path.exists() {
+		std::fs::remove_file(&full_path).map(|_| true).map_err(Error::from)?
+	} else {
+		false
+	};
+
+	if removed {
+		let rel_path = full_path.diff(wks_dir).unwrap_or_else(|| full_path.clone());
+		get_hub().publish_sync(format!("-> Lua aip.file.delete called on: {rel_path}"));
+	}
+
+	removed.into_lua(lua)
 }
 
 /// ## Lua Documentation

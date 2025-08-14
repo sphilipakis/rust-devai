@@ -1,6 +1,18 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
 
+## 2025-08-14 - [v0.8.0](https://github.com/jeremychone/rust-devai/compare/v0.7.20...v0.8.0)
+
+- **TUI BY DEFAULT** (`--old-term` for the old terminal, and still `-s` for single shot)
+- `+` aip.file.load_html_as_md
+- `+` aip.file.load_html_as_slim
+- `+` aip.time.now_.. - new time APIs
+- `^` aip.file.save_html_to_md - add the {slim: bool}, slim: true by default
+- `.` file_save_html_to_md - slim by default
+- `+` aip.file.delete - only in workspace dir
+- `.` lua-api - fix markdown format
+
+
 ## 2025-08-12 - [v0.7.20](https://github.com/jeremychone/rust-devai/compare/v0.7.19...v0.7.20)
 
 - `+` BIG ONE, tui, Copy to clipboard sections

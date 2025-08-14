@@ -119,6 +119,8 @@ aip.file.save(rel_path: string, content: string)
 
 aip.file.append(rel_path: string, content: string)
 
+aip.file.delete(path: string): boolean
+
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 
 aip.file.exists(path: string): boolean
@@ -269,6 +271,54 @@ aip.file.append("logs/app.log", "INFO: User logged in.\n")
 #### Error
 
 Returns an error (Lua table `{ error: string }`) on write failure, permission issues, or I/O errors.
+
+### aip.file.delete
+
+Deletes a file at the specified path.
+
+```lua
+-- API Signature
+aip.file.delete(path: string): boolean
+```
+
+Attempts to delete the file specified by `path`. The path is resolved relative to the workspace root.
+
+Security:
+- Deleting files is only allowed within the current workspace directory.
+
+- Deleting files under the shared base directory (`~/.aipack-base/`) is not allowed.
+
+#### Arguments
+
+- `path: string`  
+  The path to the file to delete, relative to the workspace root.
+
+#### Returns
+
+- `boolean`  
+  `true` if a file was deleted, `false` if the file did not exist.
+
+#### Example
+
+```lua
+local removed = aip.file.delete("logs/app.log")
+if removed then
+  print("Removed logs/app.log")
+else
+  print("No file to remove")
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The path attempts to delete outside the allowed workspace directory.
+
+- The target is in the `.aipack-base` folder (always forbidden).
+
+- The file cannot be deleted due to permissions or other I/O errors.
+
+- The operation requires a workspace context, but none is found.
 
 ### aip.file.ensure_exists
 

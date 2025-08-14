@@ -18,7 +18,7 @@ use crate::script::aip_modules::aip_file::file_read::{
 	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
 };
 use crate::script::aip_modules::aip_file::file_write::{
-	EnsureExistsOptions, file_append, file_ensure_exists, file_save,
+	EnsureExistsOptions, file_append, file_delete, file_ensure_exists, file_save,
 };
 use mlua::{Lua, Table, Value};
 
@@ -39,6 +39,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let file_append_fn =
 		lua.create_function(move |lua, (path, content): (String, String)| file_append(lua, &rt, path, content))?;
+
+	// -- delete
+	let rt = runtime.clone();
+	let file_delete_fn = lua.create_function(move |lua, (path,): (String,)| file_delete(lua, &rt, path))?;
 
 	// -- ensure_exists
 	let rt = runtime.clone();
@@ -125,11 +129,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	// -- load_html_as_md
 	let rt = runtime.clone();
-	let file_load_html_as_md_fn = lua.create_function(
-		move |lua, (html_path, options): (String, Option<Value>)| {
-			file_load_html_as_md(lua, &rt, html_path, options)
-		},
-	)?;
+	let file_load_html_as_md_fn = lua.create_function(move |lua, (html_path, options): (String, Option<Value>)| {
+		file_load_html_as_md(lua, &rt, html_path, options)
+	})?;
 
 	// -- save_docx_to_md
 	let rt = runtime.clone();
@@ -185,6 +187,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
 	table.set("append", file_append_fn)?;
+	table.set("delete", file_delete_fn)?;
 	table.set("ensure_exists", file_ensure_exists_fn)?;
 	table.set("exists", file_exists_fn)?;
 	table.set("info", file_info_fn)?;

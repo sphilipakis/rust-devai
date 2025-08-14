@@ -152,8 +152,8 @@ pub struct RunArgs {
 
 impl RunArgs {
 	pub fn is_tui(&self) -> bool {
-		self.xp_tui // for 0.7.x
-		// !self.old_term // for 0.8.x
+		// self.xp_tui // for 0.7.x
+		!self.old_term // for 0.8.x
 	}
 }
 /// Arguments for the `pack` subcommand

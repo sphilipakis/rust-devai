@@ -16,9 +16,9 @@ use std::str::FromStr;
 
 /// Check if write access is granted.
 /// TODO: Need to fix that. Should check that is workspace dir, or in .aipack-base/ dir, but right now, poor check.
+// Check that if three is .., it ist still in a .aipack-base
+// TODO: Would probably need to check that it can only write in it's own support folder
 pub fn check_access_write(full_path: &SPath, wks_dir: &SPath) -> Result<()> {
-	// Check that if three is .., it ist still in a .aipack-base
-	// TODO: Would probably need to check that it can only write in it's own support folder
 	if let Some(rel_path) = full_path.diff(wks_dir)
 		&& rel_path.as_str().starts_with("..")
 	{
@@ -29,6 +29,29 @@ pub fn check_access_write(full_path: &SPath, wks_dir: &SPath) -> Result<()> {
 			)));
 		}
 	}
+	Ok(())
+}
+
+/// Check if delete access is granted.
+///
+/// Same logic as write, but deletion is never allowed in `.aipack-base`.
+pub fn check_access_delete(full_path: &SPath, wks_dir: &SPath) -> Result<()> {
+	// Never allow delete operations in .aipack-base
+	if full_path.as_str().contains(".aipack-base") {
+		return Err(Error::custom(
+			"Delete file protection - Deleting files from the `.aipack-base` folder is not allowed".to_string(),
+		));
+	}
+
+	// If outside the workspace, deny deletion
+	if let Some(rel_path) = full_path.diff(wks_dir)
+		&& rel_path.as_str().starts_with("..")
+	{
+		return Err(Error::custom(format!(
+			"Delete file protection - The path `{rel_path}` does not belong to the workspace dir `{wks_dir}`.\nCannot delete files outside the workspace"
+		)));
+	}
+
 	Ok(())
 }
 
