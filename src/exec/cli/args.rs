@@ -141,11 +141,11 @@ pub struct RunArgs {
 	#[arg(short = 's', long = "single-shot", alias = "ni")]
 	pub single_shot: bool,
 
-	/// 0.7.x tui flag
+	/// Not used in v0.8.x as tui is now the default
 	#[arg(long = "xp-tui")]
 	xp_tui: bool,
 
-	/// The Old Terminal (for 0.8.x)
+	/// The Old Terminal
 	#[arg(long = "old-term")]
 	old_term: bool,
 }
