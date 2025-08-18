@@ -22,8 +22,11 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let to_record_fn =
 		lua.create_function(move |lua, (names, values): (Table, Table)| to_record(lua, names, values))?;
 	let to_records_fn = lua.create_function(move |lua, (names, rows): (Table, Table)| to_records(lua, names, rows))?;
+	let columns_to_records_fn = lua.create_function(move |lua, cols: Table| columns_to_records(lua, cols))?;
+
 	table.set("to_record", to_record_fn)?;
 	table.set("to_records", to_records_fn)?;
+	table.set("columns_to_records", columns_to_records_fn)?;
 
 	Ok(table)
 }
@@ -174,6 +177,112 @@ fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 
 		out.set(out_idx, rec)?;
 		out_idx += 1;
+	}
+
+	Ok(Value::Table(out))
+}
+
+/// ## Lua Documentation
+/// ---
+/// Convert a column-oriented table into a list of row records.
+///
+/// ```lua
+/// -- API Signature
+/// aip.shape.columns_to_records(cols: { [string]: any[] }): table[]
+/// ```
+///
+/// - All keys in `cols` must be strings (column names).
+/// - Each column value must be a table (Lua list).
+/// - All columns must have the same length; otherwise an error is returned.
+///
+/// ### Example:
+/// ```lua
+/// local cols = {
+///   id    = { 1, 2, 3 },
+///   name  = { "Alice", "Bob", "Cara" },
+///   email = { "a@x.com", "b@x.com", "c@x.com" },
+/// }
+/// local recs = aip.shape.columns_to_records(cols)
+/// -- recs == {
+/// --   { id = 1, name = "Alice", email = "a@x.com" },
+/// --   { id = 2, name = "Bob",   email = "b@x.com" },
+/// --   { id = 3, name = "Cara",  email = "c@x.com" },
+/// -- }
+/// ```
+fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
+	// Collect column names and their values (as vectors)
+	let mut col_names: Vec<mlua::String> = Vec::new();
+	let mut col_values: Vec<Vec<Value>> = Vec::new();
+	let mut expected_len: Option<usize> = None;
+
+	for pair in cols.pairs::<Value, Value>() {
+		let (key, val) = pair?;
+
+		// Keys must be strings
+		let key_str = match key {
+			Value::String(s) => s,
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.columns_to_records - Column keys must be strings. Found '{}'",
+					other.type_name()
+				))
+				.into());
+			}
+		};
+
+		// Values must be tables (lists)
+		let tbl = match val {
+			Value::Table(t) => t,
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.columns_to_records - Each column must be a table (list). Column '{}' was '{}'",
+					key_str.to_string_lossy(),
+					other.type_name()
+				))
+				.into());
+			}
+		};
+
+		// Collect sequence values
+		let mut vec_vals: Vec<Value> = Vec::new();
+		for v in tbl.sequence_values::<Value>() {
+			vec_vals.push(v?);
+		}
+		let len = vec_vals.len();
+
+		// Length consistency check
+		if let Some(exp) = expected_len {
+			if len != exp {
+				return Err(Error::custom(format!(
+					"aip.shape.columns_to_records - All columns must have the same length. Column '{}' has length {}, expected {}",
+					key_str.to_string_lossy(),
+					len,
+					exp
+				))
+				.into());
+			}
+		} else {
+			expected_len = Some(len);
+		}
+
+		col_names.push(key_str);
+		col_values.push(vec_vals);
+	}
+
+	let row_count = expected_len.unwrap_or(0);
+	let out = lua.create_table()?;
+
+	// Build each record
+	for i in 0..row_count {
+		let rec = lua.create_table()?;
+		for (idx, name) in col_names.iter().enumerate() {
+			if let Some(vals) = col_values.get(idx)
+				&& let Some(val) = vals.get(i)
+			{
+				rec.set(name, val.clone())?;
+			}
+		}
+		out.set(i + 1, rec)?;
 	}
 
 	Ok(Value::Table(out))
@@ -398,6 +507,68 @@ mod tests {
 		};
 		let err_str = err.to_string();
 		assert_contains(&err_str, "aip.shape.to_records - Column names must be strings");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_columns_to_records_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+            local cols = {
+              id    = { 1, 2, 3 },
+              name  = { "Alice", "Bob", "Cara" },
+              email = { "a@x.com", "b@x.com", "c@x.com" },
+            }
+            return aip.shape.columns_to_records(cols)
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let expected = json!([
+			{ "id": 1, "name": "Alice", "email": "a@x.com" },
+			{ "id": 2, "name": "Bob",   "email": "b@x.com" },
+			{ "id": 3, "name": "Cara",  "email": "c@x.com" }
+		]);
+		assert_eq!(res, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_columns_to_records_len_mismatch_err() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+            local cols = {
+              id   = { 1, 2 },
+              name = { "Alice" }, -- mismatch length
+            }
+            local ok, err = pcall(function()
+              return aip.shape.columns_to_records(cols)
+            end)
+            if ok then
+              return "should not reach"
+            else
+              return err
+            end
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script);
+
+		// -- Check
+		let Err(err) = res else {
+			panic!("Expected error, got {res:?}");
+		};
+		let err_str = err.to_string();
+		assert_contains(
+			&err_str,
+			"aip.shape.columns_to_records - All columns must have the same length",
+		);
 
 		Ok(())
 	}
