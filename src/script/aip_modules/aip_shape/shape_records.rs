@@ -1,4 +1,4 @@
-//! Defines the `aip.shape` module, used in the Lua engine.
+//! Defines the `aip.shape` helpers used in the Lua engine.
 //!
 //! ---
 //!
@@ -10,26 +10,11 @@
 //!
 //! - `aip.shape.to_record(names: string[], values: any[]) -> table`
 //! - `aip.shape.to_records(names: string[], rows: any[][]) -> table[]`
+//! - `aip.shape.columns_to_records(cols: { [string]: any[] }): table[]`
 //!
 
-use crate::runtime::Runtime;
-use crate::{Error, Result};
+use crate::Error;
 use mlua::{Lua, Table, Value};
-
-pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
-	let table = lua.create_table()?;
-
-	let to_record_fn =
-		lua.create_function(move |lua, (names, values): (Table, Table)| to_record(lua, names, values))?;
-	let to_records_fn = lua.create_function(move |lua, (names, rows): (Table, Table)| to_records(lua, names, rows))?;
-	let columns_to_records_fn = lua.create_function(move |lua, cols: Table| columns_to_records(lua, cols))?;
-
-	table.set("to_record", to_record_fn)?;
-	table.set("to_records", to_records_fn)?;
-	table.set("columns_to_records", columns_to_records_fn)?;
-
-	Ok(table)
-}
 
 /// ## Lua Documentation
 /// ---
@@ -69,7 +54,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// - Extra names without corresponding values are ignored.
 /// - Extra values without corresponding names are ignored.
 ///
-fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> {
+pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> {
 	// NOTE: Here we keep the data in the Lua space as there is no need to make them cross boundaries.
 
 	// Collect names as strings with validation
@@ -126,7 +111,7 @@ fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> {
 /// - If `names` contains a non-string entry, an error is returned.
 /// - If any row is not a table (list), an error is returned.
 ///
-fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
+pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 	// Validate and collect column names as strings
 	let mut name_vec: Vec<mlua::String> = Vec::new();
 	for (idx, v) in names.sequence_values::<Value>().enumerate() {
@@ -209,7 +194,7 @@ fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 /// --   { id = 3, name = "Cara",  email = "c@x.com" },
 /// -- }
 /// ```
-fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
+pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 	// Collect column names and their values (as vectors)
 	let mut col_names: Vec<mlua::String> = Vec::new();
 	let mut col_values: Vec<Vec<Value>> = Vec::new();
@@ -294,8 +279,8 @@ fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use super::*;
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
+	use crate::script::aip_modules::aip_shape::init_module;
 	use serde_json::json;
 
 	#[tokio::test]
