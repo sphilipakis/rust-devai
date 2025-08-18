@@ -273,6 +273,93 @@ pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 	Ok(Value::Table(out))
 }
 
+/// ## Lua Documentation
+/// ---
+/// Convert a list of record tables into a column-oriented table.
+/// Uses the intersection of string keys present across all records to ensure rectangular output.
+///
+/// ```lua
+/// -- API Signature
+/// aip.shape.records_to_columns(recs: table[]): { [string]: any[] }
+/// ```
+///
+/// - Each record must be a table.
+/// - All keys must be strings; if any non-string key is found, an error is returned.
+/// - The output contains only the keys present in every record (set intersection).
+pub fn records_to_columns(lua: &Lua, recs: Table) -> mlua::Result<Value> {
+	use std::collections::{BTreeSet, HashSet};
+
+	// Collect rows as tables, validating each entry
+	let mut rows: Vec<Table> = Vec::new();
+	for row_val in recs.sequence_values::<Value>() {
+		let row_val = row_val?;
+		let row_tbl = match row_val {
+			Value::Table(t) => t,
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.records_to_columns - Each record must be a table. Found '{}'",
+					other.type_name()
+				))
+				.into());
+			}
+		};
+		rows.push(row_tbl);
+	}
+
+	// Early return: no rows -> empty columns table
+	if rows.is_empty() {
+		return Ok(Value::Table(lua.create_table()?));
+	}
+
+	// Compute the intersection of string keys across all records
+	let mut intersect: Option<HashSet<String>> = None;
+
+	for row in &rows {
+		let mut keys_this_row: HashSet<String> = HashSet::new();
+
+		for pair in row.pairs::<Value, Value>() {
+			let (k, _v) = pair?;
+
+			let key_str = match k {
+				Value::String(s) => s.to_string_lossy(),
+				other => {
+					return Err(Error::custom(format!(
+						"aip.shape.records_to_columns - Record keys must be strings. Found key of type '{}'",
+						other.type_name()
+					))
+					.into());
+				}
+			};
+			keys_this_row.insert(key_str);
+		}
+
+		intersect = Some(match intersect.take() {
+			None => keys_this_row,
+			Some(prev) => prev.intersection(&keys_this_row).cloned().collect(),
+		});
+	}
+
+	let keys = intersect.unwrap_or_default();
+	// Deterministic order for output columns
+	let mut ordered_keys: BTreeSet<String> = BTreeSet::new();
+	for k in keys {
+		ordered_keys.insert(k);
+	}
+
+	// Build columns
+	let out = lua.create_table()?;
+	for key in ordered_keys {
+		let col = lua.create_table()?;
+		for (idx, row) in rows.iter().enumerate() {
+			let val: Value = row.get(key.as_str())?;
+			col.set(idx + 1, val)?;
+		}
+		out.set(key.as_str(), col)?;
+	}
+
+	Ok(Value::Table(out))
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -554,6 +641,123 @@ mod tests {
 			&err_str,
 			"aip.shape.columns_to_records - All columns must have the same length",
 		);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_records_to_columns_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local recs = {
+			  { id = 1, name = "Alice" },
+			  { id = 2, name = "Bob" },
+			}
+			return aip.shape.records_to_columns(recs)
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let expected = json!({
+			"id":   [1, 2],
+			"name": ["Alice", "Bob"]
+		});
+		assert_eq!(res, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_records_to_columns_intersection() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local recs = {
+			  { id = 1, name = "Alice", email = "a@x.com" },
+			  { id = 2, name = "Bob" }, -- missing email
+			}
+			return aip.shape.records_to_columns(recs)
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let expected = json!({
+			"id":   [1, 2],
+			"name": ["Alice", "Bob"]
+			// 'email' omitted due to intersection
+		});
+		assert_eq!(res, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_records_to_columns_row_not_table_err() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local recs = {
+			  { id = 1, name = "Alice" },
+			  "INVALID_ROW"
+			}
+			local ok, err = pcall(function()
+			  return aip.shape.records_to_columns(recs)
+			end)
+			if ok then
+			  return "should not reach"
+			else
+			  return err
+			end
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script);
+
+		// -- Check
+		let Err(err) = res else {
+			panic!("Expected error, got {res:?}");
+		};
+		let err_str = err.to_string();
+		assert_contains(&err_str, "aip.shape.records_to_columns - Each record must be a table");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_records_to_columns_non_string_key_err() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local function make_bad()
+			  local t = { id = 1, name = "Alice" }
+			  t[123] = "bad" -- non-string key
+			  return t
+			end
+			local recs = { make_bad() }
+			local ok, err = pcall(function()
+			  return aip.shape.records_to_columns(recs)
+			end)
+			if ok then
+			  return "should not reach"
+			else
+			  return err
+			end
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script);
+
+		// -- Check
+		let Err(err) = res else {
+			panic!("Expected error, got {res:?}");
+		};
+		let err_str = err.to_string();
+		assert_contains(&err_str, "aip.shape.records_to_columns - Record keys must be strings");
 
 		Ok(())
 	}
