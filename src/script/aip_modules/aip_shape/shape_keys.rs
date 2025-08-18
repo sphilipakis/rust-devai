@@ -39,6 +39,40 @@ pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 	Ok(Value::Table(out))
 }
 
+///
+/// Return a new record containing only the specified keys and remove them from the original record (in-place).
+///
+/// - Missing keys are ignored.
+/// - If `keys` contains a non-string entry, an error is returned.
+///
+pub fn extract_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+	let out = lua.create_table()?;
+
+	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
+		let key_val = key_val?;
+		let key_str = match key_val {
+			Value::String(s) => s,
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.extract_keys - Key names must be strings. Found '{}' at index {}",
+					other.type_name(),
+					idx + 1
+				))
+				.into());
+			}
+		};
+
+		let val: Value = rec.get(key_str.clone())?;
+		if !val.is_nil() {
+			out.set(key_str.clone(), val)?;
+			// Remove from original record (in-place)
+			rec.set(key_str, Value::Nil)?;
+		}
+	}
+
+	Ok(Value::Table(out))
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -144,6 +178,84 @@ mod tests {
 		};
 		let err_str = err.to_string();
 		assert_contains(&err_str, "aip.shape.select_keys - Key names must be strings");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_extract_keys_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local rec = { id = 1, name = "Alice", email = "a@x.com", role = "admin" }
+			local keys = { "id", "email" }
+			local extracted = aip.shape.extract_keys(rec, keys)
+			return { extracted = extracted, rec = rec }
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let expected = json!({
+			"extracted": { "id": 1, "email": "a@x.com" },
+			"rec": { "name": "Alice", "role": "admin" }
+		});
+		assert_eq!(res, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_extract_keys_missing_ignored() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local rec = { id = 2, name = "Bob" }
+			local keys = { "id", "missing" }
+			local extracted = aip.shape.extract_keys(rec, keys)
+			return { extracted = extracted, rec = rec }
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let expected = json!({
+			"extracted": { "id": 2 },
+			"rec": { "name": "Bob" }
+		});
+		assert_eq!(res, expected);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_aip_shape_extract_keys_invalid_key_type_err() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "shape").await?;
+		let script = r#"
+			local rec = { id = 1, name = "Alice" }
+			local keys = { "id", 123 }
+			local ok, err = pcall(function()
+				return aip.shape.extract_keys(rec, keys)
+			end)
+			if ok then
+				return "should not reach"
+			else
+				return err
+			end
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script);
+
+		// -- Check
+		let Err(err) = res else {
+			panic!("Expected error, got {res:?}");
+		};
+		let err_str = err.to_string();
+		assert_contains(&err_str, "aip.shape.extract_keys - Key names must be strings");
 
 		Ok(())
 	}
