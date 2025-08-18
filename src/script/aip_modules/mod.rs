@@ -18,6 +18,7 @@ pub mod aip_rust;
 pub mod aip_semver;
 pub mod aip_text;
 pub mod aip_uuid;
+pub mod aip_shape;
 pub mod aip_web;
 pub mod aip_time;
 
