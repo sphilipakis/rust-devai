@@ -14,6 +14,7 @@ use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
 };
 use crate::script::aip_modules::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
+use crate::script::aip_modules::aip_file::file_csv::{file_load_csv, file_load_csv_headers};
 use crate::script::aip_modules::aip_file::file_read::{
 	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
 };
@@ -110,6 +111,17 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_load_md_split_first_fn =
 		lua.create_function(move |lua, (path,): (String,)| file_load_md_split_first(lua, &rt, path))?;
 
+	// -- load_csv_headers
+	let rt = runtime.clone();
+	let file_load_csv_headers_fn =
+		lua.create_function(move |lua, (path,): (String,)| file_load_csv_headers(lua, &rt, path))?;
+
+	// -- load_csv
+	let rt = runtime.clone();
+	let file_load_csv_fn = lua.create_function(move |lua, (path, with_headers): (String, Option<bool>)| {
+		file_load_csv(lua, &rt, path, with_headers)
+	})?;
+
 	// -- save_html_to_md
 	let rt = runtime.clone();
 	let file_save_html_to_md_fn = lua.create_function(move |lua, (html_path, dest_options): (String, Value)| {
@@ -201,6 +213,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("append_json_lines", file_append_json_lines_fn)?;
 	table.set("load_md_sections", file_load_md_sections_fn)?;
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
+	table.set("load_csv_headers", file_load_csv_headers_fn)?;
+	table.set("load_csv", file_load_csv_fn)?;
 	table.set("save_html_to_md", file_save_html_to_md_fn)?;
 	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
 	table.set("load_html_as_slim", file_load_html_as_slim_fn)?;

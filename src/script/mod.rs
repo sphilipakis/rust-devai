@@ -8,6 +8,7 @@
 
 mod aip_modules;
 mod error_lua_support;
+mod lua_w_intos;
 mod support;
 
 mod aipack_custom;

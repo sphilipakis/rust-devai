@@ -7,6 +7,7 @@ mod file_html;
 mod file_docx;
 mod file_json;
 mod file_md;
+mod file_csv;
 mod support;
 
 mod init;

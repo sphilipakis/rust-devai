@@ -1,8 +1,7 @@
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::support::W;
 use crate::{Error, Result};
-use mlua::{IntoLua, Lua, Value};
+use mlua::{Lua, Value};
 
 /// Process correctly the lua eval result
 /// (Used by the lua engine eval, and test)
@@ -102,18 +101,6 @@ pub fn get_value_prop_as_string(
 		))
 		.into()),
 		None => Ok(None),
-	}
-}
-
-impl IntoLua for W<&String> {
-	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<Value> {
-		Ok(Value::String(lua.create_string(self.0)?))
-	}
-}
-
-impl IntoLua for W<String> {
-	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<Value> {
-		Ok(Value::String(lua.create_string(&self.0)?))
 	}
 }
 
