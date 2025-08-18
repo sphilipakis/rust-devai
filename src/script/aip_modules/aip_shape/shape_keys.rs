@@ -40,6 +40,48 @@ pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 }
 
 ///
+/// Return a new record without the specified keys. The original record is not modified.
+///
+/// - Missing keys are ignored.
+/// - If `keys` contains a non-string entry, an error is returned.
+///
+pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+	use std::collections::HashSet;
+
+	let mut omit_set: HashSet<String> = HashSet::new();
+	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
+		let key_val = key_val?;
+		match key_val {
+			Value::String(s) => {
+				omit_set.insert(s.to_string_lossy());
+			}
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.omit_keys - Key names must be strings. Found '{}' at index {}",
+					other.type_name(),
+					idx + 1
+				))
+				.into());
+			}
+		}
+	}
+
+	let out = lua.create_table()?;
+	for pair in rec.pairs::<Value, Value>() {
+		let (k, v) = pair?;
+		let skip = match &k {
+			Value::String(s) => omit_set.contains(&s.to_string_lossy()),
+			_ => false,
+		};
+		if !skip {
+			out.set(k, v)?;
+		}
+	}
+
+	Ok(Value::Table(out))
+}
+
+///
 /// Return a new record containing only the specified keys and remove them from the original record (in-place).
 ///
 /// - Missing keys are ignored.
