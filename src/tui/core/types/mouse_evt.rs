@@ -1,4 +1,4 @@
-use crossterm::event::{MouseEvent, MouseEventKind};
+use crossterm::event::{KeyModifiers, MouseEvent, MouseEventKind};
 use ratatui::layout::{Position, Rect};
 
 /// The application mouse event
@@ -52,6 +52,10 @@ impl MouseEvt {
 			MouseEventKind::Up(_) => true,
 			_ => false,
 		}
+	}
+
+	pub fn is_up_only(&self) -> bool {
+		self.mouse_event.modifiers == KeyModifiers::NONE && matches!(self.mouse_event.kind, MouseEventKind::Up(_))
 	}
 }
 

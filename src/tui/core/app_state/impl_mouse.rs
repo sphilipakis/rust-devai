@@ -30,8 +30,8 @@ impl AppState {
 	}
 
 	#[allow(unused)]
-	pub fn is_mouse_up(&self) -> bool {
-		self.core.mouse_evt.is_some_and(|m| m.is_up())
+	pub fn is_mouse_up_only(&self) -> bool {
+		self.core.mouse_evt.is_some_and(|m| m.is_up_only())
 	}
 }
 

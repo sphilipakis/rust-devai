@@ -126,7 +126,7 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 				}
 			}
 
-			if state.is_mouse_up() {
+			if state.is_mouse_up_only() {
 				state.set_action(action);
 				state.trigger_redraw();
 				state.clear_mouse_evts();
