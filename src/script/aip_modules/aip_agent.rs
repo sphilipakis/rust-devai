@@ -164,7 +164,7 @@ pub fn aip_agent_run(
 ///
 /// - `model`
 /// - `model_aliases`
-/// - `input_comcurrency`
+/// - `input_concurrency`
 /// - `temperature`
 ///
 /// Other properties are ignored. If the input `value` is `nil` or not a table,
@@ -184,7 +184,7 @@ pub fn aip_agent_extract_options(lua: &Lua, value: Value) -> mlua::Result<Value>
 			let result_table = lua.create_table()?;
 
 			// List of keys to copy
-			let keys_to_copy = ["model", "model_aliases", "input_comcurrency", "temperature", "top_p"];
+			let keys_to_copy = ["model", "model_aliases", "input_concurrency", "temperature", "top_p"];
 
 			for key in keys_to_copy.iter() {
 				if let Some(val) = table.x_get_value(key)
