@@ -122,14 +122,25 @@ impl LinkZone {
 		spans: &'a mut [Span<'static>],
 	) -> Option<&'a mut [Span<'static>]> {
 		let mouse_evt = mouse_evt?;
+
+		// Ensure the zone line is within the visible body area rows.
+		let line_idx = self.line_idx;
+		let scroll_usize = scroll as usize;
+		let visible_top = scroll_usize;
+		let visible_bottom = scroll_usize + ref_area.height as usize;
+		if line_idx < visible_top || line_idx >= visible_bottom {
+			return None;
+		}
+
 		let before_spans = spans.get(0..self.span_start)?;
 		let before_width = before_spans.x_width();
 
 		let zone_spans = spans.get_mut(self.span_start..self.span_start + self.span_count)?;
 
+		let visible_row = (line_idx - scroll_usize) as u16;
 		let zone_area = Rect {
 			x: ref_area.x + before_width,
-			y: ref_area.y + self.line_idx as u16 - scroll, // not sure why +1
+			y: ref_area.y + visible_row,
 			width: zone_spans.x_width(),
 			height: 1,
 		};
