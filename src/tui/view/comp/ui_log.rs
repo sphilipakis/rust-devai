@@ -72,7 +72,9 @@ pub fn ui_for_logs_with_hover<'a>(
 
 	for log in logs {
 		// -- Filter by stage if provided
-		if let Some(s) = stage && log.stage != Some(s) {
+		if let Some(s) = stage
+			&& log.stage != Some(s)
+		{
 			continue;
 		}
 
@@ -90,7 +92,7 @@ pub fn ui_for_logs_with_hover<'a>(
 
 		let lines = super::ui_for_log(log, max_width);
 		let base_idx = all_lines.len();
-		let is_hover_target = is_print_or_ping(log);
+		let is_hover_target = is_hover_log(log);
 
 		// Start a section group for multi-line hover when eligible.
 		let section_gid = if is_hover_target {
@@ -124,9 +126,10 @@ pub fn ui_for_logs_with_hover<'a>(
 	all_lines
 }
 
-pub fn is_print_or_ping(log: &Log) -> bool {
+pub fn is_hover_log(log: &Log) -> bool {
 	match log.kind {
 		Some(LogKind::AgentPrint) => true,
+		Some(LogKind::AgentSkip) => true,
 		Some(LogKind::SysInfo) => {
 			if let Some(msg) = log.message.as_deref() {
 				msg.to_ascii_lowercase().contains("ping")
