@@ -6,6 +6,7 @@ use crate::store::base::DbBmc;
 use crate::store::base::prep_fields::prep_fields_for_create;
 use crate::store::base::prep_fields::prep_fields_for_create_uid_included;
 use crate::store::base::prep_fields::prep_fields_for_update;
+use crate::support::consts;
 use modql::SqliteFromRow;
 use modql::field::HasSqliteFields;
 use modql::field::SqliteFields;
@@ -223,7 +224,7 @@ where
 	E: HasSqliteFields,
 {
 	let list_options = list_options.unwrap_or_default();
-	let limit = list_options.limit.unwrap_or(300);
+	let limit = list_options.limit.unwrap_or(consts::DEFAULT_LIST_LIMIT);
 	let order_by = list_options
 		.order_bys
 		.map(|ob| ob.join_for_sql())
