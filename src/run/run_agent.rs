@@ -6,7 +6,7 @@ use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
 use crate::run::run_agent_task::run_agent_task_outer;
 use crate::run::{RunAgentResponse, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::store::rt_model::{LogKind, RuntimeCtx};
+use crate::store::rt_model::{LogKind, RuntimeCtx, TaskForCreate};
 use crate::store::{Id, Stage};
 use crate::{Error, Result};
 use serde_json::Value;
@@ -260,11 +260,24 @@ async fn run_tasks(
 	let mut in_progress = 0;
 
 	// -- Rt Create all tasks (with their input)
-	let mut input_idx_task_id_list: Vec<(Value, usize, Id)> = Vec::new();
-	for (idx, input) in inputs.iter().cloned().enumerate() {
-		let task_id = rt_model.create_task(run_id, idx, &input).await?;
-		input_idx_task_id_list.push((input, idx, task_id));
-	}
+	// Build tasks-for-create for batch insertion to reduce events and improve performance.
+	let tasks_for_create: Vec<TaskForCreate> = inputs
+		.iter()
+		.enumerate()
+		.map(|(idx, input)| TaskForCreate::new_with_input(run_id, idx as i64, None, input))
+		.collect();
+
+	// Create all tasks in one operation; ids are returned in input order.
+	let task_ids: Vec<Id> = rt_model.create_tasks_batch(run_id, tasks_for_create).await?;
+
+	// Pair each original input with its corresponding index and created task id.
+	let input_idx_task_id_list: Vec<(Value, usize, Id)> = inputs
+		.iter()
+		.cloned()
+		.zip(task_ids.into_iter())
+		.enumerate()
+		.map(|(idx, (input, task_id))| (input, idx, task_id))
+		.collect();
 
 	// -- Iterate and run each task (concurrency as setup)
 	for (input, task_idx, task_id) in input_idx_task_id_list {

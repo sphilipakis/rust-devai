@@ -151,6 +151,14 @@ impl<'a> RtModel<'a> {
 		Ok(id)
 	}
 
+	pub async fn create_tasks_batch(&self, run_id: Id, items: Vec<TaskForCreate>) -> Result<Vec<Id>> {
+		// Defensive: ensure all items are for the same run to keep the API predictable at call sites.
+		debug_assert!(items.iter().all(|t| t.run_id == run_id));
+
+		let ids = TaskBmc::create_batch(self.mm(), items)?;
+		Ok(ids)
+	}
+
 	pub async fn update_task_model_ov(&self, _run_id: Id, task_id: Id, model_name_ov: &str) -> Result<()> {
 		let task_u = TaskForUpdate {
 			model_ov: Some(model_name_ov.to_string()),

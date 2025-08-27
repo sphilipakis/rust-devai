@@ -193,6 +193,64 @@ where
 	Ok(id)
 }
 
+/// Batch create with a single transaction and a single publish event.
+/// Returns created ids in input order.
+pub fn batch_create<MC>(mm: &ModelManager, mut items: Vec<SqliteFields>) -> Result<Vec<Id>>
+where
+	MC: DbBmc,
+{
+	if items.is_empty() {
+		return Ok(Vec::new());
+	}
+
+	// Prepare each row fields (adds uid/ctime/mtime and table-specific defaults)
+	for fields in items.iter_mut() {
+		prep_fields_for_create::<MC>(fields);
+	}
+
+	let db = mm.db();
+	let mut ids: Vec<Id> = Vec::with_capacity(items.len());
+
+	// Single transaction for atomicity and performance
+	db.exec("BEGIN", ())?;
+	let mut committed = false;
+	let res = (|| -> Result<Vec<Id>> {
+		for fields in items.into_iter() {
+			let sql = format!(
+				"INSERT INTO {} ({}) VALUES ({}) RETURNING id",
+				MC::table_ref(),
+				fields.sql_columns(),
+				fields.sql_placeholders()
+			);
+
+			let values = fields.values_as_dyn_to_sql_vec();
+			let id = db.exec_returning_num(&sql, &*values)?;
+			ids.push(id.into());
+		}
+
+		db.exec("COMMIT", ())?;
+		committed = true;
+
+		get_hub().publish_rt_model_change_sync();
+
+		Ok(ids)
+	})();
+
+	if !committed {
+		let _ = db.exec("ROLLBACK", ());
+	}
+
+	res
+}
+
+/// Helper to convert a Vec<T> into Vec<SqliteFields> using sqlite_not_none_fields().
+pub fn map_items_to_sqlite_fields<T>(items: Vec<T>) -> Vec<SqliteFields>
+where
+	T: HasSqliteFields,
+{
+	items.into_iter().map(|it| it.sqlite_not_none_fields()).collect()
+}
+
 #[allow(unused)]
 pub fn first<MC, E>(
 	mm: &ModelManager,

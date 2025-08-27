@@ -72,6 +72,25 @@ pub struct TaskForCreate {
 	pub input_content: Option<TypedContent>,
 }
 
+// region:    --- TaskForCreate Impl
+
+impl TaskForCreate {
+	pub fn new(run_id: Id, idx: i64, label: Option<String>, input_content: Option<TypedContent>) -> Self {
+		Self {
+			run_id,
+			idx,
+			label,
+			input_content,
+		}
+	}
+
+	pub fn new_with_input(run_id: Id, idx: i64, label: Option<String>, input: &serde_json::Value) -> Self {
+		Self::new(run_id, idx, label, Some(TypedContent::from_value(input)))
+	}
+}
+
+// endregion: --- TaskForCreate Impl
+
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct TaskForUpdate {
 	// -- Step Timestamps
@@ -247,6 +266,28 @@ impl TaskBmc {
 	pub fn list(mm: &ModelManager, list_options: Option<ListOptions>, filter: Option<TaskFilter>) -> Result<Vec<Task>> {
 		let filter_fields = filter.map(|f| f.sqlite_not_none_fields());
 		base::list::<Self, _>(mm, list_options, filter_fields)
+	}
+
+	/// Batch create tasks in a single transaction.
+	/// Returns created ids in input order. Post-insert, applies input_content logic per task.
+	pub fn create_batch(mm: &ModelManager, mut items: Vec<TaskForCreate>) -> Result<Vec<Id>> {
+		// Extract and consume input_content to preserve it while building SqliteFields
+		let input_contents: Vec<Option<TypedContent>> = items.iter_mut().map(|t| t.input_content.take()).collect();
+
+		// Build fields for batch insert (input_content is #[field(skip)], so not included)
+		let items_fields = base::map_items_to_sqlite_fields(items);
+
+		// Batch insert tasks
+		let ids = base::batch_create::<Self>(mm, items_fields)?;
+
+		// Apply input handling per task (short/display + inout record when needed)
+		for (id, may_input) in ids.iter().cloned().zip(input_contents.into_iter()) {
+			if let Some(input) = may_input {
+				Self::update_input(mm, id, input)?;
+			}
+		}
+
+		Ok(ids)
 	}
 }
 
