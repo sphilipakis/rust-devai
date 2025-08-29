@@ -2920,6 +2920,9 @@ aip.time.weekday_utc(): string            -- weekday name (UTC)
 
 aip.time.weekday_local(): string          -- weekday name (local)
 -- e.g., "Saturday"
+
+aip.time.local_tz_id(): string            -- IANA timezone id for local zone
+-- e.g., "America/Los_Angeles"
 ```
 
 ## aip.lua

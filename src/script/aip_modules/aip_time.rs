@@ -41,13 +41,17 @@
 //!
 //! aip.time.weekday_local(): string          -- weekday name (local)
 //! -- e.g., "Saturday"
+//!
+//! aip.time.local_tz_id(): string            -- IANA timezone id for local zone
+//! -- e.g., "America/Los_Angeles"
 //! ```
-
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::support;
 use mlua::{Lua, Table, Value};
 use time::{OffsetDateTime, UtcOffset};
+use time_tz::TimeZone as _;
+use time_tz::system::get_timezone;
 
 /// Initializes the `time` Lua module.
 ///
@@ -68,6 +72,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	table.set("today_iso_local", lua.create_function(lua_today_iso_local)?)?;
 	table.set("weekday_utc", lua.create_function(lua_weekday_utc)?)?;
 	table.set("weekday_local", lua.create_function(lua_weekday_local)?)?;
+	table.set("local_tz_id", lua.create_function(lua_local_tz_id)?)?;
 
 	Ok(table)
 }
@@ -146,6 +151,12 @@ fn lua_weekday_local(lua: &Lua, _: ()) -> mlua::Result<Value> {
 	let local_offset = UtcOffset::current_local_offset().map_err(mlua::Error::external)?;
 	let weekday = format!("{:?}", now_utc.to_offset(local_offset).date().weekday());
 	let s = lua.create_string(&weekday)?;
+	Ok(Value::String(s))
+}
+
+fn lua_local_tz_id(lua: &Lua, _: ()) -> mlua::Result<Value> {
+	let tz_id = get_timezone().map(|tz| tz.name()).unwrap_or("UTC");
+	let s = lua.create_string(tz_id)?;
 	Ok(Value::String(s))
 }
 
@@ -289,6 +300,20 @@ mod tests {
 			let s = s.as_str().ok_or("Should be string")?;
 			assert!(valid_weekdays.contains(&s), "Invalid weekday: {s}");
 		}
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_time_local_tz_id() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_time::init_module, LUA_MOD_NAME).await?;
+
+		// -- Exec
+		let res = eval_lua(&lua, r#"return aip.time.local_tz_id()"#)?;
+
+		// -- Check
+		let s = res.as_str().ok_or("Should be string")?;
+		assert!(!s.is_empty());
 		Ok(())
 	}
 }
