@@ -1,6 +1,5 @@
 //! Defines the `aip.shape` helpers used in the Lua engine.
 //!
-//! ---
 //!
 //! ## Lua documentation
 //!
@@ -10,14 +9,18 @@
 //!
 //! - `aip.shape.to_record(names: string[], values: any[]) -> table`
 //! - `aip.shape.to_records(names: string[], rows: any[][]) -> table[]`
-//! - `aip.shape.columns_to_records(cols: { [string]: any[] }): table[]`
+//! - `aip.shape.record_to_values(record: table, names?: string[]): any[]`
+//! - `aip.shape.columnar_to_records(cols: { [string]: any[] }): table[]`
+//! - `aip.shape.records_to_columnar(recs: table[]): { [string]: any[] }`
 //!
 
 use crate::Error;
 use mlua::{Lua, Table, Value};
 
+use crate::script::lua_na::NASentinel;
+
 /// ## Lua Documentation
-/// ---
+///
 /// Build a single record (row object) from a list of column names and a list of values.
 ///
 /// ```lua
@@ -26,6 +29,7 @@ use mlua::{Lua, Table, Value};
 /// ```
 ///
 /// ### Example:
+///
 /// ```lua
 /// local names  = { "id", "name", "email" }
 /// local values = { 1, "Alice", "alice@example.com" }
@@ -94,7 +98,7 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 }
 
 /// ## Lua Documentation
-/// ---
+///
 /// Build multiple records (row objects) from a list of column names and a list of rows.
 ///
 /// ```lua
@@ -111,6 +115,20 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 /// - If `names` contains a non-string entry, an error is returned.
 /// - If any row is not a table (list), an error is returned.
 ///
+/// ### Example
+///
+/// ```lua
+/// local names = { "id", "name" }
+/// local rows  = {
+///   { 1, "Alice" },
+///   { 2, "Bob"   },
+/// }
+/// local out = aip.shape.to_records(names, rows)
+/// -- out == {
+/// --   { id = 1, name = "Alice" },
+/// --   { id = 2, name = "Bob"   },
+/// -- }
+/// ```
 pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 	// Validate and collect column names as strings
 	let mut name_vec: Vec<mlua::String> = Vec::new();
@@ -168,12 +186,89 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 }
 
 /// ## Lua Documentation
-/// ---
+///
+/// Convert a single record into an array (Lua list) of values.
+///
+/// ```lua
+/// -- API Signature
+/// aip.shape.record_to_values(record: table, names?: string[]): any[]
+/// ```
+///
+/// - When `names` is provided, values are returned in the order of `names`.
+///   - Missing keys yield `NA` sentinel entries in the result list.
+///   - If `names` contains a non-string entry, an error is returned.
+/// - When `names` is not provided, values are returned in alphabetical order of the record's string keys.
+///   - Non-string keys are ignored.
+///
+/// ### Examples
+///
+/// ```lua
+/// local rec = { id = 1, name = "Alice", email = "a@x.com" }
+/// local v1  = aip.shape.record_to_values(rec)                
+/// -- { 1, "a@x.com", "Alice" } (alpha by keys: email, id, name)
+///
+/// local v2  = aip.shape.record_to_values(rec, { "name", "id", "missing" })
+/// -- { "Alice", 1, NA }
+/// ```
+pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua::Result<Value> {
+	let out = lua.create_table()?;
+
+	match names_opt {
+		Some(names) => {
+			let mut idx = 1usize;
+
+			for (i, name_val) in names.sequence_values::<Value>().enumerate() {
+				let name_val = name_val?;
+				let name_str = match name_val {
+					Value::String(s) => s,
+					other => {
+						return Err(Error::custom(format!(
+							"aip.shape.record_to_values - Column names must be strings. Found '{}' at index {}",
+							other.type_name(),
+							i + 1
+						))
+						.into());
+					}
+				};
+
+				let val: Value = rec.get(name_str)?;
+				if let Value::Nil = val {
+					let na = lua.create_userdata(NASentinel)?;
+					out.set(idx, na)?;
+				} else {
+					out.set(idx, val)?;
+				}
+				idx += 1;
+			}
+		}
+		None => {
+			// Collect string keys and sort them
+			let mut keys: Vec<String> = Vec::new();
+			for pair in rec.pairs::<Value, Value>() {
+				let (k, _v) = pair?;
+				if let Value::String(s) = k {
+					keys.push(s.to_string_lossy());
+				}
+			}
+			keys.sort();
+
+			for (i, k) in keys.iter().enumerate() {
+				let v: Value = rec.get(k.as_str())?;
+				out.set(i + 1, v)?;
+			}
+		}
+	}
+
+	Ok(Value::Table(out))
+}
+
+/// ## Lua Documentation
+///
 /// Convert a column-oriented table into a list of row records.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.columns_to_records(cols: { [string]: any[] }): table[]
+/// aip.shape.columnar_to_records(cols: { [string]: any[] }): table[]
 /// ```
 ///
 /// - All keys in `cols` must be strings (column names).
@@ -181,20 +276,21 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 /// - All columns must have the same length; otherwise an error is returned.
 ///
 /// ### Example:
+///
 /// ```lua
 /// local cols = {
 ///   id    = { 1, 2, 3 },
 ///   name  = { "Alice", "Bob", "Cara" },
 ///   email = { "a@x.com", "b@x.com", "c@x.com" },
 /// }
-/// local recs = aip.shape.columns_to_records(cols)
+/// local recs = aip.shape.columnar_to_records(cols)
 /// -- recs == {
 /// --   { id = 1, name = "Alice", email = "a@x.com" },
 /// --   { id = 2, name = "Bob",   email = "b@x.com" },
 /// --   { id = 3, name = "Cara",  email = "c@x.com" },
 /// -- }
 /// ```
-pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
+pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 	// Collect column names and their values (as vectors)
 	let mut col_names: Vec<mlua::String> = Vec::new();
 	let mut col_values: Vec<Vec<Value>> = Vec::new();
@@ -208,7 +304,7 @@ pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 			Value::String(s) => s,
 			other => {
 				return Err(Error::custom(format!(
-					"aip.shape.columns_to_records - Column keys must be strings. Found '{}'",
+					"aip.shape.columnar_to_records - Column keys must be strings. Found '{}'",
 					other.type_name()
 				))
 				.into());
@@ -220,7 +316,7 @@ pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 			Value::Table(t) => t,
 			other => {
 				return Err(Error::custom(format!(
-					"aip.shape.columns_to_records - Each column must be a table (list). Column '{}' was '{}'",
+					"aip.shape.columnar_to_records - Each column must be a table (list). Column '{}' was '{}'",
 					key_str.to_string_lossy(),
 					other.type_name()
 				))
@@ -239,7 +335,7 @@ pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 		if let Some(exp) = expected_len {
 			if len != exp {
 				return Err(Error::custom(format!(
-					"aip.shape.columns_to_records - All columns must have the same length. Column '{}' has length {}, expected {}",
+					"aip.shape.columnar_to_records - All columns must have the same length. Column '{}' has length {}, expected {}",
 					key_str.to_string_lossy(),
 					len,
 					exp
@@ -274,19 +370,32 @@ pub fn columns_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 }
 
 /// ## Lua Documentation
-/// ---
+///
 /// Convert a list of record tables into a column-oriented table.
 /// Uses the intersection of string keys present across all records to ensure rectangular output.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.records_to_columns(recs: table[]): { [string]: any[] }
+/// aip.shape.records_to_columnar(recs: table[]): { [string]: any[] }
 /// ```
 ///
 /// - Each record must be a table.
 /// - All keys must be strings; if any non-string key is found, an error is returned.
 /// - The output contains only the keys present in every record (set intersection).
-pub fn records_to_columns(lua: &Lua, recs: Table) -> mlua::Result<Value> {
+/// ### Example
+///
+/// ```lua
+/// local recs = {
+///   { id = 1, name = "Alice" },
+///   { id = 2, name = "Bob"   },
+/// }
+/// local cols = aip.shape.records_to_columnar(recs)
+/// -- cols == {
+/// --   id   = { 1, 2 },
+/// --   name = { "Alice", "Bob" },
+/// -- }
+/// ```
+pub fn records_to_columnar(lua: &Lua, recs: Table) -> mlua::Result<Value> {
 	use std::collections::{BTreeSet, HashSet};
 
 	// Collect rows as tables, validating each entry
@@ -297,7 +406,7 @@ pub fn records_to_columns(lua: &Lua, recs: Table) -> mlua::Result<Value> {
 			Value::Table(t) => t,
 			other => {
 				return Err(Error::custom(format!(
-					"aip.shape.records_to_columns - Each record must be a table. Found '{}'",
+					"aip.shape.records_to_columnar - Each record must be a table. Found '{}'",
 					other.type_name()
 				))
 				.into());
@@ -324,7 +433,7 @@ pub fn records_to_columns(lua: &Lua, recs: Table) -> mlua::Result<Value> {
 				Value::String(s) => s.to_string_lossy(),
 				other => {
 					return Err(Error::custom(format!(
-						"aip.shape.records_to_columns - Record keys must be strings. Found key of type '{}'",
+						"aip.shape.records_to_columnar - Record keys must be strings. Found key of type '{}'",
 						other.type_name()
 					))
 					.into());
@@ -359,8 +468,6 @@ pub fn records_to_columns(lua: &Lua, recs: Table) -> mlua::Result<Value> {
 
 	Ok(Value::Table(out))
 }
-
-
 
 // region:    --- Tests
 
@@ -586,7 +693,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_columns_to_records_simple() -> Result<()> {
+	async fn test_lua_aip_shape_columnar_to_records_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -595,7 +702,7 @@ mod tests {
               name  = { "Alice", "Bob", "Cara" },
               email = { "a@x.com", "b@x.com", "c@x.com" },
             }
-            return aip.shape.columns_to_records(cols)
+            return aip.shape.columnar_to_records(cols)
         "#;
 
 		// -- Exec
@@ -613,7 +720,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_columns_to_records_len_mismatch_err() -> Result<()> {
+	async fn test_lua_aip_shape_columnar_to_records_len_mismatch_err() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -622,7 +729,7 @@ mod tests {
               name = { "Alice" }, -- mismatch length
             }
             local ok, err = pcall(function()
-              return aip.shape.columns_to_records(cols)
+              return aip.shape.columnar_to_records(cols)
             end)
             if ok then
               return "should not reach"
@@ -641,14 +748,14 @@ mod tests {
 		let err_str = err.to_string();
 		assert_contains(
 			&err_str,
-			"aip.shape.columns_to_records - All columns must have the same length",
+			"aip.shape.columnar_to_records - All columns must have the same length",
 		);
 
 		Ok(())
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_records_to_columns_simple() -> Result<()> {
+	async fn test_lua_aip_shape_records_to_columnar_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -656,7 +763,7 @@ mod tests {
 			  { id = 1, name = "Alice" },
 			  { id = 2, name = "Bob" },
 			}
-			return aip.shape.records_to_columns(recs)
+			return aip.shape.records_to_columnar(recs)
 		"#;
 
 		// -- Exec
@@ -673,7 +780,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_records_to_columns_intersection() -> Result<()> {
+	async fn test_lua_aip_shape_records_to_columnar_intersection() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -681,7 +788,7 @@ mod tests {
 			  { id = 1, name = "Alice", email = "a@x.com" },
 			  { id = 2, name = "Bob" }, -- missing email
 			}
-			return aip.shape.records_to_columns(recs)
+			return aip.shape.records_to_columnar(recs)
 		"#;
 
 		// -- Exec
@@ -699,7 +806,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_records_to_columns_row_not_table_err() -> Result<()> {
+	async fn test_lua_aip_shape_records_to_columnar_row_not_table_err() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -708,7 +815,7 @@ mod tests {
 			  "INVALID_ROW"
 			}
 			local ok, err = pcall(function()
-			  return aip.shape.records_to_columns(recs)
+			  return aip.shape.records_to_columnar(recs)
 			end)
 			if ok then
 			  return "should not reach"
@@ -725,13 +832,13 @@ mod tests {
 			panic!("Expected error, got {res:?}");
 		};
 		let err_str = err.to_string();
-		assert_contains(&err_str, "aip.shape.records_to_columns - Each record must be a table");
+		assert_contains(&err_str, "aip.shape.records_to_columnar - Each record must be a table");
 
 		Ok(())
 	}
 
 	#[tokio::test]
-	async fn test_lua_aip_shape_records_to_columns_non_string_key_err() -> Result<()> {
+	async fn test_lua_aip_shape_records_to_columnar_non_string_key_err() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "shape").await?;
 		let script = r#"
@@ -742,7 +849,7 @@ mod tests {
 			end
 			local recs = { make_bad() }
 			local ok, err = pcall(function()
-			  return aip.shape.records_to_columns(recs)
+			  return aip.shape.records_to_columnar(recs)
 			end)
 			if ok then
 			  return "should not reach"
@@ -759,18 +866,10 @@ mod tests {
 			panic!("Expected error, got {res:?}");
 		};
 		let err_str = err.to_string();
-		assert_contains(&err_str, "aip.shape.records_to_columns - Record keys must be strings");
+		assert_contains(&err_str, "aip.shape.records_to_columnar - Record keys must be strings");
 
 		Ok(())
 	}
-
-
-
-
-
-
-
-
 }
 
 // endregion: --- Tests

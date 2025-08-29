@@ -11,6 +11,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
+use crate::script::lua_na::NASentinel;
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -112,7 +113,13 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 				let name = f.info().name.unwrap_or("<anonymous>".to_string());
 				Ok(format!("<function {name}>"))
 			}
-			Value::UserData(_) => Ok("<UserData>".to_string()),
+			Value::UserData(ud) => {
+				if ud.is::<NASentinel>() {
+					Ok("NA".into())
+				} else {
+					Ok("<UserData>".into())
+				}
+			}
 			Value::LightUserData(_) => Ok("<LightUserData>".to_string()),
 			Value::Thread(_) => Ok("<Thread>".to_string()),
 			_ => Ok("<OtherType>".to_string()),

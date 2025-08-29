@@ -4,6 +4,7 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::{aip_lua, aip_pin};
 use crate::script::lua_json::serde_value_to_lua_value;
+use crate::script::lua_na::NASentinel;
 use crate::script::support::process_lua_eval_result;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
 use mlua::{IntoLua, Lua, Table, Value};
@@ -33,15 +34,8 @@ impl LuaEngine {
 		// -- init utils (now under 'aip' namespace, and kept the 'utils')
 		init_aip(&lua, &runtime)?;
 
-		// -- backward compatibility "<=0.6.8"
-		let globals = lua.globals();
-		if let Ok(flow) = globals.get::<Table>("aip").and_then(|v| v.get::<Table>("flow")) {
-			// TODO: will need to integrate trace or something like it
-			let _ = globals.set("aipack", flow);
-		}
-
-		// -- init aipack (TODO: ths will need to be below the 'aip' namespace, once we find good submodule space)
-		// super::aip_flow::init_module(&lua, &runtime)?;
+		// -- Set NA
+		init_na(&lua)?;
 
 		// -- Init print
 		init_print(&runtime, &lua)?;
@@ -176,6 +170,17 @@ impl LuaEngine {
 		Ok(scope)
 	}
 }
+
+// region:    --- NA
+
+fn init_na(lua: &Lua) -> Result<()> {
+	let na = lua.create_userdata(NASentinel)?;
+	// Expose globally (optional)
+	lua.globals().set("NA", na.clone())?;
+	Ok(())
+}
+
+// endregion: --- NA
 
 // region:    --- Init Print
 
