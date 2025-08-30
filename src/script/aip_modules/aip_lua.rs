@@ -11,7 +11,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::lua_na::NASentinel;
+use crate::script::lua_null::NullSentinel;
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -114,8 +114,8 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 				Ok(format!("<function {name}>"))
 			}
 			Value::UserData(ud) => {
-				if ud.is::<NASentinel>() {
-					Ok("NA".into())
+				if let Ok(ns) = ud.borrow::<NullSentinel>() {
+					Ok(ns.to_string())
 				} else {
 					Ok("<UserData>".into())
 				}

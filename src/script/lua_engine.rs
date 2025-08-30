@@ -4,7 +4,7 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::{aip_lua, aip_pin};
 use crate::script::lua_json::serde_value_to_lua_value;
-use crate::script::lua_na::NASentinel;
+use crate::script::lua_null::NullSentinel;
 use crate::script::support::process_lua_eval_result;
 use crate::store::rt_model::{LogKind, RuntimeCtx};
 use mlua::{IntoLua, Lua, Table, Value};
@@ -35,7 +35,7 @@ impl LuaEngine {
 		init_aip(&lua, &runtime)?;
 
 		// -- Set NA
-		init_na(&lua)?;
+		init_null(&lua)?;
 
 		// -- Init print
 		init_print(&runtime, &lua)?;
@@ -171,16 +171,17 @@ impl LuaEngine {
 	}
 }
 
-// region:    --- NA
+// region:    --- null
 
-fn init_na(lua: &Lua) -> Result<()> {
-	let na = lua.create_userdata(NASentinel)?;
+fn init_null(lua: &Lua) -> Result<()> {
+	let null = lua.create_userdata(NullSentinel)?;
 	// Expose globally (optional)
-	lua.globals().set("NA", na.clone())?;
+	lua.globals().set("null", null.clone())?;
+	lua.globals().set("Null", null.clone())?;
 	Ok(())
 }
 
-// endregion: --- NA
+// endregion: --- null
 
 // region:    --- Init Print
 

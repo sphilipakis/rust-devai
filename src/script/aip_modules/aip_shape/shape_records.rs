@@ -17,7 +17,7 @@
 use crate::Error;
 use mlua::{Lua, Table, Value};
 
-use crate::script::lua_na::NASentinel;
+use crate::script::lua_null::NullSentinel;
 
 /// ## Lua Documentation
 ///
@@ -195,7 +195,7 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 /// ```
 ///
 /// - When `names` is provided, values are returned in the order of `names`.
-///   - Missing keys yield `NA` sentinel entries in the result list.
+///   - Missing keys yield `null` sentinel entries in the result list.
 ///   - If `names` contains a non-string entry, an error is returned.
 /// - When `names` is not provided, values are returned in alphabetical order of the record's string keys.
 ///   - Non-string keys are ignored.
@@ -208,7 +208,7 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 /// -- { 1, "a@x.com", "Alice" } (alpha by keys: email, id, name)
 ///
 /// local v2  = aip.shape.record_to_values(rec, { "name", "id", "missing" })
-/// -- { "Alice", 1, NA }
+/// -- { "Alice", 1, null }
 /// ```
 pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua::Result<Value> {
 	let out = lua.create_table()?;
@@ -233,7 +233,7 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 
 				let val: Value = rec.get(name_str)?;
 				if let Value::Nil = val {
-					let na = lua.create_userdata(NASentinel)?;
+					let na = lua.create_userdata(NullSentinel)?;
 					out.set(idx, na)?;
 				} else {
 					out.set(idx, val)?;

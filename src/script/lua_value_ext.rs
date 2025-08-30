@@ -5,7 +5,7 @@ use mlua::{BorrowedStr, Table, Value};
 /// TODO: Will need to handle the case where the found value is not of correct type. Probably should return `Result<Option<>>`
 #[allow(unused)]
 pub trait LuaValueExt {
-	fn x_is_na(&self) -> bool;
+	fn x_is_null(&self) -> bool;
 
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>>;
 	/// Note: Will round if floating number
@@ -22,9 +22,9 @@ pub trait LuaValueExt {
 }
 
 impl LuaValueExt for Value {
-	fn x_is_na(&self) -> bool {
+	fn x_is_null(&self) -> bool {
 		match self {
-			Value::UserData(ud) => ud.is::<crate::script::lua_na::NASentinel>(),
+			Value::UserData(ud) => ud.is::<crate::script::lua_null::NullSentinel>(),
 			_ => false,
 		}
 	}
@@ -84,11 +84,11 @@ impl LuaValueExt for Value {
 }
 
 impl LuaValueExt for Option<Value> {
-	fn x_is_na(&self) -> bool {
+	fn x_is_null(&self) -> bool {
 		let Some(val) = self.as_ref() else { return false };
 
 		match val {
-			Value::UserData(ud) => ud.is::<crate::script::lua_na::NASentinel>(),
+			Value::UserData(ud) => ud.is::<crate::script::lua_null::NullSentinel>(),
 			_ => false,
 		}
 	}
@@ -127,7 +127,7 @@ impl LuaValueExt for Option<Value> {
 }
 
 impl LuaValueExt for Table {
-	fn x_is_na(&self) -> bool {
+	fn x_is_null(&self) -> bool {
 		false
 	}
 
