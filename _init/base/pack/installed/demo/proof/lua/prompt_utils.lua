@@ -1,3 +1,20 @@
+local PROMPT_TEMPLATE = [[
+```toml
+#!meta
+# model name. e.g., gpt-5-mini, gemini-2.5-flash-lite (super fast & cheap), any models supported by AIPACK
+model = "gpt-5-mini"
+```
+
+Do not add em dash (—), use a comma. Do not use dashes as sentence separators, never.
+
+Do not change the line layout, and keep single empty lines.
+
+Make it sound American.
+
+====
+> Placeholder: Replace this line and below with your content to be proofread.
+]]
+
 -- Returns FileRecord
 function prep_prompt_file(input, options) 
   options = options or {}
@@ -12,7 +29,7 @@ function prep_prompt_file(input, options)
     prompt_path = default_prompt_path
   elseif type(input) == "string" then
       -- remove the trailing /
-      prompt_path =  input:gsub("/+$", "")
+      prompt_path = input:gsub("/+$", "")
       prompt_path = aip.text.ensure(input, {prefix = "./", suffix = "/prompt.md"})
   else
       prompt_path = input.path
@@ -24,11 +41,7 @@ function prep_prompt_file(input, options)
   -- Create placeholder initial content
   -- (otherwise, the initial content will be)
   if placeholder_suffix ~= nil then 
-    local placeholder_content = "placeholder - " .. placeholder_suffix
-    if add_separator then
-      placeholder_content = placeholder_content .. " \n\n====\n\n"
-    end
-    initial_content = placeholder_content
+    initial_content = PROMPT_TEMPLATE
   else 
     if initial_content == nil then
       initial_content = ""
@@ -53,14 +66,14 @@ function should_skip(inst, content)
   content = content and aip.text.trim(content) or ""
 
   if inst == "" and content == "" then
-    return aipack.skip("Empty content and instructions - Start writing, and do a redo.")
+    return aip.skip("Empty content and instructions - Start writing, and do a redo.")
   end
 
   local first_part = (inst ~= "" and inst) or content
 
   -- if starts with placeholder
-  if first_part:sub(1, 11):lower() == "placeholder" then
-      return aipack.skip("Content is a placeholder, so skipping for now")
+  if content and content:sub(1, 13):lower() == "> placeholder" then
+      return aip.flow.skip("Content is a placeholder, so skipping for now")
   end 
 
   return nil

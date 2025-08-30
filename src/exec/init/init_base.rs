@@ -5,7 +5,7 @@ use crate::dir_context::{
 use crate::exec::init::assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
-use crate::support::files::safer_delete_dir;
+use crate::support::files::to_trash_delete_dir;
 use simple_fs::{SPath, ensure_dir};
 use std::fs::{self, write};
 use std::io::BufRead;
@@ -189,17 +189,26 @@ async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {
 	let mut change = false;
 
 	// -- clean the old ~aipack-base/doc
-	let doc_path = aipack_base_dir.join("doc");
-	if doc_path.exists() {
-		let is_delete = safer_delete_dir(&doc_path)?;
+	change = delete_aipack_base_folder(aipack_base_dir, "doc", change)?;
+
+	// -- clean pack/installed/core/ask-aipack
+	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/core/ask-aipack", change)?;
+
+	// -- clean pack/installed/core/ask-aipack
+	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/demo/craft", change)?;
+
+	Ok(change)
+}
+
+fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool) -> Result<bool> {
+	let full_path = aipack_base_dir.join(path);
+	if full_path.exists() {
+		let is_delete = to_trash_delete_dir(&full_path)?;
 		if is_delete {
-			get_hub()
-				.publish("-> legacy '~/.aipack-base/doc' dir deleted (now part of 'core@doc')".to_string())
-				.await;
+			get_hub().publish_sync(format!("-> legacy '~/.aipack-base/{path}' dir deleted."));
 		}
 
 		change |= is_delete;
 	}
-
 	Ok(change)
 }

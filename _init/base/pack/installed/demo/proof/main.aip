@@ -1,67 +1,130 @@
 # Description
 
-This agent is for proofreading general text files, such as markdown files.
+This agent is for proofing one or more documentas general text, such as emails, documents, or any text.
 
-> Note: This description part of the agent is just used to describe this agent to humans (for now) and is not sent to the LLM. Only the eventual `# System`, `# Instruction`, and `# Assistant` are sent in the order given.
-
-> Note 2: Google Gemini Flash 2 does not seem to listen to system instructions very well. So, it has to repeat the do not remove heading.
+- The input can be a string (with `-i quick-text`) or an existing file (`-f some/some-text.md`).
+    - When the input is a string, a `./` prefix and a `.md` suffix will be added if they are not present.
+    - If no input is given, the file `.aipack/.prompt/demo@proof/proof-prompt.md` will be used.
+    - If the path does not exist, placeholder content will be created for the file.
+- If the file content is empty, processing will be skipped with a message.
+- If the file has a `====` separator:
+    - The first part is the instruction.
+    - The second part is the content/code to which the instruction is applied.
+- If the file content has no `====`, the content is what needs to be proofread.
 
 # Data
 
 ```lua
--- We can do a git restore of the target file if we have good git commit discipline.
--- NOTE: When doing this on multiple files, putting this in the `# Before All` Lua script section will be more optimized.
--- aip.git.restore(input.path)
+local p_utils  = require("prompt_utils")
+local p_values = require("prompt_values")
 
--- Notes:
---   - input: This is the FileInfo (with .path, .name, .stem, .ext) for each file matching the -f glob.
---   - file::load(input.path) will return a FileRecord, including .content for the file's content.
---   - In Lua, to return a dictionary/object, use the notation `{ name = value, … }`.
+-- == Init the prompt file if needed
+local prompt_absolute_dir = CTX.WORKSPACE_AIPACK_DIR .. "/.prompt/" .. CTX.PACK_IDENTITY
+local prompt_file_path = prompt_absolute_dir .. "/proof-prompt.md"
 
-local file = aip.file.load(input.path)
+local prompt_file = p_utils.prep_prompt_file(input, {
+    default_prompt_path = prompt_file_path,
+    placeholder_suffix = p_values.text_prompt_template
+})
 
--- If the string is only whitespace, then it is empty, so skip.
-if not file.content:find("%S") then
-    return aipack.skip("Empty file - skipping for now. Start writing, and do a replay.")
+local prompt_file_rel_path = aip.path.diff(prompt_file.path, CTX.WORKSPACE_DIR)
+if #prompt_file_rel_path == 0 then
+    prompt_file_rel_path = prompt_file.path
+end
+print("Executing demo@craft/text on prompt file:\n➜ " .. prompt_file_rel_path )
+
+
+-- Split the content
+local first_part, content = p_utils.prep_inst_and_content(prompt_file.content, "====\n", {content_is_default = true})
+
+local meta = nil
+local inst = nil
+if first_part ~= nil then
+    -- extract the eventual #!meta params
+    meta, inst = aip.md.extract_meta(first_part)
 end
 
-return {
-    file = file
+local options = nil
+if meta then
+  options = {}
+  options.model_aliases = meta.model_aliases
+  options.model         = meta.model
+end
+
+local should_skip = p_utils.should_skip(inst, content)
+if should_skip ~= nil then
+    local pin = {
+        label = "Edit prompt:",
+        content = prompt_file_rel_path
+    }
+    aip.run.pin("notice", pin)
+    aip.task.pin("notice", pin)
+    return should_skip
+end
+
+local data = {
+    prompt_file_rel_path = prompt_file_rel_path,
+    first_part = first_part,
+    content    = content,
+    inst       = inst,
+    path       = prompt_file.path,
 }
+
+-- Return the processed data
+return aip.flow.data_response({
+    data    = data,
+    options = options,
+})
 ```
 
 # System
 
-You are a proofreading expert in English.
+Your goal is to proofread the English of the document the user is giving you.
 
-- Correct only grammar and sentence phrasing when necessary.
-- Do not remove `# ...` markdown headings from the content, even if there is only one heading.
-- Do not reformat the content; only fix grammatical and phrasing errors.
-- Do not modify HTML code, programming code, markdown code, layout, or any structural aspect of the documentation.
-- If the content includes code, do not alter the code itself—only correct the comments.
-- Preserve the exact layout, including empty lines and spacing.
-- When providing the corrected text, do not wrap it in a markdown code block or add any explanations.
+- Only correct grammar and phrasing when needed or as requested by the user, and make it sound American.
+- For code, don't change the HTML code, layout, or any structural aspect of the document.
+- Don't wrap the answer in a markdown code block or give an explanation.
+- Do not need to add bullet points, but when there are some uses  `-`
+- Only when it looks like a tweet with some hashtags, then don't rephrase or remove/add lines, as it's for a short tweet.
+- The user might give some User Instruction as well; these will be marked with `<USER_INSTRUCTION>` Tag. 
+- Do not use em dash ` as separators in sentences, use other type of separaters
+    - So do not say "something—and then" but "something, and then"
+- If the User Instruction contradicts some of those system instructions, the User Instruction takes precedence.
+
+
 
 # Instruction
 
-- Do not remove `# ...` markdown headings from the content, even if there is only one heading.
+{{#if data.inst}}
+<USER_INSTRUCTION>
+{{data.inst}}}
+</USER_INSTRUCTION>
+{{/if}}
 
-== File content to correct:
+Here is my content wrapped in the `<CONTENT>`. Obviously, do not return the wrapping tags. 
 
-{{data.file.content}}
+<CONTENT>
+{{data.content}}
+</CONTENT>
+
 
 # Output
 
 ```lua
+local preamble = "" -- This will be the eventual instruction with a separator
+local ai_content = ai_response.content
 
-local content = ai_response.content
+if data.first_part then
+    local content_inst = aip.text.trim_end(data.first_part)
+    preamble = content_inst .. "\n\n====\n\n"
+    ai_content = aip.text.trim_start(ai_content)
+end
 
--- Note: It is also nice to normalize files with a single ending empty line.
-content = aip.text.ensure_single_ending_newline(content)
+local content = preamble .. ai_content
 
--- Example of how to save to the same file
-aip.file.save(data.file.path, content);
+-- Save to the same file
+aip.file.save(data.path, content);
 
 -- This will be printed by aipack if it is a string
-return "File processed: " .. data.file.path
+return "File crafted:\n➜ " .. data.prompt_file_rel_path
 ```

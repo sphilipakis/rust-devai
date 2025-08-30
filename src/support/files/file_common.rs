@@ -138,7 +138,7 @@ pub fn safer_trash_file(path: &SPath) -> Result<bool> {
 /// returns true if it was deleted (if not exists, return false)
 /// error if not a file
 /// NOTE: On Mac, this will prompt the user to accept Finder access (which might be confusing)
-pub fn safer_delete_dir(path: &SPath) -> Result<bool> {
+pub fn to_trash_delete_dir(path: &SPath) -> Result<bool> {
 	if !path.exists() {
 		return Ok(false);
 	}
@@ -147,7 +147,6 @@ pub fn safer_delete_dir(path: &SPath) -> Result<bool> {
 	}
 
 	// TODO: Probably need to add a logic to check if we are in a .aipack-... dir or in a workspace folder.
-
 	trash::delete(path).map_err(|err| format!("Cannot delete dir '{path}'. Cause: {err}"))?;
 
 	Ok(true)
