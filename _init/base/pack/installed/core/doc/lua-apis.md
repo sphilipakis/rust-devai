@@ -108,9 +108,75 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
 >       However, it is important to note that there is no TypeScript support, just standard Lua. For example, Lua properties are delimited with `=` and not `:',
 >       and arrays and dictionaries are denoted with `{ }`.
 
+
+#### nil vs. null
+
+Lua has the `nil` keyword which partially acts like a common `null` but not exactly.
+
+For that reason, AIPACK also adds the global concept of `null` that behaves closer to JSON, JS, SQL, and other nulls.
+
+Here are the key differences:
+
+**`nil`**
+
+- Native to `Lua`
+- Means no value or property does not exist.
+    - Limitation: We have no way to know if the property had a "null" value or just was not there.
+- When put in an array `{"one", "two", nil, "four"}` this will actually stop the iterator (i.e., `ipairs`) on the first nil. For example:
+```lua
+local values = {"one", "two", nil, "four"}
+for i, v in ipairs(values) do
+    print("" .. i .. ": " .. v)
+end
+-- Will print: "1: one", "2: two"
+-- NOTE: We won't see `4: four` because the iterator stop at first nil
+```
+
+**`null`**
+
+- Added by `AIPACK` to all Lua contexts, with keyword `null` (it can be `Null` as well, but it's better to use `null` if possible)
+- Behaves like a JavaScript null, and can be used in variables, property values, and array items
+- In Array
+```lua
+local values = {"one", "two", null, "four"}
+for i, v in ipairs(values) do
+    print("" .. i .. ": " .. v)
+end
+-- Will print: "1: one", "2: two", "3: null", "4: four"
+```
+- Works in objects as well, and when converting to JSON
+```lua
+local contact = {
+    name: "Jen",
+    home: null,
+    phone: nil, -- NOTE the lua "nil" here
+    title: "Director"
+}
+print(contact)
+-- Will print: {home = null,name = "Jen",title = "Director"}
+-- Note: "home" is present with null, but phone is not
+
+local contact_json = aip.json.stringify(contact)
+print(contact_json)
+-- Will print: {"home":null,"name":"Jen","title":"Director"}
+-- Note: Similar to the lua print.
+```
+
+**When to use `nil` vs. `null`**
+
+- Use `null`
+    - In arrays, use `null` over `nil` since the Lua `nil` will have some unexpected side effect, it stops iterators
+    - In object property values when wanting to keep the property name when the value is null. Using `nil`, the property will be virtually "erased."
+- Use `nil`
+    - When using simple variable initialization, e.g., `local origin_path = nil`
+    - In object property values when it's okay to not preserve the property name when it's nil. 
+
+So, if you're still not sure, use `null` in arrays, and you can use either `nil` or `null` in other scenarios.
+
 ## aip.file
 
 File manipulation functions for loading, saving, listing, and managing files and their content, including specialized functions for JSON and Markdown.
+
 ### Functions Summary
 
 ```lua
