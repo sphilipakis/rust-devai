@@ -7,7 +7,7 @@
 
 [options]
 
-# model       = "gpt-4.1"
+# model       = "gpt-5-mini"
 
 # temperature = 0.0
 
@@ -18,4 +18,4 @@
 #
 # See alias documentation at `~/.aipack-base/config-default.toml`
 [options.model_aliases]
-# my-model = "gpt-4.1-nano"
+# my-model = "gpt-5-nano"

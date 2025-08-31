@@ -79,7 +79,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///     { path = "file2.txt", content = "..." }
 ///   },
 ///   options = {
-///     model = "gpt-4.1-mini",
+///     model = "gpt-5-mini",
 ///     input_concurrency = 5
 ///   }
 /// })

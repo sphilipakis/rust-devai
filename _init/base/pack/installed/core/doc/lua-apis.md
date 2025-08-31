@@ -75,7 +75,7 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
   content?: string,
   // A formatted string capturing essential details like usage, price, model, and duration of the request, using the fields below.
   info: string,
-  // e.g., `gpt-4.1-mini`
+  // e.g., `gpt-5-mini`
   model_name: string,
   // e.g., `openai`
   adapter_kind: AdapterKind,
