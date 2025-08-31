@@ -9,24 +9,24 @@ use std::collections::HashSet;
 use std::io::{Write, stdout};
 
 /// Prints the status of API keys, indicating which are available and which are missing.
-pub fn print_api_keys(all_keys: &[&str], available_keys: &HashSet<String>) -> Result<()> {
+pub fn print_api_keys(all_keys: &[&str], set_keys: &HashSet<String>) -> Result<()> {
 	let mut stdout = stdout();
-	let mut available_list = Vec::new();
-	let mut missing_list = Vec::new();
+	let mut set_keys_list = Vec::new();
+	let mut other_keys_list = Vec::new();
 
 	// Separate keys into available and missing lists
 	for &key in all_keys {
-		if available_keys.contains(key) {
-			available_list.push(key);
+		if set_keys.contains(key) {
+			set_keys_list.push(key);
 		} else {
-			missing_list.push(key);
+			other_keys_list.push(key);
 		}
 	}
 
-	// --- Print Available Keys
-	if !available_list.is_empty() {
-		writeln!(stdout, "\nAPI Keys available:\n")?;
-		for key in available_list {
+	// --- Print Set Keys
+	if !set_keys_list.is_empty() {
+		writeln!(stdout, "\nAvailable API Keys:\n")?;
+		for key in set_keys_list {
 			execute!(
 				stdout,
 				SetForegroundColor(Color::Green),
@@ -36,12 +36,14 @@ pub fn print_api_keys(all_keys: &[&str], available_keys: &HashSet<String>) -> Re
 				Print("\n")
 			)?;
 		}
-	}
 
-	// --- Print Missing Keys
-	if !missing_list.is_empty() {
-		writeln!(stdout, "\nAPI Keys missing:\n")?;
-		for key in missing_list {
+		let other_keys_strs = other_keys_list.join(", ");
+		writeln!(stdout, "\nOther possible API Keys: {other_keys_strs}")?;
+	}
+	// --- If no set keys, then, warning like message
+	else {
+		writeln!(stdout, "\nNo API Keys Set\n")?;
+		for key in other_keys_list {
 			execute!(
 				stdout,
 				SetForegroundColor(Color::Red),
@@ -51,14 +53,15 @@ pub fn print_api_keys(all_keys: &[&str], available_keys: &HashSet<String>) -> Re
 				Print("\n")
 			)?;
 		}
+		writeln!(stdout, "\nSet at least one API key.\n")?;
+
+		let help_message = os::get_set_api_key_message();
+
+		safer_println(help_message, false);
 	}
 
 	writeln!(stdout)?;
 	stdout.flush()?;
-
-	let help_message = os::get_set_api_key_message();
-
-	safer_println(help_message, false);
 
 	Ok(())
 }

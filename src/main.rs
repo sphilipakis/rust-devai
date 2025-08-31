@@ -93,9 +93,9 @@ async fn main() -> Result<()> {
 	// Tokio wait for 100ms
 	// Note: This will allow the hub message to drain.
 	//       This is a short-term trick before we get the whole TUI app.
-	// Note: Might have a more reliable way.
+	// Note: Probably not needed now.
 	tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-	println!("\n---- Until next time, happy coding! ----");
+	//println!("\n---- Until next time, happy coding! ----");
 
 	Ok(())
 }

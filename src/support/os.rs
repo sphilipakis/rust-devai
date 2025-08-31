@@ -94,14 +94,12 @@ pub fn get_set_api_key_message() -> &'static str {
 		OsType::Mac | OsType::Linux | OsType::Unknown => {
 			r#"You can set environment variable like:
 
-export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE"
-		"#
+export OPENAI_API_KEY="YOUR_OPENAI_KEY_HERE""#
 		}
 		OsType::Windows => {
 			r#"You can set environment variable like (Assuming PowerShell):
 
-$env:OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'
-		"#
+$env:OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'"#
 		}
 	}
 }
