@@ -20,7 +20,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 - **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
 
-**BIG UPDATE 0.8.0 WITH NEW TUI**
+**BIG UPDATE 0.8.x WITH NEW TUI**
 
 ### Check out: 
 
@@ -178,21 +178,7 @@ COHERE_API_KEY
 
 - Built on top of the [Rust genai library](https://crates.io/crates/genai), which supports many top AI providers and models (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama, xAI, and Cohere).
 
-- Top new features: (see full details [CHANGELOG](CHANGELOG.md))
-  - **2025-04-13 (v0.7.0) - BIG RELEASE - Windows Support (x86 & ARM), and more**
-  - 2025-04-08 (v0.6.17) - Binaries available (mac/linux), pro@coder, pro@rust10x
-  - 2025-03-28 - (v0.6.15) - new: `aip check-keys`
-  - 2025-03-25 (v0.6.14) - agent - add `aip.flow.data_response({input?, data?, options?})` (e.g., model override by input)
-  - 2025-03-20 (v0.6.12) - Now can **call agent within agents** `aip.agent.run(agent_name, {inputs?, options?})`
-  - 2025-03-12 (v0.6.9) - Now supports `namespace@pack_name/some/**/*.*` for all `aip.file..`
-  - 2025-03-02 (v0.6.7) - Fixes and tune-up. Pack install test and other refactoring
-  - 2025-02-28 (v0.6.3) - `aip pack ..`, `aip install local...`, `ai_response.price_usd`, and more
-  - 2025-02-26 (v0.6.0) - BIG UPDATE - to **AIPACK**, now with pack support (e.g., `aip run demo@craft/code`)**
-  - 2025-02-22 (v0.5.11) - Huge update with parametric agents and coder (more info soon)
-  - 2025-01-27 (v0.5.9) - DeepSeek distill models support for Groq and Ollama (local)
-  - 2025-01-23 (v0.5.7) - `aipack run craft/text` or `aipack run craft/code` (example of new agent module support)
-  - 2025-01-06 (v0.5.4) - DeepSeek `deepseek-chat` support
-  - 2024-12-08 (v0.5.1) - Added support for **xAI**
+- See full [CHANGELOG](CHANGELOG.md)
 
 ## How it works
 

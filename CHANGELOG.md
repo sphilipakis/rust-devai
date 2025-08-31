@@ -1,5 +1,19 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-08-31 - [v0.8.1](https://github.com/jeremychone/rust-devai/compare/v0.8.0...v0.8.1)
+
+- `+` **NEW API** - New `aip.shape...` apis to reshape data. 
+- `^` **NEW API** - add aip.time.local_tz_id() e.g., 'America/Los_Angeles'
+- `+` **NEW LUA** - Added support for `null` 
+- `!` demo packs - update `demo@proof` (and remove the demo@craft)
+- `^` perf - implement batch create task for TUI perf with 500+ tasks
+- `^` task limit (for TUI) - increase default max select limit to 12,000 (from 300)
+- `.` config - Update to latest gpt and gemini models
+- `+` **NEW API** - aip.time.today_utc/local return weekday + today_iso, aip.time.weekday_utc/local
+- `^` tui - modifier + up should not trigger copy to clipboard
+- `-` tui - Many fixes
+- `-` aip.agent.extract_options - fix input_concurrency typo
+- `.` aip - remove end "happy coding" exit message
 
 ## 2025-08-14 - [v0.8.0](https://github.com/jeremychone/rust-devai/compare/v0.7.20...v0.8.0)
 

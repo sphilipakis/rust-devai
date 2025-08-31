@@ -1,1 +1,1 @@
-pub const DEFAULT_LIST_LIMIT: i64 = 3000;
+pub const DEFAULT_LIST_LIMIT: i64 = 12000;
