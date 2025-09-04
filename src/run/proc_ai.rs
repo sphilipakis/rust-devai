@@ -102,7 +102,7 @@ pub async fn process_ai(
 			hub.publish(format!(
 				"-- {role}:\n{content}",
 				role = msg.role,
-				content = msg.content.text().unwrap_or_default()
+				content = msg.content.joined_texts().unwrap_or_default()
 			))
 			.await;
 		}
@@ -231,7 +231,7 @@ async fn process_send_to_genai(
 
 	let content = content
 		.into_iter()
-		.filter_map(|c| c.into_text())
+		.filter_map(|c| c.into_joined_texts())
 		.collect::<Vec<_>>()
 		.join("\n\n");
 
