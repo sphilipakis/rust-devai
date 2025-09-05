@@ -1,7 +1,7 @@
 use super::{ActionView, RunsView, SumView};
 use crate::store::rt_model::ErrRec;
 use crate::tui::AppState;
-use crate::tui::view::{RunMainView, PopupOverlay, style};
+use crate::tui::view::{PopupOverlay, RunMainView, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -95,4 +95,3 @@ fn render_err(err_rec: &ErrRec, buf: &mut Buffer, area: Rect) {
 
 	Paragraph::new(Line::from(line)).centered().render(content_a, buf);
 }
-

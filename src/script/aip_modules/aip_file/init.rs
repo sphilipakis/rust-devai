@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::file_change::file_save_changes;
+use crate::script::aip_modules::aip_file::file_csv::{file_load_csv, file_load_csv_headers};
 use crate::script::aip_modules::aip_file::file_docx::{file_load_docx_as_md, file_save_docx_to_md};
 use crate::script::aip_modules::aip_file::file_hash::{
 	file_hash_blake3, file_hash_blake3_b58u, file_hash_blake3_b64, file_hash_blake3_b64u, file_hash_sha256,
@@ -14,7 +15,6 @@ use crate::script::aip_modules::aip_file::file_json::{
 	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
 };
 use crate::script::aip_modules::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
-use crate::script::aip_modules::aip_file::file_csv::{file_load_csv, file_load_csv_headers};
 use crate::script::aip_modules::aip_file::file_read::{
 	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
 };

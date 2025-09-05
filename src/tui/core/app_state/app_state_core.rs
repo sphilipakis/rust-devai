@@ -7,8 +7,8 @@ use crate::tui::core::{
 };
 use crate::tui::support;
 use crate::tui::view::PopupView;
-use ratatui::layout::Position;
 use arboard::Clipboard;
+use ratatui::layout::Position;
 
 /// Inner representation of the application state.
 ///

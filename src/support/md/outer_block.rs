@@ -251,4 +251,3 @@ End text.",
 		assert_eq!(result, format!("{fx_content}\n"));
 	}
 }
-

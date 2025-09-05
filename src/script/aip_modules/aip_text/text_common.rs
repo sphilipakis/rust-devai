@@ -118,7 +118,9 @@ impl FromLua for EnsureOptions {
 
 		for (key, _value) in table.pairs::<Value, Value>().flatten() {
 			if let Some(k) = key.x_as_lua_str()
-				&& k != "prefix" && k != "suffix" {
+				&& k != "prefix"
+				&& k != "suffix"
+			{
 				let msg = format!(
 					"Ensure argument contains invalid table property `{k}`. Can only contain `prefix` and/or `suffix`"
 				);

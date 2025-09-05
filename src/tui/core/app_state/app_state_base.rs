@@ -188,4 +188,3 @@ impl AppState {
 		self.core.popup_start_us = None;
 	}
 }
-
