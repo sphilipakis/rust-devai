@@ -8,7 +8,7 @@
 
 # AIPACK - Run, Build, and Share AI Packs
 
-Open-source Agentic Runtime to run, build, and share AI Packs.
+An open-source agentic runtime to run, build, and share AI Packs.
 
 - **Simple & Powerful** – 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs on a single [aip-doc page](https://aipack.ai/doc/lua-apis).  
 
@@ -16,7 +16,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 - **Efficient** – Engine written in **Rust** with a lightweight and efficient embedded Lua script. All `aip` functions are implemented in Rust.  
 
-- **Multi-AI** – Supports all major AI **providers and models** at the native layer. For example, it can use zero thinking budget with Gemini models.
+- **Multi-AI** – Supports all major AI **providers and models** at the native layer. For example, it can use Gemini models with zero thinking budget.
 
 - **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
 
@@ -46,7 +46,7 @@ Open-source Agentic Runtime to run, build, and share AI Packs.
 
 ### Install From Binaries
 
-Mac, Linux, Windows, ARM & x86 platforms are supported. See below how to install the binaries. 
+Mac, Linux, and Windows on ARM and x86 platforms are supported. See below for binary installation instructions. 
 
 _(More info at [aipack.ai/doc/install](https://aipack.ai/doc/install))_
 
@@ -97,7 +97,7 @@ tar -xvf aip.tar.gz
 
 ### Install from source
 
-For now, installation requires building directly from source via Rust. Works on all major OSes.
+For now, installation requires building directly from source with Rust. It works on all major OSes.
 
 - Install Rust: https://www.rust-lang.org/tools/install
 - For now, install with `cargo install aipack`
@@ -112,7 +112,7 @@ cd /path/to/my/project/
 # Initialize workspace .aipack/ and ~/.aipack-base
 aip init
 
-# Make sure to export the desired API key (no spaces around `=` Unix convention)
+# Make sure to export the desired API key (no spaces around `=`; Unix convention)
 export OPENAI_API_KEY="sk...."
 export ANTHROPIC_API_KEY="...."
 export GEMINI_API_KEY="..."
@@ -121,7 +121,7 @@ export GEMINI_API_KEY="..."
 # Check the keys you set up
 aip check-keys
 
-# To proofread your README.md (namespace: demo, pack_name: proof)
+# To proofread your README.md (namespace: demo, pack_name: proof):
 aip run demo@proof -f ./README.md
 
 # You can just use @pack_name if there is no other pack with this name
@@ -154,9 +154,9 @@ aip run core@ask-aipack
 
 This is the agent I use every day for my production coding.
 
-**IMPORTANT 1**: Make sure everything is committed before use (at least while you are learning about aipack).
+**IMPORTANT 1**: Make sure everything is committed before use, at least while you are learning aipack.
 
-**IMPORTANT 2**: Make sure to have your **API_KEY** set as an environment variable (on Mac, there is experimental keychain support).
+**IMPORTANT 2**: Make sure you have your **API_KEY** set as an environment variable. On macOS, there is experimental keychain support.
 
 ```
 OPENAI_API_KEY
@@ -231,7 +231,7 @@ See the aipack documentation at **[core/doc/README.md](_init/base/pack/installed
 You can also run the `ask-aipack` agent.
 
 ```sh
-# IMPORTANT: Make sure you have the `OPENAI_API_KEY` (or the key for your desired model) set in your environment
+# IMPORTANT: Make sure you have the `OPENAI_API_KEY` (or the key for your desired model) set in your environment.
 aip run core@ask-aipack
 # The prompt file will be at `.aipack/.prompt/core@ask-aipack/ask-prompt.md`
 ```
