@@ -229,13 +229,7 @@ async fn process_send_to_genai(
 	// -- Rt Rec - Update Task Usage
 	rt_model.update_task_usage(run_id, task_id, &usage).await?;
 
-	let content = content
-		.into_iter()
-		.filter_map(|c| c.into_joined_texts())
-		.collect::<Vec<_>>()
-		.join("\n\n");
-
-	let ai_response_content = if content.is_empty() { None } else { Some(content) };
+	let ai_response_content = content.into_joined_texts().filter(|s| !s.is_empty());
 	let ai_response_reasoning_content = reasoning_content;
 
 	let model_info = format_model(agent, &res_model_iden, &res_provider_model_iden, &agent.options());
