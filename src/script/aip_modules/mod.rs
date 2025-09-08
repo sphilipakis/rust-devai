@@ -3,6 +3,7 @@
 pub mod aip_agent;
 pub mod aip_cmd;
 pub mod aip_code;
+pub mod aip_csv;
 pub mod aip_file;
 pub mod aip_flow;
 pub mod aip_git;

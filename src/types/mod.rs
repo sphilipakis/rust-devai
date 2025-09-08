@@ -1,5 +1,6 @@
 // region:    --- Modules
 
+mod csv_options;
 mod dest_options;
 mod file_info;
 mod file_record;
@@ -11,6 +12,7 @@ mod pack_identity;
 mod pack_ref;
 mod tag_block;
 
+pub use csv_options::*;
 pub use dest_options::*;
 pub use file_info::*;
 pub use file_record::*;
