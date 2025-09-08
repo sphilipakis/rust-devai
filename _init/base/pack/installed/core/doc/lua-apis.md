@@ -224,6 +224,12 @@ aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 
 aip.file.load_docx_as_md(docx_path: string): string
 
+aip.file.line_spans(path: string): list<{start: number, end: number}>
+
+aip.file.csv_row_spans(path: string): list<{start: number, end: number}>
+
+aip.file.read_span(path: string, start: number, end: number): string
+
 aip.file.hash_sha256(path: string): string
 aip.file.hash_sha256_b64(path: string): string
 aip.file.hash_sha256_b64u(path: string): string
@@ -1225,35 +1231,119 @@ aip.file.save_docx_to_md("docs/spec.docx", {
 Returns an error (Lua table `{ error: string }`) if file I/O, parsing/conversion, or destination resolution fails.
 
 
-### aip.file.load_docx_as_md
+### aip.file.line_spans
 
-Loads a DOCX file, converts its content to Markdown, and returns a Markdown string.
+Returns the byte spans for each line in a text file.
 
 ```lua
 -- API Signature
-aip.file.load_docx_as_md(docx_path: string): string
+aip.file.line_spans(path: string): list<{start: number, end: number}>
 ```
+
+Given a file path, computes the start and end byte offsets for every line.
 
 #### Arguments
 
-- `docx_path: string`
-  Path to the source DOCX file, relative to the workspace root.
+- `path: string`
+  Path to the source file (relative, absolute, or pack-ref supported).
 
 #### Returns
 
-- `string`
-  The Markdown content converted from the DOCX file.
+- `list<{start: number, end: number}>`
+  A Lua list of tables with `start` and `end` byte offsets for each line.
 
 #### Example
 
 ```lua
-local md = aip.file.load_docx_as_md("docs/spec.docx")
-print(string.sub(md, 1, 80)) -- prints the first 80 characters of the converted Markdown
+local spans = aip.file.line_spans("logs/app.log")
+for i, s in ipairs(spans) do
+  print(i, s.start, s.end)
+end
 ```
 
 #### Error
 
-Returns an error (Lua table `{ error: string }`) if the DOCX file cannot be found/read or if the conversion to Markdown fails.
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved or the file cannot be read.
+
+
+### aip.file.csv_row_spans
+
+Returns the byte spans for each CSV row in a file.
+
+```lua
+-- API Signature
+aip.file.csv_row_spans(path: string): list<{start: number, end: number}>
+```
+
+Parses the file as CSV and returns byte spans for each row (one span per CSV record).
+
+#### Arguments
+
+- `path: string`
+  Path to the CSV file (relative, absolute, or pack-ref supported).
+
+#### Returns
+
+- `list<{start: number, end: number}>`
+  A Lua list of tables with `start` and `end` byte offsets for each CSV row.
+
+#### Example
+
+```lua
+local rows = aip.file.csv_row_spans("data/sample.csv")
+-- Read the first row bytes as text:
+if #rows > 0 then
+  local first_row = rows[1]
+  local text = aip.file.read_span("data/sample.csv", first_row.start, first_row.end)
+  print(text)
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the path cannot be resolved or the file cannot be read/parsed as CSV.
+
+
+### aip.file.read_span
+
+Reads and returns the file substring between the given byte offsets.
+
+```lua
+-- API Signature
+aip.file.read_span(path: string, start: number, end: number): string
+```
+
+#### Arguments
+
+- `path: string`
+  Path to the source file (relative, absolute, or pack-ref supported).
+
+- `start: number`
+  Start byte offset (non-negative).
+
+- `end: number`
+  End byte offset (non-negative, must be greater than or equal to `start`).
+
+#### Returns
+
+- `string`
+  The substring of the file content between the given byte offsets.
+
+#### Example
+
+```lua
+local spans = aip.file.line_spans("README.md")
+-- Print the first line by span:
+if #spans > 0 then
+  local s = spans[1]
+  local line = aip.file.read_span("README.md", s.start, s.end)
+  print(line)
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `start`/`end` are invalid, the path cannot be resolved, or the file cannot be read.
 
 
 ## aip.path

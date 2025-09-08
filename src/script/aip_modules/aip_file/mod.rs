@@ -1,5 +1,4 @@
-mod file_read;
-mod file_write;
+mod support;
 
 mod file_change;
 mod file_csv;
@@ -8,7 +7,20 @@ mod file_hash;
 mod file_html;
 mod file_json;
 mod file_md;
-mod support;
+mod file_read;
+mod file_spans;
+mod file_write;
+
+use file_change::*;
+use file_csv::*;
+use file_docx::*;
+use file_hash::*;
+use file_html::*;
+use file_json::*;
+use file_md::*;
+use file_read::*;
+use file_spans::*;
+use file_write::*;
 
 mod init;
 

@@ -1,26 +1,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::aip_modules::aip_file::file_change::file_save_changes;
-use crate::script::aip_modules::aip_file::file_csv::{file_load_csv, file_load_csv_headers};
-use crate::script::aip_modules::aip_file::file_docx::{file_load_docx_as_md, file_save_docx_to_md};
-use crate::script::aip_modules::aip_file::file_hash::{
-	file_hash_blake3, file_hash_blake3_b58u, file_hash_blake3_b64, file_hash_blake3_b64u, file_hash_sha256,
-	file_hash_sha256_b58u, file_hash_sha256_b64, file_hash_sha256_b64u, file_hash_sha512, file_hash_sha512_b58u,
-	file_hash_sha512_b64, file_hash_sha512_b64u,
-};
-use crate::script::aip_modules::aip_file::file_html::{
-	file_load_html_as_md, file_load_html_as_slim, file_save_html_to_md, file_save_html_to_slim,
-};
-use crate::script::aip_modules::aip_file::file_json::{
-	file_append_json_line, file_append_json_lines, file_load_json, file_load_ndjson,
-};
-use crate::script::aip_modules::aip_file::file_md::{file_load_md_sections, file_load_md_split_first};
-use crate::script::aip_modules::aip_file::file_read::{
-	file_exists, file_first, file_info, file_list, file_list_load, file_load, file_stats,
-};
-use crate::script::aip_modules::aip_file::file_write::{
-	EnsureExistsOptions, file_append, file_delete, file_ensure_exists, file_save,
-};
+use crate::script::aip_modules::aip_file::*;
+
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -161,6 +142,21 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_save_changes_fn =
 		lua.create_function(move |lua, (path, changes): (String, String)| file_save_changes(lua, &rt, path, changes))?;
 
+	// -- line_spans
+	let rt = runtime.clone();
+	let file_line_spans_fn = lua.create_function(move |lua, (path,): (String,)| file_line_spans(lua, &rt, path))?;
+
+	// -- csv_row_spans
+	let rt = runtime.clone();
+	let file_csv_row_spans_fn =
+		lua.create_function(move |lua, (path,): (String,)| file_csv_row_spans(lua, &rt, path))?;
+
+	// -- read_span
+	let rt = runtime.clone();
+	let file_read_span_fn = lua.create_function(move |lua, (path, start, end): (String, i64, i64)| {
+		file_read_span(lua, &rt, path, start, end)
+	})?;
+
 	// -- File Hash Functions
 	let rt = runtime.clone();
 	let file_hash_sha256_fn = lua.create_function(move |lua, path: String| file_hash_sha256(lua, &rt, path))?;
@@ -222,6 +218,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("save_docx_to_md", file_save_docx_to_md_fn)?;
 	table.set("load_docx_as_md", file_load_docx_as_md_fn)?;
 	table.set("save_changes", file_save_changes_fn)?;
+	table.set("line_spans", file_line_spans_fn)?;
+	table.set("csv_row_spans", file_csv_row_spans_fn)?;
+	table.set("read_span", file_read_span_fn)?;
 
 	// -- Add file hash functions
 	table.set("hash_sha256", file_hash_sha256_fn)?;
