@@ -13,9 +13,9 @@
 //!
 //! ### Functions
 //!
-//! - `aip.csv.parse_row(row: string, options?: CsvOptions): list<string>`
+//! - `aip.csv.parse_row(row: string, options?: CsvOptions): string[]`
 //!
-//! - `aip.csv.parse(content: string, options?: CsvOptions): (headers: list<string> | nil, rows: list<list<string>>)`
+//! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, content: string[][] }`
 //!
 //! Where `CsvOptions` is:
 //! ```lua
@@ -78,7 +78,7 @@ fn is_record_empty(rec: &csv::StringRecord) -> bool {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.parse_row(row: string, options?: CsvOptions): list<string>
+/// aip.csv.parse_row(row: string, options?: CsvOptions): string[]
 /// ```
 fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Result<Table> {
 	let opts = match opts_val {
@@ -106,19 +106,20 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 /// ## Lua Documentation
 ///
 /// Parse CSV content, optionally with header detection and comment skipping.
-/// Returns two values: headers (or nil) and rows (list of list<string>).
+/// Returns a table with `headers` (or nil) and `content` (string[][]).
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.parse(content: string, options?: CsvOptions): (headers: list<string> | nil, rows: list<list<string>>)
+/// aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, content: string[][] }
 /// ```
-fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Result<(Value, Value)> {
+fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Result<Value> {
 	let opts = match opts_val {
 		Some(v) => CsvOptions::from_lua(v, lua)?,
 		None => CsvOptions::default(),
 	};
 
-	let has_header = opts.has_header.unwrap_or(false);
+	// Default to has_header = true for this API; empty lines are skipped by default.
+	let has_header = opts.has_header.unwrap_or(true);
 	let skip_empty = opts.skip_empty_lines.unwrap_or(true);
 
 	let mut builder = opts.into_reader_builder();
@@ -126,18 +127,19 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 
 	let mut rdr = builder.from_reader(content.as_bytes());
 
+	let res_tbl = lua.create_table()?;
+
 	// headers
-	let headers_val = if has_header {
+	if has_header {
 		let hdr = rdr
 			.headers()
 			.map_err(|e| Error::custom(format!("aip.csv.parse failed to read headers. {e}")))?;
-		Value::Table(string_record_to_lua_array(lua, hdr)?)
-	} else {
-		Value::Nil
-	};
+		let headers_tbl = string_record_to_lua_array(lua, hdr)?;
+		res_tbl.set("headers", headers_tbl)?;
+	}
 
-	// rows
-	let rows_t = lua.create_table()?;
+	// content
+	let content_tbl = lua.create_table()?;
 	let mut idx = 1usize;
 
 	for rec_res in rdr.records() {
@@ -146,11 +148,13 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 			continue;
 		}
 		let arr = string_record_to_lua_array(lua, &rec)?;
-		rows_t.set(idx, arr)?;
+		content_tbl.set(idx, arr)?;
 		idx += 1;
 	}
 
-	Ok((headers_val, Value::Table(rows_t)))
+	res_tbl.set("content", content_tbl)?;
+
+	Ok(Value::Table(res_tbl))
 }
 
 // endregion: --- Lua Fns
@@ -192,17 +196,17 @@ John,30
 
 Jane,25
 ]]
-            local headers, rows = aip.csv.parse(content, { has_header = true, comment = "#", skip_empty_lines = true })
-            return { headers = headers, rows = rows }
+            local res = aip.csv.parse(content, { has_header = true, comment = "#", skip_empty_lines = true })
+            return res
         "##;
 		let res = eval_lua(&lua, script)?;
 		assert_eq!(res.x_get_str("/headers/0")?, "name");
 		assert_eq!(res.x_get_str("/headers/1")?, "age");
 
-		assert_eq!(res.x_get_str("/rows/0/0")?, "John");
-		assert_eq!(res.x_get_str("/rows/0/1")?, "30");
-		assert_eq!(res.x_get_str("/rows/1/0")?, "Jane");
-		assert_eq!(res.x_get_str("/rows/1/1")?, "25");
+		assert_eq!(res.x_get_str("/content/0/0")?, "John");
+		assert_eq!(res.x_get_str("/content/0/1")?, "30");
+		assert_eq!(res.x_get_str("/content/1/0")?, "Jane");
+		assert_eq!(res.x_get_str("/content/1/1")?, "25");
 
 		Ok(())
 	}
