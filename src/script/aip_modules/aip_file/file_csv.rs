@@ -1,3 +1,5 @@
+#![allow(clippy::single_match_else)] // keep module stable during refactor
+
 //! Lua CSV helpers for `aip.file`.
 //!
 //! ---
@@ -7,7 +9,7 @@
 //! ### Functions
 //!
 //! - `aip.file.load_csv_headers(path: string): string[]`
-//! - `aip.file.load_csv(path: string, with_headers?: boolean): { headers: string[], content: string[][] }`
+//! - `aip.file.load_csv(path: string, options?: CsvOptions): { headers: string[], content: string[][] }`
 //!
 //! The `path` is resolved relative to the workspace root.
 
@@ -15,7 +17,8 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::support::W;
-use mlua::{IntoLua, Lua, Value};
+use crate::types::CsvOptions;
+use mlua::{FromLua as _, IntoLua, Lua, Value};
 
 /// ## Lua Documentation
 ///
@@ -67,13 +70,13 @@ pub(super) fn file_load_csv_headers(lua: &Lua, runtime: &Runtime, path: String) 
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.load_csv(path: string, with_headers?: boolean): { headers: string[], content: string[][] }
+/// aip.file.load_csv(path: string, options?: CsvOptions): { headers: string[], content: string[][] }
 /// ```
 ///
 /// - `path: string` — CSV file path, relative to the workspace root (supports pack refs).
-/// - `with_headers?: boolean` — When `true` (default), the first row is treated as headers and
-///   not included in `content`. When `false`, no header parsing is performed and the `headers`
-///   field will be an empty array.
+/// - `options?: CsvOptions` — CSV parse options. Only `has_header` is honored by this API
+///   (defaults to `true`), which controls whether the first row is treated as headers and
+///   excluded from `content`.
 ///
 /// ### Returns
 ///
@@ -95,18 +98,19 @@ pub(super) fn file_load_csv_headers(lua: &Lua, runtime: &Runtime, path: String) 
 /// - The path cannot be resolved,
 /// - The file cannot be found or read,
 /// - CSV parsing fails.
-pub(super) fn file_load_csv(
-	lua: &Lua,
-	runtime: &Runtime,
-	path: String,
-	with_headers: Option<bool>,
-) -> mlua::Result<Value> {
+pub(super) fn file_load_csv(lua: &Lua, runtime: &Runtime, path: String, options: Option<Value>) -> mlua::Result<Value> {
 	let full_path =
 		runtime
 			.dir_context()
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 
-	let resp = crate::support::files::load_csv(&full_path, with_headers).map_err(|e| {
+	let opts = match options {
+		Some(v) => CsvOptions::from_lua(v, lua)?,
+		None => CsvOptions::default(),
+	};
+	let has_header = opts.has_header.unwrap_or(true);
+
+	let resp = crate::support::files::load_csv(&full_path, Some(has_header)).map_err(|e| {
 		Error::from(format!(
 			"aip.file.load_csv - Failed to read csv file '{path}'.\nCause: {e}",
 		))
