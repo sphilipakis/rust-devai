@@ -150,7 +150,7 @@ fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
 		));
 	}
 
-	// -- Update the eventual legach config.toml
+	// -- Update the eventual legacy config.toml
 	let legacy_config_path = base_dir.join("config.toml");
 	if legacy_config_path.exists() {
 		// rename to config-deprecated.toml
