@@ -132,7 +132,7 @@ fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
 		write(&config_default_path, config_zfile.content)?;
 		hub.publish_sync(format!(
 			"-> {label:<18} '{path}'",
-			label = "Create config default file",
+			label = "Create file",
 			path = config_default_path
 		));
 	}
