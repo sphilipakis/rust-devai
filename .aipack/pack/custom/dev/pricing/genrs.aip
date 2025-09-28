@@ -1,6 +1,6 @@
 # Options
 ```toml
-model = "gpt-5-minimal"
+model = "opus"
 ```
 
 # Description

@@ -614,6 +614,16 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5-codex",
+        "output": 10,
+        "recent": true
+      },      
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.025,
           "normal": 0.25
         },

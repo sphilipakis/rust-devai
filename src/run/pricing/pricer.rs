@@ -18,6 +18,12 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 		_ => model_name, // fallback, though this shouldn't be reached
 	};
 
+	let provider_type = if provider_type == "openai_resp" {
+		"openai"
+	} else {
+		provider_type
+	};
+
 	// Find the provider
 	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
 
