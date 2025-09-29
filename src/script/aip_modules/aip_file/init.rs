@@ -99,9 +99,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	// -- load_csv
 	let rt = runtime.clone();
-	let file_load_csv_fn = lua.create_function(move |lua, (path, options): (String, Option<Value>)| {
-		file_load_csv(lua, &rt, path, options)
-	})?;
+	let file_load_csv_fn = lua
+		.create_function(move |lua, (path, options): (String, Option<Value>)| file_load_csv(lua, &rt, path, options))?;
 
 	// -- save_html_to_md
 	let rt = runtime.clone();
