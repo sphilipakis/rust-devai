@@ -1,5 +1,16 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-09-29 - [v0.8.2](https://github.com/jeremychone/rust-devai/compare/v0.8.1...v0.8.2)
+
+- `!` globs - now does not ignore target/ and node_modules/
+- `+` gpt-5-codex - Add transparent support for OpenAI gpt-5-codex model
+- `+` api.csv... - add parse_row(row, opts), parse(content,opts)
+- `+` aip.file...spans - new aip.file.line_spans/csv_spans(path)
+- `^` aip.file.load_csv - add CsvOptions
+- `.` aip.csv.parse - return to match {headers, content}
+- `.` openai - add support for gpt-5-codex (pricing & genai 0.4.0-alpha.17)
+- `.` init - update config-default claude aliases
+
 ## 2025-08-31 - [v0.8.1](https://github.com/jeremychone/rust-devai/compare/v0.8.0...v0.8.1)
 
 - `+` **NEW API** - New `aip.shape...` apis to reshape data. 

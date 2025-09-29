@@ -16,7 +16,7 @@ An open-source agentic runtime to run, build, and share AI Packs.
 
 - **Efficient** – Engine written in **Rust** with a lightweight and efficient embedded Lua script. All `aip` functions are implemented in Rust.  
 
-- **Multi-AI** – Supports all major AI **providers and models** at the native layer. For example, it can use Gemini models with zero thinking budget.
+- **Multi-AI** – Supports all major AI **providers and models** (OpenAI, Google, Anthropic, xAI, Ollama, Groq, Fireworks.ai, ...) at the native layer for the major ones. For example, it can use Gemini models with zero thinking budget.
 
 - **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
 
@@ -40,7 +40,6 @@ An open-source agentic runtime to run, build, and share AI Packs.
 - [Video: Example generate doc from code](https://news.aipack.ai/p/procoder-ai-pack-demo-generate-doc)
 - [Video: pro@coder with pro@rust10x Rust best practices](https://www.youtube.com/watch?v=rIAoSf4TWho&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigq)
 - [Video: AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
-
 
 ## Quick Start
 
@@ -162,6 +161,9 @@ This is the agent I use every day for my production coding.
 OPENAI_API_KEY
 ANTHROPIC_API_KEY
 GEMINI_API_KEY
+FIREWORKS_API_KEY
+TOGETHER_API_KEY
+NEBIUS_API_KEY
 XAI_API_KEY
 DEEPSEEK_API_KEY
 GROQ_API_KEY
