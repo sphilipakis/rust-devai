@@ -136,6 +136,7 @@ async fn do_run(run_command_options: &RunTopAgentParams, runtime: &Runtime, agen
 			})
 			.collect();
 		let on_file_globs: Vec<&str> = on_file_globs.iter().map(|s| s.as_str()).collect();
+
 		let files = list_files("./", Some(&on_file_globs), None)?;
 
 		// -- Second, normalize the path relative to workspace_dir

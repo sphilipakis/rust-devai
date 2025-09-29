@@ -30,6 +30,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.code`](#aipcode): Code commenting utilities.
 - [`aip.time`](#aiptime): Time and date utilities (now, parse/format, epoch conversions).
 - [`aip.shape`](#aipshape): Record shaping utilities (rows and columns, key selection/extraction).
+- [`aip.csv`](#aipcsv): CSV parsing and processing utilities.
 
 #### File Path supported
 
@@ -62,7 +63,8 @@ Important notes:
 - [`MdSection`](#mdsection) (for `aip.md..`)
 - [`MdBlock`](#mdblock) (for `aip.md..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
-- [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`
+- [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
+- [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
 
 
 #### AI Response
@@ -213,6 +215,10 @@ aip.file.save_changes(path: string, changes: string): FileInfo
 aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>
 
 aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
+
+aip.file.load_csv_headers(path: string): string[]
+
+aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], content: string[][]}
 
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
@@ -970,6 +976,87 @@ print(split.after)
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if file not found/read, or parsing/conversion error.
+
+### aip.file.load_csv_headers
+
+Load a CSV file and return its header row as a list of strings.
+
+```lua
+-- API Signature
+aip.file.load_csv_headers(path: string): string[]
+```
+
+Loads the CSV file at `path` (relative to workspace), parses its header row, and returns the headers as a Lua list of strings.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to workspace root.
+
+#### Returns
+
+- `string[]`: A Lua list of strings containing the header names.
+
+#### Example
+
+```lua
+local headers = aip.file.load_csv_headers("data/example.csv")
+for i, header in ipairs(headers) do
+  print(i, header)
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The path cannot be resolved
+- The file cannot be found or read
+- CSV parsing fails
+
+### aip.file.load_csv
+
+Load a CSV file and return its headers and all rows as string arrays.
+
+```lua
+-- API Signature
+aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], content: string[][]}
+```
+
+Loads the CSV file at `path` (relative to workspace), parses it according to the provided options, and returns both headers and content.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to workspace root.
+- `options?: CsvOptions` (optional): CSV parse options. Only `has_header` is honored by this API (defaults to `true`), which controls whether the first row is treated as headers and excluded from `content`.
+
+#### Returns
+
+- `table`: A table containing:
+  ```ts
+  {
+    headers: string[],  // Header row (empty array if has_header is false)
+    content: string[][] // All data rows (excluding headers if has_header is true)
+  }
+  ```
+
+#### Example
+
+```lua
+local result = aip.file.load_csv("data/example.csv") -- defaults to has_header = true
+print("Headers:", table.concat(result.headers, ", "))
+for _, row in ipairs(result.content) do
+  print(table.concat(row, " | "))
+end
+
+-- Load CSV without headers
+local result_no_headers = aip.file.load_csv("data/data-only.csv", {has_header = false})
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The path cannot be resolved
+- The file cannot be found or read
+- CSV parsing fails
 
 ### aip.file.save_html_to_md
 
@@ -2424,6 +2511,108 @@ local raw = "no block"
 print(aip.md.outer_block_content_or_raw(block)) -- Output: "content\n"
 print(aip.md.outer_block_content_or_raw(raw))   -- Output: "no block"
 ```
+
+## aip.csv
+
+CSV parsing and processing functions for both individual rows and complete CSV content.
+
+### Functions Summary
+
+```lua
+aip.csv.parse_row(row: string, options?: CsvOptions): string[]
+
+aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, content: string[][]}
+```
+
+### aip.csv.parse_row
+
+Parse a single CSV row according to the specified options.
+
+```lua
+-- API Signature
+aip.csv.parse_row(row: string, options?: CsvOptions): string[]
+```
+
+Parses a single CSV row string into an array of field values. Non-applicable options (`has_header`, `skip_empty_lines`, `comment`) are ignored for this function.
+
+#### Arguments
+
+- `row: string`: The CSV row string to parse.
+- `options?: CsvOptions` (optional): CSV parsing options. See [CsvOptions](#csvoptions) for details. Only `delimiter`, `quote`, `escape`, and `trim_fields` apply to this function.
+
+#### Returns
+
+- `string[]`: A Lua list of strings representing the parsed fields from the row.
+
+#### Example
+
+```lua
+local row = 'a,"b,c",d'
+local fields = aip.csv.parse_row(row)
+-- fields = {"a", "b,c", "d"}
+
+-- With custom delimiter
+local fields_custom = aip.csv.parse_row("a;b;c", {delimiter = ";"})
+-- fields_custom = {"a", "b", "c"}
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the row cannot be parsed or options are invalid.
+
+### aip.csv.parse
+
+Parse CSV content with optional header detection and comment skipping.
+
+```lua
+-- API Signature
+aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, content: string[][]}
+```
+
+Parses complete CSV content and returns both headers (if present) and all data rows.
+
+#### Arguments
+
+- `content: string`: The CSV content string to parse.
+- `options?: CsvOptions` (optional): CSV parsing options. See [CsvOptions](#csvoptions) for details. All options are applicable to this function.
+
+#### Returns
+
+- `table`: A table containing:
+  ```ts
+  {
+    headers: string[] | nil, // Header row if has_header is true, otherwise nil
+    content: string[][]      // All data rows (excluding headers if has_header is true)
+  }
+  ```
+
+#### Example
+
+```lua
+local csv_content = [[
+# This is a comment
+name,age,city
+John,30,New York
+Jane,25,Boston
+]]
+
+local result = aip.csv.parse(csv_content, {
+  has_header = true,
+  comment = "#",
+  skip_empty_lines = true
+})
+-- result.headers = {"name", "age", "city"}
+-- result.content = {{"John", "30", "New York"}, {"Jane", "25", "Boston"}}
+
+-- Parse without headers
+local result_no_headers = aip.csv.parse("a,b,c\n1,2,3", {has_header = false})
+-- result_no_headers.headers = nil
+-- result_no_headers.content = {{"a", "b", "c"}, {"1", "2", "3"}}
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the content cannot be parsed or options are invalid.
 
 ## aip.json
 
@@ -4760,6 +4949,24 @@ Options table used for specifying the destination path in functions like `aip.fi
   suffix?: string     // Suffix appended to the source file stem
 }
 ```
+
+### CsvOptions
+
+Options table used for configuring CSV parsing behavior in functions like `aip.csv.parse` and `aip.file.load_csv`.
+
+```ts
+{
+  delimiter?: string,         // Column delimiter, default ","
+  quote?: string,             // Quote character, default "\""
+  escape?: string,            // Escape character, default "\""
+  trim_fields?: boolean,      // Whether to trim whitespace from fields, default false
+  has_header?: boolean,       // Whether the first row is a header, default false (true for aip.file.load_csv)
+  skip_empty_lines?: boolean, // Whether to skip empty lines, default true
+  comment?: string            // Comment character prefix (e.g., "#"), optional
+}
+```
+
+When an option expecting a character is given a multi-character string, only the first byte is used.
 
 ### MdSection
 
