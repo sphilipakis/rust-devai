@@ -1,6 +1,6 @@
 [package]
 name = "aipack"
-version = "0.8.2-WIP"
+version = "0.8.2"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
@@ -98,5 +98,5 @@ extend = "1.2.0"
 
 [build-dependencies]
 simple-fs = { version = "0.8", features = ["with-json"]}
-zip = "4"
+zip = "5"
 walkdir = "2.4"
