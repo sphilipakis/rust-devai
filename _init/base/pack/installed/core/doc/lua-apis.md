@@ -3633,7 +3633,7 @@ or returning additional arbitrary data.
 return aip.flow.data_response({
   data  = data,              -- The data that would have been returned
   input = transformed_input,
-  options = { model = "gpt-4o" },
+  options = { model = "gpt-5-mini" },
 })
 -- The agent executor will process this result table.
 ```

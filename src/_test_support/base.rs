@@ -1,6 +1,6 @@
 use crate::agent::AgentOptions;
 
-pub const TEST_MODEL: &str = "gpt-4o-mini";
+pub const TEST_MODEL: &str = "gpt-5-mini";
 
 pub const SANDBOX_01_WKS_DIR: &str = "./tests-data/sandbox-01";
 

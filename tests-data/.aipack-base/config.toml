@@ -25,7 +25,7 @@ model = "gpt-5-nano" # or an alias below (e.g. "fast", "cost-saver")
 # This can also be overridden or complemented in the `# Options` section of the aipack.
 # Note: It is important to have `model_aliases` as a property of `default_options` as shown below.
 [default_options.model_aliases]
-standard = "gpt-4o"
+standard = "gpt-5"
 high     = "gpt-5-high"
 low      = "gpt-5-low"
 flash    = "gemini-2.5-flash"

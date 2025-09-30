@@ -17,7 +17,7 @@ aip run my@sample -i "Why is the moon tidally locked?"
 This section is optional but allows you to specify a model for this agent only.
 
 ```toml
-model = "gpt-4o-mini"
+model = "gpt-5-mini"
 ```
 
 # Data

@@ -131,7 +131,7 @@ fn aipack_before_all_response(lua: &Lua, data: Value) -> mlua::Result<Value> {
 /// return aip.flow.data_response({
 ///   data  = data,              -- The data that would have been returned
 ///   input = transformed_input,
-///   options = { model = "gpt-4o" },
+///   options = { model = "gpt-5" },
 /// })
 /// -- The agent executor will process this result table.
 /// ```

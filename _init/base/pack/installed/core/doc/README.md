@@ -273,7 +273,7 @@ Example: `aip run proof-rs-comments -f "./src/main.rs"`
         - The rendered content is sent to the AI.
     - `# Output`: Executes another ```lua``` block with access to `input`, `data`, `before_all`, and `ai_response`.
         - This stage can save modified files (`aip.file.save`), create new ones, or perform other actions based on the AI response.
-- By default, this runs using the `gpt-4o-mini` model and looks for the `OPENAI_API_KEY` environment variable.
+- By default, this runs using the `gpt-5-mini` model and looks for the `OPENAI_API_KEY` environment variable.
 - It supports all AI providers compatible with the [genai crate](https://crates.io/crates/genai).
     - Environment variable names per provider: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `COHERE_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`.
     - On macOS, if an environment variable is not found, the tool may prompt to get/save the key from the keychain under the `aipack` group.
@@ -375,7 +375,7 @@ On first run (`aip run`, `aip init`, etc.), `.aipack/config.toml` and `~/.aipack
 # Can be overridden by agent-specific meta or `aip.flow` functions.
 [default_options]
 # Required model identifier (any model supported by the Rust genai crate).
-model = "gpt-4o-mini"
+model = "gpt-5-mini"
 
 # Optional concurrency setting for processing inputs in parallel. Defaults to 1.
 # Increasing this can speed up processing, especially with remote AI services.
@@ -383,9 +383,9 @@ input_concurrency = 4
 
 # Aliases for model names
 [model_aliases]
-# main = "gpt-4o"
-# mini = "gpt-4o-mini"
-# fast = "gpt-3.5-turbo"
+# main = "gpt-5"
+# mini = "gpt-5-mini"
+# fast = "gpt-5-nano"
 ```
 
 **Base Config (`~/.aipack-base/config.toml`) Example:**
@@ -393,7 +393,7 @@ input_concurrency = 4
 # Base configuration affecting all workspaces unless overridden locally.
 [default_options]
 # Default model if not set in workspace or agent.
-# model = "gpt-4o-mini"
+# model = "gpt-5-mini"
 
 # Where to store/retrieve API keys (e.g., "keyring", "env", "config")
 # api_key_source = "keyring"
