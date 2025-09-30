@@ -454,16 +454,13 @@ Supports relative paths, absolute paths, and pack references (`ns@pack/...`).
 
 #### Arguments
 
-
 - `path: string`: The path string to check for existence. Can be relative, absolute, or a pack reference.
 
 #### Returns
 
-
 - `boolean`: Returns `true` if a file or directory exists at the specified path, `false` otherwise.
 
 #### Example
-
 
 ```lua
 if aip.file.exists("README.md") then
@@ -1074,7 +1071,6 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 
 #### Arguments
 
-
 - `html_path: string`
   Path to the source HTML file, relative to the workspace root.
 
@@ -1090,12 +1086,10 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 
 #### Returns
 
-
 - `FileInfo`
   Metadata ([FileInfo](#filemeta)) about the created Markdown file.
 
 #### Example
-
 
 ```lua
 -- Default (replaces .html with .md):
@@ -1134,7 +1128,6 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 
 #### Arguments
 
-
 - `html_path: string`
   Path to the source HTML file, relative to the workspace root.
 
@@ -1151,12 +1144,10 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 
 #### Returns
 
-
 - `FileInfo`
   Metadata ([FileInfo](#filemeta)) about the created slimmed HTML file.
 
 #### Example
-
 
 ```lua
 -- Default (saves as original-slim.html):
@@ -1273,7 +1264,6 @@ aip.file.save_docx_to_md(
 
 #### Arguments
 
-
 - `docx_path: string`
   Path to the source DOCX file, relative to the workspace root.
 
@@ -1289,12 +1279,10 @@ aip.file.save_docx_to_md(
 
 #### Returns
 
-
 - `FileInfo`
   Metadata ([FileInfo](#filemeta)) about the created Markdown file.
 
 #### Example
-
 
 ```lua
 -- Default (replaces .docx with .md):
@@ -1476,16 +1464,13 @@ Parses the given path string into a structured table containing components like 
 
 #### Arguments
 
-
 - `path: string | nil`: The path string to parse. If `nil`, the function returns `nil`.
 
 #### Returns
 
-
 - `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 
 #### Example
-
 
 ```lua
 local parsed = aip.path.parse("some/folder/file.txt")
@@ -2602,12 +2587,12 @@ local result = aip.csv.parse(csv_content, {
   skip_empty_lines = true
 })
 -- result.headers = {"name", "age", "city"}
--- result.content = {{"John", "30", "New York"}, {"Jane", "25", "Boston"}}
+-- result.content = { {"John", "30", "New York"}, {"Jane", "25", "Boston"} }
 
 -- Parse without headers
 local result_no_headers = aip.csv.parse("a,b,c\n1,2,3", {has_header = false})
 -- result_no_headers.headers = nil
--- result_no_headers.content = {{"a", "b", "c"}, {"1", "2", "3"}}
+-- result_no_headers.content = { {"a", "b", "c"}, {"1", "2", "3"} }
 ```
 
 #### Error
@@ -2863,7 +2848,6 @@ Parses the given URL string and extracts its various components.
 
 #### Arguments
 
-
 - `url: string | nil`: The URL string to parse. If `nil` is provided, the function returns `nil`.
 
 #### Returns
@@ -2883,7 +2867,6 @@ Parses the given URL string and extracts its various components.
 - If the input `url` is `nil`, the function returns `nil`.
 
 #### Example
-
 
 ```lua
 local parsed = aip.web.parse_url("https://user:pass@example.com:8080/path/to/page.html?param1=val#fragment")
@@ -2921,7 +2904,6 @@ aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 
 #### Arguments
 
-
 - `href: string | nil`: The href string to resolve. This can be an absolute URL, a scheme-relative URL, an absolute path, or a relative path. If `nil`, the function returns `nil`.
 - `base_url: string`: The base URL string against which to resolve the `href`. Must be a valid absolute URL.
 
@@ -2934,7 +2916,6 @@ aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 - Returns the resolved absolute URL string.
 
 #### Example
-
 
 ```lua
 local base = "https://example.com/docs/path/"
@@ -3000,11 +2981,9 @@ aip.uuid.new(): string
 
 #### Returns
 
-
 `string`: The generated UUIDv4 as a string (e.g., "f47ac10b-58cc-4372-a567-0e02b2c3d479").
 
 #### Example
-
 
 ```lua
 local id = aip.uuid.new()
@@ -3022,11 +3001,9 @@ aip.uuid.new_v4(): string
 
 #### Returns
 
-
 `string`: The generated UUIDv4 as a string (e.g., "f47ac10b-58cc-4372-a567-0e02b2c3d479").
 
 #### Example
-
 
 ```lua
 local id_v4 = aip.uuid.new_v4()
@@ -3044,11 +3021,9 @@ aip.uuid.new_v7(): string
 
 #### Returns
 
-
 `string`: The generated UUIDv7 as a string.
 
 #### Example
-
 
 ```lua
 local id_v7 = aip.uuid.new_v7()
@@ -3066,11 +3041,9 @@ aip.uuid.new_v4_b64(): string
 
 #### Returns
 
-
 `string`: The Base64 encoded UUIDv4 string.
 
 #### Example
-
 
 ```lua
 local id_v4_b64 = aip.uuid.new_v4_b64()
@@ -3088,11 +3061,9 @@ aip.uuid.new_v4_b64u(): string
 
 #### Returns
 
-
 `string`: The URL-safe Base64 encoded (no padding) UUIDv4 string.
 
 #### Example
-
 
 ```lua
 local id_v4_b64u = aip.uuid.new_v4_b64u()
@@ -3110,11 +3081,9 @@ aip.uuid.new_v4_b58(): string
 
 #### Returns
 
-
 `string`: The Base58 encoded UUIDv4 string.
 
 #### Example
-
 
 ```lua
 local id_v4_b58 = aip.uuid.new_v4_b58()
@@ -3132,11 +3101,9 @@ aip.uuid.new_v7_b64(): string
 
 #### Returns
 
-
 `string`: The Base64 encoded UUIDv7 string.
 
 #### Example
-
 
 ```lua
 local id_v7_b64 = aip.uuid.new_v7_b64()
@@ -3154,11 +3121,9 @@ aip.uuid.new_v7_b64u(): string
 
 #### Returns
 
-
 `string`: The URL-safe Base64 encoded (no padding) UUIDv7 string.
 
 #### Example
-
 
 ```lua
 local id_v7_b64u = aip.uuid.new_v7_b64u()
@@ -3176,11 +3141,9 @@ aip.uuid.new_v7_b58(): string
 
 #### Returns
 
-
 `string`: The Base58 encoded UUIDv7 string.
 
 #### Example
-
 
 ```lua
 local id_v7_b58 = aip.uuid.new_v7_b58()
@@ -3200,16 +3163,13 @@ aip.uuid.to_time_epoch_ms(value: string | nil): integer | nil
 
 #### Arguments
 
-
 - `value: string | nil`: The UUID string or `nil`.
 
 #### Returns
 
-
 `integer | nil`: Milliseconds since Unix epoch, or `nil`.
 
 #### Example
-
 
 ```lua
 local v7_uuid_str = aip.uuid.new_v7()
@@ -3339,7 +3299,6 @@ to complete and returns its result. This allows for chaining agents together.
 
 #### Arguments
 
-
 - `agent_name: string`: The name of the agent to run. This can be a relative path
   (e.g., `"../my-other-agent.aip"`) or a fully qualified pack reference
   (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
@@ -3368,7 +3327,6 @@ local response = aip.agent.run("agent-name", {
 ```
 
 #### Returns
-
 
 The result of the agent execution. The type of the returned value depends on the agent's output:
 
@@ -3422,11 +3380,9 @@ the function returns `nil`.
 
 #### Arguments
 
-
 - `value: any`: The Lua value from which to extract options.
 
 #### Returns
-
 
 A new Lua table containing the extracted options, or `nil` if the input
 was `nil` or not a table.
@@ -3568,7 +3524,6 @@ to override the default behavior of passing all initial inputs to the agent.
 
 #### Arguments
 
-
 - `data: table` - A table defining the new inputs and options for the agent execution cycle.
   ```ts
   type BeforeAllData = {
@@ -3580,7 +3535,6 @@ to override the default behavior of passing all initial inputs to the agent.
   related types: [AgentOptions](#agentoptions)
 
 #### Example
-
 
 ```lua
 local result = aip.flow.before_all_response({
@@ -3595,7 +3549,6 @@ local result = aip.flow.before_all_response({
 ```
 
 #### Error
-
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -3614,7 +3567,6 @@ or returning additional arbitrary data.
 
 #### Arguments
 
-
 - `data: table` - A table defining the new input, options, and/or other data for the current cycle.
   ```ts
   type DataData = {
@@ -3627,7 +3579,6 @@ or returning additional arbitrary data.
 
 #### Example
 
-
 ```lua
 -- Use a transformed input and override the model for this cycle
 return aip.flow.data_response({
@@ -3639,7 +3590,6 @@ return aip.flow.data_response({
 ```
 
 #### Error
-
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -3657,12 +3607,10 @@ to instruct AIPACK to skip processing the current input value and move to the ne
 
 #### Arguments
 
-
 - `reason: string (optional)`: An optional string providing the reason for skipping the input cycle.
   This reason might be logged or displayed depending on the AIPACK execution context.
 
 #### Example
-
 
 ```lua
 -- Skip processing if the input is nil or empty
@@ -3674,7 +3622,6 @@ end
 ```
 
 #### Error
-
 
 This function does not directly return any errors. Errors might occur during the creation of lua table.
 
@@ -3985,17 +3932,14 @@ aip.html.to_md(html_content: string): string | {error: string}
 
 #### Arguments
 
-
 - `html_content: string`: The HTML content to be converted.
 
 #### Returns
-
 
 - `string`: The Markdown representation of the HTML content.
 - `{error: string}`: An error table on failure.
 
 #### Example
-
 
 ```lua
 local markdown_content = aip.html.to_md("<h1>Hello</h1><p>World</p>")
@@ -4087,16 +4031,13 @@ aip.hash.sha256(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA256 hash, hex-encoded.
 
 #### Example
-
 
 ```lua
 local hex_hash = aip.hash.sha256("hello world")
@@ -4119,16 +4060,13 @@ aip.hash.sha256_b58(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA256 hash, Base58-encoded.
 
 #### Example
-
 
 ```lua
 local b58_hash = aip.hash.sha256_b58("hello world")
@@ -4151,16 +4089,13 @@ aip.hash.sha256_b64(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA256 hash, standard Base64-encoded.
 
 #### Example
-
 
 ```lua
 local b64_hash = aip.hash.sha256_b64("hello world")
@@ -4183,16 +4118,13 @@ aip.hash.sha256_b64u(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA256 hash, URL-safe Base64-encoded without padding.
 
 #### Example
-
 
 ```lua
 local b64u_hash = aip.hash.sha256_b64u("hello world")
@@ -4215,16 +4147,13 @@ aip.hash.sha512(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA512 hash, hex-encoded.
 
 #### Example
-
 
 ```lua
 local hex_hash = aip.hash.sha512("hello world")
@@ -4247,16 +4176,13 @@ aip.hash.sha512_b58(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA512 hash, Base58-encoded.
 
 #### Example
-
 
 ```lua
 local b58_hash = aip.hash.sha512_b58("hello world")
@@ -4279,16 +4205,13 @@ aip.hash.sha512_b64(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA512 hash, standard Base64-encoded.
 
 #### Example
-
 
 ```lua
 local b64_hash = aip.hash.sha512_b64("hello world")
@@ -4311,16 +4234,13 @@ aip.hash.sha512_b64u(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The SHA512 hash, URL-safe Base64-encoded without padding.
 
 #### Example
-
 
 ```lua
 local b64u_hash = aip.hash.sha512_b64u("hello world")
@@ -4343,16 +4263,13 @@ aip.hash.blake3(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The Blake3 hash, hex-encoded.
 
 #### Example
-
 
 ```lua
 local hex_hash = aip.hash.blake3("hello world")
@@ -4375,16 +4292,13 @@ aip.hash.blake3_b58(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The Blake3 hash, Base58-encoded.
 
 #### Example
-
 
 ```lua
 local b58_hash = aip.hash.blake3_b58("hello world")
@@ -4407,16 +4321,13 @@ aip.hash.blake3_b64(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The Blake3 hash, standard Base64-encoded.
 
 #### Example
-
 
 ```lua
 local b64_hash = aip.hash.blake3_b64("hello world")
@@ -4439,16 +4350,13 @@ aip.hash.blake3_b64u(input: string): string
 
 #### Arguments
 
-
 - `input: string`: The string to hash.
 
 #### Returns
 
-
 `string`: The Blake3 hash, URL-safe Base64-encoded without padding.
 
 #### Example
-
 
 ```lua
 local b64u_hash = aip.hash.blake3_b64u("hello world")
@@ -4495,7 +4403,7 @@ Converts Lua `data` to JSON internally and renders the Handlebars `content` temp
 #### Example
 
 ```lua
-local template = "Hello, {{name}}!"
+local template = "Hello, \{{name}}!"
 local data = {name = "World"}
 local rendered_content = aip.hbs.render(template, data)
 print(rendered_content) -- Output: Hello, World!
@@ -4505,19 +4413,21 @@ local data_list = {
     todos = {"Bug Triage AIPACK", "Fix Windows Support"}
 }
 local template_list = [[
-Hello {{name}},
+Hello \{{name}},
 
 Your tasks today:
 
-{{#each todos}}
-- {{this}}
-{{/each}}
+\{{#each todos}}
+- \{{this}}
+\{{/each}}
 
 Have a good day (after you completed this tasks)
 ]]
 local content_list = aip.hbs.render(template_list, data_list)
 print(content_list)
 ```
+
+_NOTE: Do not prefix with `\` the `\{{` (this is just for internal templating for the website)_
 
 #### Error
 
