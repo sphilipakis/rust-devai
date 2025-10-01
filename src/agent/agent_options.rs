@@ -2,6 +2,7 @@ use crate::Result;
 use genai::chat::ChatOptions;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use value_ext::JsonValueExt;
 
@@ -116,13 +117,33 @@ impl AgentOptions {
 	}
 
 	/// Returns the resolved model
-	pub fn resolve_model(&self) -> Option<&str> {
+	pub fn resolve_model(&self) -> Option<Cow<'_, str>> {
 		let model = self.model.as_deref()?;
 
-		match self.model_aliases {
-			Some(_) => self.get_model_for_alias(model).or(Some(model)),
-			None => Some(model),
+		// 1) If there are no aliases, just return the original model.
+		let Some(_) = self.model_aliases.as_ref() else {
+			return Some(Cow::Borrowed(model));
+		};
+
+		// 2) Direct alias hit
+		if let Some(resolved) = self.get_model_for_alias(model) {
+			return Some(Cow::Borrowed(resolved));
 		}
+
+		// 3) Try aliasing the base and re-attach a reasoning suffix
+		let (base, suffix_opt) = extract_reasoning_suffix(model);
+		if let Some(suffix) = suffix_opt
+			&& let Some(resolved_base) = self.get_model_for_alias(base)
+		{
+			// Need an owned string because we're concatenating.
+			let mut owned = String::with_capacity(resolved_base.len() + suffix.len());
+			owned.push_str(resolved_base);
+			owned.push_str(suffix);
+			return Some(Cow::Owned(owned));
+		}
+
+		// 3) Fall back to the original model
+		Some(Cow::Borrowed(model))
 	}
 
 	pub fn input_concurrency(&self) -> Option<usize> {
@@ -143,6 +164,21 @@ impl AgentOptions {
 			.as_ref()
 			.and_then(|aliases| aliases.inner.get(alias).map(|s| s.as_str()))
 	}
+}
+
+/// If extract the possible reasoning suffix of a model name
+/// Reasoning suffix can be `-zero`, `-minimal`, `-low`, `-medium`, `-high`
+/// returns: (model_name, Some(suffix))
+fn extract_reasoning_suffix(model: &str) -> (&str, Option<&str>) {
+	let suffixes = ["-zero", "-minimal", "-low", "-medium", "-high"];
+
+	for suffix in suffixes.iter() {
+		if let Some(stripped) = model.strip_suffix(suffix) {
+			return (stripped, Some(*suffix));
+		}
+	}
+
+	(model, None)
 }
 
 // Constructors

@@ -19,6 +19,9 @@
 #   - AIPACK with the Genai library will try to match the appropriate provider; if not found, it will fallback to localhost ollama
 #   - Can specify a model with namespacing for example `fireworks::kimi-k2-instruct`
 #
+# For reasoning model, like gpt-5, gemini-2.5-flash, and claude-sonnet-4-5-20250929, reasoning suffixes, 
+# such as `-minimal`, `-low`, `-medium`, `-high` suffixes (or event  or `-zero` for flash) can be used on model name or even model aliases
+#
 # e.g.,
 #    OpenAI: "gpt-5", "gpt-5-mini", "gpt-5-nano" (with optional `-low`, `-medium`, `-high` suffixes)
 #    Gemini: "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-flash-zero" (with `-zero` for flash, `-low`, `-medium`, `-high` suffixes)
@@ -51,6 +54,10 @@ input_concurrency = 2
 #
 # Note 2: Aliases can be added or overridden in the workspace `.aipack/config.toml` or via agent options.
 #
+# Note 3: for reasoning model, reasoning suffix `-minimal`, `-low`, `-medium`, `-high` can be added and 
+#         those will be added back to the model name. 
+#         For example a `sonnet-low` as model name will be translated to 
+#
 [options.model_aliases]
 # -- Anthropic
 claude        = "claude-sonnet-4-5-20250929"
@@ -62,22 +69,13 @@ opus          = "claude-opus-4-1-20250805"
 gpt           = "gpt-5"
 gpt-mini      = "gpt-5-mini"
 gpt-nano      = "gpt-5-nano"
+codex         = "gpt-5-codex"
 # -- Google
 # As shown below, Gemini model names also support the use of `-high`, `-medium`, or `-low` suffixes,
 # in addition to the `-zero` suffix for Flash 2.5
 gpro          = "gemini-2.5-pro"
-gpro-low      = "gemini-2.5-pro-low"
-gpro-medium   = "gemini-2.5-pro-medium"
-gpro-high     = "gemini-2.5-pro-high"
 flash         = "gemini-2.5-flash"
-flash-zero    = "gemini-2.5-flash-zero"
-flash-low     = "gemini-2.5-flash-low"
-flash-medium  = "gemini-2.5-flash-medium"
-flash-high    = "gemini-2.5-flash-high"
 lite          = "gemini-2.5-flash-lite"
-lite-low      = "gemini-2.5-flash-lite-low"
-lite-medium   = "gemini-2.5-flash-lite-medium"
-lite-high     = "gemini-2.5-flash-lite-high"
 # -- Fireworks (namespaced with `fireworks::_model_name`
 qwen-coder    = "fireworks::qwen3-coder-480b-a35b-instruct"
 qwen          = "fireworks::qwen3-235b-a22b-instruct-2507"

@@ -28,7 +28,11 @@ impl Agent {
 		let model = inner.model_name.clone().ok_or_else(|| Error::ModelMissing {
 			agent_path: inner.file_path.to_string(),
 		})?;
-		let model_resolved = inner.agent_options.resolve_model().map(|v| v.into()).unwrap_or(model.clone());
+		let model_resolved = inner
+			.agent_options
+			.resolve_model()
+			.map(|v| v.to_string().into())
+			.unwrap_or(model.clone());
 
 		// -- Initial genai chat_options
 		let chat_options = inner.agent_options.to_genai_options(None);
@@ -50,7 +54,7 @@ impl Agent {
 		let model = options.model().map(ModelName::from).ok_or_else(|| Error::ModelMissing {
 			agent_path: inner.file_path.to_string(),
 		})?;
-		let model_resolved = options.resolve_model().map(|v| v.into()).unwrap_or(model.clone());
+		let model_resolved = options.resolve_model().map(|v| v.to_string().into()).unwrap_or(model.clone());
 
 		// -- Build the genai chat optoins
 		let chat_options = options.to_genai_options(Some(&self.genai_chat_options));

@@ -120,9 +120,10 @@ pub async fn process_data(
 	// -- Normalize the context
 	let input = input.unwrap_or(Value::Null);
 	let data = data.unwrap_or(Value::Null);
-	// here we use cow, not not clone the agent if no options
+
 	let agent = if let Some(options_to_merge) = options {
 		let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
+		// TODO: Here it seems we do twice the merge_new on the agent options (because done agent in the agent.new_merge)
 		let options_ov = agent.options_as_ref().merge_new(options_to_merge)?;
 		agent.new_merge(options_ov)?
 	} else {
