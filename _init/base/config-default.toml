@@ -67,8 +67,8 @@ opus          = "claude-opus-4-1-20250805"
 # For OpenAI, model names can use `-high`, `-medium`, or `-low` suffixes.
 #             e.g., `gpt-5-low`, `gpt-5-nano-high`
 gpt           = "gpt-5"
-gpt-mini      = "gpt-5-mini"
-gpt-nano      = "gpt-5-nano"
+mini          = "gpt-5-mini"
+nano          = "gpt-5-nano"
 codex         = "gpt-5-codex"
 # -- Google
 # As shown below, Gemini model names also support the use of `-high`, `-medium`, or `-low` suffixes,
