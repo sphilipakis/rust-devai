@@ -5,5 +5,6 @@
 /// NOTE: This normalizes the logic for what is considered a "yes" response.
 ///
 pub fn is_input_yes(input: &str) -> bool {
-	input.trim().eq_ignore_ascii_case("y") || input.trim().eq_ignore_ascii_case("yes")
+	let input = input.trim();
+	input.eq_ignore_ascii_case("y") || input.eq_ignore_ascii_case("yes")
 }

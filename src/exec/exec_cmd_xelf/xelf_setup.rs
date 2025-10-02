@@ -147,7 +147,7 @@ mod for_windows {
 		)
 		.await?;
 
-		if term::is_input_yes(&user_response) {
+		if !term::is_input_yes(&user_response) {
 			hub.publish(format!(
 				r#"-! Answer was not 'Y' so skipping updating environment path.
    Make sure to add '{new_path}' in your system path.
