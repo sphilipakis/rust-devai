@@ -101,6 +101,7 @@ pub fn lua_value_to_serde_value(lua_value: mlua::Value) -> Result<serde_json::Va
 		let mut map = serde_json::Map::new();
 		for pair in table.pairs::<mlua::Value, mlua::Value>() {
 			let (k, v) = pair?;
+
 			let key = match k {
 				Value::String(s) => s.to_str()?.to_string(),
 				Value::Integer(i) => i.to_string(),
@@ -127,7 +128,8 @@ pub fn lua_value_to_serde_value(lua_value: mlua::Value) -> Result<serde_json::Va
 		Value::String(s) => serde_json::Value::String(s.to_str()?.to_string()),
 		Value::Table(t) => convert_table(t)?,
 		Value::UserData(ud) if ud.is::<NullSentinel>() => serde_json::Value::Null,
-		Value::Function(_) | Value::Thread(_) | Value::LightUserData(_) | Value::UserData(_) => {
+		Value::LightUserData(_) => serde_json::Value::Null,
+		Value::Function(_) | Value::Thread(_) | Value::UserData(_) => {
 			return Err(Error::custom(
 				"Cannot serialize Lua value to JSON: unsupported type (Function/LigthUserData/UserData)",
 			));
