@@ -1,5 +1,17 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-10-03 - [v0.8.3](https://github.com/jeremychone/rust-devai/compare/v0.8.2...v0.8.3)
+
+- `.` pricing - update pricing for gemini..-latest
+- `-` lua_value_to_serde_value - made that LightUserData get json seralized as null
+- `-` windows - fix Y setup prompt
+- `.` config - update the flash/lite aliases with -latest
+- `.` config-default - update the gpt mini/nano names
+- `+` model aliases - add support for reasoning suffixes, -low, -high, ..
+- `^` anthropic models - add support for reasoning (genai 0.4.1)
+- `.` doc - lua-apis fix for site render
+
 ## 2025-09-29 - [v0.8.2](https://github.com/jeremychone/rust-devai/compare/v0.8.1...v0.8.2)
 
 - `!` globs - now does not ignore target/ and node_modules/
