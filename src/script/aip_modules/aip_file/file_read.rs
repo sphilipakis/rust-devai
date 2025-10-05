@@ -90,14 +90,14 @@ pub(super) fn file_stats(
 	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, false)?;
+	let file_refs = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, false)?;
 
-	if spaths.is_empty() {
+	if file_refs.is_empty() {
 		return FileStats::default().into_lua(lua);
 	}
 
 	// We need metadata to compute stats
-	let smetas: Vec<SMeta> = spaths.into_iter().filter_map(|spath| spath.meta().ok()).collect();
+	let smetas: Vec<&SMeta> = file_refs.iter().filter_map(|f_ref| f_ref.meta()).collect();
 
 	// Compute aggregate statistics
 	let mut total_size: u64 = 0;
@@ -409,15 +409,17 @@ pub(super) fn file_list(
 	let (base_path, include_globs) = base_dir_and_globs(runtime, include_globs, options.as_ref())?;
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
+	// NOTE: For now, not `with_meta` flag always true. Might add it to `list_files_with_options` later.
 	// Default is true, as we want convenient APIs, and offer user way to optimize it
-	let with_meta = options.x_get_bool("with_meta").unwrap_or(true);
+	// let with_meta = options.x_get_bool("with_meta").unwrap_or(true);
 
 	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, true)?;
 
 	let file_infos: Vec<FileInfo> = spaths
 		.into_iter()
-		.map(|spath| FileInfo::new(runtime.dir_context(), spath, with_meta))
+		.map(|f_ref| FileInfo::from_file_ref(runtime.dir_context(), f_ref))
 		.collect();
+
 	let res = file_infos.into_lua(lua)?;
 
 	Ok(res)
@@ -498,9 +500,9 @@ pub(super) fn file_list_load(
 
 	let absolute = options.x_get_bool("absolute").unwrap_or(false);
 
-	let spaths = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, true)?;
+	let file_refs = list_files_with_options(runtime, base_path.as_ref(), &include_globs.x_as_strs(), absolute, true)?;
 
-	let file_records = create_file_records(runtime, spaths, base_path.as_ref(), absolute)?;
+	let file_records = create_file_records(runtime, file_refs, base_path.as_ref(), absolute)?;
 
 	let res = file_records.into_lua(lua)?;
 
@@ -886,11 +888,6 @@ return { files = files }
 			.as_array()
 			.ok_or("file should be array")?;
 
-		// ->> Debug
-		for file in files {
-			println!("->> {}", file.x_pretty()?);
-		}
-
 		assert_eq!(files.len(), 3, ".files.len() should be 3");
 
 		// Just create a map fby name
@@ -899,10 +896,13 @@ return { files = files }
 
 		let file = file_by_name.get("main.aip").ok_or("Should have 'main.aip'")?;
 		assert_eq!(file.x_get_str("path")?, "sub-sub-dir/main.aip");
+		assert!(file.x_get_i64("size")? >= 0, "Should have size >= 0");
 		let file = file_by_name.get("agent-hello-3.aip").ok_or("Should have 'agent-hello-3.aip'")?;
 		assert_eq!(file.x_get_str("path")?, "sub-sub-dir/agent-hello-3.aip");
+		assert!(file.x_get_i64("size")? >= 0, "Should have size >= 0");
 		let file = file_by_name.get("agent-hello-2.aip").ok_or("Should have 'agent-hello-2.aip'")?;
 		assert_eq!(file.x_get_str("path")?, "agent-hello-2.aip");
+		assert!(file.x_get_i64("size")? >= 0, "Should have size >= 0");
 
 		Ok(())
 	}

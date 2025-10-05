@@ -5,11 +5,12 @@ use crate::dir_context::find_to_run_pack_dir;
 use crate::dir_context::resolve_pack_ref_base_path;
 use crate::runtime::Runtime;
 use crate::script::support::{get_value_prop_as_string, into_vec_of_strings};
+use crate::types::FileRef;
 use crate::types::PackRef;
 use crate::types::{DestOptions, FileRecord};
 use mlua::FromLua as _;
 use mlua::{Lua, Value};
-use simple_fs::{ListOptions, SPath, list_files};
+use simple_fs::SPath;
 use std::borrow::Cow;
 use std::path::Path;
 use std::str::FromStr;
@@ -231,69 +232,12 @@ pub fn compute_base_dir(runtime: &Runtime, options: Option<&Value>) -> Result<Op
 	Ok(base_dir)
 }
 
-/// Lists files based on provided glob patterns and options
-///
-/// Returns a list of files that match the globs, with paths relative to the base_dir
-/// or absolute depending on the options
-pub fn list_files_with_options(
-	runtime: &Runtime,
-	base_path: Option<&SPath>,
-	include_globs: &[&str],
-	absolute: bool,
-	glob_sort: bool,
-) -> Result<Vec<SPath>> {
-	let base_path = match base_path {
-		Some(base_path) => base_path.clone(),
-		None => runtime
-			.dir_context()
-			.wks_dir()
-			.ok_or("Cannot create file records, no workspace")?
-			.clone(),
-	};
-
-	let sfiles = list_files(
-		&base_path,
-		Some(include_globs),
-		Some(ListOptions::from_relative_glob(!absolute)),
-	)
-	.map_err(Error::from)?;
-
-	// Now, we put back the paths found relative to base_path
-	let sfiles = sfiles
-		.into_iter()
-		.map(|f| {
-			if absolute {
-				Ok(SPath::from(f))
-			} else {
-				//
-				let diff = f.try_diff(&base_path)?;
-				// if the diff goes back from base_path, then, we put the absolute path
-				if diff.as_str().starts_with("..") {
-					Ok(SPath::from(f))
-				} else {
-					Ok(diff)
-				}
-			}
-		})
-		.collect::<simple_fs::Result<Vec<SPath>>>()
-		.map_err(|err| crate::Error::cc("Cannot list files to base", err))?;
-
-	// sort by the globs (mke sure we use this files paths not the one before)
-	let sfiles = if glob_sort {
-		simple_fs::sort_by_globs(sfiles, include_globs, true)?
-	} else {
-		sfiles
-	};
-
-	Ok(sfiles)
-}
-
 /// Creates a vector of FileRecords from file paths
 ///
 /// Takes a list of file paths and base path, loads content and creates FileRecord objects
 pub fn create_file_records(
 	runtime: &Runtime,
-	sfiles: Vec<SPath>,
+	file_refs: Vec<FileRef>,
 	base_path: Option<&SPath>,
 	absolute: bool,
 ) -> Result<Vec<FileRecord>> {
@@ -310,19 +254,20 @@ pub fn create_file_records(
 			.clone(),
 	};
 
-	sfiles
+	file_refs
 		.into_iter()
-		.map(|sfile| -> Result<FileRecord> {
+		.map(|file_ref| -> Result<FileRecord> {
 			if absolute {
 				// So, here, the sfile is the full path (for laoding), and the rel_path
-				let file_record = FileRecord::load_from_full_path(runtime.dir_context(), &sfile, sfile.clone())?;
+				let file_record =
+					FileRecord::load_from_full_path(runtime.dir_context(), file_ref.as_ref(), file_ref.clone().spath)?;
 				Ok(file_record)
 			} else {
 				let full_path = if has_base_path {
-					base_path.join(&sfile)
+					base_path.join(file_ref.as_ref())
 				} else {
 					let dir_context = runtime.dir_context();
-					dir_context.resolve_path(runtime.session(), sfile.clone(), PathResolver::WksDir, None)?
+					dir_context.resolve_path(runtime.session(), file_ref.clone().spath, PathResolver::WksDir, None)?
 				};
 
 				// Need to cannonicalize because we need to compute the diff

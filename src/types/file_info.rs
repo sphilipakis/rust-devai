@@ -1,4 +1,5 @@
 use crate::dir_context::DirContext;
+use crate::types::FileRef;
 use mlua::{IntoLua, Lua};
 use serde::{Serialize, Serializer};
 use simple_fs::SPath;
@@ -72,6 +73,23 @@ impl FileInfo {
 		} else {
 			FileInfo::from_path(path)
 		}
+	}
+
+	/// New "new" which takes from internal type file_ref (better for smeta on base_dir relative path)
+	/// NOTE: Probably need to replace the current `new(...)`
+	pub fn from_file_ref(dir_context: &DirContext, file_ref: FileRef) -> Self {
+		let smeta = file_ref.smeta;
+		// make it home
+		let spath = dir_context.maybe_home_path_into_tilde(file_ref.spath);
+
+		let mut file_info = FileInfo::from_path(spath);
+		if let Some(smeta) = smeta {
+			file_info.ctime = Some(smeta.created_epoch_us);
+			file_info.mtime = Some(smeta.modified_epoch_us);
+			file_info.size = Some(smeta.size as i64);
+		}
+
+		file_info
 	}
 
 	/// Internal from spath (note: do not make public)
