@@ -886,14 +886,17 @@ return { files = files }
 			.as_array()
 			.ok_or("file should be array")?;
 
+		// ->> Debug
+		for file in files {
+			println!("->> {}", file.x_pretty()?);
+		}
+
 		assert_eq!(files.len(), 3, ".files.len() should be 3");
 
-		// NOTE We cannot assume the orders as different OSes might have different orders.
+		// Just create a map fby name
 		let file_by_name: HashMap<&str, &Value> =
 			files.iter().map(|v| (v.x_get_str("name").unwrap_or_default(), v)).collect();
 
-		// NOTE: Here we assume the order will be deterministic and the same across OSes (tested on Mac).
-		//       This logic might need to be changed, or actually, the list might need to have a fixed order.
 		let file = file_by_name.get("main.aip").ok_or("Should have 'main.aip'")?;
 		assert_eq!(file.x_get_str("path")?, "sub-sub-dir/main.aip");
 		let file = file_by_name.get("agent-hello-3.aip").ok_or("Should have 'agent-hello-3.aip'")?;
