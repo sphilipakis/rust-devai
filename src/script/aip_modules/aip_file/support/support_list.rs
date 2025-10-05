@@ -15,6 +15,17 @@ pub fn list_files_with_options(
 	absolute: bool,
 	glob_sort: bool,
 ) -> Result<Vec<FileRef>> {
+	// validate globs
+	// (cheap check for now. Should probably be in simple-fs)
+	for glob in include_globs {
+		let glob = glob.trim();
+		if glob.starts_with("../") || glob.starts_with("./..") {
+			return Err(Error::custom(format!(
+				"Glob '{glob}' starting with '../'.\nStarting glob with '../' is not supported at the moment."
+			)));
+		}
+	}
+
 	let base_path = match base_path {
 		Some(base_path) => base_path.clone(),
 		None => runtime
