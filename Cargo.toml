@@ -52,7 +52,7 @@ humantime = "2.1.0"
 textwrap = "0.16"
 # -- HTML & XML
 html-escape = "0.2"
-html-helpers = { version = "0.0.9" }
+html-helpers = { version = "0.1.0" }
 htmd = "0.3.0"
 url = "2.5.4"
 quick-xml = "0.38"

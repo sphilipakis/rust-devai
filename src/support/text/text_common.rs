@@ -313,6 +313,20 @@ pub fn replace_all(content: &str, patterns: &[&str], values: &[&str]) -> Result<
 
 // endregion: --- Replace
 
+// region:    --- Trim
+
+pub fn trim_if_needed(s: String) -> String {
+	let trimmed = s.trim();
+	if trimmed.len() == s.len() {
+		s
+	} else {
+		// allocate only if trimming changes something
+		trimmed.to_owned()
+	}
+}
+
+// endregion: --- Trim
+
 // region:    --- Tests
 
 #[cfg(test)]

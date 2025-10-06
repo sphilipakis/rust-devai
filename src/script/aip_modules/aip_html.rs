@@ -9,11 +9,13 @@
 //! ### Functions
 //!
 //! - `aip.html.slim(html_content: string) -> string`
+//! - `aip.html.select(html_content: string, selectors: string | string[]) -> Elem[]`
 //! - `aip.html.to_md(html_content: string) -> string`
 
 use crate::runtime::Runtime;
 use crate::script::support::into_vec_of_strings;
 use crate::support::W;
+use crate::support::text::trim_if_needed;
 use crate::{Result, support};
 use html_helpers::Elem;
 use mlua::{IntoLua, Lua, Table, Value};
@@ -152,9 +154,14 @@ impl IntoLua for W<Elem> {
 		let el = self.0;
 		let table = lua.create_table()?;
 		table.set("tag", el.tag)?;
-		table.set("attrs", el.attrs)?;
-		table.set("text", el.text)?;
-		table.set("inner_html", el.inner_html)?;
+
+		// Only set the attribute if present and not empty
+		if let Some(attrs) = el.attrs {
+			table.set("attrs", attrs)?;
+		}
+
+		table.set("text", el.text.map(trim_if_needed))?;
+		table.set("inner_html", el.inner_html.map(trim_if_needed))?;
 
 		Ok(Value::Table(table))
 	}
@@ -230,15 +237,15 @@ return aip.html.select(html_content, ".me")
 		let el = res.first().ok_or("Should have at least one")?;
 		assert_eq!(el.x_get_str("tag")?, "li");
 		assert_eq!(el.x_get_str("/attrs/class")?, "me");
-		assert_eq!(el.x_get_str("text")?, "Bullet One ");
-		assert_eq!(el.x_get_str("inner_html")?, "Bullet One ");
+		assert_eq!(el.x_get_str("text")?, "Bullet One");
+		assert_eq!(el.x_get_str("inner_html")?, "Bullet One");
 		// second one (<div>)
 		let el = res.get(1).ok_or("Should have at least two")?;
 		assert_eq!(el.x_get_str("tag")?, "div");
 		assert_eq!(el.x_get_str("/attrs/class")?, "me other ");
 		assert_eq!(el.x_get_str("/attrs/title")?, " Some Title");
-		assert_eq!(el.x_get_str("text")?, " Div Two ");
-		assert_eq!(el.x_get_str("inner_html")?, " Div <strong>Two </strong>");
+		assert_eq!(el.x_get_str("text")?, "Div Two");
+		assert_eq!(el.x_get_str("inner_html")?, "Div <strong>Two </strong>");
 
 		Ok(())
 	}
