@@ -21,24 +21,28 @@ impl<'a> TagBlockIter<'a> {
 	/// * `input` - The string slice to search within.
 	/// * `tag_name` - The name of the tag to search for (e.g., "FILE").
 	/// * `extrude` - Optional configuration for extracting content outside the tags.
+	///
+	/// TODO: need to support tag_names
 	pub fn new(input: &'a str, tag_name: &'a str, extrude: Option<Extrude>) -> Self {
 		Self {
 			input,
 			tag_name,
-			tag_content_iter: TagContentIterator::new(input, tag_name),
+			tag_content_iter: TagContentIterator::new(input, &[tag_name]),
 			extrude,
 		}
 	}
 
 	/// Consumes the iterator, collecting all found `TagBlock`s and the concatenated
 	/// content outside of the tags if `extrude` was set to `Some(Extrude::Content)`.
+	///
+	/// TODO: need to support tag_names
 	pub fn collect_blocks_and_extruded_content(self) -> (Vec<TagBlock>, String) {
 		let mut blocks: Vec<TagBlock> = Vec::new();
 		let mut extruded_content = String::new();
 		let mut last_processed_idx: usize = 0;
 
 		// We need to re-iterate using TagContentIterator to get indices for extrude
-		let content_iter = TagContentIterator::new(self.input, self.tag_name);
+		let content_iter = TagContentIterator::new(self.input, &[self.tag_name]);
 
 		for tag_content in content_iter {
 			// Create the TagBlock

@@ -11,7 +11,7 @@ fn test_support_text_tag_content_iter_simple() -> Result<()> {
 	let tag_name = "DATA";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 1);
@@ -36,7 +36,7 @@ fn test_support_text_tag_content_iter_attrs() -> Result<()> {
 	let tag_name = "FILE";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 1);
@@ -61,7 +61,7 @@ fn test_support_text_tag_content_iter_attrs_with_newline() -> Result<()> {
 	let tag_name = "FILE";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 1);
@@ -86,7 +86,7 @@ fn test_support_text_tag_content_iter_multiple() -> Result<()> {
 	let tag_name = "ITEM";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 2);
@@ -121,7 +121,7 @@ fn test_support_text_tag_content_iter_no_tags() -> Result<()> {
 	let tag_name = "MARKER";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert!(tags.is_empty());
@@ -136,7 +136,7 @@ fn test_support_text_tag_content_iter_empty_content() -> Result<()> {
 	let tag_name = "EMPTY";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 1);
@@ -162,7 +162,7 @@ fn test_support_text_tag_content_iter_nested_like() -> Result<()> {
 	let tag_name_inner = "INNER";
 
 	// -- Exec Outer
-	let tags_outer: Vec<TagContent> = TagContentIterator::new(text, tag_name_outer).collect();
+	let tags_outer: Vec<TagContent> = TagContentIterator::new(text, &[tag_name_outer]).collect();
 	// -- Check Outer
 	assert_eq!(tags_outer.len(), 1);
 	assert_eq!(
@@ -177,7 +177,7 @@ fn test_support_text_tag_content_iter_nested_like() -> Result<()> {
 	);
 
 	// -- Exec Inner
-	let tags_inner: Vec<TagContent> = TagContentIterator::new(text, tag_name_inner).collect();
+	let tags_inner: Vec<TagContent> = TagContentIterator::new(text, &[tag_name_inner]).collect();
 	// -- Check Inner
 	assert_eq!(tags_inner.len(), 1);
 	assert_eq!(
@@ -201,7 +201,7 @@ fn test_support_text_tag_content_iter_malformed_open() -> Result<()> {
 	let tag_name = "MARKER";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	// The current implementation stops if '>' isn't found for the opening tag.
@@ -217,7 +217,7 @@ fn test_support_text_tag_content_iter_unclosed() -> Result<()> {
 	let tag_name = "MARKER";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	// The current implementation stops if the closing tag isn't found.
@@ -234,7 +234,7 @@ fn test_support_text_tag_content_iter_edges() -> Result<()> {
 	let tag_name_end = "END";
 
 	// -- Exec Start
-	let tags_start: Vec<TagContent> = TagContentIterator::new(text, tag_name_start).collect();
+	let tags_start: Vec<TagContent> = TagContentIterator::new(text, &[tag_name_start]).collect();
 	// -- Check Start
 	assert_eq!(tags_start.len(), 1);
 	assert_eq!(
@@ -249,7 +249,7 @@ fn test_support_text_tag_content_iter_edges() -> Result<()> {
 	);
 
 	// -- Exec End
-	let tags_end: Vec<TagContent> = TagContentIterator::new(text, tag_name_end).collect();
+	let tags_end: Vec<TagContent> = TagContentIterator::new(text, &[tag_name_end]).collect();
 	// -- Check End
 	assert_eq!(tags_end.len(), 1);
 	assert_eq!(
@@ -273,7 +273,7 @@ fn test_support_text_tag_content_iter_incorrect_tag_name() -> Result<()> {
 	let tag_name = "MARKER"; // Searching for MARKER, not MARKERX
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert!(tags.is_empty());
@@ -288,7 +288,7 @@ fn test_support_text_tag_content_iter_tag_name_prefix_check() -> Result<()> {
 	let tag_name = "TAG";
 
 	// -- Exec
-	let tags: Vec<TagContent> = TagContentIterator::new(text, tag_name).collect();
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &[tag_name]).collect();
 
 	// -- Check
 	assert_eq!(tags.len(), 1);
@@ -300,6 +300,41 @@ fn test_support_text_tag_content_iter_tag_name_prefix_check() -> Result<()> {
 			content: "real",
 			start_idx: 28,
 			end_idx: 42,
+		}
+	);
+
+	Ok(())
+}
+
+#[test]
+fn test_support_text_tag_content_iter_multiple_tag_names() -> Result<()> {
+	// -- Setup & Fixtures
+	let text = "Alpha <ONE>first</ONE> Beta <TWO attr=ok>second</TWO> Gamma";
+	let tag_names = ["ONE", "TWO"];
+
+	// -- Exec
+	let tags: Vec<TagContent> = TagContentIterator::new(text, &tag_names).collect();
+
+	// -- Check
+	assert_eq!(tags.len(), 2);
+	assert_eq!(
+		tags[0],
+		TagContent {
+			tag_name: "ONE",
+			attrs_raw: None,
+			content: "first",
+			start_idx: 6,
+			end_idx: 21,
+		}
+	);
+	assert_eq!(
+		tags[1],
+		TagContent {
+			tag_name: "TWO",
+			attrs_raw: Some("attr=ok"),
+			content: "second",
+			start_idx: 28,
+			end_idx: 52,
 		}
 	);
 
