@@ -88,7 +88,7 @@ impl Iterator for TagBlockIter<'_> {
 
 // region:    --- Tests
 
-#[path = "../../../_tests/tests_support_text_tag_block_iter.rs"]
+#[path = "tag_block_iter_tests.rs"]
 #[cfg(test)]
 mod tests;
 
