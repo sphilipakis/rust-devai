@@ -140,22 +140,7 @@ fn extract_blocks(lua: &Lua, (md_content, options): (String, Option<Value>)) -> 
 				})
 				.transpose()?;
 
-			let extrude = table.get::<Option<Value>>("extrude")?;
-			let extrude = extrude
-				.map(|extrude| match extrude {
-					Value::String(extrude) => {
-						if extrude.to_str()? == "content" {
-							Ok(Some(Extrude::Content))
-						} else {
-							Err(crate::Error::custom(
-								"md_extract_blocks extrude must be = to 'content' for now",
-							))
-						}
-					}
-					_ => Ok(None),
-				})
-				.transpose()?
-				.flatten();
+			let extrude = Extrude::extract_from_table_value(&table)?;
 
 			(lang, extrude)
 		}
