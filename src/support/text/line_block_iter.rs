@@ -3,7 +3,7 @@
 //! This implementation concatenates all consecutive lines starting with the prefix into a block.
 //! Lines that do not start with the prefix are collected as extruded content.
 
-use crate::support::Extrude;
+use crate::types::Extrude;
 
 /// Options for configuring the LineBlockIter.
 pub struct LineBlockIterOptions<'b> {

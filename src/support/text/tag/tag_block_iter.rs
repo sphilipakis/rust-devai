@@ -1,8 +1,8 @@
 #![allow(unused)] // for now, as it is not wired
 
-use crate::support::common::Extrude;
 use crate::support::text::tag::TagContentIterator;
-use crate::types::TagBlock;
+use crate::types::Extrude;
+use crate::types::TagElem;
 
 /// Iterator that yields `TagBlock` instances found within a text based on a specific tag name.
 /// It uses `TagContentIterator` internally.
@@ -36,8 +36,8 @@ impl<'a> TagBlockIter<'a> {
 	/// content outside of the tags if `extrude` was set to `Some(Extrude::Content)`.
 	///
 	/// TODO: need to support tag_names
-	pub fn collect_blocks_and_extruded_content(self) -> (Vec<TagBlock>, String) {
-		let mut blocks: Vec<TagBlock> = Vec::new();
+	pub fn collect_blocks_and_extruded_content(self) -> (Vec<TagElem>, String) {
+		let mut blocks: Vec<TagElem> = Vec::new();
 		let mut extruded_content = String::new();
 		let mut last_processed_idx: usize = 0;
 
@@ -47,8 +47,8 @@ impl<'a> TagBlockIter<'a> {
 		for tag_content in content_iter {
 			// Create the TagBlock
 			// Note: Skipping attrs parsing for now as per requirement.
-			let block = TagBlock {
-				name: tag_content.tag_name.to_string(),
+			let block = TagElem {
+				tag: tag_content.tag_name.to_string(),
 				attrs: None, // TODO: Implement attrs parsing from tag_content.attrs_raw
 				content: tag_content.content.to_string(),
 			};
@@ -75,14 +75,14 @@ impl<'a> TagBlockIter<'a> {
 }
 
 impl Iterator for TagBlockIter<'_> {
-	type Item = TagBlock;
+	type Item = TagElem;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		self.tag_content_iter.next().map(|tag_content| {
 			// Convert TagContent to TagBlock
 			// Note: Skipping attrs parsing for now.
-			TagBlock {
-				name: tag_content.tag_name.to_string(),
+			TagElem {
+				tag: tag_content.tag_name.to_string(),
 				attrs: None, // TODO: Implement attrs parsing from tag_content.attrs_raw
 				content: tag_content.content.to_string(),
 			}

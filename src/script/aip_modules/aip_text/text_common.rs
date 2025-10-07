@@ -23,10 +23,10 @@
 
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::script::{DEFAULT_MARKERS, LuaValueExt};
-use crate::support::Extrude;
 use crate::support::html::decode_html_entities;
 use crate::support::text::{self, EnsureOptions, truncate_with_ellipsis};
 use crate::support::text::{LineBlockIter, LineBlockIterOptions};
+use crate::types::Extrude;
 use mlua::{FromLua, IntoLua, Lua, MultiValue, Table, Value};
 
 // region:    --- Transform

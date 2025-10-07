@@ -18,9 +18,9 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string;
+use crate::support::W;
 use crate::support::md::{self};
-use crate::support::{Extrude, W};
-use crate::types::MdBlock;
+use crate::types::{Extrude, MdBlock};
 use mlua::{IntoLua, Lua, LuaSerdeExt, MultiValue, Table, Value};
 
 // region:    --- Module Init

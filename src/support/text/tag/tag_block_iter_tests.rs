@@ -1,8 +1,8 @@
 //! Tests for the TagBlockIter and its extrude functionality.
 
-use crate::support::Extrude;
 use crate::support::text::TagBlockIter;
-use crate::types::TagBlock; // Make sure TagBlock derives Default, PartialEq, Debug
+use crate::types::Extrude;
+use crate::types::TagElem; // Make sure TagBlock derives Default, PartialEq, Debug
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -14,22 +14,22 @@ fn test_support_text_tag_block_iter_simple() -> Result<()> {
 
 	// -- Exec
 	let iter = TagBlockIter::new(text, tag_name, None);
-	let blocks: Vec<TagBlock> = iter.collect();
+	let blocks: Vec<TagElem> = iter.collect();
 
 	// -- Check
 	assert_eq!(blocks.len(), 2);
 	assert_eq!(
 		blocks[0],
-		TagBlock {
-			name: "DATA".to_string(),
+		TagElem {
+			tag: "DATA".to_string(),
 			attrs: None,
 			content: "content1".to_string()
 		}
 	);
 	assert_eq!(
 		blocks[1],
-		TagBlock {
-			name: "DATA".to_string(),
+		TagElem {
+			tag: "DATA".to_string(),
 			attrs: None,
 			content: "content2".to_string()
 		}
@@ -46,7 +46,7 @@ fn test_support_text_tag_block_iter_no_tags() -> Result<()> {
 
 	// -- Exec
 	let iter = TagBlockIter::new(text, tag_name, None);
-	let blocks: Vec<TagBlock> = iter.collect();
+	let blocks: Vec<TagElem> = iter.collect();
 
 	// -- Check
 	assert!(blocks.is_empty());
@@ -68,16 +68,16 @@ fn test_support_text_tag_block_iter_collect_extrude_simple() -> Result<()> {
 	assert_eq!(blocks.len(), 2);
 	assert_eq!(
 		blocks[0],
-		TagBlock {
-			name: "DATA".to_string(),
+		TagElem {
+			tag: "DATA".to_string(),
 			attrs: None,
 			content: "content1".to_string()
 		}
 	);
 	assert_eq!(
 		blocks[1],
-		TagBlock {
-			name: "DATA".to_string(),
+		TagElem {
+			tag: "DATA".to_string(),
 			attrs: None,
 			content: "content2".to_string()
 		}

@@ -1,5 +1,5 @@
-use crate::support::Extrude;
 use crate::support::md::InBlockState;
+use crate::types::Extrude;
 use crate::types::MdBlock; // new import to support 3/6 ticks
 
 /// Represents an iterator over Markdown code blocks with optional language filtering.

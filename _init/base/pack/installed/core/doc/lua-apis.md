@@ -11,6 +11,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.file`](#aipfile): File system operations (load, save, list, append, JSON/MD/HTML handling).
 - [`aip.path`](#aippath): Path manipulation and checking (split, resolve, exists, diff, parent).
 - [`aip.text`](#aiptext): Text processing utilities (trim, split, split lines, replace, truncate, escape, ensure).
+- [`aip.tag`](#aiptag): Custom tag block extraction (e.g., `<TAG>...</TAG>`).
 - [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
 - [`aip.json`](#aipjson): JSON parsing and stringification.
 - [`aip.web`](#aipweb): HTTP requests (GET, POST), URL parsing and resolution.
@@ -62,6 +63,7 @@ Important notes:
 - [`WebResponse`](#webresponse) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
 - [`MdBlock`](#mdblock) (for `aip.md..`)
+- [`TagElem`](#tagelem) (for `aip.tag..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
 - [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
@@ -2368,6 +2370,62 @@ local first, second = aip.text.split_last_line("no separator", "---")
 #### Error
 
 This function does not typically error.
+
+
+## aip.tag
+
+Functions for extracting content based on custom XML-like tags (e.g., `<FILE>...</FILE>`).
+
+### Functions Summary
+
+```lua
+aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): list<TagElem> | (list<TagElem>, string)
+```
+
+### aip.tag.extract
+
+Extracts content blocks enclosed by matching start and end tags (e.g., `<TAG>content</TAG>`).
+
+```lua
+-- API Signature
+aip.tag.extract(
+  content: string,
+  tag_names: string | list<string>,
+  options?: { extrude?: "content" }
+): list<TagElem> | (list<TagElem>, string)
+```
+
+Finds matching tag pairs in `content` based on `tag_names`.
+
+#### Arguments
+
+- `content: string`: The content to search within.
+- `tag_names: string | list<string>`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
+- `options?: table` (optional):
+  - `extrude?: "content"` (optional): If set to `"content"`, the function returns two values: the list of extracted blocks and a string containing the remaining content outside the tags.
+
+#### Returns
+
+- If `extrude` is not set: `list<TagElem>`: A Lua list of [TagElem](#tagelem) objects.
+- If `extrude = "content"`: `(list<TagElem>, string)`: A tuple containing the list of [TagElem](#tagelem) objects and the extruded content string.
+
+#### Example
+
+```lua
+local content = "Prefix <A>one</A> middle <B>two</B> Suffix"
+
+-- Extract all blocks, return only the list
+local blocks = aip.tag.extract(content, {"A", "B"})
+-- blocks[1].tag == "A", blocks[1].content == "one"
+
+-- Extract blocks and also get the remaining text
+local extracted_blocks, remaining_text = aip.tag.extract(content, "A", { extrude = "content" })
+-- remaining_text == "Prefix  middle <B>two</B> Suffix" (approx)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `tag_names` is invalid (e.g., empty string or list, or contains non-string elements).
 
 
 ## aip.md
@@ -4958,6 +5016,18 @@ Represents a fenced block (usually code) in Markdown. Returned by `aip.md.extrac
   content: string,     // Content inside the block (excluding fence lines)
   lang?: string,        // Language identifier (e.g., "rust", "lua"), optional
   info: string         // Full info string from the opening fence (e.g., "rust file:main.rs"), optional
+}
+```
+
+### TagElem
+
+Represents a block defined by start and end tags, like `<TAG>content</TAG>`. Returned by `aip.tag.extract`.
+
+```ts
+{
+  tag: string,       // The tag name (e.g., "FILE", "DATA")
+  attrs?: table,     // Key/value map of attributes from the opening tag, optional
+  content: string    // The content between the opening and closing tags
 }
 ```
 

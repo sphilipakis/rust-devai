@@ -1,13 +1,11 @@
 // region:    --- Modules
 
 mod as_strs_ext;
-mod common;
 mod cow_lines;
 mod str_ext;
 mod vec_ext;
 
 pub use as_strs_ext::*;
-pub use common::*;
 pub use cow_lines::*;
 pub use str_ext::*;
 pub use vec_ext::*;

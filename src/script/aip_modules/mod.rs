@@ -18,6 +18,7 @@ pub mod aip_pin;
 pub mod aip_rust;
 pub mod aip_semver;
 pub mod aip_shape;
+pub mod aip_tag;
 pub mod aip_text;
 pub mod aip_time;
 pub mod aip_uuid;
