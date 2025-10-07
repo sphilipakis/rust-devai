@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::*;
+use crate::types::SaveOptions;
 
 use mlua::{Lua, Table, Value};
 
@@ -14,8 +15,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	// -- save
 	let rt = runtime.clone();
-	let file_save_fn =
-		lua.create_function(move |lua, (path, content): (String, String)| file_save(lua, &rt, path, content))?;
+	let file_save_fn = lua.create_function(
+		move |lua, (path, content, options): (String, String, Option<SaveOptions>)| {
+			file_save(lua, &rt, path, content, options)
+		},
+	)?;
 
 	// -- append
 	let rt = runtime.clone();

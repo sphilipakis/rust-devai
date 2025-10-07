@@ -66,6 +66,7 @@ Important notes:
 - [`TagElem`](#tagelem) (for `aip.tag..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
+- [`SaveOptions`](#saveoptions) (for `aip.file.save(...)`)
 - [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
 
 
@@ -186,7 +187,7 @@ File manipulation functions for loading, saving, listing, and managing files and
 ```lua
 aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 
-aip.file.save(rel_path: string, content: string)
+aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 
 aip.file.append(rel_path: string, content: string)
 
@@ -299,7 +300,7 @@ Save string content to a file at the specified path.
 
 ```lua
 -- API Signature
-aip.file.save(rel_path: string, content: string)
+aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 ```
 
 Writes the `content` string to the file specified by `rel_path`. Overwrites existing files. Creates directories as needed. Restricts saving outside the workspace or shared base directory for security.
@@ -308,6 +309,10 @@ Writes the `content` string to the file specified by `rel_path`. Overwrites exis
 
 - `rel_path: string`: The path relative to the workspace root.
 - `content: string`: The string content to write.
+- `options?: SaveOptions` (optional): Options ([SaveOptions](#saveoptions)) to pre-process content before saving:
+  - `trim_start?: boolean`: If true, remove leading whitespace.
+  - `trim_end?: boolean`: If true, remove trailing whitespace.
+  - `single_trailing_newline?: boolean`: If true, ensure exactly one trailing newline (`\n`).
 
 #### Returns
 
@@ -316,7 +321,15 @@ Writes the `content` string to the file specified by `rel_path`. Overwrites exis
 #### Example
 
 ```lua
+-- Save documentation to a file in the 'docs' directory
 aip.file.save("docs/new_feature.md", "# New Feature\n\nDetails.")
+
+-- Overwrite an existing file, applying trimming and normalization
+aip.file.save("config.txt", "  new_setting=true  \n\n", {
+  trim_start = true,
+  trim_end = true,
+  single_trailing_newline = true
+})
 ```
 
 #### Error
@@ -5059,6 +5072,18 @@ Aggregated statistics for a collection of files. Returned by `aip.file.stats`.
   ctime_last: number,      // Creation timestamp of the newest file (microseconds since epoch)
   mtime_first: number,     // Modification timestamp of the oldest file (microseconds since epoch)
   mtime_last: number       // Modification timestamp of the newest file (microseconds since epoch)
+}
+```
+
+### SaveOptions
+
+Options table used for configuring content pre-processing in `aip.file.save`.
+
+```ts
+{
+  trim_start?: boolean,            // If true, remove leading whitespace (default false).
+  trim_end?: boolean,              // If true, remove trailing whitespace (default false).
+  single_trailing_newline?: boolean // If true, ensure content ends with exactly one '\n' (default false).
 }
 ```
 

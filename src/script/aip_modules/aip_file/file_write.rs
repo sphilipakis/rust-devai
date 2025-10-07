@@ -10,7 +10,7 @@
 //!
 //! ### Functions
 //!
-//! - `aip.file.save(rel_path: string, content: string)         : FileInfo`        
+//! - `aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo`        
 //! - `aip.file.append(rel_path: string, content: string)      : FileInfo`
 //! - `aip.file.ensure_exists(path: string, content?, options?) : FileInfo`
 
@@ -19,7 +19,8 @@ use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::support::{check_access_delete, check_access_write};
-use crate::types::FileInfo;
+use crate::support::text::{ensure_single_trailing_newline, trim_end_if_needed, trim_start_if_needed};
+use crate::types::{FileInfo, SaveOptions};
 use mlua::{FromLua, IntoLua, Lua, Value};
 use simple_fs::ensure_file_dir;
 use std::fs::write;
@@ -31,7 +32,7 @@ use std::io::Write;
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.save(rel_path: string, content: string): FileInfo
+/// aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 /// ```
 ///
 /// Writes the provided `content` string to the file specified by `rel_path`.
@@ -45,6 +46,10 @@ use std::io::Write;
 ///
 /// - `rel_path: string` - The path to the file where the content should be saved, relative to the workspace root.
 /// - `content: string`  - The string content to write to the file.
+/// - `options: SaveOptions` (optional) - Options to pre-process content before saving:
+///   - `trim_start?: boolean`: If true, remove leading whitespace.
+///   - `trim_end?: boolean`: If true, remove trailing whitespace.
+///   - `single_trailing_newline?: boolean`: If true, ensure exactly one trailing newline.
 ///
 /// ### Returns
 ///
@@ -56,8 +61,8 @@ use std::io::Write;
 /// -- Save documentation to a file in the 'docs' directory
 /// aip.file.save("docs/new_feature.md", "# New Feature\n\nDetails about the feature.")
 ///
-/// -- Overwrite an existing file
-/// aip.file.save("config.txt", "new_setting=true")
+/// -- Overwrite an existing file, applying trimming
+/// aip.file.save("config.txt", "  new_setting=true  \n", {trim_start = true, trim_end = true})
 /// ```
 ///
 /// ### Error
@@ -73,9 +78,33 @@ use std::io::Write;
 ///   error: string // Error message (e.g., save file protection, permission denied, ...)
 /// }
 /// ```
-pub(super) fn file_save(lua: &Lua, runtime: &Runtime, rel_path: String, content: String) -> mlua::Result<mlua::Value> {
+pub(super) fn file_save(
+	lua: &Lua,
+	runtime: &Runtime,
+	rel_path: String,
+	mut content: String,
+	options: Option<SaveOptions>,
+) -> mlua::Result<mlua::Value> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
+
+	// Apply options if present
+	if let Some(opts) = options
+		&& !opts.is_empty()
+	{
+		// 1. Apply trimming
+		if opts.should_trim_start() {
+			content = trim_start_if_needed(content);
+		}
+		if opts.should_trim_end() {
+			content = trim_end_if_needed(content);
+		}
+
+		// 2. Ensure single trailing newline
+		if opts.should_single_trailing_newline() {
+			content = ensure_single_trailing_newline(content);
+		}
+	}
 
 	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
@@ -423,6 +452,146 @@ mod tests {
 		// -- Check
 		let Err(err) = res else { panic!("Should return error") };
 		assert!(err.to_string().contains("does not belong to the workspace dir"));
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_with_trim_start() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_with_trim_start.md");
+		let fx_content_in = "   Leading spaces and content.\\n";
+		let fx_content_expected = "Leading spaces and content.\n";
+		let fx_options = "{trim_start = true}";
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save("{}", "{}", {});"#,
+			fx_dest_path, fx_content_in, fx_options
+		);
+		let _res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content_expected);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_with_trim_end() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_with_trim_end.md");
+		// Note: trailing spaces, tab, and newlines will be removed.
+		let fx_content_in = "Content and trailing spaces.   \\n\\t";
+		let fx_content_expected = "Content and trailing spaces.";
+		let fx_options = "{trim_end = true}";
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save("{}", "{}", {});"#,
+			fx_dest_path, fx_content_in, fx_options
+		);
+		let _res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content_expected);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_with_single_trailing_newline_add() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_with_single_trailing_newline_add.md");
+		let fx_content_in = "Content without newline";
+		let fx_content_expected = "Content without newline\n";
+		let fx_options = "{single_trailing_newline = true}";
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save("{}", "{}", {});"#,
+			fx_dest_path, fx_content_in, fx_options
+		);
+		let _res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content_expected);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_with_single_trailing_newline_remove_extra() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_with_single_trailing_newline_remove_extra.md");
+		let fx_content_in = "Content with multiple newlines\\n\\n\\n"; // 3 newlines
+		let fx_content_expected = "Content with multiple newlines\n"; // 1 newline
+		let fx_options = "{single_trailing_newline = true}";
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save("{}", "{}", {});"#,
+			fx_dest_path, fx_content_in, fx_options
+		);
+		let _res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content_expected);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_save_with_combo_options() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_save_with_combo_options.md");
+
+		// Content: leading space, trailing space, multiple trailing newlines
+		let fx_content_in = "   Content with all trims and newlines.  \\n\\n";
+
+		// Expected result after trim_start, trim_end, then single_trailing_newline
+		let fx_content_expected = "Content with all trims and newlines.\n";
+		let fx_options = "{trim_start = true, trim_end = true, single_trailing_newline = true}";
+
+		// -- Exec
+		let lua_code = format!(
+			r#"return aip.file.save("{}", "{}", {});"#,
+			fx_dest_path, fx_content_in, fx_options
+		);
+		let _res = run_reflective_agent(&lua_code, None).await?;
+
+		// -- Check
+		let file_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(file_content, fx_content_expected);
 
 		Ok(())
 	}

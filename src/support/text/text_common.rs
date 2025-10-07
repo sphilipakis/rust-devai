@@ -325,6 +325,26 @@ pub fn trim_if_needed(s: String) -> String {
 	}
 }
 
+pub fn trim_start_if_needed(s: String) -> String {
+	let trimmed = s.trim_start();
+	if trimmed.len() == s.len() {
+		s
+	} else {
+		// allocate only if trimming changes something
+		trimmed.to_owned()
+	}
+}
+
+pub fn trim_end_if_needed(s: String) -> String {
+	let trimmed = s.trim_end();
+	if trimmed.len() == s.len() {
+		s
+	} else {
+		// allocate only if trimming changes something
+		trimmed.to_owned()
+	}
+}
+
 // endregion: --- Trim
 
 // region:    --- Tests
