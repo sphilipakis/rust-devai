@@ -16,16 +16,17 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_vec_of_strings;
-use std::collections::HashMap;
 use crate::support::text::TagContentIterator;
 use crate::types::Extrude;
 use crate::types::TagElem;
 use mlua::{Error as LuaError, IntoLua, Lua, MultiValue, Table, Value};
+use std::collections::HashMap;
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let module = lua.create_table()?;
 	module.set("extract", lua.create_function(tag_extract)?)?;
 	module.set("extract_as_map", lua.create_function(tag_extract_as_map)?)?;
+	module.set("extract_as_multi_map", lua.create_function(tag_extract_as_multi_map)?)?;
 
 	Ok(module)
 }
@@ -52,22 +53,54 @@ fn tag_extract(lua: &Lua, (content, tag_names, options): (String, Value, Option<
 	Ok(values)
 }
 
-fn tag_extract_as_map(lua: &Lua, (content, tag_names, options): (String, Value, Option<Table>)) -> mlua::Result<MultiValue> {
+fn tag_extract_as_map(
+	lua: &Lua,
+	(content, tag_names, options): (String, Value, Option<Table>),
+) -> mlua::Result<MultiValue> {
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
 	let (blocks, extruded) = extract_tag_blocks(&content, &tag_names_vec, extrude);
 
 	// Collect blocks into HashMap to ensure only the last block for a given tag name is kept.
-	let blocks_map: HashMap<String, TagElem> = blocks
-		.into_iter()
-		.map(|block| (block.tag.clone(), block))
-		.collect();
+	let blocks_map: HashMap<String, TagElem> = blocks.into_iter().map(|block| (block.tag.clone(), block)).collect();
 
 	let map_table = lua.create_table()?;
 	for (tag_name, block) in blocks_map {
 		let block_value = block.into_lua(lua)?;
 		map_table.set(tag_name, block_value)?;
+	}
+
+	let mut values = MultiValue::new();
+	values.push_back(Value::Table(map_table));
+
+	if let Some(extruded_content) = extruded {
+		let extruded_lua_string = lua.create_string(&extruded_content)?;
+		values.push_back(Value::String(extruded_lua_string));
+	}
+
+	Ok(values)
+}
+
+fn tag_extract_as_multi_map(
+	lua: &Lua,
+	(content, tag_names, options): (String, Value, Option<Table>),
+) -> mlua::Result<MultiValue> {
+	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
+	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
+
+	let (blocks, extruded) = extract_tag_blocks(&content, &tag_names_vec, extrude);
+
+	let mut blocks_map: HashMap<String, Vec<TagElem>> = HashMap::new();
+	for block in blocks {
+		let tag_key = block.tag.clone();
+		blocks_map.entry(tag_key).or_default().push(block);
+	}
+
+	let map_table = lua.create_table()?;
+	for (tag_name, blocks_vec) in blocks_map {
+		let blocks_sequence = lua.create_sequence_from(blocks_vec)?;
+		map_table.set(tag_name, blocks_sequence)?;
 	}
 
 	let mut values = MultiValue::new();
@@ -239,6 +272,56 @@ mod tests {
 	}
 
 	#[tokio::test]
+	async fn test_script_aip_tag_extract_as_multi_map_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "tag").await?;
+		let script = r#"
+            local content = "Prefix <A>one</A> middle <B>two</B> suffix <A>three</A>"
+            local map = aip.tag.extract_as_multi_map(content, {"A", "B"})
+            return map
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let tag_a = res.get("A").and_then(|v| v.as_array()).ok_or("Expected array for tag A")?;
+		assert_eq!(tag_a.len(), 2);
+
+		let tag_a_first = tag_a
+			.first()
+			.and_then(|v| v.as_object())
+			.ok_or("Expected first block object for tag A")?;
+		let tag_a_second = tag_a
+			.get(1)
+			.and_then(|v| v.as_object())
+			.ok_or("Expected second block object for tag A")?;
+		let tag_b = res.get("B").and_then(|v| v.as_array()).ok_or("Expected array for tag B")?;
+		assert_eq!(tag_b.len(), 1);
+
+		let tag_a_first_content = tag_a_first
+			.get("content")
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for first tag A block")?;
+		let tag_a_second_content = tag_a_second
+			.get("content")
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for second tag A block")?;
+		let tag_b_content = tag_b
+			.first()
+			.and_then(|v| v.as_object())
+			.and_then(|v| v.get("content"))
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for tag B block")?;
+
+		assert_eq!(tag_a_first_content, "one");
+		assert_eq!(tag_a_second_content, "three");
+		assert_eq!(tag_b_content, "two");
+
+		Ok(())
+	}
+
+	#[tokio::test]
 	async fn test_script_aip_tag_extract_with_extrude() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(init_module, "tag").await?;
@@ -275,16 +358,10 @@ mod tests {
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
-		let extruded = res
-			.get("extruded")
-			.and_then(|v| v.as_str())
-			.ok_or("Expected extruded string")?;
+		let extruded = res.get("extruded").and_then(|v| v.as_str()).ok_or("Expected extruded string")?;
 		assert_eq!(extruded, "Prefix  middle  suffix");
 
-		let map = res
-			.get("map")
-			.and_then(|v| v.as_object())
-			.ok_or("Expected map object")?;
+		let map = res.get("map").and_then(|v| v.as_object()).ok_or("Expected map object")?;
 		let tag_a = map.get("A").and_then(|v| v.as_object()).ok_or("Expected map entry for tag A")?;
 		let tag_b = map.get("B").and_then(|v| v.as_object()).ok_or("Expected map entry for tag B")?;
 
@@ -298,6 +375,55 @@ mod tests {
 			.ok_or("Expected content for tag B")?;
 
 		assert_eq!(tag_a_content, "one");
+		assert_eq!(tag_b_content, "two");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_aip_tag_extract_as_multi_map_with_extrude() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(init_module, "tag").await?;
+		let script = r#"
+            local content = "Prefix <A>one</A> middle <B>two</B> suffix <A>three</A>"
+            local map, extruded = aip.tag.extract_as_multi_map(content, {"A", "B"}, { extrude = "content" })
+            return { map = map, extruded = extruded }
+        "#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let extruded = res.get("extruded").and_then(|v| v.as_str()).ok_or("Expected extruded string")?;
+		assert_eq!(extruded, "Prefix  middle  suffix ");
+
+		let map = res.get("map").and_then(|v| v.as_object()).ok_or("Expected map object")?;
+		let tag_a = map.get("A").and_then(|v| v.as_array()).ok_or("Expected array for tag A")?;
+		let tag_b = map.get("B").and_then(|v| v.as_array()).ok_or("Expected array for tag B")?;
+		assert_eq!(tag_a.len(), 2);
+		assert_eq!(tag_b.len(), 1);
+
+		let tag_a_first_content = tag_a
+			.first()
+			.and_then(|v| v.as_object())
+			.and_then(|v| v.get("content"))
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for first tag A block")?;
+		let tag_a_second_content = tag_a
+			.get(1)
+			.and_then(|v| v.as_object())
+			.and_then(|v| v.get("content"))
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for second tag A block")?;
+		let tag_b_content = tag_b
+			.first()
+			.and_then(|v| v.as_object())
+			.and_then(|v| v.get("content"))
+			.and_then(|v| v.as_str())
+			.ok_or("Expected content for tag B block")?;
+
+		assert_eq!(tag_a_first_content, "one");
+		assert_eq!(tag_a_second_content, "three");
 		assert_eq!(tag_b_content, "two");
 
 		Ok(())
