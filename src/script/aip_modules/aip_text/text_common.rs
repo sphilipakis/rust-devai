@@ -19,7 +19,7 @@
 //! - `aip.text.replace_markers(content: string | nil, new_sections: array): string | nil`
 //! - `aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (table | nil, string | nil)`
 //! - `aip.text.ensure(content: string | nil, {prefix? = string, suffix? = string}): string | nil`
-//! - `aip.text.ensure_single_ending_newline(content: string | nil): string | nil`
+//! - `aip.text.ensure_single_trailing_newline(content: string | nil): string | nil`
 
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::script::{DEFAULT_MARKERS, LuaValueExt};
@@ -171,7 +171,9 @@ pub fn ensure(lua: &Lua, (content_val, inst_val): (Value, Value)) -> mlua::Resul
 ///
 /// ```lua
 /// -- API Signature
-/// aip.text.ensure_single_ending_newline(content: string | nil): string | nil
+/// aip.text.ensure_single_trailing_newline(content: string | nil): string | nil
+///
+/// -- (was aip.text.ensure_single_trailing_newline)
 /// ```
 ///
 /// This function is useful for code normalization.
@@ -183,11 +185,11 @@ pub fn ensure(lua: &Lua, (content_val, inst_val): (Value, Value)) -> mlua::Resul
 /// ### Returns
 ///
 /// The string with a single ending newline, or `nil` if input `content` is `nil`.
-pub fn ensure_single_ending_newline(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
-	let Some(content) = into_option_string(content_val, "aip.text.ensure_single_ending_newline")? else {
+pub fn ensure_single_trailing_newline(lua: &Lua, content_val: Value) -> mlua::Result<Value> {
+	let Some(content) = into_option_string(content_val, "aip.text.ensure_single_trailing_newline")? else {
 		return Ok(Value::Nil);
 	};
-	let res = crate::support::text::ensure_single_ending_newline(content);
+	let res = crate::support::text::ensure_single_trailing_newline(content);
 	lua.create_string(&res).map(Value::String)
 }
 
@@ -787,10 +789,10 @@ return { blocks = a, extruded = b }
 	}
 
 	#[tokio::test]
-	async fn test_lua_text_ensure_single_ending_newline_nil_content() -> Result<()> {
+	async fn test_lua_text_ensure_single_trailing_newline_nil_content() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_text::init_module, "text").await?;
-		let script = r#"return aip.text.ensure_single_ending_newline(nil)"#;
+		let script = r#"return aip.text.ensure_single_trailing_newline(nil)"#;
 
 		// -- Exec
 		let res = eval_lua(&lua, script)?;

@@ -1858,7 +1858,9 @@ aip.text.replace_markers(content: string | nil, new_sections: list): string | ni
 
 aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): string | nil
 
-aip.text.ensure_single_ending_newline(content: string | nil): string | nil
+aip.text.ensure_single_trailing_newline(content: string | nil): string | nil
+
+aip.text.ensure_single_ending_newline(content: string | nil): string | nil -- Deprecated: Use aip.text.ensure_single_trailing_newline
 
 aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil -- lowest_size_unit default "B"
 
@@ -2206,13 +2208,13 @@ Adds the prefix/suffix only if the content doesn't already start/end with it.
 
 This function does not typically error.
 
-### aip.text.ensure_single_ending_newline
+### aip.text.ensure_single_trailing_newline
 
 Ensures the content ends with exactly one newline character (`\n`). If `content` is `nil`, returns `nil`.
 
 ```lua
 -- API Signature
-aip.text.ensure_single_ending_newline(content: string | nil): string | nil
+aip.text.ensure_single_trailing_newline(content: string | nil): string | nil
 ```
 
 Removes trailing whitespace and adds a single newline if needed. Returns `\n` if content is empty. Useful for code normalization.
@@ -2228,6 +2230,15 @@ Removes trailing whitespace and adds a single newline if needed. Returns `\n` if
 #### Error
 
 This function does not typically error.
+
+### aip.text.ensure_single_ending_newline (Deprecated)
+
+Deprecated alias for `aip.text.ensure_single_trailing_newline`.
+
+```lua
+-- API Signature
+aip.text.ensure_single_ending_newline(content: string | nil): string | nil
+```
 
 ### aip.text.format_size
 

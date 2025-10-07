@@ -5,7 +5,7 @@ use mlua::{Lua, Table};
 use super::{
 	aip_truncate,
 	ensure,
-	ensure_single_ending_newline,
+	ensure_single_trailing_newline,
 	// text_common.rs
 	escape_decode,
 	escape_decode_if_needed,
@@ -46,9 +46,15 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	)?;
 	table.set("extract_line_blocks", lua.create_function(extract_line_blocks)?)?;
 	table.set("ensure", lua.create_function(ensure)?)?;
+
+	table.set(
+		"ensure_single_trailing_newline",
+		lua.create_function(ensure_single_trailing_newline)?,
+	)?;
+	// deprecated (use ensure_single_trailing_newline)
 	table.set(
 		"ensure_single_ending_newline",
-		lua.create_function(ensure_single_ending_newline)?,
+		lua.create_function(ensure_single_trailing_newline)?,
 	)?;
 
 	// --- Functions from text_split.rs
