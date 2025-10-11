@@ -426,11 +426,7 @@ impl<'a> RtStep<'a> {
 		};
 
 		// -- Update Run State
-		let run_u = RunForUpdate {
-			end: Some(now_micro().into()),
-			end_state,
-			..Default::default()
-		};
+		let run_u = get_run_u_for_end(mm, run_id, end_state)?;
 		RunBmc::update(self.mm(), run_id, run_u)?;
 
 		// -- Add log line
@@ -457,10 +453,8 @@ impl<'a> RtStep<'a> {
 
 		// -- Then set the end time
 		// No need to set end_state was done by set_end_error
-		let run_u = RunForUpdate {
-			end: Some(now_micro().into()),
-			..Default::default()
-		};
+		let run_u = get_run_u_for_end(mm, run_id, None)?;
+
 		RunBmc::update(mm, run_id, run_u)?;
 
 		// -- Now update all the tasks of the run
@@ -474,3 +468,32 @@ impl<'a> RtStep<'a> {
 		Ok(())
 	}
 }
+
+// region:    --- Support
+
+fn get_run_u_for_end(mm: &ModelManager, run_id: Id, end_state: Option<EndState>) -> Result<RunForUpdate> {
+	let tasks = TaskBmc::list_for_run(mm, run_id)?;
+
+	let mut total_task_us = 0;
+	for task in tasks {
+		if let (Some(start), Some(end)) = (task.start, task.end) {
+			let dur = end.as_i64() - start.as_i64();
+			if dur > 0 {
+				total_task_us += dur;
+			}
+		}
+	}
+
+	let total_task_ms: i64 = (total_task_us as f64 / 1000.).round() as i64;
+
+	let run_u = RunForUpdate {
+		end: Some(now_micro().into()),
+		total_task_ms: Some(total_task_ms),
+		end_state,
+		..Default::default()
+	};
+
+	Ok(run_u)
+}
+
+// endregion: --- Support

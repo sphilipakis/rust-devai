@@ -47,6 +47,7 @@ pub struct Run {
 	pub concurrency: Option<i32>,
 
 	pub total_cost: Option<f64>,
+	pub total_task_ms: Option<i64>,
 
 	pub label: Option<String>,
 }
@@ -112,6 +113,7 @@ pub struct RunForUpdate {
 	pub concurrency: Option<i32>,
 
 	pub total_cost: Option<f64>,
+	pub total_task_ms: Option<i64>,
 
 	pub label: Option<String>,
 }

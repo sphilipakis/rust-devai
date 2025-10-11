@@ -54,9 +54,11 @@ CREATE TABLE IF NOT EXISTS run (
 		model       TEXT,
 		concurrency INTEGER,
 
-		total_cost  REAL,
+		label TEXT,
 
-		label TEXT
+		-- Computed
+		total_cost    REAL,
+		total_task_ms INTEGER -- cummulative time
 
 ) STRICT",
 );
