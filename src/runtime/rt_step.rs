@@ -437,6 +437,34 @@ impl<'a> RtStep<'a> {
 		Ok(())
 	}
 
+	/// Mark the run as completed (end time, end_state)
+	pub async fn step_run_end_canceled(&self, run_id: Id) -> Result<()> {
+		let mm = self.mm();
+
+		let run = RunBmc::get(mm, run_id)?;
+
+		// Only update end state if none
+		let end_state = if run.end_state.is_none() {
+			Some(EndState::Cancel)
+		} else {
+			None
+		};
+
+		// -- Update Run State
+		let run_u = get_run_u_for_end(mm, run_id, end_state)?;
+		RunBmc::update(self.mm(), run_id, run_u)?;
+
+		// -- Update the tasks that are not ended
+		TaskBmc::cancel_all_not_ended_for_run(mm, run_id)?;
+
+		// -- Add log line
+		self.rt_log()
+			.rec_log_no_msg(run_id, None, Some(RunStep::End), None, Some(LogKind::RunStep))
+			.await?;
+
+		Ok(())
+	}
+
 	/// Mark the run as ended but with error
 	/// NOTE: if the err_id is already there, just do not create a new one.
 	///       However, it not there, will create new one.

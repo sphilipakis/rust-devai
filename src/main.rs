@@ -66,7 +66,8 @@ async fn main() -> Result<()> {
 
 	// -- Start executor
 	let executor = Executor::new(once_mm);
-	let exec_sender = executor.sender();
+	let exec_tx = executor.sender();
+
 	// TODO: Probably want to move the spawn inside executor.start
 	tokio::spawn(async move {
 		// NOTE: This will consume the excecutor (make sure to get exec_sender before start)
@@ -82,9 +83,9 @@ async fn main() -> Result<()> {
 	//       Otherwise, if non interactive, we go to v1
 	if args.cmd.is_interactive() && args.cmd.is_tui() {
 		let mm = once_mm.get().await?;
-		tui::start_tui(mm, exec_sender, args).await?;
+		tui::start_tui(mm, exec_tx, args).await?;
 	} else {
-		let tui_v1 = TuiAppV1::new(exec_sender);
+		let tui_v1 = TuiAppV1::new(exec_tx);
 		// This will wait until all done
 		tui_v1.start_with_args(args).await?;
 	}

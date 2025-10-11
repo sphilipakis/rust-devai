@@ -46,8 +46,7 @@ impl StatefulWidget for MainView {
 		}
 
 		// -- Render action
-		let action_v = ActionView {};
-		action_v.render(action_a, buf, state);
+		ActionView.render(action_a, buf, state);
 
 		// -- Render popup overlay last (on top)
 		PopupOverlay.render(area, buf, state);

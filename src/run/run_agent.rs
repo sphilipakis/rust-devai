@@ -36,13 +36,32 @@ pub async fn run_agent(
 	// -- Rt Step - Start Run
 	let run_id = rt_step.step_run_start(run_id).await?;
 
-	let run_agent_res = run_agent_inner(runtime, run_id, agent, inputs, run_base_options, return_output_values).await;
+	let cancel_rx_opt = runtime.cancel_rx().cloned();
+
+	let run_future = run_agent_inner(runtime, run_id, agent, inputs, run_base_options, return_output_values);
+	tokio::pin!(run_future);
+
+	let (run_agent_res, canceled) = if let Some(cancel_rx) = cancel_rx_opt {
+		let cancel_fut = cancel_rx.cancelled();
+		tokio::pin!(cancel_fut);
+
+		tokio::select! {
+			res = &mut run_future => (res, false),
+			_ = &mut cancel_fut => (Ok(RunAgentResponse{ outputs: None, after_all: None }), true)
+		}
+	} else {
+		(run_future.await, false)
+	};
 
 	match run_agent_res.as_ref() {
 		// NOTE: Eventually we want to store the after all response as well
 		Ok(_ok_res) => {
 			// -- Rt Step - End
-			rt_step.step_run_end_ok(run_id).await?;
+			if canceled {
+				rt_step.step_run_end_canceled(run_id).await?;
+			} else {
+				rt_step.step_run_end_ok(run_id).await?;
+			}
 		}
 		Err(err) => {
 			// -- Rt end with err

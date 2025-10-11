@@ -1,4 +1,5 @@
 use crate::dir_context::DirContext;
+use crate::event::CancelTrx;
 use crate::exec::ExecutorTx;
 use crate::runtime::Session;
 use crate::runtime::queue::RunTx;
@@ -13,6 +14,8 @@ pub struct RuntimeInner {
 	pub(super) session: Session,
 	pub(super) run_tx: RunTx,
 	pub(super) mm: ModelManager,
+
+	pub(super) cancel_trx: Option<CancelTrx>,
 }
 
 /// Getters

@@ -38,6 +38,7 @@ pub enum AppEvent {
 pub enum ActionEvent {
 	Quit,
 	Redo,
+	CancelRun,
 }
 
 #[allow(unused)]

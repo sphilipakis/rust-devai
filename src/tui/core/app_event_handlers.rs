@@ -46,6 +46,7 @@ pub async fn handle_app_event(
 
 // region:    --- Handlers
 
+/// Briddge a term event (e.g., keyboard) into an Action Event
 async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 	if let Event::Key(key) = term_event
 		&& let KeyEventKind::Press = key.kind
@@ -54,6 +55,7 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 		match (key.code, mod_ctrl) {
 			(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
 			(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
+			(KeyCode::Char('x'), _) => app_tx.send(ActionEvent::CancelRun).await?,
 			_ => (),
 		}
 	}
@@ -77,6 +79,12 @@ async fn handle_action_event(
 		ActionEvent::Redo => {
 			//
 			executor_tx.send(ExecActionEvent::Redo).await;
+		}
+
+		// -- Cancel run
+		ActionEvent::CancelRun => {
+			//
+			executor_tx.send(ExecActionEvent::CancelRun).await;
 		}
 	}
 	Ok(())

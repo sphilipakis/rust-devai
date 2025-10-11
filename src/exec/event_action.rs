@@ -49,6 +49,8 @@ pub enum ExecActionEvent {
 	#[from]
 	RunSubAgent(RunSubAgentParams),
 
+	CancelRun,
+
 	// -- New Agent
 	CmdNew(NewArgs),
 }

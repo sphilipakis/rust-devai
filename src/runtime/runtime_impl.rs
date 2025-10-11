@@ -1,5 +1,6 @@
 use crate::Result;
 use crate::dir_context::DirContext;
+use crate::event::{CancelRx, CancelTrx, CancelTx};
 use crate::exec::ExecutorTx;
 use crate::hub::get_hub;
 use crate::run::{Literals, new_genai_client};
@@ -26,7 +27,12 @@ pub struct Runtime {
 impl Runtime {
 	/// Create a new Runtime from a dir_context (.aipack and .aipack-base)
 	/// This is called when the cli start a command
-	pub async fn new(dir_context: DirContext, executor_tx: ExecutorTx, mm: ModelManager) -> Result<Self> {
+	pub async fn new(
+		dir_context: DirContext,
+		executor_tx: ExecutorTx,
+		mm: ModelManager,
+		cancel_trx: Option<CancelTrx>,
+	) -> Result<Self> {
 		// Note: Make the type explicit for clarity
 		let genai_client = new_genai_client()?;
 
@@ -41,6 +47,7 @@ impl Runtime {
 			run_tx,
 			session: Session::new(),
 			mm,
+			cancel_trx,
 		};
 
 		let runtime = Self { inner: Arc::new(inner) };
@@ -121,6 +128,14 @@ impl Runtime {
 
 	pub fn session(&self) -> &Session {
 		self.inner.session()
+	}
+
+	pub fn cancel_tx(&self) -> Option<&CancelTx> {
+		self.inner.cancel_trx.as_ref().map(|trx| trx.tx())
+	}
+
+	pub fn cancel_rx(&self) -> Option<&CancelRx> {
+		self.inner.cancel_trx.as_ref().map(|trx| trx.rx())
 	}
 }
 
@@ -215,7 +230,8 @@ mod tests_support {
 				}
 			});
 			let mm = ModelManager::new().await?;
-			Self::new(dir_context, exec_sender, mm).await
+
+			Self::new(dir_context, exec_sender, mm, None).await
 		}
 	}
 }

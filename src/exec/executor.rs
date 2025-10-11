@@ -1,6 +1,7 @@
 //! The command executor.
 //! Will create it's own queue and listen to ExecCommand events.
 
+use crate::event::{CancelTrx, new_cancel_trx};
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
 use crate::exec::exec_sub_agent::exec_run_sub_agent;
@@ -59,6 +60,8 @@ pub struct Executor {
 	/// Used to send StartExec and EndExec events only when needed
 	active_actions: Arc<AtomicUsize>,
 
+	cancel_trx: Option<CancelTrx>,
+
 	/// NOT USED YET
 	#[allow(unused)]
 	run_queue_tx: RunQueueTx,
@@ -70,12 +73,16 @@ impl Executor {
 		let (tx, rx) = flume::unbounded();
 		let run_executor = RunQueueExecutor::new();
 		let run_queue_tx = run_executor.start();
+
+		let cancel_trx = new_cancel_trx("cancel_run");
+
 		Executor {
 			once_mm,
 			action_rx: rx,
 			action_sender: ExecutorTx::new(tx),
 			current_redo_ctx: Default::default(),
 			active_actions: Arc::new(AtomicUsize::new(0)),
+			cancel_trx: Some(cancel_trx),
 			run_queue_tx,
 		}
 	}
@@ -249,7 +256,7 @@ impl Executor {
 
 				let exec_sender = self.sender();
 				let mm = self.once_mm.get().await?;
-				let runtime = Runtime::new(dir_ctx, exec_sender, mm).await?;
+				let runtime = Runtime::new(dir_ctx, exec_sender, mm, self.cancel_trx.clone()).await?;
 				let redo = exec_run(run_args, runtime).await?;
 				self.set_current_redo_ctx(redo).await;
 				hub.publish(ExecStatusEvent::RunEnd).await;
@@ -278,6 +285,13 @@ impl Executor {
 			ExecActionEvent::RunSubAgent(run_agent_params) => {
 				if let Err(err) = exec_run_sub_agent(run_agent_params).await {
 					hub.publish(Error::cc("Fail to run agent", err)).await;
+				}
+			}
+
+			// Cancel
+			ExecActionEvent::CancelRun => {
+				if let Some(tx) = self.cancel_trx.as_ref().map(|trx| trx.tx()) {
+					tx.cancel();
 				}
 			}
 		}
