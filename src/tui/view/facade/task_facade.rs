@@ -56,12 +56,15 @@ impl Task {
 
 		spans
 	}
+
 	/// NOTE: This is fixed 6 char component
 	pub fn ui_ai(&self) -> Vec<Span<'static>> {
 		let ai_running_state = self.ai_running_state();
+
 		let ico = el_running_ico(ai_running_state.clone());
 		let label_style = match ai_running_state {
 			RunningState::NotScheduled | RunningState::Waiting => style::STL_SECTION_MARKER,
+			RunningState::Ended(Some(EndState::Cancel)) => style::STL_SECTION_MARKER,
 			_ => style::STL_SECTION_MARKER_AI,
 		};
 		let spans = vec![
@@ -142,7 +145,7 @@ impl Task {
 		];
 
 		let bg = match RunningState::from(self) {
-			RunningState::NotScheduled => style::CLR_BKG_RUNNING_WAIT,
+			RunningState::NotScheduled | RunningState::Unknown => style::CLR_BKG_RUNNING_WAIT,
 			RunningState::Waiting => style::CLR_BKG_RUNNING_WAIT,
 			RunningState::Running => {
 				if self.is_ai_running() {

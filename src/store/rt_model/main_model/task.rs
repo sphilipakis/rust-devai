@@ -200,16 +200,27 @@ impl Task {
 	}
 
 	pub fn ai_running_state(&self) -> RunningState {
-		if self.ai_gen_end.is_some() {
-			// TODO: Need to compute correctly the end state for this stage
-			RunningState::Ended(self.end_state)
-		} else if self.ai_gen_start.is_some() {
-			RunningState::Running
-		} else {
-			match self.end_state {
-				Some(_) => RunningState::NotScheduled,
-				None => RunningState::Waiting,
-			}
+		let ai_stage_done = self.ai_start.is_some() && self.ai_end.is_some();
+		let task_ended = self.end_state.is_some();
+
+		match (task_ended, ai_stage_done, self.ai_gen_start, self.ai_gen_end) {
+			// -- Task ended, but GenAI not ended, so assume AI Request was canceled
+			(true, _, Some(_start), None) => RunningState::Ended(Some(EndState::Cancel)),
+
+			// -- Task not ended, but GenAI not ended, so assume AI Request is running
+			(false, _, Some(_start), None) => RunningState::Running,
+
+			// -- GenAI Ended, and AI State ended
+			(_, true, Some(_start), Some(_end)) => RunningState::Ended(Some(EndState::Ok)),
+
+			// -- If the AI Stage was not finished, but the genai was, then, genai return error
+			(_, false, Some(_start), Some(_end)) => RunningState::Ended(Some(EndState::Err)),
+
+			// -- No Genai, but AI Stage has a start/end
+			(_, true, None, None) => RunningState::NotScheduled,
+
+			// -- Anything else, ignore for now
+			_ => RunningState::Unknown,
 		}
 	}
 }

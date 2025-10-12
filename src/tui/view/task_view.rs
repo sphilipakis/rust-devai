@@ -1,5 +1,5 @@
-use crate::store::ModelManager;
 use crate::store::rt_model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
+use crate::store::{EndState, ModelManager, RunningState};
 use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
@@ -387,22 +387,38 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 		.map(|v| v.as_str())
 		.unwrap_or_default();
 
-	let ai_stage_done = task.ai_start.is_some() && task.ai_end.is_some();
+	let (content, style) = match task.ai_running_state() {
+		RunningState::Ended(Some(EndState::Cancel)) => (
+			Some(format!("■ AI request canceled {model_name}.")),
+			marker_style_active,
+		),
 
-	let (content, style) = match (ai_stage_done, task.ai_gen_start, task.ai_gen_end) {
-		(_, Some(_start), None) => (
+		RunningState::Running => (
 			Some(format!("➜ Sending prompt to AI model {model_name}.")),
 			marker_style_active,
 		),
-		(_, Some(_start), Some(_end)) => {
+
+		RunningState::Ended(Some(EndState::Ok)) => {
 			// let cost = state.current_task_cost_fmt();
 			// let compl = state.current_task_completion_tokens_fmt();
 			(Some(format!("✔ AI model {model_name} responded.")), marker_style_active)
 		}
-		(true, None, None) => (
+
+		RunningState::Ended(Some(EndState::Err)) => {
+			// let cost = state.current_task_cost_fmt();
+			// let compl = state.current_task_completion_tokens_fmt();
+			(
+				Some(format!("✘ AI model {model_name} responded with an error.")),
+				marker_style_active,
+			)
+		}
+
+		RunningState::NotScheduled => (
 			Some(". No instruction given. GenAI Skipped.".to_string()),
 			marker_stype_inactive,
 		),
+
+		// Anything else ignore for now
 		_ => (None, marker_stype_inactive),
 	};
 

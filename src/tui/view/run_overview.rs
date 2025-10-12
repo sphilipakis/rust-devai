@@ -395,7 +395,7 @@ fn ui_for_legend(tasks: &[Task]) -> Vec<Span<'static>> {
 	// -- Process counts
 	for task in tasks {
 		match RunningState::from(task) {
-			RunningState::NotScheduled => (), // this is for other state, ignore for now.
+			RunningState::NotScheduled | RunningState::Unknown => (), // this is for other state, ignore for now.
 			RunningState::Waiting => count_waiting += 1,
 			RunningState::Running => {
 				if task.is_ai_running() {

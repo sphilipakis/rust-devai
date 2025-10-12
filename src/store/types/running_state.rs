@@ -6,6 +6,7 @@ pub enum RunningState {
 	Waiting,
 	Running,
 	Ended(Option<EndState>), // see EndState
+	Unknown,
 }
 
 // region:    --- Froms
