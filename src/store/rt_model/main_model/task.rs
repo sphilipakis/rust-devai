@@ -39,6 +39,8 @@ pub struct Task {
 	pub end_err_id: Option<Id>,
 	pub end_skip_reason: Option<String>,
 
+	pub prompt_size: Option<i64>,
+
 	pub model_ov: Option<String>,
 
 	// -- Usage values
@@ -110,6 +112,10 @@ pub struct TaskForUpdate {
 	pub end_err_id: Option<Id>,
 	pub end_skip_reason: Option<String>,
 
+	pub prompt_size: Option<i64>,
+
+	pub model_ov: Option<String>,
+
 	// -- Usage values
 	pub tk_prompt_total: Option<i32>,
 	pub tk_prompt_cached: Option<i32>,
@@ -117,7 +123,6 @@ pub struct TaskForUpdate {
 	pub tk_completion_total: Option<i32>,
 	pub tk_completion_reasoning: Option<i32>,
 
-	pub model_ov: Option<String>,
 	pub cost: Option<f64>,
 
 	pub label: Option<String>,

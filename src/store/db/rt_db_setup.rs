@@ -93,6 +93,10 @@ CREATE TABLE IF NOT EXISTS task (
 		end_err_id       INTEGER,
 		end_skip_reason  TEXT,
 
+		-- prompt
+		prompt_size      INTEGER, -- in bytes
+
+		-- Model
 		model_ov   TEXT,
 
 		-- Usage Raw

@@ -184,8 +184,14 @@ impl AppState {
 		let Some(task) = self.current_task() else {
 			return "... tokens".to_string();
 		};
+
 		let Some(tk_prompt) = task.tk_prompt_total else {
-			return "... tokens".to_string();
+			if let Some(prompt_size) = task.prompt_size {
+				let size_fmt = simple_fs::pretty_size(prompt_size as u64);
+				return format!("... ({})", size_fmt.trim());
+			} else {
+				return "... tokens".to_string();
+			}
 		};
 
 		let mut addl: Vec<String> = Vec::new();

@@ -19,23 +19,7 @@ pub struct ProcAiResponse {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub async fn process_ai(
-	runtime: &Runtime,
-	client: &genai::Client,
-	run_base_options: &RunBaseOptions,
-	run_model_resolved: &ModelName,
-	run_id: Id,
-	task_id: Id,
-	agent: Agent,
-	before_all: &Value,
-	input: &Value,
-	data: &Value,
-) -> Result<ProcAiResponse> {
-	let hub = get_hub();
-
-	let rt_step = runtime.rt_step();
-	let rt_model = runtime.rt_model();
-
+pub fn build_chat_messages(agent: &Agent, before_all: &Value, input: &Value, data: &Value) -> Result<Vec<ChatMessage>> {
 	let data_scope = HashMap::from([
 		// The hbs scope data
 		// Note: for now, we do not add the before all
@@ -43,7 +27,6 @@ pub async fn process_ai(
 		("input", input),
 		("before_all", before_all),
 	]);
-	// let data_scope = &serde_json::to_value(data_scope)?;
 
 	let mut chat_messages: Vec<ChatMessage> = Vec::new();
 	for prompt_part in agent.prompt_parts() {
@@ -91,7 +74,25 @@ pub async fn process_ai(
 			})
 		}
 	}
-	// let inst = hbs_render(agent.inst(), &data_scope)?;
+
+	Ok(chat_messages)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn process_ai(
+	runtime: &Runtime,
+	client: &genai::Client,
+	run_base_options: &RunBaseOptions,
+	run_model_resolved: &ModelName,
+	run_id: Id,
+	task_id: Id,
+	agent: Agent,
+	chat_messages: Vec<ChatMessage>,
+) -> Result<ProcAiResponse> {
+	let hub = get_hub();
+
+	let rt_step = runtime.rt_step();
+	let rt_model = runtime.rt_model();
 
 	let is_inst_empty = chat_messages.is_empty();
 
@@ -122,8 +123,13 @@ pub async fn process_ai(
 	}
 
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
+		let prompt_size: usize = chat_messages
+			.iter()
+			.map(|c| c.content.texts().iter().map(|c| c.len()).sum::<usize>())
+			.sum();
+
 		// Rt Step Ai Gen start
-		rt_step.step_task_ai_gen_start(run_id, task_id).await?;
+		rt_step.step_task_ai_gen_start(run_id, task_id, prompt_size as i64).await?;
 
 		let res = process_send_to_genai(
 			runtime,
@@ -165,7 +171,6 @@ async fn process_send_to_genai(
 ) -> Result<AiResponse> {
 	let hub = get_hub();
 
-	let rt_step = runtime.rt_step();
 	let rt_model = runtime.rt_model();
 
 	let chat_req = ChatRequest::from_messages(chat_messages);
@@ -173,16 +178,10 @@ async fn process_send_to_genai(
 	hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
 		.await;
 
-	// -- Rt Step - start AI
-	rt_step.step_task_ai_start(run_id, task_id).await?;
-
 	let start = Instant::now();
 	let chat_options = agent.genai_chat_options();
 	let chat_res = client.exec_chat(model_resolved, chat_req, Some(chat_options)).await?;
 	let duration = start.elapsed();
-
-	// -- Rt Step - end AI
-	rt_step.step_task_ai_end(run_id, task_id).await?;
 
 	// region:    --- First Info Part
 

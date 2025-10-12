@@ -2,7 +2,7 @@ use crate::agent::Agent;
 use crate::hub::{HubEvent, get_hub};
 use crate::run::AiResponse;
 use crate::run::literals::Literals;
-use crate::run::proc_ai::{ProcAiResponse, process_ai};
+use crate::run::proc_ai::{ProcAiResponse, build_chat_messages, process_ai};
 use crate::run::proc_data::{ProcDataResponse, process_data};
 use crate::run::proc_output::process_output;
 use crate::run::{DryMode, RunBaseOptions};
@@ -212,8 +212,11 @@ pub async fn run_agent_task(
 	}
 
 	// -- Execute genai if we have an instruction
+
 	// Rt Step - Start AI stage
 	rt_step.step_task_ai_start(run_id, task_id).await?;
+
+	let chat_messages = build_chat_messages(&agent, &before_all_result, &input, &data)?;
 	let res = process_ai(
 		runtime,
 		client,
@@ -222,11 +225,10 @@ pub async fn run_agent_task(
 		run_id,
 		task_id,
 		agent.clone(),
-		&before_all_result,
-		&input,
-		&data,
+		chat_messages,
 	)
 	.await;
+
 	// Capture error if any
 	if let Err(err) = res.as_ref() {
 		rt_model.set_task_end_error(run_id, task_id, Some(Stage::Ai), err)?;

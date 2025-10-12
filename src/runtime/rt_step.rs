@@ -200,10 +200,11 @@ impl<'a> RtStep<'a> {
 		Ok(())
 	}
 
-	pub async fn step_task_ai_gen_start(&self, run_id: Id, task_id: Id) -> Result<()> {
+	pub async fn step_task_ai_gen_start(&self, run_id: Id, task_id: Id, prompt_size: i64) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {
 			ai_gen_start: Some(now_micro().into()),
+			prompt_size: Some(prompt_size),
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
