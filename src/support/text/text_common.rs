@@ -156,6 +156,24 @@ pub fn truncate_left<'a>(content: &'a str, max_chars: usize) -> (Cow<'a, str>, b
 
 // region:    --- Replace
 
+/// Replace the first occurrence of `search` in `content` with `replace`.
+/// Returns a tuple `(new_string, changed)` where:
+/// - `new_string` is the resulting string (either modified or identical to the input)
+/// - `changed` is `true` if a replacement occurred, `false` otherwise.
+///
+/// This function avoids unnecessary allocation when no replacement is made.
+pub fn replace_first(content: String, search: &str, replace: &str) -> (String, bool) {
+	if let Some(pos) = content.find(search) {
+		let mut out = String::with_capacity(content.len() - search.len() + replace.len());
+		out.push_str(&content[..pos]);
+		out.push_str(replace);
+		out.push_str(&content[pos + search.len()..]);
+		(out, true)
+	} else {
+		(content, false)
+	}
+}
+
 /// Replaces content sections delimited by specific start and end markers.
 ///
 /// This function iterates through the input `content` line by line. It identifies

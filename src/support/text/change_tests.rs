@@ -483,3 +483,21 @@ fn test_support_text_apply_change_multiline_search_and_replace() -> Result {
 	assert_eq!(result, "line one\nnew line A\nnew line B\nline four");
 	Ok(())
 }
+
+#[test]
+fn test_support_text_apply_change_crlf_windows() -> Result {
+	// -- Setup & Fixtures
+	let original = "line one\nline two\nline three\nline four";
+	let original = original.replace("\n", "\r\n");
+	let search = "line two\nline three";
+	let replace = "new line A\nnew line B";
+	let changes = format_change_block(search, replace);
+
+	// -- Exec
+	let result = apply_changes(&original, changes)?;
+
+	// -- Check
+	assert_eq!(result, "line one\nnew line A\nnew line B\nline four");
+
+	Ok(())
+}

@@ -82,7 +82,7 @@ pub(super) fn file_save_changes(
 
 	let content = if full_path.exists() {
 		let content = simple_fs::read_to_string(&full_path).map_err(Error::custom)?;
-		text::apply_changes(&content, changes)?
+		text::apply_changes(content, changes)?
 	} else {
 		changes
 	};

@@ -1,4 +1,4 @@
-use crate::support::text::truncate_with_ellipsis;
+use crate::support::text::{self, truncate_with_ellipsis};
 use crate::{Error, Result};
 
 // These define what a marker line must look like for the parser.
@@ -25,7 +25,9 @@ const LINE_MARKER_REPLACE_END: &str = ">>>>>>> REPLACE";
 ///     For each block, the *first occurrence* of its `search_pattern` in the (potentially modified)
 ///     `original_content` is replaced with its `replace_pattern`.
 ///     Replacements are sequential.
-pub fn apply_changes(original_content: &str, changes: impl Into<String>) -> Result<String> {
+pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<String>) -> Result<String> {
+	let original_content = original_content.into();
+
 	let changes_str = changes.into();
 
 	// Determine if we are in block processing mode by checking for any SEARCH_START marker line.
@@ -39,15 +41,34 @@ pub fn apply_changes(original_content: &str, changes: impl Into<String>) -> Resu
 
 	// Block Processing Mode
 	let requests = process_change_requests(&changes_str)?;
-	let mut current_content = original_content.to_string();
+	let mut current_content = original_content;
 
 	for req in requests {
 		// Extract patterns using indices. process_change_requests ensures valid indices for changes_str.
 		let search_pattern = &changes_str[req.search_start_idx..req.search_end_idx];
 		let replace_pattern = &changes_str[req.replace_start_idx..req.replace_end_idx];
 
-		// Replace only the first occurrence of search_pattern.
-		current_content = current_content.replacen(search_pattern, replace_pattern, 1);
+		// first do the optimistic approach first
+		let (content, changed) = match text::replace_first(current_content, search_pattern, replace_pattern) {
+			// if the content was found and replaced, all good
+			(content, true) => (content, true),
+			// if it was not replaced, then, let's try other technics
+			(content, false) => {
+				// -- Check if this is an crlf issue
+				if content.contains("\r\n") {
+					let content = content.replace("\r\n", "\n");
+					text::replace_first(content, search_pattern, replace_pattern)
+				} else {
+					(content, false)
+				}
+			}
+		};
+
+		if !changed {
+			// TODO: Probably need to do a debug trace or something
+		}
+
+		current_content = content;
 	}
 
 	Ok(current_content)
