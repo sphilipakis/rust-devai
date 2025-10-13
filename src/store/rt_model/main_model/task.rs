@@ -41,7 +41,8 @@ pub struct Task {
 
 	pub prompt_size: Option<i64>,
 
-	pub model_ov: Option<String>,
+	pub model_ov: Option<String>,       // Eventual override
+	pub model_upstream: Option<String>, // From the provider
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i64>,
@@ -115,6 +116,7 @@ pub struct TaskForUpdate {
 	pub prompt_size: Option<i64>,
 
 	pub model_ov: Option<String>,
+	pub model_upstream: Option<String>,
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i32>,

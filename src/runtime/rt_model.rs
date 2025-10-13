@@ -8,6 +8,7 @@ use crate::store::rt_model::{
 };
 use crate::store::{EndState, Id, ModelManager, Stage, TypedContent};
 use derive_more::From;
+use genai::ModelIden;
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -169,8 +170,15 @@ impl<'a> RtModel<'a> {
 		Ok(())
 	}
 
-	pub async fn update_task_usage(&self, _run_id: Id, task_id: Id, usage: &genai::chat::Usage) -> Result<()> {
-		let task_u = TaskForUpdate::from_usage(usage);
+	pub async fn update_task_usage(
+		&self,
+		_run_id: Id,
+		task_id: Id,
+		usage: &genai::chat::Usage,
+		model_upstream: &ModelIden,
+	) -> Result<()> {
+		let mut task_u = TaskForUpdate::from_usage(usage);
+		task_u.model_upstream = Some(model_upstream.model_name.to_string());
 		TaskBmc::update(self.mm(), task_id, task_u)?;
 		Ok(())
 	}

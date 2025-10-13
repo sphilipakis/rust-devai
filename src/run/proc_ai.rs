@@ -221,17 +221,19 @@ async fn process_send_to_genai(
 		reasoning_content,
 		usage,
 		model_iden: res_model_iden,
-		provider_model_iden: res_provider_model_iden,
+		provider_model_iden,
 		..
 	} = chat_res;
 
 	// -- Rt Rec - Update Task Usage
-	rt_model.update_task_usage(run_id, task_id, &usage).await?;
+	rt_model
+		.update_task_usage(run_id, task_id, &usage, &provider_model_iden)
+		.await?;
 
 	let ai_response_content = content.into_joined_texts().filter(|s| !s.is_empty());
 	let ai_response_reasoning_content = reasoning_content;
 
-	let model_info = format_model(agent, &res_model_iden, &res_provider_model_iden, &agent.options());
+	let model_info = format_model(agent, &res_model_iden, &provider_model_iden, &agent.options());
 	if run_base_options.verbose() {
 		hub.publish(format!(
 			"\n-- AI Output ({model_info})\n\n{content}\n",

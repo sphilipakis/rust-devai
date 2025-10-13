@@ -9,6 +9,7 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
+use std::borrow::Cow;
 
 /// Renders the content of a task. For now, the logs.
 pub struct TaskView;
@@ -387,28 +388,39 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 		.map(|v| v.as_str())
 		.unwrap_or_default();
 
+	let model_names: Cow<str> = if let Some(model_upstream) = task.model_upstream.as_ref()
+		&& model_upstream != model_name
+	{
+		format!("{model_name} ({model_upstream})").into()
+	} else {
+		model_name.into()
+	};
+
 	let (content, style) = match task.ai_running_state() {
 		RunningState::Ended(Some(EndState::Cancel)) => (
-			Some(format!("■ AI request canceled {model_name}.")),
+			Some(format!("■ AI request canceled {model_names}.")),
 			marker_style_active,
 		),
 
 		RunningState::Running => (
-			Some(format!("➜ Sending prompt to AI model {model_name}.")),
+			Some(format!("➜ Sending prompt to AI model {model_names}.")),
 			marker_style_active,
 		),
 
 		RunningState::Ended(Some(EndState::Ok)) => {
 			// let cost = state.current_task_cost_fmt();
 			// let compl = state.current_task_completion_tokens_fmt();
-			(Some(format!("✔ AI model {model_name} responded.")), marker_style_active)
+			(
+				Some(format!("✔ AI model {model_names} responded.")),
+				marker_style_active,
+			)
 		}
 
 		RunningState::Ended(Some(EndState::Err)) => {
 			// let cost = state.current_task_cost_fmt();
 			// let compl = state.current_task_completion_tokens_fmt();
 			(
-				Some(format!("✘ AI model {model_name} responded with an error.")),
+				Some(format!("✘ AI model {model_names} responded with an error.")),
 				marker_style_active,
 			)
 		}

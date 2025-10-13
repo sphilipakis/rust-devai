@@ -97,7 +97,8 @@ CREATE TABLE IF NOT EXISTS task (
 		prompt_size      INTEGER, -- in bytes
 
 		-- Model
-		model_ov   TEXT,
+		model_ov         TEXT,
+		model_upstream   TEXT,    -- from te provider
 
 		-- Usage Raw
 		usage BLOB, -- jsonb, to have raw usage
