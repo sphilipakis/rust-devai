@@ -1,5 +1,21 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-10-12 - [v0.8.4](https://github.com/jeremychone/rust-devai/compare/v0.8.3...v0.8.4)
+
+- `+` New API - aip.tag - `aip.tag.extract(content, tag_names, options?)`, `.extact_as_map`, `.extact_as_multi_map`
+- `+` tui - add 'x' to cancel run (without quitting)
+- `^` tui - added prompt size display in task view while AI processing
+- `^` tui - enable copy-to-clipboard click for task_view AI section
+- `^` tui - ai step now show provider model name when different
+- `^` tui - action view clickable (e.g., `[r] Replay`, `[x] Cancel Run`, ...)
+- `^` aip.file.save - add new options for trim_start, trim_end, single_trailing_newline
+- `^` tui - added cumulative task durations for all run summary bar
+- `-` windows - check the crlf issue of apply_changes (is no match, then normalize to lf)
+- `-` tui - fix AI state display when canceled
+- `!` aip.text - renamed to 'ensure_single_trailing_newline' from 'ensure_single_ending_newline'
+- `.` lua.html.select - now element content are trimmed, and .attrs is present only when not empty
+- `.` lua file - error when globs starts with ../
+- `^` aip.file.list - now always get/return meta (size, ctime, mtime) when found
 
 ## 2025-10-03 - [v0.8.3](https://github.com/jeremychone/rust-devai/compare/v0.8.2...v0.8.3)
 
