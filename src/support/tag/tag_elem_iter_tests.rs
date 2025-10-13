@@ -1,8 +1,8 @@
-//! Tests for the TagBlockIter and its extrude functionality.
+//! Tests for the TagElemIter and its extrude functionality.
 
-use crate::support::text::TagBlockIter;
+use crate::support::tag::TagElemIter;
 use crate::types::Extrude;
-use crate::types::TagElem; // Make sure TagBlock derives Default, PartialEq, Debug
+use crate::types::TagElem; // Make sure TagElem derives Default, PartialEq, Debug
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -13,7 +13,7 @@ fn test_support_text_tag_block_iter_simple() -> Result<()> {
 	let tag_name = "DATA";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, None);
+	let iter = TagElemIter::new(text, tag_name, None);
 	let blocks: Vec<TagElem> = iter.collect();
 
 	// -- Check
@@ -45,7 +45,7 @@ fn test_support_text_tag_block_iter_no_tags() -> Result<()> {
 	let tag_name = "DATA";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, None);
+	let iter = TagElemIter::new(text, tag_name, None);
 	let blocks: Vec<TagElem> = iter.collect();
 
 	// -- Check
@@ -61,8 +61,8 @@ fn test_support_text_tag_block_iter_collect_extrude_simple() -> Result<()> {
 	let tag_name = "DATA";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, Some(Extrude::Content));
-	let (blocks, extruded) = iter.collect_blocks_and_extruded_content();
+	let iter = TagElemIter::new(text, tag_name, Some(Extrude::Content));
+	let (blocks, extruded) = iter.collect_elems_and_extruded_content();
 
 	// -- Check Blocks
 	assert_eq!(blocks.len(), 2);
@@ -96,8 +96,8 @@ fn test_support_text_tag_block_iter_collect_extrude_no_tags() -> Result<()> {
 	let tag_name = "DATA";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, Some(Extrude::Content));
-	let (blocks, extruded) = iter.collect_blocks_and_extruded_content();
+	let iter = TagElemIter::new(text, tag_name, Some(Extrude::Content));
+	let (blocks, extruded) = iter.collect_elems_and_extruded_content();
 
 	// -- Check Blocks
 	assert!(blocks.is_empty());
@@ -116,8 +116,8 @@ fn test_support_text_tag_block_iter_collect_extrude_edges() -> Result<()> {
 	let tag_name_end = "END";
 
 	// -- Exec Start Tag
-	let iter_start = TagBlockIter::new(text, tag_name_start, Some(Extrude::Content));
-	let (blocks_start, extruded_start) = iter_start.collect_blocks_and_extruded_content();
+	let iter_start = TagElemIter::new(text, tag_name_start, Some(Extrude::Content));
+	let (blocks_start, extruded_start) = iter_start.collect_elems_and_extruded_content();
 
 	// -- Check Start Tag
 	assert_eq!(blocks_start.len(), 1);
@@ -125,8 +125,8 @@ fn test_support_text_tag_block_iter_collect_extrude_edges() -> Result<()> {
 	assert_eq!(extruded_start, "middle<END>at end</END>"); // Extrudes everything not matching START
 
 	// -- Exec End Tag
-	let iter_end = TagBlockIter::new(text, tag_name_end, Some(Extrude::Content));
-	let (blocks_end, extruded_end) = iter_end.collect_blocks_and_extruded_content();
+	let iter_end = TagElemIter::new(text, tag_name_end, Some(Extrude::Content));
+	let (blocks_end, extruded_end) = iter_end.collect_elems_and_extruded_content();
 
 	// -- Check End Tag
 	assert_eq!(blocks_end.len(), 1);
@@ -143,8 +143,8 @@ fn test_support_text_tag_block_iter_collect_extrude_empty_input() -> Result<()> 
 	let tag_name = "DATA";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, Some(Extrude::Content));
-	let (blocks, extruded) = iter.collect_blocks_and_extruded_content();
+	let iter = TagElemIter::new(text, tag_name, Some(Extrude::Content));
+	let (blocks, extruded) = iter.collect_elems_and_extruded_content();
 
 	// -- Check
 	assert!(blocks.is_empty());
@@ -160,8 +160,8 @@ fn test_support_text_tag_block_iter_collect_extrude_only_tags() -> Result<()> {
 	let tag_name = "D1";
 
 	// -- Exec
-	let iter = TagBlockIter::new(text, tag_name, Some(Extrude::Content));
-	let (blocks, extruded) = iter.collect_blocks_and_extruded_content();
+	let iter = TagElemIter::new(text, tag_name, Some(Extrude::Content));
+	let (blocks, extruded) = iter.collect_elems_and_extruded_content();
 
 	// -- Check
 	assert_eq!(blocks.len(), 1);

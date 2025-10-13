@@ -11,12 +11,12 @@
 //!
 //! ### Functions
 //!
-//! - `aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): list<TagBlock> | (list<TagBlock>, string)`
+//! - `aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): list<TagElem> | (list<TagElem>, string)`
 
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_vec_of_strings;
-use crate::support::text::TagContentIterator;
+use crate::support::tag::TagElemIter;
 use crate::types::Extrude;
 use crate::types::TagElem;
 use mlua::{Error as LuaError, IntoLua, Lua, MultiValue, Table, Value};
@@ -33,13 +33,13 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 /// Extracts tagged blocks from a string.
 ///
-/// If `options` contains `extrude = "content"`, returns `(list<TagBlock>, string)`.
-/// Otherwise, returns `list<TagBlock>`.
+/// If `options` contains `extrude = "content"`, returns `(list<TagElem>, string)`.
+/// Otherwise, returns `list<TagElem>`.
 fn tag_extract(lua: &Lua, (content, tag_names, options): (String, Value, Option<Table>)) -> mlua::Result<MultiValue> {
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
-	let (blocks, extruded) = extract_tag_blocks(&content, &tag_names_vec, extrude);
+	let (blocks, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
 
 	let mut values = MultiValue::new();
 	let blocks_table = lua.create_sequence_from(blocks)?;
@@ -60,7 +60,7 @@ fn tag_extract_as_map(
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
-	let (blocks, extruded) = extract_tag_blocks(&content, &tag_names_vec, extrude);
+	let (blocks, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
 
 	// Collect blocks into HashMap to ensure only the last block for a given tag name is kept.
 	let blocks_map: HashMap<String, TagElem> = blocks.into_iter().map(|block| (block.tag.clone(), block)).collect();
@@ -89,7 +89,7 @@ fn tag_extract_as_multi_map(
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
-	let (blocks, extruded) = extract_tag_blocks(&content, &tag_names_vec, extrude);
+	let (blocks, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
 
 	let mut blocks_map: HashMap<String, Vec<TagElem>> = HashMap::new();
 	for block in blocks {
@@ -142,37 +142,25 @@ fn validate_and_normalize_tag_names(tag_names: Value) -> mlua::Result<Vec<String
 	Ok(trimmed_names)
 }
 
-fn extract_tag_blocks(content: &str, tag_names: &[String], extrude: Option<Extrude>) -> (Vec<TagElem>, Option<String>) {
-	let mut blocks: Vec<TagElem> = Vec::new();
-	let mut extruded = extrude.map(|Extrude::Content| String::new());
-	let mut last_idx: usize = 0;
+fn extract_tag_elems(content: &str, tag_names: &[String], extrude: Option<Extrude>) -> (Vec<TagElem>, Option<String>) {
+	let extrude_enabled = extrude.as_ref().is_some_and(|value| matches!(value, Extrude::Content));
 
-	if !tag_names.is_empty() {
-		let tag_refs: Vec<&str> = tag_names.iter().map(String::as_str).collect();
-
-		for tag_content in TagContentIterator::new(content, &tag_refs) {
-			if let Some(ref mut extruded_content) = extruded {
-				if tag_content.start_idx > last_idx {
-					extruded_content.push_str(&content[last_idx..tag_content.start_idx]);
-				}
-				last_idx = tag_content.end_idx + 1;
-			}
-
-			blocks.push(TagElem {
-				tag: tag_content.tag_name.to_string(),
-				attrs: None,
-				content: tag_content.content.to_string(),
-			});
-		}
+	if tag_names.is_empty() {
+		let extruded = if extrude_enabled {
+			Some(content.to_string())
+		} else {
+			None
+		};
+		return (Vec::new(), extruded);
 	}
 
-	if let Some(ref mut extruded_content) = extruded
-		&& last_idx < content.len()
-	{
-		extruded_content.push_str(&content[last_idx..]);
-	}
+	let tag_refs: Vec<&str> = tag_names.iter().map(String::as_str).collect();
+	let iter = TagElemIter::with_tag_names(content, &tag_refs, extrude);
+	let (elems, extruded_content) = iter.collect_elems_and_extruded_content();
 
-	(blocks, extruded)
+	let extruded = if extrude_enabled { Some(extruded_content) } else { None };
+
+	(elems, extruded)
 }
 
 // region:    --- Tests

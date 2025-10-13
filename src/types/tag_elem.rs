@@ -15,7 +15,7 @@ pub struct TagElem {
 }
 
 impl TagElem {
-	/// Creates a new `TagBlock` with the specified name, optional attributes, and content.
+	/// Creates a new `TagElem` with the specified name, optional attributes, and content.
 	pub fn new(name: impl Into<String>, attrs: Option<HashMap<String, String>>, content: impl Into<String>) -> Self {
 		TagElem {
 			tag: name.into(),
@@ -28,7 +28,7 @@ impl TagElem {
 // region:    --- Lua
 
 impl IntoLua for TagElem {
-	/// Converts the `TagBlock` instance into a Lua Value
+	/// Converts the `TagElem` instance into a Lua Value
 	fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
 		let table = lua.create_table()?;
 		table.set("tag", self.tag)?;
