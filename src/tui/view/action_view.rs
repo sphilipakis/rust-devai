@@ -1,8 +1,8 @@
-use crate::tui::core::AppState;
+use crate::tui::core::{Action, AppState, LinkZones};
 use crate::tui::style;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::Stylize as _;
+use ratatui::style::{Modifier, Stylize as _};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, StatefulWidget, Widget};
 
@@ -40,26 +40,71 @@ impl StatefulWidget for ActionView {
 			"] Show Runs Nav"
 		};
 
-		// -- Render Actions Bar
+		// -- Build action spans and link zones
+		let mut all_spans: Vec<Span> = Vec::new();
+		let mut link_zones = LinkZones::default();
+
+		// Helper to push an action item
+		let push_action = |spans: &mut Vec<Span>, zones: &mut LinkZones, key: &str, label: &str, action: Action| {
+			let span_start = spans.len();
+			spans.push(Span::raw("["));
+			spans.push(Span::styled(key.to_string(), style::STL_TXT_ACTION));
+			spans.push(Span::raw(label.to_string()));
+			let span_end = spans.len();
+			zones.push_link_zone(0, span_start, span_end - span_start, action);
+		};
+
+		push_action(&mut all_spans, &mut link_zones, "r", "] Replay  ", Action::Redo);
+		push_action(
+			&mut all_spans,
+			&mut link_zones,
+			"x",
+			"] Cancel Run  ",
+			Action::CancelRun,
+		);
+		push_action(&mut all_spans, &mut link_zones, "q", "] Quit  ", Action::Quit);
+		push_action(&mut all_spans, &mut link_zones, "n", n_label, Action::ToggleRunsNav);
+
+		all_spans.push(Span::raw("  "));
+
 		let overview_mode = state.overview_tasks_mode().to_string();
-		let line = Line::from(vec![
-			Span::raw("["),
-			Span::styled("r", style::STL_TXT_ACTION),
-			Span::raw("] Replay  "),
-			Span::raw("["),
-			Span::styled("x", style::STL_TXT_ACTION),
-			Span::raw("] Cancel Run  "),
-			Span::raw("["),
-			Span::styled("q", style::STL_TXT_ACTION),
-			Span::raw("] Quit  "),
-			Span::raw("["),
-			Span::styled("n", style::STL_TXT_ACTION),
-			Span::raw(n_label),
-			Span::raw("  "),
-			Span::raw("["),
-			Span::styled("t", style::STL_TXT_ACTION),
-			Span::raw(format!("] Tasks overview: {overview_mode}  ")),
-		]);
+		push_action(
+			&mut all_spans,
+			&mut link_zones,
+			"t",
+			&format!("] Tasks overview: {overview_mode}  "),
+			Action::CycleTasksOverviewMode,
+		);
+
+		let mut line = Line::from(all_spans);
+
+		// -- Handle mouse hover and click
+		let zones = link_zones.into_zones();
+		let mut hovered_idx: Option<usize> = None;
+		for (i, zone) in zones.iter().enumerate() {
+			if zone
+				.is_mouse_over(actions_a, 0, state.last_mouse_evt(), &mut line.spans)
+				.is_some()
+			{
+				hovered_idx = Some(i);
+				break;
+			}
+		}
+
+		if let Some(i) = hovered_idx {
+			let action = zones[i].action.clone();
+			if let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans) {
+				for span in hover_spans {
+					span.style = span.style.add_modifier(Modifier::BOLD).fg(style::CLR_TXT_ACTION);
+				}
+			}
+
+			if state.is_mouse_up_only() && state.is_last_mouse_over(actions_a) {
+				state.set_action(action);
+				state.trigger_redraw();
+				state.clear_mouse_evts();
+			}
+		}
 
 		Paragraph::new(line).render(actions_a, buf);
 

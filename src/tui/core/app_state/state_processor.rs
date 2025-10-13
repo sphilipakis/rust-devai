@@ -1,6 +1,7 @@
 use crate::store::rt_model::{ErrBmc, RunBmc, TaskBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
+use crate::tui::core::event::ActionEvent;
 use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
@@ -272,6 +273,30 @@ pub fn process_app_state(state: &mut AppState) {
 fn process_actions(state: &mut AppState) {
 	if let Some(action) = state.action().cloned() {
 		match action {
+			// -- Global Actions
+			Action::Quit => {
+				state.core_mut().to_send_action = Some(ActionEvent::Quit);
+				state.clear_action();
+			}
+			Action::Redo => {
+				state.core_mut().to_send_action = Some(ActionEvent::Redo);
+				state.clear_action();
+			}
+			Action::CancelRun => {
+				state.core_mut().to_send_action = Some(ActionEvent::CancelRun);
+				state.clear_action();
+			}
+			Action::ToggleRunsNav => {
+				let show_runs = !state.core().show_runs;
+				state.core_mut().show_runs = show_runs;
+				state.clear_action();
+			}
+			Action::CycleTasksOverviewMode => {
+				state.core_mut().next_overview_tasks_mode();
+				state.clear_action();
+			}
+
+			// -- Specific Actions
 			Action::ToClipboardCopy(content) => {
 				// Ensure we have a clipboard instance
 				let ensure_clipboard: Result<(), String> = if state.core().clipboard.is_some() {

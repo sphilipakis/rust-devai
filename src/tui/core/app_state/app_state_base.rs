@@ -4,7 +4,7 @@ use crate::Result;
 use crate::store::ModelManager;
 use crate::store::rt_model::Task;
 use crate::support::time::now_micro;
-use crate::tui::core::event::LastAppEvent;
+use crate::tui::core::event::{ActionEvent, LastAppEvent};
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 use crate::tui::view::PopupView;
 
@@ -65,6 +65,7 @@ impl AppState {
 			// -- Action
 			do_redraw: false,
 			do_action: None,
+			to_send_action: None,
 
 			// -- SysState
 			time: now_micro(), // the current time
@@ -163,6 +164,10 @@ impl AppState {
 
 /// Others
 impl AppState {
+	pub fn take_action_event_to_send(&mut self) -> Option<ActionEvent> {
+		self.core.to_send_action.take()
+	}
+
 	pub fn should_redraw(&self) -> bool {
 		self.core.do_redraw
 	}

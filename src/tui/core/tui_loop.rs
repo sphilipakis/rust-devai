@@ -35,6 +35,11 @@ pub fn run_ui_loop(
 			// -- Update App State
 			process_app_state(&mut app_state);
 
+			// -- If action to send, send it
+			if let Some(action_event) = app_state.take_action_event_to_send() {
+				let _ = app_tx.send(action_event).await;
+			}
+
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
 

@@ -82,6 +82,7 @@ pub const CLR_TXT: Color = CLR_TXT_500;
 pub const CLR_TXT_HOVER: Color = CLR_TXT_BLUE;
 pub const CLR_TXT_HOVER_TO_CLIP: Color = Color::Indexed(51);
 
+pub const CLR_TXT_ACTION: Color = CLR_TXT_BLUE;
 pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
@@ -91,7 +92,7 @@ pub const STL_TXT: Style = Style::new();
 
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(CLR_TXT_TEAL);
-pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_BLUE);
+pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_ACTION);
 
 // -- Nav Styles
 pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color::Black);
