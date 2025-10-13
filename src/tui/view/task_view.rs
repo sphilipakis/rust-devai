@@ -227,7 +227,8 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Add AI Lines
 	// if the run has prompt parts or we do not know, we display the line
 	if let Some(true) | None = state.current_run_has_prompt_parts() {
-		support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width), true);
+		link_zones.set_current_line(all_lines.len());
+		support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width, &mut link_zones), true);
 	}
 	link_zones.set_current_line(all_lines.len());
 
@@ -377,7 +378,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 	}
 }
 
-fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
+fn ui_for_ai(run: &Run, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
 	let marker_txt = "AI:";
 	let marker_style_active = style::STL_SECTION_MARKER_AI;
 	let marker_stype_inactive = style::STL_SECTION_MARKER;
@@ -435,7 +436,19 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16) -> Vec<Line<'static>> {
 	};
 
 	if let Some(content) = content {
-		comp::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None)
+		let lines = comp::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None);
+
+		let mut out: Vec<Line<'static>> = Vec::new();
+		let gid = link_zones.start_group();
+		for (i, line) in lines.into_iter().enumerate() {
+			if !line.spans.is_empty() {
+				let span_start = line.spans.len() - 1;
+				link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
+			}
+			out.push(line);
+		}
+
+		out
 	} else {
 		Vec::new()
 	}
