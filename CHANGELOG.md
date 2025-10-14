@@ -1,5 +1,9 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-10-13 - [v0.8.5](https://github.com/jeremychone/rust-devai/compare/v0.8.4...v0.8.5)
+
+- `^` aip.tag.extract - Add support for tag attributes
+
 ## 2025-10-12 - [v0.8.4](https://github.com/jeremychone/rust-devai/compare/v0.8.3...v0.8.4)
 
 - `+` New API - aip.tag - `aip.tag.extract(content, tag_names, options?)`, `.extact_as_map`, `.extact_as_multi_map`
