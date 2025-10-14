@@ -1,5 +1,6 @@
 // region:    --- Module
 
+mod attrs_parser;
 mod tag_content_iter;
 mod tag_elem_iter;
 

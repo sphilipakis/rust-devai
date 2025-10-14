@@ -1,3 +1,4 @@
+use super::attrs_parser::parse_attribute;
 use crate::support::tag::TagContentIterator;
 use crate::types::Extrude;
 use crate::types::TagElem;
@@ -61,9 +62,11 @@ impl<'a> TagElemIter<'a> {
 		for tag_content in content_iter {
 			// Create the TagElem
 			// Note: Skipping attrs parsing for now as per requirement.
+			let attrs = parse_attribute(tag_content.attrs_raw);
+
 			let elem = TagElem {
 				tag: tag_content.tag_name.to_string(),
-				attrs: None, // TODO: Implement attrs parsing from tag_content.attrs_raw
+				attrs, // TODO: Implement attrs parsing from tag_content.attrs_raw
 				content: tag_content.content.to_string(),
 			};
 			elems.push(elem);
@@ -102,7 +105,7 @@ impl Iterator for TagElemIter<'_> {
 			// Note: Skipping attrs parsing for now.
 			TagElem {
 				tag: tag_content.tag_name.to_string(),
-				attrs: None, // TODO: Implement attrs parsing from tag_content.attrs_raw
+				attrs: parse_attribute(tag_content.attrs_raw), // TODO: Implement attrs parsing from tag_content.attrs_raw
 				content: tag_content.content.to_string(),
 			}
 		})

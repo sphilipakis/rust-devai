@@ -3,11 +3,12 @@
 use crate::support::tag::TagElemIter;
 use crate::types::Extrude;
 use crate::types::TagElem; // Make sure TagElem derives Default, PartialEq, Debug
+use std::collections::HashMap;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
-fn test_support_text_tag_block_iter_simple() -> Result<()> {
+fn test_support_tag_elem_iter_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Some text <DATA>content1</DATA> more text <DATA>content2</DATA> final.";
 	let tag_name = "DATA";
@@ -39,7 +40,38 @@ fn test_support_text_tag_block_iter_simple() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_block_iter_no_tags() -> Result<()> {
+fn test_support_tag_elem_iter_with_attrs() -> Result<()> {
+	// -- Setup & Fixtures
+	let text = r#"Some <DATA path="a/b.txt" flag attr=123 message='hello world'>value</DATA>"#;
+	let tag_name = "DATA";
+
+	// -- Exec
+	let iter = TagElemIter::new(text, tag_name, None);
+	let blocks: Vec<TagElem> = iter.collect();
+
+	// -- Check
+	assert_eq!(blocks.len(), 1);
+
+	let mut expected_attrs = HashMap::new();
+	expected_attrs.insert("path".to_string(), "a/b.txt".to_string());
+	expected_attrs.insert("flag".to_string(), "".to_string());
+	expected_attrs.insert("attr".to_string(), "123".to_string());
+	expected_attrs.insert("message".to_string(), "hello world".to_string());
+
+	assert_eq!(
+		blocks[0],
+		TagElem {
+			tag: "DATA".to_string(),
+			attrs: Some(expected_attrs.clone()),
+			content: "value".to_string()
+		}
+	);
+
+	Ok(())
+}
+
+#[test]
+fn test_support_tag_elem_iter_no_tags() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Some text without tags.";
 	let tag_name = "DATA";
@@ -55,7 +87,39 @@ fn test_support_text_tag_block_iter_no_tags() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_block_iter_collect_extrude_simple() -> Result<()> {
+fn test_support_tag_elem_iter_collect_extrude_with_attrs() -> Result<()> {
+	// -- Setup & Fixtures
+	let text = r#"Prefix <DATA key = "value" flag>content</DATA> suffix"#;
+	let tag_name = "DATA";
+
+	// -- Exec
+	let iter = TagElemIter::new(text, tag_name, Some(Extrude::Content));
+	let (blocks, extruded) = iter.collect_elems_and_extruded_content();
+
+	// -- Check Blocks
+	assert_eq!(blocks.len(), 1);
+
+	let mut expected_attrs = HashMap::new();
+	expected_attrs.insert("key".to_string(), "value".to_string());
+	expected_attrs.insert("flag".to_string(), "".to_string());
+
+	assert_eq!(
+		blocks[0],
+		TagElem {
+			tag: "DATA".to_string(),
+			attrs: Some(expected_attrs.clone()),
+			content: "content".to_string()
+		}
+	);
+
+	// -- Check Extruded Content
+	assert_eq!(extruded, "Prefix  suffix");
+
+	Ok(())
+}
+
+#[test]
+fn test_support_tag_elem_iter_collect_extrude_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Prefix <DATA>content1</DATA> Infix <DATA>content2</DATA> Suffix";
 	let tag_name = "DATA";
@@ -90,7 +154,7 @@ fn test_support_text_tag_block_iter_collect_extrude_simple() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_block_iter_collect_extrude_no_tags() -> Result<()> {
+fn test_support_tag_elem_iter_collect_extrude_no_tags() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Just plain text.";
 	let tag_name = "DATA";
@@ -109,7 +173,7 @@ fn test_support_text_tag_block_iter_collect_extrude_no_tags() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_block_iter_collect_extrude_edges() -> Result<()> {
+fn test_support_tag_elem_iter_collect_extrude_edges() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<START>at start</START>middle<END>at end</END>";
 	let tag_name_start = "START";
@@ -137,7 +201,7 @@ fn test_support_text_tag_block_iter_collect_extrude_edges() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_block_iter_collect_extrude_empty_input() -> Result<()> {
+fn test_support_tag_elem_iter_collect_extrude_empty_input() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "";
 	let tag_name = "DATA";
@@ -154,7 +218,7 @@ fn test_support_text_tag_block_iter_collect_extrude_empty_input() -> Result<()> 
 }
 
 #[test]
-fn test_support_text_tag_block_iter_collect_extrude_only_tags() -> Result<()> {
+fn test_support_tag_elem_iter_collect_extrude_only_tags() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<D1>c1</D1><D2>c2</D2>";
 	let tag_name = "D1";

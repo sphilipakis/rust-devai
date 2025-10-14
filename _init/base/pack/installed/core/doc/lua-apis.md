@@ -2426,7 +2426,7 @@ Finds matching tag pairs in `content` based on `tag_names`.
 #### Arguments
 
 - `content: string`: The content to search within.
-- `tag_names: string | list<string>`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
+- `tag_names: string | string[]`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
 - `options?: table` (optional):
   - `extrude?: "content"` (optional): If set to `"content"`, the function returns two values: the list of extracted blocks and a string containing the remaining content outside the tags.
 
@@ -2438,11 +2438,12 @@ Finds matching tag pairs in `content` based on `tag_names`.
 #### Example
 
 ```lua
-local content = "Prefix <A>one</A> middle <B>two</B> Suffix"
+local content = "Prefix <A file=readme.md>one</A> middle <B>two</B> Suffix"
 
 -- Extract all blocks, return only the list
 local blocks = aip.tag.extract(content, {"A", "B"})
 -- blocks[1].tag == "A", blocks[1].content == "one"
+-- blocks[1].attrs.file == "readme.md"
 
 -- Extract blocks and also get the remaining text
 local extracted_blocks, remaining_text = aip.tag.extract(content, "A", { extrude = "content" })
@@ -2472,7 +2473,7 @@ Finds matching tag pairs in `content` based on `tag_names`.
 #### Arguments
 
 - `content: string`: The content to search within.
-- `tag_names: string | list<string>`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
+- `tag_names: string | string[]`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
 - `options?: table` (optional):
   - `extrude?: "content"` (optional): If set to `"content"`, the function returns two values: the map of extracted blocks and a string containing the remaining content outside the tags.
 
@@ -2515,7 +2516,7 @@ Finds matching tag pairs in `content` based on `tag_names`.
 #### Arguments
 
 - `content: string`: The content to search within.
-- `tag_names: string | list<string>`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
+- `tag_names: string | string[]`: A single tag name (e.g., `"FILE"`) or a list of tag names to look for. Case sensitive.
 - `options?: table` (optional):
   - `extrude?: "content"` (optional): If set to `"content"`, the function returns two values: the map of extracted block lists and a string containing the remaining content outside the tags.
 

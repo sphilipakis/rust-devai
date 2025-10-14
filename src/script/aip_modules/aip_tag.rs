@@ -1,9 +1,7 @@
 //! Defines the `aip.tag` module, used in the Lua engine.
 //!
 //! This module provides functions for extracting custom tag blocks (e.g., `<FILE>...</FILE>`)
-//! from text content.
-//!
-//! ---
+//! from text content, parsing attributes, and optionally extracting surrounding content.
 //!
 //! ## Lua documentation
 //!
@@ -11,7 +9,28 @@
 //!
 //! ### Functions
 //!
-//! - `aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): list<TagElem> | (list<TagElem>, string)`
+//! - `aip.tag.extract(content: string, tag_names: string | string[], options?): list<TagElem> | (list<TagElem>, string)`
+//!
+//! - `aip.tag.extract_as_map(content: string, tag_names: string | string[], options?): table<string, TagElem> | (table<string, TagElem>, string)`
+//!
+//! - `aip.tag.extract_as_multi_map(content: string, tag_names: string | string[], options?): table<string, list<TagElem>> | (table<string, list<TagElem>>, string)`
+//!
+//! All functions support an optional `options` table `{ extrude?: "content" }`.
+//! If `extrude = "content"` is set, the function returns two values: `(result, extruded_content: string)`.
+//! Otherwise, it returns only `result`.
+//!
+//! ### Types
+//!
+//! `TagElem` (Returned structure):
+//!
+//! ```lua
+//! {
+//!   tag: string,                   -- The tag name (e.g., "FILE")
+//!   attrs?: table<string, string>, -- Key-value map of attributes in the opening tag (nil if none)
+//!   content: string                -- The content between the tags
+//! }
+//! ```
+//!
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -31,10 +50,14 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	Ok(module)
 }
 
-/// Extracts tagged blocks from a string.
+/// ## Lua Documentation
 ///
-/// If `options` contains `extrude = "content"`, returns `(list<TagElem>, string)`.
-/// Otherwise, returns `list<TagElem>`.
+/// Extracts all tagged blocks as a list of `TagElem`s in the order they appear.
+///
+/// ```lua
+/// -- API Signature
+/// aip.tag.extract(content: string, tag_names: string | string[], options?): list<TagElem> | (list<TagElem>, string)
+/// ```
 fn tag_extract(lua: &Lua, (content, tag_names, options): (String, Value, Option<Table>)) -> mlua::Result<MultiValue> {
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
@@ -53,6 +76,15 @@ fn tag_extract(lua: &Lua, (content, tag_names, options): (String, Value, Option<
 	Ok(values)
 }
 
+/// ## Lua Documentation
+///
+/// Extracts tagged blocks as a map where keys are tag names and values are the corresponding `TagElem`.
+/// If multiple blocks share the same tag name, only the *last* one is retained in the map.
+///
+/// ```lua
+/// -- API Signature
+/// aip.tag.extract_as_map(content: string, tag_names: string | string[], options?): table<string, TagElem> | (table<string, TagElem>, string)
+/// ```
 fn tag_extract_as_map(
 	lua: &Lua,
 	(content, tag_names, options): (String, Value, Option<Table>),
@@ -82,6 +114,15 @@ fn tag_extract_as_map(
 	Ok(values)
 }
 
+/// ## Lua Documentation
+///
+/// Extracts tagged blocks as a map where keys are tag names and values are lists of `TagElem`s
+/// found for that tag name, ordered by appearance.
+///
+/// ```lua
+/// -- API Signature
+/// aip.tag.extract_as_multi_map(content: string, tag_names: string | string[], options?): table<string, list<TagElem>> | (table<string, list<TagElem>>, string)
+/// ```
 fn tag_extract_as_multi_map(
 	lua: &Lua,
 	(content, tag_names, options): (String, Value, Option<Table>),

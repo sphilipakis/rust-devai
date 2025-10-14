@@ -5,7 +5,7 @@ use super::{TagContent, TagContentIterator};
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 #[test]
-fn test_support_text_tag_content_iter_simple() -> Result<()> {
+fn test_support_tag_content_iter_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Some text <DATA>content</DATA> more text.";
 	let tag_name = "DATA";
@@ -30,7 +30,7 @@ fn test_support_text_tag_content_iter_simple() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_attrs() -> Result<()> {
+fn test_support_tag_content_iter_attrs() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = r#"Before <FILE path="a/b.txt" id=123>File Content</FILE> After"#;
 	let tag_name = "FILE";
@@ -55,7 +55,7 @@ fn test_support_text_tag_content_iter_attrs() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_attrs_with_newline() -> Result<()> {
+fn test_support_tag_content_iter_attrs_with_newline() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Before <FILE \npath=\"a/b.txt\"\n id=123>File Content</FILE> After";
 	let tag_name = "FILE";
@@ -80,7 +80,7 @@ fn test_support_text_tag_content_iter_attrs_with_newline() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_multiple() -> Result<()> {
+fn test_support_tag_content_iter_multiple() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Data: <ITEM>one</ITEM>, <ITEM key=val>two</ITEM>.";
 	let tag_name = "ITEM";
@@ -115,7 +115,7 @@ fn test_support_text_tag_content_iter_multiple() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_no_tags() -> Result<()> {
+fn test_support_tag_content_iter_no_tags() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Just plain text without any tags.";
 	let tag_name = "MARKER";
@@ -130,7 +130,7 @@ fn test_support_text_tag_content_iter_no_tags() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_empty_content() -> Result<()> {
+fn test_support_tag_content_iter_empty_content() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<EMPTY></EMPTY>";
 	let tag_name = "EMPTY";
@@ -155,7 +155,7 @@ fn test_support_text_tag_content_iter_empty_content() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_nested_like() -> Result<()> {
+fn test_support_tag_content_iter_nested_like() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<OUTER>outer <INNER>inner</INNER> outer</OUTER>";
 	let tag_name_outer = "OUTER";
@@ -195,7 +195,7 @@ fn test_support_text_tag_content_iter_nested_like() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_malformed_open() -> Result<()> {
+fn test_support_tag_content_iter_malformed_open() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<MARKER oops </MARKER>"; // Missing '>'
 	let tag_name = "MARKER";
@@ -211,7 +211,7 @@ fn test_support_text_tag_content_iter_malformed_open() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_unclosed() -> Result<()> {
+fn test_support_tag_content_iter_unclosed() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<MARKER>content"; // Missing closing tag
 	let tag_name = "MARKER";
@@ -227,7 +227,7 @@ fn test_support_text_tag_content_iter_unclosed() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_edges() -> Result<()> {
+fn test_support_tag_content_iter_edges() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<START>at start</START>middle<END>at end</END>";
 	let tag_name_start = "START";
@@ -267,7 +267,7 @@ fn test_support_text_tag_content_iter_edges() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_incorrect_tag_name() -> Result<()> {
+fn test_support_tag_content_iter_incorrect_tag_name() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<MARKERX>content</MARKERX>";
 	let tag_name = "MARKER"; // Searching for MARKER, not MARKERX
@@ -282,7 +282,7 @@ fn test_support_text_tag_content_iter_incorrect_tag_name() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_tag_name_prefix_check() -> Result<()> {
+fn test_support_tag_content_iter_tag_name_prefix_check() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "<TAG_EXTRA>extra</TAG_EXTRA><TAG>real</TAG>";
 	let tag_name = "TAG";
@@ -307,7 +307,7 @@ fn test_support_text_tag_content_iter_tag_name_prefix_check() -> Result<()> {
 }
 
 #[test]
-fn test_support_text_tag_content_iter_multiple_tag_names() -> Result<()> {
+fn test_support_tag_content_iter_multiple_tag_names() -> Result<()> {
 	// -- Setup & Fixtures
 	let text = "Alpha <ONE>first</ONE> Beta <TWO attr=ok>second</TWO> Gamma";
 	let tag_names = ["ONE", "TWO"];

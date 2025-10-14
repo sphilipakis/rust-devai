@@ -2,7 +2,6 @@
 
 //! Defines the `aip.csv` module, used in the lua engine.
 //!
-//! ---
 //!
 //! ## Lua documentation
 //!
@@ -16,6 +15,8 @@
 //! - `aip.csv.parse_row(row: string, options?: CsvOptions): string[]`
 //!
 //! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, content: string[][] }`
+//!
+//! ### Related Types
 //!
 //! Where `CsvOptions` is:
 //! ```lua
