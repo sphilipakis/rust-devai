@@ -28,7 +28,7 @@ local inputs = {
    
    {name = "gemini",    do_json = false,  url = "https://ai.google.dev/pricing"},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = false,  url = ""},
+   {name = "anthropic", do_json = true,  url = ""},
 
    {name = "xai",       do_json = false,  url = ""}, 
 
@@ -119,12 +119,12 @@ From this content for the {{data.provider}}:
     - The together model names are in the <h1>Names</h1> section. 
     - Set the flag `recent: true` only for the model names that match the `<h1>recent</h1>` list, and all the other should be `recent: false`
     - Also, only extract the models about Llama, qwen, deepseek, glm, gemma, mixtral, mistral, and openai. 
-- For Anthropic Models (Claude), the `.` should be replaced by `-`
-- For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
-- For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
-- For Anthropic Modes
+- For Anthropic 
+    - For Anthropic Models (Claude), the `.` should be replaced by `-`
+    - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
+    - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
     - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
-    - For Anthropic models (Claude), only sonnet 4 and opus 4.1 are recent: true, all others are recent: false
+    - For Anthropic models (Claude), only sonnet/haiku 4.5 and opus 4.1 are recent: true, all others are recent: false
 - For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
 - For Gemini models, do not add the audio or tts model.
 - but for gemini model, keep the `.` in the name.
