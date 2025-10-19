@@ -2,11 +2,11 @@
 
 <a href="https://crates.io/crates/aipack"><img src="https://img.shields.io/crates/v/aipack.svg" /></a>
 <a href="https://github.com/aipack-ai/aipack"><img alt="Static Badge" src="https://img.shields.io/badge/GitHub-Repo?color=%23336699"></a>
-<a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_Introduction_-Video?style=flat&logo=youtube&color=%23ff0000"></a>
+<a href="https://www.youtube.com/watch?v=SioUg_N9HS0"><img alt="Static Badge" src="https://img.shields.io/badge/AIPack_Introduction_-Video?style=flat&logo=youtube&color=%23ff0000"></a>
 
 </div>
 
-# AIPACK - Run, Build, and Share AI Packs
+# AIPack - Run, Build, and Share AI Packs
 
 An open-source agentic runtime to run, build, and share AI Packs.
 
@@ -24,22 +24,22 @@ An open-source agentic runtime to run, build, and share AI Packs.
 
 ### Check out: 
 
-- https://aipack.ai for more information and links, [AIPACK News & Blog Posts](https://news.aipack.ai/archive)
+- https://aipack.ai for more information and links, [AIPack News & Blog Posts](https://news.aipack.ai/archive)
 
 - [Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
 
-- **[AIPACK Lab Repo](https://github.com/aipack-ai/aipack-lab)** for some cool examples. 
+- **[AIPack Lab Repo](https://github.com/aipack-ai/aipack-lab)** for some cool examples. 
 
-- [AIPACK Substack at news.aipack.ai](https://news.aipack.ai)
+- [AIPack Substack at news.aipack.ai](https://news.aipack.ai)
 
-<img alt="Static Badge" src="https://img.shields.io/badge/AIPACK_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
+<img alt="Static Badge" src="https://img.shields.io/badge/AIPack_VIDEOS_-Video?style=flat&logo=youtube&color=%23ff0000">
 
-- [Video: AIPACK Concept Video](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [Video: AIPack Concept Video](https://www.youtube.com/watch?v=SioUg_N9HS0&list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 - [Video: Build Agent Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
 - [Video: Production Coding With pro@coder AI PACK](https://news.aipack.ai/p/production-coding-example-with-procoder)
 - [Video: Example generate doc from code](https://news.aipack.ai/p/procoder-ai-pack-demo-generate-doc)
 - [Video: pro@coder with pro@rust10x Rust best practices](https://www.youtube.com/watch?v=rIAoSf4TWho&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigq)
-- [Video: AIPACK Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
+- [Video: AIPack Playlist](https://www.youtube.com/playlist?list=PL7r-PXl6ZPcDBodiiTdUeCmUwsYFyDzGt)
 
 ## Quick Start
 
@@ -126,17 +126,6 @@ aip run demo@proof -f ./README.md
 # You can just use @pack_name if there is no other pack with this name
 aip run @proof -f ./README.md
 
-# To do some code crafting (will create `_craft-code.md`)
-aip run demo@craft/code
-
-# Or run your .aip file (you can omit the .aip extension)
-aip run path/to/file.aip
-
-# This is a good agent to run to ask questions about aipack
-# It can even generate aipack code
-aip run core@ask-aipack
-# The prompt file will be at `.aipack/.prompt/core@ask-aipack/ask-prompt.md`
-
 ```
 
 ### Thanks to
@@ -174,7 +163,7 @@ COHERE_API_KEY
 
 - Website: https://aipack.ai
 
-- [AIPACK Overview Video](https://www.youtube.com/watch?v=SioUg_N9HS0)
+- [AIPack Overview Video](https://www.youtube.com/watch?v=SioUg_N9HS0)
 
 - [Preview 'devai' intro video for v0.5](https://www.youtube.com/watch?v=b3LJcNkhkH4&list=PL7r-PXl6ZPcBcLsBdBABOFUuLziNyigqj)
 

@@ -1,10 +1,10 @@
 # API Documentation
 
-The `aip` top module provides a comprehensive set of functions for interacting with files, paths, text, markdown, JSON, web services, Lua value inspection, agent control flow, command execution, semantic versioning, Handlebars templating, code formatting, Git, Rust code processing, and HTML processing within the AIPACK environment.
+The `aip` top module provides a comprehensive set of functions for interacting with files, paths, text, markdown, JSON, web services, Lua value inspection, agent control flow, command execution, semantic versioning, Handlebars templating, code formatting, Git, Rust code processing, and HTML processing within the AIPack environment.
 
 [Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
 
-[AIPACK Lab Repo](https://github.com/aipack-ai/aipack-lab)
+[AIPack Lab Repo](https://github.com/aipack-ai/aipack-lab)
 
 #### The available submodules are:
 
@@ -18,7 +18,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.uuid`](#aipuuid): UUID generation and conversion.
 - [`aip.hash`](#aiphash): Hashing utilities (SHA256, SHA512, Blake3) with various encodings.
 - [`aip.lua`](#aiplua): Some lua helpers (for now only `.dump(data)`).
-- [`aip.agent`](#aipagent): Running other AIPACK agents.
+- [`aip.agent`](#aipagent): Running other AIPack agents.
 - [`aip.run`](#aiprun): Run-level pin helper (attach pins to the current run).
 - [`aip.task`](#aiptask): Task-level pin helper (attach pins to the current task).
 - [`aip.flow`](#aipflow): Controlling agent execution flow.
@@ -35,7 +35,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 
 #### File Path supported
 
-AIPACK supports several types of file paths:
+AIPack supports several types of file paths:
 
 | Type                   | Example                                  | Notes                                                                                                   |
 |------------------------|------------------------------------------|---------------------------------------------------------------------------------------------------------|
@@ -118,7 +118,7 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
 
 Lua has the `nil` keyword which partially acts like a common `null` but not exactly.
 
-For that reason, AIPACK also adds the global concept of `null` that behaves closer to JSON, JS, SQL, and other nulls.
+For that reason, AIPack also adds the global concept of `null` that behaves closer to JSON, JS, SQL, and other nulls.
 
 Here are the key differences:
 
@@ -139,7 +139,7 @@ end
 
 **`null`**
 
-- Added by `AIPACK` to all Lua contexts, with keyword `null` (it can be `Null` as well, but it's better to use `null` if possible)
+- Added by `AIPack` to all Lua contexts, with keyword `null` (it can be `Null` as well, but it's better to use `null` if possible)
 - Behaves like a JavaScript null, and can be used in variables, property values, and array items
 - In Array
 ```lua
@@ -1438,7 +1438,7 @@ Returns an error (Lua table `{ error: string }`) if `start`/`end` are invalid, t
 
 ## aip.path
 
-Functions for path manipulation, checking, and resolution within the AIPACK workspace.
+Functions for path manipulation, checking, and resolution within the AIPack workspace.
 
 ### Functions Summary
 
@@ -3447,7 +3447,7 @@ Returns an error (Lua table `{ error: string }`) if the value cannot be converte
 
 ## aip.agent
 
-Functions for running other AIPACK agents from within a Lua script.
+Functions for running other AIPack agents from within a Lua script.
 
 ### Functions Summary
 
@@ -3668,7 +3668,7 @@ Returns an error (Lua table `{ error: string }`) if there is no run context (no 
 
 ## aip.flow
 
-Functions for controlling the AIPACK agent execution flow from within script blocks (`before_all`, `data`).
+Functions for controlling the AIPack agent execution flow from within script blocks (`before_all`, `data`).
 
 ### Functions Summary
 
@@ -3775,12 +3775,12 @@ aip.flow.skip(reason?: string): table
 ```
 
 This function is typically called within the `data` block of an agent script
-to instruct AIPACK to skip processing the current input value and move to the next one.
+to instruct AIPack to skip processing the current input value and move to the next one.
 
 #### Arguments
 
 - `reason: string (optional)`: An optional string providing the reason for skipping the input cycle.
-  This reason might be logged or displayed depending on the AIPACK execution context.
+  This reason might be logged or displayed depending on the AIPack execution context.
 
 #### Example
 
@@ -4638,7 +4638,7 @@ print(rendered_content) -- Output: Hello, World!
 
 local data_list = {
     name  = "Jen Donavan",
-    todos = {"Bug Triage AIPACK", "Fix Windows Support"}
+    todos = {"Bug Triage AIPack", "Fix Windows Support"}
 }
 local template_list = [[
 Hello \{{name}},
@@ -5204,8 +5204,8 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 | Key                      | Example Value                                                            | Description                                                       |
 |--------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------|
 | CTX.WORKSPACE_DIR        | `/Users/dev/my-project`                                                  | Absolute path to the workspace directory (containing `.aipack/`). |
-| CTX.WORKSPACE_AIPACK_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
-| CTX.BASE_AIPACK_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPACK directory.                |
+| CTX.WORKSPACE_AIPack_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
+| CTX.BASE_AIPack_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPack directory.                |
 | CTX.AGENT_NAME           | `my_pack/my-agent` or `path/to/my-agent.aip`                             | The name or path used to invoke the agent.                        |
 | CTX.AGENT_FILE_PATH      | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack/my-agent.aip` | Absolute path to the resolved agent `.aip` file.                  |
 | CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |

@@ -1,4 +1,4 @@
-# AIPACK Lua Application model
+# AIPack Lua Application model
 
 Here is the Lua application model and concepts.
 
@@ -9,7 +9,7 @@ The full Lua APIs (`aip.` module) can be found in [lua-apis](lua-apis)
 **aipack** injects the following modules/variables into the various script stages:
 
 - In all Lua script stages (`# Before All`, `# Data`, `# Output`, `# After All`)
-  - `aip`: The [AIPACK Lua API module](lua-apis) - A set of utility functions and submodules for convenience, common logic, and control flow.
+  - `aip`: The [AIPack Lua API module](lua-apis) - A set of utility functions and submodules for convenience, common logic, and control flow.
   - `CTX`: A table containing [contextual constants](lua-apis#ctx) like paths and agent info.
     <br/>
 
