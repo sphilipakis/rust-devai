@@ -52,3 +52,13 @@ pub(super) fn atomic_replace(src: &SPath, dest: &SPath) -> Result<()> {
 }
 
 // endregion: --- File Update
+
+// region:    --- Others
+
+pub(super) fn has_aip_in_path() -> bool {
+	let Ok(env_path) = std::env::var("PATH") else {
+		return false;
+	};
+	env_path.contains(".aipack-base/bin/aip")
+}
+// endregion: --- Others

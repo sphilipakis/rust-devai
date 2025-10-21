@@ -1,6 +1,7 @@
 use crate::Result;
 use crate::dir_context::AipackBaseDir;
 use crate::exec::cli::XelfSetupArgs;
+use crate::exec::exec_cmd_xelf::support;
 use crate::exec::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::exec::init::init_base;
 use crate::hub::get_hub;
@@ -73,11 +74,13 @@ pub async fn exec_xelf_setup(_args: XelfSetupArgs) -> Result<()> {
 		Some(current_exe_spath)
 	};
 
-	if os::is_unix() {
-		unix_setup_env(&base_bin_dir).await?;
-	} else {
-		#[cfg(windows)]
-		for_windows::windows_setup_env(&base_bin_dir).await?;
+	if !support::has_aip_in_path() {
+		if os::is_unix() {
+			unix_setup_env(&base_bin_dir).await?;
+		} else {
+			#[cfg(windows)]
+			for_windows::windows_setup_env(&base_bin_dir).await?;
+		}
 	}
 
 	// -- Eventually remove the current exec
@@ -211,6 +214,7 @@ Then, check with
 
 // region:    --- Unix Setup
 
+/// Setup the environment
 async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 	let hub = get_hub();
 
@@ -233,9 +237,7 @@ async fn unix_setup_env(base_bin_dir: &SPath) -> Result<()> {
 		.await;
 
 	// -- Check & Setup env
-	if let Some(home_sh_env_path) = os::get_os_env_file_path()
-		&& home_sh_env_path.exists()
-	{
+	if let Some(home_sh_env_path) = os::get_os_env_file_path() {
 		// -- get the home sh env content or empty string if not
 		// NOTE: This will eventually create the file is not present
 		let content = if home_sh_env_path.exists() {
