@@ -21,7 +21,7 @@ path = "src/main.rs"
 
 [dependencies]
 # -- Async
-tokio = { version = "1"}
+tokio = { version = "1", features = ["process"]}
 tokio-util = "0.7.16"
 tokio-stream = "0.1.17"
 flume = "0.11.1"

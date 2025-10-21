@@ -1,12 +1,11 @@
 // region:    --- Modules
 
-use std::process::Command;
-
+use crate::Result;
 use crate::dir_context::AipackBaseDir;
 use crate::exec::exec_cmd_xelf::support::get_aip_stable_url;
 use crate::hub::{HubEvent, get_hub};
+use crate::support::proc::{self, ProcOptions};
 use crate::support::webc;
-use crate::{Error, Result};
 use semver::Version;
 use simple_fs::ensure_dir; // Assuming this module provides ensure_dir and write_to_file
 
@@ -37,6 +36,8 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	ensure_dir(&tmp_dir)?;
 	hub.publish(format!("Using temporary directory: {tmp_dir}")).await;
 
+	let proc_opts = ProcOptions::default().with_cwd(&tmp_dir);
+
 	// -- Download
 	hub.publish(format!("Downloading new version ({remote_version})...")).await;
 	let download_url = if is_latest {
@@ -49,19 +50,7 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 
 	// -- Extract
 	hub.publish(format!("Extracting {ARCHIVE_NAME} in {tmp_dir}...")).await;
-	let tar_output = Command::new("tar")
-		.args(["-xvf", ARCHIVE_NAME]) // Extracts contents into the current directory (tmp_dir)
-		.current_dir(&tmp_dir)
-		.output()
-		.map_err(|e| Error::custom(format!("Failed to execute tar command: {e}")))?;
-
-	if !tar_output.status.success() {
-		let stderr = String::from_utf8_lossy(&tar_output.stderr);
-		return Err(Error::custom(format!(
-			"Failed to extract archive. tar exited with status {}. Stderr: {stderr}",
-			tar_output.status
-		)));
-	}
+	proc::proc_exec("tar", &["-xvf", ARCHIVE_NAME], Some(&proc_opts)).await?;
 	hub.publish("Extraction complete.").await;
 
 	// -- Run setup for the new version
@@ -70,26 +59,9 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	hub.publish(format!("Running setup for the new version using {new_aip_exe_path}..."))
 		.await;
 
-	let setup_output = Command::new(new_aip_exe_path.as_str())
-		.args(["self", "setup"])
-		.current_dir(&tmp_dir) // Important to run from tmp_dir if 'aip self setup' has relative path dependencies.
-		.output()
-		.map_err(|e| {
-			Error::custom(format!(
-				"Failed to execute new 'aip self setup' from {new_aip_exe_path}: {e}"
-			))
-		})?;
-
-	if !setup_output.status.success() {
-		let stderr = String::from_utf8_lossy(&setup_output.stderr);
-		let stdout = String::from_utf8_lossy(&setup_output.stdout);
-		return Err(Error::custom(format!(
-			"New 'aip self setup' failed. Exit status: {}. Stdout: {stdout}. Stderr: {stderr}",
-			setup_output.status
-		)));
-	}
-	let setup_str = String::from_utf8_lossy(&setup_output.stdout).to_string();
-	let setup_str = format!("'aip self setup' executed:\n{setup_str}\n");
+	let setup_stdout =
+		proc::proc_exec_to_output(new_aip_exe_path.as_str(), &["self", "setup"], Some(&proc_opts)).await?;
+	let setup_str = format!("'aip self setup' executed:\n{setup_stdout}\n");
 	hub.publish(setup_str).await;
 
 	hub.publish(HubEvent::info_short(format!("Update successful! New version 'v{remote_version}' installed.\n

@@ -119,11 +119,8 @@ Remove-Item .\aip.tar.gz
 mod for_windows {
 	use super::*;
 
-	use std::process::Command;
-
+	use crate::support::proc::{self, ProcOptions};
 	use crate::term;
-	#[cfg(windows)]
-	use std::os::windows::process::CommandExt;
 
 	pub async fn windows_setup_env(base_bin_dir: &SPath) -> Result<()> {
 		let hub = get_hub();
@@ -182,7 +179,7 @@ Then, check with
 	async fn add_new_path(new_path: &str) -> Result<()> {
 		let hub = get_hub();
 
-		let current_user_path = exec_powershell(r#"[Environment]::GetEnvironmentVariable("Path", "User")"#)?;
+		let current_user_path = exec_powershell(r#"[Environment]::GetEnvironmentVariable("Path", "User")"#).await?;
 		let current_user_path = current_user_path.trim();
 
 		let updated_path = format!("{};{new_path}", current_user_path.trim_end_matches(';'));
@@ -190,7 +187,7 @@ Then, check with
 			"[Environment]::SetEnvironmentVariable('Path', '{}', 'User')",
 			updated_path.replace("'", "''") // escape single quotes
 		);
-		exec_powershell(power_set_path_cmd)?;
+		exec_powershell(power_set_path_cmd).await?;
 
 		hub.publish(format!(
 			"-> Added to shell path (with [Environment]::SetEnvironmentVariable('Path'): '{new_path}'"
@@ -200,22 +197,13 @@ Then, check with
 		Ok(())
 	}
 
-	fn exec_powershell(power_cmd: &str) -> Result<String> {
-		let mut cmd = Command::new("powershell");
-		cmd.args(["-NoProfile", "-Command", power_cmd]);
+	async fn exec_powershell(power_cmd: &str) -> Result<String> {
+		let args = ["-NoProfile", "-Command", power_cmd];
+		let mut options = ProcOptions::default();
+		options.creation_flags = Some(0x08000000); // create no window
 
-		#[cfg(windows)]
-		cmd.creation_flags(0x08000000); // create no window
-
-		let output = cmd.output()?;
-
-		if output.status.success() {
-			let stdout = String::from_utf8_lossy(&output.stdout);
-			Ok(stdout.trim().to_string())
-		} else {
-			let stderr = String::from_utf8_lossy(&output.stderr);
-			Err(format!("Cannot execute command '{power_cmd}'. Cause: {stderr}").into())
-		}
+		let output = proc::proc_exec_to_output("powershell", &args, Some(&options)).await?;
+		Ok(output.trim().to_string())
 	}
 }
 
