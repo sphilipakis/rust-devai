@@ -520,6 +520,7 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
 #### Arguments
 
 - `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
+  Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional):
   - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
   - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#filemeta) objects will be absolute.
@@ -587,6 +588,7 @@ Each [FileRecord](#filerecord) contains both metadata and the file content.
 
 - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+  Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional) - A table containing options:
   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
@@ -642,6 +644,7 @@ If no matching file is found, it returns `nil`.
 
 - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+  Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional) - A table containing options:
   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
@@ -738,6 +741,7 @@ If `include_globs` is `nil` or no files match the patterns, returns `nil`.
 - `include_globs: string | list<string> | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
   If `nil`, the function returns `nil`.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+  Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional) - A table containing options:
   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.

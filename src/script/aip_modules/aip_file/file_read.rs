@@ -34,6 +34,9 @@ use simple_fs::{SMeta, SPath, iter_files};
 /// - `include_globs: string | list<string> | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
 ///   If `nil`, the function returns `nil`.
 ///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+///   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`)
+///
+///   are excluded by default unless explicitly matched by the globs.
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
@@ -347,6 +350,9 @@ pub(super) fn file_info(lua: &Lua, runtime: &Runtime, path: Value) -> mlua::Resu
 ///
 /// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
 ///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+///   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`)
+///
+///   are excluded by default unless explicitly matched by the globs.
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
@@ -448,6 +454,9 @@ pub(super) fn file_list(
 ///
 /// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
 ///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+///   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`)
+///   are excluded by default unless explicitly matched by the globs.
+///
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
@@ -532,6 +541,9 @@ pub(super) fn file_list_load(
 ///
 /// - `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
 ///   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
+///   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`)
+///   are excluded by default unless explicitly matched by the globs.
+///
 /// - `options?: table` (optional) - A table containing options:
 ///   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
 ///     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
