@@ -8,18 +8,29 @@
 //!
 //! ### Functions
 //!
-//! - `aip.web.get(url: string): WebResponse`
-//! - `aip.web.post(url: string, data: string | table): WebResponse`
+//! - `aip.web.get(url: string, options?: WebOptions): WebResponse`
+//! - `aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse`
 //! - `aip.web.parse_url(url: string | nil): table | nil`
 //! - `aip.web.resolve_href(href: string | nil, base_url: string): string | nil`
+//!
+//! ### Related Types
+//!
+//! Where `WebOptions` is:
+//! ```lua
+//! {
+//!   user_agent?: string | boolean,    -- If true or "true", sets browser default UA. If false or "", sets no UA header. If string, sets as-is. Defaults to "aipack" if omitted and not in headers.
+//!   headers?: table,                  -- { header_name: string | string[] }
+//!   redirect_limit?: number           -- number of redirects to follow (default 5)
+//! }
+//! ```
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string;
 use crate::support::{StrExt as _, W};
+use crate::types::WebOptions;
 use crate::{Error, Result};
-use mlua::{IntoLua, Lua, LuaSerdeExt, Table, Value};
-use reqwest::redirect::Policy;
+use mlua::{FromLua as _, IntoLua, Lua, LuaSerdeExt, Table, Value};
 use reqwest::{Client, Response, header};
 use std::collections::HashMap;
 use url::Url;
@@ -229,12 +240,13 @@ impl IntoLua for W<Url> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.web.get(url: string): WebResponse
+/// aip.web.get(url: string, options?: WebOptions): WebResponse
 /// ```
 ///
 /// ### Arguments
 ///
 /// - `url: string`: The URL to make the GET request to.
+/// - `options?: WebOptions`: Optional web request options (user_agent, headers, redirect_limit)
 ///
 /// ### Returns (WebResponse)
 ///
@@ -255,19 +267,29 @@ impl IntoLua for W<Url> {
 /// local response = aip.web.get("https://google.com")
 /// print(response.status) -- 200
 /// print(response.content) -- HTML content of Google's homepage
+///
+/// -- With options
+/// local response = aip.web.get("https://api.example.com", {
+///   user_agent = "true",
+///   headers = { ["Authorization"] = "Bearer token123" },
+///   redirect_limit = 10
+/// })
 /// ```
 ///
 /// ### Error
 ///
 /// Returns an error if the web request cannot be made (e.g., invalid URL, network error).  Does not throw an error for non-2xx status codes. Check the `success` field in the `WebResponse`.
-fn web_get(lua: &Lua, url: String) -> mlua::Result<Value> {
+fn web_get(lua: &Lua, (url, opts): (String, Option<Value>)) -> mlua::Result<Value> {
 	let rt = tokio::runtime::Handle::try_current().map_err(Error::TokioTryCurrent)?;
 	let res: mlua::Result<Value> = tokio::task::block_in_place(|| {
 		rt.block_on(async {
-			let client = Client::builder()
-				.redirect(Policy::limited(5)) // Set to follow up to 5 redirects
-				.build()
-				.map_err(crate::Error::from)?;
+			let mut builder = Client::builder();
+
+			let opts_val = opts.unwrap_or(Value::Nil);
+			let web_opts = WebOptions::from_lua(opts_val, lua)?;
+			builder = web_opts.apply_to_reqwest_builder(builder);
+
+			let client = builder.build().map_err(crate::Error::from)?;
 
 			let res: mlua::Result<Value> = match client.get(&url).send().await {
 				Ok(response) => get_lua_response_value(lua, response, &url).await,
@@ -297,13 +319,14 @@ Cause: {err}"
 ///
 /// ```lua
 /// -- API Signature
-/// aip.web.post(url: string, data: string | table): WebResponse
+/// aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse
 /// ```
 ///
 /// ### Arguments
 ///
 /// - `url: string`: The URL to make the POST request to.
 /// - `data: string | table`: The data to send in the request body.  If a string is provided, the `Content-Type` header will be set to `plain/text`. If a table is provided, the `Content-Type` header will be set to `application/json` and the table will be serialized as JSON.
+/// - `options?: WebOptions`: Optional web request options (user_agent, headers, redirect_limit)
 ///
 /// ### Returns (WebResponse)
 ///
@@ -326,19 +349,28 @@ Cause: {err}"
 ///
 /// -- POST with JSON data
 /// local response = aip.web.post("https://example.com/api", { key1 = "value1", key2 = "value2" })
+///
+/// -- POST with options
+/// local response = aip.web.post("https://api.example.com", { data = "value" }, {
+///   user_agent = "MyApp/1.0",
+///   headers = { ["X-API-Key"] = "secret123" }
+/// })
 /// ```
 ///
 /// ### Error
 ///
 /// Returns an error if the web request cannot be made (e.g., invalid URL, network error, data serialization error). Does not throw an error for non-2xx status codes. Check the `success` field in the `WebResponse`.
-fn web_post(lua: &Lua, (url, data): (String, Value)) -> mlua::Result<Value> {
+fn web_post(lua: &Lua, (url, data, opts): (String, Value, Option<Value>)) -> mlua::Result<Value> {
 	let rt = tokio::runtime::Handle::try_current().map_err(Error::TokioTryCurrent)?;
 	let res: mlua::Result<Value> = tokio::task::block_in_place(|| {
 		rt.block_on(async {
-			let client = Client::builder()
-				.redirect(Policy::limited(5)) // Set to follow up to 5 redirects
-				.build()
-				.map_err(crate::Error::from)?;
+			let mut builder = Client::builder();
+
+			let opts_val = opts.unwrap_or(Value::Nil);
+			let web_opts = WebOptions::from_lua(opts_val, lua)?;
+			builder = web_opts.apply_to_reqwest_builder(builder);
+
+			let client = builder.build().map_err(crate::Error::from)?;
 
 			let mut request_builder = client.post(&url);
 

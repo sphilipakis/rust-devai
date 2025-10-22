@@ -14,6 +14,7 @@ mod pack_identity;
 mod pack_ref;
 mod save_options;
 mod tag_elem;
+mod web_options;
 
 pub use csv_options::*;
 pub use dest_options::*;
@@ -29,6 +30,7 @@ pub use pack_identity::*;
 pub use pack_ref::*;
 pub use save_options::*;
 pub use tag_elem::*;
+pub use web_options::*;
 
 // Inter UI components
 pub mod uc;

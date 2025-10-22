@@ -61,6 +61,7 @@ Important notes:
 - [`FileRecord`](#filerecord) (for `aip.file..`)
 - [`FileStats`](#filestats) (for `aip.file..`)
 - [`WebResponse`](#webresponse) (for `aip.web..`)
+- [`WebOptions`](#weboptions) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
 - [`MdBlock`](#mdblock) (for `aip.md..`)
 - [`TagElem`](#tagelem) (for `aip.tag..`)
@@ -2927,9 +2928,9 @@ Functions for making HTTP GET and POST requests, and for URL manipulation.
 ### Functions Summary
 
 ```lua
-aip.web.get(url: string): WebResponse
+aip.web.get(url: string, options?: WebOptions): WebResponse
 
-aip.web.post(url: string, data: string | table): WebResponse
+aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse
 
 aip.web.parse_url(url: string | nil): table | nil
 
@@ -2942,12 +2943,13 @@ Makes an HTTP GET request.
 
 ```lua
 -- API Signature
-aip.web.get(url: string): WebResponse
+aip.web.get(url: string, options?: WebOptions): WebResponse
 ```
 
 #### Arguments
 
 - `url: string`: The URL to request.
+- `options?: WebOptions`: Optional web request options ([WebOptions](#weboptions)).
 
 #### Returns
 
@@ -2964,6 +2966,13 @@ if response.success then
 else
   print("Error:", response.error, "Status:", response.status)
 end
+
+-- With options
+local response_with_opts = aip.web.get("https://api.example.com/data", {
+  user_agent = "true",
+  headers = { ["X-API-Key"] = "secret123" },
+  redirect_limit = 10
+})
 ```
 
 #### Error
@@ -2976,7 +2985,7 @@ Makes an HTTP POST request.
 
 ```lua
 -- API Signature
-aip.web.post(url: string, data: string | table): WebResponse
+aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse
 ```
 
 Sends `data` in the request body. If `data` is a string, `Content-Type` is `text/plain`. If `data` is a table, it's serialized to JSON and `Content-Type` is `application/json`.
@@ -2985,6 +2994,7 @@ Sends `data` in the request body. If `data` is a string, `Content-Type` is `text
 
 - `url: string`: The URL to request.
 - `data: string | table`: Data to send in the body.
+- `options?: WebOptions`: Optional web request options ([WebOptions](#weboptions)).
 
 #### Returns
 
@@ -3001,6 +3011,12 @@ local r2 = aip.web.post("https://httpbin.org/post", { key = "value", num = 123 }
 if r2.success and type(r2.content) == "table" then
   print("Received JSON echo:", r2.content.json.key) -- Output: value
 end
+
+-- POST with options
+local r3 = aip.web.post("https://api.example.com/submit", { data = "value" }, {
+  user_agent = "MyApp/1.0",
+  headers = { ["X-API-Key"] = "secret123" }
+})
 ```
 
 #### Error
@@ -5168,6 +5184,18 @@ Represents the result of an HTTP request made by `aip.web.get` or `aip.web.post`
   url: string,        // The final URL requested (after redirects)
   content: string | table, // Response body. Decoded to a Lua table if Content-Type is application/json, otherwise a string.
   error?: string      // Error message if success is false or if request initiation failed
+}
+```
+
+### WebOptions
+
+Options table used for configuring HTTP requests in `aip.web` functions.
+
+```ts
+{
+  user_agent?: string | boolean,    // If true or "true", sets browser default UA. If false or "", sets no UA header. If string, sets as-is. Defaults to "aipack" if omitted and not in headers.
+  headers?: table,                  // { header_name: string | string[] }
+  redirect_limit?: number           // Number of redirects to follow (default 5)
 }
 ```
 
