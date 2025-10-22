@@ -7,6 +7,7 @@ mod vec_ext;
 
 pub use as_strs_ext::*;
 pub use cow_lines::*;
+#[allow(unused)]
 pub use str_ext::*;
 pub use vec_ext::*;
 

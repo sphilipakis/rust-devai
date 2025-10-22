@@ -1,5 +1,6 @@
 //! Convenience functions for common string or container of string
 
+#[allow(unused)]
 pub trait StrExt {
 	fn x_contains(&self, text: &str) -> bool;
 }

@@ -13,6 +13,9 @@ pub const DEFAULT_UA_BROWSER: &str =
 /// Web request options used by `aip.web` functions.
 ///
 /// All fields are optional; defaults are applied when `nil` is provided.
+///
+/// NOTE: By default the Web Response content will be string,
+///       except when WebOptions `.parse` is true, and the content_type is `application/json`
 #[derive(Default)]
 pub struct WebOptions {
 	/// Will be set as user agent.
@@ -26,6 +29,11 @@ pub struct WebOptions {
 	/// Number of possible redirects
 	/// will use .redirect(Policy::limited(n))
 	pub redirect_limit: Option<i32>,
+
+	/// If true, attempts to parse response content (e.g., JSON) based on Content-Type header.
+	/// If set, the `content` field in `WebResponse` will be the parsed Lua value, otherwise a string.
+	/// since: 0.8.6
+	pub parse: Option<bool>,
 }
 
 impl FromLua for WebOptions {
@@ -43,6 +51,9 @@ impl FromLua for WebOptions {
 
 				// -- Extract redirect_limit
 				let redirect_limit = table.x_get_i64("redirect_limit").map(|v| v as i32);
+
+				// -- Extract parse
+				let parse = table.x_get_bool("parse");
 
 				// -- Extract headers
 				let headers = if let Ok(headers_table) = table.get::<mlua::Table>("headers") {
@@ -78,6 +89,7 @@ impl FromLua for WebOptions {
 					user_agent,
 					headers,
 					redirect_limit,
+					parse,
 				})
 			}
 			other => Err(mlua::Error::FromLuaConversionError {

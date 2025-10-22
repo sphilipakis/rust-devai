@@ -25,7 +25,8 @@
 //! {
 //!   user_agent?: string | boolean,   
 //!   headers?: table,                  -- { header_name: string | string[] }
-//!   redirect_limit?: number           -- number of redirects to follow (default 5)
+//!   redirect_limit?: number,          -- number of redirects to follow (default 5)
+//!   parse?: boolean                   -- If true, attempts to parse JSON response content (Content-Type: application/json). Content defaults to string otherwise.
 //! }
 //!
 //! - user_agent
@@ -38,11 +39,11 @@
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string;
-use crate::support::{StrExt as _, W};
-use crate::types::{DEFAULT_UA_AIPACK, DEFAULT_UA_BROWSER, WebOptions};
+use crate::support::W;
+use crate::types::{DEFAULT_UA_AIPACK, DEFAULT_UA_BROWSER, WebOptions, WebResponse};
 use crate::{Error, Result};
 use mlua::{FromLua as _, IntoLua, Lua, LuaSerdeExt, Table, Value};
-use reqwest::{Client, Response, header};
+use reqwest::{Client, header};
 use std::collections::HashMap;
 use url::Url;
 
@@ -271,7 +272,9 @@ impl IntoLua for W<Url> {
 ///   success: boolean, // Indicates if the request was successful (status code 2xx)
 ///   status: number,   // The HTTP status code of the response
 ///   url: string,      // The URL that was requested
-///   content: string | table    // The content of the response. If the response content type is `application/json`, the `content` field will be a Lua table. Otherwise, it will be a string.
+///   content: string | table, // The body of the response. Defaults to string, but can be a table (parsed JSON) if `WebOptions.parse` is true and `Content-Type` is `application/json`.
+///   content_type?: string, // The value of the Content-Type header, if present
+///   error?: string,   // Contains network error, parsing error, or generic status error if not 2xx
 /// }
 /// ```
 ///
@@ -301,12 +304,16 @@ fn web_get(lua: &Lua, (url, opts): (String, Option<Value>)) -> mlua::Result<Valu
 
 			let opts_val = opts.unwrap_or(Value::Nil);
 			let web_opts = WebOptions::from_lua(opts_val, lua)?;
+			let parse_response = web_opts.parse;
 			builder = web_opts.apply_to_reqwest_builder(builder);
 
 			let client = builder.build().map_err(crate::Error::from)?;
 
 			let res: mlua::Result<Value> = match client.get(&url).send().await {
-				Ok(response) => get_lua_response_value(lua, response, &url).await,
+				Ok(response) => {
+					let web_res = WebResponse::from_reqwest_response(response, parse_response).await?;
+					Ok(web_res.into_lua(lua)?)
+				}
 				Err(err) => Err(crate::Error::custom(format!(
 					"\
 Fail to do aip.web.get for url: {url}
@@ -351,7 +358,9 @@ Cause: {err}"
 ///   success: boolean, // Indicates if the request was successful (status code 2xx)
 ///   status: number,   // The HTTP status code of the response
 ///   url: string,      // The URL that was requested
-///   content: string | table    // The content of the response. If the response content type is `application/json`, the `content` field will be a Lua table. Otherwise, it will be a string.
+///   content: string | table, // The body of the response. Defaults to string, but can be a table (parsed JSON) if `WebOptions.parse` is true and `Content-Type` is `application/json`.
+///   content_type?: string, // The value of the Content-Type Header, if present
+///   error?: string,   // Contains network error, parsing error, or generic status error if not 2xx
 /// }
 /// ```
 ///
@@ -382,6 +391,7 @@ fn web_post(lua: &Lua, (url, data, opts): (String, Value, Option<Value>)) -> mlu
 
 			let opts_val = opts.unwrap_or(Value::Nil);
 			let web_opts = WebOptions::from_lua(opts_val, lua)?;
+			let parse_response = web_opts.parse;
 			builder = web_opts.apply_to_reqwest_builder(builder);
 
 			let client = builder.build().map_err(crate::Error::from)?;
@@ -414,7 +424,10 @@ fn web_post(lua: &Lua, (url, data, opts): (String, Value, Option<Value>)) -> mlu
 			}
 
 			let res: mlua::Result<Value> = match request_builder.send().await {
-				Ok(response) => get_lua_response_value(lua, response, &url).await,
+				Ok(response) => {
+					let web_res = WebResponse::from_reqwest_response(response, parse_response).await?;
+					Ok(web_res.into_lua(lua)?)
+				}
 				Err(err) => Err(crate::Error::custom(format!(
 					"\
 Fail to do aip.web.post for url: {url}
@@ -434,65 +447,6 @@ Cause: {err}"
 
 	res
 }
-
-// region:    --- Support
-
-async fn get_lua_response_value(lua: &Lua, response: Response, url: &str) -> mlua::Result<Value> {
-	let content_type = get_content_type(&response);
-	//
-	let status = response.status();
-	let success = status.is_success();
-	let status_code = status.as_u16() as i64;
-
-	if success {
-		// TODO: needs to reformat this error to match the lua function
-		let res = lua.create_table()?;
-		res.set("success", true)?;
-		res.set("status", status_code)?;
-		res.set("url", url)?;
-		let content = response.text().await.map_err(Error::Reqwest)?;
-		let content = get_content_value_for_content_type(lua, content_type, &content)?;
-		res.set("content", content)?;
-		Ok(Value::Table(res))
-	} else {
-		let res = lua.create_table()?;
-		res.set("success", false)?;
-		res.set("status", status_code)?;
-		res.set("url", url)?;
-		let content = response.text().await.unwrap_or_default();
-		let content = Value::String(lua.create_string(&content)?);
-
-		res.set("content", content)?;
-		res.set("error", format!("Not a 2xx status code ({status_code})"))?;
-		// NOTE: This is not an error, as the web request was sent
-		Ok(Value::Table(res))
-	}
-}
-
-/// Returns the appropriate lua Value type depending of the content type.
-/// - If `application/json` it will be a Value::Table
-/// - If anything else (for now), will be Value::String
-fn get_content_value_for_content_type(lua: &Lua, content_type: Option<String>, content: &str) -> Result<Value> {
-	let content: Value = if content_type.x_contains("application/json") {
-		// parse content as json
-		let content: serde_json::Value = serde_json::from_str(content)
-			.map_err(|err| crate::Error::custom(format!("Fail to parse web response as json.\n    Cause: {err}")))?;
-
-		lua.to_value(&content)?
-	} else {
-		Value::String(lua.create_string(content)?)
-	};
-	Ok(content)
-}
-
-fn get_content_type(response: &Response) -> Option<String> {
-	response
-		.headers()
-		.get(header::CONTENT_TYPE)
-		.map(|h| h.to_str().unwrap_or_default().to_lowercase())
-}
-
-// endregion: --- Support
 
 // region:    --- Tests
 
@@ -532,7 +486,8 @@ return aip.web.get(url)
 		let lua = setup_lua(aip_web::init_module, "web").await?;
 		let script = r#"
 local url = "https://postman-echo.com/post"
-return aip.web.post(url, {some = "stuff"})
+local res = aip.web.post(url, {some = "stuff"}, {parse = true})
+return res
 		"#;
 
 		// -- Exec
