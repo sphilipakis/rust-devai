@@ -5,8 +5,9 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::redirect::Policy;
 use std::collections::HashMap;
 
-const DEFAULT_REDIRECT_LIMIT: i32 = 5;
-const DEFAULT_WHEN_TRUE_USER_AGENT: &str =
+pub const DEFAULT_REDIRECT_LIMIT: i32 = 5;
+pub const DEFAULT_UA_AIPACK: &str = "aipack";
+pub const DEFAULT_UA_BROWSER: &str =
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 /// Web request options used by `aip.web` functions.
@@ -15,9 +16,8 @@ const DEFAULT_WHEN_TRUE_USER_AGENT: &str =
 #[derive(Default)]
 pub struct WebOptions {
 	/// Will be set as user agent.
-	/// If "true" then will set a good browser default
-	/// if Text value, then will be set as is.
-	/// Will override headers `User-Agent` if present.
+	/// If `true`, defaults to `DEFAULT_UA_AIPACK`. If `false`, no UA is set. If string, sets as-is.
+	/// Overrides headers `User-Agent` if present.
 	pub user_agent: Option<String>,
 
 	/// Headers to be set. Most of time single value, of vec of one
@@ -35,15 +35,8 @@ impl FromLua for WebOptions {
 			Value::Table(table) => {
 				// -- Extract user_agent
 				let user_agent = match table.get::<Value>("user_agent")? {
-					Value::String(s) => {
-						let s_owned = s.to_string_lossy();
-						if s_owned.eq_ignore_ascii_case("true") {
-							Some(DEFAULT_WHEN_TRUE_USER_AGENT.to_owned())
-						} else {
-							Some(s_owned)
-						}
-					}
-					Value::Boolean(true) => Some(DEFAULT_WHEN_TRUE_USER_AGENT.to_owned()),
+					Value::String(s) => Some(s.to_string_lossy()),
+					Value::Boolean(true) => Some(DEFAULT_UA_AIPACK.to_owned()),
 					Value::Boolean(false) => Some("".to_owned()),
 					_ => None,
 				};
@@ -106,34 +99,33 @@ impl WebOptions {
 
 		// region:    --- Extract & Set user_agent
 
-		let mut user_agent_to_set: Option<String> = None;
-		let mut skip_ua_header_processing = false;
+		let mut user_agent_to_set: Option<String> = self.user_agent.take();
 
-		// 1. Handle explicit user_agent field (overrides headers)
-		if let Some(ua_opt) = self.user_agent.take() {
-			skip_ua_header_processing = true;
-			// If ua_opt is "", it means user explicitly set user_agent=false and wants no user agent.
-			if !ua_opt.is_empty() {
-				user_agent_to_set = Some(ua_opt);
-			}
+		// If user_agent field was present, remove 'User-Agent' from headers map
+		if user_agent_to_set.is_some()
+			&& let Some(headers) = self.headers.as_mut()
+			&& let Some(ua_key) = headers.keys().find(|k| k.eq_ignore_ascii_case("user-agent")).cloned()
+		{
+			headers.remove(&ua_key);
 		}
 
-		// 2. Handle user_agent from headers if not explicitly set via field
-		if !skip_ua_header_processing
+		// If not explicitly set via field, try to find it in headers, and remove if found.
+		if user_agent_to_set.is_none()
 			&& let Some(headers) = self.headers.as_mut()
 			&& let Some(ua_key) = headers.keys().find(|k| k.eq_ignore_ascii_case("user-agent")).cloned()
 			&& let Some(ua_values) = headers.remove(&ua_key)
 			&& let Some(first_value) = ua_values.into_iter().next()
 		{
+			// We must consume from headers here so it doesn't get processed later as a default header
 			user_agent_to_set = Some(first_value);
 		}
 
-		// 3. Default user agent if none was determined and we are not skipping (i.e., user_agent: false)
-		if user_agent_to_set.is_none() && !skip_ua_header_processing {
-			user_agent_to_set = Some("aipack".to_owned());
+		// Apply default if still missing
+		if user_agent_to_set.is_none() {
+			user_agent_to_set = Some(DEFAULT_UA_AIPACK.to_owned());
 		}
 
-		// 4. Set user agent in client builder
+		// Set user agent in client builder if determined and not empty string
 		if let Some(ua) = user_agent_to_set
 			&& !ua.is_empty()
 		{

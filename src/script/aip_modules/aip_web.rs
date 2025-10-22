@@ -13,22 +13,33 @@
 //! - `aip.web.parse_url(url: string | nil): table | nil`
 //! - `aip.web.resolve_href(href: string | nil, base_url: string): string | nil`
 //!
+//! ### Constants
+//!
+//! - `aip.web.UA_BROWSER: string`: Default browser User Agent string.
+//! - `aip.web.UA_AIPACK: string`: Default aipack User Agent string (`aipack`).
+//!
 //! ### Related Types
 //!
 //! Where `WebOptions` is:
 //! ```lua
 //! {
-//!   user_agent?: string | boolean,    -- If true or "true", sets browser default UA. If false or "", sets no UA header. If string, sets as-is. Defaults to "aipack" if omitted and not in headers.
+//!   user_agent?: string | boolean,   
 //!   headers?: table,                  -- { header_name: string | string[] }
 //!   redirect_limit?: number           -- number of redirects to follow (default 5)
 //! }
+//!
+//! - user_agent
+//!  - If boolean 'true', sets 'aipack'.
+//!  - If boolean 'false', prevents setting UA.
+//!  - If string, sets as-is, can use `aip.web.UA_BROWSER` for a constant of a commong browser user-agent
+//!  - If undefined, will default to `aipack` or what is in the `.headers``
 //! ```
 
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string;
 use crate::support::{StrExt as _, W};
-use crate::types::WebOptions;
+use crate::types::{DEFAULT_UA_AIPACK, DEFAULT_UA_BROWSER, WebOptions};
 use crate::{Error, Result};
 use mlua::{FromLua as _, IntoLua, Lua, LuaSerdeExt, Table, Value};
 use reqwest::{Client, Response, header};
@@ -47,6 +58,9 @@ pub fn init_module(lua: &Lua, _runtime_context: &Runtime) -> Result<Table> {
 	table.set("post", web_post_fn)?;
 	table.set("parse_url", parse_url_fn)?;
 	table.set("resolve_href", resolve_href_fn)?;
+
+	table.set("UA_AIPACK", DEFAULT_UA_AIPACK)?;
+	table.set("UA_BROWSER", DEFAULT_UA_BROWSER)?;
 
 	Ok(table)
 }

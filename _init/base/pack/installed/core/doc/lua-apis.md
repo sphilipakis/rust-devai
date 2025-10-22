@@ -2937,6 +2937,11 @@ aip.web.parse_url(url: string | nil): table | nil
 aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 ```
 
+### Constants
+
+- `aip.web.UA_AIPACK: string`: Default aipack User Agent string (`aipack`).
+- `aip.web.UA_BROWSER: string`: Default browser User Agent string.
+
 ### aip.web.get
 
 Makes an HTTP GET request.
@@ -2967,11 +2972,16 @@ else
   print("Error:", response.error, "Status:", response.status)
 end
 
--- With options
+-- With options (user_agent: true uses 'aipack' default UA)
 local response_with_opts = aip.web.get("https://api.example.com/data", {
-  user_agent = "true",
+  user_agent = true,
   headers = { ["X-API-Key"] = "secret123" },
   redirect_limit = 10
+})
+
+-- Example of using the browser UA constant
+local response_browser_ua = aip.web.get("https://api.example.com/data", {
+  user_agent = aip.web.UA_BROWSER,
 })
 ```
 
@@ -5193,7 +5203,7 @@ Options table used for configuring HTTP requests in `aip.web` functions.
 
 ```ts
 {
-  user_agent?: string | boolean,    // If true or "true", sets browser default UA. If false or "", sets no UA header. If string, sets as-is. Defaults to "aipack" if omitted and not in headers.
+  user_agent?: string | boolean,    // If boolean true, sets 'aipack' UA (aip.web.UA_AIPACK). If false, prevents setting UA. If string, sets as-is (can use aip.web.UA_BROWSER). Takes precedence over 'User-Agent' in headers. Defaults to 'aipack' if omitted and 'User-Agent' is missing from headers.
   headers?: table,                  // { header_name: string | string[] }
   redirect_limit?: number           // Number of redirects to follow (default 5)
 }
