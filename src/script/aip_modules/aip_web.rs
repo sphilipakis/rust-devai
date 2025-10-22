@@ -591,6 +591,31 @@ return aip.web.parse_url(nil)
 		Ok(())
 	}
 
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_script_aip_web_get_with_headers_capture() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_web::init_module, "web").await?;
+		let script = r#"
+local url = "https://postman-echo.com/response-headers?Content-Type=text/plain&Set-Cookie=session1=a;%20HttpOnly&Set-Cookie=session2=b&X-Custom=val_single"
+local res = aip.web.get(url)
+return res
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		// Check standard header that should be there (case insensitive match for extraction)
+		let date_header = res.x_get_str("/headers/content-type")?;
+		assert!(!date_header.is_empty(), "text/plain; charset=utf-8");
+
+		// Check custom single value header
+		let custom_header = res.x_get_str("/headers/set-cookie")?;
+		assert_eq!(custom_header, "session1=a; HttpOnly");
+
+		Ok(())
+	}
+
 	#[tokio::test]
 	async fn test_script_aip_web_resolve_href_ok_absolute_href() -> Result<()> {
 		// -- Setup & Fixtures

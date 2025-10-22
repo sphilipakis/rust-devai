@@ -2964,6 +2964,7 @@ aip.web.get(url: string, options?: WebOptions): WebResponse
 
 ```lua
 local response = aip.web.get("https://httpbin.org/get")
+-- default `User-Agent` is `aipack`
 if response.success then
   print("Status:", response.status)
   -- response.content might be a string or table (if JSON)
@@ -2974,7 +2975,7 @@ end
 
 -- With options (user_agent: true uses 'aipack' default UA)
 local response_with_opts = aip.web.get("https://api.example.com/data", {
-  user_agent = true,
+  user_agent = "my-user-agent",
   headers = { ["X-API-Key"] = "secret123" },
   redirect_limit = 10
 })
@@ -3017,7 +3018,7 @@ Sends `data` in the request body. If `data` is a string, `Content-Type` is `text
 local r1 = aip.web.post("https://httpbin.org/post", "plain text data")
 
 -- POST JSON
-local r2 = aip.web.post("https://httpbin.org/post", { key = "value", num = 123 })
+local r2 = aip.web.post("https://httpbin.org/post", { key = "value", num = 123 }, { parse = true })
 if r2.success and type(r2.content) == "table" then
   print("Received JSON echo:", r2.content.json.key) -- Output: value
 end
@@ -5205,7 +5206,8 @@ Options table used for configuring HTTP requests in `aip.web` functions.
 {
   user_agent?: string | boolean,    // If boolean true, sets 'aipack' UA (aip.web.UA_AIPACK). If false, prevents setting UA. If string, sets as-is (can use aip.web.UA_BROWSER). Takes precedence over 'User-Agent' in headers. Defaults to 'aipack' if omitted and 'User-Agent' is missing from headers.
   headers?: table,                  // { header_name: string | string[] }
-  redirect_limit?: number           // Number of redirects to follow (default 5)
+  redirect_limit?: number,          // Number of redirects to follow (default 5)
+  parse?: boolean                   // If true, attempts to parse response body (e.g., JSON) based on Content-Type header. Content in WebResponse will be a Lua table if successful, otherwise a string.
 }
 ```
 

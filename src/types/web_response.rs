@@ -1,7 +1,9 @@
 use crate::Result;
 use crate::script::serde_value_to_lua_value;
 use mlua::{IntoLua, Lua, Value};
+use reqwest::header::HeaderMap;
 use reqwest::{Response, StatusCode, header};
+use std::collections::HashMap;
 
 /// Represents the result of an HTTP request made by `aip.web.get` or `aip.web.post`.
 ///
@@ -20,6 +22,7 @@ use reqwest::{Response, StatusCode, header};
 ///   url: string,        -- The final URL after redirects
 ///   content: string | table, -- The body of the response. If `WebOptions.parse=true` and `content_type` is JSON, it is a table (parsed JSON), otherwise a raw string.
 ///   content_type?: string, -- The value of the Content-Type header, if present
+///   headers?: table,      -- Lua table of response headers { header_name: string | string[] }
 ///   error?: string       -- Contains network error, parsing error, or generic status error if not 2xx
 /// }
 /// ```
@@ -29,6 +32,7 @@ pub struct WebResponse {
 	pub url: String,
 	pub content: String,
 	pub content_type: Option<String>,
+	pub headers: Option<HashMap<String, Vec<String>>>,
 	pub error: Option<String>, // Error originating from reqwest/network failure
 	pub parse: Option<bool>,
 }
@@ -68,6 +72,31 @@ impl IntoLua for WebResponse {
 			table.set("content_type", content_type)?;
 		}
 
+		// region:    --- Headers to Lua
+
+		if let Some(headers) = self.headers {
+			let headers_tbl = lua.create_table()?;
+
+			for (key, values) in headers {
+				let value_lua = if values.len() == 1 {
+					Value::String(lua.create_string(&values[0])?)
+				} else {
+					let list_tbl = lua.create_table()?;
+					for (i, v) in values.into_iter().enumerate() {
+						list_tbl.set(i + 1, v)?;
+					}
+					Value::Table(list_tbl)
+				};
+				headers_tbl.set(key, value_lua)?;
+			}
+
+			if !headers_tbl.is_empty() {
+				table.set("headers", headers_tbl)?;
+			}
+		}
+
+		// endregion: --- Headers to Lua
+
 		if let Some(error) = self.error {
 			table.set("error", error)?;
 		} else if !success {
@@ -90,12 +119,16 @@ impl WebResponse {
 		let status = response.status();
 		let url = response.url().to_string();
 
-		let content_type = response
-			.headers()
+		// Get owned HeaderMap before consuming the response body
+		let headers = response.headers().clone();
+
+		let content_type = headers
 			.get(header::CONTENT_TYPE)
 			.and_then(|h| h.to_str().ok().map(|s| s.to_owned()));
 
 		let content = response.text().await.map_err(crate::Error::Reqwest)?;
+
+		let headers_map = transform_headers(headers);
 
 		let parse = parse_response;
 
@@ -104,6 +137,7 @@ impl WebResponse {
 			url,
 			content,
 			content_type,
+			headers: Some(headers_map),
 			error: None,
 			parse,
 		})
@@ -111,3 +145,24 @@ impl WebResponse {
 }
 
 // endregion: --- Constructors
+
+// region:    --- Support
+
+fn transform_headers(headers: HeaderMap) -> HashMap<String, Vec<String>> {
+	headers
+		.into_iter()
+		.filter_map(|(name, value)| {
+			// reqwest::header::HeaderMap::into_iter yields (Option<HeaderName>, HeaderValue)
+			// None name means invalid header, skip
+			name.map(|name| (name, value))
+		})
+		.fold(HashMap::<String, Vec<String>>::new(), |mut acc, (name, value)| {
+			let key = name.as_str().to_lowercase();
+			if let Ok(value_str) = value.to_str() {
+				acc.entry(key).or_default().push(value_str.to_owned());
+			}
+			acc
+		})
+}
+
+// endregion: --- Support
