@@ -2,6 +2,7 @@
 
 ## 2025-10-25 - [v0.8.6](https://github.com/jeremychone/rust-devai/compare/v0.8.5...v0.8.6)
 
+- `^` aip.file.list - big speed boost and special folder support for `target/`, `.build/`, `node_modules/` and `__pycache__/` (but have explicit globs)
 - `+` aip.web - `.get` and `.post` now support `.headers`, `.user_agent`, and `redirect_limit` in options, and return `.headers` in WebResponse
 - `!` aip.web.post - and `...get` now accept `{parse = true}` as an option to parse JSON content when the content type is JSON (otherwise returns a string)
 - `^` aip.web - added WebOptions (user_agent, headers, redirect_limit)
