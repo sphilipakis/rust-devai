@@ -1,5 +1,14 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-10-25 - [v0.8.6](https://github.com/jeremychone/rust-devai/compare/v0.8.5...v0.8.6)
+
+- `+` aip.web - `.get` and `.post` now support `.headers`, `.user_agent`, and `redirect_limit` in options, and return `.headers` in WebResponse
+- `!` aip.web.post - and `...get` now accept `{parse = true}` as an option to parse JSON content when the content type is JSON (otherwise returns a string)
+- `^` aip.web - added WebOptions (user_agent, headers, redirect_limit)
+- `-` self setup - Unix - create `.zshenv` or `.bashrc` if the user selects Y and no aip is in the path
+- `.` config-default - added haiku 4.5 to default aliases
+- `.` pricing - updated Anthropic pricing with haiku 4.5
+
 ## 2025-10-13 - [v0.8.5](https://github.com/jeremychone/rust-devai/compare/v0.8.4...v0.8.5)
 
 - `^` aip.tag.extract - Add support for tag attributes
