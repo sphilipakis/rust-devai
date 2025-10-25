@@ -749,7 +749,7 @@ If `include_globs` is `nil` or no files match the patterns, returns `nil`.
 
 #### Returns
 
-- `FileStats`: A `FileStats` object containing aggregate statistics about the matching files.
+- `FileStats`: A [FileStats](#filestats) object containing aggregate statistics about the matching files.
 - `nil` if `include_globs` is `nil`
 
 If no files if ound a FileStats will all 0 will be returned.
@@ -886,7 +886,7 @@ Convert a Lua list (table) of values to JSON strings and append them as new line
 
 ```lua
 -- API Signature
-aip.file.append_json_lines(path: string, data: list)
+aip.file.append_json_lines(path: string, data: list): FileInfo
 ```
 
 Iterates through the `data` list, converts each element to JSON, and appends it followed by a newline (`\n`) to the file at `path` (relative to workspace). Creates file/directories if needed. Uses buffering.
@@ -898,7 +898,7 @@ Iterates through the `data` list, converts each element to JSON, and appends it 
 
 #### Returns
 
-Does not return anything upon success.
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
 
 #### Example
 
@@ -5197,7 +5197,9 @@ Represents the result of an HTTP request made by `aip.web.get` or `aip.web.post`
   success: boolean,   // true if HTTP status code is 2xx, false otherwise
   status: number,     // HTTP status code (e.g., 200, 404, 500)
   url: string,        // The final URL requested (after redirects)
-  content: string | table, // Response body. Decoded to a Lua table if Content-Type is application/json, otherwise a string.
+  content: string | table, // Response body. Decoded to a Lua table if Content-Type is application/json AND WebOptions.parse was true, otherwise a string.
+  content_type?: string, // The value of the Content-Type header, if present
+  headers?: table,      // Lua table of response headers { header_name: string | string[] }
   error?: string      // Error message if success is false or if request initiation failed
 }
 ```
@@ -5211,7 +5213,7 @@ Options table used for configuring HTTP requests in `aip.web` functions.
   user_agent?: string | boolean,    // If boolean true, sets 'aipack' UA (aip.web.UA_AIPACK). If false, prevents setting UA. If string, sets as-is (can use aip.web.UA_BROWSER). Takes precedence over 'User-Agent' in headers. Defaults to 'aipack' if omitted and 'User-Agent' is missing from headers.
   headers?: table,                  // { header_name: string | string[] }
   redirect_limit?: number,          // Number of redirects to follow (default 5)
-  parse?: boolean                   // If true, attempts to parse response body (e.g., JSON) based on Content-Type header. Content in WebResponse will be a Lua table if successful, otherwise a string.
+  parse?: boolean                   // If true, attempts to parse JSON response body if Content-Type is 'application/json'. Content in WebResponse will be a Lua table if successful, otherwise a string (defaults to false).
 }
 ```
 

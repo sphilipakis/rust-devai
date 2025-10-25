@@ -240,7 +240,7 @@ impl IntoLua for W<Url> {
 		let mut page_url = format!("{}://{}", url.scheme(), url.host_str().unwrap_or_default());
 		if let Some(port) = url.port() {
 			page_url.push(':');
-			page_url.push_str(&format!(":{port}"));
+			page_url.push_str(&format!("{port}"));
 		}
 		page_url.push_str(url.path());
 		table.set("page_url", page_url)?;
