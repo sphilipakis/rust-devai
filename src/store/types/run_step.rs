@@ -1,7 +1,8 @@
 use crate::derive_simple_enum_type;
+use macro_rules_attribute::apply;
 
 // Simple wrapper for SQLite Stage
-derive_simple_enum_type! {
+#[apply(derive_simple_enum_type)]
 pub enum RunStep {
 	Start,
 
@@ -9,7 +10,7 @@ pub enum RunStep {
 	BaStart,
 	BaEnd,
 	TasksStart, // First tasks start
-	TasksEnd, // All tasks ended
+	TasksEnd,   // All tasks ended
 
 	// -- Task
 	TaskStart,
@@ -27,7 +28,5 @@ pub enum RunStep {
 	AaStart,
 	AaEnd,
 
-
 	End,
-}
 }

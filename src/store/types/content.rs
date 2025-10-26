@@ -1,5 +1,6 @@
 use crate::derive_simple_enum_type;
 use crate::support::text::truncate;
+use macro_rules_attribute::apply;
 use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
@@ -15,11 +16,10 @@ pub struct TypedContent {
 	pub display: Option<String>,
 }
 
-derive_simple_enum_type! {
+#[apply(derive_simple_enum_type)]
 pub enum ContentTyp {
 	Json,
 	Text,
-}
 }
 
 impl TypedContent {

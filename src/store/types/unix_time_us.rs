@@ -1,9 +1,10 @@
 use crate::derive_simple_struct_type;
 use crate::{Error, Result};
+use macro_rules_attribute::apply;
 
-derive_simple_struct_type! {
-	pub struct UnixTimeUs(i64);
-}
+#[apply(derive_simple_struct_type)]
+pub struct UnixTimeUs(i64);
+
 impl UnixTimeUs {
 	pub fn as_i64(&self) -> i64 {
 		self.0

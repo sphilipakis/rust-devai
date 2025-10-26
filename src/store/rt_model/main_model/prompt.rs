@@ -1,6 +1,7 @@
 use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
 use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use macro_rules_attribute::apply;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -27,11 +28,10 @@ pub struct Prompt {
 	pub actions: Option<String>, // json
 }
 
-derive_simple_enum_type! {
-	pub enum PromptKind {
-		Sys,
-		Agent,
-	}
+#[apply(derive_simple_enum_type)]
+pub enum PromptKind {
+	Sys,
+	Agent,
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]

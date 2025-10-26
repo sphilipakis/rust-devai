@@ -1,7 +1,8 @@
 use crate::derive_simple_enum_type;
+use macro_rules_attribute::apply;
 
 // Simple wrapper for SQLite Stage
-derive_simple_enum_type! {
+#[apply(derive_simple_enum_type)]
 pub enum Stage {
 	BeforeAll,
 	Data,
@@ -9,7 +10,6 @@ pub enum Stage {
 	AiGen,
 	Output,
 	AfterAll,
-}
 }
 
 impl Stage {

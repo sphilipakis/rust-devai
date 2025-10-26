@@ -1,6 +1,7 @@
 use crate::derive_simple_enum_type;
 use crate::store::base::{self, DbBmc};
 use crate::store::{ContentTyp, Id, ModelManager, Result, UnixTimeUs};
+use macro_rules_attribute::apply;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -26,11 +27,10 @@ pub struct Inout {
 	pub display: Option<String>,
 }
 
-derive_simple_enum_type! {
+#[apply(derive_simple_enum_type)]
 pub enum InoutKind {
 	In,
 	Out,
-}
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
