@@ -6,6 +6,7 @@ use futures_timer::Delay;
 use std::time::Duration;
 use tokio::select;
 use tokio::task::JoinHandle;
+use tracing::debug;
 
 pub fn run_term_read(app_tx: AppTx) -> Result<JoinHandle<()>> {
 	let handle = tokio::spawn(async move {
@@ -21,7 +22,8 @@ pub fn run_term_read(app_tx: AppTx) -> Result<JoinHandle<()>> {
 					match maybe_event {
 						Some(Ok(event)) => {
 							if let Err(err) = app_tx.send(event).await {
-								println!("run_term_read - Cannot send app_txt.send. Cause: {err}");
+								// NOTE: On windows, we do get a Resize event after the 'q', so avoid printing
+								debug!("run_term_read - Cannot send app_txt.send. Cause: {err}");
 								break;
 							}
 						}
