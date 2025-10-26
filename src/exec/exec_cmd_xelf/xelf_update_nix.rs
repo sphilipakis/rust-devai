@@ -2,7 +2,7 @@
 
 use crate::Result;
 use crate::dir_context::AipackBaseDir;
-use crate::exec::exec_cmd_xelf::support::get_aip_stable_url;
+use crate::exec::exec_cmd_xelf::support::{get_aip_stable_url, has_aip_in_path};
 use crate::hub::{HubEvent, get_hub};
 use crate::support::proc::{self, ProcOptions};
 use crate::support::webc;
@@ -64,10 +64,19 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 	let setup_str = format!("'aip self setup' executed:\n{setup_stdout}\n");
 	hub.publish(setup_str).await;
 
-	hub.publish(HubEvent::info_short(format!("Update successful! New version 'v{remote_version}' installed.\n
-		Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect."))
-	)
+	hub.publish(HubEvent::info_short(format!(
+		"Update successful! New version 'v{remote_version}' installed.\n"
+	)))
 	.await;
+
+	if !has_aip_in_path() {
+		hub.publish(HubEvent::info_short(
+		"It seems you do not have '~/aipack-base/bin/aip' in path.
+Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect.		
+		"
+	))
+	.await;
+	}
 
 	// -- Cleanup (Optional: User can uncomment to activate)
 	// hub.publish(format!("Cleaning up temporary directory: {}", tmp_dir)).await;
