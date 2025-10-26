@@ -17,14 +17,6 @@ impl ProcOptions {
 			..self
 		}
 	}
-
-	#[cfg(windows)]
-	pub fn with_creation_flags(self, flags: u32) -> Self {
-		Self {
-			creation_flags: Some(flags),
-			..self
-		}
-	}
 }
 
 fn apply_options(command: &mut Command, options: Option<&ProcOptions>) {
