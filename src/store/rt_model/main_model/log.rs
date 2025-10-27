@@ -1,7 +1,8 @@
-use crate::derive_simple_enum_type;
+use crate::store::ScalarEnumType;
 use crate::store::base::{self, DbBmc};
 use crate::store::rt_model::RuntimeCtx;
 use crate::store::{Id, ModelManager, Result, RunStep, Stage, UnixTimeUs};
+use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -30,7 +31,7 @@ pub struct Log {
 	pub message: Option<String>,
 }
 
-derive_simple_enum_type! {
+#[mra::derive(Debug, ScalarEnumType!)]
 pub enum LogKind {
 	RunStep,
 	SysInfo,
@@ -39,7 +40,6 @@ pub enum LogKind {
 	SysDebug,
 	AgentPrint,
 	AgentSkip,
-}
 }
 
 impl Log {

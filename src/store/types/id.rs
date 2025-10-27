@@ -1,11 +1,13 @@
+use crate::store::ScalarStructType;
 use crate::store::{Error, Result};
-// use derive_more::{Deref, Display, From, Into};
-use crate::derive_simple_struct_type;
-use macro_rules_attribute::apply;
+use macro_rules_attribute as mra;
 
 // Simple wrapper for SQLite Ids
-#[apply(derive_simple_struct_type)]
+#[mra::derive(Debug, ScalarStructType!)]
 pub struct Id(i64);
+
+#[mra::derive(ScalarStructType!)]
+pub struct Id2(i64);
 
 impl Id {
 	pub fn as_i64(&self) -> i64 {

@@ -1,6 +1,7 @@
 // region:    --- Modules
 
 mod agent;
+mod derive_aliases;
 mod dir_context;
 mod error;
 mod event;
@@ -25,6 +26,7 @@ use crate::hub::{HubEvent, get_hub};
 use crate::store::OnceModelManager;
 use crate::tui_v1::TuiAppV1;
 use clap::{Parser, crate_version};
+use derive_aliases::*;
 use error::{Error, Result};
 use tracing_appender::rolling::never;
 use tracing_subscriber::EnvFilter;

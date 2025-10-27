@@ -1,7 +1,7 @@
-use crate::derive_simple_enum_type;
-use macro_rules_attribute::apply;
+use crate::store::ScalarEnumType;
+use macro_rules_attribute as mra;
 
-#[apply(derive_simple_enum_type)]
+#[mra::derive(Debug, ScalarEnumType!)]
 pub enum EndState {
 	Ok,
 	Err,

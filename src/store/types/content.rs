@@ -1,6 +1,6 @@
-use crate::derive_simple_enum_type;
+use crate::store::ScalarEnumType;
 use crate::support::text::truncate;
-use macro_rules_attribute::apply;
+use macro_rules_attribute as mra;
 use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
@@ -16,7 +16,7 @@ pub struct TypedContent {
 	pub display: Option<String>,
 }
 
-#[apply(derive_simple_enum_type)]
+#[mra::derive(Debug, ScalarEnumType!)]
 pub enum ContentTyp {
 	Json,
 	Text,

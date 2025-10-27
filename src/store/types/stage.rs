@@ -1,8 +1,8 @@
-use crate::derive_simple_enum_type;
-use macro_rules_attribute::apply;
+use crate::store::ScalarEnumType;
+use macro_rules_attribute as mra;
 
 // Simple wrapper for SQLite Stage
-#[apply(derive_simple_enum_type)]
+#[mra::derive(Debug, ScalarEnumType!)]
 pub enum Stage {
 	BeforeAll,
 	Data,

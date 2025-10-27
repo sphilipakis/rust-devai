@@ -1,8 +1,8 @@
-use crate::derive_simple_struct_type;
+use crate::store::ScalarStructType;
 use crate::{Error, Result};
-use macro_rules_attribute::apply;
+use macro_rules_attribute as mra;
 
-#[apply(derive_simple_struct_type)]
+#[mra::derive(Debug, ScalarStructType!)]
 pub struct UnixTimeUs(i64);
 
 impl UnixTimeUs {
