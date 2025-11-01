@@ -1,6 +1,5 @@
 use crate::support::text::{self, format_time_local};
 use crate::tui::core::ScrollIden;
-use crate::tui::support::clamp_idx_in_len;
 use crate::tui::view::comp;
 use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, style};
@@ -131,10 +130,17 @@ fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> 
 		&& mouse_evt.is_up()
 		&& mouse_evt.is_over(nav_a)
 	{
+		// NOTE: Here not using clamp_idx_in_len to fix issue about last item selected
+		//       when clicking on end of nav panel
 		let current_run_idx = state.run_idx();
 
 		let new_idx = mouse_evt.y() - nav_a.y + scroll;
-		let new_idx = clamp_idx_in_len(new_idx as usize, state.run_items().len());
+		let runs_len = state.run_items().len();
+		let new_idx = new_idx as usize;
+
+		if new_idx >= runs_len {
+			return false;
+		}
 
 		if Some(new_idx) != current_run_idx {
 			state.set_run_idx(Some(new_idx));
