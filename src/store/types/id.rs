@@ -6,9 +6,6 @@ use macro_rules_attribute as mra;
 #[mra::derive(Debug, ScalarStructType!)]
 pub struct Id(i64);
 
-#[mra::derive(ScalarStructType!)]
-pub struct Id2(i64);
-
 impl Id {
 	pub fn as_i64(&self) -> i64 {
 		self.0
