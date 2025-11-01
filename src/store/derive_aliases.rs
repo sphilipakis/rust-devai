@@ -3,7 +3,7 @@ use macro_rules_attribute::derive_alias;
 derive_alias! {
 	// Scalar Struct type for DB Primitive type wrapper
 	#[derive(ScalarStructType!)] = #[derive(
-		crate::Ord!,
+		crate::Cmp!,
 		Clone,
 		Copy,
 		Hash,
@@ -16,7 +16,7 @@ derive_alias! {
 	)];
 
 	#[derive(ScalarEnumType!)] = #[derive(
-		crate::Ord!,
+		crate::Cmp!,
 		Clone,
 		Copy,
 		Hash,
