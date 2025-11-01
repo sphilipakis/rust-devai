@@ -4,7 +4,7 @@ use super::event::{AppEvent, LastAppEvent};
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
-use crate::store::ModelManager;
+use crate::model::ModelManager;
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::AppTx;

@@ -1,4 +1,4 @@
-use crate::store::Id;
+use crate::model::Id;
 
 #[derive(Debug, Clone)]
 pub enum Action {

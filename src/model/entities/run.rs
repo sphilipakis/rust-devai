@@ -1,5 +1,5 @@
-use crate::store::base::{self, DbBmc};
-use crate::store::{EndState, Id, ModelManager, Result, RunningState, Stage, UnixTimeUs};
+use crate::model::base::{self, DbBmc};
+use crate::model::{EndState, Id, ModelManager, Result, RunningState, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -198,8 +198,8 @@ impl RunBmc {
 	/// NOTE:
 	///   - This does not set the end time (just the end_state)
 	pub fn set_end_error(mm: &ModelManager, run_id: Id, stage: Option<Stage>, error: &crate::Error) -> Result<()> {
-		use crate::store::ContentTyp;
-		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+		use crate::model::ContentTyp;
+		use crate::model::{ErrBmc, ErrForCreate};
 
 		// -- Create the err rec
 		let err_c = ErrForCreate {

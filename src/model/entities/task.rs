@@ -1,6 +1,6 @@
-use crate::store::base::{self, DbBmc};
-use crate::store::rt_model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::store::{EndState, Id, ModelManager, Result, RunningState, Stage, TypedContent, UnixTimeUs};
+use crate::model::base::{self, DbBmc};
+use crate::model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
+use crate::model::{EndState, Id, ModelManager, Result, RunningState, Stage, TypedContent, UnixTimeUs};
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -324,8 +324,8 @@ impl TaskBmc {
 		stage: Option<Stage>,
 		error: &crate::error::Error,
 	) -> Result<()> {
-		use crate::store::ContentTyp;
-		use crate::store::rt_model::{ErrBmc, ErrForCreate};
+		use crate::model::ContentTyp;
+		use crate::model::{ErrBmc, ErrForCreate};
 
 		let task = Self::get(mm, task_id)?;
 
@@ -524,7 +524,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::store::rt_model::{RunBmc, RunForCreate};
+	use crate::model::{RunBmc, RunForCreate};
 	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
 

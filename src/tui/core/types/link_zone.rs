@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use crate::store::Id;
+use crate::model::Id;
 use crate::tui::core::{Action, MouseEvt};
 use crate::tui::support::UiExt as _;
 use derive_more::From;

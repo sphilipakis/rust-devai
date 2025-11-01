@@ -3,8 +3,8 @@ use crate::agent::Agent;
 use crate::run::run_agent_task::RunAgentInputResponse;
 use crate::run::{AiResponse, Literals};
 use crate::runtime::Runtime;
-use crate::store::Stage;
-use crate::store::rt_model::RuntimeCtx;
+use crate::model::Stage;
+use crate::model::RuntimeCtx;
 use serde_json::Value;
 
 #[allow(clippy::too_many_arguments)]

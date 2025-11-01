@@ -8,8 +8,8 @@ use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
 use crate::runtime::{RtLog, RtModel, RtStep};
 use crate::script::LuaEngine;
-use crate::store::ModelManager;
-use crate::store::rt_model::RuntimeCtx;
+use crate::model::ModelManager;
+use crate::model::RuntimeCtx;
 use genai::Client;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -173,7 +173,7 @@ mod tests_support {
 	use crate::dir_context::{AipackBaseDir, AipackPaths};
 	use crate::exec::Executor;
 	use crate::hub::{HubEvent, get_hub};
-	use crate::store::OnceModelManager;
+	use crate::model::OnceModelManager;
 	use simple_fs::{SPath, ensure_dir};
 
 	impl Runtime {

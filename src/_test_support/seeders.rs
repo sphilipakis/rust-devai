@@ -1,6 +1,6 @@
 use crate::Result;
-use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
-use crate::store::{Id, ModelManager};
+use crate::model::{Id, ModelManager};
+use crate::model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
 
 pub fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
 	let run_c = RunForCreate {

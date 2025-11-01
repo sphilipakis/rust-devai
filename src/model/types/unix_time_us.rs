@@ -1,4 +1,4 @@
-use crate::store::ScalarStructType;
+use crate::model::ScalarStructType;
 use crate::{Error, Result};
 use macro_rules_attribute as mra;
 

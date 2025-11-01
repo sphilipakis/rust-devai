@@ -1,8 +1,8 @@
 use super::AppStateCore;
 use super::SysState;
 use crate::Result;
-use crate::store::ModelManager;
-use crate::store::rt_model::Task;
+use crate::model::ModelManager;
+use crate::model::Task;
 use crate::support::time::now_micro;
 use crate::tui::core::event::{ActionEvent, LastAppEvent};
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};

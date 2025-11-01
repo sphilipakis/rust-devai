@@ -1,5 +1,5 @@
-use crate::store::base::{self, DbBmc};
-use crate::store::{ContentTyp, Id, ModelManager, Result, Stage, UnixTimeUs};
+use crate::model::base::{self, DbBmc};
+use crate::model::{ContentTyp, Id, ModelManager, Result, Stage, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
 use uuid::Uuid;
@@ -103,7 +103,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
+	use crate::model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
 	use crate::support::time::now_micro;
 
 	// region:    --- Support

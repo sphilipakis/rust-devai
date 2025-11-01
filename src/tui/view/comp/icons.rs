@@ -1,4 +1,4 @@
-use crate::store::{EndState, RunningState};
+use crate::model::{EndState, RunningState};
 use crate::tui::style;
 use ratatui::text::Span;
 

@@ -1,5 +1,5 @@
-use crate::store::rt_model::ErrBmc;
-use crate::store::{Id, ModelManager};
+use crate::model::ErrBmc;
+use crate::model::{Id, ModelManager};
 use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;

@@ -4,7 +4,7 @@ use crate::hub::get_hub;
 use crate::run::pricing::price_it;
 use crate::run::{AiResponse, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::store::Id;
+use crate::model::Id;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
 use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse};

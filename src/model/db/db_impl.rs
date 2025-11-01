@@ -1,5 +1,5 @@
-use crate::store::Result;
-use crate::store::db::rt_db_setup::recreate_db;
+use crate::model::Result;
+use crate::model::db::rt_db_setup::recreate_db;
 use modql::SqliteFromRow;
 use rusqlite::types::FromSql;
 use rusqlite::{Connection, OptionalExtension, Params};

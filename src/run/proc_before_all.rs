@@ -4,8 +4,8 @@ use crate::agent::{Agent, AgentOptions};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue};
-use crate::store::rt_model::{LogKind, RuntimeCtx};
-use crate::store::{Id, Stage};
+use crate::model::{LogKind, RuntimeCtx};
+use crate::model::{Id, Stage};
 use crate::{Error, Result};
 use serde_json::Value;
 

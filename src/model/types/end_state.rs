@@ -1,4 +1,4 @@
-use crate::store::ScalarEnumType;
+use crate::model::ScalarEnumType;
 use macro_rules_attribute as mra;
 
 #[mra::derive(Debug, ScalarEnumType!)]

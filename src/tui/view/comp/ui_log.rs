@@ -1,5 +1,5 @@
-use crate::store::Stage;
-use crate::store::rt_model::{Log, LogKind};
+use crate::model::Stage;
+use crate::model::{Log, LogKind};
 use crate::tui::style;
 use crate::tui::view::comp;
 use ratatui::text::Line;

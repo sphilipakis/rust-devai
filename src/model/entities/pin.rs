@@ -1,7 +1,7 @@
 // region:    --- Modules
 
-use crate::store::base::{self, DbBmc};
-use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use crate::model::base::{self, DbBmc};
+use crate::model::{Id, ModelManager, Result, UnixTimeUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};

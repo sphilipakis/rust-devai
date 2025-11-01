@@ -1,6 +1,6 @@
-use crate::store::ScalarEnumType;
-use crate::store::base::{self, DbBmc};
-use crate::store::{Id, ModelManager, Result, UnixTimeUs};
+use crate::model::ScalarEnumType;
+use crate::model::base::{self, DbBmc};
+use crate::model::{Id, ModelManager, Result, UnixTimeUs};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -109,7 +109,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::store::rt_model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
+	use crate::model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
 	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
 

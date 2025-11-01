@@ -2,7 +2,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::store::rt_model::{LogBmc, LogKind, RuntimeCtx};
+use crate::model::{LogBmc, LogKind, RuntimeCtx};
 
 impl Runtime {
 	pub fn rec_log_with_rt_ctx(&self, rt_ctx: &RuntimeCtx, log_kind: LogKind, msg: &str) -> Result<()> {

@@ -3,7 +3,7 @@ use crate::event::CancelTrx;
 use crate::exec::ExecutorTx;
 use crate::runtime::Session;
 use crate::runtime::queue::RunTx;
-use crate::store::ModelManager;
+use crate::model::ModelManager;
 use genai::Client;
 
 #[derive(Debug, Clone)]

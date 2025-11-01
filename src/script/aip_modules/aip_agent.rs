@@ -19,7 +19,7 @@ use crate::run::RunAgentResponse;
 use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::store::rt_model::RuntimeCtx;
+use crate::model::RuntimeCtx;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;

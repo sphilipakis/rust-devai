@@ -1,4 +1,4 @@
-use crate::store::rt_model::ErrRec;
+use crate::model::ErrRec;
 use crate::tui::core::AppState;
 
 /// SysState & Metrics

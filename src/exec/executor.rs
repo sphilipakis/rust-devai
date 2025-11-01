@@ -21,8 +21,8 @@ use crate::exec::{
 use crate::hub::{HubEvent, get_hub};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
-use crate::store::OnceModelManager;
-use crate::store::rt_model::{ErrBmc, ErrForCreate};
+use crate::model::OnceModelManager;
+use crate::model::{ErrBmc, ErrForCreate};
 use crate::{Error, Result};
 use flume::{Receiver, Sender};
 use simple_fs::SPath;

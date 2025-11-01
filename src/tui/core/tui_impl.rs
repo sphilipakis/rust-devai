@@ -6,7 +6,7 @@ use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
-use crate::store::ModelManager;
+use crate::model::ModelManager;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use derive_more::{Deref, From};

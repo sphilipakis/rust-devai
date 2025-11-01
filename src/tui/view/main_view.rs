@@ -1,5 +1,5 @@
 use super::{ActionView, RunsView, SumView};
-use crate::store::rt_model::ErrRec;
+use crate::model::ErrRec;
 use crate::tui::AppState;
 use crate::tui::view::{PopupOverlay, RunMainView, style};
 use ratatui::buffer::Buffer;

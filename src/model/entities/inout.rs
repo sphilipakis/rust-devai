@@ -1,6 +1,6 @@
-use crate::store::ScalarEnumType;
-use crate::store::base::{self, DbBmc};
-use crate::store::{ContentTyp, Id, ModelManager, Result, UnixTimeUs};
+use crate::model::ScalarEnumType;
+use crate::model::base::{self, DbBmc};
+use crate::model::{ContentTyp, Id, ModelManager, Result, UnixTimeUs};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};

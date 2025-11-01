@@ -19,7 +19,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::store::rt_model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
+use crate::model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
 use crate::types::uc;
 use mlua::{FromLua, Lua, Table, Value, Variadic};
 use serde_json;
@@ -180,7 +180,7 @@ mod tests {
 
 	use crate::_test_support::run_reflective_agent_with_runtime;
 	use crate::runtime::Runtime;
-	use crate::store::rt_model::PinBmc;
+	use crate::model::PinBmc;
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn test_lua_run_pin_simple() -> Result<()> {

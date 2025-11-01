@@ -1,5 +1,5 @@
-use crate::store::Result;
-use crate::store::db::Db;
+use crate::model::Result;
+use crate::model::db::Db;
 
 #[derive(Debug, Clone)]
 pub struct ModelManager {
@@ -70,7 +70,7 @@ impl OnceModelManager {
 
 impl ModelManager {
 	pub async fn mock_rt_seed(&self) -> Result<()> {
-		use crate::store::rt_model::{RunBmc, RunForCreate};
+		use crate::model::{RunBmc, RunForCreate};
 
 		for i in 0..10 {
 			let run_c = RunForCreate {

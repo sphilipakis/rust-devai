@@ -1,8 +1,8 @@
 use crate::Result;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::store::rt_model::{LogBmc, LogForCreate, LogKind};
-use crate::store::{Id, ModelManager, RunStep, Stage};
+use crate::model::{LogBmc, LogForCreate, LogKind};
+use crate::model::{Id, ModelManager, RunStep, Stage};
 use derive_more::From;
 
 #[derive(Debug, From)]

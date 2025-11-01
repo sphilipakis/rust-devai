@@ -2,11 +2,11 @@ use crate::Result;
 use crate::agent::Agent;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::store::base::DbBmc;
-use crate::store::rt_model::{
+use crate::model::base::DbBmc;
+use crate::model::{
 	LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate, TaskBmc, TaskForCreate, TaskForUpdate,
 };
-use crate::store::{EndState, Id, ModelManager, Stage, TypedContent};
+use crate::model::{EndState, Id, ModelManager, Stage, TypedContent};
 use derive_more::From;
 use genai::ModelIden;
 use serde_json::Value;

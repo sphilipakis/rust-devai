@@ -112,7 +112,7 @@ pub enum Error {
 
 	// -- Store
 	#[from]
-	Store(crate::store::Error),
+	Store(crate::model::Error),
 
 	// -- TokioSync
 	TokioTryCurrent(TryCurrentError),

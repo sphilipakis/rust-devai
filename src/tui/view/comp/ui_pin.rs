@@ -1,4 +1,4 @@
-use crate::store::rt_model::Pin;
+use crate::model::Pin;
 use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;

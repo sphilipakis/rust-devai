@@ -1,4 +1,4 @@
-use crate::store::Result;
+use crate::model::Result;
 use rusqlite::Connection;
 
 // Some notes:

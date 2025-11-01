@@ -4,8 +4,8 @@ use super::event::{ActionEvent, AppEvent, DataEvent};
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
-use crate::store::ModelManager;
-use crate::store::rt_model::{LogBmc, LogForCreate, LogKind};
+use crate::model::ModelManager;
+use crate::model::{LogBmc, LogForCreate, LogKind};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
 

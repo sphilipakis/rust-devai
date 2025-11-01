@@ -1,4 +1,4 @@
-use crate::store::rt_model::{ErrBmc, RunBmc, TaskBmc};
+use crate::model::{ErrBmc, RunBmc, TaskBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::ActionEvent;

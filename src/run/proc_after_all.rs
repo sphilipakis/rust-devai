@@ -4,8 +4,8 @@ use crate::Result;
 use crate::agent::Agent;
 use crate::run::Literals;
 use crate::runtime::Runtime;
-use crate::store::rt_model::RuntimeCtx;
-use crate::store::{Id, Stage};
+use crate::model::RuntimeCtx;
+use crate::model::{Id, Stage};
 use serde_json::Value;
 
 // region:    --- Types

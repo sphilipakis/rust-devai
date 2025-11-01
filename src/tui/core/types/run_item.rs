@@ -1,5 +1,5 @@
-use crate::store::rt_model::Run;
-use crate::store::{Id, RunningState};
+use crate::model::Run;
+use crate::model::{Id, RunningState};
 
 #[derive(Debug, Clone)]
 pub struct RunItem {

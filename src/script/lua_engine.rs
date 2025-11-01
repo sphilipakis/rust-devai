@@ -6,7 +6,7 @@ use crate::script::aip_modules::{aip_lua, aip_pin};
 use crate::script::lua_json::serde_value_to_lua_value;
 use crate::script::lua_null::NullSentinel;
 use crate::script::support::process_lua_eval_result;
-use crate::store::rt_model::{LogKind, RuntimeCtx};
+use crate::model::{LogKind, RuntimeCtx};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {

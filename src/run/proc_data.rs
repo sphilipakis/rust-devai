@@ -3,8 +3,8 @@ use crate::agent::{Agent, AgentOptions};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
-use crate::store::rt_model::RuntimeCtx;
-use crate::store::{Id, Stage};
+use crate::model::RuntimeCtx;
+use crate::model::{Id, Stage};
 use genai::ModelName;
 use serde_json::Value;
 

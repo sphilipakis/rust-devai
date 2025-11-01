@@ -1,4 +1,4 @@
-use crate::store::EndState;
+use crate::model::EndState;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RunningState {

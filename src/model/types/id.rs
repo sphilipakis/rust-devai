@@ -1,5 +1,5 @@
-use crate::store::ScalarStructType;
-use crate::store::{Error, Result};
+use crate::model::ScalarStructType;
+use crate::model::{Error, Result};
 use macro_rules_attribute as mra;
 
 // Simple wrapper for SQLite Ids
