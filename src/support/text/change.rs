@@ -43,23 +43,64 @@ pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<Str
 	let requests = process_change_requests(&changes_str)?;
 	let mut current_content = original_content;
 
+	fn replace_first_remove_line(mut content: String, search_pattern: &str) -> (String, bool) {
+		if let Some(pos) = content.find(search_pattern) {
+			let mut start = pos;
+			let mut end = pos + search_pattern.len();
+			let len = content.len();
+
+			if end < len {
+				let tail = &content[end..];
+				if tail.starts_with("\r\n") {
+					end += 2;
+				} else if tail.starts_with('\n') {
+					end += 1;
+				}
+			} else if start > 0 {
+				let head = &content[..start];
+				if head.ends_with("\r\n") {
+					start -= 2;
+				} else if head.ends_with('\n') {
+					start -= 1;
+				}
+			}
+
+			if start < end {
+				content.replace_range(start..end, "");
+				return (content, true);
+			}
+		}
+
+		(content, false)
+	}
+
 	for req in requests {
 		// Extract patterns using indices. process_change_requests ensures valid indices for changes_str.
 		let search_pattern = &changes_str[req.search_start_idx..req.search_end_idx];
 		let replace_pattern = &changes_str[req.replace_start_idx..req.replace_end_idx];
 
-		// first do the optimistic approach first
-		let (content, changed) = match text::replace_first(current_content, search_pattern, replace_pattern) {
-			// if the content was found and replaced, all good
-			(content, true) => (content, true),
-			// if it was not replaced, then, let's try other technics
-			(content, false) => {
-				// -- Check if this is an crlf issue
-				if content.contains("\r\n") {
-					let content = content.replace("\r\n", "\n");
-					text::replace_first(content, search_pattern, replace_pattern)
-				} else {
-					(content, false)
+		let (content, changed) = if replace_pattern.is_empty() && !search_pattern.is_empty() {
+			let (content, changed) = replace_first_remove_line(current_content, search_pattern);
+			if !changed && content.contains("\r\n") {
+				let content = content.replace("\r\n", "\n");
+				replace_first_remove_line(content, search_pattern)
+			} else {
+				(content, changed)
+			}
+		} else {
+			// first do the optimistic approach first
+			match text::replace_first(current_content, search_pattern, replace_pattern) {
+				// if the content was found and replaced, all good
+				(content, true) => (content, true),
+				// if it was not replaced, then, let's try other technics
+				(content, false) => {
+					// -- Check if this is an crlf issue
+					if content.contains("\r\n") {
+						let content = content.replace("\r\n", "\n");
+						text::replace_first(content, search_pattern, replace_pattern)
+					} else {
+						(content, false)
+					}
 				}
 			}
 		};

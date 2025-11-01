@@ -300,6 +300,20 @@ fn test_support_text_apply_change_empty_replace_pattern() -> Result {
 }
 
 #[test]
+fn test_support_text_apply_change_empty_replace_pattern_removes_line_and_newline() -> Result {
+	// -- Setup & Fixtures
+	let original = "line one\nline two\nline three\n";
+	let changes = format_change_block("line two", ""); // Empty replace pattern
+
+	// -- Exec
+	let result = apply_changes(original, changes)?;
+
+	// -- Check
+	assert_eq!(result, "line one\nline three\n");
+	Ok(())
+}
+
+#[test]
 fn test_support_text_apply_change_malformed_missing_separator() -> Result {
 	// -- Setup & Fixtures
 	let original = "Hello world";
