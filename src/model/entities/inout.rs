@@ -1,6 +1,6 @@
 use crate::model::ScalarEnumType;
 use crate::model::base::{self, DbBmc};
-use crate::model::{ContentTyp, Id, ModelManager, Result, UnixTimeUs};
+use crate::model::{ContentTyp, EpochUs, Id, ModelManager, Result};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -14,8 +14,8 @@ pub struct Inout {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	pub task_uid: Uuid,
 
@@ -38,8 +38,8 @@ pub struct InoutOnlyDisplay {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	pub task_uid: Uuid,
 

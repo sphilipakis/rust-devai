@@ -1,7 +1,7 @@
 // region:    --- Modules
 
 use crate::model::base::{self, DbBmc};
-use crate::model::{Id, ModelManager, Result, UnixTimeUs};
+use crate::model::{EpochUs, Id, ModelManager, Result};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
@@ -16,8 +16,8 @@ pub struct Pin {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	pub run_id: Id,
 	pub task_id: Option<Id>,

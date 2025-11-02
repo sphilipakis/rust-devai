@@ -1,6 +1,6 @@
 use crate::model::base::{self, DbBmc};
+use crate::model::{EndState, EpochUs, Id, ModelManager, Result, RunningState, Stage, TypedContent};
 use crate::model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
-use crate::model::{EndState, Id, ModelManager, Result, RunningState, Stage, TypedContent, UnixTimeUs};
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -14,8 +14,8 @@ pub struct Task {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	// Foreign key
 	pub run_id: Id,
@@ -23,16 +23,16 @@ pub struct Task {
 	pub idx: Option<i64>,
 
 	// Step - Timestamps
-	pub start: Option<UnixTimeUs>,
-	pub data_start: Option<UnixTimeUs>,
-	pub data_end: Option<UnixTimeUs>,
-	pub ai_start: Option<UnixTimeUs>,
-	pub ai_gen_start: Option<UnixTimeUs>,
-	pub ai_gen_end: Option<UnixTimeUs>,
-	pub ai_end: Option<UnixTimeUs>,
-	pub output_start: Option<UnixTimeUs>,
-	pub output_end: Option<UnixTimeUs>,
-	pub end: Option<UnixTimeUs>,
+	pub start: Option<EpochUs>,
+	pub data_start: Option<EpochUs>,
+	pub data_end: Option<EpochUs>,
+	pub ai_start: Option<EpochUs>,
+	pub ai_gen_start: Option<EpochUs>,
+	pub ai_gen_end: Option<EpochUs>,
+	pub ai_end: Option<EpochUs>,
+	pub output_start: Option<EpochUs>,
+	pub output_end: Option<EpochUs>,
+	pub end: Option<EpochUs>,
 
 	// -- End state & Data
 	pub end_state: Option<EndState>,
@@ -97,16 +97,16 @@ impl TaskForCreate {
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct TaskForUpdate {
 	// -- Step Timestamps
-	pub start: Option<UnixTimeUs>,
-	pub data_start: Option<UnixTimeUs>,
-	pub data_end: Option<UnixTimeUs>,
-	pub ai_start: Option<UnixTimeUs>,
-	pub ai_gen_start: Option<UnixTimeUs>,
-	pub ai_gen_end: Option<UnixTimeUs>,
-	pub ai_end: Option<UnixTimeUs>,
-	pub output_start: Option<UnixTimeUs>,
-	pub output_end: Option<UnixTimeUs>,
-	pub end: Option<UnixTimeUs>,
+	pub start: Option<EpochUs>,
+	pub data_start: Option<EpochUs>,
+	pub data_end: Option<EpochUs>,
+	pub ai_start: Option<EpochUs>,
+	pub ai_gen_start: Option<EpochUs>,
+	pub ai_gen_end: Option<EpochUs>,
+	pub ai_end: Option<EpochUs>,
+	pub output_start: Option<EpochUs>,
+	pub output_end: Option<EpochUs>,
+	pub end: Option<EpochUs>,
 
 	// -- End state & Data
 	pub end_state: Option<EndState>,

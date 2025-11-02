@@ -1,7 +1,7 @@
 use crate::model::RuntimeCtx;
 use crate::model::ScalarEnumType;
 use crate::model::base::{self, DbBmc};
-use crate::model::{Id, ModelManager, Result, RunStep, Stage, UnixTimeUs};
+use crate::model::{Id, ModelManager, Result, RunStep, Stage, EpochUs};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -15,8 +15,8 @@ pub struct Log {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	// Foreign keys
 	pub run_id: Id,

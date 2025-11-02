@@ -3,27 +3,27 @@ use crate::{Error, Result};
 use macro_rules_attribute as mra;
 
 #[mra::derive(Debug, ScalarStructType!)]
-pub struct UnixTimeUs(i64);
+pub struct EpochUs(i64);
 
-impl UnixTimeUs {
+impl EpochUs {
 	pub fn as_i64(&self) -> i64 {
 		self.0
 	}
 }
 
 // from &i64
-impl From<&i64> for UnixTimeUs {
-	fn from(val: &i64) -> UnixTimeUs {
-		UnixTimeUs(*val)
+impl From<&i64> for EpochUs {
+	fn from(val: &i64) -> EpochUs {
+		EpochUs(*val)
 	}
 }
 
-impl TryFrom<String> for UnixTimeUs {
+impl TryFrom<String> for EpochUs {
 	type Error = Error;
-	fn try_from(val: String) -> Result<UnixTimeUs> {
+	fn try_from(val: String) -> Result<EpochUs> {
 		let id = val
 			.parse()
 			.map_err(|err| format!("id should be a number was '{val}'. Cause: {err}"))?;
-		Ok(UnixTimeUs(id))
+		Ok(EpochUs(id))
 	}
 }

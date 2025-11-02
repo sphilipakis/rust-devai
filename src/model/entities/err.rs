@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{ContentTyp, Id, ModelManager, Result, Stage, UnixTimeUs};
+use crate::model::{ContentTyp, Id, ModelManager, Result, Stage, EpochUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
 use uuid::Uuid;
@@ -11,8 +11,8 @@ pub struct ErrRec {
 	pub id: Id,
 	pub uid: Uuid,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	pub stage: Option<Stage>,
 

@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, Id, ModelManager, Result, RunningState, Stage, UnixTimeUs};
+use crate::model::{EndState, Id, ModelManager, Result, RunningState, Stage, EpochUs};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -14,26 +14,26 @@ pub struct Run {
 
 	pub parent_id: Option<Id>,
 
-	pub ctime: UnixTimeUs,
-	pub mtime: UnixTimeUs,
+	pub ctime: EpochUs,
+	pub mtime: EpochUs,
 
 	pub has_task_stages: Option<bool>,
 	pub has_prompt_parts: Option<bool>,
 
-	pub start: Option<UnixTimeUs>,
-	pub end: Option<UnixTimeUs>,
+	pub start: Option<EpochUs>,
+	pub end: Option<EpochUs>,
 
 	// Before All start/end
-	pub ba_start: Option<UnixTimeUs>,
-	pub ba_end: Option<UnixTimeUs>,
+	pub ba_start: Option<EpochUs>,
+	pub ba_end: Option<EpochUs>,
 
 	// All tasks start/end
-	pub tasks_start: Option<UnixTimeUs>,
-	pub tasks_end: Option<UnixTimeUs>,
+	pub tasks_start: Option<EpochUs>,
+	pub tasks_end: Option<EpochUs>,
 
 	// After All start/end
-	pub aa_start: Option<UnixTimeUs>,
-	pub aa_end: Option<UnixTimeUs>,
+	pub aa_start: Option<EpochUs>,
+	pub aa_end: Option<EpochUs>,
 
 	// -- End state & Data
 	pub end_state: Option<EndState>,
@@ -83,23 +83,23 @@ pub struct RunForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct RunForUpdate {
-	pub start: Option<UnixTimeUs>,
-	pub end: Option<UnixTimeUs>,
+	pub start: Option<EpochUs>,
+	pub end: Option<EpochUs>,
 
 	// States
 	pub has_prompt: Option<bool>,
 
 	// Before All start/end
-	pub ba_start: Option<UnixTimeUs>,
-	pub ba_end: Option<UnixTimeUs>,
+	pub ba_start: Option<EpochUs>,
+	pub ba_end: Option<EpochUs>,
 
 	// All tasks start/end
-	pub tasks_start: Option<UnixTimeUs>,
-	pub tasks_end: Option<UnixTimeUs>,
+	pub tasks_start: Option<EpochUs>,
+	pub tasks_end: Option<EpochUs>,
 
 	// After All start/end
-	pub aa_start: Option<UnixTimeUs>,
-	pub aa_end: Option<UnixTimeUs>,
+	pub aa_start: Option<EpochUs>,
+	pub aa_end: Option<EpochUs>,
 
 	// -- End state & Data
 	pub end_state: Option<EndState>,
