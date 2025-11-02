@@ -2,7 +2,7 @@ use macro_rules_attribute::derive_alias;
 
 derive_alias! {
 	// Scalar Struct type for DB Primitive type wrapper
-	#[derive(ScalarStructType!)] = #[derive(
+	#[derive(ScalarStruct!)] = #[derive(
 		crate::Cmp!,
 		Clone,
 		Copy,
@@ -15,7 +15,7 @@ derive_alias! {
 		modql::SqliteToValue,
 	)];
 
-	#[derive(ScalarEnumType!)] = #[derive(
+	#[derive(ScalarEnum!)] = #[derive(
 		crate::Cmp!,
 		Clone,
 		Copy,

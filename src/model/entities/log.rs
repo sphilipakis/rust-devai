@@ -1,7 +1,7 @@
 use crate::model::RuntimeCtx;
-use crate::model::ScalarEnumType;
+use crate::model::ScalarEnum;
 use crate::model::base::{self, DbBmc};
-use crate::model::{Id, ModelManager, Result, RunStep, Stage, EpochUs};
+use crate::model::{EpochUs, Id, ModelManager, Result, RunStep, Stage};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -31,7 +31,7 @@ pub struct Log {
 	pub message: Option<String>,
 }
 
-#[mra::derive(Debug, ScalarEnumType!)]
+#[mra::derive(Debug, ScalarEnum!)]
 pub enum LogKind {
 	RunStep,
 	SysInfo,

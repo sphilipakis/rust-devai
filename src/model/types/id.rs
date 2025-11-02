@@ -1,9 +1,9 @@
-use crate::model::ScalarStructType;
+use crate::model::ScalarStruct;
 use crate::model::{Error, Result};
 use macro_rules_attribute as mra;
 
 // Simple wrapper for SQLite Ids
-#[mra::derive(Debug, ScalarStructType!)]
+#[mra::derive(Debug, ScalarStruct!)]
 pub struct Id(i64);
 
 impl Id {

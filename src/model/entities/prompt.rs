@@ -1,4 +1,4 @@
-use crate::model::ScalarEnumType;
+use crate::model::ScalarEnum;
 use crate::model::base::{self, DbBmc};
 use crate::model::{EpochUs, Id, ModelManager, Result};
 use macro_rules_attribute as mra;
@@ -28,7 +28,7 @@ pub struct Prompt {
 	pub actions: Option<String>, // json
 }
 
-#[mra::derive(Debug, ScalarEnumType!)]
+#[mra::derive(Debug, ScalarEnum!)]
 pub enum PromptKind {
 	Sys,
 	Agent,

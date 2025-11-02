@@ -1,8 +1,8 @@
-use crate::model::ScalarStructType;
+use crate::model::ScalarStruct;
 use crate::{Error, Result};
 use macro_rules_attribute as mra;
 
-#[mra::derive(Debug, ScalarStructType!)]
+#[mra::derive(Debug, ScalarStruct!)]
 pub struct EpochUs(i64);
 
 impl EpochUs {

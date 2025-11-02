@@ -1,4 +1,4 @@
-use crate::model::ScalarEnumType;
+use crate::model::ScalarEnum;
 use crate::support::text::truncate;
 use macro_rules_attribute as mra;
 use serde_json::Value;
@@ -16,7 +16,7 @@ pub struct TypedContent {
 	pub display: Option<String>,
 }
 
-#[mra::derive(Debug, ScalarEnumType!)]
+#[mra::derive(Debug, ScalarEnum!)]
 pub enum ContentTyp {
 	Json,
 	Text,

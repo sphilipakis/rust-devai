@@ -9,5 +9,4 @@ derive_alias! {
 
 	// For enum as str
 	#[derive(EnumAsStr!)] = #[derive(strum::IntoStaticStr, strum::AsRefStr)];
-
 }

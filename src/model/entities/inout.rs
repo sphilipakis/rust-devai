@@ -1,4 +1,4 @@
-use crate::model::ScalarEnumType;
+use crate::model::ScalarEnum;
 use crate::model::base::{self, DbBmc};
 use crate::model::{ContentTyp, EpochUs, Id, ModelManager, Result};
 use macro_rules_attribute as mra;
@@ -27,7 +27,7 @@ pub struct Inout {
 	pub display: Option<String>,
 }
 
-#[mra::derive(Debug, ScalarEnumType!)]
+#[mra::derive(Debug, ScalarEnum!)]
 pub enum InoutKind {
 	In,
 	Out,
