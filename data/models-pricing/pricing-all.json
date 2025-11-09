@@ -131,6 +131,46 @@
         "input": {
           "cache_write": null,
           "cached": null,
+          "normal": 0.56
+        },
+        "name": "deepseek-v3p1-terminus",
+        "output": 1.68,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.55
+        },
+        "name": "glm-4p6",
+        "output": 2.19,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "kimi-k2-instruct",
+        "output": 2.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.56
+        },
+        "name": "deepseek-v3p1",
+        "output": 1.68,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
           "normal": 0.15
         },
         "name": "gpt-oss-120b",
@@ -153,7 +193,7 @@
           "cached": null,
           "normal": 0.22
         },
-        "name": "qwen3-235b-a22b-thinking-2507",
+        "name": "qwen3-235b-a22b-thinking",
         "output": 0.88,
         "recent": true
       },
@@ -173,38 +213,8 @@
           "cached": null,
           "normal": 0.22
         },
-        "name": "qwen3-235b-a22b-instruct-2507",
+        "name": "qwen3-235b-a22b-instruct",
         "output": 0.88,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.6
-        },
-        "name": "kimi-k2-instruct",
-        "output": 2.5,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.22
-        },
-        "name": "glm-4p5-air",
-        "output": 0.88,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "qwen3-coder-30b-a3b-instruct",
-        "output": 0.6,
         "recent": true
       },
       {
@@ -221,10 +231,10 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 3.0
+          "normal": 1.35
         },
-        "name": "deepseek-r1-0528",
-        "output": 8.0,
+        "name": "deepseek-r1",
+        "output": 5.4,
         "recent": false
       },
       {
@@ -236,56 +246,6 @@
         "name": "qwen3-235b-a22b",
         "output": 0.88,
         "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "qwen3-30b-a3b",
-        "output": 0.6,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.22
-        },
-        "name": "llama4-maverick-instruct-basic",
-        "output": 0.88,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "llama4-scout-instruct-basic",
-        "output": 0.6,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 3.0
-        },
-        "name": "deepseek-r1",
-        "output": 8.0,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 3.0
-        },
-        "name": "llama-v3p1-405b-instruct",
-        "output": 3.0,
-        "recent": false
       },
       {
         "input": {
@@ -313,69 +273,9 @@
           "cached": null,
           "normal": 0.9
         },
-        "name": "deepseek-v3-0324",
-        "output": 0.9,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.2
-        },
-        "name": "llama-v3p1-8b-instruct",
-        "output": 0.2,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.9
-        },
         "name": "llama-v3p3-70b-instruct",
         "output": 0.9,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.1
-        },
-        "name": "qwen3-30b-a3b-thinking-2507",
-        "output": 0.1,
         "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.5
-        },
-        "name": "qwen3-30b-a3b-instruct-2507",
-        "output": 0.5,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.55
-        },
-        "name": "deepseek-r1-basic",
-        "output": 2.19,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.9
-        },
-        "name": "llama-v3p1-70b-instruct",
-        "output": 0.9,
-        "recent": false
       },
       {
         "input": {
@@ -383,9 +283,89 @@
           "cached": null,
           "normal": 1.2
         },
-        "name": "mixtral-8x22b-instruct",
+        "name": "kimi-k2-thinking",
+        "output": 1.2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.3
+        },
+        "name": "minimax-m2",
         "output": 1.2,
         "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "qwen3-vl-30b-a3b-thinking",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "qwen3-vl-30b-a3b-instruct",
+        "output": 0.6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "qwen3-reranker-8b",
+        "output": 0.2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "qwen3-vl-235b-a22b-thinking",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.22
+        },
+        "name": "qwen3-vl-235b-a22b-instruct",
+        "output": 0.88,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.1
+        },
+        "name": "qwen3-embedding-8b",
+        "output": 0.1,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.2
+        },
+        "name": "qwen3-8b",
+        "output": 0.2,
+        "recent": true
       }
     ]
   },
@@ -394,56 +374,62 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.31,
+          "cached": 0.125,
           "normal": 1.25
         },
         "name": "gemini-2.5-pro",
-        "output": 10
+        "output": 10,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.31,
+          "cached": 0.125,
           "normal": 1.25
         },
         "name": "gemini-pro-latest",
-        "output": 10
+        "output": 10,
+        "recent": true
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.075,
+          "cached": 0.03,
           "normal": 0.3
         },
         "name": "gemini-2.5-flash",
-        "output": 2.5
+        "output": 2.5,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.075,
+          "cached": 0.03,
           "normal": 0.3
         },
         "name": "gemini-flash-latest",
-        "output": 2.5
+        "output": 2.5,
+        "recent": true
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.025,
+          "cached": 0.01,
           "normal": 0.1
         },
         "name": "gemini-2.5-flash-lite",
-        "output": 0.4
+        "output": 0.4,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.025,
+          "cached": 0.01,
           "normal": 0.1
         },
         "name": "gemini-flash-lite-latest",
-        "output": 0.4
+        "output": 0.4,
+        "recent": true
       },
       {
         "input": {
@@ -452,7 +438,8 @@
           "normal": 0.1
         },
         "name": "gemini-2.0-flash",
-        "output": 0.4
+        "output": 0.4,
+        "recent": false
       },
       {
         "input": {
@@ -461,34 +448,38 @@
           "normal": 0.075
         },
         "name": "gemini-2.0-flash-lite",
-        "output": 0.3
+        "output": 0.3,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.01875,
-          "normal": 0.075
+          "cached": null,
+          "normal": 0.15
         },
-        "name": "gemini-1.5-flash",
-        "output": 0.3
+        "name": "gemini-embedding-001",
+        "output": 0,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.0375
+          "cached": null,
+          "normal": 0.3
         },
-        "name": "gemini-1.5-flash-8b",
-        "output": 0.15
+        "name": "gemini-robotics-er-1.5-preview",
+        "output": 2.5,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.3125,
+          "cached": null,
           "normal": 1.25
         },
-        "name": "gemini-1.5-pro",
-        "output": 5
+        "name": "gemini-2.5-computer-use-preview",
+        "output": 10,
+        "recent": false
       }
     ]
   },

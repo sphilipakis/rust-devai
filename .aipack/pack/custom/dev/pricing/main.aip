@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "gpt-5-mini"
+model = "flash"
 input_concurrency = 6
 ```
 
@@ -17,6 +17,7 @@ local base_dir = p_utils.base_dir
 -- GROQ      - https://console.groq.com/docs/models pricing: https://groq.com/pricing/
 -- OPENAI    - https://platform.openai.com/docs/pricing/
 -- ANTHROPIC - https://docs.anthropic.com/en/docs/about-claude/models/overview
+-- GEMINI    - https://ai.google.dev/pricing
 -- XAI       - https://console.x.ai/team/5577cfb2-dfde-4893-9817-4eb4de1d4098/models
 -- FIREWORKS - Login with filter https://app.fireworks.ai/models?filter=LLM&serverless=true, 
 --             Static https://fireworks.ai/pricing#serverless-pricing
@@ -26,9 +27,9 @@ local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
    {name = "openai",    do_json = false,  url = ""},
    
-   {name = "gemini",    do_json = false,  url = "https://ai.google.dev/pricing"},
+   {name = "gemini",    do_json = true,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = true,  url = ""},
+   {name = "anthropic", do_json = false,  url = ""},
 
    {name = "xai",       do_json = false,  url = ""}, 
 
@@ -112,6 +113,7 @@ From this content for the {{data.provider}}:
     - For the Fireworks models, the model name is after the `/models/fireworks/`. So, `/models/fireworks/qwen3-coder-480b-a35b-instruct` the model name will be `qwen3-coder-480b-a35b-instruct`
     - For the Fireworks models, when only one price, it means same price for input and output. 
     - For the fireworks models, have only the gpt-oss, qwen3, Kimi, lama 4, and gml 4 are to be flagged recent, the rest flagged recent = false. 
+    - For the fireworks models, when end with date like versioning like `qwen3-235b-a22b-thinking-2507` remove the versioning, so it becomes `qwen3-235b-a22b-thinking`
 - For Together Models:
     - For together models only add models that have pricing. 
     - For together models, when one price, means it is the same for input / output
@@ -125,10 +127,13 @@ From this content for the {{data.provider}}:
     - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
     - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
     - For Anthropic models (Claude), only sonnet/haiku 4.5 and opus 4.1 are recent: true, all others are recent: false
-- For gemini models, there is no `caching write`, so cache value is for the `.cached` property. 
-- For Gemini models, do not add the audio or tts model.
-- but for gemini model, keep the `.` in the name.
-- For Gemini model, `gemini-2.5-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
+- For gemini models,
+    - For gemini models there is no `caching write`, so cache value is for the `.cached` property. 
+    - For Gemini models, do not add the audio or tts model.
+    - For gemini models, keep the `.` in the name.
+    - For Gemini models, `gemini-2.5-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
+    - For Gemini models, for `gemini-2.5-pro` remove the release number after pro like the `-09...` same for other gemini models. Just have the main one. 
+    - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. Then all non `-latest` have `recent: false` and those with `-latest` suffix have `recent: true`
 - For deepseek model, ignore the discound price
 - for OpenAI models
     - Do not add the gpt-image-1
