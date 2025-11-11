@@ -1,3 +1,4 @@
+use crate::types::CsvContent;
 use crate::{Error, Result};
 use csv::ReaderBuilder;
 use simple_fs::SPath;
@@ -9,12 +10,7 @@ pub fn load_csv_headers(path: &SPath) -> Result<Vec<String>> {
 	Ok(headers.iter().map(|s| s.to_string()).collect())
 }
 
-pub struct LoadCsvResponse {
-	pub headers: Vec<String>,
-	pub content: Vec<Vec<String>>,
-}
-
-pub fn load_csv(path: &SPath, with_headers: Option<bool>) -> Result<LoadCsvResponse> {
+pub fn load_csv(path: &SPath, with_headers: Option<bool>) -> Result<CsvContent> {
 	let with_headers = with_headers.unwrap_or(true);
 	let mut rdr = ReaderBuilder::new()
 		.has_headers(with_headers)
@@ -34,7 +30,7 @@ pub fn load_csv(path: &SPath, with_headers: Option<bool>) -> Result<LoadCsvRespo
 		content.push(rec.iter().map(|s| s.to_string()).collect());
 	}
 
-	Ok(LoadCsvResponse { headers, content })
+	Ok(CsvContent { headers, rows: content })
 }
 
 // region:    --- Tests
@@ -75,7 +71,7 @@ mod tests {
 		assert_eq!(res.headers.x_as_strs(), expected_headers);
 
 		let expected_content = vec![vec!["1", "Alice", "alice@example.com"], vec!["2", "Bob", "bob@example.com"]];
-		let content_as_strs: Vec<Vec<&str>> = res.content.iter().map(|row| row.x_as_strs()).collect();
+		let content_as_strs: Vec<Vec<&str>> = res.rows.iter().map(|row| row.x_as_strs()).collect();
 		assert_eq!(content_as_strs, expected_content);
 
 		Ok(())
@@ -97,7 +93,7 @@ mod tests {
 			vec!["1", "Alice", "alice@example.com"],
 			vec!["2", "Bob", "bob@example.com"],
 		];
-		assert_eq!(res.content, expected_content);
+		assert_eq!(res.rows, expected_content);
 
 		Ok(())
 	}

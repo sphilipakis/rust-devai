@@ -14,7 +14,7 @@
 //!
 //! - `aip.csv.parse_row(row: string, options?: CsvOptions): string[]`
 //!
-//! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, content: string[][] }`
+//! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }`
 //!
 //! ### Related Types
 //!
@@ -107,11 +107,11 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 /// ## Lua Documentation
 ///
 /// Parse CSV content, optionally with header detection and comment skipping.
-/// Returns a table with `headers` (or nil) and `content` (string[][]).
+/// Returns a table with `headers` (or nil) and `rows` (string[][]).
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, content: string[][] }
+/// aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }
 /// ```
 fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Result<Value> {
 	let opts = match opts_val {
@@ -139,8 +139,8 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 		res_tbl.set("headers", headers_tbl)?;
 	}
 
-	// content
-	let content_tbl = lua.create_table()?;
+	// rows
+	let rows_tbl = lua.create_table()?;
 	let mut idx = 1usize;
 
 	for rec_res in rdr.records() {
@@ -149,11 +149,11 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 			continue;
 		}
 		let arr = string_record_to_lua_array(lua, &rec)?;
-		content_tbl.set(idx, arr)?;
+		rows_tbl.set(idx, arr)?;
 		idx += 1;
 	}
 
-	res_tbl.set("content", content_tbl)?;
+	res_tbl.set("rows", rows_tbl)?;
 
 	Ok(Value::Table(res_tbl))
 }
@@ -204,10 +204,10 @@ Jane,25
 		assert_eq!(res.x_get_str("/headers/0")?, "name");
 		assert_eq!(res.x_get_str("/headers/1")?, "age");
 
-		assert_eq!(res.x_get_str("/content/0/0")?, "John");
-		assert_eq!(res.x_get_str("/content/0/1")?, "30");
-		assert_eq!(res.x_get_str("/content/1/0")?, "Jane");
-		assert_eq!(res.x_get_str("/content/1/1")?, "25");
+		assert_eq!(res.x_get_str("/rows/0/0")?, "John");
+		assert_eq!(res.x_get_str("/rows/0/1")?, "30");
+		assert_eq!(res.x_get_str("/rows/1/0")?, "Jane");
+		assert_eq!(res.x_get_str("/rows/1/1")?, "25");
 
 		Ok(())
 	}

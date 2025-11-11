@@ -222,7 +222,7 @@ aip.file.load_md_split_first(path: string): {before: string, first: MdSection, a
 
 aip.file.load_csv_headers(path: string): string[]
 
-aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], content: string[][]}
+aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], rows: string[][]}
 
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
@@ -1035,15 +1035,15 @@ Load a CSV file and return its headers and all rows as string arrays.
 
 ```lua
 -- API Signature
-aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], content: string[][]}
+aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], rows: string[][]}
 ```
 
-Loads the CSV file at `path` (relative to workspace), parses it according to the provided options, and returns both headers and content.
+Loads the CSV file at `path` (relative to workspace), parses it according to the provided options, and returns both headers and rows.
 
 #### Arguments
 
 - `path: string`: Path to the CSV file, relative to workspace root.
-- `options?: CsvOptions` (optional): CSV parse options. Only `has_header` is honored by this API (defaults to `true`), which controls whether the first row is treated as headers and excluded from `content`.
+- `options?: CsvOptions` (optional): CSV parse options. Only `has_header` is honored by this API (defaults to `true`), which controls whether the first row is treated as headers and excluded from `rows`.
 
 #### Returns
 
@@ -1051,7 +1051,7 @@ Loads the CSV file at `path` (relative to workspace), parses it according to the
   ```ts
   {
     headers: string[],  // Header row (empty array if has_header is false)
-    content: string[][] // All data rows (excluding headers if has_header is true)
+    rows: string[][] // All data rows (excluding headers if has_header is true)
   }
   ```
 
@@ -1060,7 +1060,7 @@ Loads the CSV file at `path` (relative to workspace), parses it according to the
 ```lua
 local result = aip.file.load_csv("data/example.csv") -- defaults to has_header = true
 print("Headers:", table.concat(result.headers, ", "))
-for _, row in ipairs(result.content) do
+for _, row in ipairs(result.rows) do
   print(table.concat(row, " | "))
 end
 
@@ -2683,7 +2683,7 @@ CSV parsing and processing functions for both individual rows and complete CSV c
 ```lua
 aip.csv.parse_row(row: string, options?: CsvOptions): string[]
 
-aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, content: string[][]}
+aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
 ```
 
 ### aip.csv.parse_row
@@ -2728,7 +2728,7 @@ Parse CSV content with optional header detection and comment skipping.
 
 ```lua
 -- API Signature
-aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, content: string[][]}
+aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
 ```
 
 Parses complete CSV content and returns both headers (if present) and all data rows.
@@ -2744,7 +2744,7 @@ Parses complete CSV content and returns both headers (if present) and all data r
   ```ts
   {
     headers: string[] | nil, // Header row if has_header is true, otherwise nil
-    content: string[][]      // All data rows (excluding headers if has_header is true)
+    rows: string[][]      // All data rows (excluding headers if has_header is true)
   }
   ```
 
@@ -2764,12 +2764,12 @@ local result = aip.csv.parse(csv_content, {
   skip_empty_lines = true
 })
 -- result.headers = {"name", "age", "city"}
--- result.content = { {"John", "30", "New York"}, {"Jane", "25", "Boston"} }
+-- result.rows = { {"John", "30", "New York"}, {"Jane", "25", "Boston"} }
 
 -- Parse without headers
 local result_no_headers = aip.csv.parse("a,b,c\n1,2,3", {has_header = false})
 -- result_no_headers.headers = nil
--- result_no_headers.content = { {"a", "b", "c"}, {"1", "2", "3"} }
+-- result_no_headers.rows = { {"a", "b", "c"}, {"1", "2", "3"} }
 ```
 
 #### Error

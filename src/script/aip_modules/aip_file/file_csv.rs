@@ -110,19 +110,11 @@ pub(super) fn file_load_csv(lua: &Lua, runtime: &Runtime, path: String, options:
 	};
 	let has_header = opts.has_header.unwrap_or(true);
 
-	let resp = crate::support::files::load_csv(&full_path, Some(has_header)).map_err(|e| {
+	let csv_content = crate::support::files::load_csv(&full_path, Some(has_header)).map_err(|e| {
 		Error::from(format!(
 			"aip.file.load_csv - Failed to read csv file '{path}'.\nCause: {e}",
 		))
 	})?;
 
-	let headers_tbl = W(resp.headers).into_lua(lua)?;
-	let content_tbl = W(resp.content).into_lua(lua)?;
-	// let content_tbl = crate::script::support::lua_array_of_string_arrays(lua, resp.content)?;
-
-	let res_tbl = lua.create_table()?;
-	res_tbl.set("headers", headers_tbl)?;
-	res_tbl.set("content", content_tbl)?;
-
-	Ok(Value::Table(res_tbl))
+	csv_content.into_lua(lua)
 }

@@ -1,5 +1,6 @@
 // region:    --- Modules
 
+mod csv_content;
 mod csv_options;
 mod dest_options;
 mod extrude;
@@ -17,6 +18,7 @@ mod tag_elem;
 mod web_options;
 mod web_response;
 
+pub use csv_content::*;
 pub use csv_options::*;
 pub use dest_options::*;
 pub use extrude::*;
