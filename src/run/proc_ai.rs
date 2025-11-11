@@ -1,10 +1,10 @@
 use crate::Result;
 use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
+use crate::model::Id;
 use crate::run::pricing::price_it;
 use crate::run::{AiResponse, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
-use crate::model::Id;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
 use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse};

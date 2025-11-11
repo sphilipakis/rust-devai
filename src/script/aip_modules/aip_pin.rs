@@ -17,9 +17,9 @@
 //! The functions return the numeric database identifier of the created pin.
 
 use crate::Result;
+use crate::model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::model::{PinBmc, PinForRunSave, PinForTaskSave, RuntimeCtx};
 use crate::types::uc;
 use mlua::{FromLua, Lua, Table, Value, Variadic};
 use serde_json;
@@ -179,8 +179,8 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 	use crate::_test_support::run_reflective_agent_with_runtime;
-	use crate::runtime::Runtime;
 	use crate::model::PinBmc;
+	use crate::runtime::Runtime;
 
 	#[tokio::test(flavor = "multi_thread")]
 	async fn test_lua_run_pin_simple() -> Result<()> {

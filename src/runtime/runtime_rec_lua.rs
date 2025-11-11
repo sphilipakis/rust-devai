@@ -1,8 +1,8 @@
 //! Runtime rec method for lua calls
 
 use crate::Result;
-use crate::runtime::Runtime;
 use crate::model::{LogBmc, LogKind, RuntimeCtx};
+use crate::runtime::Runtime;
 
 impl Runtime {
 	pub fn rec_log_with_rt_ctx(&self, rt_ctx: &RuntimeCtx, log_kind: LogKind, msg: &str) -> Result<()> {

@@ -1,5 +1,5 @@
-use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
 use crate::model::{EndState, ModelManager, RunningState};
+use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
 use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
