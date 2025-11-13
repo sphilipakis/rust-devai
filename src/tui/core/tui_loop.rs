@@ -53,12 +53,28 @@ pub fn run_ui_loop(
 
 			// -- Get Next App Event
 			let app_event = {
-				// -- First we try to see if there one already in the que
-				let evt = match app_rx.try_recv() {
-					Ok(r) => r,
-					Err(err) => {
-						error!("UI LOOP ERROR. Cause: {err}");
-						continue;
+				// -- First we try to see if there one already in the queue
+				// and get the last "refresh_event" if they are stacked
+				let mut last_refresh = None;
+
+				let evt = loop {
+					match app_rx.try_recv() {
+						Ok(Some(r)) => {
+							if r.is_refresh_event() {
+								last_refresh = Some(r);
+								continue;
+							} else {
+								break Some(r);
+							}
+						}
+						Ok(None) => {
+							break last_refresh;
+						}
+						Err(err) => {
+							// NOTE: This might become an infinit loop if the error keep repeating (not sure)
+							error!("UI LOOP ERROR. Cause: {err}");
+							continue;
+						}
 					}
 				};
 

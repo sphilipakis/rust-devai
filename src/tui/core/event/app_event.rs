@@ -34,6 +34,12 @@ pub enum AppEvent {
 	Tick(i64),
 }
 
+impl AppEvent {
+	pub fn is_refresh_event(&self) -> bool {
+		matches!(self, AppEvent::DoRedraw | AppEvent::Data(_))
+	}
+}
+
 #[derive(Debug)]
 pub enum ActionEvent {
 	Quit,

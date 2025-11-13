@@ -76,7 +76,6 @@ impl<T> Rx<T> {
 
 	/// Non-blocking receive.
 	/// Returns `Ok(None)` if channel is empty.
-	#[allow(unused)]
 	pub fn try_recv(&self) -> Result<Option<T>> {
 		match self.0.try_recv() {
 			Ok(v) => Ok(Some(v)),
