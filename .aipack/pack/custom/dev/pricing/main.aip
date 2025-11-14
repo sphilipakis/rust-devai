@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "flash"
+model = "gpt-5.1"
 input_concurrency = 6
 ```
 
@@ -25,9 +25,9 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = false,  url = ""},
+   {name = "openai",    do_json = true,  url = ""},
    
-   {name = "gemini",    do_json = true,  url = ""},
+   {name = "gemini",    do_json = false,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
    {name = "anthropic", do_json = false,  url = ""},
 
@@ -61,13 +61,14 @@ if not input.do_json  then
     return aip.flow.skip("" .. input.name .. " marked as do_json = false, so skipping")
 end
 
-if not aip.path.exists(html_path) then 
-    return aip.flow.skip("" .. input.name .. " no html " .. html_path .. " so skipping")
+if aip.path.exists(html_path) then 
+    local slim_html = aip.file.save_html_to_slim(html_path)
+    aip.file.save_html_to_md(slim_html.path, md_path)
 end 
 
-local slim_html = aip.file.save_html_to_slim(html_path)
-aip.file.save_html_to_md(slim_html.path, md_path)
-
+if not aip.path.exists(md_path) then
+    return aip.flow.skip("" .. input.name .. " no md " .. md_path .. " so skipping")
+end
 
 -- local rem_url = input.url
 -- if not aip.path.exists(md_path) then 
@@ -136,7 +137,10 @@ From this content for the {{data.provider}}:
     - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. Then all non `-latest` have `recent: false` and those with `-latest` suffix have `recent: true`
 - For deepseek model, ignore the discound price
 - for OpenAI models
-    - Do not add the gpt-image-1
+    - for OpenAI modelsDo not add the gpt-image-1 or audio models
+    - for OpenAI models Only take the "standards" pricing,
+    - for OpenAI models ignore the legacy models
+    - For OpenAI Models, all models starting with `gpt-5.1...` are `recent: true` everything else is `recent: false`. So any model starting with `gpt-5-` will e `recent: false`
     - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
     - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
     - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 

@@ -641,57 +641,97 @@
     "models": [
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.125,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5.1",
+        "output": 10,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": 0.125,
           "cached": 0.125,
           "normal": 1.25
         },
         "name": "gpt-5",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
-          "cache_write": null,
-          "cached": 0.125,
-          "normal": 1.25
-        },
-        "name": "gpt-5-codex",
-        "output": 10,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
+          "cache_write": 0.025,
           "cached": 0.025,
           "normal": 0.25
         },
         "name": "gpt-5-mini",
         "output": 2,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.005,
           "cached": 0.005,
           "normal": 0.05
         },
         "name": "gpt-5-nano",
         "output": 0.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.125,
           "cached": 0.125,
           "normal": 1.25
         },
-        "name": "gpt-5-chat-latest",
+        "name": "gpt-5.1-chat-latest",
         "output": 10,
         "recent": true
       },
       {
         "input": {
+          "cache_write": 0.125,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5-chat-latest",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": 0.125,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5.1-codex",
+        "output": 10,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": 0.125,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5-codex",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
           "cache_write": null,
+          "cached": null,
+          "normal": 15
+        },
+        "name": "gpt-5-pro",
+        "output": 120,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": 0.5,
           "cached": 0.5,
           "normal": 2
         },
@@ -701,7 +741,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.1,
           "cached": 0.1,
           "normal": 0.4
         },
@@ -711,7 +751,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.025,
           "cached": 0.025,
           "normal": 0.1
         },
@@ -721,7 +761,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 1.25,
           "cached": 1.25,
           "normal": 2.5
         },
@@ -731,27 +771,7 @@
       },
       {
         "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 2.5
-        },
-        "name": "gpt-4o-audio-preview",
-        "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 2.5,
-          "normal": 5
-        },
-        "name": "gpt-4o-realtime-preview",
-        "output": 20,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
+          "cache_write": 0.075,
           "cached": 0.075,
           "normal": 0.15
         },
@@ -761,17 +781,37 @@
       },
       {
         "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
+          "cache_write": 0.4,
+          "cached": 0.4,
+          "normal": 4
         },
-        "name": "gpt-4o-mini-audio-preview",
-        "output": 0.6,
+        "name": "gpt-realtime",
+        "output": 16,
         "recent": false
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.06,
+          "cached": 0.06,
+          "normal": 0.6
+        },
+        "name": "gpt-realtime-mini",
+        "output": 2.4,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": 2.5,
+          "cached": 2.5,
+          "normal": 5
+        },
+        "name": "gpt-4o-realtime-preview",
+        "output": 20,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": 0.3,
           "cached": 0.3,
           "normal": 0.6
         },
@@ -781,7 +821,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 7.5,
           "cached": 7.5,
           "normal": 15
         },
@@ -811,7 +851,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.5,
           "cached": 0.5,
           "normal": 2
         },
@@ -821,7 +861,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 2.5,
           "cached": 2.5,
           "normal": 10
         },
@@ -831,7 +871,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.275,
           "cached": 0.275,
           "normal": 1.1
         },
@@ -841,7 +881,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.5,
           "cached": 0.5,
           "normal": 2
         },
@@ -851,7 +891,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.55,
           "cached": 0.55,
           "normal": 1.1
         },
@@ -861,7 +901,7 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.55,
           "cached": 0.55,
           "normal": 1.1
         },
@@ -871,12 +911,32 @@
       },
       {
         "input": {
-          "cache_write": null,
+          "cache_write": 0.025,
+          "cached": 0.025,
+          "normal": 0.25
+        },
+        "name": "gpt-5.1-codex-mini",
+        "output": 2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": 0.375,
           "cached": 0.375,
           "normal": 1.5
         },
         "name": "codex-mini-latest",
         "output": 6,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": 0.125,
+          "cached": 0.125,
+          "normal": 1.25
+        },
+        "name": "gpt-5-search-api",
+        "output": 10,
         "recent": false
       },
       {

@@ -360,14 +360,14 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-robotics-er-1.5-preview",
+		name: "gemini-robotics-er-1.5",
 		input_cached: None,
 		input_normal: 0.3,
 		output_normal: 2.5,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-2.5-computer-use-preview",
+		name: "gemini-2.5-computer-use",
 		input_cached: None,
 		input_normal: 1.25,
 		output_normal: 10.0,
@@ -497,14 +497,14 @@ const GROQ: Provider = Provider {
 // Define OpenAI pricing
 const OPENAI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
-		name: "gpt-5",
+		name: "gpt-5.1",
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-5-codex",
+		name: "gpt-5",
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
@@ -525,10 +525,38 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gpt-5.1-chat-latest",
+		input_cached: Some(0.125),
+		input_normal: 1.25,
+		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gpt-5-chat-latest",
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-5.1-codex",
+		input_cached: Some(0.125),
+		input_normal: 1.25,
+		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-5-codex",
+		input_cached: Some(0.125),
+		input_normal: 1.25,
+		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-5-pro",
+		input_cached: None,
+		input_normal: 15.0,
+		output_normal: 120.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -560,17 +588,31 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-4o-realtime-preview",
-		input_cached: Some(2.5),
-		input_normal: 5.0,
-		output_normal: 20.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gpt-4o-mini",
 		input_cached: Some(0.075),
 		input_normal: 0.15,
 		output_normal: 0.6,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-realtime",
+		input_cached: Some(0.4),
+		input_normal: 4.0,
+		output_normal: 16.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-realtime-mini",
+		input_cached: Some(0.06),
+		input_normal: 0.6,
+		output_normal: 2.4,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-4o-realtime-preview",
+		input_cached: Some(2.5),
+		input_normal: 5.0,
+		output_normal: 20.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -644,10 +686,24 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gpt-5.1-codex-mini",
+		input_cached: Some(0.025),
+		input_normal: 0.25,
+		output_normal: 2.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "codex-mini-latest",
 		input_cached: Some(0.375),
 		input_normal: 1.5,
 		output_normal: 6.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-5-search-api",
+		input_cached: Some(0.125),
+		input_normal: 1.25,
+		output_normal: 10.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
