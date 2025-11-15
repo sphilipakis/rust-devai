@@ -6,6 +6,7 @@ use crate::model::{EndState, Id, ModelManager, Stage, TypedContent};
 use crate::model::{
 	LogBmc, LogForCreate, LogKind, RunBmc, RunForCreate, RunForUpdate, TaskBmc, TaskForCreate, TaskForUpdate,
 };
+use crate::run::ModelPricing;
 use crate::runtime::Runtime;
 use derive_more::From;
 use genai::ModelIden;
@@ -167,6 +168,18 @@ impl<'a> RtModel<'a> {
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;
 
+		Ok(())
+	}
+
+	pub async fn update_task_model_pricing(&self, _run_id: Id, task_id: Id, pricing: &ModelPricing) -> Result<()> {
+		let task_u = TaskForUpdate {
+			pricing_model: Some(pricing.name.to_string()),
+			pricing_input: Some(pricing.input_normal),
+			pricing_input_cached: pricing.input_cached,
+			pricing_output: Some(pricing.output_normal),
+			..Default::default()
+		};
+		TaskBmc::update(self.mm(), task_id, task_u)?;
 		Ok(())
 	}
 

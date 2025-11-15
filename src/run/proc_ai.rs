@@ -2,7 +2,7 @@ use crate::Result;
 use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
 use crate::model::Id;
-use crate::run::pricing::price_it;
+use crate::run::pricing::{model_pricing, price_it};
 use crate::run::{AiResponse, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::support::hbs::hbs_render;
@@ -177,6 +177,13 @@ async fn process_send_to_genai(
 
 	hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
 		.await;
+
+	if let Ok(service_target) = client.resolve_service_target(model_resolved).await
+		&& let Some(pricing) = model_pricing(&service_target.model)
+	{
+		// If error, that's fine. Might want to trace it.
+		let _ = rt_model.update_task_model_pricing(run_id, task_id, &pricing).await;
+	}
 
 	let start = Instant::now();
 	let chat_options = agent.genai_chat_options();

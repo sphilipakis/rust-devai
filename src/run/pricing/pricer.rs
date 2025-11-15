@@ -1,5 +1,6 @@
 use super::ModelPricing;
 use super::data::PROVIDERS;
+use genai::ModelIden;
 use genai::chat::Usage;
 
 /// Calculates the price for a given provider type, model name, and usage.
@@ -69,7 +70,10 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	Some(price)
 }
 
-pub fn model_pricing(provider_type: &str, model_name: &str) -> Option<ModelPricing> {
+pub fn model_pricing(model_iden: &ModelIden) -> Option<ModelPricing> {
+	let provider_type = model_iden.adapter_kind.as_lower_str();
+	let model_name = &*model_iden.model_name;
+
 	let model_name = normalize_model_name(model_name);
 
 	let provider_type = normalize_provider_type(provider_type);

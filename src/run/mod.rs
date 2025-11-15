@@ -21,4 +21,6 @@ pub use run_agent::*;
 pub use run_executor::*;
 pub use run_types::*;
 
+pub use pricing::ModelPricing;
+
 // endregion: --- Modules

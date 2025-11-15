@@ -100,6 +100,12 @@ CREATE TABLE IF NOT EXISTS task (
 		model_ov         TEXT,
 		model_upstream   TEXT,    -- from te provider
 
+		-- Model Pricing
+		pricing_model         TEXT, 
+		pricing_input         REAL,
+		pricing_input_cached  REAL,
+		pricing_output        REAL,
+
 		-- Usage Raw
 		usage BLOB, -- jsonb, to have raw usage
 		-- Usage Values

@@ -150,6 +150,7 @@ async fn run_agent_inner(
 
 		// Rt Step - Tasks Start
 		rt_step.step_tasks_start(run_id).await?;
+
 		let captured_outputs_res = run_tasks(
 			runtime,
 			run_id,
@@ -161,6 +162,7 @@ async fn run_agent_inner(
 			return_output_values,
 		)
 		.await;
+
 		// Rt Step - Tasks End
 		rt_step.step_tasks_end(run_id).await?;
 		let captured_outputs = captured_outputs_res?;

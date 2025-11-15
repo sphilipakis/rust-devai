@@ -44,6 +44,12 @@ pub struct Task {
 	pub model_ov: Option<String>,       // Eventual override
 	pub model_upstream: Option<String>, // From the provider
 
+	// -- Model Pricing
+	pub pricing_model: Option<String>,
+	pub pricing_input: Option<f64>,
+	pub pricing_input_cached: Option<f64>,
+	pub pricing_output: Option<f64>,
+
 	// -- Usage values
 	pub tk_prompt_total: Option<i64>,
 	pub tk_prompt_cached: Option<i64>,
@@ -115,8 +121,15 @@ pub struct TaskForUpdate {
 
 	pub prompt_size: Option<i64>,
 
+	// -- Model
 	pub model_ov: Option<String>,
 	pub model_upstream: Option<String>,
+
+	// -- Model Pricing
+	pub pricing_model: Option<String>,
+	pub pricing_input: Option<f64>,
+	pub pricing_input_cached: Option<f64>,
+	pub pricing_output: Option<f64>,
 
 	// -- Usage values
 	pub tk_prompt_total: Option<i32>,

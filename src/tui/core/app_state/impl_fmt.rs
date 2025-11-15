@@ -185,15 +185,25 @@ impl AppState {
 			return "... tokens".to_string();
 		};
 
+		// -- If no prompt_total yet, display pending info (with eventual pricing)
 		let Some(tk_prompt) = task.tk_prompt_total else {
+			let mut msg = String::new();
+
+			if let Some(price) = task.pricing_input {
+				msg.push_str(&format!(".. ${price}/MTk"));
+			} else {
+				msg.push_str("...");
+			}
+
 			if let Some(prompt_size) = task.prompt_size {
 				let size_fmt = simple_fs::pretty_size(prompt_size as u64);
-				return format!("... ({})", size_fmt.trim());
-			} else {
-				return "... tokens".to_string();
+				msg.push_str(&format!(" ({})", size_fmt.trim()));
 			}
+
+			return msg;
 		};
 
+		// -- if some prompt_total show cost
 		let mut addl: Vec<String> = Vec::new();
 		if let Some(tk_cached) = task.tk_prompt_cached
 			&& tk_cached > 0
@@ -220,7 +230,15 @@ impl AppState {
 			return "... tokens".to_string();
 		};
 		let Some(tk_completion) = task.tk_completion_total else {
-			return "... tokens".to_string();
+			let mut msg = String::new();
+
+			if let Some(price) = task.pricing_output {
+				msg.push_str(&format!(".. ${price}/MTk"));
+			} else {
+				msg.push_str("...");
+			}
+
+			return msg;
 		};
 
 		let mut res = format!("{} tk", text::format_num(tk_completion));
