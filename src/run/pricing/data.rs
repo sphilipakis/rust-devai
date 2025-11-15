@@ -1,19 +1,4 @@
-#![allow(unused)] // For early development.
-
-#[derive(Debug)]
-pub struct ModelPricing {
-	pub name: &'static str,
-	pub input_cached: Option<f64>,
-	pub input_normal: f64,
-	pub output_normal: f64,
-	pub output_reasoning: Option<f64>,
-}
-
-#[derive(Debug)]
-pub struct Provider {
-	pub name: &'static str,
-	pub models: &'static [ModelPricing],
-}
+use crate::run::pricing::{ModelPricing, ProviderPricing};
 
 // Define Anthropic pricing
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
@@ -89,7 +74,7 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const ANTHROPIC: Provider = Provider {
+const ANTHROPIC: ProviderPricing = ProviderPricing {
 	name: "anthropic",
 	models: ANTHROPIC_MODELS,
 };
@@ -112,7 +97,7 @@ const DEEPSEEK_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const DEEPSEEK: Provider = Provider {
+const DEEPSEEK: ProviderPricing = ProviderPricing {
 	name: "deepseek",
 	models: DEEPSEEK_MODELS,
 };
@@ -289,7 +274,7 @@ const FIREWORKS_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const FIREWORKS: Provider = Provider {
+const FIREWORKS: ProviderPricing = ProviderPricing {
 	name: "fireworks",
 	models: FIREWORKS_MODELS,
 };
@@ -375,7 +360,7 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const GEMINI: Provider = Provider {
+const GEMINI: ProviderPricing = ProviderPricing {
 	name: "gemini",
 	models: GEMINI_MODELS,
 };
@@ -489,7 +474,7 @@ const GROQ_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const GROQ: Provider = Provider {
+const GROQ: ProviderPricing = ProviderPricing {
 	name: "groq",
 	models: GROQ_MODELS,
 };
@@ -729,7 +714,7 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const OPENAI: Provider = Provider {
+const OPENAI: ProviderPricing = ProviderPricing {
 	name: "openai",
 	models: OPENAI_MODELS,
 };
@@ -815,7 +800,7 @@ const XAI_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const XAI: Provider = Provider {
+const XAI: ProviderPricing = ProviderPricing {
 	name: "xai",
 	models: XAI_MODELS,
 };
@@ -1110,9 +1095,9 @@ const TOGETHER_MODELS: &[ModelPricing] = &[
 	},
 ];
 
-const TOGETHER: Provider = Provider {
+const TOGETHER: ProviderPricing = ProviderPricing {
 	name: "together",
 	models: TOGETHER_MODELS,
 };
 
-pub const PROVIDERS: &[Provider] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI, FIREWORKS, TOGETHER];
+pub const PROVIDERS: &[ProviderPricing] = &[OPENAI, GROQ, GEMINI, DEEPSEEK, ANTHROPIC, XAI, FIREWORKS, TOGETHER];

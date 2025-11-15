@@ -2,6 +2,9 @@
 
 mod data;
 mod pricer;
+mod pricing_types;
+
+use pricing_types::*;
 
 // endregion: --- Modules
 

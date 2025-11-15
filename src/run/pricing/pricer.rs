@@ -1,4 +1,5 @@
-use super::data::{ModelPricing, PROVIDERS};
+use super::ModelPricing;
+use super::data::PROVIDERS;
 use genai::chat::Usage;
 
 /// Calculates the price for a given provider type, model name, and usage.
