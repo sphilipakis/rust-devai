@@ -13,32 +13,13 @@ use genai::chat::Usage;
 /// * `Option<f64>` - The calculated price in USD, or None if the provider or model was not found
 pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<f64> {
 	// Since not api from genai yet, extract the eventual namespace of the modelname
-	let model_name = match model_name.splitn(2, "::").collect::<Vec<_>>().as_slice() {
-		[_, after] => after,
-		[only] => only,
-		_ => model_name, // fallback, though this shouldn't be reached
-	};
+	let model_name = normalize_model_name(model_name);
 
-	let provider_type = if provider_type == "openai_resp" {
-		"openai"
-	} else {
-		provider_type
-	};
+	let provider_type = normalize_provider_type(provider_type);
 
 	// Find the provider
-	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
-
 	// Find the model within the provider (longest start_with)
-	let mut model: Option<&ModelPricing> = None;
-	for m in provider.models.iter() {
-		if model_name.starts_with(m.name) {
-			let current_len = model.map(|m| m.name.len()).unwrap_or(0);
-			if current_len < m.name.len() {
-				model = Some(m)
-			}
-		}
-	}
-	let model = model?;
+	let model = find_model_entry(provider_type, model_name)?;
 
 	// -- Extract prompt related tokens and pricing
 	let prompt_tokens = usage.prompt_tokens.unwrap_or(0) as f64;
@@ -86,6 +67,45 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	let price = (price * 10_000.0).round() / 10_000.0;
 
 	Some(price)
+}
+
+pub fn model_pricing(provider_type: &str, model_name: &str) -> Option<ModelPricing> {
+	let model_name = normalize_model_name(model_name);
+
+	let provider_type = normalize_provider_type(provider_type);
+
+	find_model_entry(provider_type, model_name).copied()
+}
+
+fn normalize_model_name(model_name: &str) -> &str {
+	match model_name.split_once("::") {
+		Some((_, after)) => after,
+		None => model_name,
+	}
+}
+
+fn normalize_provider_type(provider_type: &str) -> &str {
+	if provider_type == "openai_resp" {
+		"openai"
+	} else {
+		provider_type
+	}
+}
+
+fn find_model_entry(provider_type: &str, model_name: &str) -> Option<&'static ModelPricing> {
+	let provider = PROVIDERS.iter().find(|p| p.name == provider_type)?;
+
+	let mut model: Option<&ModelPricing> = None;
+	for m in provider.models.iter() {
+		if model_name.starts_with(m.name) {
+			let current_len = model.map(|m| m.name.len()).unwrap_or(0);
+			if current_len < m.name.len() {
+				model = Some(m)
+			}
+		}
+	}
+
+	model
 }
 
 // region:    --- Tests

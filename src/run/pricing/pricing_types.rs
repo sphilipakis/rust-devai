@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct ModelPricing {
 	pub name: &'static str,
 	pub input_cached: Option<f64>,

@@ -10,6 +10,6 @@ use pricing_types::*;
 
 // region:    --- Public API
 
-pub use pricer::price_it;
+pub use pricer::{model_pricing, price_it};
 
 // endregion: --- Public API
