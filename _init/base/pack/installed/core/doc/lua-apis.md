@@ -234,9 +234,9 @@ aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 
 aip.file.load_docx_as_md(docx_path: string): string
 
-aip.file.line_spans(path: string): list<{start: number, end: number}>
+aip.file.line_spans(path: string): list<[start: number, end: number]>
 
-aip.file.csv_row_spans(path: string): list<{start: number, end: number}>
+aip.file.csv_row_spans(path: string): list<[start: number, end: number]>
 
 aip.file.read_span(path: string, start: number, end: number): string
 
@@ -1332,7 +1332,7 @@ Returns the byte spans for each line in a text file.
 
 ```lua
 -- API Signature
-aip.file.line_spans(path: string): list<{start: number, end: number}>
+aip.file.line_spans(path: string): list<[start: number, end: number]>
 ```
 
 Given a file path, computes the start and end byte offsets for every line.
@@ -1344,15 +1344,15 @@ Given a file path, computes the start and end byte offsets for every line.
 
 #### Returns
 
-- `list<{start: number, end: number}>`
-  A Lua list of tables with `start` and `end` byte offsets for each line.
+- `list<[start: number, end: number]>`
+  A Lua list of two-item arrays where `span[1]` is the start byte and `span[2]` is the end byte for each line.
 
 #### Example
 
 ```lua
 local spans = aip.file.line_spans("logs/app.log")
 for i, s in ipairs(spans) do
-  print(i, s.start, s.end)
+  print(i, s[1], s[2])
 end
 ```
 
@@ -1367,7 +1367,7 @@ Returns the byte spans for each CSV row in a file.
 
 ```lua
 -- API Signature
-aip.file.csv_row_spans(path: string): list<{start: number, end: number}>
+aip.file.csv_row_spans(path: string): list<[start: number, end: number]>
 ```
 
 Parses the file as CSV and returns byte spans for each row (one span per CSV record).
@@ -1379,8 +1379,8 @@ Parses the file as CSV and returns byte spans for each row (one span per CSV rec
 
 #### Returns
 
-- `list<{start: number, end: number}>`
-  A Lua list of tables with `start` and `end` byte offsets for each CSV row.
+- `list<[start: number, end: number]>`
+  A Lua list of two-item arrays where `row[1]` is the start byte and `row[2]` is the end byte for each CSV row.
 
 #### Example
 
@@ -1389,7 +1389,7 @@ local rows = aip.file.csv_row_spans("data/sample.csv")
 -- Read the first row bytes as text:
 if #rows > 0 then
   local first_row = rows[1]
-  local text = aip.file.read_span("data/sample.csv", first_row.start, first_row.end)
+  local text = aip.file.read_span("data/sample.csv", first_row[1], first_row[2])
   print(text)
 end
 ```
@@ -1431,7 +1431,7 @@ local spans = aip.file.line_spans("README.md")
 -- Print the first line by span:
 if #spans > 0 then
   local s = spans[1]
-  local line = aip.file.read_span("README.md", s.start, s.end)
+  local line = aip.file.read_span("README.md", s[1], s[2])
   print(line)
 end
 ```

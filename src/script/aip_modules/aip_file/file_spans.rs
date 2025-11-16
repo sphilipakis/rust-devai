@@ -6,8 +6,8 @@
 //!
 //! ### Functions
 //!
-//! - `aip.file.line_spans(path: string): integer[][]`
-//! - `aip.file.csv_row_spans(path: string): integer[][]`
+//! - `aip.file.line_spans(path: string): [start,end][]`
+//! - `aip.file.csv_row_spans(path: string): [start,end][]`
 //! - `aip.file.read_span(path: string, start: integer, end: integer): string`
 //!
 //! The `path` is resolved relative to the workspace root.
@@ -16,7 +16,7 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use mlua::{Lua, Value};
-use simple_fs::{SPath, csv_row_spans as fs_csv_row_spans, line_spans as fs_line_spans, read_span as fs_read_span};
+use simple_fs::{self, SPath};
 
 // region:    --- Lua Spans
 
@@ -26,7 +26,7 @@ use simple_fs::{SPath, csv_row_spans as fs_csv_row_spans, line_spans as fs_line_
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.line_spans(path: string): integer[][]
+/// aip.file.line_spans(path: string): [start,end][]
 /// ```
 ///
 /// - `path: string`: File path relative to the workspace root (pack refs supported).
@@ -52,7 +52,7 @@ pub(super) fn file_line_spans(lua: &Lua, runtime: &Runtime, path: String) -> mlu
 		.dir_context()
 		.resolve_path(runtime.session(), rel_path, PathResolver::WksDir, None)?;
 
-	let spans = fs_line_spans(&full_path).map_err(Error::from)?;
+	let spans = simple_fs::line_spans(&full_path).map_err(Error::from)?;
 	let table = spans_to_lua_table(lua, &spans)?;
 	Ok(Value::Table(table))
 }
@@ -63,7 +63,7 @@ pub(super) fn file_line_spans(lua: &Lua, runtime: &Runtime, path: String) -> mlu
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.csv_row_spans(path: string): integer[][]
+/// aip.file.csv_row_spans(path: string): [start,end][]
 /// ```
 ///
 /// - `path: string`: CSV file path relative to the workspace root (pack refs supported).
@@ -88,7 +88,7 @@ pub(super) fn file_csv_row_spans(lua: &Lua, runtime: &Runtime, path: String) -> 
 		.dir_context()
 		.resolve_path(runtime.session(), rel_path, PathResolver::WksDir, None)?;
 
-	let spans = fs_csv_row_spans(&full_path).map_err(Error::from)?;
+	let spans = simple_fs::csv_row_spans(&full_path).map_err(Error::from)?;
 	let table = spans_to_lua_table(lua, &spans)?;
 	Ok(Value::Table(table))
 }
@@ -139,7 +139,7 @@ pub(super) fn file_read_span(
 		.dir_context()
 		.resolve_path(runtime.session(), rel_path, PathResolver::WksDir, None)?;
 
-	let text = fs_read_span(&full_path, start as usize, end as usize).map_err(Error::from)?;
+	let text = simple_fs::read_span(&full_path, start as usize, end as usize).map_err(Error::from)?;
 	Ok(text)
 }
 
