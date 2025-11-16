@@ -25,7 +25,7 @@
 //!   quote?: string,             -- default "\""
 //!   escape?: string,            -- default "\""
 //!   trim_fields?: boolean,      -- default false
-//!   has_header?: boolean,       -- default false
+//!   has_header?: boolean,       -- default true for parse()
 //!   skip_empty_lines?: boolean, -- default true
 //!   comment?: string            -- e.g., "#", optional
 //! }
@@ -108,6 +108,8 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 ///
 /// Parse CSV content, optionally with header detection and comment skipping.
 /// Returns a table with `headers` (or nil) and `rows` (string[][]).
+/// By default this API treats the first row as headers (`has_header = true`) and skips empty lines
+/// (`skip_empty_lines = true`) unless these options are overridden.
 ///
 /// ```lua
 /// -- API Signature

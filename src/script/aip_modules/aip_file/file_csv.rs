@@ -9,7 +9,7 @@
 //! ### Functions
 //!
 //! - `aip.file.load_csv_headers(path: string): string[]`
-//! - `aip.file.load_csv(path: string, options?: CsvOptions): { headers: string[], content: string[][] }`
+//! - `aip.file.load_csv(path: string, options?: CsvOptions): { _type: "CsvContent", headers: string[], rows: string[][] }`
 //!
 //! The `path` is resolved relative to the workspace root.
 
@@ -70,24 +70,25 @@ pub(super) fn file_load_csv_headers(lua: &Lua, runtime: &Runtime, path: String) 
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.load_csv(path: string, options?: CsvOptions): { headers: string[], content: string[][] }
+/// aip.file.load_csv(path: string, options?: CsvOptions): { _type: "CsvContent", headers: string[], rows: string[][] }
 /// ```
 ///
 /// - `path: string` — CSV file path, relative to the workspace root (supports pack refs).
 /// - `options?: CsvOptions` — CSV parse options. Only `has_header` is honored by this API
 ///   (defaults to `true`), which controls whether the first row is treated as headers and
-///   excluded from `content`.
+///   excluded from the returned `rows`.
 ///
 /// ### Returns
 ///
-/// - `{ headers: string[], content: string[][] }`
+/// - `{ _type: "CsvContent", headers: string[], rows: string[][] }`
 ///
 /// ### Example
 ///
 /// ```lua
 /// local res = aip.file.load_csv("data/example.csv") -- defaults to with_headers = true
+/// print("Type:", res._type) -- "CsvContent"
 /// print("Headers:", table.concat(res.headers, ", "))
-/// for _, row in ipairs(res.content) do
+/// for _, row in ipairs(res.rows) do
 ///   print(table.concat(row, " | "))
 /// end
 /// ```
