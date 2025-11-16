@@ -14,6 +14,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.tag`](#aiptag): Custom tag block extraction (e.g., `<TAG>...</TAG>`).
 - [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
 - [`aip.json`](#aipjson): JSON parsing and stringification.
+- [`aip.toml`](#aiptoml): TOML parsing and stringification helpers.
 - [`aip.web`](#aipweb): HTTP requests (GET, POST), URL parsing and resolution.
 - [`aip.uuid`](#aipuuid): UUID generation and conversion.
 - [`aip.hash`](#aiphash): Hashing utilities (SHA256, SHA512, Blake3) with various encodings.
@@ -814,6 +815,35 @@ print(config.port) -- Output: 8080
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if file not found/read, content is invalid JSON, or conversion fails.
+
+### aip.file.load_toml
+
+Load a file, parse its content as TOML, and return the corresponding Lua value.
+
+```lua
+-- API Signature
+aip.file.load_toml(path: string): table | value
+```
+
+#### Arguments
+
+- `path: string`: Path to the TOML file, relative to the workspace root.
+
+#### Returns
+
+- `table | value`: A Lua value representing the parsed TOML content.
+
+#### Example
+
+```lua
+local config = aip.file.load_toml("Config.toml")
+print(config.title)
+print(config.owner.name)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the file cannot be read, the TOML content is invalid, or the conversion to a Lua value fails.
 
 ### aip.file.load_ndjson
 
@@ -2924,6 +2954,81 @@ Deprecated alias for `aip.json.stringify`.
 -- API Signature
 aip.json.stringify_to_line(content: table): string
 ```
+
+## aip.toml
+
+Functions Summary
+
+```lua
+aip.toml.parse(content: string): table
+aip.toml.stringify(content: table): string
+```
+
+### aip.toml.parse
+
+Parse a TOML string into a Lua table.
+
+```lua
+-- API Signature
+aip.toml.parse(content: string): table
+```
+
+#### Arguments
+
+- `content: string`: The TOML string to parse.
+
+#### Returns
+
+- `table`: A Lua table representing the parsed TOML structure.
+
+#### Example
+
+```lua
+local toml_str = [[
+title = "Example"
+
+[owner]
+name = "John"
+]]
+local obj = aip.toml.parse(toml_str)
+print(obj.title)
+print(obj.owner.name)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `content` is not valid TOML.
+
+### aip.toml.stringify
+
+Stringify a Lua table into a TOML string.
+
+```lua
+-- API Signature
+aip.toml.stringify(content: table): string
+```
+
+#### Arguments
+
+- `content: table`: The Lua table to stringify.
+
+#### Returns
+
+- `string`: A TOML-formatted string representing the table.
+
+#### Example
+
+```lua
+local obj = {
+    title = "Example",
+    owner = { name = "John" }
+}
+local toml_str = aip.toml.stringify(obj)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized into TOML.
 
 ## aip.web
 
