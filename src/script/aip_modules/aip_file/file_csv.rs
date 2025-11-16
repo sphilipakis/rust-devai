@@ -1,5 +1,3 @@
-#![allow(clippy::single_match_else)] // keep module stable during refactor
-
 //! Lua CSV helpers for `aip.file`.
 //!
 //! ---
