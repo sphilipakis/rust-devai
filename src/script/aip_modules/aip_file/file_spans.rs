@@ -59,8 +59,8 @@ fn spans_to_lua_table(lua: &Lua, spans: &[(usize, usize)]) -> mlua::Result<mlua:
 	let out = lua.create_table()?;
 	for (i, (start, end)) in spans.iter().enumerate() {
 		let row = lua.create_table()?;
-		row.set("start", *start as i64)?;
-		row.set("end", *end as i64)?;
+		row.set(1, *start as i64)?;
+		row.set(2, *end as i64)?;
 		out.set(i + 1, row)?;
 	}
 	Ok(out)
