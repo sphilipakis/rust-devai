@@ -218,6 +218,45 @@ async fn test_lua_aip_shape_to_records_invalid_name_type() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_lua_aip_shape_record_to_values_auto_order() -> Result<()> {
+	// -- Setup & Fixtures
+	let lua = setup_lua(init_module, "shape").await?;
+	let script = r#"
+            local rec = { id = 1, name = "Alice", email = "a@x.com" }
+            return aip.shape.record_to_values(rec)
+        "#;
+
+	// -- Exec
+	let res = eval_lua(&lua, script)?;
+
+	// -- Check
+	let expected = json!(["a@x.com", 1, "Alice"]);
+	assert_eq!(res, expected);
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_lua_aip_shape_record_to_values_with_names_nulls() -> Result<()> {
+	// -- Setup & Fixtures
+	let lua = setup_lua(init_module, "shape").await?;
+	let script = r#"
+            local rec = { id = 1, name = "Alice" }
+            local names = { "name", "id", "missing" }
+            return aip.shape.record_to_values(rec, names)
+        "#;
+
+	// -- Exec
+	let res = eval_lua(&lua, script)?;
+
+	// -- Check
+	let expected = json!(["Alice", 1, null]);
+	assert_eq!(res, expected);
+
+	Ok(())
+}
+
+#[tokio::test]
 async fn test_lua_aip_shape_columnar_to_records_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let lua = setup_lua(init_module, "shape").await?;

@@ -2,7 +2,7 @@
 //!
 //! ## Lua documentation
 //!
-//! This section of the `aip.shape` module exposes helpers to select, omit, remove, or extract keys on row-like records (Lua tables).
+//! This section of the `aip.shape` module exposes helpers to select, omit, remove, or extract keys on row-like records (Lua objects).
 //!
 //! ### Functions
 //!
@@ -14,7 +14,7 @@
 //!
 //! - `aip.shape.extract_keys(rec: table, keys: string[]): table`
 
-use crate::Error;
+use super::support::collect_string_sequence;
 use mlua::{Lua, Table, Value};
 
 /// ## Lua Documentation
@@ -23,7 +23,7 @@ use mlua::{Lua, Table, Value};
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.select_keys(rec: table, keys: string[]): table
+/// aip.shape.select_keys(rec: object, keys: string[]): object
 /// ```
 ///
 /// - Missing keys are ignored.
@@ -37,25 +37,13 @@ use mlua::{Lua, Table, Value};
 /// -- out == { id = 1, email = "a@x.com" }
 /// ```
 pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+	let key_names = collect_string_sequence(keys, "aip.shape.select_keys", "Key names")?;
 	let out = lua.create_table()?;
 
-	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
-		let key_val = key_val?;
-		let key_str = match key_val {
-			Value::String(s) => s,
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.select_keys - Key names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		};
-
-		let val: Value = rec.get(key_str.clone())?;
+	for key in key_names {
+		let val: Value = rec.get(key.clone())?;
 		if !val.is_nil() {
-			out.set(key_str, val)?;
+			out.set(key, val)?;
 		}
 	}
 
@@ -74,7 +62,7 @@ pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.omit_keys(rec: table, keys: string[]): table
+/// aip.shape.omit_keys(rec: object, keys: string[]): object
 /// ```
 ///
 /// ### Example
@@ -87,29 +75,20 @@ pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 	use std::collections::HashSet;
 
-	let mut omit_set: HashSet<String> = HashSet::new();
-	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
-		let key_val = key_val?;
-		match key_val {
-			Value::String(s) => {
-				omit_set.insert(s.to_string_lossy());
-			}
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.omit_keys - Key names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		}
+	let key_names = collect_string_sequence(keys, "aip.shape.omit_keys", "Key names")?;
+	let mut omit_set: HashSet<String> = HashSet::with_capacity(key_names.len());
+	for key in key_names {
+		omit_set.insert(key.to_string_lossy().to_string());
 	}
 
 	let out = lua.create_table()?;
 	for pair in rec.pairs::<Value, Value>() {
 		let (k, v) = pair?;
 		let skip = match &k {
-			Value::String(s) => omit_set.contains(&s.to_string_lossy()),
+			Value::String(s) => {
+				let needle = s.to_string_lossy();
+				omit_set.contains(&needle)
+			}
 			_ => false,
 		};
 		if !skip {
@@ -134,7 +113,7 @@ pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.remove_keys(rec: table, keys: string[]): integer
+/// aip.shape.remove_keys(rec: object, keys: string[]): integer
 /// ```
 ///
 /// ### Example
@@ -145,25 +124,13 @@ pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 /// -- rec == { id = 1, name = "Alice" }
 /// ```
 pub fn remove_keys(_lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+	let key_names = collect_string_sequence(keys, "aip.shape.remove_keys", "Key names")?;
 	let mut removed: i64 = 0;
 
-	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
-		let key_val = key_val?;
-		let key_str = match key_val {
-			Value::String(s) => s,
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.remove_keys - Key names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		};
-
-		let val: Value = rec.get(key_str.clone())?;
+	for key in key_names {
+		let val: Value = rec.get(key.clone())?;
 		if !val.is_nil() {
-			rec.set(key_str, Value::Nil)?;
+			rec.set(key, Value::Nil)?;
 			removed += 1;
 		}
 	}
@@ -183,7 +150,7 @@ pub fn remove_keys(_lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.extract_keys(rec: table, keys: string[]): table
+/// aip.shape.extract_keys(rec: object, keys: string[]): object
 /// ```
 ///
 /// ### Example
@@ -194,27 +161,15 @@ pub fn remove_keys(_lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 /// -- rec    == { name = "Alice" }
 /// ```
 pub fn extract_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+	let key_names = collect_string_sequence(keys, "aip.shape.extract_keys", "Key names")?;
 	let out = lua.create_table()?;
 
-	for (idx, key_val) in keys.sequence_values::<Value>().enumerate() {
-		let key_val = key_val?;
-		let key_str = match key_val {
-			Value::String(s) => s,
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.extract_keys - Key names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		};
-
-		let val: Value = rec.get(key_str.clone())?;
+	for key in key_names {
+		let val: Value = rec.get(key.clone())?;
 		if !val.is_nil() {
-			out.set(key_str.clone(), val)?;
+			out.set(key.clone(), val)?;
 			// Remove from original record (in-place)
-			rec.set(key_str, Value::Nil)?;
+			rec.set(key, Value::Nil)?;
 		}
 	}
 

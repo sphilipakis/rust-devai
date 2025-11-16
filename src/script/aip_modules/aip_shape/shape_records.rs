@@ -3,17 +3,22 @@
 //!
 //! ## Lua documentation
 //!
-//! The `aip.shape` module exposes helpers to shape records (row objects) from arrays/lists.
+//! The `aip.shape` module exposes helpers to shape records built from lists of values (each entry is a heterogeneous list of values) sourced from arrays/lists.
+//!
+//! `record` means the object (i.e. dictionary) format.
 //!
 //! ### Functions
 //!
-//! - `aip.shape.to_record(names: string[], values: any[]) -> table`
-//! - `aip.shape.to_records(names: string[], rows: any[][]) -> table[]`
-//! - `aip.shape.record_to_values(record: table, names?: string[]): any[]`
-//! - `aip.shape.columnar_to_records(cols: { [string]: any[] }): table[]`
-//! - `aip.shape.records_to_columnar(recs: table[]): { [string]: any[] }`
+//! - `aip.shape.to_record(names: string[], values: any[]) -> object`
+//! - `aip.shape.to_records(names: string[], rows: any[][]) -> object[]`
+//! - `aip.shape.record_to_values(record: object, names?: string[]): any[]`
+//! - `aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]`
+//! - `aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }`
 //!
 
+use super::support::{
+	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence,
+};
 use crate::Error;
 use mlua::{Lua, Table, Value};
 
@@ -21,11 +26,11 @@ use crate::script::lua_null::NullSentinel;
 
 /// ## Lua Documentation
 ///
-/// Build a single record (row object) from a list of column names and a list of values.
+/// Build a single record (i.e., object) from a list of column names and a list of values.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.to_record(names: string[], values: any[]): table
+/// aip.shape.to_record(names: string[], values: any[]): object
 /// ```
 ///
 /// ### Example:
@@ -44,7 +49,7 @@ use crate::script::lua_null::NullSentinel;
 ///
 /// ### Returns
 ///
-/// - `table` - A Lua table with keys from `names` and values from `values`.
+/// - `object` - A Lua table with keys from `names` and values from `values`.
 ///
 /// ### Errors
 ///
@@ -62,27 +67,10 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 	// NOTE: Here we keep the data in the Lua space as there is no need to make them cross boundaries.
 
 	// Collect names as strings with validation
-	let mut name_vec: Vec<mlua::String> = Vec::new();
-	for (idx, v) in names.sequence_values::<Value>().enumerate() {
-		let v = v?;
-		match v {
-			Value::String(s) => name_vec.push(s),
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.to_record - Column names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		}
-	}
+	let name_vec = collect_string_sequence(names, "aip.shape.to_record", "Column names")?;
 
 	// Collect values as arbitrary Lua values
-	let mut vals_vec: Vec<Value> = Vec::new();
-	for v in values.sequence_values::<Value>() {
-		vals_vec.push(v?);
-	}
+	let vals_vec = collect_sequence_values(values)?;
 
 	let limit = core::cmp::min(name_vec.len(), vals_vec.len());
 
@@ -90,7 +78,7 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 	for i in 0..limit {
 		// NOTE: Should always be fine, but avoid [.] by best practice
 		if let (Some(name), Some(val)) = (name_vec.get(i), vals_vec.get(i)) {
-			rec.set(name, val)?;
+			rec.set(name.clone(), val.clone())?;
 		}
 	}
 
@@ -99,59 +87,45 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 
 /// ## Lua Documentation
 ///
-/// Build multiple records (row objects) from a list of column names and a list of rows.
+/// Build multiple records (i.e., objects) from a list of column names and a list of value lists (each entry is a heterogeneous list of values).
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.to_records(names: string[], rows: any[][]): table[]
+/// aip.shape.to_records(names: string[], value_lists: any[][]): object[]
 /// ```
 ///
-/// - Truncates each row to the shorter length between `names` and the row values.
+/// - Truncates each list of values to the shorter length between `names` and the provided values.
 /// - Extra names without corresponding values are ignored.
-/// - Extra row values without corresponding names are ignored.
+/// - Extra values inside the same list without corresponding names are ignored.
 ///
 /// ### Errors
 ///
 /// - If `names` contains a non-string entry, an error is returned.
-/// - If any row is not a table (list), an error is returned.
+/// - If any list of values is not a table (list), an error is returned.
 ///
 /// ### Example
 ///
 /// ```lua
 /// local names = { "id", "name" }
-/// local rows  = {
+/// local value_lists = {
 ///   { 1, "Alice" },
 ///   { 2, "Bob"   },
 /// }
-/// local out = aip.shape.to_records(names, rows)
+/// local out = aip.shape.to_records(names, value_lists)
 /// -- out == {
 /// --   { id = 1, name = "Alice" },
 /// --   { id = 2, name = "Bob"   },
 /// -- }
 /// ```
-pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
+pub fn to_records(lua: &Lua, names: Table, value_lists: Table) -> mlua::Result<Value> {
 	// Validate and collect column names as strings
-	let mut name_vec: Vec<mlua::String> = Vec::new();
-	for (idx, v) in names.sequence_values::<Value>().enumerate() {
-		let v = v?;
-		match v {
-			Value::String(s) => name_vec.push(s),
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.to_records - Column names must be strings. Found '{}' at index {}",
-					other.type_name(),
-					idx + 1
-				))
-				.into());
-			}
-		}
-	}
+	let name_vec = collect_string_sequence(names, "aip.shape.to_records", "Column names")?;
 
 	// Build records
 	let out = lua.create_table()?;
 	let mut out_idx = 1usize;
 
-	for row_val in rows.sequence_values::<Value>() {
+	for row_val in value_lists.sequence_values::<Value>() {
 		let row_val = row_val?;
 		let row_tbl = match row_val {
 			Value::Table(t) => t,
@@ -165,16 +139,13 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 		};
 
 		// Collect row values
-		let mut vals_vec: Vec<Value> = Vec::new();
-		for v in row_tbl.sequence_values::<Value>() {
-			vals_vec.push(v?);
-		}
+		let vals_vec = collect_sequence_values(row_tbl)?;
 
 		let limit = core::cmp::min(name_vec.len(), vals_vec.len());
 		let rec = lua.create_table()?;
 		for i in 0..limit {
 			if let (Some(name), Some(val)) = (name_vec.get(i), vals_vec.get(i)) {
-				rec.set(name, val)?;
+				rec.set(name.clone(), val.clone())?;
 			}
 		}
 
@@ -191,7 +162,7 @@ pub fn to_records(lua: &Lua, names: Table, rows: Table) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.record_to_values(record: table, names?: string[]): any[]
+/// aip.shape.record_to_values(record: object, names?: string[]): any[]
 /// ```
 ///
 /// - When `names` is provided, values are returned in the order of `names`.
@@ -216,22 +187,10 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 	match names_opt {
 		Some(names) => {
 			let mut idx = 1usize;
+			let ordered_names = collect_string_sequence(names, "aip.shape.record_to_values", "Column names")?;
 
-			for (i, name_val) in names.sequence_values::<Value>().enumerate() {
-				let name_val = name_val?;
-				let name_str = match name_val {
-					Value::String(s) => s,
-					other => {
-						return Err(Error::custom(format!(
-							"aip.shape.record_to_values - Column names must be strings. Found '{}' at index {}",
-							other.type_name(),
-							i + 1
-						))
-						.into());
-					}
-				};
-
-				let val: Value = rec.get(name_str)?;
+			for name_str in ordered_names {
+				let val: Value = rec.get(name_str.clone())?;
 				if let Value::Nil = val {
 					let na = lua.create_userdata(NullSentinel)?;
 					out.set(idx, na)?;
@@ -264,11 +223,11 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 
 /// ## Lua Documentation
 ///
-/// Convert a column-oriented table into a list of row records.
+/// Convert a column-oriented table into a list of records produced from lists of values.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.columnar_to_records(cols: { [string]: any[] }): table[]
+/// aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]
 /// ```
 ///
 /// - All keys in `cols` must be strings (column names).
@@ -325,10 +284,7 @@ pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 		};
 
 		// Collect sequence values
-		let mut vec_vals: Vec<Value> = Vec::new();
-		for v in tbl.sequence_values::<Value>() {
-			vec_vals.push(v?);
-		}
+		let vec_vals = collect_sequence_values(tbl)?;
 		let len = vec_vals.len();
 
 		// Length consistency check
@@ -371,15 +327,15 @@ pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 
 /// ## Lua Documentation
 ///
-/// Convert a list of record tables into a column-oriented table.
+/// Convert a list of record objects into a column-oriented table.
 /// Uses the intersection of string keys present across all records to ensure rectangular output.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.shape.records_to_columnar(recs: table[]): { [string]: any[] }
+/// aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }
 /// ```
 ///
-/// - Each record must be a table.
+/// - Each record must be an object (Lua table).
 /// - All keys must be strings; if any non-string key is found, an error is returned.
 /// - The output contains only the keys present in every record (set intersection).
 /// ### Example
@@ -396,24 +352,8 @@ pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 /// -- }
 /// ```
 pub fn records_to_columnar(lua: &Lua, recs: Table) -> mlua::Result<Value> {
-	use std::collections::{BTreeSet, HashSet};
-
 	// Collect rows as tables, validating each entry
-	let mut rows: Vec<Table> = Vec::new();
-	for row_val in recs.sequence_values::<Value>() {
-		let row_val = row_val?;
-		let row_tbl = match row_val {
-			Value::Table(t) => t,
-			other => {
-				return Err(Error::custom(format!(
-					"aip.shape.records_to_columnar - Each record must be a table. Found '{}'",
-					other.type_name()
-				))
-				.into());
-			}
-		};
-		rows.push(row_tbl);
-	}
+	let (rows, ordered_keys) = collect_rows_and_intersection(recs, "aip.shape.records_to_columnar")?;
 
 	// Early return: no rows -> empty columns table
 	if rows.is_empty() {
@@ -421,50 +361,13 @@ pub fn records_to_columnar(lua: &Lua, recs: Table) -> mlua::Result<Value> {
 	}
 
 	// Compute the intersection of string keys across all records
-	let mut intersect: Option<HashSet<String>> = None;
-
-	for row in &rows {
-		let mut keys_this_row: HashSet<String> = HashSet::new();
-
-		for pair in row.pairs::<Value, Value>() {
-			let (k, _v) = pair?;
-
-			let key_str = match k {
-				Value::String(s) => s.to_string_lossy(),
-				other => {
-					return Err(Error::custom(format!(
-						"aip.shape.records_to_columnar - Record keys must be strings. Found key of type '{}'",
-						other.type_name()
-					))
-					.into());
-				}
-			};
-			keys_this_row.insert(key_str);
-		}
-
-		intersect = Some(match intersect.take() {
-			None => keys_this_row,
-			Some(prev) => prev.intersection(&keys_this_row).cloned().collect(),
-		});
-	}
-
-	let keys = intersect.unwrap_or_default();
 	// Deterministic order for output columns
-	let mut ordered_keys: BTreeSet<String> = BTreeSet::new();
-	for k in keys {
-		ordered_keys.insert(k);
+	if ordered_keys.is_empty() {
+		return Ok(Value::Table(lua.create_table()?));
 	}
 
 	// Build columns
-	let out = lua.create_table()?;
-	for key in ordered_keys {
-		let col = lua.create_table()?;
-		for (idx, row) in rows.iter().enumerate() {
-			let val: Value = row.get(key.as_str())?;
-			col.set(idx + 1, val)?;
-		}
-		out.set(key.as_str(), col)?;
-	}
+	let out = build_columnar_table(lua, &rows, &ordered_keys)?;
 
 	Ok(Value::Table(out))
 }

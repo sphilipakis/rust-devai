@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::process_lua_eval_result;
+use crate::script::{lua_value_to_serde_value, process_lua_eval_result};
 use mlua::{Lua, Table};
 use serde_json::Value;
 
@@ -38,6 +38,6 @@ where
 pub fn eval_lua(lua: &Lua, code: &str) -> Result<Value> {
 	let res = lua.load(code).eval::<mlua::Value>();
 	let res_lua_value = process_lua_eval_result(lua, res, code)?;
-	let value = serde_json::to_value(&res_lua_value)?;
-	Ok(value)
+	let serde_value = lua_value_to_serde_value(res_lua_value)?;
+	Ok(serde_value)
 }
