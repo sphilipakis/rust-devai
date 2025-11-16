@@ -135,7 +135,7 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// ```
 fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	let json_value = lua_value_to_serde_value(content)?;
-	toml::to_string(&json_value)
+	tomls::stringify_json_value(&json_value)
 		.map_err(|err| Error::custom(format!("aip.toml.stringify fail to stringify. {err}")).into())
 }
 
