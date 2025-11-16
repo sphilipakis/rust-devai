@@ -460,8 +460,10 @@ mod tests {
             }
             return aip.json.stringify_pretty(obj)
         "#;
+
 		// -- Exec
 		let res = eval_lua(&lua, script)?;
+
 		// -- Check
 		let result = res.as_str().ok_or("Expected string result")?;
 		let parsed: serde_json::Value = serde_json::from_str(result)?;
@@ -471,6 +473,7 @@ mod tests {
 		assert_eq!(parsed["hobbies"][0], "reading");
 		assert!(result.contains('\n'), "Expected pretty formatting with newlines");
 		assert!(result.contains("  "), "Expected pretty formatting with indentation");
+
 		Ok(())
 	}
 
