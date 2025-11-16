@@ -10,25 +10,25 @@
 
 An open-source agentic runtime to run, build, and share AI Packs.
 
-- **Simple & Powerful** – 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs on a single [aip-doc page](https://aipack.ai/doc/lua-apis).  
+- **Simple & Powerful**, 1 Agent = 1 multi-stage Markdown file with built-in **concurrency**, **Map-Reduce**, and all APIs on a single [aip-doc page](https://aipack.ai/doc/lua-apis).
 
-- **Light & Lean** – No bloat, **< 20MB**, **single executable**, **ZERO dependencies**.  
+- **Light & Lean**, No bloat, **< 20MB**, **single executable**, **ZERO dependencies**.
 
-- **Efficient** – Engine written in **Rust** with a lightweight and efficient embedded Lua script. All `aip` functions are implemented in Rust.  
+- **Efficient**, Engine written in **Rust** with a lightweight and efficient embedded Lua script. All `aip` functions are implemented in Rust.
 
-- **Multi-AI** – Supports all major AI **providers and models** (OpenAI, Google, Anthropic, xAI, Ollama, Groq, Fireworks.ai, ...) at the native layer for the major ones. For example, it can use Gemini models with zero thinking budget.
+- **Multi-AI**, Supports all major AI **providers and models** (OpenAI, Google, Anthropic, xAI, Ollama, Groq, Fireworks.ai, ...) at the native layer for the major ones. For example, it can use Gemini models with zero thinking budget.
 
-- **Local or Cloud** – Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
+- **Local or Cloud**, Runs locally, is completely IDE-agnostic, or runs in the cloud, on a server or serverless.
 
 **BIG UPDATE 0.8.x WITH NEW TUI**
 
-### Check out: 
+### Check out:
 
 - https://aipack.ai for more information and links, [AIPack News & Blog Posts](https://news.aipack.ai/archive)
 
 - [Getting Started Video Tutorial](https://news.aipack.ai/p/aipack-tutorial-from-hello-world)
 
-- **[AIPack Lab Repo](https://github.com/aipack-ai/aipack-lab)** for some cool examples. 
+- **[AIPack Lab Repo](https://github.com/aipack-ai/aipack-lab)** for some cool examples.
 
 - [AIPack Substack at news.aipack.ai](https://news.aipack.ai)
 
@@ -45,7 +45,7 @@ An open-source agentic runtime to run, build, and share AI Packs.
 
 ### Install From Binaries
 
-Mac, Linux, and Windows on ARM and x86 platforms are supported. See below for binary installation instructions. 
+Mac, Linux, and Windows on ARM and x86 platforms are supported. See below for binary installation instructions.
 
 _(More info at [aipack.ai/doc/install](https://aipack.ai/doc/install))_
 
@@ -105,7 +105,7 @@ For now, installation requires building directly from source with Rust. It works
 ### Run
 
 ```sh
-# In the terminal, go to your project
+# In the terminal, navigate to your project
 cd /path/to/my/project/
 
 # Initialize workspace .aipack/ and ~/.aipack-base
@@ -117,22 +117,21 @@ export ANTHROPIC_API_KEY="...."
 export GEMINI_API_KEY="..."
 # For more keys, see below
 
-# Check the keys you set up
+# Check the keys you've set up
 aip check-keys
 
 # To proofread your README.md (namespace: demo, pack_name: proof):
 aip run demo@proof -f ./README.md
 
-# You can just use @pack_name if there is no other pack with this name
+# You can just use @pack_name if there is no other pack with that name
 aip run @proof -f ./README.md
 
 ```
 
 ### Thanks to
 
--  **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
--  [David Horner](https://github.com/davehorner) for adding Windows support for Open Agent (with VSCode) ([#30](https://github.com/aipack-ai/aipack/pull/30))
--  [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/aipack-ai/aipack/pull/28))
+- **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
+- [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/aipack-ai/aipack/pull/28))
 
 
 ### `pro@coder`
@@ -142,9 +141,9 @@ aip run @proof -f ./README.md
 
 This is the agent I use every day for my production coding.
 
-**IMPORTANT 1**: Make sure everything is committed before use, at least while you are learning aipack.
+**IMPORTANT 1**: Make sure everything is committed before use, especially while you are learning AIPack.
 
-**IMPORTANT 2**: Make sure you have your **API_KEY** set as an environment variable. On macOS, there is experimental keychain support.
+**IMPORTANT 2**: Make sure you have your **API\_KEY** set as an environment variable. On macOS, there is experimental keychain support.
 
 ```
 OPENAI_API_KEY
@@ -177,38 +176,38 @@ COHERE_API_KEY
     - An `.aip` agent file is just a **Markdown file** with sections for each stage of the agent's processing.
     - See below for all the [possible stages](#multi-stage).
 - `aip run demo@proof -f "./*.md"`
-  - will run the installed agent file `main.aip` in the
-  - pack named `proof`
-  - namespace `demo`
-  - agent file `main.aip`
-  - Full path `~/.aipack-base/pack/installed/demo/proof/main.aip`
-  - You can pass input to your agent using:
-    - `-f "path/with/optional/**/glob.*" -f "README.md"` (the Lua code will receive a `{path = .., name =..}` FileInfo-like structure as input)
-    - `-i "some string" -i "another input"` (the Lua code will receive these strings as input)
+    - will run the installed agent file `main.aip` in the
+    - pack named `proof`
+    - namespace `demo`
+    - agent file `main.aip`
+    - Full path `~/.aipack-base/pack/installed/demo/proof/main.aip`
+    - You can pass input to your agent using:
+        - `-f "path/with/optional/**/glob.*" -f "README.md"` (the Lua code will receive a `{path = .., name =..}` FileInfo-like structure as input)
+        - `-i "some string" -i "another input"` (the Lua code will receive these strings as input)
     - Each input triggers one run of the agent.
 - `aip run some/path/to/agent`
-  - If the path ends with `.aip`, it's treated as a direct file run.
-  - If there is no `.aip` extension, then:
-    - `.../agent.aip` will be executed if it exists.
-    - or `.../agent/main.aip` will be executed if it exists.
-- **aipack** agents are simple `.aip` files that can be placed anywhere on disk.
-  - e.g., `aipack run ./my-path/to/my-agent.aip ...`
-- **Multi AI Provider / Models** - **aipack** uses [genai](https://crates.io/crates/genai) and therefore supports providers like OpenAI, Anthropic, Gemini, Groq, Ollama, Cohere, and more.
+    - If the path ends with `.aip`, it's treated as a direct file run.
+    - If there is no `.aip` extension, then:
+        - `.../agent.aip` will be executed if it exists.
+        - or `.../agent/main.aip` will be executed if it exists.
+- **AIPack** agents are simple `.aip` files that can be placed anywhere on disk.
+    - e.g., `aipack run ./my-path/to/my-agent.aip ...`
+- **Multi AI Provider / Models** - **AIPack** uses [genai](https://crates.io/crates/genai) and therefore supports providers like OpenAI, Anthropic, Gemini, Groq, Ollama, Cohere, and more.
 - **Lua** is used for all scripting (thanks to the great [mlua](https://crates.io/crates/mlua) crate).
 - **Handlebars** is used for all prompt templating (thanks to the great Rust native [handlebars](https://crates.io/crates/handlebars) crate).
 
 ### Multi Stage
 
-A single **aipack** file may comprise any of the following stages.
+A single **AIPack** file may comprise any of the following stages.
 
-| Stage           | Language       | Description                                                                                                      |
-|-----------------|----------------|------------------------------------------------------------------------------------------------------------------|
-| `# Before All`  | **Lua**        | Reshape/generate inputs and add global data to the command scope (the "map" part of map/reduce).                  |
-| `# Data`        | **Lua**        | Gather additional data per input and return it for the next stages.                                             |
-| `# System`      | **Handlebars** | Customize the system prompt using data from `# Before All` and `# Data`.                                           |
-| `# Instruction` | **Handlebars** | Customize the instruction prompt using data from `# Before All` and `# Data`.                                      |
-| `# Assistant`   | **Handlebars** | Optional for special customizations, such as the "Jedi Mind Trick."                                              |
-| `# Output`      | **Lua**        | Processes the `ai_response` from the LLM. If not defined, `ai_response.content` is output to the terminal.         |
+| Stage           | Language       | Description                                                                                                                      |
+|-----------------|----------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `# Before All`  | **Lua**        | Reshape/generate inputs and add global data to the command scope (the "map" part of map/reduce).                                 |
+| `# Data`        | **Lua**        | Gather additional data per input and return it for the next stages.                                                              |
+| `# System`      | **Handlebars** | Customize the system prompt using data from `# Before All` and `# Data`.                                                         |
+| `# Instruction` | **Handlebars** | Customize the instruction prompt using data from `# Before All` and `# Data`.                                                    |
+| `# Assistant`   | **Handlebars** | Optional for special customizations, such as the "Jedi Mind Trick."                                                              |
+| `# Output`      | **Lua**        | Processes the `ai_response` from the LLM. If not defined, `ai_response.content` is output to the terminal.                       |
 | `# After All`   | **Lua**        | Called with `inputs` and `outputs` for post-processing after all input processing is complete (the "reduce" part of map/reduce). |
 
 - `# Before All` and `# After All` act like the **map** and **reduce** steps, running before and after the main input processing loop, respectively.
@@ -217,7 +216,7 @@ A single **aipack** file may comprise any of the following stages.
 
 ## [aipack doc](_init/base/pack/installed/core/doc/README.md)
 
-See the aipack documentation at **[core/doc/README.md](_init/base/pack/installed/core/doc/README.md)** (with the [Lua modules doc](_init/base/pack/installed/core/doc/lua.md)).
+See the AIPack documentation at **[core/doc/README.md](_init/base/pack/installed/core/doc/README.md)** (with the [Lua modules doc](_init/base/pack/installed/core/doc/lua.md)).
 
 You can also run the `ask-aipack` agent.
 

@@ -11,7 +11,6 @@ pub mod aip_hash; // Added new hash module
 pub mod aip_hbs;
 pub mod aip_html;
 pub mod aip_json;
-pub mod aip_toml;
 pub mod aip_lua;
 pub mod aip_md;
 pub mod aip_path;
@@ -22,6 +21,7 @@ pub mod aip_shape;
 pub mod aip_tag;
 pub mod aip_text;
 pub mod aip_time;
+pub mod aip_toml;
 pub mod aip_uuid;
 pub mod aip_web;
 
