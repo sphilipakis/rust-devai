@@ -1,5 +1,3 @@
-#![allow(clippy::needless_borrow)] // keep module stable during refactor
-
 //! Defines the `aip.csv` module, used in the lua engine.
 //!
 //!
@@ -36,9 +34,9 @@
 //! - When an option expecting a character is given a multi-character string, only the first byte is used.
 
 use crate::runtime::Runtime;
-use crate::types::CsvOptions;
+use crate::types::{CsvContent, CsvOptions};
 use crate::{Error, Result};
-use mlua::{FromLua as _, Lua, Table, Value};
+use mlua::{FromLua as _, IntoLua as _, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
@@ -53,22 +51,6 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 	Ok(table)
 }
-
-// region:    --- Helpers
-
-fn string_record_to_lua_array(lua: &Lua, rec: &csv::StringRecord) -> mlua::Result<Table> {
-	let t = lua.create_table()?;
-	for (i, field) in rec.iter().enumerate() {
-		t.set(i + 1, field)?;
-	}
-	Ok(t)
-}
-
-fn is_record_empty(rec: &csv::StringRecord) -> bool {
-	rec.iter().all(|s| s.trim().is_empty())
-}
-
-// endregion: --- Helpers
 
 // region:    --- Lua Fns
 
@@ -115,6 +97,8 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 /// -- API Signature
 /// aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }
 /// ```
+/// The returned table matches the `CsvContent` structure (same as `aip.file.load_csv`),
+/// including the `_type = "CsvContent"` marker and using an empty `headers` array when `has_header` is false.
 fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Result<Value> {
 	let opts = match opts_val {
 		Some(v) => CsvOptions::from_lua(v, lua)?,
@@ -130,37 +114,53 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 
 	let mut rdr = builder.from_reader(content.as_bytes());
 
-	let res_tbl = lua.create_table()?;
+	let mut headers = Vec::new();
 
 	// headers
 	if has_header {
 		let hdr = rdr
 			.headers()
 			.map_err(|e| Error::custom(format!("aip.csv.parse failed to read headers. {e}")))?;
-		let headers_tbl = string_record_to_lua_array(lua, hdr)?;
-		res_tbl.set("headers", headers_tbl)?;
+		headers = string_record_to_vec(hdr);
 	}
 
 	// rows
-	let rows_tbl = lua.create_table()?;
-	let mut idx = 1usize;
+	let mut rows = Vec::new();
 
 	for rec_res in rdr.records() {
 		let rec = rec_res.map_err(|e| Error::custom(format!("aip.csv.parse failed to read record. {e}")))?;
 		if skip_empty && is_record_empty(&rec) {
 			continue;
 		}
-		let arr = string_record_to_lua_array(lua, &rec)?;
-		rows_tbl.set(idx, arr)?;
-		idx += 1;
+		rows.push(string_record_to_vec(&rec));
 	}
 
-	res_tbl.set("rows", rows_tbl)?;
+	let csv_content = CsvContent { headers, rows };
 
-	Ok(Value::Table(res_tbl))
+	csv_content.into_lua(lua)
 }
 
 // endregion: --- Lua Fns
+
+// region:    --- Support
+
+fn string_record_to_lua_array(lua: &Lua, rec: &csv::StringRecord) -> mlua::Result<Table> {
+	let t = lua.create_table()?;
+	for (i, field) in rec.iter().enumerate() {
+		t.set(i + 1, field)?;
+	}
+	Ok(t)
+}
+
+fn string_record_to_vec(rec: &csv::StringRecord) -> Vec<String> {
+	rec.iter().map(|s| s.to_string()).collect()
+}
+
+fn is_record_empty(rec: &csv::StringRecord) -> bool {
+	rec.iter().all(|s| s.trim().is_empty())
+}
+
+// endregion: --- Support
 
 // region:    --- Tests
 

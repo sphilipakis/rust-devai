@@ -70,6 +70,7 @@ Important notes:
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
 - [`SaveOptions`](#saveoptions) (for `aip.file.save(...)`)
 - [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
+- [`CsvContent`](#csvcontent) (for `aip.file.load_csv`)
 
 
 #### AI Response
@@ -1077,13 +1078,7 @@ Loads the CSV file at `path` (relative to workspace), parses it according to the
 
 #### Returns
 
-- `table`: A table containing:
-  ```ts
-  {
-    headers: string[],  // Header row (empty array if has_header is false)
-    rows: string[][] // All data rows (excluding headers if has_header is true)
-  }
-  ```
+- `CsvContent`: Matches the [CsvContent](#csvcontent) structure (same as `aip.file.load_csv`), including the `_type = "CsvContent"` marker alongside the `headers` and `rows` fields.
 
 #### Example
 
@@ -5233,6 +5228,18 @@ Options table used for specifying the destination path in functions like `aip.fi
   base_dir?: string,  // Base directory for resolving the destination
   file_name?: string, // Custom file name for the output
   suffix?: string     // Suffix appended to the source file stem
+}
+```
+
+### CsvContent
+
+Represents the table returned by `aip.file.load_csv`, which includes the `_type = "CsvContent"` marker, the parsed `headers` (empty when no header row was requested), and the `rows` matrix.
+
+```ts
+{
+  _type: "CsvContent",
+  headers: string[],
+  rows: string[][]
 }
 ```
 
