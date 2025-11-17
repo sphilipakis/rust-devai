@@ -16,7 +16,7 @@
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::lua_value_ext::LuaValueExt;
+use crate::script::LuaValueExt;
 
 use crate::types::{DestOptions, FileInfo};
 use mlua::{FromLua as _, IntoLua, Lua, Value};

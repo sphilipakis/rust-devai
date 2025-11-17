@@ -20,9 +20,8 @@ use super::support::{
 	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence,
 };
 use crate::Error;
+use crate::script::NullSentinel;
 use mlua::{Lua, Table, Value};
-
-use crate::script::lua_null::NullSentinel;
 
 /// ## Lua Documentation
 ///

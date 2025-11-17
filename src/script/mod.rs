@@ -8,20 +8,16 @@
 
 mod aip_modules;
 mod error_lua_support;
-mod lua_null;
-mod lua_w_intos;
+mod lua_helpers;
 mod support;
 
 mod aipack_custom;
 mod lua_engine;
-mod lua_json;
 mod lua_uc;
-mod lua_value_ext;
 
 pub use aipack_custom::*;
 pub use lua_engine::*;
-pub use lua_json::*;
-pub use lua_value_ext::LuaValueExt;
+pub use lua_helpers::*;
 
 #[cfg(test)] // Needed for test only (beside this script module)
 pub use support::process_lua_eval_result;

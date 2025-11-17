@@ -1,4 +1,4 @@
-use crate::script::lua_null::NullSentinel;
+use crate::script::NullSentinel;
 use crate::{Error, Result};
 use mlua::{Lua, LuaSerdeExt as _};
 

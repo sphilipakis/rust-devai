@@ -11,7 +11,7 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::lua_null::NullSentinel;
+use crate::script::NullSentinel;
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
