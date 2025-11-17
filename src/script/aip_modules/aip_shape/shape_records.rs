@@ -17,12 +17,12 @@
 //! - `aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }`
 //!
 
-use super::support::{
-	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence,
-};
 use crate::Error;
 use crate::script::NullSentinel;
-use mlua::{Lua, Table, Value};
+use crate::script::support::{
+	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence, expect_table,
+};
+use mlua::{Lua, Value};
 
 /// ## Lua Documentation
 ///
@@ -63,14 +63,14 @@ use mlua::{Lua, Table, Value};
 /// - Extra names without corresponding values are ignored.
 /// - Extra values without corresponding names are ignored.
 ///
-pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> {
+pub fn to_record(lua: &Lua, names: Value, values: Value) -> mlua::Result<Value> {
 	// NOTE: Here we keep the data in the Lua space as there is no need to make them cross boundaries.
 
 	// Collect names as strings with validation
 	let name_vec = collect_string_sequence(names, "aip.shape.to_record", "Column names")?;
 
 	// Collect values as arbitrary Lua values
-	let vals_vec = collect_sequence_values(values)?;
+	let vals_vec = collect_sequence_values(values, "aip.shape.to_record", "Value list")?;
 
 	let limit = core::cmp::min(name_vec.len(), vals_vec.len());
 
@@ -117,15 +117,16 @@ pub fn to_record(lua: &Lua, names: Table, values: Table) -> mlua::Result<Value> 
 /// --   { id = 2, name = "Bob"   },
 /// -- }
 /// ```
-pub fn to_records(lua: &Lua, names: Table, value_lists: Table) -> mlua::Result<Value> {
+pub fn to_records(lua: &Lua, names: Value, value_lists: Value) -> mlua::Result<Value> {
 	// Validate and collect column names as strings
 	let name_vec = collect_string_sequence(names, "aip.shape.to_records", "Column names")?;
+	let rows_tbl = expect_table(value_lists, "aip.shape.to_records", "Rows")?;
 
 	// Build records
 	let out = lua.create_table()?;
 	let mut out_idx = 1usize;
 
-	for row_val in value_lists.sequence_values::<Value>() {
+	for row_val in rows_tbl.sequence_values::<Value>() {
 		let row_val = row_val?;
 		let row_tbl = match row_val {
 			Value::Table(t) => t,
@@ -139,7 +140,7 @@ pub fn to_records(lua: &Lua, names: Table, value_lists: Table) -> mlua::Result<V
 		};
 
 		// Collect row values
-		let vals_vec = collect_sequence_values(row_tbl)?;
+		let vals_vec = collect_sequence_values(Value::Table(row_tbl), "aip.shape.to_records", "Row values")?;
 
 		let limit = core::cmp::min(name_vec.len(), vals_vec.len());
 		let rec = lua.create_table()?;
@@ -181,26 +182,12 @@ pub fn to_records(lua: &Lua, names: Table, value_lists: Table) -> mlua::Result<V
 /// local v2  = aip.shape.record_to_values(rec, { "name", "id", "missing" })
 /// -- { "Alice", 1, null }
 /// ```
-pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua::Result<Value> {
+pub fn record_to_values(lua: &Lua, rec: Value, names_opt: Option<Value>) -> mlua::Result<Value> {
+	let rec = expect_table(rec, "aip.shape.record_to_values", "Record")?;
 	let out = lua.create_table()?;
 
 	match names_opt {
-		Some(names) => {
-			let mut idx = 1usize;
-			let ordered_names = collect_string_sequence(names, "aip.shape.record_to_values", "Column names")?;
-
-			for name_str in ordered_names {
-				let val: Value = rec.get(name_str.clone())?;
-				if let Value::Nil = val {
-					let na = lua.create_userdata(NullSentinel)?;
-					out.set(idx, na)?;
-				} else {
-					out.set(idx, val)?;
-				}
-				idx += 1;
-			}
-		}
-		None => {
+		Some(Value::Nil) | None => {
 			// Collect string keys and sort them
 			let mut keys: Vec<String> = Vec::new();
 			for pair in rec.pairs::<Value, Value>() {
@@ -214,6 +201,21 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 			for (i, k) in keys.iter().enumerate() {
 				let v: Value = rec.get(k.as_str())?;
 				out.set(i + 1, v)?;
+			}
+		}
+		Some(names) => {
+			let mut idx = 1usize;
+			let ordered_names = collect_string_sequence(names, "aip.shape.record_to_values", "Column names")?;
+
+			for name_str in ordered_names {
+				let val: Value = rec.get(name_str.clone())?;
+				if let Value::Nil = val {
+					let na = lua.create_userdata(NullSentinel)?;
+					out.set(idx, na)?;
+				} else {
+					out.set(idx, val)?;
+				}
+				idx += 1;
 			}
 		}
 	}
@@ -248,8 +250,9 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 ///// --   { 2, "Bob"   },
 ///// -- }
 ///// ```
-pub fn records_to_value_lists(lua: &Lua, recs: Table, names: Table) -> mlua::Result<Value> {
+pub fn records_to_value_lists(lua: &Lua, recs: Value, names: Value) -> mlua::Result<Value> {
 	let ordered_names = collect_string_sequence(names, "aip.shape.records_to_value_lists", "Column names")?;
+	let recs = expect_table(recs, "aip.shape.records_to_value_lists", "Records")?;
 
 	let out = lua.create_table()?;
 	let mut row_idx = 1usize;
@@ -312,7 +315,9 @@ pub fn records_to_value_lists(lua: &Lua, recs: Table, names: Table) -> mlua::Res
 /// --   { id = 3, name = "Cara",  email = "c@x.com" },
 /// -- }
 /// ```
-pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
+pub fn columnar_to_records(lua: &Lua, cols: Value) -> mlua::Result<Value> {
+	let cols = expect_table(cols, "aip.shape.columnar_to_records", "Columns")?;
+
 	// Collect column names and their values (as vectors)
 	let mut col_names: Vec<mlua::String> = Vec::new();
 	let mut col_values: Vec<Vec<Value>> = Vec::new();
@@ -347,7 +352,8 @@ pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 		};
 
 		// Collect sequence values
-		let vec_vals = collect_sequence_values(tbl)?;
+		let col_ctx = format!("aip.shape.columnar_to_records - Column '{}'", key_str.to_string_lossy());
+		let vec_vals = collect_sequence_values(Value::Table(tbl), &col_ctx, "Column values")?;
 		let len = vec_vals.len();
 
 		// Length consistency check
@@ -414,7 +420,7 @@ pub fn columnar_to_records(lua: &Lua, cols: Table) -> mlua::Result<Value> {
 /// --   name = { "Alice", "Bob" },
 /// -- }
 /// ```
-pub fn records_to_columnar(lua: &Lua, recs: Table) -> mlua::Result<Value> {
+pub fn records_to_columnar(lua: &Lua, recs: Value) -> mlua::Result<Value> {
 	// Collect rows as tables, validating each entry
 	let (rows, ordered_keys) = collect_rows_and_intersection(recs, "aip.shape.records_to_columnar")?;
 

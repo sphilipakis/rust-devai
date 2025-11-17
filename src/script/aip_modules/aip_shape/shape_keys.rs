@@ -14,8 +14,8 @@
 //!
 //! - `aip.shape.extract_keys(rec: table, keys: string[]): table`
 
-use super::support::collect_string_sequence;
-use mlua::{Lua, Table, Value};
+use crate::script::support::{collect_string_sequence, expect_table};
+use mlua::{Lua, Value};
 
 /// ## Lua Documentation
 /// ---
@@ -36,7 +36,8 @@ use mlua::{Lua, Table, Value};
 /// local out  = aip.shape.select_keys(rec, keys)
 /// -- out == { id = 1, email = "a@x.com" }
 /// ```
-pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+pub fn select_keys(lua: &Lua, rec: Value, keys: Value) -> mlua::Result<Value> {
+	let rec = expect_table(rec, "aip.shape.select_keys", "Record")?;
 	let key_names = collect_string_sequence(keys, "aip.shape.select_keys", "Key names")?;
 	let out = lua.create_table()?;
 
@@ -72,7 +73,8 @@ pub fn select_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 /// -- out == { id = 1, name = "Alice" }
 /// -- rec is unchanged
 /// ```
-pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+pub fn omit_keys(lua: &Lua, rec: Value, keys: Value) -> mlua::Result<Value> {
+	let rec = expect_table(rec, "aip.shape.omit_keys", "Record")?;
 	use std::collections::HashSet;
 
 	let key_names = collect_string_sequence(keys, "aip.shape.omit_keys", "Key names")?;
@@ -123,7 +125,8 @@ pub fn omit_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 /// -- n   == 1
 /// -- rec == { id = 1, name = "Alice" }
 /// ```
-pub fn remove_keys(_lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+pub fn remove_keys(_lua: &Lua, rec: Value, keys: Value) -> mlua::Result<Value> {
+	let rec = expect_table(rec, "aip.shape.remove_keys", "Record")?;
 	let key_names = collect_string_sequence(keys, "aip.shape.remove_keys", "Key names")?;
 	let mut removed: i64 = 0;
 
@@ -160,7 +163,8 @@ pub fn remove_keys(_lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
 /// -- picked == { id = 1, email = "a@x.com" }
 /// -- rec    == { name = "Alice" }
 /// ```
-pub fn extract_keys(lua: &Lua, rec: Table, keys: Table) -> mlua::Result<Value> {
+pub fn extract_keys(lua: &Lua, rec: Value, keys: Value) -> mlua::Result<Value> {
+	let rec = expect_table(rec, "aip.shape.extract_keys", "Record")?;
 	let key_names = collect_string_sequence(keys, "aip.shape.extract_keys", "Key names")?;
 	let out = lua.create_table()?;
 
