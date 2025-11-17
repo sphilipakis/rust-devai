@@ -257,6 +257,58 @@ async fn test_lua_aip_shape_record_to_values_with_names_nulls() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_lua_aip_shape_records_to_value_lists_auto_order() -> Result<()> {
+	// -- Setup & Fixtures
+	let lua = setup_lua(init_module, "shape").await?;
+	let script = r#"
+            local recs = {
+              { id = 1, name = "Alice" },
+              { id = 2, name = "Bob" },
+            }
+            local names = { "id", "name" }
+            return aip.shape.records_to_value_lists(recs, names)
+        "#;
+
+	// -- Exec
+	let res = eval_lua(&lua, script)?;
+
+	// -- Check
+	let expected = json!([
+		[1, "Alice"],
+		[2, "Bob"]
+	]);
+	assert_eq!(res, expected);
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_lua_aip_shape_records_to_value_lists_with_names_nulls() -> Result<()> {
+	// -- Setup & Fixtures
+	let lua = setup_lua(init_module, "shape").await?;
+	let script = r#"
+            local recs = {
+              { id = 1, name = "Alice" },
+              { id = 2 },
+            }
+            local names = { "name", "id", "missing" }
+            return aip.shape.records_to_value_lists(recs, names)
+        "#;
+
+	// -- Exec
+	let res = eval_lua(&lua, script)?;
+
+	// -- Check
+	let expected = json!([
+		["Alice", 1, null],
+		[null, 2, null]
+	]);
+	assert_eq!(res, expected);
+
+	Ok(())
+}
+
+#[tokio::test]
 async fn test_lua_aip_shape_columnar_to_records_simple() -> Result<()> {
 	// -- Setup & Fixtures
 	let lua = setup_lua(init_module, "shape").await?;

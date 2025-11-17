@@ -12,6 +12,7 @@
 //! - `aip.shape.to_record(names: string[], values: any[]) -> object`
 //! - `aip.shape.to_records(names: string[], rows: any[][]) -> object[]`
 //! - `aip.shape.record_to_values(record: object, names?: string[]): any[]`
+//! - `aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]`
 //! - `aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]`
 //! - `aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }`
 //!
@@ -215,6 +216,69 @@ pub fn record_to_values(lua: &Lua, rec: Table, names_opt: Option<Table>) -> mlua
 				out.set(i + 1, v)?;
 			}
 		}
+	}
+
+	Ok(Value::Table(out))
+}
+
+///// ## Lua Documentation
+/////
+///// Convert multiple records into lists of values, mirroring `aip.shape.record_to_values`.
+/////
+///// ```lua
+///// -- API Signature
+///// aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]
+///// ```
+/////
+///// - `names` is required and defines the order of the values for each row.
+///// - Missing keys yield `null` sentinel entries in the result list.
+///// - If `names` contains a non-string entry, an error is returned.
+///// - Each entry in `records` must be a table (object), otherwise an error is returned.
+/////
+///// ### Example
+/////
+///// ```lua
+///// local recs = {
+/////   { id = 1, name = "Alice" },
+/////   { id = 2, name = "Bob"   },
+///// }
+///// local rows = aip.shape.records_to_value_lists(recs, { "id", "name" })
+///// -- rows == {
+///// --   { 1, "Alice" },
+///// --   { 2, "Bob"   },
+///// -- }
+///// ```
+pub fn records_to_value_lists(lua: &Lua, recs: Table, names: Table) -> mlua::Result<Value> {
+	let ordered_names = collect_string_sequence(names, "aip.shape.records_to_value_lists", "Column names")?;
+
+	let out = lua.create_table()?;
+	let mut row_idx = 1usize;
+
+	for rec_val in recs.sequence_values::<Value>() {
+		let rec_tbl = match rec_val? {
+			Value::Table(t) => t,
+			other => {
+				return Err(Error::custom(format!(
+					"aip.shape.records_to_value_lists - Each record must be a table. Found '{}'",
+					other.type_name()
+				))
+				.into());
+			}
+		};
+
+		let row_tbl = lua.create_table()?;
+		for (col_idx, name) in ordered_names.iter().enumerate() {
+			let val: Value = rec_tbl.get(name.clone())?;
+			if let Value::Nil = val {
+				let na = lua.create_userdata(NullSentinel)?;
+				row_tbl.set(col_idx + 1, na)?;
+			} else {
+				row_tbl.set(col_idx + 1, val)?;
+			}
+		}
+
+		out.set(row_idx, row_tbl)?;
+		row_idx += 1;
 	}
 
 	Ok(Value::Table(out))
