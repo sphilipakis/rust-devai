@@ -282,10 +282,31 @@ const FIREWORKS: ProviderPricing = ProviderPricing {
 // Define Gemini pricing
 const GEMINI_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "gemini-3-pro",
+		input_cached: Some(0.2),
+		input_normal: 2.0,
+		output_normal: 12.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-3-pro-batch",
+		input_cached: Some(0.2),
+		input_normal: 1.0,
+		output_normal: 6.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-2.5-pro",
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-pro-batch",
+		input_cached: Some(0.125),
+		input_normal: 0.625,
+		output_normal: 5.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -296,10 +317,24 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gemini-pro-latest-batch",
+		input_cached: Some(0.125),
+		input_normal: 0.625,
+		output_normal: 5.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-2.5-flash",
 		input_cached: Some(0.03),
 		input_normal: 0.3,
 		output_normal: 2.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash-batch",
+		input_cached: Some(0.03),
+		input_normal: 0.15,
+		output_normal: 1.25,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -310,10 +345,38 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gemini-flash-latest-batch",
+		input_cached: Some(0.03),
+		input_normal: 0.15,
+		output_normal: 1.25,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash-image",
+		input_cached: None,
+		input_normal: 0.3,
+		output_normal: 30.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash-image-batch",
+		input_cached: None,
+		input_normal: 0.15,
+		output_normal: 30.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-2.5-flash-lite",
 		input_cached: Some(0.01),
 		input_normal: 0.1,
 		output_normal: 0.4,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.5-flash-lite-batch",
+		input_cached: Some(0.01),
+		input_normal: 0.05,
+		output_normal: 0.2,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -324,6 +387,13 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gemini-flash-lite-latest-batch",
+		input_cached: Some(0.01),
+		input_normal: 0.05,
+		output_normal: 0.2,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-2.0-flash",
 		input_cached: Some(0.025),
 		input_normal: 0.1,
@@ -331,10 +401,24 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gemini-2.0-flash-batch",
+		input_cached: Some(0.025),
+		input_normal: 0.05,
+		output_normal: 0.2,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-2.0-flash-lite",
 		input_cached: None,
 		input_normal: 0.075,
 		output_normal: 0.3,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-2.0-flash-lite-batch",
+		input_cached: None,
+		input_normal: 0.0375,
+		output_normal: 0.15,
 		output_reasoning: None,
 	},
 	ModelPricing {
