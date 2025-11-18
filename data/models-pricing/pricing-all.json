@@ -374,6 +374,36 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.2,
+          "normal": 2
+        },
+        "name": "gemini-3-pro",
+        "output": 12,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.2,
+          "normal": 2
+        },
+        "name": "gemini-3-pro-preview",
+        "output": 12,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.2,
+          "normal": 1
+        },
+        "name": "gemini-3-pro-preview-batch",
+        "output": 6,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
@@ -385,11 +415,11 @@
         "input": {
           "cache_write": null,
           "cached": 0.125,
-          "normal": 1.25
+          "normal": 0.625
         },
-        "name": "gemini-pro-latest",
-        "output": 10,
-        "recent": true
+        "name": "gemini-2.5-pro-batch",
+        "output": 5,
+        "recent": false
       },
       {
         "input": {
@@ -405,10 +435,30 @@
         "input": {
           "cache_write": null,
           "cached": 0.03,
+          "normal": 0.15
+        },
+        "name": "gemini-2.5-flash-batch",
+        "output": 1.25,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.03,
           "normal": 0.3
         },
-        "name": "gemini-flash-latest",
+        "name": "gemini-2.5-flash-preview",
         "output": 2.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.03,
+          "normal": 0.15
+        },
+        "name": "gemini-2.5-flash-preview-batch",
+        "output": 1.25,
         "recent": true
       },
       {
@@ -425,11 +475,51 @@
         "input": {
           "cache_write": null,
           "cached": 0.01,
+          "normal": 0.05
+        },
+        "name": "gemini-2.5-flash-lite-batch",
+        "output": 0.2,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.01,
           "normal": 0.1
         },
-        "name": "gemini-flash-lite-latest",
+        "name": "gemini-2.5-flash-lite-preview",
         "output": 0.4,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.01,
+          "normal": 0.05
+        },
+        "name": "gemini-2.5-flash-lite-preview-batch",
+        "output": 0.2,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.3
+        },
+        "name": "gemini-2.5-flash-image",
+        "output": 30,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gemini-2.5-flash-image-batch",
+        "output": 30,
+        "recent": false
       },
       {
         "input": {
@@ -439,6 +529,16 @@
         },
         "name": "gemini-2.0-flash",
         "output": 0.4,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.025,
+          "normal": 0.05
+        },
+        "name": "gemini-2.0-flash-batch",
+        "output": 0.2,
         "recent": false
       },
       {
@@ -455,31 +555,71 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.15
+          "normal": 0.0375
         },
-        "name": "gemini-embedding-001",
-        "output": 0,
+        "name": "gemini-2.0-flash-lite-batch",
+        "output": 0.15,
         "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.03,
           "normal": 0.3
         },
-        "name": "gemini-robotics-er-1.5-preview",
+        "name": "gemini-flash-latest",
         "output": 2.5,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.03,
+          "normal": 0.15
+        },
+        "name": "gemini-flash-latest-batch",
+        "output": 1.25,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.125,
           "normal": 1.25
         },
-        "name": "gemini-2.5-computer-use-preview",
+        "name": "gemini-pro-latest",
         "output": 10,
-        "recent": false
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.125,
+          "normal": 0.625
+        },
+        "name": "gemini-pro-latest-batch",
+        "output": 5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.01,
+          "normal": 0.1
+        },
+        "name": "gemini-flash-lite-latest",
+        "output": 0.4,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.01,
+          "normal": 0.05
+        },
+        "name": "gemini-flash-lite-latest-batch",
+        "output": 0.2,
+        "recent": true
       }
     ]
   },
@@ -641,7 +781,7 @@
     "models": [
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
@@ -651,17 +791,17 @@
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
         "name": "gpt-5",
         "output": 10,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
-          "cache_write": 0.025,
+          "cache_write": null,
           "cached": 0.025,
           "normal": 0.25
         },
@@ -671,7 +811,7 @@
       },
       {
         "input": {
-          "cache_write": 0.005,
+          "cache_write": null,
           "cached": 0.005,
           "normal": 0.05
         },
@@ -681,7 +821,7 @@
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
@@ -691,7 +831,7 @@
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
@@ -701,17 +841,17 @@
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
         "name": "gpt-5.1-codex",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
@@ -731,7 +871,7 @@
       },
       {
         "input": {
-          "cache_write": 0.5,
+          "cache_write": null,
           "cached": 0.5,
           "normal": 2
         },
@@ -741,7 +881,7 @@
       },
       {
         "input": {
-          "cache_write": 0.1,
+          "cache_write": null,
           "cached": 0.1,
           "normal": 0.4
         },
@@ -751,7 +891,7 @@
       },
       {
         "input": {
-          "cache_write": 0.025,
+          "cache_write": null,
           "cached": 0.025,
           "normal": 0.1
         },
@@ -761,7 +901,7 @@
       },
       {
         "input": {
-          "cache_write": 1.25,
+          "cache_write": null,
           "cached": 1.25,
           "normal": 2.5
         },
@@ -771,7 +911,7 @@
       },
       {
         "input": {
-          "cache_write": 0.075,
+          "cache_write": null,
           "cached": 0.075,
           "normal": 0.15
         },
@@ -781,7 +921,7 @@
       },
       {
         "input": {
-          "cache_write": 0.4,
+          "cache_write": null,
           "cached": 0.4,
           "normal": 4
         },
@@ -791,7 +931,7 @@
       },
       {
         "input": {
-          "cache_write": 0.06,
+          "cache_write": null,
           "cached": 0.06,
           "normal": 0.6
         },
@@ -801,7 +941,7 @@
       },
       {
         "input": {
-          "cache_write": 2.5,
+          "cache_write": null,
           "cached": 2.5,
           "normal": 5
         },
@@ -811,7 +951,7 @@
       },
       {
         "input": {
-          "cache_write": 0.3,
+          "cache_write": null,
           "cached": 0.3,
           "normal": 0.6
         },
@@ -821,7 +961,47 @@
       },
       {
         "input": {
-          "cache_write": 7.5,
+          "cache_write": null,
+          "cached": null,
+          "normal": 2.5
+        },
+        "name": "gpt-audio",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.6
+        },
+        "name": "gpt-audio-mini",
+        "output": 2.4,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2.5
+        },
+        "name": "gpt-4o-audio-preview",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gpt-4o-mini-audio-preview",
+        "output": 0.6,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 7.5,
           "normal": 15
         },
@@ -851,7 +1031,7 @@
       },
       {
         "input": {
-          "cache_write": 0.5,
+          "cache_write": null,
           "cached": 0.5,
           "normal": 2
         },
@@ -861,7 +1041,7 @@
       },
       {
         "input": {
-          "cache_write": 2.5,
+          "cache_write": null,
           "cached": 2.5,
           "normal": 10
         },
@@ -871,7 +1051,7 @@
       },
       {
         "input": {
-          "cache_write": 0.275,
+          "cache_write": null,
           "cached": 0.275,
           "normal": 1.1
         },
@@ -881,7 +1061,7 @@
       },
       {
         "input": {
-          "cache_write": 0.5,
+          "cache_write": null,
           "cached": 0.5,
           "normal": 2
         },
@@ -891,7 +1071,7 @@
       },
       {
         "input": {
-          "cache_write": 0.55,
+          "cache_write": null,
           "cached": 0.55,
           "normal": 1.1
         },
@@ -901,7 +1081,7 @@
       },
       {
         "input": {
-          "cache_write": 0.55,
+          "cache_write": null,
           "cached": 0.55,
           "normal": 1.1
         },
@@ -911,17 +1091,17 @@
       },
       {
         "input": {
-          "cache_write": 0.025,
+          "cache_write": null,
           "cached": 0.025,
           "normal": 0.25
         },
         "name": "gpt-5.1-codex-mini",
         "output": 2,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
-          "cache_write": 0.375,
+          "cache_write": null,
           "cached": 0.375,
           "normal": 1.5
         },
@@ -931,7 +1111,7 @@
       },
       {
         "input": {
-          "cache_write": 0.125,
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
