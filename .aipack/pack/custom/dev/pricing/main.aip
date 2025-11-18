@@ -25,9 +25,9 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = true,  url = ""},
+   {name = "openai",    do_json = false,  url = ""},
    
-   {name = "gemini",    do_json = false,  url = ""},
+   {name = "gemini",    do_json = true,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
    {name = "anthropic", do_json = false,  url = ""},
 
@@ -132,10 +132,11 @@ From this content for the {{data.provider}}:
     - For gemini models there is no `caching write`, so cache value is for the `.cached` property. 
     - For Gemini models, do not add the audio or tts model.
     - For gemini models, keep the `.` in the name.
-    - For Gemini models, `gemini-2.5-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
+    - For Gemini models, `gemini-3-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
     - For Gemini models, for `gemini-2.5-pro` remove the release number after pro like the `-09...` same for other gemini models. Just have the main one. 
-    - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. Then all non `-latest` have `recent: false` and those with `-latest` suffix have `recent: true`
-- For deepseek model, ignore the discound price
+    - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. 
+    - For gemini models all `-latest` and `gemini-3...` are marked with `recent: true` and and the rest are false.
+    - For gemini models, only add the model that starts with `gemini...`
 - for OpenAI models
     - for OpenAI modelsDo not add the gpt-image-1 or audio models
     - for OpenAI models Only take the "standards" pricing,
