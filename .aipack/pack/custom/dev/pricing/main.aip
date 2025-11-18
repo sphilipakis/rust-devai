@@ -25,9 +25,9 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = false,  url = ""},
+   {name = "openai",    do_json = true,  url = ""},
    
-   {name = "gemini",    do_json = true,  url = ""},
+   {name = "gemini",    do_json = false,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
    {name = "anthropic", do_json = false,  url = ""},
 
@@ -140,12 +140,12 @@ From this content for the {{data.provider}}:
 - for OpenAI models
     - for OpenAI modelsDo not add the gpt-image-1 or audio models
     - for OpenAI models Only take the "standards" pricing,
+    - For OpenAI Models, set `cache_write: null` when not defined. 
     - for OpenAI models ignore the legacy models
-    - For OpenAI Models, all models starting with `gpt-5.1...` are `recent: true` everything else is `recent: false`. So any model starting with `gpt-5-` will e `recent: false`
+    - For OpenAI Models, all models starting with `gpt-5.1` are `recent: true` everything else is `recent: false`. So any model starting with `gpt-5-` will be `recent: false` for example
     - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
     - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
     - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 
-    - For openAI models, only gpt-5 has `recent: true`, all other model `recent: false`
 - Do not put in code block, just the raw json, pretty formatted.
 - If caching price not available, set to `null`
 - If price has text and audio, take the text price

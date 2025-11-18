@@ -797,7 +797,7 @@
         },
         "name": "gpt-5",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -847,7 +847,7 @@
         },
         "name": "gpt-5.1-codex",
         "output": 10,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -982,26 +982,6 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
-          "normal": 2.5
-        },
-        "name": "gpt-4o-audio-preview",
-        "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "gpt-4o-mini-audio-preview",
-        "output": 0.6,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": 7.5,
           "normal": 15
         },
@@ -1097,7 +1077,7 @@
         },
         "name": "gpt-5.1-codex-mini",
         "output": 2,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
