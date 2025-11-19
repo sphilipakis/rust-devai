@@ -2709,6 +2709,10 @@ CSV parsing and processing functions for both individual rows and complete CSV c
 aip.csv.parse_row(row: string, options?: CsvOptions): string[]
 
 aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
+
+aip.csv.values_to_row(values: any[]): string
+
+aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
 ```
 
 ### aip.csv.parse_row
@@ -2800,6 +2804,70 @@ local result_no_headers = aip.csv.parse("a,b,c\n1,2,3", {has_header = false})
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if the content cannot be parsed or options are invalid.
+
+### aip.csv.values_to_row
+
+Converts a list of Lua values into a single CSV row string.
+
+```lua
+-- API Signature
+aip.csv.values_to_row(values: any[]): string
+```
+
+Each entry in `values` can be a string, number, boolean, `nil`, the AIPack `null` sentinel, or a table.
+Tables are converted to JSON strings before being written. `nil` and `null` entries become empty fields.
+
+#### Arguments
+
+- `values: any[]`: Lua list of values to serialize into a CSV row.
+
+#### Returns
+
+- `string`: A CSV-formatted row string following RFC 4180 quoting rules.
+
+#### Example
+
+```lua
+local row = aip.csv.values_to_row({"a", 123, true, nil, { foo = "bar" }})
+-- row == "a,123,true,,{\"foo\":\"bar\"}"
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if an unsupported type (e.g., function, thread) is encountered or serialization fails.
+
+### aip.csv.value_lists_to_rows
+
+Converts a list of value lists into a list of CSV row strings.
+
+```lua
+-- API Signature
+aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
+```
+
+Uses `aip.csv.values_to_row` for each inner list and returns all resulting CSV rows.
+
+#### Arguments
+
+- `value_lists: any[][]`: Lua list of lists representing rows. Each inner list follows the same type rules as `aip.csv.values_to_row`.
+
+#### Returns
+
+- `string[]`: Lua list of CSV-formatted row strings.
+
+#### Example
+
+```lua
+local rows = aip.csv.value_lists_to_rows({
+  {"a", 1},
+  {"b,c", 2}
+})
+-- rows == { "a,1", "\"b,c\",2" }
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if `value_lists` is not a table, an entry is not a list, or any contained value cannot be serialized.
 
 ## aip.json
 

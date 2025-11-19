@@ -11,8 +11,9 @@
 //! ### Functions
 //!
 //! - `aip.csv.parse_row(row: string, options?: CsvOptions): string[]`
-//!
 //! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }`
+//! - `aip.csv.values_to_row(values: any[]): string`
+//! - `aip.csv.value_lists_to_rows(value_lists: any[][]): string[]`
 //!
 //! ### Related Types
 //!
@@ -48,10 +49,12 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let parse_fn =
 		lua.create_function(|lua, (content, opts): (String, Option<Value>)| lua_parse(lua, content, opts))?;
 	let values_to_row_fn = lua.create_function(|lua, values: Value| lua_values_to_row(lua, values))?;
+	let value_lists_to_rows_fn = lua.create_function(|lua, lists: Value| lua_value_lists_to_rows(lua, lists))?;
 
 	table.set("parse_row", parse_row_fn)?;
 	table.set("parse", parse_fn)?;
 	table.set("values_to_row", values_to_row_fn)?;
+	table.set("value_lists_to_rows", value_lists_to_rows_fn)?;
 
 	Ok(table)
 }
@@ -122,12 +125,42 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 ///   - Tables are converted to JSON strings.
 ///   - Nil (and null sentinel) are converted to empty strings.
 fn lua_values_to_row(_lua: &Lua, values: Value) -> mlua::Result<String> {
-	let table = match values {
+	values_to_row_inner(values, "aip.csv.values_to_row")
+}
+
+/// ## Lua Documentation
+///
+/// Converts a list of list of values into a list of CSV row strings.
+///
+/// ```lua
+/// -- API Signature
+/// aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
+/// ```
+fn lua_value_lists_to_rows(_lua: &Lua, value_lists: Value) -> mlua::Result<Vec<String>> {
+	let table = match value_lists {
 		Value::Table(t) => t,
 		_ => {
 			return Err(mlua::Error::external(
-				"aip.csv.values_to_row - values must be a table (list)",
+				"aip.csv.value_lists_to_rows - value_lists must be a table (list of lists)",
 			));
+		}
+	};
+
+	let mut rows = Vec::new();
+	for (idx, item) in table.sequence_values::<Value>().enumerate() {
+		let item = item?;
+		let row = values_to_row_inner(item, "aip.csv.value_lists_to_rows")
+			.map_err(|e| mlua::Error::external(format!("Row {}: {}", idx + 1, e)))?;
+		rows.push(row);
+	}
+	Ok(rows)
+}
+
+fn values_to_row_inner(values: Value, ctx: &str) -> mlua::Result<String> {
+	let table = match values {
+		Value::Table(t) => t,
+		_ => {
+			return Err(mlua::Error::external(format!("{ctx} - values must be a table (list)")));
 		}
 	};
 
@@ -149,7 +182,7 @@ fn lua_values_to_row(_lua: &Lua, values: Value) -> mlua::Result<String> {
 			}
 			other => {
 				return Err(mlua::Error::external(format!(
-					"aip.csv.values_to_row - unsupported value type '{}'",
+					"{ctx} - unsupported value type '{}'",
 					other.type_name()
 				)));
 			}
@@ -269,6 +302,30 @@ Jane,25
 		assert!(res.is_err());
 		let err = res.err().unwrap();
 		assert!(err.to_string().contains("unsupported value type 'function'"));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_aip_csv_value_lists_to_rows() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		let script = r#"
+			local lists = {
+				{"a", 1},
+				{"b,c", 2}
+			}
+			return aip.csv.value_lists_to_rows(lists)
+		"#;
+		let res = eval_lua(&lua, script)?;
+		let rows = res.as_array().ok_or("not an array")?;
+		assert_eq!(rows.len(), 2);
+
+		let r1 = rows[0].as_str().ok_or("Should have at least one row")?;
+		assert_eq!(r1, "a,1");
+
+		let r2 = rows[1].as_str().ok_or("Should have second row")?;
+		assert_eq!(r2, "\"b,c\",2");
 
 		Ok(())
 	}
