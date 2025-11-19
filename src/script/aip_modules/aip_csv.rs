@@ -33,10 +33,11 @@
 //! - `parse_row` ignores: `has_header`, `skip_empty_lines`, and `comment`.
 //! - When an option expecting a character is given a multi-character string, only the first byte is used.
 
+use crate::Result;
 use crate::runtime::Runtime;
+use crate::script::lua_helpers::lua_value_to_serde_value;
 use crate::support::W;
 use crate::types::CsvOptions;
-use crate::Result;
 use mlua::{FromLua as _, IntoLua as _, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -46,9 +47,11 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 		lua.create_function(|lua, (row, opts): (String, Option<Value>)| lua_parse_row(lua, row, opts))?;
 	let parse_fn =
 		lua.create_function(|lua, (content, opts): (String, Option<Value>)| lua_parse(lua, content, opts))?;
+	let values_to_row_fn = lua.create_function(|lua, values: Value| lua_values_to_row(lua, values))?;
 
 	table.set("parse_row", parse_row_fn)?;
 	table.set("parse", parse_fn)?;
+	table.set("values_to_row", values_to_row_fn)?;
 
 	Ok(table)
 }
@@ -106,8 +109,59 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 	csv_content.into_lua(lua)
 }
 
-// endregion: --- Lua Fns
+/// ## Lua Documentation
+///
+/// Converts a list of values into a CSV row string.
+///
+/// ```lua
+/// -- API Signature
+/// aip.csv.values_to_row(values: any[]): string
+/// ```
+///
+/// - `values`: A list of values (strings, numbers, booleans, nil, or tables).
+///   - Tables are converted to JSON strings.
+///   - Nil (and null sentinel) are converted to empty strings.
+fn lua_values_to_row(_lua: &Lua, values: Value) -> mlua::Result<String> {
+	let table = match values {
+		Value::Table(t) => t,
+		_ => {
+			return Err(mlua::Error::external(
+				"aip.csv.values_to_row - values must be a table (list)",
+			));
+		}
+	};
 
+	let mut row_values = Vec::new();
+
+	// Iterate over sequence values (1..N)
+	for value in table.sequence_values::<Value>() {
+		let value = value?;
+		let s = match value {
+			Value::String(s) => s.to_str()?.to_string(),
+			Value::Integer(i) => i.to_string(),
+			Value::Number(n) => n.to_string(),
+			Value::Boolean(b) => b.to_string(), // "true" or "false"
+			Value::Nil => "".to_string(),
+			Value::UserData(ud) if ud.is::<crate::script::NullSentinel>() => "".to_string(),
+			Value::Table(t) => {
+				let serde_val = lua_value_to_serde_value(Value::Table(t)).map_err(mlua::Error::external)?;
+				serde_json::to_string(&serde_val).map_err(mlua::Error::external)?
+			}
+			other => {
+				return Err(mlua::Error::external(format!(
+					"aip.csv.values_to_row - unsupported value type '{}'",
+					other.type_name()
+				)));
+			}
+		};
+		row_values.push(s);
+	}
+
+	let csv_row = crate::support::csvs::values_to_csv_row(&row_values).map_err(mlua::Error::external)?;
+	Ok(csv_row)
+}
+
+// endregion: --- Lua Fns
 
 // region:    --- Tests
 
@@ -157,6 +211,30 @@ Jane,25
 		assert_eq!(res.x_get_str("/rows/0/1")?, "30");
 		assert_eq!(res.x_get_str("/rows/1/0")?, "Jane");
 		assert_eq!(res.x_get_str("/rows/1/1")?, "25");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_aip_csv_values_to_row() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		// Test simple values
+		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a", 123, true, nil})"#)?;
+		let s = res.as_str().ok_or("Should be string")?;
+		assert_eq!(s, "a,123,true,");
+
+		// Test with quoting needed
+		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a,b", 'c "d"'})"#)?;
+		let s = res.as_str().ok_or("Should be string")?;
+		assert_eq!(s, "\"a,b\",\"c \"\"d\"\"\"");
+
+		// Test with table (json)
+		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a", {b=1}})"#)?;
+		let s = res.as_str().ok_or("Should be string")?;
+		// JSON for {b=1} is {"b":1} usually
+		assert!(s.starts_with("a,"));
+		assert!(s.contains(r#"{""b"":1}"#));
 
 		Ok(())
 	}

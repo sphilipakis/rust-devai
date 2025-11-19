@@ -2,6 +2,34 @@ use crate::types::{CsvContent, CsvOptions};
 use crate::{Error, Result};
 use std::path::Path;
 
+pub fn values_to_csv_row(values: &[String]) -> Result<String> {
+	let mut wtr = csv::WriterBuilder::new().has_headers(false).from_writer(Vec::new());
+
+	wtr.write_record(values)
+		.map_err(|e| Error::custom(format!("Failed to write CSV record: {e}")))?;
+
+	let bytes = wtr
+		.into_inner()
+		.map_err(|e| Error::custom(format!("Failed to retrieve CSV buffer: {e}")))?;
+
+	let s =
+		String::from_utf8(bytes).map_err(|e| Error::custom(format!("Failed to convert CSV buffer to UTF-8: {e}")))?;
+
+	// Trim the trailing newline which is added by the CSV writer by default.
+	// We only remove one occurrence of the terminator (\n or \r\n).
+	let s = if let Some(stripped) = s.strip_suffix('\n') {
+		if let Some(stripped_cr) = stripped.strip_suffix('\r') {
+			stripped_cr.to_string()
+		} else {
+			stripped.to_string()
+		}
+	} else {
+		s
+	};
+
+	Ok(s)
+}
+
 pub fn parse_csv_row(row: &str, options: Option<CsvOptions>) -> Result<Vec<String>> {
 	let options = options.unwrap_or_default();
 	let mut builder = options.into_reader_builder();
@@ -53,13 +81,8 @@ pub fn load_csv(path: impl AsRef<Path>, options: Option<CsvOptions>) -> Result<C
 	let path = path.as_ref();
 	let content = simple_fs::read_to_string(path)?;
 
-	parse_csv(&content, options).map_err(|e| {
-		Error::custom(format!(
-			"Failed to parse CSV file '{}': {}",
-			path.display(),
-			e
-		))
-	})
+	parse_csv(&content, options)
+		.map_err(|e| Error::custom(format!("Failed to parse CSV file '{}': {}", path.display(), e)))
 }
 
 pub fn load_csv_headers(path: impl AsRef<Path>, options: Option<CsvOptions>) -> Result<Vec<String>> {
@@ -73,9 +96,12 @@ pub fn load_csv_headers(path: impl AsRef<Path>, options: Option<CsvOptions>) -> 
 		.map_err(|e| Error::custom(format!("Failed to open CSV file '{}': {e}", path.display())))?;
 	let mut rdr = builder.from_reader(file);
 
-	let headers = rdr
-		.headers()
-		.map_err(|e| Error::custom(format!("Failed to read CSV headers from file '{}': {e}", path.display())))?;
+	let headers = rdr.headers().map_err(|e| {
+		Error::custom(format!(
+			"Failed to read CSV headers from file '{}': {e}",
+			path.display()
+		))
+	})?;
 
 	Ok(headers.iter().map(|s| s.to_string()).collect())
 }
@@ -106,6 +132,13 @@ mod tests {
 	}
 
 	#[test]
+	fn test_support_files_csv_to_csv_row_simple() -> Result<()> {
+		let row = values_to_csv_row(&["a".to_string(), "b,c".to_string(), "d".to_string()])?;
+		assert_eq!(row, r#"a,"b,c",d"#);
+		Ok(())
+	}
+
+	#[test]
 	fn test_support_files_csv_load_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let path = SPath::new("tests-data/sandbox-01/example.csv");
@@ -117,10 +150,7 @@ mod tests {
 		let expected_headers = vec!["id", "name", "email"];
 		assert_eq!(res.headers.x_as_strs(), expected_headers);
 
-		let expected_content = vec![
-			vec!["1", "Alice", "alice@example.com"],
-			vec!["2", "Bob", "bob@example.com"],
-		];
+		let expected_content = vec![vec!["1", "Alice", "alice@example.com"], vec!["2", "Bob", "bob@example.com"]];
 		let content_as_strs: Vec<Vec<&str>> = res.rows.iter().map(|row| row.x_as_strs()).collect();
 		assert_eq!(content_as_strs, expected_content);
 
@@ -133,10 +163,13 @@ mod tests {
 		let path = SPath::new("tests-data/sandbox-01/example.csv");
 
 		// -- Exec
-		let res = load_csv(&path, Some(CsvOptions {
-			has_header: Some(false),
-			..Default::default()
-		}))?;
+		let res = load_csv(
+			&path,
+			Some(CsvOptions {
+				has_header: Some(false),
+				..Default::default()
+			}),
+		)?;
 
 		// -- Check
 		assert!(res.headers.is_empty(), "Headers should be empty when no_header is true");
