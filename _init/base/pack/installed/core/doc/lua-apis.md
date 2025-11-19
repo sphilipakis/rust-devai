@@ -200,17 +200,17 @@ aip.file.ensure_exists(path: string, content?: string, options?: {content_when_e
 
 aip.file.exists(path: string): boolean
 
-aip.file.list(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): list<FileInfo>
+aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[]
 
-aip.file.list_load(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): list<FileRecord>
+aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[]
 
-aip.file.first(include_globs: string | list<string>, options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
+aip.file.first(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 
 aip.file.info(path: string): FileInfo | nil
 
 aip.file.load_json(path: string): table | value
 
-aip.file.load_ndjson(path: string): list<table>
+aip.file.load_ndjson(path: string): object[]
 
 aip.file.append_json_line(path: string, data: value): FileInfo
 
@@ -218,7 +218,7 @@ aip.file.append_json_lines(path: string, data: list): FileInfo
 
 aip.file.save_changes(path: string, changes: string): FileInfo
 
-aip.file.load_md_sections(path: string, headings?: string | list<string>): list<MdSection>
+aip.file.load_md_sections(path: string, headings?: string | string[]): MdSection[]
 
 aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
 
@@ -236,9 +236,9 @@ aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 
 aip.file.load_docx_as_md(docx_path: string): string
 
-aip.file.line_spans(path: string): list<[start: number, end: number]>
+aip.file.line_spans(path: string): [start: number, end: number][]
 
-aip.file.csv_row_spans(path: string): list<[start: number, end: number]>
+aip.file.csv_row_spans(path: string): [start: number, end: number][]
 
 aip.file.read_span(path: string, start: number, end: number): string
 
@@ -508,20 +508,20 @@ List file metadata ([FileInfo](#filemeta)) matching glob patterns.
 ```lua
 -- API Signature
 aip.file.list(
-  include_globs: string | list<string>,
+  include_globs: string | string[],
   options?: {
     base_dir?: string,
     absolute?: boolean,
     with_meta?: boolean
   }
-): list<FileInfo>
+): FileInfo[]
 ```
 
 Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileInfo](#filemeta) objects (metadata only, no content).
 
 #### Arguments
 
-- `include_globs: string | list<string>`: Glob pattern(s). Pack references supported.
+- `include_globs: string | string[]`: Glob pattern(s). Pack references supported.
   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional):
   - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
@@ -535,7 +535,7 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
 
 #### Returns
 
-- `list<FileInfo>`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
+- `FileInfo[]`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
 
 #### Example
 
@@ -574,12 +574,12 @@ List and load files ([FileRecord](#filerecord)) matching glob patterns.
 ```lua
 -- API Signature
 aip.file.list_load(
-  include_globs: string | list<string>,
+  include_globs: string | string[],
   options?: {
     base_dir?: string,
     absolute?: boolean
   }
-): list<FileRecord>
+): FileRecord[]
 ```
 
 Finds files matching `include_globs` patterns within the specified `base_dir` (or workspace root),
@@ -588,7 +588,7 @@ Each [FileRecord](#filerecord) contains both metadata and the file content.
 
 #### Arguments
 
-- `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
+- `include_globs: string | string[]` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional) - A table containing options:
@@ -600,7 +600,7 @@ Each [FileRecord](#filerecord) contains both metadata and the file content.
 
 #### Returns
 
-- `list<FileRecord>`: A Lua list of [FileRecord](#filerecord) tables. Empty if no files match the globs.
+- `FileRecord[]`: A Lua list of [FileRecord](#filerecord) tables. Empty if no files match the globs.
 
 #### Example
 
@@ -630,7 +630,7 @@ Find the first file matching glob patterns and return its metadata ([FileInfo](#
 ```lua
 -- API Signature
 aip.file.first(
-  include_globs: string | list<string>,
+  include_globs: string | string[],
   options?: {
     base_dir?: string,
     absolute?: boolean
@@ -644,7 +644,7 @@ If no matching file is found, it returns `nil`.
 
 #### Arguments
 
-- `include_globs: string | list<string>` - A single glob pattern string or a Lua list (table) of glob pattern strings.
+- `include_globs: string | string[]` - A single glob pattern string or a Lua list (table) of glob pattern strings.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional) - A table containing options:
@@ -726,7 +726,7 @@ Calculates aggregate statistics for a set of files matching glob patterns.
 ```lua
 -- API Signature
 aip.file.stats(
-  include_globs: string | list<string> | nil,
+  include_globs: string | string[] | nil,
   options?: {
     base_dir?: string,
     absolute?: boolean
@@ -740,7 +740,7 @@ If `include_globs` is `nil` or no files match the patterns, returns `nil`.
 
 #### Arguments
 
-- `include_globs: string | list<string> | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
+- `include_globs: string | string[] | nil` - A single glob pattern string, a Lua list (table) of glob pattern strings, or `nil`.
   If `nil`, the function returns `nil`.
   Globs can include standard wildcards (`*`, `?`, `**`, `[]`). Pack references (e.g., `ns@pack/**/*.md`) are supported.
   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
@@ -852,7 +852,7 @@ Load a file containing newline-delimited JSON (NDJSON), parse each line, and ret
 
 ```lua
 -- API Signature
-aip.file.load_ndjson(path: string): list<table>
+aip.file.load_ndjson(path: string): object[]
 ```
 
 Loads the file at `path` (relative to workspace), parses each non-empty line as JSON, and returns a Lua list of the parsed values. Empty lines are skipped.
@@ -863,7 +863,7 @@ Loads the file at `path` (relative to workspace), parses each non-empty line as 
 
 #### Returns
 
-- `list<table>`: Lua list containing parsed values from each line.
+- `object[]`: Lua list containing parsed values from each line.
 
 #### Example
 
@@ -951,8 +951,8 @@ Load markdown sections from a file, optionally filtering by specific heading nam
 -- API Signature
 aip.file.load_md_sections(
   path: string,
-  headings?: string | list<string>
-): list<MdSection>
+  headings?: string | string[]
+): MdSection[]
 ```
 
 Reads the markdown file at `path` (relative to workspace) and splits it into sections based on headings (`#`). Returns a list of [MdSection](#mdsection) objects. Optionally filters by exact heading `name` (case-sensitive, excluding `#`).
@@ -960,11 +960,11 @@ Reads the markdown file at `path` (relative to workspace) and splits it into sec
 #### Arguments
 
 - `path: string`: Path to the markdown file, relative to workspace root.
-- `headings?: string | list<string>` (optional): Heading name(s) to filter by.
+- `headings?: string | string[]` (optional): Heading name(s) to filter by.
 
 #### Returns
 
-- `list<MdSection>`: A Lua list of [MdSection](#mdsection) tables. Includes content before the first heading if no filter applied. Empty if file empty or no matching sections.
+- `MdSection[]`: A Lua list of [MdSection](#mdsection) tables. Includes content before the first heading if no filter applied. Empty if file empty or no matching sections.
 
 #### Example
 
@@ -1357,7 +1357,7 @@ Returns the byte spans for each line in a text file.
 
 ```lua
 -- API Signature
-aip.file.line_spans(path: string): list<[start: number, end: number]>
+aip.file.line_spans(path: string): [start: number, end: number][]
 ```
 
 Given a file path, computes the start and end byte offsets for every line.
@@ -1369,7 +1369,7 @@ Given a file path, computes the start and end byte offsets for every line.
 
 #### Returns
 
-- `list<[start: number, end: number]>`
+- `[start: number, end: number]>[]
   A Lua list of two-item arrays where `span[1]` is the start byte and `span[2]` is the end byte for each line.
 
 #### Example
@@ -1392,7 +1392,7 @@ Returns the byte spans for each CSV row in a file.
 
 ```lua
 -- API Signature
-aip.file.csv_row_spans(path: string): list<[start: number, end: number]>
+aip.file.csv_row_spans(path: string): [start: number, end: number][]
 ```
 
 Parses the file as CSV and returns byte spans for each row (one span per CSV record).
@@ -1404,7 +1404,7 @@ Parses the file as CSV and returns byte spans for each row (one span per CSV rec
 
 #### Returns
 
-- `list<[start: number, end: number]>`
+- `[start: number, end: number]>[]
   A Lua list of two-item arrays where `row[1]` is the start byte and `row[2]` is the end byte for each CSV row.
 
 #### Example
@@ -1487,7 +1487,7 @@ aip.path.diff(file_path: string, base_path: string): string
 
 aip.path.parent(path: string): string | nil
 
-aip.path.matches_glob(path: string | nil, globs: string | list<string>): boolean | nil
+aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil
 
 aip.path.join(base: string, ...parts: string | string[]): string
 
@@ -1820,7 +1820,7 @@ Checks if a path matches one or more glob patterns.
 
 ```lua
 -- API Signature
-aip.path.matches_glob(path: string | nil, globs: string | list<string>): boolean | nil
+aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil
 ```
 
 Determines whether the provided `path` matches any of the glob patterns given
@@ -1832,7 +1832,7 @@ If `globs` is an empty string or an empty list, the result is `false`.
 - `path: string | nil`  
   The path to test. If `nil`, the function returns `nil`.
 
-- `globs: string | list<string>`  
+- `globs: string | string[]`  
   A single glob pattern string or a Lua list of pattern strings.  
   Standard wildcards (`*`, `?`, `**`, `[]`) are supported.
 
@@ -1907,7 +1907,7 @@ aip.text.ensure_single_ending_newline(content: string | nil): string | nil -- De
 
 aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil -- lowest_size_unit default "B"
 
-aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
+aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (string[] | nil, string | nil)
 
 aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
 
@@ -2310,7 +2310,7 @@ Extracts consecutive lines starting with a specific prefix. If `content` is `nil
 
 ```lua
 -- API Signature
-aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (list<string> | nil, string | nil)
+aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (string[] | nil, string | nil)
 ```
 
 Extracts blocks of consecutive lines from `content` where each line begins with `options.starts_with`.
@@ -2325,7 +2325,7 @@ Extracts blocks of consecutive lines from `content` where each line begins with 
 
 #### Returns
 
-- `list<string> | nil`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix. `nil` if input `content` was `nil`.
+- `string[] | nil`: A Lua list of strings, each element being a block of consecutive lines starting with the prefix. `nil` if input `content` was `nil`.
 - `string | nil`: The remaining content if `extrude = "content"`, otherwise `nil`. `nil` if input `content` was `nil`.
 
 #### Example
@@ -2433,7 +2433,7 @@ Functions for extracting content based on custom XML-like tags (e.g., `<FILE>...
 ### Functions Summary
 
 ```lua
-aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): list<TagElem> | (list<TagElem>, string)
+aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): TagElem[] | (TagElem[], string)
 aip.tag.extract_as_map(content: string, tag_names: string | string[], options?: {extrude?: "content"}): table | (table, string)
 aip.tag.extract_as_multi_map(content: string, tag_names: string | string[], options?: {extrude?: "content"}): table | (table, string)
 ```
@@ -2446,9 +2446,9 @@ Extracts content blocks enclosed by matching start and end tags (e.g., `<TAG>con
 -- API Signature
 aip.tag.extract(
   content: string,
-  tag_names: string | list<string>,
+  tag_names: string | string[],
   options?: { extrude?: "content" }
-): list<TagElem> | (list<TagElem>, string)
+): TagElem[] | (TagElem[], string)
 ```
 
 Finds matching tag pairs in `content` based on `tag_names`.
@@ -2462,8 +2462,8 @@ Finds matching tag pairs in `content` based on `tag_names`.
 
 #### Returns
 
-- If `extrude` is not set: `list<TagElem>`: A Lua list of [TagElem](#tagelem) objects.
-- If `extrude = "content"`: `(list<TagElem>, string)`: A tuple containing the list of [TagElem](#tagelem) objects and the extruded content string.
+- If `extrude` is not set: `TagElem[]`: A Lua list of [TagElem](#tagelem) objects.
+- If `extrude = "content"`: `(TagElem[], string)`: A tuple containing the list of [TagElem](#tagelem) objects and the extruded content string.
 
 #### Example
 
@@ -2493,7 +2493,7 @@ Extracts content blocks and returns them as a map, where the key is the tag name
 -- API Signature
 aip.tag.extract_as_map(
   content: string,
-  tag_names: string | list<string>,
+  tag_names: string | string[],
   options?: { extrude?: "content" }
 ): table | (table, string)
 ```
@@ -2536,7 +2536,7 @@ Extracts content blocks and returns them as a map, where the key is the tag name
 -- API Signature
 aip.tag.extract_as_multi_map(
   content: string,
-  tag_names: string | list<string>,
+  tag_names: string | string[],
   options?: { extrude?: "content" }
 ): table | (table, string)
 ```
@@ -2579,11 +2579,11 @@ Markdown processing functions for extracting structured information like code bl
 ### Functions Summary
 
 ```lua
-aip.md.extract_blocks(md_content: string): list<MdBlock>
+aip.md.extract_blocks(md_content: string): MdBlock[]
 
-aip.md.extract_blocks(md_content: string, lang: string): list<MdBlock>
+aip.md.extract_blocks(md_content: string, lang: string): MdBlock[]
 
-aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (list<MdBlock>, string)
+aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (MdBlock[], string)
 
 aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
 
@@ -2597,11 +2597,11 @@ Extracts fenced code blocks ([MdBlock](#mdblock)) from markdown content.
 ```lua
 -- API Signatures
 -- Extract all blocks:
-aip.md.extract_blocks(md_content: string): list<MdBlock>
+aip.md.extract_blocks(md_content: string): MdBlock[]
 -- Extract blocks by language:
-aip.md.extract_blocks(md_content: string, lang: string): list<MdBlock>
+aip.md.extract_blocks(md_content: string, lang: string): MdBlock[]
 -- Extract blocks and remaining content:
-aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (list<MdBlock>, string)
+aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (MdBlock[], string)
 ```
 
 Parses `md_content` and extracts fenced code blocks (``` ```).
@@ -2617,8 +2617,8 @@ Parses `md_content` and extracts fenced code blocks (``` ```).
 
 #### Returns
 
-- If `extrude` is not set: `list<MdBlock>`: A Lua list of [MdBlock](#mdblock) objects.
-- If `extrude = "content"`: `(list<MdBlock>, string)`: A tuple containing the list of [MdBlock](#mdblock) objects and the remaining content string.
+- If `extrude` is not set: `MdBlock[]`: A Lua list of [MdBlock](#mdblock) objects.
+- If `extrude = "content"`: `(MdBlock[], string)`: A tuple containing the list of [MdBlock](#mdblock) objects and the remaining content string.
 
 #### Example
 
@@ -2810,7 +2810,7 @@ JSON parsing and stringification functions.
 ```lua
 aip.json.parse(content: string): table | value
 
-aip.json.parse_ndjson(content: string): list<table>
+aip.json.parse_ndjson(content: string): object[]
 
 aip.json.stringify(content: table): string
 
@@ -2853,7 +2853,7 @@ Parse a newline-delimited JSON (NDJSON) string into a list of tables/values.
 
 ```lua
 -- API Signature
-aip.json.parse_ndjson(content: string): list<table>
+aip.json.parse_ndjson(content: string): object[]
 ```
 
 Parses each non-empty line as a separate JSON object/value.
@@ -2864,7 +2864,7 @@ Parses each non-empty line as a separate JSON object/value.
 
 #### Returns
 
-- `list<table>`: A Lua list containing the parsed value from each line.
+- `object[]`: A Lua list containing the parsed value from each line.
 
 #### Example
 
@@ -3935,7 +3935,7 @@ Functions for executing system commands.
 ### Functions Summary
 
 ```lua
-aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
+aip.cmd.exec(cmd_name: string, args?: string | string[]): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
 ```
 
 ### aip.cmd.exec
@@ -3944,7 +3944,7 @@ Execute a system command with optional arguments.
 
 ```lua
 -- API Signature
-aip.cmd.exec(cmd_name: string, args?: string | list<string>): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
+aip.cmd.exec(cmd_name: string, args?: string | string[]): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
 ```
 
 Executes the command using the system shell. On Windows, wraps with `cmd /C`.
@@ -3952,7 +3952,7 @@ Executes the command using the system shell. On Windows, wraps with `cmd /C`.
 #### Arguments
 
 - `cmd_name: string`: Command name or path.
-- `args?: string | list<string>` (optional): Arguments as a single string or list of strings.
+- `args?: string | string[]` (optional): Arguments as a single string or list of strings.
 
 #### Returns
 
@@ -4189,7 +4189,7 @@ Functions for processing HTML content.
 ```lua
 aip.html.slim(html_content: string): string | {error: string}
 
-aip.html.select(html_content: string, selectors: string | string[]): list<Elem>
+aip.html.select(html_content: string, selectors: string | string[]): Elem[]
 
 aip.html.to_md(html_content: string): string | {error: string}
 ```
@@ -4235,8 +4235,8 @@ Selects elements from HTML content using CSS selectors.
 -- API Signature
 aip.html.select(
   html_content: string,
-  selectors: string | list<string>
-): list<Elem>
+  selectors: string | string[]
+): Elem[]
 ```
 
 Parses `html_content`, applies the CSS `selectors`, and returns a list of matching elements.
@@ -4244,11 +4244,11 @@ Parses `html_content`, applies the CSS `selectors`, and returns a list of matchi
 #### Arguments
 
 - `html_content: string`: The HTML content to search within.
-- `selectors: string | list<string>`: One or more CSS selector strings.
+- `selectors: string | string[]`: One or more CSS selector strings.
 
 #### Returns
 
-- `list<Elem>`: A Lua list of tables, where each table represents an element (`Elem`). Returns an empty list if no elements match.
+- `Elem[]`: A Lua list of tables, where each table represents an element (`Elem`). Returns an empty list if no elements match.
 
 #### Elem Structure
 
@@ -4846,23 +4846,23 @@ Functions to shape row-like Lua tables (records), convert between row- and colum
 ```lua
 aip.shape.to_record(names: string[], values: any[]): table
 
-aip.shape.to_records(names: string[], rows: any[][]): list<table>
+aip.shape.to_records(names: string[], rows: any[][]): object[]
 
-aip.shape.record_to_values(record: table, names?: string[]): list<any>
+aip.shape.record_to_values(record: table, names?: string[]): any[]
 
 aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]
 
-aip.shape.columnar_to_records(cols: { [string]: list<any> }): list<table>
+aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]
 
-aip.shape.records_to_columnar(recs: list<table>): { [string]: list<any> }
+aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }
 
-aip.shape.select_keys(rec: table, keys: list<string>): table
+aip.shape.select_keys(rec: table, keys: string[]): table
 
-aip.shape.omit_keys(rec: table, keys: list<string>): table
+aip.shape.omit_keys(rec: table, keys: string[]): table
 
-aip.shape.remove_keys(rec: table, keys: list<string>): integer
+aip.shape.remove_keys(rec: table, keys: string[]): integer
 
-aip.shape.extract_keys(rec: table, keys: list<string>): table
+aip.shape.extract_keys(rec: table, keys: string[]): table
 ```
 
 ### aip.shape.to_record
@@ -4901,7 +4901,7 @@ Build multiple records from a list of column names and a list of rows (each row 
 
 ```lua
 -- API Signature
-aip.shape.to_records(names: string[], rows: any[][]): list<table>
+aip.shape.to_records(names: string[], rows: any[][]): object[]
 ```
 
 #### Arguments
@@ -4912,7 +4912,7 @@ aip.shape.to_records(names: string[], rows: any[][]): list<table>
 
 #### Returns
 
-- `list<table>`: A list of records.
+- `object[]`: A list of records.
 
 #### Example
 
@@ -5006,7 +5006,7 @@ Convert a column-oriented table into a list of records. All columns must be tabl
 
 ```lua
 -- API Signature
-aip.shape.columnar_to_records(cols: { [string]: any[] }): list<table>
+aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]
 ```
 
 #### Arguments
@@ -5015,7 +5015,7 @@ aip.shape.columnar_to_records(cols: { [string]: any[] }): list<table>
 
 #### Returns
 
-- `list<table>`: A list of row records.
+- `object[]`: A list of row records.
 
 #### Example
 
@@ -5043,12 +5043,12 @@ Convert a list of records into a column-oriented table. Uses the intersection of
 
 ```lua
 -- API Signature
-aip.shape.records_to_columnar(recs: list<table>): { [string]: any[] }
+aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }
 ```
 
 #### Arguments
 
-- `recs: list<table>`: List of records (each must be a table with string keys).
+- `recs: object[]`: List of records (each must be a table with string keys).
 
 #### Returns
 
