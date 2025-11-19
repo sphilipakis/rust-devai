@@ -222,7 +222,7 @@ Jane,25
 		// Test simple values
 		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a", 123, true, nil})"#)?;
 		let s = res.as_str().ok_or("Should be string")?;
-		assert_eq!(s, "a,123,true,");
+		assert_eq!(s, "a,123,true");
 
 		// Test with quoting needed
 		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a,b", 'c "d"'})"#)?;
@@ -235,6 +235,40 @@ Jane,25
 		// JSON for {b=1} is {"b":1} usually
 		assert!(s.starts_with("a,"));
 		assert!(s.contains(r#"{""b"":1}"#));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_aip_csv_values_to_row_special_chars() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		// Newlines, floats, empty strings
+		let script = r#"
+			local val = {"line\nbreak", 12.34, ""}
+			return aip.csv.values_to_row(val)
+		"#;
+		let res = eval_lua(&lua, script)?;
+		let s = res.as_str().ok_or("Should be string")?;
+
+		// "line\nbreak",12.34,
+		assert_eq!(s, "\"line\nbreak\",12.34,");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_aip_csv_values_to_row_error() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		let script = r#"
+			local val = {"a", function() end}
+			return aip.csv.values_to_row(val)
+		"#;
+		let res = eval_lua(&lua, script);
+		assert!(res.is_err());
+		let err = res.err().unwrap();
+		assert!(err.to_string().contains("unsupported value type 'function'"));
 
 		Ok(())
 	}
