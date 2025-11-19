@@ -52,7 +52,7 @@ pub(super) fn file_load_csv_headers(lua: &Lua, runtime: &Runtime, path: String) 
 			.dir_context()
 			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 
-	let headers = crate::support::files::load_csv_headers(&full_path).map_err(|e| {
+	let headers = crate::support::csvs::load_csv_headers(&full_path, None).map_err(|e| {
 		Error::from(format!(
 			"aip.file.load_csv_headers - Failed to read csv file '{path}'.\nCause: {e}",
 		))
@@ -107,9 +107,8 @@ pub(super) fn file_load_csv(lua: &Lua, runtime: &Runtime, path: String, options:
 		Some(v) => CsvOptions::from_lua(v, lua)?,
 		None => CsvOptions::default(),
 	};
-	let has_header = opts.has_header.unwrap_or(true);
 
-	let csv_content = crate::support::files::load_csv(&full_path, Some(has_header)).map_err(|e| {
+	let csv_content = crate::support::csvs::load_csv(&full_path, Some(opts)).map_err(|e| {
 		Error::from(format!(
 			"aip.file.load_csv - Failed to read csv file '{path}'.\nCause: {e}",
 		))

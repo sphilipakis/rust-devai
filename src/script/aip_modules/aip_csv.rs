@@ -34,8 +34,9 @@
 //! - When an option expecting a character is given a multi-character string, only the first byte is used.
 
 use crate::runtime::Runtime;
-use crate::types::{CsvContent, CsvOptions};
-use crate::{Error, Result};
+use crate::support::W;
+use crate::types::CsvOptions;
+use crate::Result;
 use mlua::{FromLua as _, IntoLua as _, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -69,20 +70,15 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 		None => CsvOptions::default(),
 	};
 
-	// TODO: Needs to handle if row is empty
-	let mut builder = opts.into_reader_builder();
-	builder.has_headers(false).comment(None).flexible(true);
-	let mut rdr = builder.from_reader(row.as_bytes());
+	let row_vec = crate::support::csvs::parse_csv_row(&row, Some(opts))?;
 
-	let rec_opt = rdr
-		.records()
-		.next()
-		.transpose()
-		.map_err(|e| Error::custom(format!("aip.csv.parse_row failed. {e}")))?;
+	let table = W(row_vec)
+		.into_lua(lua)
+		.map_err(|e| mlua::Error::external(format!("Failed to convert row to lua table: {e}")))?;
 
-	match rec_opt {
-		Some(rec) => string_record_to_lua_array(lua, &rec),
-		None => lua.create_table(), // empty list
+	match table {
+		Value::Table(t) => Ok(t),
+		_ => Err(mlua::Error::external("Expected a table")),
 	}
 }
 
@@ -105,62 +101,13 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 		None => CsvOptions::default(),
 	};
 
-	// Default to has_header = true for this API; empty lines are skipped by default.
-	let has_header = opts.has_header.unwrap_or(true);
-	let skip_empty = opts.skip_empty_lines.unwrap_or(true);
-
-	let mut builder = opts.into_reader_builder();
-	builder.has_headers(has_header).flexible(true);
-
-	let mut rdr = builder.from_reader(content.as_bytes());
-
-	let mut headers = Vec::new();
-
-	// headers
-	if has_header {
-		let hdr = rdr
-			.headers()
-			.map_err(|e| Error::custom(format!("aip.csv.parse failed to read headers. {e}")))?;
-		headers = string_record_to_vec(hdr);
-	}
-
-	// rows
-	let mut rows = Vec::new();
-
-	for rec_res in rdr.records() {
-		let rec = rec_res.map_err(|e| Error::custom(format!("aip.csv.parse failed to read record. {e}")))?;
-		if skip_empty && is_record_empty(&rec) {
-			continue;
-		}
-		rows.push(string_record_to_vec(&rec));
-	}
-
-	let csv_content = CsvContent { headers, rows };
+	let csv_content = crate::support::csvs::parse_csv(&content, Some(opts))?;
 
 	csv_content.into_lua(lua)
 }
 
 // endregion: --- Lua Fns
 
-// region:    --- Support
-
-fn string_record_to_lua_array(lua: &Lua, rec: &csv::StringRecord) -> mlua::Result<Table> {
-	let t = lua.create_table()?;
-	for (i, field) in rec.iter().enumerate() {
-		t.set(i + 1, field)?;
-	}
-	Ok(t)
-}
-
-fn string_record_to_vec(rec: &csv::StringRecord) -> Vec<String> {
-	rec.iter().map(|s| s.to_string()).collect()
-}
-
-fn is_record_empty(rec: &csv::StringRecord) -> bool {
-	rec.iter().all(|s| s.trim().is_empty())
-}
-
-// endregion: --- Support
 
 // region:    --- Tests
 
