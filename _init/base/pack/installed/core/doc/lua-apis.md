@@ -4850,6 +4850,8 @@ aip.shape.to_records(names: string[], rows: any[][]): list<table>
 
 aip.shape.record_to_values(record: table, names?: string[]): list<any>
 
+aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]
+
 aip.shape.columnar_to_records(cols: { [string]: list<any> }): list<table>
 
 aip.shape.records_to_columnar(recs: list<table>): { [string]: list<any> }
@@ -4955,6 +4957,48 @@ local v2  = aip.shape.record_to_values(rec, { "name", "id", "missing" })
 #### Error
 
 Returns an error if `names` contains a non-string entry.
+
+### aip.shape.records_to_value_lists
+
+Converts a list of record objects into tables of ordered values using a fixed column order.
+
+```lua
+-- API Signature
+aip.shape.records_to_value_lists(records: table[], names: string[]): any[][]
+```
+
+- `records`: List of record tables containing the data to convert.
+- `names`: List of column names that defines the order of the values for each row.
+  Each entry must be a string.
+
+The returned value is a Lua list where each entry is itself a list of values that
+correspond to the columns declared in `names`. Missing keys emit the shared
+`null` sentinel to keep the row lengths consistent.
+
+#### Example
+
+```lua
+local recs = {
+  { id = 1, name = "Alice" },
+  { id = 2 },
+}
+local names = { "name", "id", "missing" }
+return aip.shape.records_to_value_lists(recs, names)
+```
+
+The result is:
+
+```
+{
+  { "Alice", 1, null },
+  { null, 2, null }
+}
+```
+
+#### Error
+
+Returns an error if any entry of `names` is not a string or if any element of
+`records` is not a table.
 
 ### aip.shape.columnar_to_records
 
