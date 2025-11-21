@@ -48,8 +48,10 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 		lua.create_function(|lua, (row, opts): (String, Option<Value>)| lua_parse_row(lua, row, opts))?;
 	let parse_fn =
 		lua.create_function(|lua, (content, opts): (String, Option<Value>)| lua_parse(lua, content, opts))?;
-	let values_to_row_fn = lua.create_function(|lua, values: Value| lua_values_to_row(lua, values))?;
-	let value_lists_to_rows_fn = lua.create_function(|lua, lists: Value| lua_value_lists_to_rows(lua, lists))?;
+	let values_to_row_fn =
+		lua.create_function(|lua, (values, opts): (Value, Option<Value>)| lua_values_to_row(lua, values, opts))?;
+	let value_lists_to_rows_fn =
+		lua.create_function(|lua, (lists, opts): (Value, Option<Value>)| lua_value_lists_to_rows(lua, lists, opts))?;
 
 	table.set("parse_row", parse_row_fn)?;
 	table.set("parse", parse_fn)?;
@@ -118,14 +120,19 @@ fn lua_parse(lua: &Lua, content: String, opts_val: Option<Value>) -> mlua::Resul
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.values_to_row(values: any[]): string
+/// aip.csv.values_to_row(values: any[], options?: CsvOptions): string
 /// ```
 ///
 /// - `values`: A list of values (strings, numbers, booleans, nil, or tables).
 ///   - Tables are converted to JSON strings.
 ///   - Nil (and null sentinel) are converted to empty strings.
-fn lua_values_to_row(_lua: &Lua, values: Value) -> mlua::Result<String> {
-	values_to_row_inner(values, "aip.csv.values_to_row")
+/// - `options`: Optional `CsvOptions` (e.g., `delimiter`, `quote`, `escape`).
+fn lua_values_to_row(lua: &Lua, values: Value, opts_val: Option<Value>) -> mlua::Result<String> {
+	let opts = match opts_val {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+	values_to_row_inner(values, opts, "aip.csv.values_to_row")
 }
 
 /// ## Lua Documentation
@@ -134,9 +141,12 @@ fn lua_values_to_row(_lua: &Lua, values: Value) -> mlua::Result<String> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
+/// aip.csv.value_lists_to_rows(value_lists: any[][], options?: CsvOptions): string[]
 /// ```
-fn lua_value_lists_to_rows(_lua: &Lua, value_lists: Value) -> mlua::Result<Vec<String>> {
+///
+/// - `value_lists`: A list of lists of values.
+/// - `options`: Optional `CsvOptions` (e.g., `delimiter`, `quote`, `escape`).
+fn lua_value_lists_to_rows(lua: &Lua, value_lists: Value, opts_val: Option<Value>) -> mlua::Result<Vec<String>> {
 	let table = match value_lists {
 		Value::Table(t) => t,
 		_ => {
@@ -146,17 +156,22 @@ fn lua_value_lists_to_rows(_lua: &Lua, value_lists: Value) -> mlua::Result<Vec<S
 		}
 	};
 
+	let opts = match opts_val {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+
 	let mut rows = Vec::new();
 	for (idx, item) in table.sequence_values::<Value>().enumerate() {
 		let item = item?;
-		let row = values_to_row_inner(item, "aip.csv.value_lists_to_rows")
+		let row = values_to_row_inner(item, opts.clone(), "aip.csv.value_lists_to_rows")
 			.map_err(|e| mlua::Error::external(format!("Row {}: {}", idx + 1, e)))?;
 		rows.push(row);
 	}
 	Ok(rows)
 }
 
-fn values_to_row_inner(values: Value, ctx: &str) -> mlua::Result<String> {
+fn values_to_row_inner(values: Value, opts: Option<CsvOptions>, ctx: &str) -> mlua::Result<String> {
 	let table = match values {
 		Value::Table(t) => t,
 		_ => {
@@ -190,7 +205,7 @@ fn values_to_row_inner(values: Value, ctx: &str) -> mlua::Result<String> {
 		row_values.push(s);
 	}
 
-	let csv_row = crate::support::csvs::values_to_csv_row(&row_values).map_err(mlua::Error::external)?;
+	let csv_row = crate::support::csvs::values_to_csv_row(&row_values, opts).map_err(mlua::Error::external)?;
 	Ok(csv_row)
 }
 
@@ -262,6 +277,11 @@ Jane,25
 		let s = res.as_str().ok_or("Should be string")?;
 		assert_eq!(s, "\"a,b\",\"c \"\"d\"\"\"");
 
+		// Test with custom options
+		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a", "b"}, {delimiter = ";"})"#)?;
+		let s = res.as_str().ok_or("Should be string")?;
+		assert_eq!(s, "a;b");
+
 		// Test with table (json)
 		let res = eval_lua(&lua, r#"return aip.csv.values_to_row({"a", {b=1}})"#)?;
 		let s = res.as_str().ok_or("Should be string")?;
@@ -326,6 +346,30 @@ Jane,25
 
 		let r2 = rows[1].as_str().ok_or("Should have second row")?;
 		assert_eq!(r2, "\"b,c\",2");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_aip_csv_value_lists_to_rows_with_options() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		let script = r#"
+			local lists = {
+				{"a", 1},
+				{"b", 2}
+			}
+			return aip.csv.value_lists_to_rows(lists, {delimiter = "|"})
+		"#;
+		let res = eval_lua(&lua, script)?;
+		let rows = res.as_array().ok_or("not an array")?;
+		assert_eq!(rows.len(), 2);
+
+		let r1 = rows[0].as_str().ok_or("Should have at least one row")?;
+		assert_eq!(r1, "a|1");
+
+		let r2 = rows[1].as_str().ok_or("Should have second row")?;
+		assert_eq!(r2, "b|2");
 
 		Ok(())
 	}

@@ -2,8 +2,15 @@ use crate::types::{CsvContent, CsvOptions};
 use crate::{Error, Result};
 use std::path::Path;
 
-pub fn values_to_csv_row(values: &[String]) -> Result<String> {
-	let mut wtr = csv::WriterBuilder::new().has_headers(false).from_writer(Vec::new());
+pub fn values_to_csv_row(values: &[String], options: Option<CsvOptions>) -> Result<String> {
+	let options = options.unwrap_or_default();
+	let mut builder = options.into_writer_builder();
+	// We force has_headers(false) because we are writing a single row of values,
+	// and we do not want the writer to treat the first call as headers (if we were to use higher level APIs),
+	// although write_record treats input as record regardless.
+	builder.has_headers(false);
+
+	let mut wtr = builder.from_writer(Vec::new());
 
 	wtr.write_record(values)
 		.map_err(|e| Error::custom(format!("Failed to write CSV record: {e}")))?;
@@ -133,8 +140,19 @@ mod tests {
 
 	#[test]
 	fn test_support_files_csv_to_csv_row_simple() -> Result<()> {
-		let row = values_to_csv_row(&["a".to_string(), "b,c".to_string(), "d".to_string()])?;
+		let row = values_to_csv_row(&["a".to_string(), "b,c".to_string(), "d".to_string()], None)?;
 		assert_eq!(row, r#"a,"b,c",d"#);
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_files_csv_to_csv_row_custom_delimiter() -> Result<()> {
+		let options = CsvOptions {
+			delimiter: Some(";".to_string()),
+			..Default::default()
+		};
+		let row = values_to_csv_row(&["a".to_string(), "b;c".to_string(), "d".to_string()], Some(options))?;
+		assert_eq!(row, r#"a;"b;c";d"#);
 		Ok(())
 	}
 

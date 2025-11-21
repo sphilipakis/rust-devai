@@ -12,7 +12,7 @@ use mlua::{FromLua, Lua, Value};
 /// - has_header: false
 /// - skip_empty_lines: true
 /// - comment: none (if provided, only the first byte is used)
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct CsvOptions {
 	pub delimiter: Option<String>,
 	pub quote: Option<String>,
@@ -90,6 +90,26 @@ impl CsvOptions {
 
 		if let Some(b) = self.comment.as_ref().and_then(|s| s.as_bytes().first().copied()) {
 			builder.comment(Some(b));
+		}
+
+		builder
+	}
+
+	/// Build a `csv::WriterBuilder` applying only the values explicitly set in `CsvOptions`.
+	/// Defaults are left to `WriterBuilder` when the corresponding option is `None`.
+	pub fn into_writer_builder(self) -> csv::WriterBuilder {
+		let mut builder = csv::WriterBuilder::new();
+
+		if let Some(b) = self.delimiter.as_ref().and_then(|s| s.as_bytes().first().copied()) {
+			builder.delimiter(b);
+		}
+
+		if let Some(b) = self.quote.as_ref().and_then(|s| s.as_bytes().first().copied()) {
+			builder.quote(b);
+		}
+
+		if let Some(b) = self.escape.as_ref().and_then(|s| s.as_bytes().first().copied()) {
+			builder.escape(b);
 		}
 
 		builder

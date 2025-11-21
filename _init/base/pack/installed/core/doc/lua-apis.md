@@ -2710,9 +2710,9 @@ aip.csv.parse_row(row: string, options?: CsvOptions): string[]
 
 aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
 
-aip.csv.values_to_row(values: any[]): string
+aip.csv.values_to_row(values: any[], options?: CsvOptions): string
 
-aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
+aip.csv.value_lists_to_rows(value_lists: any[][], options?: CsvOptions): string[]
 ```
 
 ### aip.csv.parse_row
@@ -2811,7 +2811,7 @@ Converts a list of Lua values into a single CSV row string.
 
 ```lua
 -- API Signature
-aip.csv.values_to_row(values: any[]): string
+aip.csv.values_to_row(values: any[], options?: CsvOptions): string
 ```
 
 Each entry in `values` can be a string, number, boolean, `nil`, the AIPack `null` sentinel, or a table.
@@ -2820,6 +2820,7 @@ Tables are converted to JSON strings before being written. `nil` and `null` entr
 #### Arguments
 
 - `values: any[]`: Lua list of values to serialize into a CSV row.
+- `options?: CsvOptions` (optional): Optional `CsvOptions` (e.g., `delimiter`, `quote`, `escape`).
 
 #### Returns
 
@@ -2842,7 +2843,7 @@ Converts a list of value lists into a list of CSV row strings.
 
 ```lua
 -- API Signature
-aip.csv.value_lists_to_rows(value_lists: any[][]): string[]
+aip.csv.value_lists_to_rows(value_lists: any[][], options?: CsvOptions): string[]
 ```
 
 Uses `aip.csv.values_to_row` for each inner list and returns all resulting CSV rows.
@@ -2850,6 +2851,7 @@ Uses `aip.csv.values_to_row` for each inner list and returns all resulting CSV r
 #### Arguments
 
 - `value_lists: any[][]`: Lua list of lists representing rows. Each inner list follows the same type rules as `aip.csv.values_to_row`.
+- `options?: CsvOptions` (optional): Optional `CsvOptions` (e.g., `delimiter`, `quote`, `escape`).
 
 #### Returns
 
