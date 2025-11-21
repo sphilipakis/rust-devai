@@ -1,4 +1,5 @@
 use crate::support::text::{self, truncate_with_ellipsis};
+use crate::types::{ChangesInfo, FailChange};
 use crate::{Error, Result};
 
 // These define what a marker line must look like for the parser.
@@ -25,7 +26,7 @@ const LINE_MARKER_REPLACE_END: &str = ">>>>>>> REPLACE";
 ///     For each block, the *first occurrence* of its `search_pattern` in the (potentially modified)
 ///     `original_content` is replaced with its `replace_pattern`.
 ///     Replacements are sequential.
-pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<String>) -> Result<String> {
+pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<String>) -> Result<(String, ChangesInfo)> {
 	let original_content = original_content.into();
 
 	let changes_str = changes.into();
@@ -36,12 +37,20 @@ pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<Str
 
 	if !is_block_mode {
 		// Simple Replacement Mode: entire original_content is replaced by changes_str.
-		return Ok(changes_str);
+		return Ok((
+			changes_str,
+			ChangesInfo {
+				changed_count: 1,
+				failed_changes: Vec::new(),
+			},
+		));
 	}
 
 	// Block Processing Mode
 	let requests = process_change_requests(&changes_str)?;
 	let mut current_content = original_content;
+	let mut changed_count = 0;
+	let mut failed_changes = Vec::new();
 
 	fn replace_first_remove_line(mut content: String, search_pattern: &str) -> (String, bool) {
 		if let Some(pos) = content.find(search_pattern) {
@@ -105,14 +114,26 @@ pub fn apply_changes(original_content: impl Into<String>, changes: impl Into<Str
 			}
 		};
 
-		if !changed {
-			// TODO: Probably need to do a debug trace or something
+		if changed {
+			changed_count += 1;
+		} else {
+			failed_changes.push(FailChange {
+				search: search_pattern.to_string(),
+				replace: replace_pattern.to_string(),
+				reason: "Search block not found in content".to_string(),
+			});
 		}
 
 		current_content = content;
 	}
 
-	Ok(current_content)
+	Ok((
+		current_content,
+		ChangesInfo {
+			changed_count,
+			failed_changes,
+		},
+	))
 }
 
 #[derive(Debug)] // For easier debugging if needed during development

@@ -1,5 +1,6 @@
 // region:    --- Modules
 
+mod changes_info;
 mod csv_content;
 mod csv_options;
 mod dest_options;
@@ -18,6 +19,7 @@ mod tag_elem;
 mod web_options;
 mod web_response;
 
+pub use changes_info::*;
 pub use csv_content::*;
 pub use csv_options::*;
 pub use dest_options::*;

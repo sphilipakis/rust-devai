@@ -21,7 +21,7 @@ fn test_support_text_apply_change_simple_replace_no_markers() -> Result {
 	let changes = "Hallo Welt".to_string();
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "Hallo Welt");
@@ -36,7 +36,7 @@ fn test_support_text_apply_change_simple_replace_contains_end_marker_only_as_tex
 	let changes = format!("Some text {LINE_MARKER_REPLACE_END} with an end marker style part");
 
 	// -- Exec
-	let result = apply_changes(original, changes.clone())?;
+	let result = apply_changes(original, changes.clone())?.0;
 
 	// -- Check
 	assert_eq!(result, changes);
@@ -52,7 +52,7 @@ fn test_support_text_apply_change_single_valid_block_original_markers_format() -
 	let changes = format_change_block("old_text", "new_text");
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	// replacen replaces only the first "old_text".
@@ -67,7 +67,7 @@ fn test_support_text_apply_change_single_valid_block_explicit_lines() -> Result 
 	let changes = format_change_block("old_text1", "new_text1");
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "Hello new_text1 world.");
@@ -84,7 +84,7 @@ fn test_support_text_apply_change_multiline_patterns_in_block_new_format() -> Re
 	let changes = format_change_block(search_pattern_text, replace_pattern_text);
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	let expected = "First line\nSecond new line\nAnd a new third line\nThird line";
@@ -100,7 +100,7 @@ fn test_support_text_apply_change_multiple_valid_blocks() -> Result {
 	let changes = format_multiple_change_blocks(blocks_data, "\n");
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	// 1. "one two three two one".replacen("one", "1", 1) -> "1 two three two one"
@@ -118,7 +118,7 @@ fn test_support_text_apply_change_multiple_blocks_with_newlines_between() -> Res
 	let changes = format_multiple_change_blocks(blocks_data, "\n\n\n"); // Whitespace lines between blocks
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "1 2 3 two one"); // Same logic as above
@@ -136,7 +136,7 @@ fn test_support_text_apply_change_multiple_blocks_with_mixed_whitespace_and_trai
 	let changes = format!("{block1}\n{block2}\n{block3}");
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	// 1. "apple banana cherry".replacen("apple", "A", 1) -> "A banana cherry"
@@ -260,13 +260,41 @@ fn test_support_text_apply_change_search_not_found_in_original() -> Result {
 	let changes = format_change_block("not_found_text", "replacement");
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let (result, info) = apply_changes(original, changes)?;
 
 	// -- Check
 	assert_eq!(
 		result, original,
 		"Original should be unchanged as search pattern not found"
 	);
+	assert_eq!(info.changed_count, 0);
+	assert_eq!(info.failed_changes.len(), 1);
+	assert_eq!(info.failed_changes[0].search, "not_found_text");
+	assert_eq!(info.failed_changes[0].reason, "Search block not found in content");
+
+	Ok(())
+}
+
+#[test]
+fn test_support_text_apply_change_mixed_success_and_failure() -> Result {
+	// -- Setup & Fixtures
+	let original = "one two three";
+	let changes = format!(
+		"{}\n{}",
+		format_change_block("two", "2"), // Should succeed
+		format_change_block("four", "4") // Should fail
+	);
+
+	// -- Exec
+	let (result, info) = apply_changes(original, changes)?;
+
+	// -- Check
+	assert_eq!(result, "one 2 three");
+	assert_eq!(info.changed_count, 1);
+	assert_eq!(info.failed_changes.len(), 1);
+	assert_eq!(info.failed_changes[0].search, "four");
+	assert_eq!(info.failed_changes[0].reason, "Search block not found in content");
+
 	Ok(())
 }
 
@@ -277,7 +305,7 @@ fn test_support_text_apply_change_empty_search_pattern() -> Result {
 	let changes = format_change_block("", "X"); // Empty search pattern
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	// "abc".replacen("", "X", 1) results in "Xabc"
@@ -292,7 +320,7 @@ fn test_support_text_apply_change_empty_replace_pattern() -> Result {
 	let changes = format_change_block("this text", ""); // Empty replace pattern
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "delete  now");
@@ -306,7 +334,7 @@ fn test_support_text_apply_change_empty_replace_pattern_removes_line_and_newline
 	let changes = format_change_block("line two", ""); // Empty replace pattern
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "line one\nline three\n");
@@ -370,7 +398,7 @@ fn test_support_text_apply_change_markers_as_text_in_patterns() -> Result {
 	let changes = format_change_block(search_pattern, replace_pattern);
 
 	// -- Exec
-	let result = apply_changes(original.as_str(), changes)?;
+	let result = apply_changes(original.as_str(), changes)?.0;
 
 	// -- Check
 	assert_eq!(
@@ -392,7 +420,7 @@ fn test_support_text_apply_change_block_at_eof_no_trailing_newline_in_changes_in
 	let changes_str_no_final_newline = format_change_block("this", "that");
 
 	// -- Exec
-	let result = apply_changes(original, changes_str_no_final_newline)?;
+	let result = apply_changes(original, changes_str_no_final_newline)?.0;
 
 	// -- Check
 	assert_eq!(result, "fix that");
@@ -406,7 +434,7 @@ fn test_support_text_apply_change_empty_changes_string() -> Result {
 	let changes = "".to_string();
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	// Empty changes string -> simple replace mode -> replaces original with ""
@@ -461,7 +489,7 @@ fn test_support_text_apply_change_empty_search_pattern_in_block() -> Result {
 	let changes = format_change_block("", "X-"); // search="", replace="X-"
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "X-abc def");
@@ -475,7 +503,7 @@ fn test_support_text_apply_change_empty_replace_pattern_in_block() -> Result {
 	let changes = format_change_block("remove_this", ""); // search="remove_this", replace=""
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "abc  def");
@@ -491,7 +519,7 @@ fn test_support_text_apply_change_multiline_search_and_replace() -> Result {
 	let changes = format_change_block(search, replace);
 
 	// -- Exec
-	let result = apply_changes(original, changes)?;
+	let result = apply_changes(original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "line one\nnew line A\nnew line B\nline four");
@@ -508,7 +536,7 @@ fn test_support_text_apply_change_crlf_windows() -> Result {
 	let changes = format_change_block(search, replace);
 
 	// -- Exec
-	let result = apply_changes(&original, changes)?;
+	let result = apply_changes(&original, changes)?.0;
 
 	// -- Check
 	assert_eq!(result, "line one\nnew line A\nnew line B\nline four");
