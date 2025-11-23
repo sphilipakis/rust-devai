@@ -8,14 +8,20 @@
 //!
 //! - `aip.file.load_csv_headers(path: string): string[]`
 //! - `aip.file.load_csv(path: string, options?: CsvOptions): { _type: "CsvContent", headers: string[], rows: string[][] }`
+//! - `aip.file.save_as_csv(path: string, data: matrix | {headers, rows}, options?: CsvOptions): FileInfo`
+//! - `aip.file.save_records_as_csv(path: string, records: table[], header_keys: string[], options?: CsvOptions): FileInfo`
+//! - `aip.file.append_as_csv(path: string, data: matrix | {headers, rows}, options?: CsvOptions): FileInfo`
 //!
 //! The `path` is resolved relative to the workspace root.
 
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
+use crate::script::aip_modules::aip_csv::{lua_matrix_to_rows, lua_value_to_csv_string};
+use crate::script::aip_modules::aip_file::support::check_access_write;
+use crate::script::support::{collect_string_sequence, expect_table};
 use crate::support::W;
-use crate::types::CsvOptions;
+use crate::types::{CsvContent, CsvOptions, FileInfo};
 use mlua::{FromLua as _, IntoLua, Lua, Value};
 
 /// ## Lua Documentation
@@ -116,3 +122,211 @@ pub(super) fn file_load_csv(lua: &Lua, runtime: &Runtime, path: String, options:
 
 	csv_content.into_lua(lua)
 }
+
+/// ## Lua Documentation
+///
+/// Save data as CSV file (overwrite).
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.save_as_csv(
+///   path: string,
+///   data: any[][] | { headers: string[], rows: any[][] },
+///   options?: CsvOptions
+/// ): FileInfo
+/// ```
+pub(super) fn file_save_as_csv(
+	lua: &Lua,
+	runtime: &Runtime,
+	path: String,
+	data: Value,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save_as_csv requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	let opts = match options {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+	let has_header = opts.as_ref().and_then(|o| o.has_header);
+
+	let content = normalize_csv_payload(lua, data, has_header)?;
+
+	crate::support::csvs::save_csv(&full_path, &content, opts).map_err(|e| {
+		Error::from(format!(
+			"aip.file.save_as_csv - Failed to save csv file '{path}'.\nCause: {e}",
+		))
+	})?;
+
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Save a list of records as CSV file (overwrite).
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.save_records_as_csv(
+///   path: string,
+///   records: table[],
+///   header_keys: string[],
+///   options?: CsvOptions
+/// ): FileInfo
+/// ```
+pub(super) fn file_save_records_as_csv(
+	lua: &Lua,
+	runtime: &Runtime,
+	path: String,
+	records: Value,
+	header_keys: Vec<String>,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir =
+		dir_context.try_wks_dir_with_err_ctx("aip.file.save_records_as_csv requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	let records_tbl = expect_table(records, "aip.file.save_records_as_csv", "records")?;
+
+	// -- Build rows
+	let mut rows = Vec::new();
+	for rec_val in records_tbl.sequence_values::<Value>() {
+		let rec_val = rec_val?;
+		if let Value::Table(rec) = rec_val {
+			let mut row = Vec::new();
+			for key in &header_keys {
+				let val = rec.get::<Value>(key.as_str())?;
+				row.push(lua_value_to_csv_string(val)?);
+			}
+			rows.push(row);
+		} else {
+			return Err(mlua::Error::external("Records must be a list of tables"));
+		}
+	}
+
+	let content = CsvContent {
+		headers: header_keys,
+		rows,
+	};
+
+	let opts = match options {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+
+	crate::support::csvs::save_csv(&full_path, &content, opts).map_err(|e| {
+		Error::from(format!(
+			"aip.file.save_records_as_csv - Failed to save csv file '{path}'.\nCause: {e}",
+		))
+	})?;
+
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Append data to a CSV file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.append_as_csv(
+///   path: string,
+///   data: any[][] | { headers: string[], rows: any[][] },
+///   options?: CsvOptions
+/// ): FileInfo
+/// ```
+pub(super) fn file_append_as_csv(
+	lua: &Lua,
+	runtime: &Runtime,
+	path: String,
+	data: Value,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.append_as_csv requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	let opts = match options {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+	let has_header = opts.as_ref().and_then(|o| o.has_header);
+
+	let content = normalize_csv_payload(lua, data, has_header)?;
+
+	crate::support::csvs::append_csv(&full_path, &content, opts).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_as_csv - Failed to append to csv file '{path}'.\nCause: {e}",
+		))
+	})?;
+
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
+}
+
+// region:    --- Support
+
+/// Normalize the CSV payload (data argument) into a CsvContent struct.
+///
+/// It handles both:
+/// - A matrix (list of lists) `any[][]`.
+/// - A structured table `{ headers: string[], rows: any[][] }`.
+///
+/// If a matrix is provided and `has_header` is true (via options), the first row is treated as headers.
+fn normalize_csv_payload(_lua: &Lua, data: Value, has_header_opt: Option<bool>) -> mlua::Result<CsvContent> {
+	let has_header = has_header_opt.unwrap_or(false);
+
+	if let Value::Table(t) = &data {
+		// Check if it is {headers: ..., rows: ...}
+		// A crude check: if "rows" exists and is a table
+		if let Ok(rows_val) = t.get::<Value>("rows")
+			&& let Value::Table(rows_tbl) = rows_val
+		{
+			// It is structured
+			let headers_val = t.get::<Value>("headers")?;
+			let headers: Vec<mlua::String> = if let Value::Table(ht) = headers_val {
+				collect_string_sequence(Value::Table(ht), "CsvContent", "headers")?
+			} else {
+				Vec::new()
+			};
+
+			let headers = headers.into_iter().map(|s| s.to_string_lossy()).collect();
+
+			let rows = lua_matrix_to_rows(rows_tbl)?;
+			return Ok(CsvContent { headers, rows });
+		}
+
+		// Otherwise assume it is a matrix
+		let mut rows = lua_matrix_to_rows(t.clone())?;
+		let headers = if has_header && !rows.is_empty() {
+			rows.remove(0)
+		} else {
+			Vec::new()
+		};
+
+		Ok(CsvContent { headers, rows })
+	} else {
+		Err(mlua::Error::external(
+			"Data must be a table (matrix or structured {headers, rows})",
+		))
+	}
+}
+
+// endregion: --- Support

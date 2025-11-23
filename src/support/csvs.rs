@@ -3,6 +3,67 @@ use crate::{Error, Result};
 use std::collections::HashMap;
 use std::path::Path;
 
+pub fn save_csv(path: impl AsRef<Path>, content: &CsvContent, options: Option<CsvOptions>) -> Result<()> {
+	write_csv(path, content, options, false)
+}
+
+pub fn append_csv(path: impl AsRef<Path>, content: &CsvContent, options: Option<CsvOptions>) -> Result<()> {
+	write_csv(path, content, options, true)
+}
+
+fn write_csv(path: impl AsRef<Path>, content: &CsvContent, options: Option<CsvOptions>, append: bool) -> Result<()> {
+	let path = path.as_ref();
+	let options = options.unwrap_or_default();
+
+	// Remap headers if labels provided (clone to not modify original content)
+	let mut headers = content.headers.clone();
+	if let Some(labels) = &options.header_labels {
+		remap_keys_to_labels(&mut headers, labels);
+	}
+
+	// Determine if we write headers
+	let file_exists = path.exists();
+	let write_headers = if append && file_exists {
+		false
+	} else {
+		!options.skip_header_row.unwrap_or(false) && !headers.is_empty()
+	};
+
+	// Setup writer
+	let builder = options.into_writer_builder();
+
+	// If append, we need to open in append mode.
+	let file = if append {
+		simple_fs::ensure_file_dir(path)?;
+		std::fs::OpenOptions::new()
+			.create(true)
+			.append(true)
+			.open(path)
+			.map_err(|e| Error::custom(format!("Failed to open CSV file for append '{}': {e}", path.display())))?
+	} else {
+		simple_fs::ensure_file_dir(path)?;
+		std::fs::File::create(path)
+			.map_err(|e| Error::custom(format!("Failed to create CSV file '{}': {e}", path.display())))?
+	};
+
+	let mut wtr = builder.from_writer(file);
+
+	if write_headers {
+		wtr.write_record(&headers)
+			.map_err(|e| Error::custom(format!("Failed to write headers: {e}")))?;
+	}
+
+	for row in &content.rows {
+		wtr.write_record(row)
+			.map_err(|e| Error::custom(format!("Failed to write row: {e}")))?;
+	}
+
+	wtr.flush()
+		.map_err(|e| Error::custom(format!("Failed to flush CSV writer: {e}")))?;
+
+	Ok(())
+}
+
 pub fn values_to_csv_row(values: &[String], options: Option<CsvOptions>) -> Result<String> {
 	let options = options.unwrap_or_default();
 	let mut builder = options.into_writer_builder();

@@ -110,6 +110,28 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_load_csv_fn = lua
 		.create_function(move |lua, (path, options): (String, Option<Value>)| file_load_csv(lua, &rt, path, options))?;
 
+	// -- save_as_csv
+	let rt = runtime.clone();
+	let file_save_as_csv_fn = lua.create_function(
+		move |lua, (path, data, options): (String, Value, Option<Value>)| file_save_as_csv(lua, &rt, path, data, options),
+	)?;
+
+	// -- save_records_as_csv
+	let rt = runtime.clone();
+	let file_save_records_as_csv_fn = lua.create_function(
+		move |lua, (path, records, header_keys, options): (String, Value, Vec<String>, Option<Value>)| {
+			file_save_records_as_csv(lua, &rt, path, records, header_keys, options)
+		},
+	)?;
+
+	// -- append_as_csv
+	let rt = runtime.clone();
+	let file_append_as_csv_fn = lua.create_function(
+		move |lua, (path, data, options): (String, Value, Option<Value>)| {
+			file_append_as_csv(lua, &rt, path, data, options)
+		},
+	)?;
+
 	// -- save_html_to_md
 	let rt = runtime.clone();
 	let file_save_html_to_md_fn = lua.create_function(move |lua, (html_path, dest_options): (String, Value)| {
@@ -219,6 +241,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("load_md_split_first", file_load_md_split_first_fn)?;
 	table.set("load_csv_headers", file_load_csv_headers_fn)?;
 	table.set("load_csv", file_load_csv_fn)?;
+	table.set("save_as_csv", file_save_as_csv_fn)?;
+	table.set("save_records_as_csv", file_save_records_as_csv_fn)?;
+	table.set("append_as_csv", file_append_as_csv_fn)?;
 	table.set("save_html_to_md", file_save_html_to_md_fn)?;
 	table.set("save_html_to_slim", file_save_html_to_slim_fn)?;
 	table.set("load_html_as_slim", file_load_html_as_slim_fn)?;

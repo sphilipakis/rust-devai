@@ -41,6 +41,48 @@ use crate::support::W;
 use crate::types::CsvOptions;
 use mlua::{FromLua as _, IntoLua as _, Lua, Table, Value};
 
+/// Convert a Lua value to a string suitable for CSV.
+/// - Strings are returned as is.
+/// - Numbers/Booleans are to_string().
+/// - Nil/NullSentinel becomes "".
+/// - Tables are serialized to JSON.
+pub fn lua_value_to_csv_string(value: Value) -> mlua::Result<String> {
+	match value {
+		Value::String(s) => Ok(s.to_str()?.to_string()),
+		Value::Integer(i) => Ok(i.to_string()),
+		Value::Number(n) => Ok(n.to_string()),
+		Value::Boolean(b) => Ok(b.to_string()), // "true" or "false"
+		Value::Nil => Ok("".to_string()),
+		Value::UserData(ud) if ud.is::<crate::script::NullSentinel>() => Ok("".to_string()),
+		Value::Table(t) => {
+			let serde_val = lua_value_to_serde_value(Value::Table(t)).map_err(mlua::Error::external)?;
+			serde_json::to_string(&serde_val).map_err(mlua::Error::external)
+		}
+		other => Err(mlua::Error::external(format!(
+			"unsupported value type '{}'",
+			other.type_name()
+		))),
+	}
+}
+
+/// Convert a Lua table (list of lists) into a Vec<Vec<String>>.
+///
+/// Each inner value is converted to a CSV string using `lua_value_to_csv_string`.
+pub fn lua_matrix_to_rows(matrix: Table) -> mlua::Result<Vec<Vec<String>>> {
+	let mut rows = Vec::new();
+	for row_val in matrix.sequence_values::<Value>() {
+		let row_val = row_val?;
+		if let Value::Table(row_tbl) = row_val {
+			let mut row = Vec::new();
+			for cell_val in row_tbl.sequence_values::<Value>() {
+				row.push(lua_value_to_csv_string(cell_val?)?);
+			}
+			rows.push(row);
+		}
+	}
+	Ok(rows)
+}
+
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
@@ -184,24 +226,7 @@ fn values_to_row_inner(values: Value, opts: Option<CsvOptions>, ctx: &str) -> ml
 	// Iterate over sequence values (1..N)
 	for value in table.sequence_values::<Value>() {
 		let value = value?;
-		let s = match value {
-			Value::String(s) => s.to_str()?.to_string(),
-			Value::Integer(i) => i.to_string(),
-			Value::Number(n) => n.to_string(),
-			Value::Boolean(b) => b.to_string(), // "true" or "false"
-			Value::Nil => "".to_string(),
-			Value::UserData(ud) if ud.is::<crate::script::NullSentinel>() => "".to_string(),
-			Value::Table(t) => {
-				let serde_val = lua_value_to_serde_value(Value::Table(t)).map_err(mlua::Error::external)?;
-				serde_json::to_string(&serde_val).map_err(mlua::Error::external)?
-			}
-			other => {
-				return Err(mlua::Error::external(format!(
-					"{ctx} - unsupported value type '{}'",
-					other.type_name()
-				)));
-			}
-		};
+		let s = lua_value_to_csv_string(value).map_err(|e| mlua::Error::external(format!("{ctx} - {e}")))?;
 		row_values.push(s);
 	}
 
