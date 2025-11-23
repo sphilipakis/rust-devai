@@ -75,7 +75,7 @@ pub fn parse_csv(content: &str, options: Option<CsvOptions>) -> Result<CsvConten
 		headers = hdr.iter().map(|s| s.to_string()).collect();
 
 		if let Some(labels) = &header_labels {
-			remap_headers(&mut headers, labels);
+			remap_labels_to_keys(&mut headers, labels);
 		}
 	}
 
@@ -122,13 +122,17 @@ pub fn load_csv_headers(path: impl AsRef<Path>, options: Option<CsvOptions>) -> 
 	let mut headers: Vec<String> = headers.iter().map(|s| s.to_string()).collect();
 
 	if let Some(labels) = &header_labels {
-		remap_headers(&mut headers, labels);
+		remap_labels_to_keys(&mut headers, labels);
 	}
 
 	Ok(headers)
 }
 
-fn remap_headers(headers: &mut [String], header_labels: &HashMap<String, String>) {
+/// Remap CSV headers (labels) to internal keys.
+///
+/// Use `header_labels` map { key: label }.
+/// Function maps label -> key.
+pub fn remap_labels_to_keys(headers: &mut [String], header_labels: &HashMap<String, String>) {
 	// Build reverse mapping: label -> key
 	// If multiple keys map to the same label, the last one wins (or arbitrary).
 	// Spec: "If a CSV header matches a `label` (value) in the map, it is renamed to the corresponding `key`."
@@ -137,6 +141,19 @@ fn remap_headers(headers: &mut [String], header_labels: &HashMap<String, String>
 	for header in headers.iter_mut() {
 		if let Some(key) = label_to_key.get(header) {
 			*header = key.to_string();
+		}
+	}
+}
+
+/// Remap internal keys to CSV headers (labels).
+///
+/// Use `header_labels` map { key: label }.
+/// Function maps key -> label.
+pub fn remap_keys_to_labels(headers: &mut [String], header_labels: &HashMap<String, String>) {
+	// Spec: "Write: Maps internal "key" to CSV header "label""
+	for header in headers.iter_mut() {
+		if let Some(label) = header_labels.get(header) {
+			*header = label.clone();
 		}
 	}
 }
