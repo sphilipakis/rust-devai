@@ -353,29 +353,47 @@ pub(super) fn file_append_csv_row(
 ///
 /// It handles both:
 /// - A matrix (list of lists) `any[][]`.
-/// - A structured table `{ headers: string[], rows: any[][] }`.
+/// - A structured table `{ headers?: string[], rows?: any[][] }`.
 ///
 /// If a matrix is provided and `has_header` is true (via options), the first row is treated as headers.
 fn normalize_csv_payload(_lua: &Lua, data: Value, has_header_opt: Option<bool>) -> mlua::Result<CsvContent> {
 	let has_header = has_header_opt.unwrap_or(false);
 
 	if let Value::Table(t) = &data {
-		// Check if it is {headers: ..., rows: ...}
-		// A crude check: if "rows" exists and is a table
-		if let Ok(rows_val) = t.get::<Value>("rows")
-			&& let Value::Table(rows_tbl) = rows_val
-		{
-			// It is structured
-			let headers_val = t.get::<Value>("headers")?;
-			let headers: Vec<mlua::String> = if let Value::Table(ht) = headers_val {
-				collect_string_sequence(Value::Table(ht), "CsvContent", "headers")?
-			} else {
-				Vec::new()
+		// Check for structured data: presence of "rows" or "headers"
+		let rows_val = t.get::<Value>("rows")?;
+		let headers_val = t.get::<Value>("headers")?;
+
+		let is_structured = !rows_val.is_nil() || !headers_val.is_nil();
+
+		if is_structured {
+			// -- Headers
+			let headers = match headers_val {
+				Value::Table(ht) => {
+					let seq = collect_string_sequence(Value::Table(ht), "CsvContent", "headers")?;
+					seq.into_iter().map(|s| s.to_string_lossy()).collect()
+				}
+				Value::Nil => Vec::new(),
+				other => {
+					return Err(mlua::Error::external(format!(
+						"'headers' must be a table, found {}",
+						other.type_name()
+					)));
+				}
 			};
 
-			let headers = headers.into_iter().map(|s| s.to_string_lossy()).collect();
+			// -- Rows
+			let rows = match rows_val {
+				Value::Table(rt) => lua_matrix_to_rows(rt)?,
+				Value::Nil => Vec::new(),
+				other => {
+					return Err(mlua::Error::external(format!(
+						"'rows' must be a table, found {}",
+						other.type_name()
+					)));
+				}
+			};
 
-			let rows = lua_matrix_to_rows(rows_tbl)?;
 			return Ok(CsvContent { headers, rows });
 		}
 
@@ -494,6 +512,69 @@ mod tests {
 		Ok(())
 	}
 
+	#[tokio::test]
+	async fn test_lua_file_csv_save_as_csv_only_headers() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_save_as_csv_only_headers.csv");
+		let fx_lua = format!(
+			r#"
+            local data = {{
+                headers = {{"name", "age"}}
+            }}
+            return aip.file.save_as_csv("{fx_path}", data)
+        "#
+		);
+
+		run_reflective_agent(&fx_lua, None).await?;
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		let lines: Vec<&str> = content.lines().collect();
+		assert_eq!(lines.len(), 1);
+		assert_eq!(lines[0], "name,age");
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_csv_save_as_csv_only_rows() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_save_as_csv_only_rows.csv");
+		let fx_lua = format!(
+			r#"
+            local data = {{
+                rows = {{ {{"Alice", 30}} }}
+            }}
+            return aip.file.save_as_csv("{fx_path}", data)
+        "#
+		);
+
+		run_reflective_agent(&fx_lua, None).await?;
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		let lines: Vec<&str> = content.lines().collect();
+		assert_eq!(lines.len(), 1);
+		assert_eq!(lines[0], "Alice,30");
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_csv_save_as_csv_empty_table() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_save_as_csv_empty.csv");
+		let fx_lua = format!(
+			r#"
+            local data = {{}}
+            return aip.file.save_as_csv("{fx_path}", data)
+        "#
+		);
+
+		run_reflective_agent(&fx_lua, None).await?;
+		// Should exist and be empty
+		assert!(std::path::Path::new(&format!("tests-data/sandbox-01/{fx_path}")).exists());
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		assert!(content.is_empty());
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
 }
 
 // endregion: --- Tests

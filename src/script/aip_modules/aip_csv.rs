@@ -11,7 +11,7 @@
 //! ### Functions
 //!
 //! - `aip.csv.parse_row(row: string, options?: CsvOptions): string[]`
-//! - `aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }`
+//! - `aip.csv.parse(content: string, options?: CsvOptions): CsvContent`
 //! - `aip.csv.values_to_row(values: any[]): string`
 //! - `aip.csv.value_lists_to_rows(value_lists: any[][]): string[]`
 //!
@@ -135,13 +135,14 @@ fn lua_parse_row(lua: &Lua, row: String, opts_val: Option<Value>) -> mlua::Resul
 /// ## Lua Documentation
 ///
 /// Parse CSV content, optionally with header detection and comment skipping.
-/// Returns a table with `headers` (or nil) and `rows` (string[][]).
+/// Returns a `CsvContent` table (`{ _type = "CsvContent", headers = string[], rows = string[][] }`).
+/// When `has_header` is `false`, the headers array is returned empty rather than `nil`.
 /// By default this API treats the first row as headers (`has_header = true`) and skips empty lines
 /// (`skip_empty_lines = true`) unless these options are overridden.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.csv.parse(content: string, options?: CsvOptions): { headers: string[] | nil, rows: string[][] }
+/// aip.csv.parse(content: string, options?: CsvOptions): CsvContent
 /// ```
 /// The returned table matches the `CsvContent` structure (same as `aip.file.load_csv`),
 /// including the `_type = "CsvContent"` marker and using an empty `headers` array when `has_header` is false.

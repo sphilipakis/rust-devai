@@ -226,7 +226,7 @@ aip.file.load_csv_headers(path: string): string[]
 
 aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], rows: string[][]}
 
-aip.file.save_as_csv(path: string, data: any[][] | {headers: string[], rows: any[][]}, options?: CsvOptions): FileInfo
+aip.file.save_as_csv(path: string, data: any[][] | {headers?: string[], rows?: any[][]}, options?: CsvOptions): FileInfo
 aip.file.save_records_as_csv(path: string, records: table[], header_keys: string[], options?: CsvOptions): FileInfo
 aip.file.append_csv_rows(path: string, value_lists: any[][], options?: CsvOptions): FileInfo
 aip.file.append_csv_row(path: string, values: any[], options?: CsvOptions): FileInfo
@@ -1113,7 +1113,7 @@ Save data as CSV file (overwrite).
 -- API Signature
 aip.file.save_as_csv(
   path: string,
-  data: any[][] | { headers: string[], rows: any[][] },
+  data: any[][] | { headers?: string[], rows?: any[][] },
   options?: CsvOptions
 ): FileInfo
 ```
@@ -1123,9 +1123,9 @@ Writes `data` to the CSV file at `path`.
 #### Arguments
 
 - `path: string`: Path to the CSV file, relative to the workspace root.
-- `data: any[][] | { headers: string[], rows: any[][] }`: The data to save. Can be:
+- `data: any[][] | { headers?: string[], rows?: any[][] }`: The data to save. Can be:
     - A matrix (`any[][]`). If `options.has_header` is true, the first row is treated as headers.
-    - A structured table `{ headers: string[], rows: any[][] }`.
+    - A structured table `{ headers?: string[], rows?: any[][] }`. Supports defining headers only, rows only, or both.
 - `options?: CsvOptions` (optional): CSV write options. `header_labels` are used to map internal keys to output labels. `skip_header_row` can suppress header emission.
 
 #### Returns
@@ -2880,7 +2880,7 @@ CSV parsing and processing functions for both individual rows and complete CSV c
 ```lua
 aip.csv.parse_row(row: string, options?: CsvOptions): string[]
 
-aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
+aip.csv.parse(content: string, options?: CsvOptions): CsvContent
 
 aip.csv.values_to_row(values: any[], options?: CsvOptions): string
 
@@ -2929,10 +2929,10 @@ Parse CSV content with optional header detection and comment skipping.
 
 ```lua
 -- API Signature
-aip.csv.parse(content: string, options?: CsvOptions): {headers: string[] | nil, rows: string[][]}
+aip.csv.parse(content: string, options?: CsvOptions): CsvContent
 ```
 
-Parses complete CSV content and returns both headers (if present) and all data rows.
+Parses complete CSV content and returns a `CsvContent` table containing headers (empty array when no header row is requested) and all data rows.
 
 #### Arguments
 
@@ -2963,7 +2963,7 @@ local result = aip.csv.parse(csv_content, {
 
 -- Parse without headers
 local result_no_headers = aip.csv.parse("a,b,c\n1,2,3", {has_header = false})
--- result_no_headers.headers = nil
+-- result_no_headers.headers = {}
 -- result_no_headers.rows = { {"a", "b", "c"}, {"1", "2", "3"} }
 ```
 
