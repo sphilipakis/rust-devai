@@ -226,6 +226,11 @@ aip.file.load_csv_headers(path: string): string[]
 
 aip.file.load_csv(path: string, options?: CsvOptions): {headers: string[], rows: string[][]}
 
+aip.file.save_as_csv(path: string, data: any[][] | {headers: string[], rows: any[][]}, options?: CsvOptions): FileInfo
+aip.file.save_records_as_csv(path: string, records: table[], header_keys: string[], options?: CsvOptions): FileInfo
+aip.file.append_csv_rows(path: string, value_lists: any[][], options?: CsvOptions): FileInfo
+aip.file.append_csv_row(path: string, values: any[], options?: CsvOptions): FileInfo
+
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
 
 aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
@@ -1099,6 +1104,173 @@ Returns an error (Lua table `{ error: string }`) if:
 - The path cannot be resolved
 - The file cannot be found or read
 - CSV parsing fails
+
+### aip.file.save_as_csv
+
+Save data as CSV file (overwrite).
+
+```lua
+-- API Signature
+aip.file.save_as_csv(
+  path: string,
+  data: any[][] | { headers: string[], rows: any[][] },
+  options?: CsvOptions
+): FileInfo
+```
+
+Writes `data` to the CSV file at `path`.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to the workspace root.
+- `data: any[][] | { headers: string[], rows: any[][] }`: The data to save. Can be:
+    - A matrix (`any[][]`). If `options.has_header` is true, the first row is treated as headers.
+    - A structured table `{ headers: string[], rows: any[][] }`.
+- `options?: CsvOptions` (optional): CSV write options. `header_labels` are used to map internal keys to output labels. `skip_header_row` can suppress header emission.
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the created CSV file.
+
+#### Example
+
+```lua
+local data = {
+    {"name", "age"},
+    {"Alice", 30}
+}
+aip.file.save_as_csv("output/users.csv", data, { has_header = true })
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) on write failure, path restriction, or serialization issues.
+
+### aip.file.save_records_as_csv
+
+Save a list of record objects (tables with keys) to CSV (overwrite).
+
+```lua
+-- API Signature
+aip.file.save_records_as_csv(
+  path: string,
+  records: table[],
+  header_keys: string[],
+  options?: CsvOptions
+): FileInfo
+```
+
+Writes `records` to the CSV file at `path`, aligning values based on `header_keys`.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to the workspace root.
+- `records: table[]`: A list of Lua tables/objects (records).
+- `header_keys: string[]`: Defines the column order and specifies which keys to extract from `records`.
+- `options?: CsvOptions` (optional): CSV write options. `header_labels` can map internal `header_keys` to output column names.
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the created CSV file.
+
+#### Example
+
+```lua
+local users = {
+    { id = 1, full_name = "Alice" },
+    { id = 2, full_name = "Bob" }
+}
+local keys = {"id", "full_name"}
+aip.file.save_records_as_csv("output/user_data.csv", users, keys)
+
+-- Example with header labels mapping internal keys to external labels
+local labeled_keys = {"id", "full_name"}
+local opts = {
+    header_labels = {
+        id = "User ID",
+        full_name = "Name"
+    }
+}
+aip.file.save_records_as_csv("output/labeled_users.csv", users, labeled_keys, opts)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) on write failure, missing keys in records, or serialization issues.
+
+### aip.file.append_csv_rows
+
+Appends multiple data rows (matrix `any[][]`) to a CSV file, creating the file if it doesn't exist.
+
+```lua
+-- API Signature
+aip.file.append_csv_rows(
+  path: string,
+  value_lists: any[][],
+  options?: CsvOptions
+): FileInfo
+```
+
+This function focuses purely on appending data rows. Options related to automatic header writing (`has_header`, `header_labels`) are ignored.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to the workspace root.
+- `value_lists: any[][]`: List of lists of values (`any[][]`) to append. Inner values are converted to CSV strings (tables -> JSON).
+- `options?: CsvOptions` (optional): CSV write options (e.g., `delimiter`, `quote`, `escape`).
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+
+#### Example
+
+```lua
+local rows_to_append = {
+    {"2025-01-01", "Start"},
+    {"2025-01-02", "Stop"}
+}
+aip.file.append_csv_rows("logs/activity.csv", rows_to_append)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) on write failure or serialization issues.
+
+### aip.file.append_csv_row
+
+Appends a single data row (list of values) to a CSV file, creating the file if it doesn't exist.
+
+```lua
+-- API Signature
+aip.file.append_csv_row(
+  path: string,
+  values: any[],
+  options?: CsvOptions
+): FileInfo
+```
+
+This function focuses purely on appending a single data row. Headers should be managed separately via `aip.file.append_csv_headers`.
+
+#### Arguments
+
+- `path: string`: Path to the CSV file, relative to the workspace root.
+- `values: any[]`: A single list of values to append as a row. Inner values are converted to CSV strings (tables -> JSON).
+- `options?: CsvOptions` (optional): CSV write options (e.g., `delimiter`, `quote`, `escape`).
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+
+#### Example
+
+```lua
+aip.file.append_csv_row("logs/simple.csv", {"Data", 123, true})
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) on write failure or serialization issues.
 
 ### aip.file.save_html_to_md
 
@@ -2769,13 +2941,7 @@ Parses complete CSV content and returns both headers (if present) and all data r
 
 #### Returns
 
-- `table`: A table containing:
-  ```ts
-  {
-    headers: string[] | nil, // Header row if has_header is true, otherwise nil
-    rows: string[][]      // All data rows (excluding headers if has_header is true)
-  }
-  ```
+- `CsvContent`: Matches the [CsvContent](#csvcontent) structure (same as `aip.file.load_csv`), including the `_type = "CsvContent"` marker alongside the `headers` and `rows` fields.
 
 #### Example
 
@@ -5367,9 +5533,11 @@ Options table used for configuring CSV parsing behavior in functions like `aip.c
   quote?: string,             // Quote character, default "\""
   escape?: string,            // Escape character, default "\""
   trim_fields?: boolean,      // Whether to trim whitespace from fields, default false
-  has_header?: boolean,       // Whether the first row is a header, default false (true for aip.file.load_csv)
-  skip_empty_lines?: boolean, // Whether to skip empty lines, default true
-  comment?: string            // Comment character prefix (e.g., "#"), optional
+  has_header?: boolean,       // Whether the first row is a header, default false (true for aip.file.load_csv),
+  header_labels?: { [string]: string }, // Map { key: label } for renaming headers/keys (parsing and writing),
+  skip_empty_lines?: boolean, // Whether to skip empty lines, default true,
+  comment?: string,           // Comment character prefix (e.g., "#"), optional
+  skip_header_row?: boolean   // Writing only: Suppress header emission even if headers are available (default false).
 }
 ```
 

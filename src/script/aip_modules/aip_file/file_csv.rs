@@ -10,7 +10,8 @@
 //! - `aip.file.load_csv(path: string, options?: CsvOptions): { _type: "CsvContent", headers: string[], rows: string[][] }`
 //! - `aip.file.save_as_csv(path: string, data: matrix | {headers, rows}, options?: CsvOptions): FileInfo`
 //! - `aip.file.save_records_as_csv(path: string, records: table[], header_keys: string[], options?: CsvOptions): FileInfo`
-//! - `aip.file.append_as_csv(path: string, data: matrix | {headers, rows}, options?: CsvOptions): FileInfo`
+//! - `aip.file.append_csv_rows(path: string, value_lists: any[][], options?: CsvOptions): FileInfo`
+//! - `aip.file.append_csv_row(path: string, values: any[], options?: CsvOptions): FileInfo`
 //!
 //! The `path` is resolved relative to the workspace root.
 
@@ -238,42 +239,107 @@ pub(super) fn file_save_records_as_csv(
 
 /// ## Lua Documentation
 ///
-/// Append data to a CSV file.
+/// Append rows to a CSV file.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.file.append_as_csv(
+/// aip.file.append_csv_rows(
 ///   path: string,
-///   data: any[][] | { headers: string[], rows: any[][] },
+///   value_lists: any[][],
 ///   options?: CsvOptions
 /// ): FileInfo
 /// ```
-pub(super) fn file_append_as_csv(
+pub(super) fn file_append_csv_rows(
 	lua: &Lua,
 	runtime: &Runtime,
 	path: String,
-	data: Value,
+	value_lists: Value,
 	options: Option<Value>,
 ) -> mlua::Result<Value> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 
 	// We might not want that once workspace is truely optional
-	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.append_as_csv requires a aipack workspace setup")?;
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.append_csv_rows requires a aipack workspace setup")?;
 
 	check_access_write(&full_path, wks_dir)?;
+
+	let rows = match value_lists {
+		Value::Table(t) => lua_matrix_to_rows(t)?,
+		_ => return Err(mlua::Error::external("value_lists must be a table (list of lists)")),
+	};
+
+	let content = CsvContent {
+		headers: Vec::new(),
+		rows,
+	};
 
 	let opts = match options {
 		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
 		None => None,
 	};
-	let has_header = opts.as_ref().and_then(|o| o.has_header);
-
-	let content = normalize_csv_payload(lua, data, has_header)?;
 
 	crate::support::csvs::append_csv(&full_path, &content, opts).map_err(|e| {
 		Error::from(format!(
-			"aip.file.append_as_csv - Failed to append to csv file '{path}'.\nCause: {e}",
+			"aip.file.append_csv_rows - Failed to append rows to csv file '{path}'.\nCause: {e}",
+		))
+	})?;
+
+	let file_info = FileInfo::new(runtime.dir_context(), path, &full_path);
+	file_info.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Append a single row to a CSV file.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.append_csv_row(
+///   path: string,
+///   values: any[],
+///   options?: CsvOptions
+/// ): FileInfo
+/// ```
+pub(super) fn file_append_csv_row(
+	lua: &Lua,
+	runtime: &Runtime,
+	path: String,
+	values: Value,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.append_csv_row requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	let row = match values {
+		Value::Table(t) => {
+			let mut r = Vec::new();
+			for val in t.sequence_values::<Value>() {
+				r.push(lua_value_to_csv_string(val?)?);
+			}
+			r
+		}
+		_ => return Err(mlua::Error::external("values must be a table (list)")),
+	};
+
+	let content = CsvContent {
+		headers: Vec::new(),
+		rows: vec![row],
+	};
+
+	let opts = match options {
+		Some(v) => Some(CsvOptions::from_lua(v, lua)?),
+		None => None,
+	};
+
+	crate::support::csvs::append_csv(&full_path, &content, opts).map_err(|e| {
+		Error::from(format!(
+			"aip.file.append_csv_row - Failed to append row to csv file '{path}'.\nCause: {e}",
 		))
 	})?;
 
@@ -370,41 +436,33 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_lua_file_csv_append_as_csv_ok() -> Result<()> {
-		let fx_path = gen_sandbox_01_temp_file_path("test_append_as_csv.csv");
+	async fn test_lua_file_csv_append_csv_rows_ok() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_append_csv_rows.csv");
 
-		// 1. Create/Append first batch (new file)
-		let fx_lua1 = format!(
+		// Create file with header first
+		let fx_lua_header = format!(
 			r#"
-            local data = {{
-                {{"name", "age"}},
-                {{"Alice", 30}}
-            }}
-            return aip.file.append_as_csv("{fx_path}", data, {{has_header = true}})
-        "#
+            aip.file.save_as_csv("{fx_path}", {{headers={{"name", "age"}}, rows={{}}}})
+            "#
 		);
-		run_reflective_agent(&fx_lua1, None).await?;
+		run_reflective_agent(&fx_lua_header, None).await?;
 
-		// 2. Append second batch (existing file)
-		let fx_lua2 = format!(
+		// Now append rows
+		let fx_lua = format!(
 			r#"
             local data = {{
-                {{"name", "age"}}, -- Header in data
+                {{"Alice", 30}},
                 {{"Bob", 25}}
             }}
-            -- has_header=true means first row is header, so it should be SKIPPED when appending
-            return aip.file.append_as_csv("{fx_path}", data, {{has_header = true}})
+            -- has_header should be ignored for append_csv_rows
+            return aip.file.append_csv_rows("{fx_path}", data, {{has_header = true}})
         "#
 		);
-		run_reflective_agent(&fx_lua2, None).await?;
+
+		run_reflective_agent(&fx_lua, None).await?;
 
 		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
 		let lines: Vec<&str> = content.lines().collect();
-
-		// Should be:
-		// name,age
-		// Alice,30
-		// Bob,25
 		assert_eq!(lines.len(), 3);
 		assert_eq!(lines[0], "name,age");
 		assert_eq!(lines[1], "Alice,30");
@@ -413,6 +471,29 @@ mod tests {
 		clean_sanbox_01_tmp_file(fx_path)?;
 		Ok(())
 	}
+
+	#[tokio::test]
+	async fn test_lua_file_csv_append_csv_row_ok() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_append_csv_row.csv");
+
+		// Append one row
+		let fx_lua = format!(
+			r#"
+            return aip.file.append_csv_row("{fx_path}", {{"Alice", 30}})
+        "#
+		);
+
+		run_reflective_agent(&fx_lua, None).await?;
+
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		let lines: Vec<&str> = content.lines().collect();
+		assert_eq!(lines.len(), 1);
+		assert_eq!(lines[0], "Alice,30");
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
+
 }
 
 // endregion: --- Tests
