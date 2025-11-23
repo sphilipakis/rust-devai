@@ -1,26 +1,39 @@
 use crate::script::LuaValueExt;
 use csv::{ReaderBuilder, Trim};
 use mlua::{FromLua, Lua, Value};
+use std::collections::HashMap;
 
 /// CSV options bag used by `aip.csv` functions.
 ///
-/// All fields are optional; when `nil` is provided for options, defaults are applied in the caller:
-/// - delimiter: "," (first byte used)
-/// - quote: "\"" (first byte used)
-/// - escape: "\"" (first byte used)
-/// - trim_fields: false
-/// - has_header: false
-/// - skip_empty_lines: true
-/// - comment: none (if provided, only the first byte is used)
+/// All fields are optional; when `nil` is provided for options, defaults are applied in the caller.
 #[derive(Default, Clone)]
 pub struct CsvOptions {
+	/// Field delimiter. Default: "," (first byte used).
 	pub delimiter: Option<String>,
+
+	/// Quote character. Default: "\"" (first byte used).
 	pub quote: Option<String>,
+
+	/// Escape character. Default: "\"" (first byte used).
 	pub escape: Option<String>,
+
+	/// Whether to trim whitespace from fields. Default: false.
 	pub trim_fields: Option<bool>,
+
+	/// Whether the first row is a header. Default: false (true for `aip.file.load_csv`).
 	pub has_header: Option<bool>,
+
+	/// Map { key: label } for renaming headers/keys.
+	pub header_labels: Option<HashMap<String, String>>,
+
+	/// Whether to skip empty lines during parsing. Default: true.
 	pub skip_empty_lines: Option<bool>,
+
+	/// Comment character prefix (e.g., "#"). Default: none (if provided, only the first byte is used).
 	pub comment: Option<String>,
+
+	/// Writing only: Suppress header emission even if headers are available. Default: false.
+	pub skip_header_row: Option<bool>,
 }
 
 impl FromLua for CsvOptions {
@@ -35,6 +48,27 @@ impl FromLua for CsvOptions {
 				let has_header = table.x_get_bool("has_header");
 				let skip_empty_lines = table.x_get_bool("skip_empty_lines");
 				let comment = table.x_get_string("comment");
+				let skip_header_row = table.x_get_bool("skip_header_row");
+
+				let header_labels = if let Some(val) = table.x_get_value("header_labels") {
+					match val {
+						Value::Table(t) => {
+							let mut map = HashMap::new();
+							for pair in t.pairs::<String, String>() {
+								let (k, v) = pair.map_err(|e| mlua::Error::FromLuaConversionError {
+									from: "Table",
+									to: "HashMap<String, String>".to_string(),
+									message: Some(format!("Invalid header_labels: {}", e)),
+								})?;
+								map.insert(k, v);
+							}
+							Some(map)
+						}
+						_ => None,
+					}
+				} else {
+					None
+				};
 
 				Ok(CsvOptions {
 					delimiter,
@@ -42,8 +76,10 @@ impl FromLua for CsvOptions {
 					escape,
 					trim_fields,
 					has_header,
+					header_labels,
 					skip_empty_lines,
 					comment,
+					skip_header_row,
 				})
 			}
 			other => Err(mlua::Error::FromLuaConversionError {

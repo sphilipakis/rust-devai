@@ -373,6 +373,35 @@ Jane,25
 
 		Ok(())
 	}
+
+	#[tokio::test]
+	async fn test_aip_csv_parse_with_header_labels() -> Result<()> {
+		let lua = setup_lua(aip_csv::init_module, "csv").await?;
+
+		let script = r#"
+			local content = "ID,Full Name,Age\n1,Alice,30"
+			local opts = {
+				header_labels = {
+					id = "ID",
+					name = "Full Name"
+				}
+			}
+			return aip.csv.parse(content, opts)
+		"#;
+		let res = eval_lua(&lua, script)?;
+
+		// Verify headers remapping
+		assert_eq!(res.x_get_str("/headers/0")?, "id");
+		assert_eq!(res.x_get_str("/headers/1")?, "name");
+		assert_eq!(res.x_get_str("/headers/2")?, "Age"); // Unmapped
+
+		// Verify rows content remains valid
+		assert_eq!(res.x_get_str("/rows/0/0")?, "1");
+		assert_eq!(res.x_get_str("/rows/0/1")?, "Alice");
+		assert_eq!(res.x_get_str("/rows/0/2")?, "30");
+
+		Ok(())
+	}
 }
 
 // endregion: --- Tests

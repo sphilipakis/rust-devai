@@ -1,5 +1,6 @@
 use crate::types::{CsvContent, CsvOptions};
 use crate::{Error, Result};
+use std::collections::HashMap;
 use std::path::Path;
 
 pub fn values_to_csv_row(values: &[String], options: Option<CsvOptions>) -> Result<String> {
@@ -54,9 +55,11 @@ pub fn parse_csv_row(row: &str, options: Option<CsvOptions>) -> Result<Vec<Strin
 }
 
 pub fn parse_csv(content: &str, options: Option<CsvOptions>) -> Result<CsvContent> {
-	let options = options.unwrap_or_default();
+	let mut options = options.unwrap_or_default();
 	let has_header = options.has_header.unwrap_or(true);
 	let skip_empty_lines = options.skip_empty_lines.unwrap_or(true);
+
+	let header_labels = options.header_labels.take();
 
 	let mut builder = options.into_reader_builder();
 	// We set has_headers explicitly to handle the extraction logic below correctly
@@ -70,6 +73,10 @@ pub fn parse_csv(content: &str, options: Option<CsvOptions>) -> Result<CsvConten
 			.headers()
 			.map_err(|e| Error::custom(format!("Failed to read CSV headers: {e}")))?;
 		headers = hdr.iter().map(|s| s.to_string()).collect();
+
+		if let Some(labels) = &header_labels {
+			remap_headers(&mut headers, labels);
+		}
 	}
 
 	let mut rows = Vec::new();
@@ -94,7 +101,9 @@ pub fn load_csv(path: impl AsRef<Path>, options: Option<CsvOptions>) -> Result<C
 
 pub fn load_csv_headers(path: impl AsRef<Path>, options: Option<CsvOptions>) -> Result<Vec<String>> {
 	let path = path.as_ref();
-	let options = options.unwrap_or_default();
+	let mut options = options.unwrap_or_default();
+
+	let header_labels = options.header_labels.take();
 
 	let mut builder = options.into_reader_builder();
 	builder.has_headers(true);
@@ -110,7 +119,26 @@ pub fn load_csv_headers(path: impl AsRef<Path>, options: Option<CsvOptions>) -> 
 		))
 	})?;
 
-	Ok(headers.iter().map(|s| s.to_string()).collect())
+	let mut headers: Vec<String> = headers.iter().map(|s| s.to_string()).collect();
+
+	if let Some(labels) = &header_labels {
+		remap_headers(&mut headers, labels);
+	}
+
+	Ok(headers)
+}
+
+fn remap_headers(headers: &mut [String], header_labels: &HashMap<String, String>) {
+	// Build reverse mapping: label -> key
+	// If multiple keys map to the same label, the last one wins (or arbitrary).
+	// Spec: "If a CSV header matches a `label` (value) in the map, it is renamed to the corresponding `key`."
+	let label_to_key: HashMap<&String, &String> = header_labels.iter().map(|(k, v)| (v, k)).collect();
+
+	for header in headers.iter_mut() {
+		if let Some(key) = label_to_key.get(header) {
+			*header = key.to_string();
+		}
+	}
 }
 
 // region:    --- Tests
@@ -200,6 +228,59 @@ mod tests {
 
 		let content_as_strs: Vec<Vec<&str>> = res.rows.iter().map(|row| row.x_as_strs()).collect();
 		assert_eq!(content_as_strs, expected_content);
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_files_csv_load_with_header_labels() -> Result<()> {
+		// -- Setup & Fixtures
+		let content = "ID Code,Full Name,Contact Email\n1,Alice,alice@x.com";
+		let mut labels = HashMap::new();
+		labels.insert("id".to_string(), "ID Code".to_string());
+		labels.insert("name".to_string(), "Full Name".to_string());
+		// "Contact Email" not mapped, should remain as is.
+
+		let options = CsvOptions {
+			header_labels: Some(labels),
+			..Default::default()
+		};
+
+		// -- Exec
+		let res = parse_csv(content, Some(options))?;
+
+		// -- Check
+		let expected_headers = vec!["id", "name", "Contact Email"];
+		assert_eq!(res.headers, expected_headers);
+		assert_eq!(res.rows.len(), 1);
+		assert_eq!(res.rows[0], vec!["1", "Alice", "alice@x.com"]);
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_files_csv_load_headers_remapped() -> Result<()> {
+		// -- Setup & Fixtures
+		// Content: id,name,email
+		let path = SPath::new("tests-data/sandbox-01/example.csv");
+
+		let mut labels = HashMap::new();
+		labels.insert("ID".to_string(), "id".to_string()); // map "id" -> "ID"
+		// "name" and "email" unmapped
+
+		let options = CsvOptions {
+			header_labels: Some(labels),
+			..Default::default()
+		};
+
+		// -- Exec
+		let headers = load_csv_headers(&path, Some(options))?;
+
+		// -- Check
+		// Original: ["id", "name", "email"]
+		// Remapped: ["ID", "name", "email"]
+		let expected = vec!["ID", "name", "email"];
+		assert_eq!(headers, expected);
 
 		Ok(())
 	}
