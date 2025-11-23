@@ -10,9 +10,10 @@ use std::borrow::Cow;
 /// # Returns
 ///
 /// A `String` containing the extracted content between the first and last ```
-pub fn outer_block_content_or_raw(content: &str) -> Cow<'_, str> {
+pub fn outer_block_content_or_raw(content_orig: &str) -> Cow<'_, str> {
+	let content = content_orig.trim();
 	if !content.starts_with("```") {
-		return content.into();
+		return content_orig.into();
 	}
 
 	// Split the input content into lines for line-by-line processing.
