@@ -144,18 +144,48 @@ aip.file.save_records_as_csv(
 - **header_keys**: Defines the order of columns and which keys to extract from records.
 - **options**: `header_labels` can map internal keys to output column names.
 
-### 5. aip.file.append_as_csv
+### 5. aip.file.append_csv_headers
 
-Appends data to a CSV file. Creates the file if it doesn't exist.
+Appends a header row to a CSV file. If the file exists, it appends the headers unless `skip_header_row` is true. If the file does not exist, it creates it and writes headers unless `skip_header_row` is true.
 
 ```lua
-aip.file.append_as_csv(
+aip.file.append_csv_headers(
   path: string,
-  data: any[][] | { headers: string[], rows: any[][] },
+  headers: string[],
   options?: CsvOptions
 ): FileInfo
 ```
 
-- **File Creation**: If file is created, writes headers (unless `skip_header_row` is true).
-- **Appending**: If file exists, headers in `data` are skipped (writes only rows).
-- **data**: Same matrix or structured format as `save_as_csv`.
+- **headers**: The list of header keys/names to write.
+- **options**: Supports `header_labels` for mapping internal keys to output labels, and `skip_header_row` to conditionally suppress writing headers.
+
+### 6. aip.file.append_csv_rows
+
+Appends multiple rows of values (matrix `any[][]`) to a CSV file. Creates the file if it doesn't exist.
+
+```lua
+aip.file.append_csv_rows(
+  path: string,
+  value_lists: any[][],
+  options?: CsvOptions
+): FileInfo
+```
+
+- **value_lists**: List of lists of values (`any[][]`).
+
+Note that this function focuses solely on appending data rows. Options related to automatic header writing (`options.has_header`, `options.header_labels`) are ignored. Headers should be managed explicitly using `aip.file.append_csv_headers`.
+
+### 7. aip.file.append_csv_row
+
+Appends a single row (list of values) to a CSV file. Creates the file if it doesn't exist.
+
+```lua
+aip.file.append_csv_row(
+  path: string,
+  values: any[],
+  options?: CsvOptions
+): FileInfo
+```
+
+- **values**: A list of values to append as a single CSV record.
+- **Header Handling**: This function does not handle headers. Headers should be managed explicitly using `aip.file.append_csv_headers`.
