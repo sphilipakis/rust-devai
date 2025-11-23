@@ -1,47 +1,121 @@
-## API Functions Summary
+# CSV API Specification
+
+This specification covers the `aip.csv` module (string-based operations) and the CSV-related functions in the `aip.file` module (file-system operations).
+
+## Types
 
 ### CsvOptions
 
-The existing `CsvOptions` type is extended to support both parsing and saving configuration.
+Configuration for parsing and saving CSV data.
 
 ```lua
--- API Signature
 type CsvOptions = {
-  -- Common
-  delimiter?: string,
-  quote?: string,
-  escape?: string,
-  trim_fields?: boolean,
+  -- Serialization & Parsing
+  delimiter?: string,         -- Default: ",". The field delimiter character.
+  quote?: string,             -- Default: "\"". The quote character.
+  escape?: string,            -- Default: "\"". The escape character.
+  trim_fields?: boolean,      -- Default: false. If true, trims whitespace from fields.
+
+  -- Header & Row Handling
   has_header?: boolean,       -- Parsing: First row is header (extracted). Writing: First input row is header (used).
-  header_labels?: { [string]: string }, -- Map { key: label }. Read: Maps CSV header "label" to internal "key" (applied by aip.csv.parse and aip.file.load_csv so the returned headers can be used directly with aip.shape helpers). Write: Maps internal "key" to CSV header "label" (used by all aip.file.save_* helpers to return to the label format).
+  header_labels?: { [string]: string }, -- Map { key: label }. See below.
+  skip_empty_lines?: boolean, -- Default: true. Skips empty lines during parsing.
+  comment?: string,           -- Default: nil. Comment character prefix (e.g., "#").
 
-  -- Parsing specific (Existing)
-  skip_empty_lines?: boolean,
-  comment?: string,
-
-  -- Writing specific (New)
-  skip_header_row?: boolean,            -- Suppress header emission even if available
+  -- Writing specific
+  skip_header_row?: boolean,  -- Default: false. Suppress header emission even if available.
 }
 ```
 
-- `header_labels`: Optional map `{ key: label }` for renaming headers.
-    - **Parsing:** If a CSV header matches a `label` (value) in the map, it is renamed to the corresponding `key`.
-    - **Writing:** If a record key matches a `key` in the map, it is written to the CSV header as `label`.
-- `has_header`: 
-    - **Parsing:** If `true`, the first row is extracted as `headers` and removed from `rows`. 
-    - **Writing:** If `true`, the first entry of a bare matrix (`any[][]`) is treated as the canonical header row and consumed before writing subsequent rows. Applies to matrix helpers only and is ignored by `aip.file.save_records_as_csv` as well as by structured `{ headers, rows }` payloads.
-- `skip_header_row`: **Writing only**. Suppresses header emission even if it could be written, enabling reuse of the same options record in different contexts.
+**`header_labels` behavior:**
+- **Parsing/Loading:** If a CSV header matches a `label` (value) in the map, it is renamed to the corresponding `key` in the returned `headers` list.
+- **Writing:** If a header key matches a `key` in the map, it is written to the CSV file as `label`.
 
-Matrix helpers ignore `has_header` whenever the payload already bundles `{ headers, rows }`.
+**`has_header` behavior:**
+- **Parsing:** If `true`, the first row is treated as headers and separated from `rows`.
+- **Writing (Matrix data):** If `true`, the first row of the matrix is treated as the header row.
+- **Writing (Structured data):** Ignored if data is `{ headers: ..., rows: ... }` (headers are explicit).
 
-The same `header_labels` map is therefore used across `aip.csv.parse(...)`, `aip.file.load_csv(...)`, and all of the save helpers: parsing/loading remap the headers to the internal keys so they slot directly into `aip.shape` helpers, while saving remaps those keys back to the configured label format.
+---
 
-### 1. aip.file.save_as_csv (Matrix Data Overwrite)
+## Module `aip.csv`
 
-Performs a full overwrite save of CSV content from a list of value lists (matrix data).
+Helper functions for in-memory CSV string manipulation.
+
+### 1. aip.csv.parse_row
+
+Parses a single CSV row string into a list of fields.
 
 ```lua
--- API Signature
+aip.csv.parse_row(row: string, options?: CsvOptions): string[]
+```
+
+- **options**: Uses `delimiter`, `quote`, `escape`, `trim_fields`. Ignores header/comment options.
+
+### 2. aip.csv.parse
+
+Parses a full CSV string content.
+
+```lua
+aip.csv.parse(content: string, options?: CsvOptions): CsvContent
+```
+
+- **Returns**: `CsvContent` object: `{ _type: "CsvContent", headers: string[], rows: string[][] }`.
+- **options**: Uses all parsing options (`has_header`, `skip_empty_lines`, `comment`, etc.).
+
+### 3. aip.csv.values_to_row
+
+Converts a list of Lua values into a single CSV row string.
+
+```lua
+aip.csv.values_to_row(values: any[], options?: CsvOptions): string
+```
+
+- **values**: List of values. `nil` becomes empty string. Tables are JSON serialized.
+- **options**: Uses `delimiter`, `quote`, `escape`.
+
+### 4. aip.csv.value_lists_to_rows
+
+Converts a list of rows (list of values) into a list of CSV strings.
+
+```lua
+aip.csv.value_lists_to_rows(value_lists: any[][], options?: CsvOptions): string[]
+```
+
+---
+
+## Module `aip.file` (CSV Helpers)
+
+File system operations for CSV files. Paths are relative to the workspace root.
+
+### 1. aip.file.load_csv_headers
+
+Loads only the headers from a CSV file.
+
+```lua
+aip.file.load_csv_headers(path: string): string[]
+```
+
+- Useful for inspecting columns without loading the entire file.
+- Implicitly assumes `has_header = true`.
+- Does not support options currently.
+
+### 2. aip.file.load_csv
+
+Loads a CSV file into a `CsvContent` object.
+
+```lua
+aip.file.load_csv(path: string, options?: CsvOptions): CsvContent
+```
+
+- **Returns**: `{ _type: "CsvContent", headers: string[], rows: string[][] }`.
+- **options**: Defaults `has_header` to `true`.
+
+### 3. aip.file.save_as_csv
+
+Saves data to a CSV file (overwrites).
+
+```lua
 aip.file.save_as_csv(
   path: string,
   data: any[][] | { headers: string[], rows: any[][] },
@@ -49,61 +123,32 @@ aip.file.save_as_csv(
 ): FileInfo
 ```
 
-Saves the data in `data` to the specified `path`. The helper accepts either a bare list of value lists (matrix data) or a structured `{ headers, rows }` table. Structured payloads use their embedded `headers` as the canonical keys and their `rows` as the body, while bare matrices rely on `has_header = true` to treat their first entry as the canonical header row (otherwise no header row is emitted). Header text still flows through `header_labels`, and `skip_header_row` suppresses emission regardless of how the keys were determined.
+- **data**:
+    - **Matrix (`any[][]`)**: If `options.has_header` is true, the first row is treated as headers.
+    - **Structured (`{headers, rows}`)**: Uses explicit headers.
+- **options**: `skip_header_row` can be used to omit headers in output. `header_labels` apply.
 
-#### Arguments
+### 4. aip.file.save_records_as_csv
 
-- `path: string`: Path to the target CSV file, relative to the workspace root.
-- `data: any[][] | { headers: string[], rows: any[][] }`: Provide either a bare matrix (list of value lists) or a structured table containing explicit `headers` and the `rows` to write. When the structured table is used, its headers override `CsvOptions.headers` and make `has_header` unnecessary.
-- `options?: CsvOptions`: When passing a bare matrix, set `has_header = true` if the first entry contains canonical header keys that should be consumed, remap the visible labels via `header_labels`, reuse the serialization switches (`delimiter`, `quote`, `escape`, `trim_fields`), and set `skip_header_row = true` if you need to suppress headers. When supplying `{ headers, rows }`, only the shared serialization and labeling fields apply because the headers are already embedded and `has_header` is ignored. The shared `header_labels` map keeps the emitted header row aligned with the labels that `aip.csv.parse`/`aip.file.load_csv` already map for use with `aip.shape` helpers.
-
-#### Returns
-
-- `FileInfo`: Metadata about the saved file.
-
-#### Error
-
-Returns an error (Lua table `{ error: string }`) on conversion failure, directory creation failure, or file write/permission error.
-
-
-### 2. aip.file.save_records_as_csv (Record List Overwrite)
-
-Saves a list of records (tables with named keys) to a CSV file.
+Saves a list of record objects (tables with keys) to CSV.
 
 ```lua
--- API Signature
 aip.file.save_records_as_csv(
   path: string,
   records: table[],
-  header_keys: string[], -- Mandatory list of keys to extract from records in order.
+  header_keys: string[],
   options?: CsvOptions
 ): FileInfo
 ```
 
-Saves the data in `records` (a list of tables/objects) to the specified `path`. Requires `header_keys` to define the keys to extract from records and their order. The output header row uses these keys by default, but you can map them to end-user labels via `options.header_labels`, or omit the header entirely with `skip_header_row`.
+- **header_keys**: Defines the order of columns and which keys to extract from records.
+- **options**: `header_labels` can map internal keys to output column names.
 
-#### Arguments
+### 5. aip.file.append_as_csv
 
-- `path: string`: Path to the target CSV file, relative to the workspace root.
-- `records: table[]`: List of records to write.
-- `header_keys: string[]`: The mandatory list of keys to extract from each record, defining the output column order.
-- `options?: CsvOptions`: Use `header_labels` to rename the rendered headers, `skip_header_row` to suppress the header even though `header_keys` are provided, and the serialization switches (`delimiter`, `quote`, `escape`, `trim_fields`) for formatting. The `has_header` field inside `CsvOptions` is ignored for this helper because `header_keys` already defines the canonical order. This reuses the same `header_labels` map so the saved header row matches the label form that parsing/loading exposed for downstream `aip.shape` helpers.
-
-#### Returns
-
-- `FileInfo`: Metadata about the saved file.
-
-#### Error
-
-Returns an error (Lua table `{ error: string }`) if `header_keys` is missing or invalid, conversion fails, or file write/permission error occurs.
-
-
-### 3. aip.file.append_as_csv (Matrix Data Append)
-
-Appends new CSV content from a list of value lists (matrix data) to an existing file.
+Appends data to a CSV file. Creates the file if it doesn't exist.
 
 ```lua
--- API Signature
 aip.file.append_as_csv(
   path: string,
   data: any[][] | { headers: string[], rows: any[][] },
@@ -111,18 +156,6 @@ aip.file.append_as_csv(
 ): FileInfo
 ```
 
-Appends the data in `data` to the file at `path`. If the file does not exist, it is created. The helper accepts either a bare value matrix or a structured `{ headers, rows }` table. Structured payloads use their inline `headers` when a new file is created (unless `skip_header_row` is set), while bare matrices rely on `has_header = true` to treat their first entry as the canonical header row before appending the remaining rows. Subsequent rows are appended verbatim after serialization.
-
-#### Arguments
-
-- `path: string`: Path to the target CSV file, relative to the workspace root.
-- `data: any[][] | { headers: string[], rows: any[][] }`: Provide either a bare matrix (list of value lists) or a structured table containing explicit `headers` plus the `rows` to append. Structured payloads bypass `CsvOptions.headers`/`has_header` because they already carry the canonical keys.
-- `options?: CsvOptions`: For bare matrices, set `has_header = true` when the first entry carries header keys you want consumed before appending, remap display labels via `header_labels`, reuse the serialization switches, and rely on `skip_header_row` if you need to suppress header emission in a fresh file. When the payload already includes `{ headers, rows }`, only the labeling and serialization-related fields apply and `has_header` is ignored. This keeps the output labels in sync with the header format that `aip.csv.parse`/`aip.file.load_csv` produced for `aip.shape` helpers.
-
-#### Returns
-
-- `FileInfo`: Metadata about the file after append operation.
-
-#### Error
-
-Returns an error (Lua table `{ error: string }`) on conversion failure, directory creation failure, or file write/permission error.
+- **File Creation**: If file is created, writes headers (unless `skip_header_row` is true).
+- **Appending**: If file exists, headers in `data` are skipped (writes only rows).
+- **data**: Same matrix or structured format as `save_as_csv`.
