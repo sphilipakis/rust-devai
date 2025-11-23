@@ -112,9 +112,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	// -- save_as_csv
 	let rt = runtime.clone();
-	let file_save_as_csv_fn = lua.create_function(
-		move |lua, (path, data, options): (String, Value, Option<Value>)| file_save_as_csv(lua, &rt, path, data, options),
-	)?;
+	let file_save_as_csv_fn =
+		lua.create_function(move |lua, (path, data, options): (String, Value, Option<Value>)| {
+			file_save_as_csv(lua, &rt, path, data, options)
+		})?;
 
 	// -- save_records_as_csv
 	let rt = runtime.clone();
@@ -126,11 +127,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 
 	// -- append_as_csv
 	let rt = runtime.clone();
-	let file_append_as_csv_fn = lua.create_function(
-		move |lua, (path, data, options): (String, Value, Option<Value>)| {
+	let file_append_as_csv_fn =
+		lua.create_function(move |lua, (path, data, options): (String, Value, Option<Value>)| {
 			file_append_as_csv(lua, &rt, path, data, options)
-		},
-	)?;
+		})?;
 
 	// -- save_html_to_md
 	let rt = runtime.clone();

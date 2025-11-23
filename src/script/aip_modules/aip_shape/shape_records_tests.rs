@@ -273,10 +273,7 @@ async fn test_lua_aip_shape_records_to_value_lists_auto_order() -> Result<()> {
 	let res = eval_lua(&lua, script)?;
 
 	// -- Check
-	let expected = json!([
-		[1, "Alice"],
-		[2, "Bob"]
-	]);
+	let expected = json!([[1, "Alice"], [2, "Bob"]]);
 	assert_eq!(res, expected);
 
 	Ok(())
@@ -299,10 +296,7 @@ async fn test_lua_aip_shape_records_to_value_lists_with_names_nulls() -> Result<
 	let res = eval_lua(&lua, script)?;
 
 	// -- Check
-	let expected = json!([
-		["Alice", 1, null],
-		[null, 2, null]
-	]);
+	let expected = json!([["Alice", 1, null], [null, 2, null]]);
 	assert_eq!(res, expected);
 
 	Ok(())

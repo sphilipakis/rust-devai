@@ -281,8 +281,8 @@ fn test_support_text_apply_change_mixed_success_and_failure() -> Result {
 	let original = "one two three";
 	let changes = format!(
 		"{}\n{}",
-		format_change_block("two", "2"), // Should succeed
-		format_change_block("four", "4") // Should fail
+		format_change_block("two", "2"),  // Should succeed
+		format_change_block("four", "4")  // Should fail
 	);
 
 	// -- Exec
