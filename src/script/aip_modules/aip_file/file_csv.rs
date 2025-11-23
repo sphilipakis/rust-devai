@@ -330,3 +330,89 @@ fn normalize_csv_payload(_lua: &Lua, data: Value, has_header_opt: Option<bool>) 
 }
 
 // endregion: --- Support
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+
+	use crate::_test_support::{clean_sanbox_01_tmp_file, gen_sandbox_01_temp_file_path, run_reflective_agent};
+	use simple_fs::read_to_string;
+	use value_ext::JsonValueExt as _;
+
+	#[tokio::test]
+	async fn test_lua_file_csv_save_as_csv_matrix_ok() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_save_as_csv_matrix.csv");
+		let fx_lua = format!(
+			r#"
+            local data = {{
+                {{"name", "age"}},
+                {{"Alice", 30}},
+                {{"Bob", 25}}
+            }}
+            return aip.file.save_as_csv("{fx_path}", data, {{has_header = true}})
+        "#
+		);
+
+		let res = run_reflective_agent(&fx_lua, None).await?;
+		assert_eq!(res.x_get_str("path")?, fx_path.as_str());
+
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		let lines: Vec<&str> = content.lines().collect();
+		assert_eq!(lines.len(), 3);
+		assert_eq!(lines[0], "name,age");
+		assert_eq!(lines[1], "Alice,30");
+		assert_eq!(lines[2], "Bob,25");
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_file_csv_append_as_csv_ok() -> Result<()> {
+		let fx_path = gen_sandbox_01_temp_file_path("test_append_as_csv.csv");
+
+		// 1. Create/Append first batch (new file)
+		let fx_lua1 = format!(
+			r#"
+            local data = {{
+                {{"name", "age"}},
+                {{"Alice", 30}}
+            }}
+            return aip.file.append_as_csv("{fx_path}", data, {{has_header = true}})
+        "#
+		);
+		run_reflective_agent(&fx_lua1, None).await?;
+
+		// 2. Append second batch (existing file)
+		let fx_lua2 = format!(
+			r#"
+            local data = {{
+                {{"name", "age"}}, -- Header in data
+                {{"Bob", 25}}
+            }}
+            -- has_header=true means first row is header, so it should be SKIPPED when appending
+            return aip.file.append_as_csv("{fx_path}", data, {{has_header = true}})
+        "#
+		);
+		run_reflective_agent(&fx_lua2, None).await?;
+
+		let content = read_to_string(format!("tests-data/sandbox-01/{fx_path}"))?;
+		let lines: Vec<&str> = content.lines().collect();
+
+		// Should be:
+		// name,age
+		// Alice,30
+		// Bob,25
+		assert_eq!(lines.len(), 3);
+		assert_eq!(lines[0], "name,age");
+		assert_eq!(lines[1], "Alice,30");
+		assert_eq!(lines[2], "Bob,25");
+
+		clean_sanbox_01_tmp_file(fx_path)?;
+		Ok(())
+	}
+}
+
+// endregion: --- Tests
