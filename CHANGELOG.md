@@ -1,5 +1,20 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-11-23 - [v0.8.8](https://github.com/jeremychone/rust-devai/compare/v0.8.7...v0.8.8)
+
+- `!` api change - csv - now returns `{headers?, rows}` (was `{headers, content}`)
+- `!` aip.file.load_spans - return tuple spans `[start, end]` rather than `{start: number, end: number}`
+- `+` NEW API - `aip.lua.merge` and `aip.lua.merge_deep`
+- `+` NEW API - `aip.file` .. `.save_as_csv`, `.append_csv_row`, `.append_csv_rows`
+- `+` NEW API - `aip.csv.value_lists_to_rows`, `aip.csv.values_to_row`
+- `+` NEW API - `aip.shape.records_to_value_lists`
+- `+` NEW API - `aip.toml.parse`, `aip.file.load_toml`, `aip.toml.stringify`
+- `+` NEW API Argument - Add `CsvOptions` to `aip.csv.values_to_row` and `value_lists_to_rows`
+- `^` `aip.file.apply_changes` - now return two values `(FileInfo, ChangesInfo)`.
+- `+` tui - display model pricing while AI running
+- `^` pricing - gemini 3, openai gpt 5.1, fireworks pricing update
+- `-` tui - runs nav view - fix issue when clicking nav on no item, last item get selected
+
 ## 2025-10-25 - [v0.8.7](https://github.com/jeremychone/rust-devai/compare/v0.8.5...v0.8.7)
 
 - `^` aip.file.list - big speed boost and special folder support for `target/`, `.build/`, `node_modules/` and `__pycache__/` (but have explicit globs)
