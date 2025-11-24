@@ -60,10 +60,10 @@ input_concurrency = 2
 #
 [options.model_aliases]
 # -- Anthropic
-claude        = "claude-sonnet-4-5-20250929"
-sonnet        = "claude-sonnet-4-5-20250929"
-haiku         = "claude-haiku-4-5-20251001"
-opus          = "claude-opus-4-1-20250805"
+claude        = "claude-sonnet-4-5"
+sonnet        = "claude-sonnet-4-5"
+haiku         = "claude-haiku-4-5"
+opus          = "claude-opus-4-5"
 # -- OpenAI
 # For OpenAI, model names can use `-high`, `-medium`, or `-low` suffixes.
 #             e.g., `gpt-5-low`, `gpt-5-nano-high`
