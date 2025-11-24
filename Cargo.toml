@@ -54,7 +54,7 @@ textwrap = "0.16"
 # -- HTML & XML
 html-escape = "0.2"
 html-helpers = { version = "0.1.0" }
-htmd = "0.4"
+htmd = "0.5"
 url = "2.5.7"
 quick-xml = "0.38"
 # -- Web
