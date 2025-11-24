@@ -208,9 +208,9 @@ aip.file.first(include_globs: string | string[], options?: {base_dir?: string, a
 
 aip.file.info(path: string): FileInfo | nil
 
-aip.file.load_json(path: string): table | value
+aip.file.load_json(path: string | nil): table | value | nil
 
-aip.file.load_ndjson(path: string): object[]
+aip.file.load_ndjson(path: string | nil): object[] | nil
 
 aip.file.append_json_line(path: string, data: value): FileInfo
 
@@ -797,18 +797,18 @@ Load a file, parse its content as JSON, and return the corresponding Lua value.
 
 ```lua
 -- API Signature
-aip.file.load_json(path: string): table | value
+aip.file.load_json(path: string | nil): table | value | nil
 ```
 
-Loads the file at `path` (relative to workspace), parses it as JSON, and converts it to a Lua value.
+Loads the file at `path` (relative to workspace), parses it as JSON, and converts it to a Lua value. Returns `nil` if `path` is `nil`.
 
 #### Arguments
 
-- `path: string`: Path to the JSON file, relative to workspace root.
+- `path: string | nil`: Path to the JSON file, relative to workspace root. If `nil`, returns `nil`.
 
 #### Returns
 
-- `table | value`: Lua value representing the parsed JSON.
+- `table | value | nil`: Lua value representing the parsed JSON, or `nil`.
 
 #### Example
 
@@ -857,18 +857,18 @@ Load a file containing newline-delimited JSON (NDJSON), parse each line, and ret
 
 ```lua
 -- API Signature
-aip.file.load_ndjson(path: string): object[]
+aip.file.load_ndjson(path: string | nil): object[] | nil
 ```
 
-Loads the file at `path` (relative to workspace), parses each non-empty line as JSON, and returns a Lua list of the parsed values. Empty lines are skipped.
+Loads the file at `path` (relative to workspace), parses each non-empty line as JSON, and returns a Lua list of the parsed values. Empty lines are skipped. Returns `nil` if `path` is `nil`.
 
 #### Arguments
 
-- `path: string`: Path to the NDJSON file, relative to workspace root.
+- `path: string | nil`: Path to the NDJSON file, relative to workspace root. If `nil`, returns `nil`.
 
 #### Returns
 
-- `object[]`: Lua list containing parsed values from each line.
+- `object[] | nil`: Lua list containing parsed values from each line, or `nil`.
 
 #### Example
 
@@ -3044,9 +3044,9 @@ JSON parsing and stringification functions.
 ### Functions Summary
 
 ```lua
-aip.json.parse(content: string): table | value
+aip.json.parse(content: string | nil): table | value | nil
 
-aip.json.parse_ndjson(content: string): object[]
+aip.json.parse_ndjson(content: string | nil): object[] | nil
 
 aip.json.stringify(content: table): string
 
@@ -3061,16 +3061,16 @@ Parse a JSON string into a Lua table or value.
 
 ```lua
 -- API Signature
-aip.json.parse(content: string): table | value
+aip.json.parse(content: string | nil): table | value | nil
 ```
 
 #### Arguments
 
-- `content: string`: The JSON string to parse.
+- `content: string | nil`: The JSON string to parse. If `nil`, returns `nil`.
 
 #### Returns
 
-- `table | value`: A Lua value representing the parsed JSON.
+- `table | value | nil`: A Lua value representing the parsed JSON. Returns `nil` if `content` was `nil`.
 
 #### Example
 
@@ -3089,18 +3089,18 @@ Parse a newline-delimited JSON (NDJSON) string into a list of tables/values.
 
 ```lua
 -- API Signature
-aip.json.parse_ndjson(content: string): object[]
+aip.json.parse_ndjson(content: string | nil): object[] | nil
 ```
 
 Parses each non-empty line as a separate JSON object/value.
 
 #### Arguments
 
-- `content: string`: The NDJSON string.
+- `content: string | nil`: The NDJSON string. If `nil`, returns `nil`.
 
 #### Returns
 
-- `object[]`: A Lua list containing the parsed value from each line.
+- `object[] | nil`: A Lua list containing the parsed value from each line, or `nil` if `content` was `nil`.
 
 #### Example
 
