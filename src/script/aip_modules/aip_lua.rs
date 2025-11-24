@@ -20,10 +20,75 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let dump_lua = lua.create_function(dump)?;
 	table.set("dump", dump_lua)?;
 
+	let merge_lua = lua.create_function(merge)?;
+	table.set("merge", merge_lua)?;
+
+	let merge_deep_lua = lua.create_function(merge_deep)?;
+	table.set("merge_deep", merge_deep_lua)?;
+
 	Ok(table)
 }
 
 // region: --- Rust Lua Support
+
+/// ## Lua Documentation
+///
+/// Shallow merge of `overlay` into `base`. Returns a new table.
+///
+/// ```lua
+/// -- API Signature
+/// aip.lua.merge(base: table, overlay: table): table
+/// ```
+fn merge(lua: &Lua, (base, overlay): (Table, Table)) -> mlua::Result<Table> {
+	let new_table = lua.create_table()?;
+	for pair in base.pairs::<Value, Value>() {
+		let (k, v) = pair?;
+		new_table.set(k, v)?;
+	}
+	for pair in overlay.pairs::<Value, Value>() {
+		let (k, v) = pair?;
+		new_table.set(k, v)?;
+	}
+	Ok(new_table)
+}
+
+/// ## Lua Documentation
+///
+/// Deep merge of `overlay` into `base`. Returns a new table.
+///
+/// ```lua
+/// -- API Signature
+/// aip.lua.merge_deep(base: table, overlay: table): table
+/// ```
+fn merge_deep(lua: &Lua, (base, overlay): (Table, Table)) -> mlua::Result<Table> {
+	fn deep_merge_value(lua: &Lua, base: Value, overlay: Value) -> mlua::Result<Value> {
+		match (base, overlay) {
+			(Value::Table(base_t), Value::Table(overlay_t)) => {
+				let new_table = lua.create_table()?;
+				// Copy base
+				for pair in base_t.pairs::<Value, Value>() {
+					let (k, v) = pair?;
+					new_table.set(k, v)?;
+				}
+				// Merge overlay
+				for pair in overlay_t.pairs::<Value, Value>() {
+					let (k, v_overlay) = pair?;
+					let v_base = new_table.get::<Value>(k.clone())?;
+					let merged = deep_merge_value(lua, v_base, v_overlay)?;
+					new_table.set(k, merged)?;
+				}
+				Ok(Value::Table(new_table))
+			}
+			(_, v) => Ok(v),
+		}
+	}
+
+	let res = deep_merge_value(lua, Value::Table(base), Value::Table(overlay))?;
+	match res {
+		Value::Table(t) => Ok(t),
+		_ => unreachable!("Should be a table"),
+	}
+}
 
 /// ## Lua Documentation
 ///
@@ -138,9 +203,10 @@ mod tests {
 
 	use crate::_test_support::{assert_contains, eval_lua, setup_lua};
 	use crate::script::aip_modules::aip_lua;
+	use value_ext::JsonValueExt as _;
 
 	#[tokio::test]
-	async fn test_lua_dump_ok() -> Result<()> {
+	async fn test_lua_lua_dump_ok() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_lua::init_module, "lua").await?;
 		let script = r#"
@@ -157,9 +223,52 @@ return aip.lua.dump(tbl)
 		let res = res.as_str().ok_or("res json value should be of type string")?;
 
 		// -- Check
-		assert_contains(res, "bool = {true}");
-		assert_contains(res, "key1 = {\"value1\"}");
-		assert_contains(res, "key2 = {42}");
+		assert_contains(res, "bool = true");
+		assert_contains(res, "key1 = \"value1\"");
+		assert_contains(res, "key2 = 42");
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_lua_merge_simple_ok() -> Result<()> {
+		// -- Setup
+		let lua = setup_lua(aip_lua::init_module, "lua").await?;
+
+		// -- Test shallow merge
+		let script = r#"
+        local base = { a = 1, b = 2 }
+        local ovl = { b = 3, c = 4 }
+        local res = aip.lua.merge(base, ovl)
+        return res
+    "#;
+		let res = eval_lua(&lua, script)?;
+		assert_eq!(res.x_get::<i32>("a")?, 1);
+		assert_eq!(res.x_get::<i32>("b")?, 3);
+		assert_eq!(res.x_get::<i32>("c")?, 4);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_lua_merge_deep_ok() -> Result<()> {
+		// -- Setup
+		let lua = setup_lua(aip_lua::init_module, "lua").await?;
+
+		// -- Test deep merge
+		let script = r#"
+        local base = { a = 1, b = { x = 10, y = 20 } }
+        local ovl = { b = { y = 22, z = 30 }, c = 3 }
+        local res = aip.lua.merge_deep(base, ovl)
+        return res
+    "#;
+		let res = eval_lua(&lua, script)?;
+		assert_eq!(res.x_get::<i32>("a")?, 1);
+		assert_eq!(res.x_get::<i32>("c")?, 3);
+
+		assert_eq!(res.x_get::<i32>("/b/x")?, 10);
+		assert_eq!(res.x_get::<i32>("/b/y")?, 22);
+		assert_eq!(res.x_get::<i32>("/b/z")?, 30);
+
 		Ok(())
 	}
 }
