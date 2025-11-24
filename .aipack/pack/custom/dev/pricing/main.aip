@@ -25,11 +25,11 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = true,  url = ""},
+   {name = "openai",    do_json = false,  url = ""},
    
    {name = "gemini",    do_json = false,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = false,  url = ""},
+   {name = "anthropic", do_json = true,   url = ""},
 
    {name = "xai",       do_json = false,  url = ""}, 
 
@@ -124,6 +124,7 @@ From this content for the {{data.provider}}:
     - Also, only extract the models about Llama, qwen, deepseek, glm, gemma, mixtral, mistral, and openai. 
 - For Anthropic 
     - For Anthropic Models (Claude), the `.` should be replaced by `-`
+    - For Anthropic Models (Claude), only the model name ending `4-5` are `recent: true`, the other models are `recent: false`
     - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
     - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
     - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
