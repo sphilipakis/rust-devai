@@ -1,5 +1,11 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2025-11-25 - [v0.8.9](https://github.com/jeremychone/rust-devai/compare/v0.8.8...v0.8.9)
+
+- `!` pricing - updated Opus-4.5 pricing
+- `^` gemini 3 - Use new `thinkingLevel` when gemini-3.. for `-low` and `-high`
+
 ## 2025-11-23 - [v0.8.8](https://github.com/jeremychone/rust-devai/compare/v0.8.7...v0.8.8)
 
 - `!` api change - csv - now returns `{headers?, rows}` (was `{headers, content}`)
