@@ -33,61 +33,54 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Shallow merge of `overlay` into `base`. Returns a new table.
+/// Shallow merge one or more tables into `target` (in place).
 ///
 /// ```lua
 /// -- API Signature
-/// aip.lua.merge(base: table, overlay: table): table
+/// aip.lua.merge(target: table, ...objs: table)
 /// ```
-fn merge(lua: &Lua, (base, overlay): (Table, Table)) -> mlua::Result<Table> {
-	let new_table = lua.create_table()?;
-	for pair in base.pairs::<Value, Value>() {
-		let (k, v) = pair?;
-		new_table.set(k, v)?;
+fn merge(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Table>)) -> mlua::Result<()> {
+	for obj in objs {
+		for pair in obj.pairs::<Value, Value>() {
+			let (k, v) = pair?;
+			target.set(k, v)?;
+		}
 	}
-	for pair in overlay.pairs::<Value, Value>() {
-		let (k, v) = pair?;
-		new_table.set(k, v)?;
-	}
-	Ok(new_table)
+	Ok(())
 }
 
 /// ## Lua Documentation
 ///
-/// Deep merge of `overlay` into `base`. Returns a new table.
+/// Deep merge one or more tables into `target` (in place).
 ///
 /// ```lua
 /// -- API Signature
-/// aip.lua.merge_deep(base: table, overlay: table): table
+/// aip.lua.merge_deep(target: table, ...objs: table)
 /// ```
-fn merge_deep(lua: &Lua, (base, overlay): (Table, Table)) -> mlua::Result<Table> {
-	fn deep_merge_value(lua: &Lua, base: Value, overlay: Value) -> mlua::Result<Value> {
-		match (base, overlay) {
-			(Value::Table(base_t), Value::Table(overlay_t)) => {
-				let new_table = lua.create_table()?;
-				// Copy base
-				for pair in base_t.pairs::<Value, Value>() {
-					let (k, v) = pair?;
-					new_table.set(k, v)?;
+fn merge_deep(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Table>)) -> mlua::Result<()> {
+	fn deep_merge_into(target: &Table, overlay: &Table) -> mlua::Result<()> {
+		for pair in overlay.pairs::<Value, Value>() {
+			let (k, v_overlay) = pair?;
+			let v_target = target.get::<Value>(k.clone())?;
+
+			match (&v_target, &v_overlay) {
+				(Value::Table(t_target), Value::Table(t_overlay)) => {
+					// Both are tables, recursively merge
+					deep_merge_into(t_target, t_overlay)?;
 				}
-				// Merge overlay
-				for pair in overlay_t.pairs::<Value, Value>() {
-					let (k, v_overlay) = pair?;
-					let v_base = new_table.get::<Value>(k.clone())?;
-					let merged = deep_merge_value(lua, v_base, v_overlay)?;
-					new_table.set(k, merged)?;
+				_ => {
+					// Set the overlay value
+					target.set(k, v_overlay)?;
 				}
-				Ok(Value::Table(new_table))
 			}
-			(_, v) => Ok(v),
 		}
+		Ok(())
 	}
 
-	let res = deep_merge_value(lua, Value::Table(base), Value::Table(overlay))?;
-	match res {
-		Value::Table(t) => Ok(t),
-		_ => unreachable!("Should be a table"),
+	for obj in objs {
+		deep_merge_into(&target, &obj)?;
 	}
+	Ok(())
 }
 
 /// ## Lua Documentation
@@ -234,12 +227,12 @@ return aip.lua.dump(tbl)
 		// -- Setup
 		let lua = setup_lua(aip_lua::init_module, "lua").await?;
 
-		// -- Test shallow merge
+		// -- Test shallow merge in place
 		let script = r#"
         local base = { a = 1, b = 2 }
         local ovl = { b = 3, c = 4 }
-        local res = aip.lua.merge(base, ovl)
-        return res
+        aip.lua.merge(base, ovl)
+        return base
     "#;
 		let res = eval_lua(&lua, script)?;
 		assert_eq!(res.x_get::<i32>("a")?, 1);
@@ -250,16 +243,37 @@ return aip.lua.dump(tbl)
 	}
 
 	#[tokio::test]
+	async fn test_lua_lua_merge_multi_ok() -> Result<()> {
+		// -- Setup
+		let lua = setup_lua(aip_lua::init_module, "lua").await?;
+
+		// -- Test shallow merge with multiple tables
+		let script = r#"
+        local base = { a = 1 }
+        local ovl1 = { b = 2 }
+        local ovl2 = { c = 3, a = 10 }
+        aip.lua.merge(base, ovl1, ovl2)
+        return base
+    "#;
+		let res = eval_lua(&lua, script)?;
+		assert_eq!(res.x_get::<i32>("a")?, 10);
+		assert_eq!(res.x_get::<i32>("b")?, 2);
+		assert_eq!(res.x_get::<i32>("c")?, 3);
+
+		Ok(())
+	}
+
+	#[tokio::test]
 	async fn test_lua_lua_merge_deep_ok() -> Result<()> {
 		// -- Setup
 		let lua = setup_lua(aip_lua::init_module, "lua").await?;
 
-		// -- Test deep merge
+		// -- Test deep merge in place
 		let script = r#"
         local base = { a = 1, b = { x = 10, y = 20 } }
         local ovl = { b = { y = 22, z = 30 }, c = 3 }
-        local res = aip.lua.merge_deep(base, ovl)
-        return res
+        aip.lua.merge_deep(base, ovl)
+        return base
     "#;
 		let res = eval_lua(&lua, script)?;
 		assert_eq!(res.x_get::<i32>("a")?, 1);
@@ -267,6 +281,30 @@ return aip.lua.dump(tbl)
 
 		assert_eq!(res.x_get::<i32>("/b/x")?, 10);
 		assert_eq!(res.x_get::<i32>("/b/y")?, 22);
+		assert_eq!(res.x_get::<i32>("/b/z")?, 30);
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_lua_merge_deep_multi_ok() -> Result<()> {
+		// -- Setup
+		let lua = setup_lua(aip_lua::init_module, "lua").await?;
+
+		// -- Test deep merge with multiple tables
+		let script = r#"
+        local base = { a = 1, b = { x = 10 } }
+        local ovl1 = { b = { y = 20 } }
+        local ovl2 = { b = { z = 30 }, c = 5 }
+        aip.lua.merge_deep(base, ovl1, ovl2)
+        return base
+    "#;
+		let res = eval_lua(&lua, script)?;
+		assert_eq!(res.x_get::<i32>("a")?, 1);
+		assert_eq!(res.x_get::<i32>("c")?, 5);
+
+		assert_eq!(res.x_get::<i32>("/b/x")?, 10);
+		assert_eq!(res.x_get::<i32>("/b/y")?, 20);
 		assert_eq!(res.x_get::<i32>("/b/z")?, 30);
 
 		Ok(())

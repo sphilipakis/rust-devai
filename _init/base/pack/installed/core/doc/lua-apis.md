@@ -3772,12 +3772,16 @@ aip.time.local_tz_id(): string            -- IANA timezone id for local zone
 
 ## aip.lua
 
-Lua value inspection functions.
+Lua value inspection and manipulation functions.
 
 ### Functions Summary
 
 ```lua
 aip.lua.dump(value: any): string
+
+aip.lua.merge(target: table, ...objs: table)
+
+aip.lua.merge_deep(target: table, ...objs: table)
 ```
 
 ### aip.lua.dump
@@ -3810,6 +3814,74 @@ print(aip.lua.dump(tbl))
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if the value cannot be converted to string.
+
+### aip.lua.merge
+
+Shallow merge one or more tables into `target` (in place).
+
+```lua
+-- API Signature
+aip.lua.merge(target: table, ...objs: table)
+```
+
+Iterates through each table in `objs` and copies its key-value pairs into `target`. Later tables override earlier ones for the same key.
+
+#### Arguments
+
+- `target: table`: The table to merge into (modified in place).
+- `...objs: table`: One or more tables whose key-value pairs are merged into `target`.
+
+#### Returns
+
+Nothing (modifies `target` in place).
+
+#### Example
+
+```lua
+local base = { a = 1, b = 2 }
+local ovl1 = { b = 3, c = 4 }
+local ovl2 = { d = 5 }
+aip.lua.merge(base, ovl1, ovl2)
+-- base is now { a = 1, b = 3, c = 4, d = 5 }
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if table iteration fails.
+
+### aip.lua.merge_deep
+
+Deep merge one or more tables into `target` (in place).
+
+```lua
+-- API Signature
+aip.lua.merge_deep(target: table, ...objs: table)
+```
+
+Recursively merges key-value pairs from each table in `objs` into `target`. When both `target` and the overlay have a table value for the same key, those nested tables are merged recursively. Otherwise, the overlay value replaces the target value.
+
+#### Arguments
+
+- `target: table`: The table to merge into (modified in place).
+- `...objs: table`: One or more tables to deep merge into `target`.
+
+#### Returns
+
+Nothing (modifies `target` in place).
+
+#### Example
+
+```lua
+local base = { a = 1, b = { x = 10, y = 20 } }
+local ovl1 = { b = { y = 22, z = 30 } }
+local ovl2 = { c = 3 }
+aip.lua.merge_deep(base, ovl1, ovl2)
+-- base is now { a = 1, b = { x = 10, y = 22, z = 30 }, c = 3 }
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if table iteration fails.
 
 
 ## aip.agent
