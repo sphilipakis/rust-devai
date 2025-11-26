@@ -3,7 +3,9 @@
 
 ## 2025-11-25 - [v0.8.9](https://github.com/jeremychone/rust-devai/compare/v0.8.8...v0.8.9)
 
-- `!` pricing - updated Opus-4.5 pricing
+- `^` aip.lua.merge - support multi object merge and merge_deep (& merge on first target object now)
+- `^` Opus-4-5 - Added support for new reasonning effort config
+- `^` Opus-4-5 - Updated pricing
 - `^` gemini 3 - Use new `thinkingLevel` when gemini-3.. for `-low` and `-high`
 
 ## 2025-11-23 - [v0.8.8](https://github.com/jeremychone/rust-devai/compare/v0.8.7...v0.8.8)
