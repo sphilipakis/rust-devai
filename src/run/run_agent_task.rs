@@ -203,6 +203,7 @@ pub async fn run_agent_task(
 		agent,
 		input,
 		data,
+		attachments,
 		run_model_resolved,
 		skip,
 	} = res?;
@@ -216,7 +217,7 @@ pub async fn run_agent_task(
 	// Rt Step - Start AI stage
 	rt_step.step_task_ai_start(run_id, task_id).await?;
 
-	let chat_messages = build_chat_messages(&agent, &before_all_result, &input, &data)?;
+	let chat_messages = build_chat_messages(runtime, &agent, &before_all_result, &input, &data, &attachments)?;
 	let res = process_ai(
 		runtime,
 		client,

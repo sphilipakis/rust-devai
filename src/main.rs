@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
 		// Set up the subscriber with the file writer and log level
 		tracing_subscriber::fmt()
 			.with_writer(non_blocking)
-			.with_env_filter(EnvFilter::new("aip=debug"))
+			.with_env_filter(EnvFilter::new("aip=debug,genai=debug"))
 			.without_time()
 			.with_ansi(false)
 			.init();

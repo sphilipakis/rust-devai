@@ -3,6 +3,7 @@
 mod in_block_state;
 mod md_block_iter;
 mod md_meta_extractor;
+mod md_ref_iter;
 mod md_section_iter;
 mod md_section_split;
 mod outer_block;
@@ -10,6 +11,7 @@ mod outer_block;
 pub use in_block_state::*;
 pub use md_block_iter::*;
 pub use md_meta_extractor::*;
+pub use md_ref_iter::MdRefIter;
 pub use md_section_iter::*;
 pub use outer_block::*;
 

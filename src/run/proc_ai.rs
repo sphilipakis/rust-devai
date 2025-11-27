@@ -3,13 +3,14 @@ use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
 use crate::model::Id;
 use crate::run::pricing::{model_pricing, price_it};
-use crate::run::{AiResponse, DryMode, RunBaseOptions};
+use crate::run::{AiResponse, Attachments, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
-use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse};
+use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, ContentPart};
 use genai::{ModelIden, ModelName};
 use serde_json::Value;
+use simple_fs::SPath;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -18,8 +19,14 @@ pub struct ProcAiResponse {
 	pub ai_response: Option<AiResponse>,
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn build_chat_messages(agent: &Agent, before_all: &Value, input: &Value, data: &Value) -> Result<Vec<ChatMessage>> {
+pub fn build_chat_messages(
+	runtime: &Runtime,
+	agent: &Agent,
+	before_all: &Value,
+	input: &Value,
+	data: &Value,
+	attachments: &Attachments,
+) -> Result<Vec<ChatMessage>> {
 	let data_scope = HashMap::from([
 		// The hbs scope data
 		// Note: for now, we do not add the before all
@@ -29,6 +36,55 @@ pub fn build_chat_messages(agent: &Agent, before_all: &Value, input: &Value, dat
 	]);
 
 	let mut chat_messages: Vec<ChatMessage> = Vec::new();
+
+	// -- Add the eventual attachments
+	for att in attachments {
+		// Resolve
+		let file_path = SPath::new(&att.file_source);
+		let file_path = match runtime.resolve_path_default(file_path, None) {
+			Ok(file_path) => file_path,
+			Err(err) => {
+				let chat_msg = ChatMessage::user(format!(
+					"Error while attaching file '{}'\nCause: {err}",
+					att.file_source
+				));
+				chat_messages.push(chat_msg);
+				continue;
+			}
+		};
+
+		let chat_msg = match ContentPart::from_binary_file(&file_path) {
+			Ok(file_cp) => {
+				let file_name = att
+					.file_name
+					.as_deref()
+					.unwrap_or(file_path.file_name().unwrap_or("no file name"));
+
+				let m = format!(
+					"Here is file attachment.
+File Path: '{file_path}'
+File Name: '{file_name}'"
+				);
+				let m = if let Some(desc) = &att.title {
+					format!("{m}\nFile Title: {desc}")
+				} else {
+					m
+				};
+				let text = format!("{m}\n");
+
+				ChatMessage::user(vec![
+					//
+					ContentPart::from_text(text),
+					file_cp,
+				])
+			}
+			Err(err) => ChatMessage::user(format!("Error while attaching file '{file_path}'\nCause: {err}")),
+		};
+
+		chat_messages.push(chat_msg);
+	}
+
+	// -- Add the prompt parts from the agent (.aip markdown template)
 	for prompt_part in agent.prompt_parts() {
 		let PromptPart {
 			kind,
@@ -123,10 +179,7 @@ pub async fn process_ai(
 	}
 
 	let ai_response: Option<AiResponse> = if !is_inst_empty {
-		let prompt_size: usize = chat_messages
-			.iter()
-			.map(|c| c.content.texts().iter().map(|c| c.len()).sum::<usize>())
-			.sum();
+		let prompt_size: usize = chat_messages.iter().map(|c| c.size()).sum();
 
 		// Rt Step Ai Gen start
 		rt_step.step_task_ai_gen_start(run_id, task_id, prompt_size as i64).await?;

@@ -100,6 +100,10 @@ pub enum Error {
 	BeforeAllFailWrongReturn {
 		cause: String,
 	},
+	#[display("Data Lua block did not return a valid structure.\nCause: {cause}")]
+	DataFailWrongReturn {
+		cause: String,
+	},
 
 	// -- Genai
 	#[display("Environment API KEY missing: {env_name}")]

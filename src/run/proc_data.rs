@@ -2,7 +2,7 @@ use crate::Result;
 use crate::agent::{Agent, AgentOptions};
 use crate::model::RuntimeCtx;
 use crate::model::{Id, Stage};
-use crate::run::Literals;
+use crate::run::{Attachments, Literals};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};
 use genai::ModelName;
@@ -14,6 +14,7 @@ pub struct ProcDataResponse {
 	pub agent: Agent,
 	pub input: Value, // will be Null if it was None
 	pub data: Value,
+	pub attachments: Attachments,
 	pub run_model_resolved: ModelName,
 	pub skip: bool,
 }
@@ -24,6 +25,7 @@ impl ProcDataResponse {
 			agent,
 			input,
 			data: Value::Null,
+			attachments: Attachments::new(Vec::new()),
 			run_model_resolved,
 			skip: true,
 		}
@@ -53,7 +55,12 @@ pub async fn process_data(
 	let agent_dir = agent.file_dir()?;
 
 	// -- Execute data
-	let DataResponse { input, data, options } = if let Some(data_script) = agent.data_script().as_ref() {
+	let DataResponse {
+		input,
+		data,
+		attachments: attachments_val,
+		options,
+	} = if let Some(data_script) = agent.data_script().as_ref() {
 		// -- Build the scope
 		// Note: Probably way to optimize the number of lua engine we create
 		//       However, nice to be they are fully scoped.
@@ -94,10 +101,12 @@ pub async fn process_data(
 			FromValue::AipackCustom(AipackCustom::DataResponse(DataResponse {
 				input: input_ov,
 				data,
+				attachments,
 				options,
 			})) => DataResponse {
 				input: input_ov.or(Some(input)),
 				data,
+				attachments,
 				options,
 			},
 
@@ -113,6 +122,7 @@ pub async fn process_data(
 		DataResponse {
 			input: Some(input),
 			data: None,
+			attachments: None,
 			options: None,
 		}
 	};
@@ -120,6 +130,9 @@ pub async fn process_data(
 	// -- Normalize the context
 	let input = input.unwrap_or(Value::Null);
 	let data = data.unwrap_or(Value::Null);
+
+	// Convert raw Value to Attachments using custom deserializer
+	let attachments: Attachments = serde_json::from_value(attachments_val.unwrap_or(Value::Null))?;
 
 	let agent = if let Some(options_to_merge) = options {
 		let options_to_merge: AgentOptions = serde_json::from_value(options_to_merge)?;
@@ -134,6 +147,7 @@ pub async fn process_data(
 		agent,
 		input,
 		data,
+		attachments,
 		run_model_resolved,
 		skip: false,
 	})

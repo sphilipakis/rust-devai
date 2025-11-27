@@ -19,8 +19,8 @@ use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string;
 use crate::support::W;
-use crate::support::md::{self};
-use crate::types::{Extrude, MdBlock};
+use crate::support::md::{self, MdRefIter};
+use crate::types::{Extrude, MdBlock, MdRef};
 use mlua::{IntoLua, Lua, LuaSerdeExt, MultiValue, Table, Value};
 
 // region:    --- Module Init
@@ -31,9 +31,11 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let extract_blocks_fn = lua.create_function(extract_blocks)?;
 	let outer_block_content_or_raw_fn = lua.create_function(outer_block_content_or_raw)?;
 	let extract_meta_fn = lua.create_function(extract_meta)?;
+	let extract_refs_fn = lua.create_function(extract_refs)?;
 
 	table.set("extract_blocks", extract_blocks_fn)?;
 	table.set("extract_meta", extract_meta_fn)?;
+	table.set("extract_refs", extract_refs_fn)?;
 	table.set("outer_block_content_or_raw", outer_block_content_or_raw_fn)?;
 
 	Ok(table)
@@ -301,6 +303,81 @@ fn outer_block_content_or_raw(_lua: &Lua, md_content: String) -> mlua::Result<St
 	Ok(res.into_owned())
 }
 
+/// ## Lua Documentation
+///
+/// Extracts all markdown references (links and images) from markdown content.
+///
+/// ```lua
+/// -- API Signature
+/// aip.md.extract_refs(md_content: string): list<MdRef>
+/// ```
+///
+/// Scans the provided `md_content` for markdown references in the forms:
+/// - Links: `[text](target)`
+/// - Images: `![alt text](target)`
+///
+/// References inside code blocks (fenced with ``` or ````) and inline code (backticks) are skipped.
+///
+/// ### Arguments
+///
+/// - `md_content: string | nil`: The markdown content string to process.
+///
+/// ### Returns
+///
+/// - `list<MdRef>`: A Lua list (table) of `MdRef` objects. Each object represents a parsed reference:
+///   ```ts
+///   {
+///     _type: "MdRef",       // Type identifier
+///     target: string,       // URL, file path, or in-document anchor
+///     text: string | nil,   // Content inside the brackets (nil if empty)
+///     inline: boolean,      // True if prefixed with '![' (image)
+///     kind: string          // "Anchor" | "File" | "Url"
+///   }
+///   ```
+///
+/// If `md_content` is nil, returns an empty list.
+///
+/// ### Example
+///
+/// ```lua
+/// local content = [[
+/// Check out [this link](https://example.com) and [docs](docs/page.md).
+///
+/// Also see ![image](assets/photo.jpg) for reference.
+///
+/// ```
+/// [not a link](https://fake.com)
+/// ```
+/// ]]
+///
+/// local refs = aip.md.extract_refs(content)
+/// print(#refs) -- Output: 3
+///
+/// for _, ref in ipairs(refs) do
+///   print(ref.target, ref.kind, ref.inline)
+/// end
+/// -- Output:
+/// -- https://example.com    Url    false
+/// -- docs/page.md           File   false
+/// -- assets/photo.jpg       File   true
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if an internal error occurs during processing.
+fn extract_refs(lua: &Lua, md_content: Value) -> mlua::Result<Value> {
+	// allow md_content to be nil
+	let Some(md_content) = into_option_string(md_content, "aip.md.extract_refs")? else {
+		// Return empty table for nil input
+		return Ok(Value::Table(lua.create_table()?));
+	};
+
+	let refs: Vec<MdRef> = MdRefIter::new(&md_content).collect();
+	let lua_value = lua.to_value(&refs)?;
+
+	Ok(lua_value)
+}
+
 // region:    --- Tests
 
 #[cfg(test)]
@@ -485,6 +562,121 @@ return {
 		// Should also remove code fences and blank lines resulting from block removal
 		assert_not_contains(remain, "```toml");
 		assert_not_contains(remain, "```");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_md_extract_refs_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "md").await?;
+		let lua_code = r#"
+local content = [[
+Check out [this link](https://example.com) and [docs](docs/page.md).
+
+Also see ![image](assets/photo.jpg) for reference.
+]]
+return aip.md.extract_refs(content)
+		"#;
+
+		// -- Exec
+		let res: Value = eval_lua(&lua, lua_code)?;
+
+		// -- Check
+		assert!(res.is_array());
+		let refs = res.as_array().ok_or("Res should be array")?;
+		assert_eq!(refs.len(), 3, "Should have found 3 refs");
+
+		// Check first ref (link)
+		let first = &refs[0];
+		assert_eq!(first.x_get_str("_type")?, "MdRef");
+		assert_eq!(first.x_get_str("target")?, "https://example.com");
+		assert_eq!(first.x_get_str("text")?, "this link");
+		assert_eq!(first.get("inline").and_then(|v| v.as_bool()), Some(false));
+		assert_eq!(first.x_get_str("kind")?, "Url");
+
+		// Check second ref (file link)
+		let second = &refs[1];
+		assert_eq!(second.x_get_str("target")?, "docs/page.md");
+		assert_eq!(second.x_get_str("text")?, "docs");
+		assert_eq!(second.get("inline").and_then(|v| v.as_bool()), Some(false));
+		assert_eq!(second.x_get_str("kind")?, "File");
+
+		// Check third ref (image)
+		let third = &refs[2];
+		assert_eq!(third.x_get_str("target")?, "assets/photo.jpg");
+		assert_eq!(third.x_get_str("text")?, "image");
+		assert_eq!(third.get("inline").and_then(|v| v.as_bool()), Some(true));
+		assert_eq!(third.x_get_str("kind")?, "File");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_md_extract_refs_skip_code_blocks() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "md").await?;
+		// NOTE: the [[ ]] for multi line in lua breaks when line starts with ```, so work around
+		let lua_code = r#"
+local content = "Here is a [real link](https://real.com).\n"
+content = content .. "\n```\n[not a link](https://fake.com)\n```\n"
+content = content .. "\nAnd [another real](page.md)."
+
+return aip.md.extract_refs(content)
+		"#;
+
+		// -- Exec
+		let res: Value = eval_lua(&lua, lua_code)?;
+
+		// -- Check
+		assert!(res.is_array());
+		let refs = res.as_array().ok_or("Res should be array")?;
+		assert_eq!(refs.len(), 2, "Should have found 2 refs (skipping code block)");
+		assert_eq!(refs[0].x_get_str("target")?, "https://real.com");
+		assert_eq!(refs[1].x_get_str("target")?, "page.md");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_md_extract_refs_nil_input() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "md").await?;
+		let lua_code = r#"
+return aip.md.extract_refs(nil)
+		"#;
+
+		// -- Exec
+		let res: Value = eval_lua(&lua, lua_code)?;
+
+		// -- Check
+		assert!(res.is_array());
+		let refs = res.as_array().ok_or("Res should be array")?;
+		assert_eq!(refs.len(), 0, "Should return empty list for nil input");
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_md_extract_refs_anchor() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(super::init_module, "md").await?;
+		let lua_code = r#"
+local content = [[
+[go to section](#my-section)
+]]
+return aip.md.extract_refs(content)
+		"#;
+
+		// -- Exec
+		let res: Value = eval_lua(&lua, lua_code)?;
+
+		// -- Check
+		assert!(res.is_array());
+		let refs = res.as_array().ok_or("Res should be array")?;
+		assert_eq!(refs.len(), 1, "Should have found 1 ref");
+		assert_eq!(refs[0].x_get_str("target")?, "#my-section");
+		assert_eq!(refs[0].x_get_str("kind")?, "Anchor");
 
 		Ok(())
 	}

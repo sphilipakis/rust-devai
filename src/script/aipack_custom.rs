@@ -22,6 +22,7 @@ pub enum AipackCustom {
 pub struct DataResponse {
 	pub input: Option<Value>,
 	pub data: Option<Value>,
+	pub attachments: Option<Value>,
 	pub options: Option<Value>, // AgentOptions
 }
 
@@ -172,16 +173,22 @@ fn parse_data_response(custom_data: Option<Value>) -> Result<DataResponse> {
 		Value::Object(mut obj) => {
 			let input = obj.remove("input");
 			let data = obj.remove("data");
+			let attachments = obj.remove("attachments");
 			let options = obj.remove("options");
 
 			let keys: Vec<String> = obj.keys().map(|k| k.to_string()).collect();
 			if !keys.is_empty() {
 				let joined_keys = keys.join(", ");
-				return Err(Error::BeforeAllFailWrongReturn {
+				return Err(Error::DataFailWrongReturn {
 					cause: format!("{ERROR_CAUSE}. But also contained: {joined_keys}"),
 				});
 			}
-			DataResponse { input, data, options }
+			DataResponse {
+				input,
+				data,
+				attachments,
+				options,
+			}
 		}
 		_ => DataResponse::default(),
 	};

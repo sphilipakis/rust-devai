@@ -7,6 +7,7 @@ mod rt_log;
 mod rt_model;
 mod rt_step;
 mod runtime_impl;
+mod runtime_path_resolver;
 mod runtime_rec_lua;
 
 pub use rt_log::*;

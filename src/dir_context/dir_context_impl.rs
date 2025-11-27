@@ -115,7 +115,7 @@ impl DirContext {
 	/// Note: It wont't test if the path exists.
 	///
 	/// - `mode`
-	///   - For pack_ref path, it will attempt to do a relative to PathResolver variat if possible,
+	///   - For pack_ref path, it will attempt to do a relative to PathResolver variant if possible,
 	///   - For relative path, it will resolve relative to PathResolver variant (CurrentDir, ...)
 	///   - For absolute path it will be ignored
 	///

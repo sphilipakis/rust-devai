@@ -65,6 +65,7 @@ Important notes:
 - [`WebOptions`](#weboptions) (for `aip.web..`)
 - [`MdSection`](#mdsection) (for `aip.md..`)
 - [`MdBlock`](#mdblock) (for `aip.md..`)
+- [`MdRef`](#mdref) (for `aip.md..`)
 - [`TagElem`](#tagelem) (for `aip.tag..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
@@ -2760,6 +2761,8 @@ aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): 
 aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
 
 aip.md.outer_block_content_or_raw(md_content: string): string
+
+aip.md.extract_refs(md_content: string | nil): MdRef[]
 ```
 
 ### aip.md.extract_blocks
@@ -2842,6 +2845,60 @@ local meta, remain = aip.md.extract_meta(content)
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if any meta block contains invalid TOML.
+
+### aip.md.extract_refs
+
+Extracts all markdown references (links and images) from markdown content.
+
+```lua
+-- API Signature
+aip.md.extract_refs(md_content: string | nil): MdRef[]
+```
+
+Scans the provided `md_content` for markdown references in the forms:
+- Links: `[text](target)`
+- Images: `![alt text](target)`
+
+References inside code blocks (fenced with ``` or ````) and inline code (backticks) are skipped.
+
+#### Arguments
+
+- `md_content: string | nil`: The markdown content string to process.
+
+#### Returns
+
+- `MdRef[]`: A Lua list (table) of [`MdRef`](#mdref) objects. Each object represents a parsed reference.
+
+If `md_content` is `nil`, returns an empty list (`{}`).
+
+#### Example
+
+```lua
+local content = [[
+Check out [this link](https://example.com) and [docs](docs/page.md).
+
+Also see ![image](assets/photo.jpg) for reference.
+
+```
+[not a link](https://fake.com)
+```
+]]
+
+local refs = aip.md.extract_refs(content)
+print(#refs) -- Output: 3
+
+for _, ref in ipairs(refs) do
+  print(ref.target, ref.kind, ref.inline)
+end
+-- Output:
+-- https://example.com    Url    false
+-- docs/page.md           File   false
+-- assets/photo.jpg       File   true
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if an internal error occurs during processing.
 
 ### aip.md.outer_block_content_or_raw
 
@@ -4181,9 +4238,10 @@ or returning additional arbitrary data.
 - `data: table` - A table defining the new input, options, and/or other data for the current cycle.
   ```ts
   type DataData = {
-    input?: any | nil,     // Optional. The new input to use for this cycle. If nil, the original input is used.
-    data?: any | nil,      // Data that will be available in the next stage. Same as returning a simple data.
-    options?: AgentOptions, // Optional. Partial AgentOptions to override for this cycle.
+    input?: any | nil,         // Optional. The new input to use for this cycle. If nil, the original input is used.
+    data?: any | nil,          // Optional. Data that will be available in the next stage. Same as returning a simple data.
+    options?: AgentOptions,    // Optional. Partial AgentOptions to override for this cycle.
+    attachments?: Attachments  // Optional. Allows to attach images and pdf to the prompt. 
   } & any // Can also include other arbitrary data fields (e.g., computed values, flags)
   ```
   related types: [AgentOptions](#agentoptions)
@@ -5642,6 +5700,20 @@ Represents a fenced block (usually code) in Markdown. Returned by `aip.md.extrac
 }
 ```
 
+### MdRef
+
+A parsed Markdown inline reference (link or image). Returned by `aip.md.extract_refs`.
+
+```ts
+{
+  _type: "MdRef",       // Type identifier
+  target: string,       // URL, file path, or in-document anchor
+  text: string | nil,   // Content inside the brackets (nil if empty)
+  inline: boolean,      // True if prefixed with '![' (image)
+  kind: string          // "Anchor" | "File" | "Url"
+}
+```
+
 ### TagElem
 
 Represents a block defined by start and end tags, like `<TAG>content</TAG>`. Returned by `aip.tag.extract`.
@@ -5707,6 +5779,43 @@ Configuration options for an agent. Used in `aip.flow.before_all_response` and `
   input_concurrency?: number,
   model_aliases?: { [key: string]: string }
 }
+```
+
+### Attachments
+
+Represents a collection of file attachments that can be attached to a prompt. Used in `aip.flow.data_response` to attach images, PDFs, or other binary files to the AI request.
+
+```ts
+// Can be provided as:
+// - A single Attachment object
+// - A list of Attachment objects
+// - null or empty object (no attachments)
+
+type Attachment = {
+  file_source: string,   // Local file path to the attachment
+  file_name?: string,    // Optional custom file name for display
+  title?: string         // Optional title/description for the attachment
+}
+
+type Attachments = Attachment[]
+```
+
+#### Example
+
+```lua
+return aip.flow.data_response({
+  data = data,
+  attachments = {
+    { file_source = "images/screenshot.png", title = "UI Screenshot" },
+    { file_source = "docs/spec.pdf", file_name = "specification.pdf" }
+  }
+})
+
+-- Or a single attachment
+return aip.flow.data_response({
+  data = data,
+  attachments = { file_source = "diagram.png" }
+})
 ```
 
 ## CTX
