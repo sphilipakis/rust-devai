@@ -12,6 +12,8 @@ pub struct Run {
 	pub id: Id,
 	pub uid: Uuid,
 
+	pub label: Option<String>,
+
 	pub parent_id: Option<Id>,
 
 	pub ctime: EpochUs,
@@ -48,8 +50,6 @@ pub struct Run {
 
 	pub total_cost: Option<f64>,
 	pub total_task_ms: Option<i64>,
-
-	pub label: Option<String>,
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
@@ -83,6 +83,8 @@ pub struct RunForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct RunForUpdate {
+	pub label: Option<String>,
+
 	pub start: Option<EpochUs>,
 	pub end: Option<EpochUs>,
 
@@ -114,8 +116,6 @@ pub struct RunForUpdate {
 
 	pub total_cost: Option<f64>,
 	pub total_task_ms: Option<i64>,
-
-	pub label: Option<String>,
 }
 
 // endregion: --- Types

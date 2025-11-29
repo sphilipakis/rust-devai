@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS run (
 		id          INTEGER PRIMARY KEY AUTOINCREMENT,
 		uid         BLOB NOT NULL,
 
+		label       TEXT,	-- Only when agent call. aip.task.set_label('some label')
+
 		parent_id   INTEGER,
 
 		ctime  INTEGER NOT NULL,
@@ -53,8 +55,6 @@ CREATE TABLE IF NOT EXISTS run (
 
 		model       TEXT,
 		concurrency INTEGER,
-
-		label TEXT,
 
 		-- Computed
 		total_cost    REAL,

@@ -11,7 +11,7 @@ impl Task {
 	pub fn fmt_label(&self, tasks_len: usize) -> String {
 		let num = text::num_pad_for_len(self.idx.unwrap_or_default(), tasks_len);
 		if let Some(label) = self.label.as_ref() {
-			format!("{num} - {label}")
+			format!("({num}) {label}")
 		} else {
 			format!("Task-{num}")
 		}

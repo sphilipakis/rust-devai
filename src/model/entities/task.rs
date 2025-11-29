@@ -14,6 +14,8 @@ pub struct Task {
 	pub id: Id,
 	pub uid: Uuid,
 
+	pub label: Option<String>,
+
 	pub ctime: EpochUs,
 	pub mtime: EpochUs,
 
@@ -59,8 +61,6 @@ pub struct Task {
 
 	pub cost: Option<f64>,
 
-	pub label: Option<String>,
-
 	pub input_uid: Option<Uuid>,
 	pub input_short: Option<String>,
 	pub input_has_display: Option<bool>,
@@ -102,6 +102,8 @@ impl TaskForCreate {
 
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct TaskForUpdate {
+	pub label: Option<String>,
+
 	// -- Step Timestamps
 	pub start: Option<EpochUs>,
 	pub data_start: Option<EpochUs>,
@@ -139,8 +141,6 @@ pub struct TaskForUpdate {
 	pub tk_completion_reasoning: Option<i32>,
 
 	pub cost: Option<f64>,
-
-	pub label: Option<String>,
 
 	pub input_uid: Option<Uuid>,
 	pub input_short: Option<String>,

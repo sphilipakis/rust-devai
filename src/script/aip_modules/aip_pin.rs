@@ -53,6 +53,46 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	Ok(table)
 }
 
+/// Shared implementation for both `run.pin` and `task.pin`.
+fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<()> {
+	let cmd = PinCommand::from_lua_variadic(lua, args)?;
+
+	let ctx = RuntimeCtx::extract_from_global(lua)?;
+
+	let mm = runtime.mm();
+	let (run_id, task_id) = {
+		let run_id = ctx.get_run_id(mm)?.ok_or("Cannot create pin – no RUN context available")?;
+		let task_id = if for_task { ctx.get_task_id(mm)? } else { None };
+		(run_id, task_id)
+	};
+
+	if for_task {
+		let task_id = task_id.ok_or(
+			"Cannot call 'aip.task.pin(...)' in a before all or after all code block.\nCall `aip.run.pin(..)`'",
+		)?;
+		let pin_c = PinForTaskSave {
+			run_id,
+			task_id,
+			iden: cmd.iden,
+			priority: cmd.priority,
+			content: Some(cmd.content),
+		};
+
+		PinBmc::save_task_pin(mm, pin_c)?
+	} else {
+		let pin_c = PinForRunSave {
+			run_id,
+			iden: cmd.iden,
+			priority: cmd.priority,
+			content: Some(cmd.content),
+		};
+
+		PinBmc::save_run_pin(mm, pin_c)?
+	};
+
+	Ok(())
+}
+
 // region:    --- Support
 
 // -- PinCommand
@@ -128,46 +168,6 @@ impl PinCommand {
 
 		Ok(json_string)
 	}
-}
-
-/// Shared implementation for both `run.pin` and `task.pin`.
-fn create_pin(lua: &Lua, runtime: &Runtime, for_task: bool, args: Variadic<Value>) -> Result<()> {
-	let cmd = PinCommand::from_lua_variadic(lua, args)?;
-
-	let ctx = RuntimeCtx::extract_from_global(lua)?;
-
-	let mm = runtime.mm();
-	let (run_id, task_id) = {
-		let run_id = ctx.get_run_id(mm)?.ok_or("Cannot create pin – no RUN context available")?;
-		let task_id = if for_task { ctx.get_task_id(mm)? } else { None };
-		(run_id, task_id)
-	};
-
-	if for_task {
-		let task_id = task_id.ok_or(
-			"Cannot call 'aip.task.pin(...)' in a before all or after all code block.\nCall `aip.run.pin(..)`'",
-		)?;
-		let pin_c = PinForTaskSave {
-			run_id,
-			task_id,
-			iden: cmd.iden,
-			priority: cmd.priority,
-			content: Some(cmd.content),
-		};
-
-		PinBmc::save_task_pin(mm, pin_c)?
-	} else {
-		let pin_c = PinForRunSave {
-			run_id,
-			iden: cmd.iden,
-			priority: cmd.priority,
-			content: Some(cmd.content),
-		};
-
-		PinBmc::save_run_pin(mm, pin_c)?
-	};
-
-	Ok(())
 }
 
 // endregion: --- Support
