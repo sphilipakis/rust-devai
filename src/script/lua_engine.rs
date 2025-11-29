@@ -4,7 +4,7 @@ use crate::model::{LogKind, RuntimeCtx};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::NullSentinel;
-use crate::script::aip_modules::{aip_lua, aip_pin, aip_run, aip_task};
+use crate::script::aip_modules::aip_lua;
 use crate::script::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use mlua::{IntoLua, Lua, Table, Value};
@@ -262,29 +262,7 @@ fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 		html, cmd, lua, code, hbs, semver, agent, uuid, hash, time, shape
 	);
 
-	// aip.run and aip.task are special because multiple modules contribute to them
-	// First, create the base tables from aip_pin (which provides run.pin and task.pin)
-	let aip_pin_tables = aip_pin::init_module(lua_vm, runtime)?;
-
-	// Get or create the run table
-	let run_table: Table = aip_pin_tables.get("run")?;
-	// Merge aip_run functions into run table
-	let aip_run_table = aip_run::init_module(lua_vm, runtime)?;
-	for pair in aip_run_table.pairs::<String, Value>() {
-		let (key, value) = pair?;
-		run_table.set(key, value)?;
-	}
-	table.set("run", run_table)?;
-
-	// Get or create the task table
-	let task_table: Table = aip_pin_tables.get("task")?;
-	// Merge aip_task functions into task table
-	let aip_task_table = aip_task::init_module(lua_vm, runtime)?;
-	for pair in aip_task_table.pairs::<String, Value>() {
-		let (key, value) = pair?;
-		task_table.set(key, value)?;
-	}
-	table.set("task", task_table)?;
+	init_and_set!(table, lua_vm, runtime, run, task);
 
 	let globals = lua_vm.globals();
 	// NOTE: now the aipack utilities are below `aip`,

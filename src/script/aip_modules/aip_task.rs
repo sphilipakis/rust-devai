@@ -9,15 +9,17 @@
 //! ### Functions
 //!
 //! - `aip.task.set_label(label: string)`  
-//!   Sets the label on the current **task** (requires both `CTX.RUN_UID` and `CTX.TASK_UID`).
+//! - `aip.task.pin(iden?: string, priority?: number, content?: any)`  
+//!
 
 use crate::Result;
 use crate::model::{RuntimeCtx, TaskBmc, TaskForUpdate};
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use mlua::{Lua, Table, Value};
+use crate::script::support::create_pin;
+use mlua::{Lua, Table, Value, Variadic};
 
-/// Registers the `task.set_label` helper in Lua.
+/// Registers the `task.set_label` and `task.pin` helpers in Lua.
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
@@ -27,6 +29,15 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		let set_label_fn = lua
 			.create_function(move |lua, label: Value| set_task_label(lua, &rt, label).map_err(mlua::Error::external))?;
 		table.set("set_label", set_label_fn)?;
+	}
+
+	// -- task.pin
+	{
+		let rt = runtime.clone();
+		let task_pin_fn = lua.create_function(move |lua, args: Variadic<Value>| {
+			create_pin(lua, &rt, /*for_task*/ true, args).map_err(mlua::Error::external)
+		})?;
+		table.set("pin", task_pin_fn)?;
 	}
 
 	Ok(table)
