@@ -1,6 +1,15 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
 
+## 2025-11-28 - [v0.8.10](https://github.com/jeremychone/rust-devai/compare/v0.8.9...v0.8.10)
+
+- `+` BIG ONE - file attachment support - on a `aip.flow.data_response(..., {attchments: ...})`
+- `+` aip.task.set_label - new api to set task label
+- `+` aip.runs.set_label - new api to set run label
+- `+` aip.md.extract_refs - news api to extract markdown ref/links
+- `-` self update on nix - fix has_aip_in_path function
+
+
 ## 2025-11-25 - [v0.8.9](https://github.com/jeremychone/rust-devai/compare/v0.8.8...v0.8.9)
 
 - `^` aip.lua.merge - support multi object merge and merge_deep (& merge on first target object now)
