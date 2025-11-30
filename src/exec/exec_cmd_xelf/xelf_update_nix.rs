@@ -71,7 +71,7 @@ pub(super) async fn exec_update_for_nix(remote_version: &Version, is_latest: boo
 
 	if !has_aip_in_path() {
 		hub.publish(HubEvent::info_short(
-		"It seems you do not have '~/aipack-base/bin/aip' in path.
+		"It seems you do not have '~/.aipack-base/bin' in path.
 Please restart your terminal session or source your shell profile (e.g., `source ~/.bashrc`, `source ~/.zshrc`) for changes to take effect.		
 		"
 	))
