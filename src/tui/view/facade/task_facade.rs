@@ -28,7 +28,10 @@ impl Task {
 
 		// compute & add label text and width
 		let label = self.fmt_label(tasks_len);
+
 		let width = (width - spans.x_width()) as usize;
+		let label_truncated = text::truncate(&label, width);
+		let label: &str = label_truncated.0.as_ref();
 		let label = format!("{label:<width$}");
 		spans.push(Span::styled(label, style::STL_TXT));
 

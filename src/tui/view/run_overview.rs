@@ -245,7 +245,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(8),         // label_a
+			Constraint::Length(12),        // label_a
 			Constraint::Length(gap_width), // gap
 			Constraint::Fill(3),           // input_a
 			Constraint::Length(gap_width), // gap
