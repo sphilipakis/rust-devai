@@ -9,7 +9,8 @@
 //! ### Functions
 //!
 //! - `aip.task.set_label(label: string)`  
-//! - `aip.task.pin(iden?: string, priority?: number, content?: any)`  
+//! - `aip.task.pin(iden: string, content: string | {label?: string, content: string})`  
+//! - `aip.task.pin(iden: string, priority: number, content: string | {label?: string, content: string})`  
 //!
 
 use crate::Result;

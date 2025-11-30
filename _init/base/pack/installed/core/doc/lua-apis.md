@@ -20,8 +20,8 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.hash`](#aiphash): Hashing utilities (SHA256, SHA512, Blake3) with various encodings.
 - [`aip.lua`](#aiplua): Some lua helpers (for now only `.dump(data)`).
 - [`aip.agent`](#aipagent): Running other AIPack agents.
-- [`aip.run`](#aiprun): Run-level pin helper (attach pins to the current run).
-- [`aip.task`](#aiptask): Task-level pin helper (attach pins to the current task).
+- [`aip.run`](#aiprun): Run-level helpers (set label, attach pins to the current run).
+- [`aip.task`](#aiptask): Task-level helpers (set label, attach pins to the current task).
 - [`aip.flow`](#aipflow): Controlling agent execution flow.
 - [`aip.cmd`](#aipcmd): Executing system commands.
 - [`aip.semver`](#aipsemver): Semantic versioning operations.
@@ -4058,14 +4058,42 @@ was `nil` or not a table.
 
 ## aip.task
 
-Functions for recording pins at the task level (attached to the current task of the current run).
+Functions for recording pins and updating task metadata (attached to the current task of the current run).
 
 ### Functions Summary
 
 ```lua
+aip.task.set_label(label: string)
 aip.task.pin(iden: string, content: any)
 aip.task.pin(iden: string, priority: number, content: any)
 ```
+
+### aip.task.set_label
+
+Sets a new human-readable label for the current task.
+
+```lua
+-- API Signature
+aip.task.set_label(label: string)
+```
+
+#### Arguments
+
+- `label: string`: The new label string for the task.
+
+#### Returns
+
+- Nothing. This function records the update as a side effect.
+
+#### Example
+
+```lua
+aip.task.set_label("Task: Validate inputs")
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if called outside a task context or if arguments are invalid.
 
 ### aip.task.pin
 
@@ -4073,8 +4101,8 @@ Creates a pin attached to the current task. Requires that both CTX.RUN_UID and C
 
 ```lua
 -- API Signatures
-aip.task.pin(iden: string, content: any)
-aip.task.pin(iden: string, priority: number, content: any)
+aip.task.pin(iden: string, content: string | {label?: string, content: string})
+aip.task.pin(iden: string, priority: number, content: string | {label?: string, content: string})
 ```
 
 Records a pin for the current task. When the optional priority is provided, it will be stored along with the pin.
@@ -4087,8 +4115,10 @@ Records a pin for the current task. When the optional priority is provided, it w
 - `priority: number (optional)`
   Optional numeric priority to associate with the pin.
 
-- `content: any`
-  Arbitrary content to associate with the pin (string, table, etc.).
+- `content: string | {label?: string, content: string}`
+  The content to associate with the pin. This can be:
+  - A simple string value (or other primitive value convertible to a string) to be stored as content.
+  - A structured table `{label?: string, content: string}` to provide a display label and content.
 
 #### Returns
 
@@ -4111,14 +4141,42 @@ Returns an error (Lua table `{ error: string }`) if called outside a task contex
 
 ## aip.run
 
-Functions for recording pins at the run level (attached to the overall run).
+Functions for recording pins and updating run metadata (attached to the overall run).
 
 ### Functions Summary
 
 ```lua
+aip.run.set_label(label: string)
 aip.run.pin(iden: string, content: any)
 aip.run.pin(iden: string, priority: number, content: any)
 ```
+
+### aip.run.set_label
+
+Sets a new human-readable label for the current run.
+
+```lua
+-- API Signature
+aip.run.set_label(label: string)
+```
+
+#### Arguments
+
+- `label: string`: The new label string for the run.
+
+#### Returns
+
+- Nothing. This function records the update as a side effect.
+
+#### Example
+
+```lua
+aip.run.set_label("Run for project cleanup")
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if called outside a run context or if arguments are invalid.
 
 ### aip.run.pin
 
@@ -4126,8 +4184,8 @@ Creates a pin attached to the current run. Requires that CTX.RUN_UID is availabl
 
 ```lua
 -- API Signatures
-aip.run.pin(iden: string, content: any)
-aip.run.pin(iden: string, priority: number, content: any)
+aip.run.pin(iden: string, content: string | {label?: string, content: string})
+aip.run.pin(iden: string, priority: number, content: string | {label?: string, content: string})
 ```
 
 Records a pin for the current run. When the optional priority is provided, it will be stored along with the pin.
@@ -4140,8 +4198,10 @@ Records a pin for the current run. When the optional priority is provided, it wi
 - `priority: number (optional)`
   Optional numeric priority to associate with the pin.
 
-- `content: any`
-  Arbitrary content to associate with the pin (string, table, etc.).
+- `content: string | {label?: string, content: string}`
+  The content to associate with the pin. This can be:
+  - A simple string value (or other primitive value convertible to a string) to be stored as content.
+  - A structured table `{label?: string, content: string}` to provide a display label and content.
 
 #### Returns
 

@@ -66,6 +66,9 @@ impl PinCommand {
 	/// 1. `pin(iden, priority, content)`
 	/// 2. `pin(iden, content)`
 	///
+	/// `content` can be a string (or convertible primitive value) or a structured table 
+	/// `{label?: string, content: string}` (mapped to uc::Marker).
+	///
 	/// Returns an informative error if the arguments do not match either form.
 	fn from_lua_variadic(lua: &Lua, args: Variadic<Value>) -> Result<Self> {
 		match args.len() {
