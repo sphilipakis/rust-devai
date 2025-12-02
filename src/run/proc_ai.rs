@@ -40,8 +40,8 @@ pub fn build_chat_messages(
 	// -- Add the eventual attachments
 	for att in attachments {
 		// Resolve
-		let file_path = SPath::new(&att.file_source);
-		let file_path = match runtime.resolve_path_default(file_path, None) {
+		let file_source = SPath::new(&att.file_source);
+		let file_path = match runtime.resolve_path_default(file_source.clone(), None) {
 			Ok(file_path) => file_path,
 			Err(err) => {
 				let chat_msg = ChatMessage::user(format!(
@@ -62,8 +62,9 @@ pub fn build_chat_messages(
 
 				let m = format!(
 					"Here is file attachment.
-File Path: '{file_path}'
-File Name: '{file_name}'"
+File Path: '{file_source}'
+File Name: '{file_name}'
+"
 				);
 				let m = if let Some(desc) = &att.title {
 					format!("{m}\nFile Title: {desc}")
