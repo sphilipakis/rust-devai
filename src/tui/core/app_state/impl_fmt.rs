@@ -210,11 +210,6 @@ impl AppState {
 		{
 			addl.push(format!("{} cached", text::format_num(tk_cached)));
 		}
-		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation
-			&& tk_cache_creation > 0
-		{
-			addl.push(format!("{} cache write", text::format_num(tk_cache_creation)));
-		}
 
 		let mut res = format!("{} tk", text::format_num(tk_prompt));
 
@@ -223,6 +218,19 @@ impl AppState {
 		}
 
 		res
+	}
+
+	pub fn current_task_cache_creation_fmt(&self) -> Option<String> {
+		let task = self.current_task()?;
+
+		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation
+			&& tk_cache_creation > 0
+		{
+			let t = text::format_num(tk_cache_creation);
+			Some(format!("{} tk", t))
+		} else {
+			None
+		}
 	}
 
 	pub fn current_task_completion_tokens_fmt(&self) -> String {

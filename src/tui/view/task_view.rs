@@ -80,6 +80,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	let duration = state.current_task_duration_txt();
 	let prompt_tk = state.current_task_prompt_tokens_fmt();
 	let completion_tk = state.current_task_completion_tokens_fmt();
+	let cache_creation_tk = state.current_task_cache_creation_fmt();
 
 	let first_call_width = 10;
 
@@ -90,8 +91,8 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			Constraint::Length(first_call_width), // Model / Prompt
 			Constraint::Length(25),               //
 			Constraint::Length(9),                // Cost / Completion
-			Constraint::Length(9),                //
-			Constraint::Length(13),               // Duration
+			Constraint::Length(18),               //
+			Constraint::Length(13),               // Duration / Cache Write
 			Constraint::Fill(1),                  //
 		])
 		.spacing(1)
@@ -152,6 +153,17 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 		Paragraph::new(completion_tk)
 			.style(stl_field_val)
 			.render(val_2.union(val_3).x_row(current_row), buf);
+
+		//current_task_cache_write_fmt
+		if let Some(cache_creation_tk) = cache_creation_tk {
+			Paragraph::new("Cache Write:")
+				.style(style::STL_FIELD_LBL)
+				.right_aligned()
+				.render(label_3.x_row(current_row), buf);
+			Paragraph::new(cache_creation_tk)
+				.style(stl_field_val)
+				.render(val_3.union(val_3).x_row(current_row), buf);
+		}
 	}
 }
 
