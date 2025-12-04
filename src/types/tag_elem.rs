@@ -1,5 +1,3 @@
-#![allow(unused)] // for now, as not wired yet
-
 use mlua::IntoLua;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -16,6 +14,7 @@ pub struct TagElem {
 
 impl TagElem {
 	/// Creates a new `TagElem` with the specified name, optional attributes, and content.
+	#[allow(unused)]
 	pub fn new(name: impl Into<String>, attrs: Option<HashMap<String, String>>, content: impl Into<String>) -> Self {
 		TagElem {
 			tag: name.into(),
