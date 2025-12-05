@@ -16,7 +16,6 @@ mod md_section;
 mod pack_identity;
 mod pack_ref;
 mod save_options;
-mod tag_elem;
 mod web_options;
 mod web_response;
 
@@ -36,7 +35,6 @@ pub use md_section::*;
 pub use pack_identity::*;
 pub use pack_ref::*;
 pub use save_options::*;
-pub use tag_elem::*;
 pub use web_options::*;
 pub use web_response::*;
 

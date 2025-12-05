@@ -24,7 +24,6 @@ pub mod md;
 pub mod os;
 pub mod paths;
 pub mod proc;
-pub mod tag;
 pub mod text;
 pub mod time;
 pub mod tomls;

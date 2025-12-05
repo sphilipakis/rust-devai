@@ -35,9 +35,9 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_vec_of_strings;
-use crate::support::tag::TagElemIter;
+use crate::support::W;
 use crate::types::Extrude;
-use crate::types::TagElem;
+use markex::tag;
 use mlua::{Error as LuaError, IntoLua, Lua, MultiValue, Table, Value};
 use std::collections::HashMap;
 
@@ -92,10 +92,13 @@ fn tag_extract_as_map(
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
-	let (blocks, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
+	let (w_tag_elems, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
 
 	// Collect blocks into HashMap to ensure only the last block for a given tag name is kept.
-	let blocks_map: HashMap<String, TagElem> = blocks.into_iter().map(|block| (block.tag.clone(), block)).collect();
+	let blocks_map: HashMap<String, W<tag::TagElem>> = w_tag_elems
+		.into_iter()
+		.map(|w_tag_elem| (w_tag_elem.0.tag.clone(), w_tag_elem))
+		.collect();
 
 	let map_table = lua.create_table()?;
 	for (tag_name, block) in blocks_map {
@@ -130,12 +133,12 @@ fn tag_extract_as_multi_map(
 	let tag_names_vec = validate_and_normalize_tag_names(tag_names)?;
 	let extrude = options.map_or(Ok(None), |options_v| Extrude::extract_from_table_value(&options_v))?;
 
-	let (blocks, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
+	let (w_tag_elems, extruded) = extract_tag_elems(&content, &tag_names_vec, extrude);
 
-	let mut blocks_map: HashMap<String, Vec<TagElem>> = HashMap::new();
-	for block in blocks {
-		let tag_key = block.tag.clone();
-		blocks_map.entry(tag_key).or_default().push(block);
+	let mut blocks_map: HashMap<String, Vec<W<tag::TagElem>>> = HashMap::new();
+	for w_tag_elem in w_tag_elems {
+		let tag_key = w_tag_elem.0.tag.clone();
+		blocks_map.entry(tag_key).or_default().push(w_tag_elem);
 	}
 
 	let map_table = lua.create_table()?;
@@ -183,7 +186,11 @@ fn validate_and_normalize_tag_names(tag_names: Value) -> mlua::Result<Vec<String
 	Ok(trimmed_names)
 }
 
-fn extract_tag_elems(content: &str, tag_names: &[String], extrude: Option<Extrude>) -> (Vec<TagElem>, Option<String>) {
+fn extract_tag_elems(
+	content: &str,
+	tag_names: &[String],
+	extrude: Option<Extrude>,
+) -> (Vec<W<tag::TagElem>>, Option<String>) {
 	let extrude_enabled = extrude.as_ref().is_some_and(|value| matches!(value, Extrude::Content));
 
 	if tag_names.is_empty() {
@@ -195,11 +202,14 @@ fn extract_tag_elems(content: &str, tag_names: &[String], extrude: Option<Extrud
 		return (Vec::new(), extruded);
 	}
 
-	let tag_refs: Vec<&str> = tag_names.iter().map(String::as_str).collect();
-	let iter = TagElemIter::with_tag_names(content, &tag_refs, extrude);
-	let (elems, extruded_content) = iter.collect_elems_and_extruded_content();
+	let tag_names: Vec<&str> = tag_names.iter().map(String::as_str).collect();
+	let extracted_data = tag::extract(content, &tag_names, extrude_enabled);
+
+	let (elems, extruded_content) = extracted_data.into_with_extrude_content();
 
 	let extruded = if extrude_enabled { Some(extruded_content) } else { None };
+
+	let elems = elems.into_iter().map(W).collect();
 
 	(elems, extruded)
 }
