@@ -115,7 +115,9 @@ CREATE TABLE IF NOT EXISTS task (
 		tk_completion_total         INTEGER,
 		tk_completion_reasoning     INTEGER,
 		
-		cost  REAL,
+		cost                REAL,
+		cost_cache_write    REAL, 
+		cost_cache_saving   REAL, 
 
 		label               TEXT,
 
