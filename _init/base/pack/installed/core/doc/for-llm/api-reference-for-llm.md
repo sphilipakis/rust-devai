@@ -1,0 +1,534 @@
+# AIPack Agent API Reference for LLMs
+
+This document summarizes the structure, execution flow, and complete Lua API of an AIPack agent (`.aip` file) to enable autonomous creation and modification of agents.
+
+## 1. Agent Execution Flow
+
+An AIPack agent is a multi-stage Markdown file where stages define pre-processing, prompt templating (Handlebars), AI interaction, and post-processing (Lua).
+
+| Stage           | Language       | Runs Per        | Injected Variables (Scope)                                      | Purpose                                                              |
+|-----------------|----------------|-----------------|-----------------------------------------------------------------|----------------------------------------------------------------------|
+| `# Before All`  | **Lua**        | Once            | `aip`, `CTX`, `inputs`                                          | Global setup, filtering `inputs`, customizing `options`.             |
+| `# Data`        | **Lua**        | Per Input       | `aip`, `CTX`, `input`, `before_all`                             | Per-input data gathering (e.g., loading file content), flow control (`aip.flow.skip`), input/option overrides. |
+| `# System`      | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | System prompt template.                                              |
+| `# Instruction` | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | User prompt template (Aliases: `# User`, `# Inst`).                  |
+| `# Assistant`   | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | Optional specialized prompt priming (Aliases: `# Model`, `# Mind Trick`). |
+| `# Output`      | **Lua**        | Per Processed Input | `aip`, `CTX`, `input`, `data`, `before_all`, `ai_response`      | Process AI response (`ai_response`), perform side effects (e.g., save files). Returns result captured in `# After All`. |
+| `# After All`   | **Lua**        | Once            | `aip`, `CTX`, `inputs`, `outputs`, `before_all`                 | Final cleanup, summary generation. `inputs` and `outputs` are aligned lists. |
+
+**Injected Variables Detail:**
+
+| Variable      | Type            | Description                                                                 |
+|---------------|-----------------|-----------------------------------------------------------------------------|
+| `aip`         | `AipModule`     | The AIPack API module, containing utility functions (see section 4).         |
+| `CTX`         | `Context`       | Contextual constants (paths, session UIDs). See section 5.                   |
+| `inputs`      | `any[]`         | List of initial or modified inputs (`# Before All`, `# After All`).           |
+| `input`       | `any`           | Current input item (e.g., `string` or `FileInfo`).                          |
+| `before_all`  | `any`           | Data returned from `# Before All`.                                          |
+| `data`        | `any`           | Data returned from `# Data`.                                                |
+| `ai_response` | `AiResponse`    | AI result object (`# Output` only). See section 3.                          |
+
+## 2. Flow Control (`aip.flow`)
+
+Functions used as the return value in `# Before All` or `# Data` to control the agent pipeline.
+
+```typescript
+type BeforeAllData = {
+  inputs?: any[],      // New list of inputs, replaces original inputs.
+  options?: AgentOptions, // Overrides global options for the run (model, concurrency, etc.).
+  before_all?: any,    // Data passed to subsequent stages.
+  [key: string]: any,  // Arbitrary data fields allowed.
+}
+
+type DataData = {
+  input?: any | nil,   // New input for this cycle. If nil, original input is used.
+  data?: any | nil,    // Data passed to prompt/output stages.
+  options?: AgentOptions, // Overrides options for this specific cycle.
+  attachments?: Attachment | Attachment[] // Attachments for this cycle (e.g., images).
+  [key: string]: any,  // Arbitrary data fields allowed.
+}
+
+/** Customizes execution flow at the 'Before All' stage (use as return value). */
+aip.flow.before_all_response(data: BeforeAllData): table
+
+/** Customizes execution flow at the 'Data' stage (use as return value). */
+aip.flow.data_response(data: DataData): table
+
+/** Skips processing the current input cycle (use as return value in # Data). */
+aip.flow.skip(reason?: string): table
+```
+
+## 3. Core Data Types
+
+### AiResponse
+
+The result object available in the `# Output` stage.
+
+```typescript
+type AiResponse = {
+  content?: string,          // The final text response from the AI.
+  info: string,             // Formatted string capturing usage, price, model, duration.
+  model_name: string,       // e.g., `gpt-5-mini`
+  adapter_kind: string,     // e.g., `openai`
+  usage: {
+    prompt_tokens: number,
+    completion_tokens: number
+  },
+  price_usd?: number,       // Approximate price in USD, if available.
+  duration_sec: number,     // Duration in seconds (with millisecond precision).
+  reasoning_content?: string, // Reasoning content, if available.
+}
+```
+
+### FileInfo & FileRecord
+
+File metadata and content structures.
+
+```typescript
+type FileInfo = {
+  path: string,    // Relative or absolute path
+  dir: string,     // Parent directory of the path
+  name: string,    // File name with extension
+  stem: string,    // File name without extension
+  ext: string,     // File extension
+  ctime?: number,  // Creation timestamp (microseconds since epoch)
+  mtime?: number,  // Modification timestamp (microseconds)
+  size?: number    // File size in bytes
+}
+
+type FileRecord = FileInfo & {
+  content: string  // The text content of the file
+}
+```
+
+### Options Types
+
+```typescript
+type SaveOptions = {
+  trim_start?: boolean,
+  trim_end?: boolean,
+  single_trailing_newline?: boolean
+}
+
+type DestOptions = {
+  base_dir?: string,
+  file_name?: string,
+  suffix?: string
+}
+
+type AgentOptions = {
+  model?: string,
+  temperature?: number,
+  top_p?: number,
+  input_concurrency?: number,
+  model_aliases?: { [key: string]: string }
+}
+```
+
+### Attachments
+
+Used in `DataData` to attach files for multimodal models.
+
+```typescript
+type Attachment = {
+  file_source: string,   // Local file path to the attachment
+  file_name?: string,    // Optional custom file name for display
+  title?: string         // Optional title/description for the attachment
+}
+
+type Attachments = Attachment | Attachment[] // List or single attachment
+```
+
+### WebResponse
+
+Result structure from `aip.web.get`/`post`.
+
+```typescript
+type WebResponse = {
+  success: boolean,        // true if HTTP status code is 2xx
+  status: number,          // HTTP status code
+  url: string,             // The final URL requested
+  content: string | table, // Response body (table if JSON and parse=true)
+  content_type?: string,
+  headers?: { [key: string]: string | string[] },
+  error?: string           // Error message if request failed or non-2xx status
+}
+
+type WebOptions = {
+  user_agent?: string | boolean,
+  headers?: table,
+  redirect_limit?: number,
+  parse?: boolean          // Attempt JSON parsing if Content-Type is 'application/json' (default false)
+}
+```
+
+### CSV/Data Types
+
+```typescript
+type CsvContent = {
+  _type: "CsvContent",
+  headers: string[],
+  rows: string[][]
+}
+
+type CsvOptions = {
+  delimiter?: string,
+  quote?: string,
+  escape?: string,
+  trim_fields?: boolean,
+  has_header?: boolean,
+  header_labels?: { [string]: string },
+  skip_empty_lines?: boolean,
+  comment?: string,
+  skip_header_row?: boolean
+}
+```
+
+### Markdown Types
+
+```typescript
+type MdSection = {
+  content: string,    // Full content of the section
+  heading?: {         // Present if the section starts with a heading
+    content: string,  // Raw heading line (e.g., "## Title")
+    level: number,
+    name: string      // Extracted heading name
+  }
+}
+
+type MdBlock = {
+  content: string,     // Content inside the block (excluding fence lines)
+  lang?: string,        // Language identifier (e.g., "rust")
+  info: string         // Full info string (e.g., "rust file:main.rs")
+}
+
+type MdRef = {
+  _type: "MdRef",
+  target: string,       // URL, file path, or anchor
+  text: string | nil,
+  inline: boolean,      // True if prefixed with '![' (image)
+  kind: string          // "Anchor" | "File" | "Url"
+}
+```
+
+### Other Utility Types
+
+```typescript
+type TagElem = {
+  tag: string,       // The tag name (e.g., "FILE")
+  attrs?: table,     // Key/value map of attributes from the opening tag
+  content: string    // The content between the tags
+}
+
+type CmdResponse = {
+  stdout: string,  // Standard output
+  stderr: string,  // Standard error
+  exit:   number   // Exit code (0 usually success)
+}
+```
+
+## 4. AIPack Lua API (`aip.*`) Reference
+
+All functions return an error table `{ error: string }` on failure, unless otherwise specified (like `aip.path.parent` returning `nil`).
+
+### aip.file - File System Operations
+
+```typescript
+aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
+aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
+aip.file.append(rel_path: string, content: string): FileInfo
+aip.file.delete(path: string): boolean
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
+aip.file.exists(path: string): boolean
+aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[]
+aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[]
+aip.file.first(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
+aip.file.info(path: string): FileInfo | nil
+aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: string, absolute?: boolean}): FileStats | nil
+aip.file.load_json(path: string | nil): table | value | nil
+aip.file.load_ndjson(path: string | nil): object[] | nil
+aip.file.load_toml(path: string): table | value
+aip.file.append_json_line(path: string, data: value): FileInfo
+aip.file.append_json_lines(path: string, data: list): FileInfo
+aip.file.save_changes(path: string, changes: string): FileInfo
+aip.file.load_md_sections(path: string, headings?: string | string[]): MdSection[]
+aip.file.load_md_split_first(path: string): {before: string, first: MdSection, after: string}
+aip.file.load_csv_headers(path: string): string[]
+aip.file.load_csv(path: string, options?: CsvOptions): CsvContent
+aip.file.save_as_csv(path: string, data: any[][] | {headers?: string[], rows?: any[][]}, options?: CsvOptions): FileInfo
+aip.file.save_records_as_csv(path: string, records: table[], header_keys: string[], options?: CsvOptions): FileInfo
+aip.file.append_csv_rows(path: string, value_lists: any[][], options?: CsvOptions): FileInfo
+aip.file.append_csv_row(path: string, values: any[], options?: CsvOptions): FileInfo
+aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
+aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
+aip.file.load_html_as_slim(html_path: string): string
+aip.file.load_html_as_md(html_path: string, options?: { trim?: boolean }): string
+aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
+aip.file.load_docx_as_md(docx_path: string): string
+aip.file.line_spans(path: string): [start: number, end: number][]
+aip.file.csv_row_spans(path: string): [start: number, end: number][]
+aip.file.read_span(path: string, start: number, end: number): string
+aip.file.hash_sha256(path: string): string
+aip.file.hash_sha256_b64(path: string): string
+aip.file.hash_sha256_b64u(path: string): string
+aip.file.hash_sha256_b58u(path: string): string
+aip.file.hash_sha512(path: string): string
+aip.file.hash_sha512_b64(path: string): string
+aip.file.hash_sha512_b64u(path: string): string
+aip.file.hash_sha512_b58u(path: string): string
+aip.file.hash_blake3(path: string): string
+aip.file.hash_blake3_b64(path: string): string
+aip.file.hash_blake3_b64u(path: string): string
+aip.file.hash_blake3_b58u(path: string): string
+```
+
+### aip.path - Path Manipulation
+
+```typescript
+aip.path.split(path: string): (parent: string, filename: string)
+aip.path.resolve(path: string): string
+aip.path.exists(path: string): boolean
+aip.path.is_file(path: string): boolean
+aip.path.is_dir(path: string): boolean
+aip.path.diff(file_path: string, base_path: string): string
+aip.path.parent(path: string): string | nil
+aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil
+aip.path.join(base: string, ...parts: string | string[]): string
+aip.path.parse(path: string | nil): FileInfo | nil
+```
+
+### aip.text - String Manipulation
+
+```typescript
+aip.text.escape_decode(content: string | nil): string | nil
+aip.text.escape_decode_if_needed(content: string | nil): string | nil
+aip.text.split_first(content: string | nil, sep: string): (string | nil, string | nil)
+aip.text.split_last(content: string | nil, sep: string): (string | nil, string | nil)
+aip.text.remove_first_line(content: string | nil): string | nil
+aip.text.remove_first_lines(content: string | nil, n: number): string | nil
+aip.text.remove_last_line(content: string | nil): string | nil
+aip.text.remove_last_lines(content: string | nil, n: number): string | nil
+aip.text.trim(content: string | nil): string | nil
+aip.text.trim_start(content: string | nil): string | nil
+aip.text.trim_end(content: string | nil): string | nil
+aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): string | nil
+aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
+aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): string | nil
+aip.text.ensure_single_trailing_newline(content: string | nil): string | nil
+aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil
+aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (string[] | nil, string | nil)
+aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
+aip.text.split_last_line(content: string | nil, sep: string): (string | nil, string | nil)
+```
+
+### aip.tag - Custom Tag Extraction
+
+```typescript
+aip.tag.extract(content: string, tag_names: string | string[], options?: {extrude?: "content"}): TagElem[] | (TagElem[], string)
+aip.tag.extract_as_map(content: string, tag_names: string | string[], options?: {extrude?: "content"}): table | (table, string)
+aip.tag.extract_as_multi_map(content: string, tag_names: string | string[], options?: {extrude?: "content"}): table | (table, string)
+```
+
+### aip.md - Markdown Processing
+
+```typescript
+aip.md.extract_blocks(md_content: string): MdBlock[]
+aip.md.extract_blocks(md_content: string, lang: string): MdBlock[]
+aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (MdBlock[], string)
+aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
+aip.md.outer_block_content_or_raw(md_content: string): string
+aip.md.extract_refs(md_content: string | nil): MdRef[]
+```
+
+### aip.json - JSON Helpers
+
+```typescript
+aip.json.parse(content: string | nil): table | value | nil
+aip.json.parse_ndjson(content: string | nil): object[] | nil
+aip.json.stringify(content: table): string
+aip.json.stringify_pretty(content: table): string
+```
+
+### aip.toml - TOML Helpers
+
+```typescript
+aip.toml.parse(content: string): table
+aip.toml.stringify(content: table): string
+```
+
+### aip.web - HTTP Requests & URL
+
+```typescript
+aip.web.get(url: string, options?: WebOptions): WebResponse
+aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse
+aip.web.parse_url(url: string | nil): table | nil
+aip.web.resolve_href(href: string | nil, base_url: string): string | nil
+```
+
+### aip.uuid - UUID Generation
+
+```typescript
+aip.uuid.new(): string
+aip.uuid.new_v4(): string
+aip.uuid.new_v7(): string
+aip.uuid.new_v4_b64(): string
+aip.uuid.new_v4_b64u(): string
+aip.uuid.new_v4_b58(): string
+aip.uuid.new_v7_b64(): string
+aip.uuid.new_v7_b64u(): string
+aip.uuid.new_v7_b58(): string
+aip.uuid.to_time_epoch_ms(value: string | nil): integer | nil
+```
+
+### aip.hash - Hashing
+
+```typescript
+aip.hash.sha256(input: string): string
+aip.hash.sha256_b58(input: string): string
+aip.hash.sha256_b64(input: string): string
+aip.hash.sha256_b64u(input: string): string
+aip.hash.sha512(input: string): string
+aip.hash.sha512_b58(input: string): string
+aip.hash.sha512_b64(input: string): string
+aip.hash.sha512_b64u(input: string): string
+aip.hash.blake3(input: string): string
+aip.hash.blake3_b58(input: string): string
+aip.hash.blake3_b64(input: string): string
+aip.hash.blake3_b64u(input: string): string
+```
+
+### aip.time - Time Utilities
+
+```typescript
+aip.time.now_iso_utc(): string
+aip.time.now_iso_local(): string
+aip.time.now_iso_utc_micro(): string
+aip.time.now_iso_local_micro(): string
+aip.time.now_utc_micro(): integer
+aip.time.today_utc(): string
+aip.time.today_local(): string
+aip.time.today_iso_utc(): string
+aip.time.today_iso_local(): string
+aip.time.weekday_utc(): string
+aip.time.weekday_local(): string
+aip.time.local_tz_id(): string
+```
+
+### aip.lua - Lua Helpers
+
+```typescript
+aip.lua.dump(value: any): string
+aip.lua.merge(target: table, ...objs: table)
+aip.lua.merge_deep(target: table, ...objs: table)
+```
+
+### aip.csv - CSV Parsing and Formatting
+
+```typescript
+aip.csv.parse_row(row: string, options?: CsvOptions): string[]
+aip.csv.parse(content: string, options?: CsvOptions): CsvContent
+aip.csv.values_to_row(values: any[], options?: CsvOptions): string
+aip.csv.value_lists_to_rows(value_lists: any[][], options?: CsvOptions): string[]
+```
+
+### aip.hbs - Handlebars Rendering
+
+```typescript
+aip.hbs.render(content: string, data: any): string | {error: string}
+```
+
+### aip.agent - Agent Chaining
+
+```typescript
+aip.agent.run(agent_name: string, options?: {inputs?: string | list | table, options?: table}): any
+aip.agent.extract_options(value: any): table | nil
+```
+
+### aip.run & aip.task - Metadata/Pinning
+
+```typescript
+// aip.run (Requires CTX.RUN_UID)
+aip.run.set_label(label: string)
+aip.run.pin(iden: string, content: string | {label?: string, content: string})
+aip.run.pin(iden: string, priority: number, content: string | {label?: string, content: string})
+
+// aip.task (Requires CTX.RUN_UID and CTX.TASK_UID)
+aip.task.set_label(label: string)
+aip.task.pin(iden: string, content: string | {label?: string, content: string})
+aip.task.pin(iden: string, priority: number, content: string | {label?: string, content: string})
+```
+
+### aip.cmd - System Commands
+
+```typescript
+aip.cmd.exec(cmd_name: string, args?: string | string[]): CmdResponse | {error: string, stdout?: string, stderr?: string, exit?: number}
+```
+
+### aip.semver - Semantic Versioning
+
+```typescript
+aip.semver.compare(version1: string, operator: string, version2: string): boolean | {error: string}
+aip.semver.parse(version: string): {major: number, minor: number, patch: number, prerelease: string | nil, build: string | nil} | {error: string}
+aip.semver.is_prerelease(version: string): boolean | {error: string}
+aip.semver.valid(version: string): boolean
+```
+
+### aip.rust - Rust Code Processing
+
+```typescript
+aip.rust.prune_to_declarations(code: string): string | {error: string}
+```
+
+### aip.html - HTML Processing
+
+```typescript
+aip.html.slim(html_content: string): string | {error: string}
+aip.html.select(html_content: string, selectors: string | string[]): Elem[]
+aip.html.to_md(html_content: string): string | {error: string}
+```
+
+### aip.git - Git Operations
+
+```typescript
+aip.git.restore(path: string): string | {error: string, stdout?: string, stderr?: string, exit?: number}
+```
+
+### aip.code - Code Utilities
+
+```typescript
+aip.code.comment_line(lang_ext: string, comment_content: string): string | {error: string}
+```
+
+### aip.shape - Record Shaping Utilities
+
+```typescript
+aip.shape.to_record(names: string[], values: any[]): table
+aip.shape.to_records(names: string[], rows: any[][]): object[]
+aip.shape.record_to_values(record: table, names?: string[]): any[]
+aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]
+aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]
+aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }
+aip.shape.select_keys(rec: table, keys: string[]): table
+aip.shape.omit_keys(rec: table, keys: string[]): table
+aip.shape.remove_keys(rec: table, keys: string[]): integer
+aip.shape.extract_keys(rec: table, keys: string[]): table
+```
+
+## 5. Context Constants (`CTX`)
+
+Injected into all Lua stages, providing execution environment information. All paths are absolute.
+
+| Key                            | Description                                                               |
+|--------------------------------|---------------------------------------------------------------------------|
+| CTX.WORKSPACE_DIR              | Absolute path to the workspace directory (parent of `.aipack/`).          |
+| CTX.BASE_AIPack_DIR            | Absolute path to the user's base AIPack directory (`~/.aipack-base`).     |
+| CTX.AGENT_NAME                 | Name or path used to invoke the agent (e.g., `my_pack/my-agent`).         |
+| CTX.AGENT_FILE_PATH            | Absolute path to the resolved agent `.aip` file.                          |
+| CTX.AGENT_FILE_DIR             | Absolute path to the directory containing the agent file.                 |
+| CTX.TMP_DIR                    | Temporary directory for this session (`.aipack/.sessions/_uid_/tmp`).     |
+| CTX.SESSION_UID                | The Session Unique ID.                                                    |
+| CTX.RUN_UID                    | The Run Unique ID.                                                        |
+| CTX.TASK_UID                   | The Task Unique ID (only available during per-input stages: `# Data`, `# Output`). |
+| CTX.PACK_IDENTITY              | Pack identity (`namespace@name`) (nil if not run via pack reference).     |
+| CTX.PACK_WORKSPACE_SUPPORT_DIR | Workspace support directory for the pack (if applicable).                 |
+| CTX.PACK_BASE_SUPPORT_DIR      | Base support directory for the pack (if applicable).                      |
