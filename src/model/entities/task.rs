@@ -7,6 +7,18 @@ use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
 use uuid::Uuid;
 
+// region:    --- AiPrice
+
+/// Computed AI pricing information for a task.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AiPrice {
+	pub cost: f64,
+	pub cost_cache_write: Option<f64>,
+	pub cost_cache_saving: Option<f64>,
+}
+
+// endregion: --- AiPrice
+
 // region:    --- Types
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
@@ -60,6 +72,8 @@ pub struct Task {
 	pub tk_completion_reasoning: Option<i64>,
 
 	pub cost: Option<f64>,
+	pub cost_cache_write: Option<f64>,
+	pub cost_cache_saving: Option<f64>,
 
 	pub input_uid: Option<Uuid>,
 	pub input_short: Option<String>,
@@ -141,6 +155,8 @@ pub struct TaskForUpdate {
 	pub tk_completion_reasoning: Option<i32>,
 
 	pub cost: Option<f64>,
+	pub cost_cache_write: Option<f64>,
+	pub cost_cache_saving: Option<f64>,
 
 	pub input_uid: Option<Uuid>,
 	pub input_short: Option<String>,

@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::agent::{Agent, AgentOptions, PromptPart, parse_prompt_part_options};
 use crate::hub::get_hub;
-use crate::model::Id;
+use crate::model::{AiPrice, Id};
 use crate::run::pricing::{model_pricing, price_it};
 use crate::run::{AiResponse, Attachments, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
@@ -254,16 +254,25 @@ async fn process_send_to_genai(
 	let mut info = duration_msg;
 
 	// Compute the price
-	let price_usd = get_price(&chat_res);
+	let ai_price = get_price(&chat_res);
+	let price_usd = ai_price.as_ref().map(|ap| ap.cost);
 
 	// -- Rt Rec - Update Cost
-	if let Some(price_usd) = price_usd {
-		let _ = rt_model.update_task_cost(run_id, task_id, price_usd).await;
+	if let Some(ref ai_price) = ai_price {
+		let _ = rt_model
+			.update_task_cost(
+				run_id,
+				task_id,
+				ai_price.cost,
+				ai_price.cost_cache_write,
+				ai_price.cost_cache_saving,
+			)
+			.await;
 	}
 
 	// add to info
-	if let Some(price_usd) = price_usd {
-		info = format!("{info} | ~${price_usd}")
+	if let Some(ref ai_price) = ai_price {
+		info = format!("{info} | ~${}", ai_price.cost)
 	}
 
 	let usage_msg = format_usage(&chat_res.usage);
@@ -319,7 +328,7 @@ async fn process_send_to_genai(
 
 // region:    --- Support
 
-fn get_price(chat_res: &ChatResponse) -> Option<f64> {
+fn get_price(chat_res: &ChatResponse) -> Option<AiPrice> {
 	let provider = chat_res.model_iden.adapter_kind.as_lower_str();
 	let model_name = &*chat_res.model_iden.model_name;
 	price_it(provider, model_name, &chat_res.usage)

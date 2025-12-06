@@ -196,10 +196,19 @@ impl<'a> RtModel<'a> {
 		Ok(())
 	}
 
-	pub async fn update_task_cost(&self, run_id: Id, task_id: Id, cost: f64) -> Result<()> {
+	pub async fn update_task_cost(
+		&self,
+		run_id: Id,
+		task_id: Id,
+		cost: f64,
+		cost_cache_write: Option<f64>,
+		cost_cache_saving: Option<f64>,
+	) -> Result<()> {
 		// -- Update Task
 		let task_u = TaskForUpdate {
 			cost: Some(cost),
+			cost_cache_write,
+			cost_cache_saving,
 			..Default::default()
 		};
 		TaskBmc::update(self.mm(), task_id, task_u)?;

@@ -1,5 +1,6 @@
 use super::ModelPricing;
 use super::data::PROVIDERS;
+use crate::model::AiPrice;
 use genai::ModelIden;
 use genai::chat::Usage;
 
@@ -11,8 +12,8 @@ use genai::chat::Usage;
 /// * `usage` - The token usage information
 ///
 /// # Returns
-/// * `Option<f64>` - The calculated price in USD, or None if the provider or model was not found
-pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<f64> {
+/// * `Option<PriceResult>` - The calculated price information, or None if the provider or model was not found
+pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<AiPrice> {
 	// Since not api from genai yet, extract the eventual namespace of the modelname
 	let model_name = normalize_model_name(model_name);
 
@@ -55,19 +56,46 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	let price_completion_normal = model.output_normal;
 	let price_completion_reasoning = model.output_reasoning.unwrap_or(price_completion_normal);
 
-	// NOTE:
-	let price = (prompt_tokens_normal * price_prompt_normal)
-		+ (prompt_cached_tokens * price_prompt_cached)
-		+ (prompt_cache_creation_tokens * price_prompt_cache_creation)
-		+ (completion_tokens_normal * price_completion_normal)
-		+ (completion_tokens_reasoning * price_completion_reasoning);
+	// -- Compute individual cost components
+	let cost_prompt_normal = prompt_tokens_normal * price_prompt_normal / 1_000_000.0;
+	let cost_prompt_cached = prompt_cached_tokens * price_prompt_cached / 1_000_000.0;
+	let cost_prompt_cache_creation = prompt_cache_creation_tokens * price_prompt_cache_creation / 1_000_000.0;
+	let cost_completion_normal = completion_tokens_normal * price_completion_normal / 1_000_000.0;
+	let cost_completion_reasoning = completion_tokens_reasoning * price_completion_reasoning / 1_000_000.0;
 
-	// The price are per million tokens
-	let price = price / 1_000_000.0;
+	// -- Compute total cost
+	let cost = cost_prompt_normal
+		+ cost_prompt_cached
+		+ cost_prompt_cache_creation
+		+ cost_completion_normal
+		+ cost_completion_reasoning;
+	let cost = (cost * 10_000.0).round() / 10_000.0;
 
-	let price = (price * 10_000.0).round() / 10_000.0;
+	// -- Compute cache write cost (only if there was cache creation)
+	let cost_cache_write = if prompt_cache_creation_tokens > 0.0 {
+		Some((cost_prompt_cache_creation * 10_000.0).round() / 10_000.0)
+	} else {
+		None
+	};
 
-	Some(price)
+	// -- Compute cache saving (difference between what cached tokens would have cost at normal price vs cached price)
+	let cost_cache_saving = if prompt_cached_tokens > 0.0 {
+		let would_have_cost = prompt_cached_tokens * price_prompt_normal / 1_000_000.0;
+		let saving = would_have_cost - cost_prompt_cached;
+		if saving > 0.0 {
+			Some((saving * 10_000.0).round() / 10_000.0)
+		} else {
+			None
+		}
+	} else {
+		None
+	};
+
+	Some(AiPrice {
+		cost,
+		cost_cache_write,
+		cost_cache_saving,
+	})
 }
 
 pub fn model_pricing(model_iden: &ModelIden) -> Option<ModelPricing> {
@@ -132,11 +160,11 @@ mod tests {
 		};
 
 		// -- Exec
-		let price = price_it("openai", "gpt-4o", &usage);
+		let ai_price = price_it("openai", "gpt-4o", &usage);
 
 		// -- Check
-		assert!(price.is_some());
-		let price = price.unwrap();
+		let ai_price = ai_price.ok_or("Should have AI Price")?;
+		let price = ai_price.cost;
 		// ModelPricing {
 		// 	name: "gpt-4o",
 		// 	input_cached: Some(1.25),
@@ -147,6 +175,8 @@ mod tests {
 		// Calculate expected: (1000 * 2.5 / 1_000_000) + (500 * 10.0 / 1_000_000)
 		let expected = 0.0025 + 0.005; // 0.0075
 		assert!((price - expected).abs() < f64::EPSILON);
+		assert!(ai_price.cost_cache_write.is_none());
+		assert!(ai_price.cost_cache_saving.is_none());
 
 		Ok(())
 	}
@@ -169,11 +199,11 @@ mod tests {
 		};
 
 		// -- Exec
-		let price = price_it("openai", "gpt-4o-mini", &usage);
+		let ai_price = price_it("openai", "gpt-4o-mini", &usage);
 
 		// -- Check
-		assert!(price.is_some());
-		let price = price.unwrap();
+		let ai_price = ai_price.ok_or("Should have ai price")?;
+		let price = ai_price.cost;
 
 		// Calculate expected:
 		let cached = fx_cached_tokens as f64 * 0.075 / 1_000_000.0;
@@ -182,6 +212,9 @@ mod tests {
 		let expected = cached + prompt + completion;
 		let expected = (expected * 10_000.0).round() / 10_000.0;
 		assert!((price - expected).abs() < f64::EPSILON);
+		// Check cache saving is computed
+		assert!(ai_price.cost_cache_saving.is_some());
+		assert!(ai_price.cost_cache_write.is_none());
 
 		Ok(())
 	}
@@ -205,10 +238,11 @@ mod tests {
 
 		// -- Exec
 		// Test with a model that has input_cached: None (e.g., groq model)
-		let price = price_it("gemini", "gemini-2.5-pro", &usage);
+		let ai_price = price_it("gemini", "gemini-2.5-pro", &usage);
 
 		// -- Check
-		let price = price.ok_or("Should have price")?;
+		let ai_price = ai_price.ok_or("Should have price")?;
+		let price = ai_price.cost;
 
 		// Calculate expected: cached tokens should use input_normal price
 		let cached = fx_cached_tokens as f64 * 0.31 / 1_000_000.0;
@@ -241,11 +275,11 @@ mod tests {
 
 		// -- Exec
 		// Test with an Anthropic model which uses cache_creation_tokens
-		let price = price_it("anthropic", "claude-3-5-sonnet", &usage);
+		let ai_price = price_it("anthropic", "claude-3-5-sonnet", &usage);
 
 		// -- Check
-		assert!(price.is_some());
-		let price = price.unwrap();
+		let ai_price = ai_price.ok_or("Should have ai price")?;
+		let price = ai_price.cost;
 
 		// Calculate expected:
 		let cached = fx_cached_tokens as f64 * 0.3 / 1_000_000.0;
@@ -256,6 +290,10 @@ mod tests {
 		let expected = cached + cache_creation + prompt + completion;
 		let expected = (expected * 10_000.0).round() / 10_000.0; // 0.00012 + 0.00075 + 0.003 + 0.0075 = 0.01137 -> 0.0114
 		assert!((price - expected).abs() < f64::EPSILON);
+		// Check cache write cost is computed
+		assert!(ai_price.cost_cache_write.is_some());
+		// Check cache saving is computed
+		assert!(ai_price.cost_cache_saving.is_some());
 
 		Ok(())
 	}
@@ -270,10 +308,10 @@ mod tests {
 		};
 
 		// -- Exec
-		let price = price_it("unknown_provider", "gpt-4o", &usage);
+		let ai_price = price_it("unknown_provider", "gpt-4o", &usage);
 
 		// -- Check
-		assert!(price.is_none());
+		assert!(ai_price.is_none());
 
 		Ok(())
 	}
@@ -288,10 +326,10 @@ mod tests {
 		};
 
 		// -- Exec
-		let price = price_it("openai", "unknown_model", &usage);
+		let ai_price = price_it("openai", "unknown_model", &usage);
 
 		// -- Check
-		assert!(price.is_none());
+		assert!(ai_price.is_none());
 
 		Ok(())
 	}
