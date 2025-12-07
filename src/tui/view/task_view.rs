@@ -80,20 +80,18 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	let duration = state.current_task_duration_txt();
 	let prompt_tk = state.current_task_prompt_tokens_fmt();
 	let completion_tk = state.current_task_completion_tokens_fmt();
-	let cache_creation_tk = state.current_task_cache_creation_fmt();
-
-	let first_call_width = 10;
+	let cache_info = state.current_task_cache_info_fmt();
 
 	// -- Columns layout
 	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(first_call_width), // Model / Prompt
-			Constraint::Length(25),               //
-			Constraint::Length(9),                // Cost / Completion
-			Constraint::Length(18),               //
-			Constraint::Length(13),               // Duration / Cache Write
-			Constraint::Fill(1),                  //
+			Constraint::Length(10), // Model / Prompt
+			Constraint::Length(22), //
+			Constraint::Length(9),  // Cost / Completion
+			Constraint::Length(25), //
+			Constraint::Length(13), // Duration / Cache Info
+			Constraint::Fill(1),    //
 		])
 		.spacing(1)
 		.areas(area);
@@ -126,7 +124,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.render(label_2.x_row(current_row), buf);
 		Paragraph::new(cost).style(stl_field_val).render(val_2.x_row(current_row), buf);
 
-		Paragraph::new("Duration:")
+		Paragraph::new(" Duration:")
 			.style(style::STL_FIELD_LBL)
 			.right_aligned()
 			.render(label_3.x_row(current_row), buf);
@@ -155,12 +153,12 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.render(val_2.union(val_3).x_row(current_row), buf);
 
 		//current_task_cache_write_fmt
-		if let Some(cache_creation_tk) = cache_creation_tk {
-			Paragraph::new("Cache Write:")
+		if let Some(cache_info) = cache_info {
+			Paragraph::new(" Cache Info:")
 				.style(style::STL_FIELD_LBL)
 				.right_aligned()
 				.render(label_3.x_row(current_row), buf);
-			Paragraph::new(cache_creation_tk)
+			Paragraph::new(cache_info)
 				.style(stl_field_val)
 				.render(val_3.union(val_3).x_row(current_row), buf);
 		}

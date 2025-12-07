@@ -204,33 +204,37 @@ impl AppState {
 		};
 
 		// -- if some prompt_total show cost
-		let mut addl: Vec<String> = Vec::new();
-		if let Some(tk_cached) = task.tk_prompt_cached
-			&& tk_cached > 0
-		{
-			addl.push(format!("{} cached", text::format_num(tk_cached)));
-		}
-
-		let mut res = format!("{} tk", text::format_num(tk_prompt));
-
-		if !addl.is_empty() {
-			res = format!("{res} ({})", addl.join(", "));
-		}
+		let res = format!("{} tk", text::format_num(tk_prompt));
 
 		res
 	}
 
-	pub fn current_task_cache_creation_fmt(&self) -> Option<String> {
+	pub fn current_task_cache_info_fmt(&self) -> Option<String> {
 		let task = self.current_task()?;
+
+		let mut buf = String::new();
+
+		if let Some(tk_cached) = task.tk_prompt_cached
+			&& tk_cached > 0
+		{
+			buf.push_str(&format!("{} tk cached", text::format_num(tk_cached)));
+			if let Some(cache_saving) = task.cost_cache_saving {
+				buf.push_str(&format!(" (saving: -${cache_saving})"));
+			}
+		}
 
 		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation
 			&& tk_cache_creation > 0
 		{
+			let prefix = if buf.is_empty() { "" } else { " | " };
 			let t = text::format_num(tk_cache_creation);
-			Some(format!("{} tk", t))
-		} else {
-			None
+			buf.push_str(&format!("{prefix}{} tk cache creation", t));
+			if let Some(cost_cache_write) = task.cost_cache_write {
+				buf.push_str(&format!(" (cost: +${cost_cache_write})"));
+			}
 		}
+
+		if buf.is_empty() { None } else { Some(buf) }
 	}
 
 	pub fn current_task_completion_tokens_fmt(&self) -> String {
