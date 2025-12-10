@@ -1,4 +1,3 @@
-use crate::Result;
 use crate::dir_context::{
 	AipackBaseDir, AipackPaths, CONFIG_BASE_DEFAULT_FILE_NAME, CONFIG_BASE_USER_FILE_NAME, DirContext,
 };
@@ -6,7 +5,9 @@ use crate::exec::init::assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
 use crate::support::files::to_trash_delete_dir;
+use crate::{Error, Result};
 use simple_fs::{SPath, ensure_dir};
+use std::collections::HashSet;
 use std::fs::{self, write};
 use std::io::BufRead;
 
@@ -60,10 +61,27 @@ pub async fn init_base(force: bool) -> Result<()> {
 	// -- Update the config
 	update_base_configs(&base_dir, force)?;
 
-	// -- Init the pack path
-	let pack_paths = assets::extract_base_pack_file_paths()?;
-	println!("->> pack_paths {pack_paths:?}");
-	assets::update_files("base", &base_dir, &pack_paths.x_as_strs(), force).await?;
+	// -- Init the installed pack path
+	if force {
+		let installed_pack_file_paths = assets::extract_base_pack_installed_file_paths()?;
+		// get the local pack folders
+		// like pack/installed/core/doc, pack/installed/demo/proof
+		let pack_folder_paths = installed_pack_file_paths
+			.iter()
+			.filter_map(|path| extract_after_pack_path(path))
+			.collect::<HashSet<_>>();
+		// Clean the eventual installed pack
+		for pack_folder_path in pack_folder_paths {
+			// here `false` is just a place holder as we do not maintain the change state in this function
+			delete_aipack_base_folder(&base_dir, &pack_folder_path, false, "Previous built-in pack")?;
+		}
+		assets::update_files("base", &base_dir, &installed_pack_file_paths.x_as_strs(), force).await?;
+	}
+
+	// -- Init the built-int custom pack path
+	// old logic
+	let custom_pack_file_paths = assets::extract_base_pack_custom_file_paths()?;
+	assets::update_files("base", &base_dir, &custom_pack_file_paths.x_as_strs(), force).await?;
 
 	// -- Display message
 	if new || force {
@@ -75,8 +93,38 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 // region:    --- Support
 
+// when a file like
+// file_path_from_base_dir: `pack/installed/demo/proof/lua/prompt_utils.lua`
+// Will return `pack/path/installed/demo`
+fn extract_after_pack_path(file_path_from_base_dir: &str) -> Option<String> {
+	let parts: Vec<&str> = file_path_from_base_dir.split('/').collect();
+
+	// we expect at least: pack / installed / x / y / ...
+	if parts.len() < 4 {
+		return None;
+	}
+
+	if parts[0] == "pack" && parts[1] == "installed" {
+		Some(format!("{}/{}/{}/{}", parts[0], parts[1], parts[2], parts[3]))
+	} else {
+		None
+	}
+}
+
 fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool, msg: &str) -> Result<bool> {
 	let full_path = aipack_base_dir.join(path);
+
+	// -- Check if int .aipack-base
+	let Ok(abs_path) = full_path.canonicalize() else {
+		return Ok(false); // for now silent
+	};
+
+	if !abs_path.as_str().contains(".aipack-base") {
+		return Err(Error::custom(format!(
+			"Cannot delete path '{abs_path}'. Not in .aipack-base/ path"
+		)));
+	}
+
 	if full_path.exists() {
 		let is_delete = to_trash_delete_dir(&full_path)?;
 		if is_delete {

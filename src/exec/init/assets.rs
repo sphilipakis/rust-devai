@@ -59,8 +59,12 @@ pub fn extract_base_config_user_toml_zfile() -> Result<ZFile> {
 	extract_base_zfile("config-user.toml")
 }
 
-pub fn extract_base_pack_file_paths() -> Result<Vec<String>> {
-	list_base_file_paths_start_with("pack")
+pub fn extract_base_pack_installed_file_paths() -> Result<Vec<String>> {
+	list_base_file_paths_start_with("pack/installed")
+}
+
+pub fn extract_base_pack_custom_file_paths() -> Result<Vec<String>> {
+	list_base_file_paths_start_with("pack/custom")
 }
 
 fn extract_base_zfile(path: &str) -> Result<ZFile> {
