@@ -19,6 +19,7 @@ use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::support::{check_access_delete, check_access_write};
+use crate::support::files::safer_trash_file;
 use crate::support::text::{ensure_single_trailing_newline, trim_end_if_needed, trim_start_if_needed};
 use crate::types::{FileInfo, SaveOptions};
 use mlua::{FromLua, IntoLua, Lua, Value};
@@ -165,7 +166,8 @@ pub(super) fn file_delete(lua: &Lua, runtime: &Runtime, rel_path: String) -> mlu
 	check_access_delete(&full_path, wks_dir)?;
 
 	let removed = if full_path.exists() {
-		std::fs::remove_file(&full_path).map(|_| true).map_err(Error::from)?
+		// std::fs::remove_file(&full_path).map(|_| true).map_err(Error::from)?
+		safer_trash_file(&full_path)?
 	} else {
 		false
 	};

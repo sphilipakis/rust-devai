@@ -120,7 +120,6 @@ fn is_buff_empty(buff: &[u8]) -> bool {
 /// returns true if it was deleted (if not exists, return false)
 /// error if not a file
 /// NOTE: On Mac, this will prompt the user to accept Finder access (which might be confusing)
-#[allow(unused)]
 pub fn safer_trash_file(path: &SPath) -> Result<bool> {
 	if !path.exists() {
 		return Ok(false);
