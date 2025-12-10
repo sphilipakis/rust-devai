@@ -62,6 +62,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Init the pack path
 	let pack_paths = assets::extract_base_pack_file_paths()?;
+	println!("->> pack_paths {pack_paths:?}");
 	assets::update_files("base", &base_dir, &pack_paths.x_as_strs(), force).await?;
 
 	// -- Display message
@@ -70,6 +71,21 @@ pub async fn init_base(force: bool) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+// region:    --- Support
+
+fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool, msg: &str) -> Result<bool> {
+	let full_path = aipack_base_dir.join(path);
+	if full_path.exists() {
+		let is_delete = to_trash_delete_dir(&full_path)?;
+		if is_delete {
+			get_hub().publish_sync(format!("-> {msg} - '~/.aipack-base/{path}' dir deleted."));
+		}
+
+		change |= is_delete;
+	}
+	Ok(change)
 }
 
 /// Check is the `.aipack/version.txt` is present,
@@ -174,6 +190,10 @@ fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
 	Ok(())
 }
 
+// endregion: --- Support
+
+// region:    --- Legacy Handling
+
 async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {
 	if !aipack_base_dir.as_str().contains(".aipack-base") {
 		return Err(format!(
@@ -184,27 +204,18 @@ async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {
 
 	let mut change = false;
 
+	let msg = "Legacy";
+
 	// -- clean the old ~aipack-base/doc
-	change = delete_aipack_base_folder(aipack_base_dir, "doc", change)?;
+	change = delete_aipack_base_folder(aipack_base_dir, "doc", change, msg)?;
 
 	// -- clean pack/installed/core/ask-aipack
-	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/core/ask-aipack", change)?;
+	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/core/ask-aipack", change, msg)?;
 
 	// -- clean pack/installed/core/ask-aipack
-	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/demo/craft", change)?;
+	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/demo/craft", change, msg)?;
 
 	Ok(change)
 }
 
-fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool) -> Result<bool> {
-	let full_path = aipack_base_dir.join(path);
-	if full_path.exists() {
-		let is_delete = to_trash_delete_dir(&full_path)?;
-		if is_delete {
-			get_hub().publish_sync(format!("-> legacy '~/.aipack-base/{path}' dir deleted."));
-		}
-
-		change |= is_delete;
-	}
-	Ok(change)
-}
+// endregion: --- Legacy Handling
