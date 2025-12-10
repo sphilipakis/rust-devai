@@ -1,11 +1,11 @@
+use crate::Result;
 use crate::dir_context::{
 	AipackBaseDir, AipackPaths, CONFIG_BASE_DEFAULT_FILE_NAME, CONFIG_BASE_USER_FILE_NAME, DirContext,
 };
 use crate::exec::init::assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
-use crate::support::files::to_trash_delete_dir;
-use crate::{Error, Result};
+use crate::support::files::{DeleteCheck, safer_trash_dir};
 use simple_fs::{SPath, ensure_dir};
 use std::collections::HashSet;
 use std::fs::{self, write};
@@ -114,19 +114,8 @@ fn extract_after_pack_path(file_path_from_base_dir: &str) -> Option<String> {
 fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool, msg: &str) -> Result<bool> {
 	let full_path = aipack_base_dir.join(path);
 
-	// -- Check if int .aipack-base
-	let Ok(abs_path) = full_path.canonicalize() else {
-		return Ok(false); // for now silent
-	};
-
-	if !abs_path.as_str().contains(".aipack-base") {
-		return Err(Error::custom(format!(
-			"Cannot delete path '{abs_path}'. Not in .aipack-base/ path"
-		)));
-	}
-
 	if full_path.exists() {
-		let is_delete = to_trash_delete_dir(&full_path)?;
+		let is_delete = safer_trash_dir(&full_path, Some(DeleteCheck::CONTAINS_AIPACK_BASE))?;
 		if is_delete {
 			get_hub().publish_sync(format!("-> {msg} - '~/.aipack-base/{path}' dir deleted."));
 		}

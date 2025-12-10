@@ -115,41 +115,6 @@ fn is_buff_empty(buff: &[u8]) -> bool {
 	let s = std::str::from_utf8(buff).unwrap_or("");
 	s.chars().all(|c| c.is_whitespace())
 }
-
-/// Will do a safer delete, moving to trash if possible
-/// returns true if it was deleted (if not exists, return false)
-/// error if not a file
-/// NOTE: On Mac, this will prompt the user to accept Finder access (which might be confusing)
-pub fn safer_trash_file(path: &SPath) -> Result<bool> {
-	if !path.exists() {
-		return Ok(false);
-	}
-	if !path.is_file() {
-		return Err(format!("Path '{path}' is not a file. Cannot delete with safer_delete_file.").into());
-	}
-
-	trash::delete(path).map_err(|err| format!("Cannot delete file '{path}'. Cause: {err}"))?;
-
-	Ok(true)
-}
-
-/// Will do a safer delete, moving to trash if possible
-/// returns true if it was deleted (if not exists, return false)
-/// error if not a file
-/// NOTE: On Mac, this will prompt the user to accept Finder access (which might be confusing)
-pub fn to_trash_delete_dir(path: &SPath) -> Result<bool> {
-	if !path.exists() {
-		return Ok(false);
-	}
-	if !path.is_dir() {
-		return Err(format!("Path '{path}' is not a directory. Cannot delete with safer_delete_dir.").into());
-	}
-
-	// TODO: Probably need to add a logic to check if we are in a .aipack-... dir or in a workspace folder.
-	trash::delete(path).map_err(|err| format!("Cannot delete dir '{path}'. Cause: {err}"))?;
-
-	Ok(true)
-}
 // region:    --- Tests
 
 #[cfg(test)]
