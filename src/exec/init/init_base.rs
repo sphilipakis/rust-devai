@@ -60,10 +60,6 @@ pub async fn init_base(force: bool) -> Result<()> {
 	// -- Update the config
 	update_base_configs(&base_dir, force)?;
 
-	// -- Init the doc
-	let doc_paths = assets::extract_base_doc_file_paths()?;
-	assets::update_files("base", &base_dir, &doc_paths.x_as_strs(), force).await?;
-
 	// -- Init the pack path
 	let pack_paths = assets::extract_base_pack_file_paths()?;
 	assets::update_files("base", &base_dir, &pack_paths.x_as_strs(), force).await?;

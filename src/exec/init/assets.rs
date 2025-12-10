@@ -59,10 +59,6 @@ pub fn extract_base_config_user_toml_zfile() -> Result<ZFile> {
 	extract_base_zfile("config-user.toml")
 }
 
-pub fn extract_base_doc_file_paths() -> Result<Vec<String>> {
-	list_base_file_paths_start_with("doc")
-}
-
 pub fn extract_base_pack_file_paths() -> Result<Vec<String>> {
 	list_base_file_paths_start_with("pack")
 }
