@@ -88,7 +88,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 		.constraints(vec![
 			Constraint::Length(10), // Model / Prompt
 			Constraint::Length(22), //
-			Constraint::Length(9),  // Cost / Completion
+			Constraint::Length(7),  // Cost / Completion
 			Constraint::Length(25), //
 			Constraint::Length(13), // Duration / Cache Info
 			Constraint::Fill(1),    //
