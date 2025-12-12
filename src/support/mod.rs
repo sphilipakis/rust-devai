@@ -23,6 +23,7 @@ pub mod jsons;
 pub mod md;
 pub mod os;
 pub mod paths;
+pub mod pdf;
 pub mod proc;
 pub mod text;
 pub mod time;

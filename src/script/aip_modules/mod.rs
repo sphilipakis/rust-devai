@@ -14,6 +14,7 @@ pub mod aip_json;
 pub mod aip_lua;
 pub mod aip_md;
 pub mod aip_path;
+pub mod aip_pdf;
 pub mod aip_run;
 pub mod aip_rust;
 pub mod aip_semver;

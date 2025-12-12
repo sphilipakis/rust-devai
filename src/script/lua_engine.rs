@@ -5,6 +5,7 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::NullSentinel;
 use crate::script::aip_modules::aip_lua;
+use crate::script::aip_modules::aip_pdf;
 use crate::script::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use mlua::{IntoLua, Lua, Table, Value};
@@ -259,7 +260,7 @@ fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 	init_and_set!(
 		table, lua_vm, runtime, // -- The lua module names that refers to aip_...
 		flow, file, git, web, text, rust, path, md, tag, json, toml, csv, //
-		html, cmd, lua, code, hbs, semver, agent, uuid, hash, time, shape
+		html, cmd, lua, code, hbs, semver, agent, uuid, hash, time, shape, pdf
 	);
 
 	init_and_set!(table, lua_vm, runtime, run, task);
