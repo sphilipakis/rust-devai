@@ -3,20 +3,6 @@ use crate::run::pricing::{ModelPricing, ProviderPricing};
 // Define Anthropic pricing
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
-		name: "claude-sonnet-4-5",
-		input_cached: Some(0.3),
-		input_normal: 3.0,
-		output_normal: 15.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "claude-haiku-4-5",
-		input_cached: Some(0.1),
-		input_normal: 1.0,
-		output_normal: 5.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "claude-opus-4-5",
 		input_cached: Some(0.5),
 		input_normal: 5.0,
@@ -28,6 +14,20 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		input_cached: Some(1.5),
 		input_normal: 15.0,
 		output_normal: 75.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "claude-opus-4",
+		input_cached: Some(1.5),
+		input_normal: 15.0,
+		output_normal: 75.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "claude-sonnet-4-5",
+		input_cached: Some(0.3),
+		input_normal: 3.0,
+		output_normal: 15.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -45,10 +45,10 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-opus-4",
-		input_cached: Some(1.5),
-		input_normal: 15.0,
-		output_normal: 75.0,
+		name: "claude-haiku-4-5",
+		input_cached: Some(0.1),
+		input_normal: 1.0,
+		output_normal: 5.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -56,13 +56,6 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		input_cached: Some(0.08),
 		input_normal: 0.8,
 		output_normal: 4.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "claude-3-haiku",
-		input_cached: None,
-		input_normal: 0.25,
-		output_normal: 1.25,
 		output_reasoning: None,
 	},
 ];
@@ -414,27 +407,6 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_normal: 0.15,
 		output_reasoning: None,
 	},
-	ModelPricing {
-		name: "gemini-embedding-001",
-		input_cached: None,
-		input_normal: 0.15,
-		output_normal: 0.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-robotics-er-1.5",
-		input_cached: None,
-		input_normal: 0.3,
-		output_normal: 2.5,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-2.5-computer-use",
-		input_cached: None,
-		input_normal: 1.25,
-		output_normal: 10.0,
-		output_reasoning: None,
-	},
 ];
 
 const GEMINI: ProviderPricing = ProviderPricing {
@@ -657,31 +629,31 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-realtime",
-		input_cached: Some(0.4),
-		input_normal: 4.0,
-		output_normal: 16.0,
+		name: "gpt-5.2",
+		input_cached: Some(0.175),
+		input_normal: 1.75,
+		output_normal: 14.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-realtime-mini",
-		input_cached: Some(0.06),
-		input_normal: 0.6,
-		output_normal: 2.4,
+		name: "gpt-5.2-chat-latest",
+		input_cached: Some(0.175),
+		input_normal: 1.75,
+		output_normal: 14.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-4o-realtime-preview",
-		input_cached: Some(2.5),
-		input_normal: 5.0,
-		output_normal: 20.0,
+		name: "gpt-5.2-pro",
+		input_cached: None,
+		input_normal: 21.0,
+		output_normal: 168.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-4o-mini-realtime-preview",
-		input_cached: Some(0.3),
-		input_normal: 0.6,
-		output_normal: 2.4,
+		name: "gpt-5.1-codex-max",
+		input_cached: Some(0.125),
+		input_normal: 1.25,
+		output_normal: 10.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -769,21 +741,8 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gpt-4o-mini-search-preview",
-		input_cached: None,
-		input_normal: 0.15,
-		output_normal: 0.6,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gpt-4o-search-preview",
-		input_cached: None,
-		input_normal: 2.5,
-		output_normal: 10.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "computer-use-preview",
+		// Renamed computer-use-preview
+		name: "computer-use",
 		input_cached: None,
 		input_normal: 3.0,
 		output_normal: 12.0,

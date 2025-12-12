@@ -762,12 +762,22 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.175,
+          "normal": 1.75
+        },
+        "name": "gpt-5.2",
+        "output": 14,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
         "name": "gpt-5.1",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -787,7 +797,7 @@
         },
         "name": "gpt-5-mini",
         "output": 2,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -802,12 +812,22 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.175,
+          "normal": 1.75
+        },
+        "name": "gpt-5.2-chat-latest",
+        "output": 14,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.125,
           "normal": 1.25
         },
         "name": "gpt-5.1-chat-latest",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -825,9 +845,19 @@
           "cached": 0.125,
           "normal": 1.25
         },
+        "name": "gpt-5.1-codex-max",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.125,
+          "normal": 1.25
+        },
         "name": "gpt-5.1-codex",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -838,6 +868,16 @@
         "name": "gpt-5-codex",
         "output": 10,
         "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 21
+        },
+        "name": "gpt-5.2-pro",
+        "output": 168,
+        "recent": true
       },
       {
         "input": {
@@ -897,66 +937,6 @@
         },
         "name": "gpt-4o-mini",
         "output": 0.6,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.4,
-          "normal": 4
-        },
-        "name": "gpt-realtime",
-        "output": 16,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.06,
-          "normal": 0.6
-        },
-        "name": "gpt-realtime-mini",
-        "output": 2.4,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 2.5,
-          "normal": 5
-        },
-        "name": "gpt-4o-realtime-preview",
-        "output": 20,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.3,
-          "normal": 0.6
-        },
-        "name": "gpt-4o-mini-realtime-preview",
-        "output": 2.4,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 2.5
-        },
-        "name": "gpt-audio",
-        "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.6
-        },
-        "name": "gpt-audio-mini",
-        "output": 2.4,
         "recent": false
       },
       {
@@ -1057,7 +1037,7 @@
         },
         "name": "gpt-5.1-codex-mini",
         "output": 2,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -1076,26 +1056,6 @@
           "normal": 1.25
         },
         "name": "gpt-5-search-api",
-        "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "gpt-4o-mini-search-preview",
-        "output": 0.6,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 2.5
-        },
-        "name": "gpt-4o-search-preview",
         "output": 10,
         "recent": false
       },

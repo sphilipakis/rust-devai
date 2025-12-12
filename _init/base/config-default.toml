@@ -67,7 +67,7 @@ haiku         = "claude-haiku-4-5"
 # -- OpenAI
 # For OpenAI, model names can use `-high`, `-medium`, or `-low` suffixes.
 #             e.g., `gpt-5-low`, `gpt-5-nano-high`
-gpt           = "gpt-5.1"
+gpt           = "gpt-5.2"
 codex         = "gpt-5.1-codex"
 codex-mini    = "gpt-5.1-codex-mini"
 mini          = "gpt-5-mini"

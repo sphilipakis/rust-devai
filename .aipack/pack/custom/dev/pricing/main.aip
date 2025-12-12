@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "gpt-5.1"
+model = "gpt-5.2"
 input_concurrency = 6
 ```
 
@@ -27,11 +27,11 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = false,  url = ""},
+   {name = "openai",    do_json = true,  url = ""},
    
    {name = "gemini",    do_json = false,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = true,   url = ""},
+   {name = "anthropic", do_json = false,   url = ""},
 
    {name = "xai",       do_json = false,  url = ""}, 
 
@@ -42,7 +42,8 @@ local inputs = {
 
 -- Agument inputs
 for _, input in ipairs(inputs) do
-    input.md_path = base_dir .. "/.data/pricing-" .. input.name .. ".md"
+    input._display  = input.name
+    input.md_path   = base_dir .. "/.data/pricing-" .. input.name .. ".md"
     input.html_path = base_dir .. "/.data/pricing-" .. input.name .. ".html"
     input.json_path = base_dir .. "/.data/pricing-" .. input.name .. ".json"
 end
@@ -109,9 +110,15 @@ From this content for the {{data.provider}}:
 
 - Create a pricing JSON
 - Make sure all models are all lowercase
-- For Groq models, 
-    - For Groq models there are two sections in the markdown, the pricing and the name. Make sure to take the name from the name section, and infer the "display name" to get the pricing. 
-    - For Groq models, the models that are both section name and price, mark them as `recent: true`, if they are not in the model names, then `recent: false`
+- for OpenAI models
+    - for OpenAI modelsDo not add the gpt-image-1 or audio models
+    - for OpenAI models Only take the "standards" pricing,
+    - For OpenAI Models, set `cache_write: null` when not defined. 
+    - for OpenAI models ignore the legacy models
+    - For OpenAI Models, model starting with `gpt-5.2`. and `gpt-5-mini` are all `recent: true`, and then everything else is `recent: false`. 
+    - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
+    - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
+    - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 
 - For Fireworks models: 
     - For the Fireworks models, the model name is after the `/models/fireworks/`. So, `/models/fireworks/qwen3-coder-480b-a35b-instruct` the model name will be `qwen3-coder-480b-a35b-instruct`
     - For the Fireworks models, when only one price, it means same price for input and output. 
@@ -144,15 +151,9 @@ From this content for the {{data.provider}}:
     - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. 
     - For gemini models all `-latest` and `gemini-3...` are marked with `recent: true` and and the rest are false.
     - For gemini models, only add the model that starts with `gemini...`
-- for OpenAI models
-    - for OpenAI modelsDo not add the gpt-image-1 or audio models
-    - for OpenAI models Only take the "standards" pricing,
-    - For OpenAI Models, set `cache_write: null` when not defined. 
-    - for OpenAI models ignore the legacy models
-    - For OpenAI Models, all models starting with `gpt-5.1` are `recent: true` everything else is `recent: false`. So any model starting with `gpt-5-` will be `recent: false` for example
-    - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
-    - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
-    - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 
+- For Groq models, 
+    - For Groq models there are two sections in the markdown, the pricing and the name. Make sure to take the name from the name section, and infer the "display name" to get the pricing. 
+    - For Groq models, the models that are both section name and price, mark them as `recent: true`, if they are not in the model names, then `recent: false`    
 - Do not put in code block, just the raw json, pretty formatted.
 - If caching price not available, set to `null`
 - If price has text and audio, take the text price
