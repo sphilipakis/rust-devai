@@ -58,7 +58,7 @@ Important notes:
 
 #### Common Data Types:
 
-- [`FileInfo`](#filemeta) (for `aip.file..`) (FileInfo + `.content`)
+- [`FileInfo`](#fileinfo) (for `aip.file..`) (FileInfo + `.content`)
 - [`FileRecord`](#filerecord) (for `aip.file..`)
 - [`FileStats`](#filestats) (for `aip.file..`)
 - [`WebResponse`](#webresponse) (for `aip.web..`)
@@ -325,7 +325,7 @@ Writes the `content` string to the file specified by `rel_path`. Overwrites exis
 
 #### Returns
 
-- FileInfo: Metadata ([FileInfo](#filemeta)) about the saved file.
+- FileInfo: Metadata ([FileInfo](#fileinfo)) about the saved file.
 
 #### Example
 
@@ -363,7 +363,7 @@ Appends `content` to the end of the file at `rel_path`. Creates the file and dir
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -443,7 +443,7 @@ Checks if the file exists. If not, creates it with `content`. If it exists and `
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -509,7 +509,7 @@ Returns an error (Lua table `{ error: string }`) if the path string cannot be re
 
 ### aip.file.list
 
-List file metadata ([FileInfo](#filemeta)) matching glob patterns.
+List file metadata ([FileInfo](#fileinfo)) matching glob patterns.
 
 ```lua
 -- API Signature
@@ -523,7 +523,7 @@ aip.file.list(
 ): FileInfo[]
 ```
 
-Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileInfo](#filemeta) objects (metadata only, no content).
+Finds files matching `include_globs` within `base_dir` (or workspace) and returns a list of [FileInfo](#fileinfo) objects (metadata only, no content).
 
 #### Arguments
 
@@ -531,7 +531,7 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
   Note: Common build/dependency folders (e.g., `target/`, `node_modules/`, `.build/`, `__pycache__/`) are excluded by default unless explicitly matched by `include_globs`.
 - `options?: table` (optional):
   - `base_dir?: string` (optional): Base directory for globs. Defaults to workspace. Pack refs supported.
-  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#filemeta) objects will be absolute.
+  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#fileinfo) objects will be absolute.
     If `false` (default), the `path` will be relative to the `base_dir`. If a path resolves outside the `base_dir`
     (e.g., using `../` in globs), it will be returned as an absolute path even if `absolute` is false.
   - `with_meta?: boolean` (optional): If `false`, the function will skip fetching detailed metadata
@@ -541,7 +541,7 @@ Finds files matching `include_globs` within `base_dir` (or workspace) and return
 
 #### Returns
 
-- `FileInfo[]`: A Lua list of [FileInfo](#filemeta) tables. Empty if no matches.
+- `FileInfo[]`: A Lua list of [FileInfo](#fileinfo) tables. Empty if no matches.
 
 #### Example
 
@@ -631,7 +631,7 @@ Returns an error (Lua table `{ error: string }`) on invalid arguments, resolutio
 
 ### aip.file.first
 
-Find the first file matching glob patterns and return its metadata ([FileInfo](#filemeta)).
+Find the first file matching glob patterns and return its metadata ([FileInfo](#fileinfo)).
 
 ```lua
 -- API Signature
@@ -645,7 +645,7 @@ aip.file.first(
 ```
 
 Searches for files matching the `include_globs` patterns within the specified `base_dir` (or workspace root).
-It stops searching as soon as the first matching file is found and returns its [FileInfo](#filemeta) object (metadata only, no content).
+It stops searching as soon as the first matching file is found and returns its [FileInfo](#fileinfo) object (metadata only, no content).
 If no matching file is found, it returns `nil`.
 
 #### Arguments
@@ -656,12 +656,12 @@ If no matching file is found, it returns `nil`.
 - `options?: table` (optional) - A table containing options:
   - `base_dir?: string` (optional): The directory relative to which the `include_globs` are applied.
     Defaults to the workspace root. Pack references (e.g., `ns@pack/`) are supported.
-  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#filemeta) object (if found) will be absolute.
+  - `absolute?: boolean` (optional): If `true`, the `path` in the returned [FileInfo](#fileinfo) object (if found) will be absolute.
     If `false` (default), the `path` will be relative to the `base_dir`. Similar to `aip.file.list`, paths outside `base_dir` become absolute.
 
 #### Returns
 
-- `FileInfo | nil`: If a matching file is found, returns a [FileInfo](#filemeta) table. If no matching file is found, returns `nil`.
+- `FileInfo | nil`: If a matching file is found, returns a [FileInfo](#fileinfo) table. If no matching file is found, returns `nil`.
 
 #### Example
 
@@ -690,14 +690,14 @@ Returns an error (Lua table `{ error: string }`) on invalid arguments, resolutio
 
 ### aip.file.info
 
-Retrieves file metadata ([`FileInfo`](#filemeta)) for the specified path.
+Retrieves file metadata ([`FileInfo`](#fileinfo)) for the specified path.
 
 ```lua
 -- API Signature
 aip.file.info(path: string): FileInfo | nil
 ```
 
-If the given `path` exists, this function returns a [`FileInfo`](#filemeta) object
+If the given `path` exists, this function returns a [`FileInfo`](#fileinfo) object
 containing the file metadata (no content).  
 If the path cannot be resolved or the file does not exist, it returns `nil`.
 
@@ -904,7 +904,7 @@ Converts `data` to JSON and appends it, followed by a newline (`\n`), to the fil
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -935,7 +935,7 @@ Iterates through the `data` list, converts each element to JSON, and appends it 
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -1131,7 +1131,7 @@ Writes `data` to the CSV file at `path`.
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the created CSV file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the created CSV file.
 
 #### Example
 
@@ -1172,7 +1172,7 @@ Writes `records` to the CSV file at `path`, aligning values based on `header_key
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the created CSV file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the created CSV file.
 
 #### Example
 
@@ -1222,7 +1222,7 @@ This function focuses purely on appending data rows. Options related to automati
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -1261,7 +1261,7 @@ This function focuses purely on appending a single data row. Headers should be m
 
 #### Returns
 
-- `FileInfo`: Metadata ([FileInfo](#filemeta)) about the file.
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the file.
 
 #### Example
 
@@ -1305,7 +1305,7 @@ Loads the HTML file at `html_path` (relative to workspace), converts its content
 #### Returns
 
 - `FileInfo`
-  Metadata ([FileInfo](#filemeta)) about the created Markdown file.
+  Metadata ([FileInfo](#fileinfo)) about the created Markdown file.
 
 #### Example
 
@@ -1363,7 +1363,7 @@ Loads the HTML file at `html_path` (relative to workspace), removes non-content 
 #### Returns
 
 - `FileInfo`
-  Metadata ([FileInfo](#filemeta)) about the created slimmed HTML file.
+  Metadata ([FileInfo](#fileinfo)) about the created slimmed HTML file.
 
 #### Example
 
@@ -1498,7 +1498,7 @@ aip.file.save_docx_to_md(
 #### Returns
 
 - `FileInfo`
-  Metadata ([FileInfo](#filemeta)) about the created Markdown file.
+  Metadata ([FileInfo](#fileinfo)) about the created Markdown file.
 
 #### Example
 
@@ -1671,7 +1671,7 @@ aip.path.parse(path: string | nil): table | nil
 
 ### aip.path.parse
 
-Parses a path string and returns a [FileInfo](#filemeta) table representation of its components.
+Parses a path string and returns a [FileInfo](#fileinfo) table representation of its components.
 
 ```lua
 -- API Signature
@@ -1686,7 +1686,7 @@ Parses the given path string into a structured table containing components like 
 
 #### Returns
 
-- `table | nil`: A [FileInfo](#filemeta) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
+- `table | nil`: A [FileInfo](#fileinfo) table representing the parsed path components if `path` is a string. Returns `nil` if the input `path` was `nil`. Note that `ctime`, `mtime`, and `size` fields will be `nil` as this function only parses the string, it does not access the filesystem.
 
 #### Example
 
