@@ -237,11 +237,11 @@ All functions return an error table `{ error: string }` on failure, unless other
 aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 aip.file.append(rel_path: string, content: string): FileInfo
-aip.file.delete(path: string): boolean
+aip.file.delete(path: string): boolean // Only allowed within workspace (not base dir).
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 aip.file.exists(path: string): boolean
-aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[]
-aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[]
+aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[] // Excludes common build directories by default.
+aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[] // Excludes common build directories by default.
 aip.file.first(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 aip.file.info(path: string): FileInfo | nil
 aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: string, absolute?: boolean}): FileStats | nil
@@ -260,9 +260,9 @@ aip.file.save_records_as_csv(path: string, records: table[], header_keys: string
 aip.file.append_csv_rows(path: string, value_lists: any[][], options?: CsvOptions): FileInfo
 aip.file.append_csv_row(path: string, values: any[], options?: CsvOptions): FileInfo
 aip.file.save_html_to_md(html_path: string, dest?: string | table): FileInfo
-aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo
+aip.file.save_html_to_slim(html_path: string, dest?: string | table): FileInfo // dest default: [stem]-slim.html in source dir.
 aip.file.load_html_as_slim(html_path: string): string
-aip.file.load_html_as_md(html_path: string, options?: { trim?: boolean }): string
+aip.file.load_html_as_md(html_path: string, options?: { trim?: boolean }): string // options.trim defaults to true (slims before conversion).
 aip.file.save_docx_to_md(docx_path: string, dest?: string | table): FileInfo
 aip.file.load_docx_as_md(docx_path: string): string
 aip.file.line_spans(path: string): [start: number, end: number][]
@@ -293,7 +293,7 @@ aip.path.is_dir(path: string): boolean
 aip.path.diff(file_path: string, base_path: string): string
 aip.path.parent(path: string): string | nil
 aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil
-aip.path.join(base: string, ...parts: string | string[]): string
+aip.path.join(base: string, ...parts: string | string[]): string // Note: All parts are concatenated into one path before joining with base.
 aip.path.parse(path: string | nil): FileInfo | nil
 ```
 
@@ -426,7 +426,7 @@ aip.lua.merge_deep(target: table, ...objs: table)
 
 ```typescript
 aip.pdf.page_count(path: string): number
-aip.pdf.split_pages(path: string, dest_dir?: string): FileInfo[]
+aip.pdf.split_pages(path: string, dest_dir?: string): FileInfo[] // dest_dir default: [stem]/ in source dir.
 ```
 
 ### aip.csv - CSV Parsing and Formatting
