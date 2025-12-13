@@ -2,7 +2,7 @@ use crate::Result;
 use crate::error::Error;
 use derive_more::{Deref, From, Into};
 use lopdf::{Document, Object, ObjectId, dictionary};
-use simple_fs::SPath;
+use simple_fs::{SPath, ensure_dir};
 use std::collections::BTreeMap;
 
 #[derive(From, Into, Deref)]
@@ -31,6 +31,46 @@ pub fn extract_pdf_page(pdf: &PdfDoc, page_num: usize) -> Result<PdfDoc> {
 	let pdf_page_doc = extract_page(pdf, page_id)?;
 
 	Ok(pdf_page_doc.into())
+}
+
+pub fn save_pdf_doc(pdf: &mut PdfDoc, path: &SPath) -> Result<()> {
+	// Ensure parent directory exists
+	if let Some(parent) = path.parent() {
+		ensure_dir(parent.as_std_path()).map_err(Error::from)?;
+	}
+
+	pdf.doc
+		.save(path.as_std_path())
+		.map_err(|err| Error::cc(format!("Cannot save pdf doc: {path}"), err))?;
+
+	Ok(())
+}
+
+/// Splits a PDF into individual page files.
+///
+/// - `pdf_path`: Path to the source PDF file.
+/// - `dest_dir`: Destination directory for the split pages.
+///
+/// Returns a vector of paths to the created page files.
+pub fn split_pdf_pages(pdf_path: &SPath, dest_dir: &SPath) -> Result<Vec<SPath>> {
+	let pdf = load_pdf_doc(pdf_path)?;
+	let total_pages = page_count(&pdf);
+	let stem = pdf_path.stem();
+
+	let mut created_files: Vec<SPath> = Vec::new();
+
+	for page_num in 1..=total_pages {
+		let mut page_doc = extract_pdf_page(&pdf, page_num)?;
+
+		// Format page number with leading zeros (4 digits)
+		let page_filename = format!("{stem}-page-{page_num:04}.pdf");
+		let page_path = dest_dir.join(&page_filename);
+
+		save_pdf_doc(&mut page_doc, &page_path)?;
+		created_files.push(page_path);
+	}
+
+	Ok(created_files)
 }
 
 // region:    --- Support

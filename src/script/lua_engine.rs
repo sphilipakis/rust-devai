@@ -5,7 +5,6 @@ use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::NullSentinel;
 use crate::script::aip_modules::aip_lua;
-use crate::script::aip_modules::aip_pdf;
 use crate::script::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
 use mlua::{IntoLua, Lua, Table, Value};
@@ -293,7 +292,7 @@ mod tests {
 		let engine = LuaEngine::new(runtime.clone(), "test_lua_engine_eval_simple_ok")?;
 		let fx_script = r#"
 local square_root = math.sqrt(25)
-return "Hello " .. my_name .. " - " .. square_root		
+return "Hello " .. my_name .. " - " .. square_root
 		"#;
 
 		// -- Exec

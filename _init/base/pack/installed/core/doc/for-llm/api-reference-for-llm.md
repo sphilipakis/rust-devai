@@ -422,6 +422,13 @@ aip.lua.merge(target: table, ...objs: table)
 aip.lua.merge_deep(target: table, ...objs: table)
 ```
 
+### aip.pdf - PDF Utilities
+
+```typescript
+aip.pdf.page_count(path: string): number
+aip.pdf.split_pages(path: string, dest_dir?: string): FileInfo[]
+```
+
 ### aip.csv - CSV Parsing and Formatting
 
 ```typescript
