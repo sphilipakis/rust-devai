@@ -148,7 +148,8 @@ pub fn run_prune_to_declarations(code: &str) -> Result<String> {
 
 #[derive(Logos, Debug, PartialEq)]
 enum Token {
-	#[regex(r"//.*", priority = 3)]
+	// TODO: Eventually need to optimize that.
+	#[regex(r"//.*", priority = 3, allow_greedy = true)]
 	Comment,
 
 	#[regex(r"#\[cfg\(test", priority = 2)]
@@ -186,12 +187,12 @@ mod tests {
 	async fn test_rust_prune_to_declarations() -> Result<()> {
 		// -- Fixtures
 		let data_script = r#"
-//! Some top comment 
+//! Some top comment
 
-use some::module; // and comment 
+use some::module; // and comment
 
 /// Some comment
-/// Some stuff about fn 
+/// Some stuff about fn
 pub fn async some_async_fn(some_arg: String) -> i32{
    let some = "code";
 	 123
@@ -201,7 +202,7 @@ pub fn async some_async_fn(some_arg: String) -> i32{
 fn some_normal() {
 		// DOING SOME STUFF
 		// some fn stuff
-}	 
+}
 
 impl SomeStruct {
   fn some_fn() {
@@ -213,7 +214,7 @@ impl SomeStruct {
 mod tests {
  // Some tests
  #[test]
- fn some_test() { 
+ fn some_test() {
  // some test fn impl
  }
 }
