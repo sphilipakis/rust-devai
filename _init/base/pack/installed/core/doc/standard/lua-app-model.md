@@ -14,7 +14,7 @@ The full Lua APIs (`aip.` module) can be found in [lua-apis](lua-apis)
     <br/>
 
 - In the `# Before All` stage
-  - `inputs`: A Lua list containing all the inputs provided to the agent run command.
+  - `inputs`: A Lua list containing all the inputs provided to the agent run command (or `nil` if no inputs were passed).
     - When `-f "**/some/glob*.*"` is used, each element in `inputs` will be a [FileInfo](lua-apis#filemeta) object.
     - When `-i "some string"` is used, each element will be the corresponding string.
     <br/>

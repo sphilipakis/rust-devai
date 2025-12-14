@@ -212,7 +212,7 @@ Here is a full description of the complete flow:
     - Then the following stages occur (all are optional):
 - **Stage 1**: `# Before All` (lua block) (optional)
     - The `lua` block has the following in scope:
-        - `inputs`: A list of all inputs provided to the agent run.
+        - `inputs`: A list of all inputs provided to the agent run (or `nil` if no inputs).
         - `aip`: The [AIPack Lua API module](lua-apis).
         - `CTX`: Contextual [constants](lua.md#ctx) (paths, agent info).
     - It can return:
