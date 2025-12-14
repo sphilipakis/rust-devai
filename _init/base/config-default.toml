@@ -19,7 +19,7 @@
 #   - AIPACK with the Genai library will try to match the appropriate provider; if not found, it will fallback to localhost ollama
 #   - Can specify a model with namespacing for example `fireworks::kimi-k2-instruct`
 #
-# For reasoning model, like gpt-5, gemini-2.5-flash, and claude-sonnet-4-5-20250929, reasoning suffixes, 
+# For reasoning model, like gpt-5, gemini-2.5-flash, and claude-sonnet-4-5-20250929, reasoning suffixes,
 # such as `-minimal`, `-low`, `-medium`, `-high` suffixes (or event  or `-zero` for flash) can be used on model name or even model aliases
 #
 # e.g.,
@@ -29,7 +29,7 @@
 # Fireworks: "fireworks::qwen3-coder-480b-a35b-instruct", "fireworks::kimi-k2-instruct", or full name `accounts/fireworks/models/qwen3-235b-a22b-thinking-2507`
 #    Ollama: "phi4:14b", "gemma3:4b", "gemma3:27b", "deepseek-r1:70b", "llama4:scout" (or any locally installed Ollama)
 
-model = "gpt-5.1" # or an alias from below (e.g., "flash", "gpro")
+model = "gpt-5.2" # or an alias from below (e.g., "flash", "gpro")
 
 # Temperature (by default unset)
 
@@ -54,9 +54,9 @@ input_concurrency = 2
 #
 # Note 2: Aliases can be added or overridden in the workspace `.aipack/config.toml` or via agent options.
 #
-# Note 3: for reasoning model, reasoning suffix `-minimal`, `-low`, `-medium`, `-high` can be added and 
-#         those will be added back to the model name. 
-#         For example a `sonnet-low` as model name will be translated to 
+# Note 3: for reasoning model, reasoning suffix `-minimal`, `-low`, `-medium`, `-high` can be added and
+#         those will be added back to the model name.
+#         For example a `sonnet-low` as model name will be translated to
 #
 [options.model_aliases]
 # -- Anthropic

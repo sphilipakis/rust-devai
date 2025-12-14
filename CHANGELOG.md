@@ -1,5 +1,14 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2025-12-13 - [v0.8.11](https://github.com/jeremychone/rust-devai/compare/v0.8.10...v0.8.11)
+
+- `!` init-base - now delete the builtin installed packs before installing (for consistency, use to trash for recovery)
+- `!` aip.file.delete - now use `to_trash` to enable recovery.
+- `+` aip.pdf - `.page_count(path)` and `.split_pages(path, dest_dir?)`
+- `^` model - support the -none suffix now (mostly for >= gpt 5.1
+- `^` tui - update prompt/compl layout with ellipsis
+- `*` core@doc - now has the for-llm/ and standard/ structure
+- `-` aip.file.list - fix issue when listting `**/..` and before was a non existent start folder glob
 
 ## 2025-11-28 - [v0.8.10](https://github.com/jeremychone/rust-devai/compare/v0.8.9...v0.8.10)
 
@@ -8,7 +17,6 @@
 - `+` aip.runs.set_label - new api to set run label
 - `+` aip.md.extract_refs - news api to extract markdown ref/links
 - `-` self update on nix - fix has_aip_in_path function
-
 
 ## 2025-11-25 - [v0.8.9](https://github.com/jeremychone/rust-devai/compare/v0.8.8...v0.8.9)
 
@@ -88,9 +96,9 @@
 
 ## 2025-08-31 - [v0.8.1](https://github.com/jeremychone/rust-devai/compare/v0.8.0...v0.8.1)
 
-- `+` **NEW API** - New `aip.shape...` apis to reshape data. 
+- `+` **NEW API** - New `aip.shape...` apis to reshape data.
 - `^` **NEW API** - add aip.time.local_tz_id() e.g., 'America/Los_Angeles'
-- `+` **NEW LUA** - Added support for `null` 
+- `+` **NEW LUA** - Added support for `null`
 - `!` demo packs - update `demo@proof` (and remove the demo@craft)
 - `^` perf - implement batch create task for TUI perf with 500+ tasks
 - `^` task limit (for TUI) - increase default max select limit to 12,000 (from 300)
@@ -106,12 +114,11 @@
 - **TUI BY DEFAULT** (`--old-term` for the old terminal, and still `-s` for single shot)
 - `+` aip.file.load_html_as_md
 - `+` aip.file.load_html_as_slim
-- `+` aip.time.now_.. - new time APIs
+- `+` aip.time.now\_.. - new time APIs
 - `^` aip.file.save_html_to_md - add the {slim: bool}, slim: true by default
 - `.` file_save_html_to_md - slim by default
 - `+` aip.file.delete - only in workspace dir
 - `.` lua-api - fix markdown format
-
 
 ## 2025-08-12 - [v0.7.20](https://github.com/jeremychone/rust-devai/compare/v0.7.19...v0.7.20)
 
@@ -132,22 +139,22 @@
 - `^` pricing - update Together AI and OpenAI GPT-5 pricing; refresh Anthropic and Groq; update pricing-all.json and pricing/data.rs
 - `.` pricing - update Fireworks GPT-OSS
 - `^` `aip.text.format_size` - add `{trim = true}`
-- `^` inputs - FileInfo and FileRecord now default _display to path when not provided
-- `^` types - implement custom serializer to include _type metadata, types like FileInfo, FileRecord,
+- `^` inputs - FileInfo and FileRecord now default \_display to path when not provided
+- `^` types - implement custom serializer to include \_type metadata, types like FileInfo, FileRecord,
 - `.` lua-apis - update aip.run/task pin APIs
 - `.` keys - add Nebius API key to known systems
 
 ## 2025-08-04 - [v0.7.18](https://github.com/jeremychone/rust-devai/compare/v0.7.17...v0.7.18)
 
 - `!` base config tomls - now have `~/.aipack-base/config-default.toml` and `~/.aipack-base/config-user.toml`
-    - Old `~/.aipack-base/config.toml` will be renamed to `~/.aipack-base/config-deprecated.toml` and won't be used (can be deleted)
-    - Default model aliases updated. 
-- `+` NEW Lua API - `aip.file.info(file_path): FileInfo` to get the FileInfo of a give file. 
+  - Old `~/.aipack-base/config.toml` will be renamed to `~/.aipack-base/config-deprecated.toml` and won't be used (can be deleted)
+  - Default model aliases updated.
+- `+` NEW Lua API - `aip.file.info(file_path): FileInfo` to get the FileInfo of a give file.
 - `+` NEW Lua API - `aip.file.stats(globs): FileStats` (`{total_size, number_of_files, ctime_first, ...}`)
 - `+` NEW genai provider - Now support fireworks.ai (and its pricing)
-    - namespaced like `fireworks::glm-4p5` or full fireworks name like `accounts/fireworks/models/glm-4p5`
-- `+` NEW genai provider - Now support together.ai (no pricing yet). 
-    - namespaced like `together::together::Qwen/Qwen3-235B-A22B-Instruct-2507-tput`
+  - namespaced like `fireworks::glm-4p5` or full fireworks name like `accounts/fireworks/models/glm-4p5`
+- `+` NEW genai provider - Now support together.ai (no pricing yet).
+  - namespaced like `together::together::Qwen/Qwen3-235B-A22B-Instruct-2507-tput`
 - `^` `aip.text.format_size` - add lowest_unit support with `..format_size(2344333, "MB")`
 - `-` sys error - implement sys error when tui and error happen before first run
 - `-` tui - fix tasks 'no current tasks' state issue when changing sub run
@@ -156,7 +163,7 @@
 
 ## 2025-07-21 - [v0.7.17](https://github.com/jeremychone/rust-devai/compare/v0.7.16...v0.7.17)
 
-- `+` pin - added `aip.run.pin(..)` and `aip.task.pin(..)` with text and first Marker Universal Component  `{label, content}`
+- `+` pin - added `aip.run.pin(..)` and `aip.task.pin(..)` with text and first Marker Universal Component `{label, content}`
 - `+` tui - nested runs (sub agents)
 - `+` aip.text - add aip.text.format_size(..) for formatting bytes (fixed 9 chars format)
 - `+` lua - add aip.path.matches_glob(...)
@@ -193,11 +200,11 @@
 
 ## 2025-07-23 - [v0.7.15](https://github.com/jeremychone/rust-devai/compare/v0.7.14...v0.7.15)
 
-- `+` **BIG ONE**: New Terminal UI with the `--xp-tui` flag  
-    - Example: `aip run pro@coder --xp-tui` 
-    - or `aip run my-agent.aip --xp-tui`
-    - This will be the default UI in version `0.8.0`
-    - Running without `--xp-tui` will use the previous UI
+- `+` **BIG ONE**: New Terminal UI with the `--xp-tui` flag
+  - Example: `aip run pro@coder --xp-tui`
+  - or `aip run my-agent.aip --xp-tui`
+  - This will be the default UI in version `0.8.0`
+  - Running without `--xp-tui` will use the previous UI
 - `.` Other fixes, pricing & model update (Kimi 2 on groq)
 
 ## 2025-06-23 - [v0.7.14](https://github.com/jeremychone/rust-devai/compare/v0.7.13...v0.7.14)
@@ -208,7 +215,7 @@
 ## 2025-06-12 - [v0.7.13](https://github.com/jeremychone/rust-devai/compare/v0.7.12...v0.7.13)
 
 - `+` `aip.file_file_hash_...` for sha256, sha512, and blake3 (hex, b64, b64u, and b58 encoding)
-- `^` doc - lua-apis for the file.hash_... and aip.file.hash_...
+- `^` doc - lua-apis for the file.hash*... and aip.file.hash*...
 - `^` pricing - update new OpenAI o3 pricing
 - `.` all 'y' input are now case insensitive and match 'yes' as well
 - `.` init - config update to latest gemini 2.5 pro 06-05
@@ -229,7 +236,7 @@
 - `+` AgentOptions - added top_p for agent options
 - `^` `aip.web.parse_url` - add page_url (no fragment, no query)
 - `^` add `aip.file.exits(path)` (same as `aip.path.exists`) make it work with pack ref (when no exists)
-- `^` doc - update `core@doc/lua-apis.md` more path information 
+- `^` doc - update `core@doc/lua-apis.md` more path information
 - `^` AiResponse.info - add temperature when set
 - `-` update/fix pricing
 - `-` fix gemini cached computation (from genai 0.3.3)
@@ -262,24 +269,24 @@
 ## 2025-05-08 - [v0.7.7](https://github.com/jeremychone/rust-devai/compare/v0.7.6...v0.7.7)
 
 - `+` NEW session & tmp dir - Added `CTX.SESSION`, `CTX.TMP_DIR`, and `$tmp/some/path.txt` alias
-- `+` NEW Base and Workspace support directory for packs with `ns@pack_name$base/some/file.txt` and `ns@pack_name$workspace/some/file.txt` 
-    - C`TX.PACK_BASE_SUPPORT_DIR` and `CTX.PACK_WORKSPACE_SUPPORT_DIR`
+- `+` NEW Base and Workspace support directory for packs with `ns@pack_name$base/some/file.txt` and `ns@pack_name$workspace/some/file.txt`
+  - C`TX.PACK_BASE_SUPPORT_DIR` and `CTX.PACK_WORKSPACE_SUPPORT_DIR`
 - `+` NEW `aip.lua.file`
-    - Added `aip.file.save_html_to_slim(html_file_path, dest?)`, 
-    - Added `aip.file.save_html_to_md(html_file_path, dest?)`, 
-    - Added `aip.file.append_json_line(path, data)`
-    - Added `aip.file.append_json_lines(path, [data])`
-    - Added `aip.file.load_ndjson(path)`
-    - Added `aip.file.load_json`
-    - `FileInfo` and `FileRecord` now have created, updated, size metadata
+  - Added `aip.file.save_html_to_slim(html_file_path, dest?)`,
+  - Added `aip.file.save_html_to_md(html_file_path, dest?)`,
+  - Added `aip.file.append_json_line(path, data)`
+  - Added `aip.file.append_json_lines(path, [data])`
+  - Added `aip.file.load_ndjson(path)`
+  - Added `aip.file.load_json`
+  - `FileInfo` and `FileRecord` now have created, updated, size metadata
 - `^` `aip.json`
-    - Now `aip.json.stringify(data)` stringify to single line. 
-    - Added `aip.json.stringify_pretty(data)`
+  - Now `aip.json.stringify(data)` stringify to single line.
+  - Added `aip.json.stringify_pretty(data)`
 - `+` `aip.html`
-    - Added `aip.html.to_md(html_content)`
-    - Now `aip.html.slim(full_html)` (from deprecated `.prune_to_content(full_html)`)
+  - Added `aip.html.to_md(html_content)`
+  - Now `aip.html.slim(full_html)` (from deprecated `.prune_to_content(full_html)`)
 - `-` test - fix test_pricing_pricer...
-- `.` _init config.toml update with flash-prev-zero
+- `.` \_init config.toml update with flash-prev-zero
 - `.` Gemini - Added support for `-zero`, `-low`, `-medium`, `-high` suffixes for reasoning budget
 
 ## 2025-04-26 - [v0.7.6](https://github.com/jeremychone/rust-devai/compare/v0.7.5...v0.7.6)
@@ -294,7 +301,7 @@
 ## 2025-04-19 - [v0.7.4](https://github.com/jeremychone/rust-devai/compare/v0.7.3...v0.7.4)
 
 - `^` Windows x86 binary now 64bit (https://aipack.ai)
-- `^` gemini 2.5* - Support reasoning tokens,and update pricing calculation
+- `^` gemini 2.5\* - Support reasoning tokens,and update pricing calculation
 - `.` config.toml - update the config tomls with new models
 
 ## 2025-04-16 - [v0.7.3](https://github.com/jeremychone/rust-devai/compare/v0.7.2...v0.7.3)
@@ -310,7 +317,7 @@
 - `!` pack - keep the version as is in filename (no more replacing the `.` by `-`)
 - `.` error - remove the default display {self}, was creating infinite looop
 - `.` pricing - add pricing for the openai gpt 4.1 family
-- `^` core@doc - add doc for aip.web.*
+- `^` core@doc - add doc for aip.web.\*
 - `.` update setup messages
 - `-` aip.file.list_load - fix bug that make the function hang
 
@@ -419,12 +426,12 @@ BIG ERROR - This won't compile; some files are missing. Use v0.6.9.
 - `.` add CTX.AIPACK_VERSION
 - `.` .aip format - removed legacy config, added 'user' as alias of 'instruction'
 - `>` refactor tui
-- `^` install - installing pack check version now to make sure greater than. 
+- `^` install - installing pack check version now to make sure greater than.
 - `>` refactors - tui, printers, tests_installer, tests_packer
 
 ## 2025-03-04 - [v0.6.6](https://github.com/jeremychone/rust-devai/compare/v0.6.5...v0.6.6)
 
-- `.` Minor cleanup and update AIPACK resource links and text. 
+- `.` Minor cleanup and update AIPACK resource links and text.
 
 ## 2025-03-02 - [v0.6.5](https://github.com/jeremychone/rust-devai/compare/v0.6.4...v0.6.5)
 
@@ -491,9 +498,9 @@ BIG ERROR - This won't compile; some files are missing. Use v0.6.9.
 
 - `-` (#24) fix - Compile - does not compile in non macos
 
-## 2025-01-20 -  [v0.5.6](https://github.com/jeremychone/rust-devai/compare/v0.5.4...v0.5.6)
+## 2025-01-20 - [v0.5.6](https://github.com/jeremychone/rust-devai/compare/v0.5.4...v0.5.6)
 
-IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix. 
+IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix.
 
 **v0.5.6**
 
@@ -516,8 +523,8 @@ IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix.
 - `+` NEW - ~/.devai-base/ - first pass (supports custom/agent and custom/lua)
 - `+` NEW - lua - first pass at supporting 'require' with the '.devai/custom/lua' path added
 - `!` CHANGE - remove devai new-solo
-- `!` CHANGE - .devai/... name change, rename the  folders to  (for simplification)
-    - e.g., Now `.devai/custom/agent` (before `.devai/custom/command-agent`)
+- `!` CHANGE - .devai/... name change, rename the folders to (for simplification)
+  - e.g., Now `.devai/custom/agent` (before `.devai/custom/command-agent`)
 - `.` init - do not create custom/new-template anymore
 - `.` fix agent proof-comments
 - `^` genai - updated to 0.1.17 with DeepSeek support
@@ -531,13 +538,14 @@ IMPORTANT: Can't compile on non-Mac. See v0.5.7 for fix.
 
 ## 2024-12-12 - `0.5.3`
 
-Thanks to [Kees Jongenburger](https://github.com/keesj) for reporting 
+Thanks to [Kees Jongenburger](https://github.com/keesj) for reporting
 
 - `-` Fix critical bug - [#23 cli issue - devai init fails when the .devai directory does not exits](https://github.com/jeremychone/rust-devai/issues/23)
 
 ## 2024-12-11 - `0.5.2`
 
-> NOTE - This version introduced a critical bug (when .devai/ did not exist). 
+> NOTE - This version introduced a critical bug (when .devai/ did not exist).
+
          See [#23](https://github.com/jeremychone/rust-devai/issues/23)
          Use `0.5.3` and above
 

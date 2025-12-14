@@ -1,13 +1,13 @@
 # Customize or override the `./config-default.toml` properties
-# 
-# This will be merged on top of `./config-default.toml` to provide the 
-# base configuration for all aip runs. 
+#
+# This will be merged on top of `./config-default.toml` to provide the
+# base configuration for all aip runs.
 #
 # For documentation, see `./config-default.toml`.
 
 [options]
 
-# model       = "gpt-5.1"
+# model       = "gpt-5.2"
 
 # temperature = 0.0
 
