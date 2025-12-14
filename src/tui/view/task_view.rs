@@ -1,5 +1,6 @@
 use crate::model::{EndState, ModelManager, RunningState};
 use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
+use crate::support::text::truncate_with_ellipsis;
 use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
@@ -75,23 +76,30 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	}
 
 	// -- Prepare Data
+	const VAL_1_WIDTH: u16 = 25;
+	const VAL_2_WIDTH: u16 = 25;
+
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_fmt();
 	let duration = state.current_task_duration_txt();
 	let prompt_tk = state.current_task_prompt_tokens_fmt();
+	// Here we assume if overflow is because we have a (1235 tk reasoning)
+	let prompt_tk = truncate_with_ellipsis(&prompt_tk, VAL_1_WIDTH as usize, ".)");
 	let completion_tk = state.current_task_completion_tokens_fmt();
+	// Here we assume if overflow is because have a (123 KB)
+	let completion_tk = truncate_with_ellipsis(&completion_tk, VAL_2_WIDTH as usize, ".)");
 	let cache_info = state.current_task_cache_info_fmt();
 
 	// -- Columns layout
 	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(10), // Model / Prompt
-			Constraint::Length(22), //
-			Constraint::Length(7),  // Cost / Completion
-			Constraint::Length(25), //
-			Constraint::Length(13), // Duration / Cache Info
-			Constraint::Fill(1),    //
+			Constraint::Length(10),          // Model / Prompt
+			Constraint::Length(VAL_1_WIDTH), //
+			Constraint::Length(7),           // Cost / Completion
+			Constraint::Length(VAL_2_WIDTH), //
+			Constraint::Length(13),          // Duration / Cache Info
+			Constraint::Fill(1),             //
 		])
 		.spacing(1)
 		.areas(area);
