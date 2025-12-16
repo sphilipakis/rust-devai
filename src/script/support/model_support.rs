@@ -66,7 +66,7 @@ impl PinCommand {
 	/// 1. `pin(iden, priority, content)`
 	/// 2. `pin(iden, content)`
 	///
-	/// `content` can be a string (or convertible primitive value) or a structured table 
+	/// `content` can be a string (or convertible primitive value) or a structured table
 	/// `{label?: string, content: string}` (mapped to uc::Marker).
 	///
 	/// Returns an informative error if the arguments do not match either form.
