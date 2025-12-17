@@ -364,21 +364,11 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.2,
-          "normal": 2
+          "cached": 0.05,
+          "normal": 0.5
         },
-        "name": "gemini-3-pro-preview",
-        "output": 12,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.2,
-          "normal": 1
-        },
-        "name": "gemini-3-pro-preview-batch",
-        "output": 6,
+        "name": "gemini-3-flash",
+        "output": 3,
         "recent": true
       },
       {
@@ -394,16 +384,6 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.125,
-          "normal": 0.625
-        },
-        "name": "gemini-2.5-pro-batch",
-        "output": 5,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": 0.03,
           "normal": 0.3
         },
@@ -414,91 +394,11 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.15
-        },
-        "name": "gemini-2.5-flash-batch",
-        "output": 1.25,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.3
-        },
-        "name": "gemini-2.5-flash-preview",
-        "output": 2.5,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.15
-        },
-        "name": "gemini-2.5-flash-preview-batch",
-        "output": 1.25,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": 0.01,
           "normal": 0.1
         },
         "name": "gemini-2.5-flash-lite",
         "output": 0.4,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.05
-        },
-        "name": "gemini-2.5-flash-lite-batch",
-        "output": 0.2,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.1
-        },
-        "name": "gemini-2.5-flash-lite-preview",
-        "output": 0.4,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.05
-        },
-        "name": "gemini-2.5-flash-lite-preview-batch",
-        "output": 0.2,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.3
-        },
-        "name": "gemini-2.5-flash-image",
-        "output": 30,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 0.15
-        },
-        "name": "gemini-2.5-flash-image-batch",
-        "output": 30,
         "recent": false
       },
       {
@@ -514,16 +414,6 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.025,
-          "normal": 0.05
-        },
-        "name": "gemini-2.0-flash-batch",
-        "output": 0.2,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": null,
           "normal": 0.075
         },
@@ -534,32 +424,12 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
-          "normal": 0.0375
-        },
-        "name": "gemini-2.0-flash-lite-batch",
-        "output": 0.15,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": 0.03,
           "normal": 0.3
         },
         "name": "gemini-flash-latest",
         "output": 2.5,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.15
-        },
-        "name": "gemini-flash-latest-batch",
-        "output": 1.25,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -569,37 +439,57 @@
         },
         "name": "gemini-pro-latest",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.125,
-          "normal": 0.625
+          "cached": null,
+          "normal": 0.15
         },
-        "name": "gemini-pro-latest-batch",
-        "output": 5,
-        "recent": true
+        "name": "gemini-embedding-001",
+        "output": 0,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.1
+          "cached": null,
+          "normal": 0.3
         },
-        "name": "gemini-flash-lite-latest",
-        "output": 0.4,
-        "recent": true
+        "name": "gemini-robotics-er-1.5",
+        "output": 2.5,
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.01,
-          "normal": 0.05
+          "cached": null,
+          "normal": 1.25
         },
-        "name": "gemini-flash-lite-latest-batch",
-        "output": 0.2,
-        "recent": true
+        "name": "gemini-2.5-computer-use",
+        "output": 10,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0,
+          "normal": 0
+        },
+        "name": "gemma-3",
+        "output": 0,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0,
+          "normal": 0
+        },
+        "name": "gemma-3n",
+        "output": 0,
+        "recent": false
       }
     ]
   },

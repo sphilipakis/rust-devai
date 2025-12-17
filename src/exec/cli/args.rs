@@ -1,5 +1,5 @@
 use crate::exec::ExecActionEvent;
-use clap::{Parser, Subcommand, command};
+use clap::{Parser, Subcommand};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]

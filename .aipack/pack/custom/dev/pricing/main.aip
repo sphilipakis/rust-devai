@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "gpt-5.2"
+model = "gemini-3-flash-preview"
 input_concurrency = 6
 ```
 
@@ -27,9 +27,9 @@ local base_dir = p_utils.base_dir
 --             names In the browser window: console.log($$('td[id]').map(td => td.id).join('\n'));
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
-   {name = "openai",    do_json = true,  url = ""},
+   {name = "openai",    do_json = false,  url = ""},
    
-   {name = "gemini",    do_json = false,  url = ""},
+   {name = "gemini",    do_json = true,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
    {name = "anthropic", do_json = false,   url = ""},
 
@@ -146,10 +146,13 @@ From this content for the {{data.provider}}:
     - For gemini models there is no `caching write`, so cache value is for the `.cached` property. 
     - For Gemini models, do not add the audio or tts model.
     - For gemini models, keep the `.` in the name.
-    - For Gemini models, `gemini-3-pro-preview` and `gemini-2.5-flash-preview` remove the `-preview` in the name
+    - For Gemini models, `gemini-3-pro-preview` and `gemini-3-flash-preview` remove the `-preview` in the name
     - For Gemini models, for `gemini-2.5-pro` remove the release number after pro like the `-09...` same for other gemini models. Just have the main one. 
-    - For the Gemini models, add new models for `gemini-flash-latest`, `gemini-pro-latest` and `gemini-flash-lite-latest` with the same price as their respective latest version. So those will be duplicates, but they can be used as well. 
-    - For gemini models all `-latest` and `gemini-3...` are marked with `recent: true` and and the rest are false.
+    - For the Gemini models, add new models for 
+      - `gemini-flash-latest` based on `gemini flash 2.5` pricing. 
+      - `gemini-pro-latest` based on `gemini pro 2.5` pricing. 
+      - Not that bothg of this latest will be `recent: false` as they ar aboused on the 2.5
+    - For gemini models all only `gemini-3...` are marked with `recent: true` and and the rest are false.
     - For gemini models, only add the model that starts with `gemini...`
 - For Groq models, 
     - For Groq models there are two sections in the markdown, the pricing and the name. Make sure to take the name from the name section, and infer the "display name" to get the pricing. 
