@@ -76,30 +76,36 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	}
 
 	// -- Prepare Data
-	const VAL_1_WIDTH: u16 = 25;
-	const VAL_2_WIDTH: u16 = 25;
+	const L1_VAL_1_WIDTH: u16 = 25;
+	const L1_VAL_2_WIDTH: u16 = 12; // cost value
 
-	let model_name = state.current_task_model_name();
-	let cost = state.current_task_cost_fmt();
-	let duration = state.current_task_duration_txt();
-	let prompt_tk = state.current_task_prompt_tokens_fmt();
-	// Here we assume if overflow is because we have a (1235 tk reasoning)
-	let prompt_tk = truncate_with_ellipsis(&prompt_tk, VAL_1_WIDTH as usize, ".)");
-	let completion_tk = state.current_task_completion_tokens_fmt();
-	// Here we assume if overflow is because have a (123 KB)
-	let completion_tk = truncate_with_ellipsis(&completion_tk, VAL_2_WIDTH as usize, ".)");
-	let cache_info = state.current_task_cache_info_fmt();
+	const L2_VAL_1_WIDTH: u16 = 25;
+	const L2_VAL_2_WIDTH: u16 = 25;
 
 	// -- Columns layout
-	let [label_1, val_1, label_2, val_2, label_3, val_3] = Layout::default()
+	// l1_ is for the model, cost, duration
+	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(10),          // Model / Prompt
-			Constraint::Length(VAL_1_WIDTH), //
-			Constraint::Length(7),           // Cost / Completion
-			Constraint::Length(VAL_2_WIDTH), //
-			Constraint::Length(13),          // Duration / Cache Info
-			Constraint::Fill(1),             //
+			Constraint::Length(10),             // Model
+			Constraint::Length(L1_VAL_1_WIDTH), //
+			Constraint::Length(7),              // Cost
+			Constraint::Length(L1_VAL_2_WIDTH), //
+			Constraint::Length(13),             // Duration
+			Constraint::Fill(1),                //
+		])
+		.spacing(1)
+		.areas(area);
+	// l2_ is for the prompt, compl, cache info
+	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, l2_label_3, l2_val_3] = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints(vec![
+			Constraint::Length(10),             // Prompt
+			Constraint::Length(L2_VAL_1_WIDTH), //
+			Constraint::Length(7),              // Completion
+			Constraint::Length(L2_VAL_2_WIDTH), //
+			Constraint::Length(13),             // Cache Info
+			Constraint::Fill(1),                //
 		])
 		.spacing(1)
 		.areas(area);
@@ -113,62 +119,76 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 		style::STL_FIELD_VAL
 	};
 
-	// -- Render Model Row
+	// -- Render l1 - Model Row
+	let model_name = state.current_task_model_name();
+	let cost = state.current_task_cost_fmt();
+	let duration = state.current_task_duration_txt();
+
 	if matches!(header_mode, HeaderMode::Full) {
 		current_row += 1;
 
 		Paragraph::new("Model:")
 			.style(style::STL_FIELD_LBL)
 			.right_aligned()
-			.render(label_1.x_row(current_row), buf);
+			.render(l1_label_1.x_row(current_row), buf);
 		// NOTE: here a little chack to have maximum space for model name
 		Paragraph::new(model_name)
 			.style(stl_field_val)
-			.render(val_1.x_row(current_row).x_width(26), buf);
+			.render(l1_val_1.x_row(current_row).x_width(26), buf);
 
 		// NOTE: Here we use Span to give a little bit more space to Model
 		Paragraph::new(Span::styled("  Cost:", style::STL_FIELD_LBL))
 			.right_aligned()
-			.render(label_2.x_row(current_row), buf);
-		Paragraph::new(cost).style(stl_field_val).render(val_2.x_row(current_row), buf);
+			.render(l1_label_2.x_row(current_row), buf);
+		Paragraph::new(cost)
+			.style(stl_field_val)
+			.render(l1_val_2.x_row(current_row), buf);
 
 		Paragraph::new(" Duration:")
 			.style(style::STL_FIELD_LBL)
 			.right_aligned()
-			.render(label_3.x_row(current_row), buf);
+			.render(l1_label_3.x_row(current_row), buf);
 		Paragraph::new(duration)
 			.style(stl_field_val)
-			.render(val_3.x_row(current_row), buf);
+			.render(l1_val_3.x_row(current_row), buf);
 	}
 
-	// -- Render Row for tokens
+	// -- Render l2 - Row for tokens
+	let prompt_tk = state.current_task_prompt_tokens_fmt();
+	// Here we assume if overflow is because we have a (1235 tk reasoning)
+	let prompt_tk = truncate_with_ellipsis(&prompt_tk, L2_VAL_1_WIDTH as usize, ".)");
+	let completion_tk = state.current_task_completion_tokens_fmt();
+	// Here we assume if overflow is because have a (123 KB)
+	let completion_tk = truncate_with_ellipsis(&completion_tk, L2_VAL_2_WIDTH as usize, ".)");
+	let cache_info = state.current_task_cache_info_fmt();
+
 	if matches!(header_mode, HeaderMode::Full | HeaderMode::TokensOnly) {
 		current_row += 1;
 		Paragraph::new("Prompt:")
 			.style(style::STL_FIELD_LBL)
 			.right_aligned()
-			.render(label_1.x_row(current_row), buf);
+			.render(l2_label_1.x_row(current_row), buf);
 		Paragraph::new(prompt_tk)
 			.style(stl_field_val)
-			.render(val_1.x_row(current_row), buf);
+			.render(l2_val_1.x_row(current_row), buf);
 
 		Paragraph::new("Compl:")
 			.style(style::STL_FIELD_LBL)
 			.right_aligned()
-			.render(label_2.x_row(current_row), buf);
+			.render(l2_label_2.x_row(current_row), buf);
 		Paragraph::new(completion_tk)
 			.style(stl_field_val)
-			.render(val_2.union(val_3).x_row(current_row), buf);
+			.render(l2_val_2.union(l2_val_3).x_row(current_row), buf);
 
 		//current_task_cache_write_fmt
 		if let Some(cache_info) = cache_info {
 			Paragraph::new(" Cache Info:")
 				.style(style::STL_FIELD_LBL)
 				.right_aligned()
-				.render(label_3.x_row(current_row), buf);
+				.render(l2_label_3.x_row(current_row), buf);
 			Paragraph::new(cache_info)
 				.style(stl_field_val)
-				.render(val_3.union(val_3).x_row(current_row), buf);
+				.render(l2_val_3.union(l2_val_3).x_row(current_row), buf);
 		}
 	}
 }

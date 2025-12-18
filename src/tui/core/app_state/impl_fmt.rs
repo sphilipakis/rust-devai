@@ -71,7 +71,7 @@ impl AppState {
 			.unwrap_or_else(|| "-".to_string())
 	}
 
-	/// Returns the cumulative duration of all tasks (formatted)  
+	/// Returns the cumulative duration of all tasks (formatted)
 	/// or `None` when there is **one task or fewer**.
 	pub fn tasks_cummulative_duration(&self) -> Option<String> {
 		let run_item = self.current_run_item()?;
@@ -165,7 +165,7 @@ impl AppState {
 		}
 	}
 
-	/// Returns the cumulative duration of all tasks (formatted)  
+	/// Returns the cumulative duration of all tasks (formatted)
 	/// or `None` when there is **one task or fewer**.
 	pub fn current_task_duration_txt(&self) -> String {
 		if let Some(task) = self.current_task() {
@@ -256,7 +256,7 @@ impl AppState {
 		let mut res = format!("{} tk", text::format_num(tk_completion));
 
 		if let Some(reasonning) = task.tk_completion_reasoning {
-			res = format!("{res} ({} reasoning)", text::format_num(reasonning));
+			res = format!("{res} ({} reason)", text::format_num(reasonning));
 		}
 
 		res
