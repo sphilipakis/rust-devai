@@ -1,6 +1,6 @@
 use crate::tui::core::{Action, LinkZones, ScrollIden};
 use crate::tui::style;
-use crate::tui::support::clamp_idx_in_len;
+use crate::tui::support::{UiExt as _, clamp_idx_in_len};
 use crate::tui::view::comp::{self, ui_for_marker_section_str};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, TaskView};
@@ -191,6 +191,7 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state
 			let mut line = Line::from(task.ui_label(Some(" "), area.width, tasks_len));
 			if task_sel_idx == idx {
 				line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
+				line = line.x_fg(style::CLR_TXT_BLACK);
 			} else if is_mouse_in_nav && state.is_last_mouse_over(tasks_list_a.x_row((idx + 1) as u16 - scroll)) {
 				line = line.fg(style::CLR_TXT_HOVER);
 			}

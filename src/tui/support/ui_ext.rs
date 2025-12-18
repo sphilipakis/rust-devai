@@ -1,5 +1,5 @@
 use ratatui::style::Color;
-use ratatui::text::Span;
+use ratatui::text::{Line, Span};
 
 pub trait UiExt {
 	/// Sent the bg for all ui elements
@@ -11,6 +11,26 @@ pub trait UiExt {
 
 	// Total width of all ui elements
 	fn x_width(&self) -> u16;
+}
+
+impl UiExt for Line<'_> {
+	fn x_bg(mut self, color: Color) -> Self {
+		for span in self.iter_mut() {
+			span.style.bg = color.into();
+		}
+		self
+	}
+
+	fn x_fg(mut self, color: Color) -> Self {
+		for span in self.iter_mut() {
+			span.style.fg = color.into();
+		}
+		self
+	}
+
+	fn x_width(&self) -> u16 {
+		self.iter().map(|span| span.width() as u16).sum()
+	}
 }
 
 impl UiExt for Vec<Span<'_>> {
