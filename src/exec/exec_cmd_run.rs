@@ -5,10 +5,10 @@ use crate::hub::{HubEvent, get_hub};
 use crate::run::run_agent;
 use crate::run::{RunRedoCtx, RunTopAgentParams};
 use crate::runtime::Runtime;
-use crate::support::editor;
 use crate::support::jsons::into_values;
+use crate::support::{editor, text};
 use crate::types::FileInfo;
-use crate::{Error, Result};
+use crate::{Error, Result, term};
 use simple_fs::{SEventKind, SPath, list_files, watch};
 use tracing::info;
 
@@ -46,6 +46,11 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 		}
 	}
 
+	// set the terminal name if possible
+	let agent_win_name = text::truncate_left_with_ellipsis(agent.name(), 22, "..");
+	term::set_window_name(&agent_win_name);
+
+	// Run
 	match do_run(&run_options, &runtime, &agent).await {
 		Ok(_) => (),
 		Err(err) => hub.publish(err).await,

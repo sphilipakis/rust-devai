@@ -105,7 +105,7 @@ impl Default for TermInfo {
 
 // region:    --- Public Functions
 
-pub fn term_program() -> Option<TermInfo> {
+pub fn term_info() -> Option<TermInfo> {
 	let info = TermInfo::default();
 	if info.term_program.is_some() || !info.term_variants.is_empty() {
 		Some(info)
@@ -114,7 +114,11 @@ pub fn term_program() -> Option<TermInfo> {
 	}
 }
 
-pub fn set_window_name(term_info: &TermInfo, name: &str) -> bool {
+pub fn set_window_name(name: &str) -> bool {
+	let Some(term_info) = term_info() else {
+		return false;
+	};
+
 	if term_info.match_any("tmux") {
 		let _ = Command::new("tmux").arg("rename-window").arg(name).spawn();
 		return true;
