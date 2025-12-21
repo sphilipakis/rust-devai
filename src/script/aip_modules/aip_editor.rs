@@ -106,13 +106,13 @@ fn open_file(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> 
 	}
 
 	// Attempt to open the file in the auto-detected editor
-	match editor::open_file_auto(&full_path)? {
-		Some(editor_program) => {
+	match editor::open_file_auto(&full_path) {
+		Ok(editor_program) => {
 			let result = lua.create_table()?;
 			result.set("editor", editor_program.program())?;
 			result.into_lua(lua)
 		}
-		None => Ok(Value::Nil),
+		Err(_) => Ok(Value::Nil),
 	}
 }
 
