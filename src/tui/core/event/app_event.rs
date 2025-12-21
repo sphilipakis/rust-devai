@@ -40,11 +40,18 @@ impl AppEvent {
 	}
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum ScrollDir {
+	Up,
+	Down,
+}
+
 #[derive(Debug)]
 pub enum ActionEvent {
 	Quit,
 	Redo,
 	CancelRun,
+	Scroll(ScrollDir),
 }
 
 #[allow(unused)]

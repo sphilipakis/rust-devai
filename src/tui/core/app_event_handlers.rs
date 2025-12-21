@@ -1,6 +1,6 @@
 use super::AppTx;
 use super::ExitTx;
-use super::event::{ActionEvent, AppEvent, DataEvent};
+use super::event::{ActionEvent, AppEvent, DataEvent, ScrollDir};
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
@@ -19,6 +19,9 @@ pub async fn handle_app_event(
 	exit_tx: &ExitTx,
 	app_event: &AppEvent,
 ) -> Result<()> {
+	// if let AppEvent::Term(Event::Mouse(mouse_event)) = app_event {
+	// 	tracing::debug!("TUI Mouse AppEvent: {mouse_event:?}");
+	// }
 	// tracing::debug!("APP EVENT HANDLER - {app_event:?}");
 
 	match app_event {
@@ -56,6 +59,8 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 			(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
 			(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
 			(KeyCode::Char('x'), _) => app_tx.send(ActionEvent::CancelRun).await?,
+			(KeyCode::Up, _) => app_tx.send(ActionEvent::Scroll(ScrollDir::Up)).await?,
+			(KeyCode::Down, _) => app_tx.send(ActionEvent::Scroll(ScrollDir::Down)).await?,
 			_ => (),
 		}
 	}
@@ -86,6 +91,9 @@ async fn handle_action_event(
 			//
 			executor_tx.send(ExecActionEvent::CancelRun).await;
 		}
+
+		// -- Scroll (handled in process_app_state via LastAppEvent)
+		ActionEvent::Scroll(_) => (),
 	}
 	Ok(())
 }

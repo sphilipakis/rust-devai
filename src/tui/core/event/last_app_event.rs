@@ -50,6 +50,13 @@ impl LastAppEvent {
 			_ => None,
 		})
 	}
+
+	pub fn as_action_event(&self) -> Option<&super::ActionEvent> {
+		self.last_event.as_ref().and_then(|e| match e.as_ref() {
+			AppEvent::Action(event) => Some(event),
+			_ => None,
+		})
+	}
 }
 
 // region:    --- Froms

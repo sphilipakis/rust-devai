@@ -1,12 +1,14 @@
 use crate::model::{ErrBmc, RunBmc, TaskBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
-use crate::tui::core::event::ActionEvent;
-use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab};
+use crate::tui::core::event::{ActionEvent, ScrollDir};
+use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
 use std::time::Duration;
+
+const SCROLL_KEY_MAIN_VIEW: bool = true;
 
 pub fn process_app_state(state: &mut AppState) {
 	// -- Process tick
@@ -55,10 +57,6 @@ pub fn process_app_state(state: &mut AppState) {
 		// Find the active scroll zone
 		let zone_iden = state.core().find_zone_for_pos(mouse_evt);
 
-		// if let Some(zone_iden) = zone_iden {
-		// 	tracing::debug!(" {zone_iden:?}");
-		// }
-
 		state.core_mut().active_scroll_zone_iden = zone_iden;
 	} else {
 		state.core_mut().mouse_evt = None;
@@ -66,18 +64,42 @@ pub fn process_app_state(state: &mut AppState) {
 	}
 
 	// -- Scroll
-	if let Some(mouse_evt) = state.last_app_event().as_mouse_event()
-		&& let Some(zone_iden) = state.core().active_scroll_zone_iden
-	{
+	let mut scroll_dir = None;
+	let mut is_key_scroll = false;
+
+	if let Some(mouse_evt) = state.last_app_event().as_mouse_event() {
 		match mouse_evt.kind {
-			MouseEventKind::ScrollUp => {
-				state.core_mut().dec_scroll(zone_iden, 1);
-			}
-			MouseEventKind::ScrollDown => {
-				state.core_mut().inc_scroll(zone_iden, 1);
-			}
+			MouseEventKind::ScrollUp => scroll_dir = Some(ScrollDir::Up),
+			MouseEventKind::ScrollDown => scroll_dir = Some(ScrollDir::Down),
 			_ => (),
-		};
+		}
+	} else if let Some(ActionEvent::Scroll(dir)) = state.last_app_event().as_action_event() {
+		scroll_dir = Some(*dir);
+		is_key_scroll = true;
+	}
+
+	if let Some(dir) = scroll_dir {
+		let mut zone_iden = state.core().active_scroll_zone_iden;
+
+		// If it is a key scroll and we have the SCROLL_KEY_MAIN_VIEW set to true
+		// then, we override/fallback to the main view scroll zone.
+		if is_key_scroll && SCROLL_KEY_MAIN_VIEW {
+			zone_iden = match state.run_tab() {
+				RunTab::Overview => Some(ScrollIden::OverviewContent),
+				RunTab::Tasks => Some(ScrollIden::TaskContent),
+			};
+		}
+
+		if let Some(zone_iden) = zone_iden {
+			match dir {
+				ScrollDir::Up => {
+					state.core_mut().dec_scroll(zone_iden, 1);
+				}
+				ScrollDir::Down => {
+					state.core_mut().inc_scroll(zone_iden, 1);
+				}
+			}
+		}
 	}
 
 	// -- Toggle runs list
