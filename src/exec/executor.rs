@@ -242,7 +242,7 @@ impl Executor {
 
 			// From the inital command run
 			// TODO: Might want to not initialize the workspace here, and let the user know. Not sure.
-			// NOTE: This is the EVent from the Command line only (when aip.agent.run, the event RunAgent is sent)
+			// NOTE: This is the Event from the Command line only (when aip.agent.run, the event RunAgent is sent)
 			ExecActionEvent::CmdRun(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
 				// Here we init base if version changed.
