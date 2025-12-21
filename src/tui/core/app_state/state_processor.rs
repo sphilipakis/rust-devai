@@ -66,6 +66,8 @@ pub fn process_app_state(state: &mut AppState) {
 	// -- Scroll
 	let mut scroll_dir = None;
 	let mut is_key_scroll = false;
+	let mut scroll_to_end = false;
+	let mut is_page = false;
 
 	if let Some(mouse_evt) = state.last_app_event().as_mouse_event() {
 		match mouse_evt.kind {
@@ -73,9 +75,24 @@ pub fn process_app_state(state: &mut AppState) {
 			MouseEventKind::ScrollDown => scroll_dir = Some(ScrollDir::Down),
 			_ => (),
 		}
-	} else if let Some(ActionEvent::Scroll(dir)) = state.last_app_event().as_action_event() {
-		scroll_dir = Some(*dir);
-		is_key_scroll = true;
+	} else if let Some(action_evt) = state.last_app_event().as_action_event() {
+		match action_evt {
+			ActionEvent::Scroll(dir) => {
+				scroll_dir = Some(*dir);
+				is_key_scroll = true;
+			}
+			ActionEvent::ScrollPage(dir) => {
+				scroll_dir = Some(*dir);
+				is_key_scroll = true;
+				is_page = true;
+			}
+			ActionEvent::ScrollToEnd(dir) => {
+				scroll_dir = Some(*dir);
+				is_key_scroll = true;
+				scroll_to_end = true;
+			}
+			_ => (),
+		}
 	}
 
 	if let Some(dir) = scroll_dir {
@@ -91,12 +108,25 @@ pub fn process_app_state(state: &mut AppState) {
 		}
 
 		if let Some(zone_iden) = zone_iden {
-			match dir {
-				ScrollDir::Up => {
-					state.core_mut().dec_scroll(zone_iden, 1);
+			if scroll_to_end {
+				match dir {
+					ScrollDir::Up => {
+						state.set_scroll(zone_iden, 0);
+					}
+					ScrollDir::Down => {
+						// Set to a very large value; the view will clamp it appropriately
+						state.set_scroll(zone_iden, u16::MAX);
+					}
 				}
-				ScrollDir::Down => {
-					state.core_mut().inc_scroll(zone_iden, 1);
+			} else {
+				let amount = if is_page { 5 } else { 1 };
+				match dir {
+					ScrollDir::Up => {
+						state.core_mut().dec_scroll(zone_iden, amount);
+					}
+					ScrollDir::Down => {
+						state.core_mut().inc_scroll(zone_iden, amount);
+					}
 				}
 			}
 		}

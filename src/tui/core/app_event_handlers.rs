@@ -55,12 +55,37 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 		&& let KeyEventKind::Press = key.kind
 	{
 		let mod_ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-		match (key.code, mod_ctrl) {
-			(KeyCode::Char('q'), _) | (KeyCode::Char('c'), true) => app_tx.send(ActionEvent::Quit).await?,
-			(KeyCode::Char('r'), _) => app_tx.send(ActionEvent::Redo).await?,
-			(KeyCode::Char('x'), _) => app_tx.send(ActionEvent::CancelRun).await?,
-			(KeyCode::Up, _) => app_tx.send(ActionEvent::Scroll(ScrollDir::Up)).await?,
-			(KeyCode::Down, _) => app_tx.send(ActionEvent::Scroll(ScrollDir::Down)).await?,
+		let mod_shift = key.modifiers.contains(KeyModifiers::SHIFT);
+
+		//if matches!(key.code, KeyCode::Up | KeyCode::Down) {
+		// tracing::debug!(
+		// 	"{:?} TUI Key Event: code: {:?}, ctrl: {mod_ctrl}, shift: {mod_shift}",
+		// 	key,
+		// 	key.code
+		// );
+		// }
+
+		match (key.code, mod_ctrl, mod_shift) {
+			(KeyCode::Char('q'), _, _) | (KeyCode::Char('c'), true, _) => app_tx.send(ActionEvent::Quit).await?,
+			(KeyCode::Char('r'), _, _) => app_tx.send(ActionEvent::Redo).await?,
+			(KeyCode::Char('x'), _, _) => app_tx.send(ActionEvent::CancelRun).await?,
+
+			// -- Scroll To End (Shift + Arrow or Home/End)
+			(KeyCode::Up, _, true) | (KeyCode::Home, _, _) => {
+				app_tx.send(ActionEvent::ScrollToEnd(ScrollDir::Up)).await?
+			}
+			(KeyCode::Down, _, true) | (KeyCode::End, _, _) => {
+				app_tx.send(ActionEvent::ScrollToEnd(ScrollDir::Down)).await?
+			}
+
+			// -- Scroll Page (PageUp/PageDown)
+			(KeyCode::PageUp, _, _) => app_tx.send(ActionEvent::ScrollPage(ScrollDir::Up)).await?,
+			(KeyCode::PageDown, _, _) => app_tx.send(ActionEvent::ScrollPage(ScrollDir::Down)).await?,
+
+			// -- Scroll (Arrow)
+			(KeyCode::Up, _, false) => app_tx.send(ActionEvent::Scroll(ScrollDir::Up)).await?,
+			(KeyCode::Down, _, false) => app_tx.send(ActionEvent::Scroll(ScrollDir::Down)).await?,
+
 			_ => (),
 		}
 	}
@@ -75,25 +100,20 @@ async fn handle_action_event(
 	_exit_tx: &ExitTx,
 ) -> Result<()> {
 	match action_event {
-		// -- The quick is handle at the main loop to break
 		ActionEvent::Quit => {
 			// Handled at the main loop
 		}
-
-		// -- Do the Redo
 		ActionEvent::Redo => {
 			//
 			executor_tx.send(ExecActionEvent::Redo).await;
 		}
-
-		// -- Cancel run
 		ActionEvent::CancelRun => {
 			//
 			executor_tx.send(ExecActionEvent::CancelRun).await;
 		}
-
-		// -- Scroll (handled in process_app_state via LastAppEvent)
 		ActionEvent::Scroll(_) => (),
+		ActionEvent::ScrollPage(_) => (),
+		ActionEvent::ScrollToEnd(_) => (),
 	}
 	Ok(())
 }

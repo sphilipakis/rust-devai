@@ -52,6 +52,8 @@ pub enum ActionEvent {
 	Redo,
 	CancelRun,
 	Scroll(ScrollDir),
+	ScrollPage(ScrollDir),
+	ScrollToEnd(ScrollDir),
 }
 
 #[allow(unused)]
