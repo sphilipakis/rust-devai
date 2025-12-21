@@ -228,7 +228,7 @@ impl AppState {
 		{
 			let prefix = if buf.is_empty() { "" } else { " | " };
 			let t = text::format_num(tk_cache_creation);
-			buf.push_str(&format!("{prefix}{} tk cache creation", t));
+			buf.push_str(&format!("{prefix}{} tk cache write", t));
 			if let Some(cost_cache_write) = task.cost_cache_write {
 				buf.push_str(&format!(" (cost: +${cost_cache_write})"));
 			}
