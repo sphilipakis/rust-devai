@@ -282,6 +282,12 @@ aip.file.hash_blake3_b64u(path: string): string
 aip.file.hash_blake3_b58u(path: string): string
 ```
 
+### aip.editor - Editor Integration
+
+```typescript
+aip.editor.open_file(path: string): { editor: string } | nil
+```
+
 ### aip.path - Path Manipulation
 
 ```typescript
