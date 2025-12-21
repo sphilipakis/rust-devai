@@ -5,10 +5,12 @@ use crate::hub::{HubEvent, get_hub};
 use crate::run::run_agent;
 use crate::run::{RunRedoCtx, RunTopAgentParams};
 use crate::runtime::Runtime;
+use crate::support::editor;
 use crate::support::jsons::into_values;
 use crate::types::FileInfo;
 use crate::{Error, Result};
 use simple_fs::{SEventKind, SPath, list_files, watch};
+use tracing::info;
 
 /// Exec for the Run command
 /// Might do a single run or a watch
@@ -36,8 +38,12 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 
 	let run_options = RunTopAgentParams::new(run_args)?;
 
+	// Open agent if flag is set to open it (with `-o`)
 	if run_options.base_run_options().open() {
-		open_vscode(agent.file_path()).await;
+		let path = SPath::from(agent.file_path());
+		if let Err(err) = editor::open_file_auto(&path) {
+			info!("Cannot open agent file. Cause: {err}")
+		}
 	}
 
 	match do_run(&run_options, &runtime, &agent).await {
