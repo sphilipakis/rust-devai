@@ -16,6 +16,7 @@ pub mod consts;
 pub mod cred;
 pub mod csvs;
 pub mod docx;
+pub mod editor;
 pub mod files;
 pub mod hbs;
 pub mod html;
