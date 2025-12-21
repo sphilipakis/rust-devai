@@ -34,8 +34,8 @@ pub fn get_available_api_keys() -> HashSet<String> {
 }
 
 /// Attempt to open a path via vscode
-/// NOTE: VSCode will do the right thing when the user have multiple vscode open
-///       by opening the path in the corresponding workspace.
+/// NOTE: For now, we use the support::editor::.. to [try] to open the right one
+#[allow(unused)]
 pub async fn open_vscode(path: impl AsRef<Path>) {
 	let path = path.as_ref();
 

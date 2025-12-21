@@ -49,11 +49,6 @@ pub struct TermInfo {
 }
 
 impl TermInfo {
-	pub fn match_program(&self, name: &str) -> bool {
-		let target = TermProgram::from_str(name);
-		self.term_program.as_ref() == Some(&target)
-	}
-
 	pub fn match_any(&self, name: &str) -> bool {
 		let target = TermProgram::from_str(name);
 		self.term_program.as_ref() == Some(&target) || self.term_variants.contains(&target)

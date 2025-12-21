@@ -1,4 +1,3 @@
-use super::support::open_vscode;
 use crate::agent::{Agent, find_agent};
 use crate::exec::cli::RunArgs;
 use crate::hub::{HubEvent, get_hub};

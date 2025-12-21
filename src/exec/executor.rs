@@ -6,7 +6,6 @@ use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
 use crate::exec::exec_sub_agent::exec_run_sub_agent;
 use crate::exec::init::{init_base, init_base_and_dir_context, init_wks};
-use crate::exec::support::open_vscode;
 use crate::exec::{
 	ExecStatusEvent,
 	exec_check_keys,
@@ -23,6 +22,7 @@ use crate::model::OnceModelManager;
 use crate::model::{ErrBmc, ErrForCreate};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
+use crate::support::editor;
 use crate::{Error, Result};
 use flume::{Receiver, Sender};
 use simple_fs::SPath;
@@ -234,7 +234,9 @@ impl Executor {
 			ExecActionEvent::OpenAgent => {
 				//
 				if let Some(agent_file_path) = self.get_agent_file_path().await {
-					open_vscode(agent_file_path).await
+					if let Err(err) = editor::open_file_auto(&agent_file_path) {
+						hub.publish(Error::cc("Fail to open agent file in editor", err)).await;
+					}
 				}
 			}
 
