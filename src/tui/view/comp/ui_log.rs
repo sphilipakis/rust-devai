@@ -55,7 +55,7 @@ pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentSkip => ("■ Skip:", style::STL_SECTION_MARKER_SKIP),
 	};
 
-	super::ui_for_marker_section_str(content, marker_txt_style, max_width, None)
+	super::ui_for_marker_section_str(content, marker_txt_style, max_width, None, None, None)
 }
 
 /// Build logs UI and attach LinkZones to create section-wide hover/click for eligible logs.
@@ -83,6 +83,10 @@ pub fn ui_for_logs_with_hover<'a>(
 			continue;
 		}
 
+		let Some(kind) = log.kind else {
+			continue;
+		};
+
 		// Prepare the original (pre-format) content to be copied on click.
 		let raw_content: String = match (log.message.as_ref(), log.kind.as_ref()) {
 			(_, Some(LogKind::RunStep)) => log.step_as_str().to_string(),
@@ -90,34 +94,33 @@ pub fn ui_for_logs_with_hover<'a>(
 			_ => "No Step not MSG for log".to_string(),
 		};
 
-		let lines = super::ui_for_log(log, max_width);
-		let base_idx = all_lines.len();
-		let is_hover_target = is_hover_log(log);
+		let marker_txt_style = match kind {
+			LogKind::RunStep => ("Sys Step", style::STL_SECTION_MARKER),
+			LogKind::SysInfo => ("Sys Info", style::STL_SECTION_MARKER),
+			LogKind::SysWarn => ("Sys Warn", style::STL_SECTION_MARKER),
+			LogKind::SysError => ("Sys Error", style::STL_SECTION_MARKER),
+			LogKind::SysDebug => ("Sys Debug", style::STL_SECTION_MARKER),
+			LogKind::AgentPrint => ("Print:", style::STL_SECTION_MARKER),
+			LogKind::AgentSkip => ("■ Skip:", style::STL_SECTION_MARKER_SKIP),
+		};
 
-		// Start a section group for multi-line hover when eligible.
-		let section_gid = if is_hover_target {
-			Some(link_zones.start_group())
+		let is_hover_target = is_hover_log(log);
+		let action = if is_hover_target {
+			Some(Action::ToClipboardCopy(raw_content.clone()))
 		} else {
 			None
 		};
 
-		for (i, line) in lines.into_iter().enumerate() {
-			if let Some(gid) = section_gid {
-				let span_len = line.spans.len();
-				if span_len > 0 {
-					let span_start = span_len - 1;
-					link_zones.push_group_zone(
-						base_idx + i,
-						span_start,
-						1,
-						gid,
-						Action::ToClipboardCopy(raw_content.clone()),
-					);
-				}
-			}
+		let lines = super::ui_for_marker_section_str(
+			&raw_content,
+			marker_txt_style,
+			max_width,
+			None,
+			Some(link_zones),
+			action,
+		);
 
-			all_lines.push(line);
-		}
+		all_lines.extend(lines);
 
 		// Add empty separator line (do not attach zones to this line)
 		all_lines.push(Line::default());

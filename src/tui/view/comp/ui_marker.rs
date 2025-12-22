@@ -1,4 +1,5 @@
 use crate::support::VecExt as _;
+use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::support::UiExt;
 use ratatui::style::Style;
@@ -14,6 +15,8 @@ pub fn ui_for_marker_section_str(
 	(marker_txt, marker_style): (&str, Style),
 	max_width: u16,
 	content_prefix: Option<&Vec<Span<'static>>>,
+	mut link_zones: Option<&mut LinkZones>,
+	action: Option<Action>,
 ) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
@@ -36,6 +39,15 @@ pub fn ui_for_marker_section_str(
 
 	let mut msg_wrap_iter = msg_wrap.into_iter();
 
+	// -- Prep LinkZones group
+	let group_id = if let Some(lz) = link_zones.as_mut()
+		&& action.is_some()
+	{
+		Some(lz.start_group())
+	} else {
+		None
+	};
+
 	// -- First Content Line
 	let first_content = msg_wrap_iter.next().unwrap_or_default();
 	let first_content_span = Span::styled(first_content.to_string(), style::STL_SECTION_TXT);
@@ -49,7 +61,16 @@ pub fn ui_for_marker_section_str(
 		let spans_prefix = spans_prefix.to_vec();
 		first_line.extend(spans_prefix.to_vec());
 	}
+	let content_span_start = first_line.spans.len();
 	first_line.push_span(first_content_span);
+
+	// Register first line zone
+	if let Some(gid) = group_id
+		&& let Some(lz) = link_zones.as_mut()
+		&& let Some(act) = action.as_ref()
+	{
+		lz.push_group_zone(0, content_span_start, 1, gid, act.clone());
+	}
 
 	// -- Lines
 	let mut lines = vec![first_line];
@@ -57,13 +78,24 @@ pub fn ui_for_marker_section_str(
 	// -- Render other content line if present
 	if msg_wrap_len > 1 {
 		let left_spacing = " ".repeat(marker_width + width_spacer);
-		for line_content in msg_wrap_iter {
+		for (i, line_content) in msg_wrap_iter.enumerate() {
 			let mut spans: Vec<Span<'static>> = vec![Span::raw(left_spacing.to_string())];
 			if let Some(spans_prefix) = content_prefix {
 				let spans_prefix = spans_prefix.to_vec();
 				spans.extend(spans_prefix.to_vec());
 			}
+			let content_span_start = spans.len();
 			spans.push(Span::styled(line_content.into_owned(), style::STL_SECTION_TXT));
+
+			// Register additional line zones
+			if let Some(gid) = group_id
+				&& let Some(lz) = link_zones.as_mut()
+				&& let Some(act) = action.as_ref()
+			{
+				// i + 1 because we are in the additional lines loop
+				lz.push_group_zone(i + 1, content_span_start, 1, gid, act.clone());
+			}
+
 			lines.push(spans.into())
 		}
 	}

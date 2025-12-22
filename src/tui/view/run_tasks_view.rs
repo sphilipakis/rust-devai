@@ -138,7 +138,7 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Else, check if there is a skip
 	else if let Some(run_skip_reason) = state.current_run_item().and_then(|r| r.run().end_skip_reason.as_ref()) {
 		let marker = ("■ Skip:", style::STL_SECTION_MARKER_SKIP);
-		let line = ui_for_marker_section_str(run_skip_reason, marker, area.width, None);
+		let line = ui_for_marker_section_str(run_skip_reason, marker, area.width, None, None, None);
 		Paragraph::new(line).render(area, buf);
 	} else {
 		Paragraph::new("").render(area, buf);

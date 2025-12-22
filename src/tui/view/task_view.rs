@@ -379,20 +379,14 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 
 	match TaskBmc::get_input_for_display(mm, task) {
 		Ok(Some(content)) => {
-			let lines = comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None);
-
-			let mut out: Vec<Line<'static>> = Vec::new();
-
-			// Grouped zones across the whole Input section.
-			let gid = link_zones.start_group();
-			for (i, line) in lines.into_iter().enumerate() {
-				let span_len = line.spans.len();
-				if span_len > 0 {
-					let span_start = span_len - 1;
-					link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
-				}
-				out.push(line);
-			}
+			let mut out = comp::ui_for_marker_section_str(
+				&content,
+				(marker_txt, marker_style),
+				max_width,
+				None,
+				Some(link_zones),
+				Some(Action::ToClipboardCopy(content.clone())),
+			);
 
 			// Separator line (no zones)
 			out.push(Line::default());
@@ -406,6 +400,8 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 				&format!("Error getting input. {err}"),
 				(marker_txt, marker_style),
 				max_width,
+				None,
+				None,
 				None,
 			);
 			if !out.is_empty() {
@@ -474,19 +470,14 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16, link_zones: &mut LinkZones)
 	};
 
 	if let Some(content) = content {
-		let lines = comp::ui_for_marker_section_str(&content, (marker_txt, style), max_width, None);
-
-		let mut out: Vec<Line<'static>> = Vec::new();
-		let gid = link_zones.start_group();
-		for (i, line) in lines.into_iter().enumerate() {
-			if !line.spans.is_empty() {
-				let span_start = line.spans.len() - 1;
-				link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
-			}
-			out.push(line);
-		}
-
-		out
+		comp::ui_for_marker_section_str(
+			&content,
+			(marker_txt, style),
+			max_width,
+			None,
+			Some(link_zones),
+			Some(Action::ToClipboardCopy(content.clone())),
+		)
 	} else {
 		Vec::new()
 	}
@@ -498,20 +489,14 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mu
 
 	match TaskBmc::get_output_for_display(mm, task) {
 		Ok(Some(content)) => {
-			let lines = comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, None);
-
-			let mut out: Vec<Line<'static>> = Vec::new();
-
-			// Grouped zones across the whole Output section.
-			let gid = link_zones.start_group();
-			for (i, line) in lines.into_iter().enumerate() {
-				let span_len = line.spans.len();
-				if span_len > 0 {
-					let span_start = span_len - 1;
-					link_zones.push_group_zone(i, span_start, 1, gid, Action::ToClipboardCopy(content.clone()));
-				}
-				out.push(line);
-			}
+			let mut out = comp::ui_for_marker_section_str(
+				&content,
+				(marker_txt, marker_style),
+				max_width,
+				None,
+				Some(link_zones),
+				Some(Action::ToClipboardCopy(content.clone())),
+			);
 
 			// Separator line (no zones)
 			out.push(Line::default());
@@ -525,6 +510,8 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mu
 				&format!("Error getting output. {err}"),
 				(marker_txt, marker_style),
 				max_width,
+				None,
+				None,
 				None,
 			);
 			if !out.is_empty() {
