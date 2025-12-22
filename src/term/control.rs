@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::env;
 use std::process::Command;
@@ -8,6 +9,7 @@ use std::process::Command;
 pub enum TermProgram {
 	Zed,
 	Vscode,
+	WezTerm,
 	Iterm,
 	Alacritty,
 	Tmux,
@@ -25,6 +27,7 @@ impl TermProgram {
 		match s_lower.as_str() {
 			"vscode" => Self::Vscode,
 			"zed" => Self::Zed,
+			"wezterm" => Self::WezTerm,
 			"iterm.app" | "iterm" => Self::Iterm,
 			"apple_terminal" => Self::AppleTerminal,
 			"alacritty" => Self::Alacritty,
@@ -78,6 +81,8 @@ impl Default for TermInfo {
 				term_variants.insert(TermProgram::Vscode);
 			} else if key_upper.contains("ZED") {
 				term_variants.insert(TermProgram::Zed);
+			} else if key_upper.contains("WEZTERM") {
+				term_variants.insert(TermProgram::WezTerm);
 			} else if key_upper.contains("ITERM") {
 				term_variants.insert(TermProgram::Iterm);
 			} else if key_upper.contains("GHOSTTY") {
@@ -115,8 +120,17 @@ pub fn set_window_name(name: &str) -> bool {
 	};
 
 	if term_info.match_any("tmux") {
-		let _ = Command::new("tmux").arg("rename-window").arg(name).spawn();
-		return true;
+		let res = Command::new("tmux").arg("rename-window").arg(name).spawn();
+		return res.is_ok();
+	} else if term_info.match_any("wezterm") {
+		let prog = if let Ok(dir) = env::var("WEZTERM_EXECUTABLE_DIR") {
+			Cow::from(format!("{dir}/wezterm"))
+		} else {
+			Cow::from("wezterm")
+		};
+		let args = &["cli", "set-tab-title", name];
+		let res = Command::new(&*prog).args(args).spawn();
+		return res.is_ok();
 	}
 
 	false

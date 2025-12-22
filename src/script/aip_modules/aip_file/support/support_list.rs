@@ -9,11 +9,14 @@ use std::collections::HashSet;
 // Those folders need to be explicitly include in the include globs or they will be ignored with `**..**` glob (e.g. `**target/**`)
 const SPECIAL_DEFAULT_FOLDER_EXCLUDES: &[&str] = &[
 	//
+	".git/",
 	"target/",
 	"node_modules/",
 	".build/",
 	"__pycache__/",
 ];
+
+const GLOBS_TO_ALWAYS_EXLUDES: &[&str] = &["**/.DS_Store", ".DS_Store", "**/Thumbs.db", "**/*.swp"];
 
 /// Lists files based on provided glob patterns and options
 ///
@@ -79,7 +82,8 @@ pub fn list_files_with_options(
 	} else {
 		Vec::new()
 	};
-	let exclude_globs = exclude_globs.x_as_strs();
+	let mut exclude_globs = exclude_globs.x_as_strs();
+	exclude_globs.extend_from_slice(GLOBS_TO_ALWAYS_EXLUDES);
 	if !exclude_globs.is_empty() {
 		options = options.with_exclude_globs(&exclude_globs);
 	}
