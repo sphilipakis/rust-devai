@@ -1,5 +1,5 @@
 #![allow(unused)] // Ok for this file since we want to eventualy build a hollistic style structure
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Modifier, Style, Stylize};
 
 // NOTE: Mac Default terminal does not support true colors
 //       only 256 ANSI one.
@@ -87,8 +87,10 @@ pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
 
-pub const CLR_TXT_PATH: Color = CLR_TXT_TEAL; // 85, 81
-pub const CLR_TXT_PATH_SEL: Color = Color::Indexed(39); // 82, 75
+// Private since should use the
+const CLR_TXT_PATH: Color = Color::Indexed(81); //CLR_TXT_TEAL; // 85, 81
+// same color, as it will be underlined.
+const CLR_TXT_PATH_SEL: Color = CLR_TXT_PATH; // Color::Indexed(39); // 82, 75
 
 // -- Text Styles
 pub const STL_TXT: Style = Style::new();
@@ -98,7 +100,7 @@ pub const STL_TXT_SEL: Style = Style::new().fg(CLR_TXT_TEAL);
 pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_ACTION);
 
 pub const STL_TXT_PATH: Style = Style::new().fg(CLR_TXT_PATH);
-pub const STL_TXT_PATH_HOVER: Style = Style::new().fg(CLR_TXT_PATH_SEL);
+pub const STL_TXT_PATH_HOVER: Style = Style::new().fg(CLR_TXT_PATH_SEL).add_modifier(Modifier::UNDERLINED);
 
 // -- Nav Styles
 pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color::Black);

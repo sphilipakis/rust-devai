@@ -5,7 +5,6 @@ use ratatui::style::{Color, Style};
 pub fn style_text_path(hovered: bool, debug_color: Option<Color>) -> Style {
 	let mut st = if hovered {
 		style::STL_TXT_PATH_HOVER
-		// style::STL_TXT_PATH
 	} else {
 		style::STL_TXT_PATH
 	};
