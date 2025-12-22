@@ -124,6 +124,7 @@ pub fn ui_for_logs_with_hover<'a>(
 
 		// Add empty separator line (do not attach zones to this line)
 		all_lines.push(Line::default());
+		link_zones.inc_current_line_by(1);
 	}
 
 	all_lines

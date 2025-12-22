@@ -18,7 +18,14 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 			} else {
 				content
 			};
-			comp::ui_for_marker_section_str(&content, (marker_txt, marker_style), max_width, Some(&spans_prefix), None, None)
+			comp::ui_for_marker_section_str(
+				&content,
+				(marker_txt, marker_style),
+				max_width,
+				Some(&spans_prefix),
+				None,
+				None,
+			)
 		}
 		Err(err) => comp::ui_for_marker_section_str(
 			&format!("Error getting error. {err}"),
@@ -61,6 +68,7 @@ pub fn ui_for_err_with_hover(
 
 			// Separator line (no zones)
 			out.push(Line::default());
+			link_zones.inc_current_line_by(1);
 
 			out
 		}
@@ -75,6 +83,7 @@ pub fn ui_for_err_with_hover(
 				Some(Action::ToClipboardCopy(content.clone())),
 			);
 			out.push(Line::default());
+			link_zones.inc_current_line_by(1);
 
 			out
 		}

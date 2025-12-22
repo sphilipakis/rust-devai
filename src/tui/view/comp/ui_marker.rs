@@ -100,6 +100,11 @@ pub fn ui_for_marker_section_str(
 		}
 	}
 
+	// -- Update current line if link_zones present
+	if let Some(lz) = link_zones.as_mut() {
+		lz.inc_current_line_by(lines.len());
+	}
+
 	// -- Return lines
 	lines
 }

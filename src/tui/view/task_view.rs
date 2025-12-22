@@ -390,6 +390,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 
 			// Separator line (no zones)
 			out.push(Line::default());
+			link_zones.inc_current_line_by(1);
 
 			out
 		}
@@ -500,6 +501,7 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mu
 
 			// Separator line (no zones)
 			out.push(Line::default());
+			link_zones.inc_current_line_by(1);
 
 			out
 		}

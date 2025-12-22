@@ -53,6 +53,7 @@ pub fn ui_for_pins_with_hover<'a>(
 
 		// Add a separator line (no zones attached).
 		all_lines.push(Line::default());
+		link_zones.inc_current_line_by(1);
 	}
 
 	all_lines
