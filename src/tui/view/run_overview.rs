@@ -7,7 +7,7 @@ use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Modifier;
+use ratatui::style::Color;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 
@@ -77,12 +77,14 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let mut link_zones = LinkZones::default();
 	let mut all_lines: Vec<Line> = Vec::new();
 
+	let path_color = (state.debug_clr() != 0).then(|| Color::Indexed(state.debug_clr()));
+
 	// -- Add the pins
 	link_zones.set_current_line(all_lines.len());
 	// ui_for_pins add empty line after, so no ned to ad it again
 	support::extend_lines(
 		&mut all_lines,
-		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones),
+		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones, path_color),
 		false,
 	);
 
@@ -91,7 +93,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_before_all(&logs, max_width, false, &mut link_zones),
+		ui_for_before_all(&logs, max_width, false, &mut link_zones, path_color),
 		false,
 	);
 	link_zones.set_current_line(all_lines.len());
@@ -111,7 +113,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_after_all(&logs, max_width, false, &mut link_zones),
+		ui_for_after_all(&logs, max_width, false, &mut link_zones, path_color),
 		false,
 	);
 	link_zones.set_current_line(all_lines.len());
@@ -120,7 +122,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	if let Some(err_id) = state.current_run_item().and_then(|r| r.run().end_err_id) {
 		support::extend_lines(
 			&mut all_lines,
-			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones),
+			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones, path_color),
 			true,
 		);
 	}
@@ -136,15 +138,20 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	let zones = link_zones.into_zones();
 
 	// First pass: detect which zone (if any) is hovered.
+	// Note: We look for the most specific zone (the one with the minimum span_count)
 	let mut hovered_idx: Option<usize> = None;
+	let mut min_span_count = usize::MAX;
+
 	for (i, zone) in zones.iter().enumerate() {
 		if let Some(line) = all_lines.get_mut(zone.line_idx)
 			&& zone
 				.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
 				.is_some()
 		{
-			hovered_idx = Some(i);
-			break;
+			if zone.span_count < min_span_count {
+				min_span_count = zone.span_count;
+				hovered_idx = Some(i);
+			}
 		}
 	}
 
@@ -174,11 +181,10 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 					&& let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans)
 				{
 					for span in hover_spans {
-						span.style.fg = Some(style::CLR_TXT_BLUE);
+						span.style = style::style_text_path(true, None);
 						if is_grid {
 							span.style.bg = Some(style::CLR_BKG_BLACK);
 						}
-						span.style = span.style.add_modifier(Modifier::BOLD);
 					}
 				}
 			}
@@ -209,12 +215,38 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 // region:    --- UI Builders
 
-fn ui_for_before_all(logs: &[Log], max_width: u16, show_steps: bool, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
-	comp::ui_for_logs_with_hover(logs.iter(), max_width, Some(Stage::BeforeAll), show_steps, link_zones)
+fn ui_for_before_all(
+	logs: &[Log],
+	max_width: u16,
+	show_steps: bool,
+	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
+	comp::ui_for_logs_with_hover(
+		logs.iter(),
+		max_width,
+		Some(Stage::BeforeAll),
+		show_steps,
+		link_zones,
+		path_color,
+	)
 }
 
-fn ui_for_after_all(logs: &[Log], max_width: u16, show_steps: bool, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
-	comp::ui_for_logs_with_hover(logs.iter(), max_width, Some(Stage::AfterAll), show_steps, link_zones)
+fn ui_for_after_all(
+	logs: &[Log],
+	max_width: u16,
+	show_steps: bool,
+	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
+	comp::ui_for_logs_with_hover(
+		logs.iter(),
+		max_width,
+		Some(Stage::AfterAll),
+		show_steps,
+		link_zones,
+		path_color,
+	)
 }
 
 fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {

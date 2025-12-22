@@ -23,6 +23,7 @@ pub enum PopupMode {
 pub struct PopupView {
 	pub content: String,
 	pub mode: PopupMode,
+	pub is_err: bool,
 }
 
 impl PopupView {
@@ -76,16 +77,19 @@ impl StatefulWidget for PopupOverlay {
 		// Clear only the popup area so its interior is solid and does not bleed underlying content.
 		Clear.render(popup_a, buf);
 
-		// Text style
-		// TODO: need to make it property (for now, hardcode to clip)
-		let txt_style = style::CLR_TXT_HOVER_TO_CLIP;
+		// Text & border style
+		let (txt_style, border_style) = if popup.is_err {
+			(style::STL_SECTION_MARKER_ERR, style::CLR_TXT_RED)
+		} else {
+			(style::CLR_TXT_HOVER_TO_CLIP.into(), style::CLR_TXT_WHITE)
+		};
 
 		// Render the popup content with a bordered block and black background inside the popup only.
 		let para = Paragraph::new(Text::from(popup.content.clone()))
 			.style(txt_style)
 			.block(
 				Block::bordered()
-					.border_style(style::CLR_TXT_WHITE)
+					.border_style(border_style)
 					.padding(Padding::new(2, 2, 1, 1))
 					.bg(style::CLR_BKG_BLACK),
 			)

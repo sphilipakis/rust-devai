@@ -6,6 +6,7 @@ use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIde
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
+use simple_fs::SPath;
 use std::time::Duration;
 
 const SCROLL_KEY_MAIN_VIEW: bool = true;
@@ -363,23 +364,32 @@ fn process_actions(state: &mut AppState) {
 					}
 				};
 
+				let mut is_err = false;
 				let popup_msg = match ensure_clipboard {
 					Ok(()) => {
 						if let Some(cb) = state.core_mut().clipboard.as_mut() {
 							match cb.set_text(content) {
 								Ok(()) => "Copied to clipboard".to_string(),
-								Err(err) => format!("Clipboard error: {err}"),
+								Err(err) => {
+									is_err = true;
+									format!("Clipboard error: {err}")
+								}
 							}
 						} else {
+							is_err = true;
 							"Clipboard unavailable".to_string()
 						}
 					}
-					Err(msg) => msg,
+					Err(msg) => {
+						is_err = true;
+						msg
+					}
 				};
 
 				state.set_popup(PopupView {
 					content: popup_msg,
 					mode: PopupMode::Timed(Duration::from_millis(1000)),
+					is_err,
 				});
 				state.clear_action();
 			}
@@ -387,12 +397,33 @@ fn process_actions(state: &mut AppState) {
 				state.set_popup(PopupView {
 					content: "Click on Content".to_string(),
 					mode: PopupMode::Timed(Duration::from_millis(1000)),
+					is_err: false,
 				});
 				state.clear_action();
 			}
 			Action::GoToTask { .. } => {
 				// Switch to Tasks tab; keep the action so the view can select and clear it.
 				state.set_run_tab(RunTab::Tasks);
+			}
+			Action::OpenFile(path) => {
+				let spath = SPath::from(&path);
+				match crate::support::editor::open_file_auto(&spath) {
+					Ok(editor) => {
+						state.set_popup(PopupView {
+							content: format!("Opening file\n{path}\n(with {})", editor.program()),
+							mode: PopupMode::Timed(Duration::from_millis(2000)),
+							is_err: false,
+						});
+					}
+					Err(err) => {
+						state.set_popup(PopupView {
+							content: format!("Failed to open file\n{path}\n(Cause: {err})"),
+							mode: PopupMode::Timed(Duration::from_millis(3000)),
+							is_err: true,
+						});
+					}
+				}
+				state.clear_action();
 			}
 		}
 	}

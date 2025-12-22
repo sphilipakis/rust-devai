@@ -2,7 +2,8 @@ use crate::support::VecExt as _;
 use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::support::UiExt;
-use ratatui::style::Style;
+use crate::tui::view::support;
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use std::borrow::Cow;
 
@@ -17,6 +18,7 @@ pub fn ui_for_marker_section_str(
 	content_prefix: Option<&Vec<Span<'static>>>,
 	mut link_zones: Option<&mut LinkZones>,
 	action: Option<Action>,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let spacer = " ";
 	let width_spacer = spacer.len(); // won't work if no ASCII
@@ -48,55 +50,88 @@ pub fn ui_for_marker_section_str(
 		None
 	};
 
+	// -- Lines accumulator
+	let mut lines = Vec::new();
+
+	// Helper to push a line with segments and link zones
+
+	let mut push_line_fn = |rel_line_idx: usize,
+	                        prefix_spans: Vec<Span<'static>>,
+	                        line_content: &str,
+	                        mut lz_opt: Option<&mut LinkZones>,
+	                        gid_opt: Option<u32>,
+	                        main_action_opt: Option<&Action>| {
+		let mut spans = prefix_spans;
+		let content_span_start = spans.len();
+
+		let segments = support::segment_line_path(line_content);
+
+		for seg in segments {
+			let style = if seg.file_path.is_some() {
+				style::style_text_path(false, path_color)
+			} else {
+				style::STL_SECTION_TXT
+			};
+			let span_idx = spans.len();
+			spans.push(Span::styled(seg.text, style));
+
+			if let Some(lz) = lz_opt.as_mut() {
+				if let Some(path) = seg.file_path {
+					lz.push_link_zone(rel_line_idx, span_idx, 1, Action::OpenFile(path.to_string()));
+				} else if let (Some(gid), Some(act)) = (gid_opt, main_action_opt) {
+					lz.push_group_zone(rel_line_idx, span_idx, 1, gid, act.clone());
+				}
+			}
+		}
+
+		// Register the whole content as a group zone to ensure consistent interaction coverage for the section.
+		// Precedence logic (shortest span wins) ensures path-specific zones take priority when overlapped.
+		if let (Some(lz), Some(gid), Some(act)) = (lz_opt, gid_opt, main_action_opt) {
+			lz.push_group_zone(
+				rel_line_idx,
+				content_span_start,
+				spans.len() - content_span_start,
+				gid,
+				act.clone(),
+			);
+		}
+
+		lines.push(Line::from(spans));
+	};
+
 	// -- First Content Line
 	let first_content = msg_wrap_iter.next().unwrap_or_default();
-	let first_content_span = Span::styled(first_content.to_string(), style::STL_SECTION_TXT);
-
-	let mut first_line = Line::from(vec![
-		//
-		mark_span,
-		Span::raw(spacer),
-	]);
+	let mut first_prefix = vec![mark_span, Span::raw(spacer)];
 	if let Some(spans_prefix) = content_prefix {
-		let spans_prefix = spans_prefix.to_vec();
-		first_line.extend(spans_prefix.to_vec());
-	}
-	let content_span_start = first_line.spans.len();
-	first_line.push_span(first_content_span);
-
-	// Register first line zone
-	if let Some(gid) = group_id
-		&& let Some(lz) = link_zones.as_mut()
-		&& let Some(act) = action.as_ref()
-	{
-		lz.push_group_zone(0, content_span_start, 1, gid, act.clone());
+		first_prefix.extend(spans_prefix.to_vec());
 	}
 
-	// -- Lines
-	let mut lines = vec![first_line];
+	push_line_fn(
+		0,
+		first_prefix,
+		&first_content,
+		link_zones.as_deref_mut(),
+		group_id,
+		action.as_ref(),
+	);
 
 	// -- Render other content line if present
 	if msg_wrap_len > 1 {
 		let left_spacing = " ".repeat(marker_width + width_spacer);
 		for (i, line_content) in msg_wrap_iter.enumerate() {
-			let mut spans: Vec<Span<'static>> = vec![Span::raw(left_spacing.to_string())];
+			let mut other_prefix = vec![Span::raw(left_spacing.to_string())];
 			if let Some(spans_prefix) = content_prefix {
-				let spans_prefix = spans_prefix.to_vec();
-				spans.extend(spans_prefix.to_vec());
-			}
-			let content_span_start = spans.len();
-			spans.push(Span::styled(line_content.into_owned(), style::STL_SECTION_TXT));
-
-			// Register additional line zones
-			if let Some(gid) = group_id
-				&& let Some(lz) = link_zones.as_mut()
-				&& let Some(act) = action.as_ref()
-			{
-				// i + 1 because we are in the additional lines loop
-				lz.push_group_zone(i + 1, content_span_start, 1, gid, act.clone());
+				other_prefix.extend(spans_prefix.to_vec());
 			}
 
-			lines.push(spans.into())
+			push_line_fn(
+				i + 1,
+				other_prefix,
+				&line_content,
+				link_zones.as_deref_mut(),
+				group_id,
+				action.as_ref(),
+			);
 		}
 	}
 

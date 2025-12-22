@@ -19,4 +19,7 @@ pub enum Action {
 
 	// Copy the provided text into the clipboard
 	ToClipboardCopy(String),
+
+	// Open the file at the given path
+	OpenFile(String),
 }

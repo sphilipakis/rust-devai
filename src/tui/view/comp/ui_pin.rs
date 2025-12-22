@@ -3,15 +3,20 @@ use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;
 use crate::types::uc;
+use ratatui::style::Color;
 use ratatui::text::Line;
 
 /// NOTE: Add empty line after each log section
 #[allow(unused)]
-pub fn ui_for_pins<'a>(pins: impl IntoIterator<Item = &'a Pin>, max_width: u16) -> Vec<Line<'static>> {
+pub fn ui_for_pins<'a>(
+	pins: impl IntoIterator<Item = &'a Pin>,
+	max_width: u16,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line> = Vec::new();
 	for pin in pins {
 		// Render log lines
-		let pin_lines = comp::ui_for_pin(pin, max_width);
+		let pin_lines = comp::ui_for_pin(pin, max_width, path_color);
 		all_lines.extend(pin_lines);
 		all_lines.push(Line::default()); // empty line (for now)
 	}
@@ -25,6 +30,7 @@ pub fn ui_for_pins_with_hover<'a>(
 	pins: impl IntoIterator<Item = &'a Pin>,
 	max_width: u16,
 	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line<'static>> = Vec::new();
 
@@ -47,6 +53,7 @@ pub fn ui_for_pins_with_hover<'a>(
 			None,
 			Some(link_zones),
 			Some(Action::ToClipboardCopy(content.clone())),
+			path_color,
 		);
 
 		all_lines.extend(lines);
@@ -60,7 +67,7 @@ pub fn ui_for_pins_with_hover<'a>(
 }
 
 /// Return the lines for a single log entity
-pub fn ui_for_pin(pin: &Pin, max_width: u16) -> Vec<Line<'static>> {
+pub fn ui_for_pin(pin: &Pin, max_width: u16, path_color: Option<Color>) -> Vec<Line<'static>> {
 	let marker_style = style::STL_PIN_MARKER;
 
 	let (label_txt, content) = if let Some(content) = pin.content.as_ref() {
@@ -72,7 +79,15 @@ pub fn ui_for_pin(pin: &Pin, max_width: u16) -> Vec<Line<'static>> {
 		("Pin:".to_string(), "No content".to_string())
 	};
 
-	super::ui_for_marker_section_str(&content, (&label_txt, marker_style), max_width, None, None, None)
+	super::ui_for_marker_section_str(
+		&content,
+		(&label_txt, marker_style),
+		max_width,
+		None,
+		None,
+		None,
+		path_color,
+	)
 }
 
 // region:    --- Render UI Pins

@@ -6,7 +6,6 @@ use crate::tui::view::support::RectExt as _;
 use crate::tui::{AppState, TaskView};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Modifier;
 use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
@@ -78,22 +77,30 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		let mut link_zones = LinkZones::default();
 		link_zones.set_current_line(0);
 
-		let mut lines = super::comp::ui_for_err_with_hover(state.mm(), err_id, area.width.min(120), &mut link_zones);
+		let path_color = (state.debug_clr() != 0).then(|| ratatui::style::Color::Indexed(state.debug_clr()));
+
+		let mut lines =
+			super::comp::ui_for_err_with_hover(state.mm(), err_id, area.width.min(120), &mut link_zones, path_color);
 
 		// -- Simple hover/click processing (no scroll in this view)
 		let scroll: u16 = 0;
 		let zones = link_zones.into_zones();
 
 		// Detect hovered zone
+		// Note: We look for the most specific zone (the one with the minimum span_count)
 		let mut hovered_idx: Option<usize> = None;
+		let mut min_span_count = usize::MAX;
+
 		for (i, zone) in zones.iter().enumerate() {
 			if let Some(line) = lines.get_mut(zone.line_idx)
 				&& zone
 					.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
 					.is_some()
 			{
-				hovered_idx = Some(i);
-				break;
+				if zone.span_count < min_span_count {
+					min_span_count = zone.span_count;
+					hovered_idx = Some(i);
+				}
 			}
 		}
 
@@ -119,8 +126,7 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 						&& let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans)
 					{
 						for span in hover_spans {
-							span.style.fg = Some(style::CLR_TXT_BLUE);
-							span.style = span.style.add_modifier(Modifier::BOLD);
+							span.style = style::style_text_path(true, None);
 						}
 					}
 				}
@@ -138,7 +144,8 @@ fn render_no_tasks(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	// -- Else, check if there is a skip
 	else if let Some(run_skip_reason) = state.current_run_item().and_then(|r| r.run().end_skip_reason.as_ref()) {
 		let marker = ("■ Skip:", style::STL_SECTION_MARKER_SKIP);
-		let line = ui_for_marker_section_str(run_skip_reason, marker, area.width, None, None, None);
+		let path_color = (state.debug_clr() != 0).then(|| ratatui::style::Color::Indexed(state.debug_clr()));
+		let line = ui_for_marker_section_str(run_skip_reason, marker, area.width, None, None, None, path_color);
 		Paragraph::new(line).render(area, buf);
 	} else {
 		Paragraph::new("").render(area, buf);

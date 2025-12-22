@@ -2,6 +2,7 @@ use crate::model::Stage;
 use crate::model::{Log, LogKind};
 use crate::tui::style;
 use crate::tui::view::comp;
+use ratatui::style::Color;
 use ratatui::text::Line;
 
 /// NOTE: Add empty line after each log section
@@ -11,6 +12,7 @@ pub fn ui_for_logs<'a>(
 	max_width: u16,
 	stage: Option<Stage>,
 	show_steps: bool,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let mut all_lines: Vec<Line> = Vec::new();
 	for log in logs {
@@ -26,7 +28,7 @@ pub fn ui_for_logs<'a>(
 		}
 
 		// Render log lines
-		let log_lines = comp::ui_for_log(log, max_width);
+		let log_lines = comp::ui_for_log(log, max_width, path_color);
 		all_lines.extend(log_lines);
 		all_lines.push(Line::default()); // empty line (for now)
 	}
@@ -35,7 +37,7 @@ pub fn ui_for_logs<'a>(
 }
 
 /// Return the lines for a single log entity
-pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
+pub fn ui_for_log(log: &Log, max_width: u16, path_color: Option<Color>) -> Vec<Line<'static>> {
 	let Some(kind) = log.kind else {
 		return vec![Line::raw(format!("Log [{}] has no kind", log.id))];
 	};
@@ -55,7 +57,7 @@ pub fn ui_for_log(log: &Log, max_width: u16) -> Vec<Line<'static>> {
 		LogKind::AgentSkip => ("■ Skip:", style::STL_SECTION_MARKER_SKIP),
 	};
 
-	super::ui_for_marker_section_str(content, marker_txt_style, max_width, None, None, None)
+	super::ui_for_marker_section_str(content, marker_txt_style, max_width, None, None, None, path_color)
 }
 
 /// Build logs UI and attach LinkZones to create section-wide hover/click for eligible logs.
@@ -65,6 +67,7 @@ pub fn ui_for_logs_with_hover<'a>(
 	stage: Option<Stage>,
 	show_steps: bool,
 	link_zones: &mut crate::tui::core::LinkZones,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	use crate::tui::core::Action;
 
@@ -118,6 +121,7 @@ pub fn ui_for_logs_with_hover<'a>(
 			None,
 			Some(link_zones),
 			action,
+			path_color,
 		);
 
 		all_lines.extend(lines);

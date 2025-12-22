@@ -1,7 +1,9 @@
 // region:    --- Modules
 
-mod styles_base;
+mod style_common;
+mod style_consts;
 
-pub use styles_base::*;
+pub use style_common::*;
+pub use style_consts::*;
 
 // endregion: --- Modules

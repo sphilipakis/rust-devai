@@ -87,12 +87,18 @@ pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
 
+pub const CLR_TXT_PATH: Color = CLR_TXT_TEAL; // 85, 81
+pub const CLR_TXT_PATH_SEL: Color = Color::Indexed(39); // 82, 75
+
 // -- Text Styles
 pub const STL_TXT: Style = Style::new();
 
 pub const STL_TXT_ACT: Style = Style::new().fg(Color::White);
 pub const STL_TXT_SEL: Style = Style::new().fg(CLR_TXT_TEAL);
 pub const STL_TXT_ACTION: Style = Style::new().fg(CLR_TXT_ACTION);
+
+pub const STL_TXT_PATH: Style = Style::new().fg(CLR_TXT_PATH);
+pub const STL_TXT_PATH_HOVER: Style = Style::new().fg(CLR_TXT_PATH_SEL);
 
 // -- Nav Styles
 pub const STL_NAV_ITEM_HIGHLIGHT: Style = Style::new().bg(CLR_BKG_SEL).fg(Color::Black);

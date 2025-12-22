@@ -3,10 +3,11 @@ use crate::model::{Id, ModelManager};
 use crate::tui::core::{Action, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;
+use ratatui::style::Color;
 use ratatui::text::{Line, Span};
 
 #[allow(unused)]
-pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'static>> {
+pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16, path_color: Option<Color>) -> Vec<Line<'static>> {
 	let marker_txt = "Error:";
 	let marker_style = style::STL_SECTION_MARKER_ERR;
 	let spans_prefix = vec![Span::styled("┃ ", style::CLR_TXT_RED)];
@@ -25,6 +26,7 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 				Some(&spans_prefix),
 				None,
 				None,
+				path_color,
 			)
 		}
 		Err(err) => comp::ui_for_marker_section_str(
@@ -34,6 +36,7 @@ pub fn ui_for_err(mm: &ModelManager, err_id: Id, max_width: u16) -> Vec<Line<'st
 			None,
 			None,
 			None,
+			path_color,
 		),
 	}
 }
@@ -43,6 +46,7 @@ pub fn ui_for_err_with_hover(
 	err_id: Id,
 	max_width: u16,
 	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let marker_txt = "Error:";
 	let marker_style = style::STL_SECTION_MARKER_ERR;
@@ -64,6 +68,7 @@ pub fn ui_for_err_with_hover(
 				Some(&spans_prefix),
 				Some(link_zones),
 				Some(Action::ToClipboardCopy(content.clone())),
+				path_color,
 			);
 
 			// Separator line (no zones)
@@ -81,6 +86,7 @@ pub fn ui_for_err_with_hover(
 				None,
 				Some(link_zones),
 				Some(Action::ToClipboardCopy(content.clone())),
+				path_color,
 			);
 			out.push(Line::default());
 			link_zones.inc_current_line_by(1);

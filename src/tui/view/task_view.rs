@@ -7,7 +7,7 @@ use crate::tui::view::{comp, support};
 use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::Modifier;
+use ratatui::style::Color;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarState, StatefulWidget, Widget as _};
 use std::borrow::Cow;
@@ -112,13 +112,6 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 
 	let mut current_row = 0;
 
-	// When color debug:
-	let stl_field_val = if state.debug_clr() != 0 {
-		style::STL_FIELD_VAL.fg(ratatui::style::Color::Indexed(state.debug_clr()))
-	} else {
-		style::STL_FIELD_VAL
-	};
-
 	// -- Render l1 - Model Row
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_fmt();
@@ -133,7 +126,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.render(l1_label_1.x_row(current_row), buf);
 		// NOTE: here a little chack to have maximum space for model name
 		Paragraph::new(model_name)
-			.style(stl_field_val)
+			.style(style::STL_FIELD_VAL)
 			.render(l1_val_1.x_row(current_row).x_width(26), buf);
 
 		// NOTE: Here we use Span to give a little bit more space to Model
@@ -141,7 +134,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.right_aligned()
 			.render(l1_label_2.x_row(current_row), buf);
 		Paragraph::new(cost)
-			.style(stl_field_val)
+			.style(style::STL_FIELD_VAL)
 			.render(l1_val_2.x_row(current_row), buf);
 
 		Paragraph::new(" Duration:")
@@ -149,7 +142,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.right_aligned()
 			.render(l1_label_3.x_row(current_row), buf);
 		Paragraph::new(duration)
-			.style(stl_field_val)
+			.style(style::STL_FIELD_VAL)
 			.render(l1_val_3.x_row(current_row), buf);
 	}
 
@@ -169,7 +162,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.right_aligned()
 			.render(l2_label_1.x_row(current_row), buf);
 		Paragraph::new(prompt_tk)
-			.style(stl_field_val)
+			.style(style::STL_FIELD_VAL)
 			.render(l2_val_1.x_row(current_row), buf);
 
 		Paragraph::new("Compl:")
@@ -177,7 +170,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.right_aligned()
 			.render(l2_label_2.x_row(current_row), buf);
 		Paragraph::new(completion_tk)
-			.style(stl_field_val)
+			.style(style::STL_FIELD_VAL)
 			.render(l2_val_2.union(l2_val_3).x_row(current_row), buf);
 
 		//current_task_cache_write_fmt
@@ -187,7 +180,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 				.right_aligned()
 				.render(l2_label_3.x_row(current_row), buf);
 			Paragraph::new(cache_info)
-				.style(stl_field_val)
+				.style(style::STL_FIELD_VAL)
 				.render(l2_val_3.union(l2_val_3).x_row(current_row), buf);
 		}
 	}
@@ -236,12 +229,14 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Link zones accumulator for hover/click over logs
 	let mut link_zones = LinkZones::default();
 
+	let path_color = (state.debug_clr() != 0).then(|| Color::Indexed(state.debug_clr()));
+
 	// -- Add the pins
 	link_zones.set_current_line(all_lines.len());
 	// ui_for_pins add empty line after, so no ned to ad it again
 	support::extend_lines(
 		&mut all_lines,
-		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones),
+		comp::ui_for_pins_with_hover(&pins, max_width, &mut link_zones, path_color),
 		false,
 	);
 	link_zones.set_current_line(all_lines.len());
@@ -249,7 +244,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// -- Add Input (with hover/click to copy)
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_input(state.mm(), task, max_width, &mut link_zones),
+		ui_for_input(state.mm(), task, max_width, &mut link_zones, path_color),
 		false,
 	);
 	link_zones.set_current_line(all_lines.len());
@@ -258,7 +253,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_before_ai_logs(task, &logs, max_width, show_steps, &mut link_zones),
+		ui_for_before_ai_logs(task, &logs, max_width, show_steps, &mut link_zones, path_color),
 		false,
 	);
 
@@ -266,7 +261,11 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	// if the run has prompt parts or we do not know, we display the line
 	if let Some(true) | None = state.current_run_has_prompt_parts() {
 		link_zones.set_current_line(all_lines.len());
-		support::extend_lines(&mut all_lines, ui_for_ai(run, task, max_width, &mut link_zones), true);
+		support::extend_lines(
+			&mut all_lines,
+			ui_for_ai(run, task, max_width, &mut link_zones, path_color),
+			true,
+		);
 	}
 	link_zones.set_current_line(all_lines.len());
 
@@ -274,7 +273,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	link_zones.set_current_line(all_lines.len());
 	support::extend_lines(
 		&mut all_lines,
-		ui_for_after_ai_logs(task, &logs, max_width, show_steps, &mut link_zones),
+		ui_for_after_ai_logs(task, &logs, max_width, show_steps, &mut link_zones, path_color),
 		false,
 	);
 
@@ -284,7 +283,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 		link_zones.set_current_line(all_lines.len());
 		support::extend_lines(
 			&mut all_lines,
-			ui_for_output(state.mm(), task, max_width, &mut link_zones),
+			ui_for_output(state.mm(), task, max_width, &mut link_zones, path_color),
 			false,
 		);
 	}
@@ -294,7 +293,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	if let Some(err_id) = task.end_err_id {
 		support::extend_lines(
 			&mut all_lines,
-			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones),
+			comp::ui_for_err_with_hover(state.mm(), err_id, max_width, &mut link_zones, path_color),
 			true,
 		);
 	}
@@ -308,15 +307,20 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 	let zones = link_zones.into_zones();
 
 	// First pass: detect which zone (if any) is hovered.
+	// Note: We look for the most specific zone (the one with the minimum span_count)
 	let mut hovered_idx: Option<usize> = None;
+	let mut min_span_count = usize::MAX;
+
 	for (i, zone) in zones.iter().enumerate() {
 		if let Some(line) = all_lines.get_mut(zone.line_idx)
 			&& zone
 				.is_mouse_over(area, scroll, state.last_mouse_evt(), &mut line.spans)
 				.is_some()
 		{
-			hovered_idx = Some(i);
-			break;
+			if zone.span_count < min_span_count {
+				min_span_count = zone.span_count;
+				hovered_idx = Some(i);
+			}
 		}
 	}
 
@@ -342,8 +346,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 					&& let Some(hover_spans) = zones[i].spans_slice_mut(&mut line.spans)
 				{
 					for span in hover_spans {
-						span.style.fg = Some(style::CLR_TXT_BLUE);
-						span.style = span.style.add_modifier(Modifier::BOLD);
+						span.style = style::style_text_path(true, None);
 					}
 				}
 			}
@@ -373,7 +376,13 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState, show_steps: b
 
 // region:    --- UI Builders
 
-fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
+fn ui_for_input(
+	mm: &ModelManager,
+	task: &Task,
+	max_width: u16,
+	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
 	let marker_txt = "Input:";
 	let marker_style = style::STL_SECTION_MARKER_INPUT;
 
@@ -386,6 +395,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 				None,
 				Some(link_zones),
 				Some(Action::ToClipboardCopy(content.clone())),
+				path_color,
 			);
 
 			// Separator line (no zones)
@@ -404,6 +414,7 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 				None,
 				None,
 				None,
+				path_color,
 			);
 			if !out.is_empty() {
 				out.push(Line::default());
@@ -413,7 +424,13 @@ fn ui_for_input(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut
 	}
 }
 
-fn ui_for_ai(run: &Run, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
+fn ui_for_ai(
+	run: &Run,
+	task: &Task,
+	max_width: u16,
+	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
 	let marker_txt = "AI:";
 	let marker_style_active = style::STL_SECTION_MARKER_AI;
 	let marker_stype_inactive = style::STL_SECTION_MARKER;
@@ -478,13 +495,20 @@ fn ui_for_ai(run: &Run, task: &Task, max_width: u16, link_zones: &mut LinkZones)
 			None,
 			Some(link_zones),
 			Some(Action::ToClipboardCopy(content.clone())),
+			path_color,
 		)
 	} else {
 		Vec::new()
 	}
 }
 
-fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
+fn ui_for_output(
+	mm: &ModelManager,
+	task: &Task,
+	max_width: u16,
+	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
+) -> Vec<Line<'static>> {
 	let marker_txt = "Output:";
 	let marker_style = style::STL_SECTION_MARKER_OUTPUT;
 
@@ -497,6 +521,7 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mu
 				None,
 				Some(link_zones),
 				Some(Action::ToClipboardCopy(content.clone())),
+				path_color,
 			);
 
 			// Separator line (no zones)
@@ -515,6 +540,7 @@ fn ui_for_output(mm: &ModelManager, task: &Task, max_width: u16, link_zones: &mu
 				None,
 				None,
 				None,
+				path_color,
 			);
 			if !out.is_empty() {
 				out.push(Line::default());
@@ -530,10 +556,11 @@ fn ui_for_before_ai_logs(
 	max_width: u16,
 	show_steps: bool,
 	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
 	let iter = logs.iter().filter(|v| v.ctime.as_i64() < ai_start);
-	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones)
+	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones, path_color)
 }
 
 fn ui_for_after_ai_logs(
@@ -542,10 +569,11 @@ fn ui_for_after_ai_logs(
 	max_width: u16,
 	show_steps: bool,
 	link_zones: &mut LinkZones,
+	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let ai_start: i64 = task.ai_start.map(|v| v.as_i64()).unwrap_or(i64::MAX);
 	let iter = logs.iter().filter(|v| v.ctime.as_i64() > ai_start);
-	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones)
+	comp::ui_for_logs_with_hover(iter, max_width, None, show_steps, link_zones, path_color)
 }
 
 #[allow(unused)]
