@@ -98,7 +98,7 @@ pub fn format_time_local(epoch_us: i64) -> Result<String> {
 		Ok(local_dt.format(&format)?)
 	}
 
-	let res = inner(epoch_us).map_err(|err| format!("Cannot format epoch_us '{epoch_us}'. Cause: {err}"))?;
+	let res = inner(epoch_us).map_err(|err| format!("Cannot format epoch_us '{epoch_us}'.\nCause: {err}"))?;
 
 	Ok(res)
 }

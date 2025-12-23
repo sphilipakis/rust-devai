@@ -94,7 +94,7 @@ fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Resul
 	let selectors = into_vec_of_strings(selectors, "aip.html.select")?;
 
 	let els = html_helpers::select(&html_content, &selectors)
-		.map_err(|err| crate::Error::custom(format!("Cannot apply selector '{selectors:?}'. Cause: {err}")))?;
+		.map_err(|err| crate::Error::custom(format!("Cannot apply selector '{selectors:?}'.\nCause: {err}")))?;
 
 	let els: Vec<mlua::Value> = els
 		.into_iter()

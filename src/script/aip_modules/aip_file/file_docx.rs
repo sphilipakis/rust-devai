@@ -39,13 +39,13 @@ use std::path::Path;
 ///
 /// ### Arguments
 ///
-/// - `docx_path: string`  
+/// - `docx_path: string`
 ///   Path to the source DOCX file, relative to the workspace root.
 ///
-/// - `dest: DestOptions (optional)`  
+/// - `dest: DestOptions (optional)`
 ///   Destination path or options table:
 ///
-///   - `string`  
+///   - `string`
 ///     Path to save the `.md` file (relative or absolute).
 ///
 ///   - `table` (`DestOptions`):
@@ -55,7 +55,7 @@ use std::path::Path;
 ///
 /// ### Returns
 ///
-/// - `FileInfo`  
+/// - `FileInfo`
 ///   Metadata about the created Markdown file (path, name, stem, ext, timestamps, size).
 ///
 /// ### Example
@@ -88,7 +88,7 @@ pub(super) fn file_save_docx_to_md(
 	// -- convert to Markdown using support::docx
 	let md_content = crate::support::docx::docx_convert(Path::new(full_docx.as_str())).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to convert DOCX file '{docx_path}' to Markdown. Cause: {e}"
+			"Failed to convert DOCX file '{docx_path}' to Markdown.\nCause: {e}"
 		))
 	})?;
 
@@ -98,7 +98,7 @@ pub(super) fn file_save_docx_to_md(
 	// -- write out and return metadata
 	simple_fs::ensure_file_dir(&full_md).map_err(Error::from)?;
 	write(&full_md, md_content)
-		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{rel_md}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{rel_md}'.\nCause: {e}")))?;
 
 	let meta = FileInfo::new(runtime.dir_context(), rel_md, &full_md);
 	meta.into_lua(lua)
@@ -138,7 +138,7 @@ pub(super) fn file_load_docx_as_md(lua: &Lua, runtime: &Runtime, docx_path: Stri
 	// -- convert to Markdown using support::docx
 	let md_content = crate::support::docx::docx_convert(Path::new(full_docx.as_str())).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to convert DOCX file '{docx_path}' to Markdown. Cause: {e}"
+			"Failed to convert DOCX file '{docx_path}' to Markdown.\nCause: {e}"
 		))
 	})?;
 

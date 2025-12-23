@@ -70,7 +70,7 @@ pub fn open_file_auto(path: &SPath) -> Result<EditorProgram> {
 	Command::new(program)
 		.arg(path.as_str())
 		.spawn()
-		.map_err(|err| format!("Failed to open editor '{program}' for file '{path}'. Cause: {err}"))?;
+		.map_err(|err| format!("Failed to open editor '{program}' for file '{path}'.\nCause: {err}"))?;
 
 	Ok(editor)
 }

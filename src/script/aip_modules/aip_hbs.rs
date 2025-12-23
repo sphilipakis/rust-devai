@@ -87,7 +87,7 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 /// ```
 fn render(_lua: &Lua, (content, data): (String, Value)) -> mlua::Result<String> {
 	let data_serde = serde_json::to_value(&data)
-		.map_err(|err| crate::Error::custom(format!("Fail to convert lua value to serde. Cause: {err}")))?;
+		.map_err(|err| crate::Error::custom(format!("Fail to convert lua value to serde.\nCause: {err}")))?;
 	let rendered = crate::support::hbs::hbs_render(&content, &data_serde).map_err(mlua::Error::external)?;
 	Ok(rendered)
 }

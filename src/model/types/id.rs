@@ -24,7 +24,7 @@ impl TryFrom<String> for Id {
 	fn try_from(val: String) -> Result<Id> {
 		let id = val
 			.parse()
-			.map_err(|err| format!("id should be a number was '{val}'. Cause: {err}"))?;
+			.map_err(|err| format!("id should be a number was '{val}'.\nCause: {err}"))?;
 		Ok(Id(id))
 	}
 }

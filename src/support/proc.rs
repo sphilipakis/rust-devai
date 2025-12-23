@@ -52,7 +52,7 @@ pub async fn proc_exec_to_output(cmd: &str, args: &[&str], options: Option<&Proc
 	let output = command
 		.output()
 		.await
-		.map_err(|err| Error::custom(format!("Failed to execute '{command_repr}'. Cause: {err}")))?;
+		.map_err(|err| Error::custom(format!("Failed to execute '{command_repr}'.\nCause: {err}")))?;
 
 	if !output.status.success() {
 		let status_desc = match output.status.code() {
@@ -67,7 +67,7 @@ pub async fn proc_exec_to_output(cmd: &str, args: &[&str], options: Option<&Proc
 
 	let stdout = String::from_utf8(output.stdout).map_err(|err| {
 		Error::custom(format!(
-			"Failed to decode stdout for '{command_repr}' as UTF-8. Cause: {err}"
+			"Failed to decode stdout for '{command_repr}' as UTF-8.\nCause: {err}"
 		))
 	})?;
 
@@ -87,7 +87,7 @@ pub async fn proc_exec(cmd: &str, args: &[&str], options: Option<&ProcOptions>) 
 	let status = command
 		.status()
 		.await
-		.map_err(|err| Error::custom(format!("Failed to execute '{command_repr}'. Cause: {err}")))?;
+		.map_err(|err| Error::custom(format!("Failed to execute '{command_repr}'.\nCause: {err}")))?;
 
 	if !status.success() {
 		let status_desc = match status.code() {

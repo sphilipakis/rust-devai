@@ -9,7 +9,7 @@ pub struct SysState {
 /// Constructor & Refresher
 impl SysState {
 	pub fn new() -> Result<Self> {
-		let pid = get_current_pid().map_err(|err| format!("Fail to get current process id. Cause: {err}"))?;
+		let pid = get_current_pid().map_err(|err| format!("Fail to get current process id.\nCause: {err}"))?;
 		let sys = System::new();
 		Ok(SysState { pid, sys })
 	}

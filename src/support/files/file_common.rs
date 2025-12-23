@@ -78,7 +78,7 @@ pub fn is_file_empty(file_path: impl AsRef<Path>) -> Result<bool> {
 		//
 		Error::cc(
 			"Cannot determine if file empty",
-			format!("File '{}' open error. Cause: {err}", path.to_string_lossy()),
+			format!("File '{}' open error.\nCause: {err}", path.to_string_lossy()),
 		)
 	})?;
 	let mut reader = BufReader::new(file);

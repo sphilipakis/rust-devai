@@ -80,7 +80,7 @@ impl DirContext {
 	pub fn try_wks_dir_with_err_ctx(&self, ctx_msg: &str) -> Result<&SPath> {
 		self.aipack_paths().wks_dir().ok_or_else(|| {
 			format!(
-				"{ctx_msg}. Cause: No Workspace available.\nDo a 'aip init' in your project root folder to set the '.aipack/' workspace marker folder"
+				"{ctx_msg}.\nCause: No Workspace available.\nDo a 'aip init' in your project root folder to set the '.aipack/' workspace marker folder"
 			)
 			.into()
 		})
@@ -203,7 +203,7 @@ impl DirContext {
 
 		let Some(base_dir) = self.aipack_paths().tmp_dir(session) else {
 			return Err(Error::custom(format!(
-				"cannot resolve tmp path '{orig_path}'. Cause: No workspace found"
+				"cannot resolve tmp path '{orig_path}'.\nCause: No workspace found"
 			)));
 		};
 

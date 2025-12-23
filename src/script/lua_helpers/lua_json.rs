@@ -167,7 +167,7 @@ pub fn lua_value_list_to_serde_values(lua_value: mlua::Value) -> Result<Vec<serd
 		.into_iter()
 		.map(|val| lua_value_to_serde_value(val?))
 		.collect::<Result<Vec<_>>>()
-		.map_err(|e| format!("A mlua Value cannot be serialize to Json. Cause: {e}"))?;
+		.map_err(|e| format!("A mlua Value cannot be serialize to Json.\nCause: {e}"))?;
 
 	Ok(json_values)
 }

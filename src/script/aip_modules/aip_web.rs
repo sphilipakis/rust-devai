@@ -23,7 +23,7 @@
 //! Where `WebOptions` is:
 //! ```lua
 //! {
-//!   user_agent?: string | boolean,   
+//!   user_agent?: string | boolean,
 //!   headers?: table,                  -- { header_name: string | string[] }
 //!   redirect_limit?: number,          -- number of redirects to follow (default 5)
 //!   parse?: boolean                   -- If true, attempts to parse JSON response content (Content-Type: application/json). Content defaults to string otherwise.
@@ -125,7 +125,7 @@ pub fn web_parse_url(lua: &Lua, url: Value) -> mlua::Result<Value> {
 
 	match Url::parse(&url) {
 		Ok(url) => Ok(W(url).into_lua(lua)?),
-		Err(err) => Err(crate::Error::Custom(format!("Cannot parse url '{url}'. Cause: {err}")).into()),
+		Err(err) => Err(crate::Error::Custom(format!("Cannot parse url '{url}'.\nCause: {err}")).into()),
 	}
 }
 
@@ -202,14 +202,14 @@ fn web_resolve_href(lua: &Lua, (href_val, base_url_str): (Value, String)) -> mlu
 
 	let base_url = Url::parse(&base_url_str).map_err(|e| {
 		Error::custom(format!(
-			"aip.web.resolve_href: Invalid base_url '{base_url_str}'. Cause: {e}"
+			"aip.web.resolve_href: Invalid base_url '{base_url_str}'.\nCause: {e}"
 		))
 	})?;
 
 	match base_url.join(&href_str) {
 		Ok(resolved_url) => Ok(Value::String(lua.create_string(resolved_url.as_str())?)),
 		Err(e) => Err(Error::custom(format!(
-			"aip.web.resolve_href: Failed to join href '{href_str}' with base_url '{base_url_str}'. Cause: {e}"
+			"aip.web.resolve_href: Failed to join href '{href_str}' with base_url '{base_url_str}'.\nCause: {e}"
 		))
 		.into()),
 	}

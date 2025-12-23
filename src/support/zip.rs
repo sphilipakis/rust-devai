@@ -86,14 +86,14 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 	let file = File::open(src_zip.as_std_path())?;
 	let mut archive = ZipArchive::new(file).map_err(|err| Error::UnzipZipFail {
 		zip_file: src_zip.to_string(),
-		cause: format!("Fail to create new archive. Cause: {err}"),
+		cause: format!("Fail to create new archive.\nCause: {err}"),
 	})?;
 
 	// Iterate over zip entries.
 	for i in 0..archive.len() {
 		let mut file = archive.by_index(i).map_err(|err| Error::UnzipZipFail {
 			zip_file: src_zip.to_string(),
-			cause: format!("Fail to get item by_index {i}. Cause: {err}"),
+			cause: format!("Fail to get item by_index {i}.\nCause: {err}"),
 		})?;
 		let outpath = dest_dir.join(file.name());
 

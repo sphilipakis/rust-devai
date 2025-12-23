@@ -41,7 +41,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<RunRe
 	if run_options.base_run_options().open() {
 		let path = SPath::from(agent.file_path());
 		if let Err(err) = editor::open_file_auto(&path) {
-			info!("Cannot open agent file. Cause: {err}")
+			info!("Cannot open agent file.\nCause: {err}")
 		}
 	}
 

@@ -208,7 +208,7 @@ fn lua_print(lua: &Lua, runtime: &Runtime, args: mlua::Variadic<Value>) -> mlua:
 			Value::Boolean(b) => b.to_string(),
 			_ => {
 				let res = aip_lua::dump(lua, arg);
-				res.unwrap_or_else(|err| format!("Cannot print content. Cause: {err}"))
+				res.unwrap_or_else(|err| format!("Cannot print content.\nCause: {err}"))
 			}
 		})
 		.collect();

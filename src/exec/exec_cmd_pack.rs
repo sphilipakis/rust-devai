@@ -110,7 +110,7 @@ async fn generate_pack_toml(dir_path: &SPath) -> Result<()> {
 	let patterns = &["DIR_NAME"];
 	let replacements = &[dir_name];
 	let ac =
-		AhoCorasick::new(patterns).map_err(|err| Error::custom(format!("AhoCorasick pattern fail. Cause: {err}")))?;
+		AhoCorasick::new(patterns).map_err(|err| Error::custom(format!("AhoCorasick pattern fail.\nCause: {err}")))?;
 	content = ac.replace_all(&content, replacements);
 
 	// Write the file

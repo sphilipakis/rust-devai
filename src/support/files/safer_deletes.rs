@@ -22,7 +22,7 @@ pub fn safer_trash_file(path: &SPath) -> Result<bool> {
 		return Err(format!("Path '{path}' is not a file. Cannot delete with safer_delete_file.").into());
 	}
 
-	trash::delete(path).map_err(|err| format!("Cannot delete file '{path}'. Cause: {err}"))?;
+	trash::delete(path).map_err(|err| format!("Cannot delete file '{path}'.\nCause: {err}"))?;
 
 	Ok(true)
 }
@@ -54,7 +54,7 @@ pub fn safer_trash_dir(path: &SPath, delete_check: Option<DeleteCheck>) -> Resul
 	}
 
 	// -- Execute the AIPack
-	trash::delete(path).map_err(|err| format!("Cannot delete dir '{path}'. Cause: {err}"))?;
+	trash::delete(path).map_err(|err| format!("Cannot delete dir '{path}'.\nCause: {err}"))?;
 
 	Ok(true)
 }

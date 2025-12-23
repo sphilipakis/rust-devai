@@ -6,8 +6,8 @@
 //!
 //! ### Functions
 //!
-//! - `aip.file.save_html_to_md(html_path: string, dest?: DestOptions): FileInfo`  
-//! - `aip.file.save_html_to_slim(html_path: string, dest?: DestOptions): FileInfo`  
+//! - `aip.file.save_html_to_md(html_path: string, dest?: DestOptions): FileInfo`
+//! - `aip.file.save_html_to_slim(html_path: string, dest?: DestOptions): FileInfo`
 //!
 //! These helpers load an HTML file, transform it (conversion to Markdown or
 //! slimming), save the result, and return the [`FileInfo`] describing the
@@ -42,13 +42,13 @@ use std::fs::{read_to_string, write};
 ///
 /// ### Arguments
 ///
-/// - `html_path: string`  
+/// - `html_path: string`
 ///   Path to the source HTML file, relative to the workspace root.
 ///
-/// - `dest: DestOptions (optional)`  
+/// - `dest: DestOptions (optional)`
 ///   Destination path or options table:
 ///
-///   - `string`  
+///   - `string`
 ///     Path to save the `.md` file (relative or absolute).
 ///
 ///   - `table` (`DestOptions`):
@@ -59,7 +59,7 @@ use std::fs::{read_to_string, write};
 ///
 /// ### Returns
 ///
-/// - `FileInfo`  
+/// - `FileInfo`
 ///   Metadata about the created Markdown file (path, name, stem, ext, timestamps, size).
 ///
 /// ### Example
@@ -99,12 +99,12 @@ pub(super) fn file_save_html_to_md(
 	let rel_html = SPath::new(html_path.clone());
 	let full_html = dir_context.resolve_path(runtime.session(), rel_html.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'.\nCause: {e}")))?;
 
 	// -- slim if requested
 	let html_content = if do_slim {
 		crate::support::html::slim(html_content)
-			.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?
+			.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'.\nCause: {e}")))?
 	} else {
 		html_content
 	};
@@ -112,7 +112,7 @@ pub(super) fn file_save_html_to_md(
 	// -- convert to Markdown
 	let md_content = crate::support::html::to_md(html_content).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to convert HTML file '{html_path}' to Markdown. Cause: {e}"
+			"Failed to convert HTML file '{html_path}' to Markdown.\nCause: {e}"
 		))
 	})?;
 
@@ -122,7 +122,7 @@ pub(super) fn file_save_html_to_md(
 	// -- write out and return metadata
 	simple_fs::ensure_file_dir(&full_md).map_err(Error::from)?;
 	write(&full_md, md_content)
-		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{rel_md}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to write Markdown file '{rel_md}'.\nCause: {e}")))?;
 
 	let meta = FileInfo::new(runtime.dir_context(), rel_md, &full_md);
 	meta.into_lua(lua)
@@ -147,10 +147,10 @@ pub(super) fn file_save_html_to_md(
 ///
 /// ### Arguments
 ///
-/// - `html_path: string`  
+/// - `html_path: string`
 ///   Path to the source HTML file, relative to the workspace root.
 ///
-/// - `dest: DestOptions (optional)`  
+/// - `dest: DestOptions (optional)`
 ///   Destination path or options table for the output `.html` file:
 ///
 ///   - `nil`: Saves as `[original_name]-slim.html` in the same directory.
@@ -162,7 +162,7 @@ pub(super) fn file_save_html_to_md(
 ///
 /// ### Returns
 ///
-/// - `FileInfo`  
+/// - `FileInfo`
 ///   Metadata about the created slimmed HTML file.
 ///
 /// ### Example
@@ -196,11 +196,11 @@ pub(super) fn file_save_html_to_slim(
 	let full_html_src =
 		dir_context.resolve_path(runtime.session(), rel_html_src.clone(), PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html_src)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'.\nCause: {e}")))?;
 
 	// -- slim the HTML content
 	let slim_html_content = crate::support::html::slim(html_content)
-		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'.\nCause: {e}")))?;
 
 	// -- determine destination paths using the helper
 	let (rel_html_dest, full_html_dest) =
@@ -210,7 +210,7 @@ pub(super) fn file_save_html_to_slim(
 	simple_fs::ensure_file_dir(&full_html_dest).map_err(Error::from)?;
 	write(&full_html_dest, slim_html_content).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to write slimmed HTML file '{rel_html_dest}'. Cause: {e}"
+			"Failed to write slimmed HTML file '{rel_html_dest}'.\nCause: {e}"
 		))
 	})?;
 
@@ -250,11 +250,11 @@ pub(super) fn file_load_html_as_slim(lua: &Lua, runtime: &Runtime, html_path: St
 	let rel_html = SPath::new(html_path.clone());
 	let full_html = dir_context.resolve_path(runtime.session(), rel_html, PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'.\nCause: {e}")))?;
 
 	// -- slim HTML
 	let slim_html_content = crate::support::html::slim(html_content)
-		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'.\nCause: {e}")))?;
 
 	slim_html_content.into_lua(lua)
 }
@@ -307,7 +307,7 @@ pub(super) fn file_load_html_as_md(
 	let rel_html = SPath::new(html_path.clone());
 	let full_html = dir_context.resolve_path(runtime.session(), rel_html, PathResolver::WksDir, None)?;
 	let html_content = read_to_string(&full_html)
-		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to read HTML file '{html_path}'.\nCause: {e}")))?;
 
 	// -- decide whether to slim (default true)
 	let do_slim = match options {
@@ -318,7 +318,7 @@ pub(super) fn file_load_html_as_md(
 	// -- optionally slim
 	let html_content = if do_slim {
 		crate::support::html::slim(html_content)
-			.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'. Cause: {e}")))?
+			.map_err(|e| Error::Custom(format!("Failed to slim HTML file '{html_path}'.\nCause: {e}")))?
 	} else {
 		html_content
 	};
@@ -326,7 +326,7 @@ pub(super) fn file_load_html_as_md(
 	// -- convert to Markdown
 	let md_content = crate::support::html::to_md(html_content).map_err(|e| {
 		Error::Custom(format!(
-			"Failed to convert HTML file '{html_path}' to Markdown. Cause: {e}"
+			"Failed to convert HTML file '{html_path}' to Markdown.\nCause: {e}"
 		))
 	})?;
 

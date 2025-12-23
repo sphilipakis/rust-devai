@@ -72,7 +72,7 @@ pub fn run_ui_loop(
 						}
 						Err(err) => {
 							// NOTE: This might become an infinit loop if the error keep repeating (not sure)
-							error!("UI LOOP ERROR. Cause: {err}");
+							error!("UI LOOP ERROR.\nCause: {err}");
 							continue;
 						}
 					}
@@ -93,7 +93,7 @@ pub fn run_ui_loop(
 						match app_rx.recv().await {
 							Ok(evt) => evt,
 							Err(err) => {
-								error!("UI LOOP ERROR. Cause: {err}");
+								error!("UI LOOP ERROR.\nCause: {err}");
 								continue;
 							}
 						}

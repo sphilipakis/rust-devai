@@ -44,7 +44,7 @@ pub fn get_aip_stable_url(version: Option<&Version>) -> Result<String> {
 pub(super) fn atomic_replace(src: &SPath, dest: &SPath) -> Result<()> {
 	fs::rename(src, dest).map_err(|err| {
 		Error::custom(format!(
-			"Failed to replace '{dest}' with '{src}'. Cause: {err}.\n\
+			"Failed to replace '{dest}' with '{src}'.\nCause: {err}.\n\
 					 On Windows, make sure all 'aip' processes are terminated before updating."
 		))
 	})?;

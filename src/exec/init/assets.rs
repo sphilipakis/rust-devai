@@ -151,7 +151,7 @@ fn extract_asset_content(path: &str) -> Result<Vec<u8>> {
 
 	let mut file = archive
 		.by_name(path)
-		.map_err(|err| Error::custom(format!("Fail to extract assets from zip '{path}'. Cause: {err} ")))?;
+		.map_err(|err| Error::custom(format!("Fail to extract assets from zip '{path}'.\nCause: {err} ")))?;
 
 	let mut data: Vec<u8> = Vec::new();
 
@@ -164,7 +164,7 @@ fn new_asset_archive_reader() -> Result<ZipArchive<Cursor<&'static [u8]>>> {
 	let reader = Cursor::new(ASSETS_ZIP);
 
 	let archive = ZipArchive::new(reader)
-		.map_err(|err| Error::custom(format!("Cannot create zip archive reader. Cause: {err}")))?;
+		.map_err(|err| Error::custom(format!("Cannot create zip archive reader.\nCause: {err}")))?;
 
 	Ok(archive)
 }

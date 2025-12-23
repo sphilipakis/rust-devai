@@ -99,7 +99,7 @@ If you used handlebars for some dynamic value `cache = data.should_cache_context
 
 	let options: PartOptions = value.try_into().map_err(|err| {
 		Error::custom(format!(
-			"Prompt header '{content}' invalid format format is invalid. Cause: {err}"
+			"Prompt header '{content}' invalid format format is invalid.\nCause: {err}"
 		))
 	})?;
 

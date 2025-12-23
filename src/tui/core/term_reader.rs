@@ -23,7 +23,7 @@ pub fn run_term_read(app_tx: AppTx) -> Result<JoinHandle<()>> {
 						Some(Ok(event)) => {
 							if let Err(err) = app_tx.send(event).await {
 								// NOTE: On windows, we do get a Resize event after the 'q', so avoid printing
-								info!("run_term_read - Cannot send app_txt.send. Cause: {err}");
+								info!("run_term_read - Cannot send app_txt.send.\nCause: {err}");
 								break;
 							}
 						}

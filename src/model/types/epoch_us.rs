@@ -23,7 +23,7 @@ impl TryFrom<String> for EpochUs {
 	fn try_from(val: String) -> Result<EpochUs> {
 		let id = val
 			.parse()
-			.map_err(|err| format!("id should be a number was '{val}'. Cause: {err}"))?;
+			.map_err(|err| format!("id should be a number was '{val}'.\nCause: {err}"))?;
 		Ok(EpochUs(id))
 	}
 }

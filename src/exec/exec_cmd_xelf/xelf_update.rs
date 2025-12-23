@@ -126,14 +126,14 @@ async fn fetch_latest_remote_version() -> Result<Version> {
 	// -- Parse TOML
 	let latest_data: LatestTomlData = toml::from_str(&toml_content).map_err(|e| {
 		Error::custom(format!(
-			"Failed to parse latest version TOML from {LATEST_TOML_URL}. Cause: {e}"
+			"Failed to parse latest version TOML from {LATEST_TOML_URL}.\nCause: {e}"
 		))
 	})?;
 
 	let latest_version_str = &latest_data.latest_stable.version;
 	let latest_version = Version::parse(latest_version_str).map_err(|e| {
 		Error::custom(format!(
-			"Failed to parse latest version '{latest_version_str}'. Cause: {e}"
+			"Failed to parse latest version '{latest_version_str}'.\nCause: {e}"
 		))
 	})?;
 

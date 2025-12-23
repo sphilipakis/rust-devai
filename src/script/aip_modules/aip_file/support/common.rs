@@ -302,7 +302,7 @@ pub fn resolve_dest_path(
 	let dir_context = runtime.dir_context();
 
 	let opts: DestOptions = DestOptions::from_lua(dest_value, lua)
-		.map_err(|e| Error::Custom(format!("Failed to parse destination options. Cause: {e}")))?;
+		.map_err(|e| Error::Custom(format!("Failed to parse destination options.\nCause: {e}")))?;
 
 	let src_stem = Path::new(src_rel_path.as_str())
 		.file_stem()
