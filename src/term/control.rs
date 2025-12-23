@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::env;
-use std::process::Command;
 
 // region:    --- TermProgram
 
@@ -120,7 +119,7 @@ pub fn set_window_name(name: &str) -> bool {
 	};
 
 	if term_info.match_any("tmux") {
-		let res = Command::new("tmux").arg("rename-window").arg(name).spawn();
+		let res = crate::support::os::new_run_command("tmux").arg("rename-window").arg(name).spawn();
 		return res.is_ok();
 	} else if term_info.match_any("wezterm") {
 		let prog = if let Ok(dir) = env::var("WEZTERM_EXECUTABLE_DIR") {
@@ -129,7 +128,7 @@ pub fn set_window_name(name: &str) -> bool {
 			Cow::from("wezterm")
 		};
 		let args = &["cli", "set-tab-title", name];
-		let res = Command::new(&*prog).args(args).spawn();
+		let res = crate::support::os::new_run_command(&prog).args(args).spawn();
 		return res.is_ok();
 	}
 

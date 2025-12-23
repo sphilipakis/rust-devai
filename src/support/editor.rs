@@ -1,7 +1,6 @@
 use crate::Result;
 use simple_fs::SPath;
 use std::env;
-use std::process::Command;
 
 // region:    --- EditorProgram
 
@@ -67,8 +66,14 @@ pub fn open_file_auto(path: &SPath) -> Result<EditorProgram> {
 	};
 
 	let program = editor.program();
-	Command::new(program)
-		.arg(path.as_str())
+	let mut cmd = crate::support::os::new_run_command(program);
+
+	// VSCode (code) often needs '--' before the path to correctly handle paths on Windows
+	if editor == EditorProgram::Vscode {
+		cmd.arg("--");
+	}
+
+	cmd.arg(path.as_str())
 		.spawn()
 		.map_err(|err| format!("Failed to open editor '{program}' for file '{path}'.\nCause: {err}"))?;
 

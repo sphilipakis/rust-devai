@@ -4,6 +4,7 @@
 
 use crate::support::files::home_dir;
 use simple_fs::SPath;
+use std::process::Command;
 
 /// Return the os env file
 /// for mac `Some("~/.zshenv")` (but absolute path)
@@ -83,6 +84,18 @@ pub fn is_linux() -> bool {
 #[allow(unused)]
 pub fn is_windows() -> bool {
 	cfg!(target_os = "windows")
+}
+
+/// Creates a new Command for running a program, handling platform-specific details.
+/// On Windows, it runs via `cmd /C` to ensure scripts and PATH-based commands work correctly.
+pub fn new_run_command(program: &str) -> Command {
+	if cfg!(target_os = "windows") {
+		let mut cmd = Command::new("cmd");
+		cmd.arg("/C").arg(program);
+		cmd
+	} else {
+		Command::new(program)
+	}
 }
 
 // endregion: --- General Os Type
