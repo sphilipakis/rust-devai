@@ -76,10 +76,10 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	}
 
 	// -- Prepare Data
-	const L1_VAL_1_WIDTH: u16 = 25;
+	const L1_VAL_1_WIDTH: u16 = 20;
 	const L1_VAL_2_WIDTH: u16 = 12; // cost value
 
-	const L2_VAL_1_WIDTH: u16 = 25;
+	const L2_VAL_1_WIDTH: u16 = 20;
 	const L2_VAL_2_WIDTH: u16 = 25;
 
 	// -- Columns layout
@@ -175,7 +175,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 
 		//current_task_cache_write_fmt
 		if let Some(cache_info) = cache_info {
-			Paragraph::new(" Cache Info:")
+			Paragraph::new(" Cache:")
 				.style(style::STL_FIELD_LBL)
 				.right_aligned()
 				.render(l2_label_3.x_row(current_row), buf);

@@ -217,9 +217,9 @@ impl AppState {
 		if let Some(tk_cached) = task.tk_prompt_cached
 			&& tk_cached > 0
 		{
-			buf.push_str(&format!("{} tk cached", text::format_num(tk_cached)));
+			buf.push_str(&format!("{} tk", text::format_num(tk_cached)));
 			if let Some(cache_saving) = task.cost_cache_saving {
-				buf.push_str(&format!(" (saving: -${cache_saving})"));
+				buf.push_str(&format!(" (-${cache_saving} saving)"));
 			}
 		}
 
@@ -228,9 +228,9 @@ impl AppState {
 		{
 			let prefix = if buf.is_empty() { "" } else { " | " };
 			let t = text::format_num(tk_cache_creation);
-			buf.push_str(&format!("{prefix}{} tk cache write", t));
+			buf.push_str(&format!("{prefix}{} tk write", t));
 			if let Some(cost_cache_write) = task.cost_cache_write {
-				buf.push_str(&format!(" (cost: +${cost_cache_write})"));
+				buf.push_str(&format!(" (+${cost_cache_write} cost)"));
 			}
 		}
 
