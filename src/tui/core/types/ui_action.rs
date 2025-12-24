@@ -19,6 +19,15 @@ pub enum UiAction {
 		task_id: Id,
 	},
 
+	// Confirm a pending work (e.g., installation)
+	WorkConfirm(Id),
+	// Cancel a pending work
+	WorkCancel(Id),
+	// Run the command associated with a work (e.g., after installation)
+	WorkRun(Id),
+	// Close/Dismiss the work view
+	WorkClose(Id),
+
 	#[allow(unused)]
 	ShowText,
 

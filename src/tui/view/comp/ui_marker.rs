@@ -1,5 +1,5 @@
 use crate::support::VecExt as _;
-use crate::tui::core::{UiAction, LinkZones};
+use crate::tui::core::{LinkZones, UiAction};
 use crate::tui::style;
 use crate::tui::support::UiExt;
 use crate::tui::view::support;

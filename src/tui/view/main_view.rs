@@ -39,7 +39,7 @@ impl StatefulWidget for MainView {
 
 		// -- Render main
 		match state.stage() {
-			AppStage::Normal | AppStage::Installing | AppStage::Installed => {
+			AppStage::Normal | AppStage::Installing | AppStage::Installed | AppStage::PromptInstall(_) => {
 				if state.show_runs() {
 					RunMainView::clear_scroll_idens(state);
 					RunsView.render(content_a, buf, state);
@@ -48,7 +48,7 @@ impl StatefulWidget for MainView {
 					RunMainView.render(content_a, buf, state);
 				}
 
-				// Render Install/Installed overlay
+				// Render Install/Installed/Prompt overlay
 				if state.stage() != AppStage::Normal {
 					InstallView.render(content_a, buf, state);
 				}

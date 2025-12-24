@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use crate::model::Id;
-use crate::tui::core::{UiAction, MouseEvt};
+use crate::tui::core::{MouseEvt, UiAction};
 use crate::tui::support::UiExt as _;
 use derive_more::From;
 use ratatui::layout::{Position, Rect};

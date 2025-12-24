@@ -200,7 +200,7 @@ impl AppState {
 	pub fn should_be_pinged(&self) -> bool {
 		self.running_tick_count().is_some()
 			|| self.popup().is_some_and(|p| p.is_timed())
-			|| self.stage() == AppStage::Installed
+			|| matches!(self.stage(), AppStage::Installing | AppStage::Installed)
 	}
 }
 

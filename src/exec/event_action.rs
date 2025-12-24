@@ -5,6 +5,7 @@
 use crate::exec::cli::{
 	CheckKeysArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs, XelfUpdateArgs,
 };
+use crate::model::Id;
 use crate::run::RunSubAgentParams;
 use derive_more::From;
 
@@ -36,13 +37,13 @@ pub enum ExecActionEvent {
 	CmdXelfSetup(XelfSetupArgs),
 	/// Preform `self update`
 	CmdXelfUpdate(XelfUpdateArgs),
+	/// Trigger an agent run (either from CLI or UI)
+	Run(RunArgs),
 
 	// -- Interactive Commands
 	OpenAgent,
 
 	// -- Run Commands
-	/// This is the result of a CLI run
-	CmdRun(RunArgs),
 	/// When press r
 	Redo,
 	/// When called from
@@ -50,6 +51,10 @@ pub enum ExecActionEvent {
 	RunSubAgent(RunSubAgentParams),
 
 	CancelRun,
+
+	// -- Work Lifecycle
+	WorkConfirm(Id),
+	WorkCancel(Id),
 
 	// -- New Agent
 	CmdNew(NewArgs),
@@ -65,11 +70,15 @@ impl ExecActionEvent {
 	/// NOTE: this is for the executor, but we might want to change this eventually
 	pub fn is_tui(&self) -> bool {
 		match self {
-			ExecActionEvent::CmdRun(run_args) => run_args.is_tui(),
+			ExecActionEvent::Run(run_args) => run_args.is_tui(),
+			ExecActionEvent::Redo
+			| ExecActionEvent::CancelRun
+			| ExecActionEvent::WorkConfirm(_)
+			| ExecActionEvent::WorkCancel(_)
+			| ExecActionEvent::OpenAgent => true,
 			// TODO: Those need to be handled
 			// (might not be an issue for now, because this is for error handling
 			// and error that are not run related happen at start)
-			// ExecActionEvent::Redo => todo!(),
 			// ExecActionEvent::RunSubAgent(run_sub_agent_params) => todo!(),
 			_ => false,
 		}

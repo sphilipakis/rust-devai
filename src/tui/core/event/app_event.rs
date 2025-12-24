@@ -1,4 +1,6 @@
+use crate::exec::cli::RunArgs;
 use crate::hub::HubEvent;
+use crate::model::Id;
 use derive_more::From;
 
 /// The main application event enum.
@@ -58,6 +60,9 @@ pub enum AppActionEvent {
 	Scroll(ScrollDir),
 	ScrollPage(ScrollDir),
 	ScrollToEnd(ScrollDir),
+	WorkConfirm(Id),
+	WorkCancel(Id),
+	Run(RunArgs),
 }
 
 #[allow(unused)]

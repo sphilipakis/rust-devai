@@ -1,5 +1,6 @@
 use crate::exec::ExecActionEvent;
 use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -101,7 +102,7 @@ impl CliCommand {
 // region:    --- Sub Command Args
 
 /// Arguments for the `run` subcommand
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone, Serialize, Deserialize)]
 pub struct RunArgs {
 	#[clap(help = "The name of the agent, which can be:\n\
 - A AIP pack reference:\n\
@@ -251,7 +252,7 @@ impl From<CliCommand> for ExecActionEvent {
 		match cli_cmd {
 			CliCommand::Init(init_args) => ExecActionEvent::CmdInit(init_args),
 			CliCommand::InitBase => ExecActionEvent::CmdInitBase,
-			CliCommand::Run(run_args) => ExecActionEvent::CmdRun(run_args),
+			CliCommand::Run(run_args) => ExecActionEvent::Run(run_args),
 			// CliCommand::New(new_args) => ExecActionEvent::CmdNew(new_args),
 			// CliCommand::New(new_args) => ExecCommand::NewCommandAgent(new_args),
 			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),

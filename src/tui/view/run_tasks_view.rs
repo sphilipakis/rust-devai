@@ -1,4 +1,4 @@
-use crate::tui::core::{UiAction, LinkZones, ScrollIden};
+use crate::tui::core::{LinkZones, ScrollIden, UiAction};
 use crate::tui::style;
 use crate::tui::support::{UiExt as _, clamp_idx_in_len};
 use crate::tui::view::comp::{self, ui_for_marker_section_str};

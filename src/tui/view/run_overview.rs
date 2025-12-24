@@ -1,7 +1,7 @@
 use crate::model::{EndState, RunningState, Stage};
 use crate::model::{Log, LogBmc, PinBmc, Task};
 use crate::tui::AppState;
-use crate::tui::core::{UiAction, LinkZones, ScrollIden};
+use crate::tui::core::{LinkZones, ScrollIden, UiAction};
 use crate::tui::support::UiExt as _;
 use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};

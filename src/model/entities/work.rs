@@ -1,6 +1,6 @@
 use crate::model::ScalarEnum;
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, EpochUs, Id, ModelManager, Result, RunningState};
+use crate::model::{EndState, EpochUs, Error, Id, ModelManager, Result, RunningState};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
@@ -28,6 +28,16 @@ pub struct Work {
 	pub message: Option<String>,
 }
 
+impl Work {
+	pub fn get_data_as<T: serde::de::DeserializeOwned>(&self) -> Result<Option<T>> {
+		let Some(data) = &self.data else {
+			return Ok(None);
+		};
+		let val = serde_json::from_str(data).map_err(|err| Error::cc("Cannot dserialize WorkData", err))?;
+		Ok(Some(val))
+	}
+}
+
 #[mra::derive(Debug, ScalarEnum!)]
 pub enum WorkKind {
 	Install,
@@ -51,6 +61,14 @@ pub struct WorkForCreate {
 	pub data: Option<String>,
 }
 
+impl WorkForCreate {
+	pub fn set_data<T: serde::Serialize>(&mut self, data: &T) -> Result<()> {
+		let json = serde_json::to_string(data).map_err(|err| Error::cc("Cannot serialize WorkData", err))?;
+		self.data = Some(json);
+		Ok(())
+	}
+}
+
 #[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
 pub struct WorkForUpdate {
 	pub start: Option<EpochUs>,
@@ -61,6 +79,14 @@ pub struct WorkForUpdate {
 
 	pub data: Option<String>,
 	pub message: Option<String>,
+}
+
+impl WorkForUpdate {
+	pub fn set_data<T: serde::Serialize>(&mut self, data: &T) -> Result<()> {
+		let json = serde_json::to_string(data).map_err(|err| Error::cc("Cannot serialize WorkData", err))?;
+		self.data = Some(json);
+		Ok(())
+	}
 }
 
 // endregion: --- Types

@@ -1,6 +1,6 @@
 use crate::model::ErrBmc;
 use crate::model::{Id, ModelManager};
-use crate::tui::core::{UiAction, LinkZones};
+use crate::tui::core::{LinkZones, UiAction};
 use crate::tui::style;
 use crate::tui::view::comp;
 use ratatui::style::Color;

@@ -1,7 +1,7 @@
 use crate::model::{EndState, ModelManager, RunningState};
 use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
 use crate::support::text::truncate_with_ellipsis;
-use crate::tui::core::{UiAction, LinkZones, ScrollIden};
+use crate::tui::core::{LinkZones, ScrollIden, UiAction};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
 use crate::tui::{AppState, style};

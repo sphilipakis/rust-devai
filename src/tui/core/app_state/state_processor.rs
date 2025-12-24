@@ -1,4 +1,4 @@
-use crate::model::{ErrBmc, RunBmc, TaskBmc, WorkBmc};
+use crate::model::{ErrBmc, InstallData, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{AppActionEvent, ScrollDir};
@@ -278,20 +278,15 @@ pub fn process_app_state(state: &mut AppState) {
 	};
 
 	// -- Update running tick
-	let run_items = state.run_items();
-	if !run_items.is_empty() {
-		let is_one_running = run_items.iter().any(|r| r.is_running());
+	let is_active = state.run_items().iter().any(|r| r.is_running()) || state.stage() == AppStage::Installing;
 
-		// If running and no running start, then, set the running_start
-		if is_one_running && state.core.running_tick_start.is_none() {
-			state.core.running_tick_start = Some(now_micro())
-		}
-		// Make sure to turn it off if not running
-		else if !is_one_running {
-			state.core.running_tick_start = None
-		}
-	} else {
-		state.core.running_tick_start = None; // No run selected
+	// If active and no running start, then, set the running_start
+	if is_active && state.core.running_tick_start.is_none() {
+		state.core.running_tick_start = Some(now_micro())
+	}
+	// Make sure to turn it off if not running
+	else if !is_active {
+		state.core.running_tick_start = None
 	}
 
 	// -- Arrow key (keyboard & mouse)
@@ -332,18 +327,27 @@ fn process_stage(state: &mut AppState) {
 
 	// -- Check for active "Install" work
 	if let Ok(Some(work)) = WorkBmc::get_active_install(mm) {
-		state.set_stage(AppStage::Installing);
-		let inner = state.core_mut();
-		inner.current_work_id = Some(work.id);
-		inner.installed_start_us = None;
+		// Determine if it needs confirmation or is actively installing
+		let mut needs_confirm = false;
+		let mut pack_ref_opt: Option<String> = None;
 
-		// Extract pack_ref from data
-		if let Some(data) = work.data
-			&& let Ok(data_val) = serde_json::from_str::<serde_json::Value>(&data)
+		if let Ok(Some(install_data)) = work.get_data_as::<InstallData>() {
+			needs_confirm = install_data.needs_user_confirm;
+			pack_ref_opt = Some(install_data.pack_ref);
+		}
+
 		{
-			if let Some(pack_ref) = data_val.get("pack_ref").and_then(|v| v.as_str()) {
-				inner.installing_pack_ref = Some(pack_ref.to_string());
-			}
+			let inner = state.core_mut();
+			inner.current_work_id = Some(work.id);
+			inner.installing_pack_ref = pack_ref_opt;
+		}
+
+		if needs_confirm {
+			state.set_stage(AppStage::PromptInstall(work.id));
+		} else {
+			state.set_stage(AppStage::Installing);
+			let inner = state.core_mut();
+			inner.installed_start_us = None;
 		}
 	}
 	// -- Handle transition from Installing to Installed or clearing Installed
@@ -365,20 +369,15 @@ fn process_stage(state: &mut AppState) {
 				}
 			}
 			AppStage::Installed => {
-				// Check if 4 seconds passed
-				if let Some(start) = state.core().installed_start_us {
-					if state.core().time - start > 2_000_000 {
-						state.set_stage(AppStage::Normal);
-						state.core_mut().current_work_id = None;
-						state.core_mut().installing_pack_ref = None;
-						state.core_mut().installed_start_us = None;
-					}
-				} else {
-					state.set_stage(AppStage::Normal);
-				}
+				// stay in Installed until user Run or Close
 			}
 			AppStage::Normal => {
 				// stay Normal
+				state.core_mut().current_work_id = None;
+				state.core_mut().installing_pack_ref = None;
+			}
+			AppStage::PromptInstall(_id) => {
+				state.set_stage(AppStage::Normal);
 				state.core_mut().current_work_id = None;
 				state.core_mut().installing_pack_ref = None;
 			}
@@ -389,7 +388,6 @@ fn process_stage(state: &mut AppState) {
 fn process_actions(state: &mut AppState) {
 	if let Some(action) = state.action().cloned() {
 		match action {
-			// -- Global Actions
 			UiAction::Quit => {
 				state.core_mut().to_send_action = Some(AppActionEvent::Quit);
 				state.clear_action();
@@ -411,8 +409,6 @@ fn process_actions(state: &mut AppState) {
 				state.core_mut().next_overview_tasks_mode();
 				state.clear_action();
 			}
-
-			// -- Specific Actions
 			UiAction::ToClipboardCopy(content) => {
 				// Ensure we have a clipboard instance
 				let ensure_clipboard: Result<(), String> = if state.core().clipboard.is_some() {
@@ -486,6 +482,34 @@ fn process_actions(state: &mut AppState) {
 						});
 					}
 				}
+				state.clear_action();
+			}
+			UiAction::WorkConfirm(id) => {
+				state.core_mut().to_send_action = Some(AppActionEvent::WorkConfirm(id));
+				state.trigger_redraw();
+				state.clear_action();
+			}
+			UiAction::WorkCancel(id) => {
+				state.core_mut().to_send_action = Some(AppActionEvent::WorkCancel(id));
+				state.trigger_redraw();
+				state.clear_action();
+			}
+			UiAction::WorkRun(id) => {
+				let mm = state.mm().clone();
+				if let Ok(work) = WorkBmc::get(&mm, id)
+					&& let Ok(Some(install_data)) = work.get_data_as::<InstallData>()
+					&& let Some(run_args_val) = install_data.run_args
+					&& let Ok(run_args) = serde_json::from_value::<crate::exec::cli::RunArgs>(run_args_val)
+				{
+					state.core_mut().to_send_action = Some(AppActionEvent::Run(run_args));
+				}
+				state.set_stage(AppStage::Normal);
+				state.trigger_redraw();
+				state.clear_action();
+			}
+			UiAction::WorkClose(_id) => {
+				state.set_stage(AppStage::Normal);
+				state.trigger_redraw();
 				state.clear_action();
 			}
 		}

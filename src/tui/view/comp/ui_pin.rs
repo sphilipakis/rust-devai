@@ -1,5 +1,5 @@
 use crate::model::Pin;
-use crate::tui::core::{UiAction, LinkZones};
+use crate::tui::core::{LinkZones, UiAction};
 use crate::tui::style;
 use crate::tui::view::comp;
 use crate::types::uc;

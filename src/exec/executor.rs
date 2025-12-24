@@ -20,7 +20,7 @@ use crate::exec::{
 };
 use crate::hub::{HubEvent, get_hub};
 use crate::model::OnceModelManager;
-use crate::model::{EndState, ErrBmc, ErrForCreate, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind};
+use crate::model::{EndState, ErrBmc, ErrForCreate, InstallData, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
 use crate::support::editor;
@@ -188,15 +188,15 @@ impl Executor {
 		}
 
 		match action {
-			// -- Cli Action Events
 			ExecActionEvent::CmdInit(init_args) => {
 				init_wks(init_args.path.as_deref(), true).await?;
 				init_base(false).await?;
 			}
+
 			ExecActionEvent::CmdInitBase => {
 				init_base(true).await?;
 			}
-			// TODO: need to rethink this action
+
 			ExecActionEvent::CmdNew(new_args) => {
 				if let Err(err) = exec_new(new_args, init_wks(None, false).await?).await {
 					if matches!(err, Error::UserInterrupted) {
@@ -209,6 +209,7 @@ impl Executor {
 				}
 				hub.publish(HubEvent::Quit).await;
 			}
+
 			ExecActionEvent::CmdList(list_args) => {
 				exec_list(init_base_and_dir_context(false).await?, list_args).await?
 			}
@@ -243,12 +244,7 @@ impl Executor {
 				}
 			}
 
-			// -- Agent Run Related
-
-			// From the inital command run
-			// TODO: Might want to not initialize the workspace here, and let the user know. Not sure.
-			// NOTE: This is the Event from the Command line only (when aip.agent.run, the event RunAgent is sent)
-			ExecActionEvent::CmdRun(run_args) => {
+			ExecActionEvent::Run(run_args) => {
 				hub.publish(ExecStatusEvent::RunStart).await;
 				// Here we init base if version changed.
 				// This way we make sure doc and all work as expected
@@ -284,68 +280,20 @@ impl Executor {
 							let pack_ref_base = format!("{}@{}", pack_ref.namespace, pack_ref.name);
 
 							// Create Work entry for installation
-							let work_data = serde_json::json!({ "pack_ref": pack_ref_base }).to_string();
-							let work_id = WorkBmc::create(
-								&mm,
-								WorkForCreate {
-									kind: WorkKind::Install,
-									data: Some(work_data),
-								},
-							)?;
-
-							// Trigger actual install
-							let install_args = crate::exec::cli::InstallArgs {
-								aipack_ref: pack_ref_base.to_string(),
+							let mut work_c = WorkForCreate {
+								kind: WorkKind::Install,
+								data: None,
 							};
+							work_c.set_data(&InstallData {
+								pack_ref: pack_ref_base,
+								run_args: Some(serde_json::to_value(run_args)?),
+								needs_user_confirm: true,
+							})?;
 
-							// Mark work as started
-							WorkBmc::update(
-								&mm,
-								work_id,
-								WorkForUpdate {
-									start: Some(now_micro().into()),
-									..Default::default()
-								},
-							)?;
+							let _work_id = WorkBmc::create(&mm, work_c)?;
 
-							match exec_install(dir_ctx, install_args).await {
-								Ok(installed_pack) => {
-									// Mark work as completed
-									WorkBmc::update(
-										&mm,
-										work_id,
-										WorkForUpdate {
-											end: Some(now_micro().into()),
-											end_state: Some(EndState::Ok),
-											message: Some(format!(
-												"{}@{} v{}",
-												installed_pack.pack_toml.namespace,
-												installed_pack.pack_toml.name,
-												installed_pack.pack_toml.version
-											)),
-											..Default::default()
-										},
-									)?;
-
-									// Retry the run after successful installation
-									let redo = exec_run(run_args, runtime).await?;
-									self.set_current_redo_ctx(redo).await;
-								}
-								Err(install_err) => {
-									// Mark work as failed
-									WorkBmc::update(
-										&mm,
-										work_id,
-										WorkForUpdate {
-											end: Some(now_micro().into()),
-											end_state: Some(EndState::Err),
-											message: Some(install_err.to_string()),
-											..Default::default()
-										},
-									)?;
-									hub.publish(install_err).await;
-								}
-							}
+							// Publish change to notify TUI
+							hub.publish_rt_model_change_sync();
 						} else {
 							hub.publish(err).await;
 						}
@@ -355,7 +303,6 @@ impl Executor {
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
-			// From Redo
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
@@ -374,18 +321,93 @@ impl Executor {
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 
-			// From aip.agent.run
 			ExecActionEvent::RunSubAgent(run_agent_params) => {
 				if let Err(err) = exec_run_sub_agent(run_agent_params).await {
 					hub.publish(Error::cc("Fail to run agent", err)).await;
 				}
 			}
 
-			// Cancel
 			ExecActionEvent::CancelRun => {
 				if let Some(tx) = self.cancel_trx.as_ref().map(|trx| trx.tx()) {
 					tx.cancel();
 				}
+			}
+
+			ExecActionEvent::WorkConfirm(id) => {
+				let mm = self.once_mm.get().await?;
+				let work = WorkBmc::get(&mm, id)?;
+
+				if let Ok(Some(mut install_data)) = work.get_data_as::<InstallData>() {
+					// -- Update work state to start installation
+					install_data.needs_user_confirm = false;
+					let mut work_u = WorkForUpdate {
+						start: Some(now_micro().into()),
+						..Default::default()
+					};
+					work_u.set_data(&install_data)?;
+					WorkBmc::update(&mm, id, work_u)?;
+					hub.publish_rt_model_change_sync();
+
+					// -- Execute installation
+					let pack_ref = install_data.pack_ref.clone();
+					let dir_ctx = init_wks(None, false).await?;
+					let install_res = exec_install(
+						dir_ctx,
+						crate::exec::cli::InstallArgs {
+							aipack_ref: pack_ref.clone(),
+						},
+					)
+					.await;
+
+					match install_res {
+						Ok(installed_pack) => {
+							let pack_identity = format!(
+								"{}@{} v{}",
+								installed_pack.pack_toml.namespace,
+								installed_pack.pack_toml.name,
+								installed_pack.pack_toml.version
+							);
+
+							WorkBmc::update(
+								&mm,
+								id,
+								WorkForUpdate {
+									end: Some(now_micro().into()),
+									end_state: Some(EndState::Ok),
+									message: Some(pack_identity),
+									..Default::default()
+								},
+							)?;
+						}
+						Err(err) => {
+							WorkBmc::update(
+								&mm,
+								id,
+								WorkForUpdate {
+									end: Some(now_micro().into()),
+									end_state: Some(EndState::Err),
+									message: Some(format!("Installation failed: {err}")),
+									..Default::default()
+								},
+							)?;
+						}
+					}
+					hub.publish_rt_model_change_sync();
+				}
+			}
+
+			ExecActionEvent::WorkCancel(id) => {
+				let mm = self.once_mm.get().await?;
+				WorkBmc::update(
+					&mm,
+					id,
+					WorkForUpdate {
+						end: Some(now_micro().into()),
+						end_state: Some(EndState::Cancel),
+						..Default::default()
+					},
+				)?;
+				hub.publish_rt_model_change_sync();
 			}
 		}
 

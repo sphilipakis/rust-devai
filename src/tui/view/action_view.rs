@@ -1,4 +1,4 @@
-use crate::tui::core::{UiAction, AppState, LinkZones};
+use crate::tui::core::{AppState, LinkZones, UiAction};
 use crate::tui::style;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;

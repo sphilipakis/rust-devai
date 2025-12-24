@@ -114,6 +114,15 @@ async fn handle_action_event(
 		AppActionEvent::Scroll(_) => (),
 		AppActionEvent::ScrollPage(_) => (),
 		AppActionEvent::ScrollToEnd(_) => (),
+		AppActionEvent::WorkConfirm(id) => {
+			executor_tx.send(ExecActionEvent::WorkConfirm(*id)).await;
+		}
+		AppActionEvent::WorkCancel(id) => {
+			executor_tx.send(ExecActionEvent::WorkCancel(*id)).await;
+		}
+		AppActionEvent::Run(run_args) => {
+			executor_tx.send(ExecActionEvent::Run(run_args.clone())).await;
+		}
 	}
 	Ok(())
 }
