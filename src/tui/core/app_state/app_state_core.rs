@@ -3,7 +3,7 @@ use crate::model::{ErrRec, Task};
 use crate::model::{Id, ModelManager};
 use crate::tui::core::event::{ActionEvent, LastAppEvent};
 use crate::tui::core::{
-	Action, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones,
+	Action, AppStage, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones,
 };
 use crate::tui::support;
 use crate::tui::view::PopupView;
@@ -15,6 +15,11 @@ use ratatui::layout::Position;
 /// `pub` fields are fine here because the whole struct is only visible
 /// inside `crate::tui::core`.
 pub(in crate::tui::core) struct AppStateCore {
+	pub stage: AppStage,
+
+	pub installing_pack_ref: Option<String>,
+	pub current_work_id: Option<Id>,
+
 	// -- Debug
 	// debug color idx
 	pub debug_clr: u8,
@@ -75,6 +80,8 @@ pub(in crate::tui::core) struct AppStateCore {
 	// -- Popup
 	pub popup: Option<PopupView>,
 	pub popup_start_us: Option<i64>,
+
+	pub installed_start_us: Option<i64>,
 }
 
 impl AppStateCore {

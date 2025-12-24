@@ -1,14 +1,14 @@
 use super::AppStateCore;
 use super::SysState;
 use crate::Result;
+use crate::model::Id;
 use crate::model::ModelManager;
 use crate::model::Task;
 use crate::support::time::now_micro;
+use crate::tui::core::AppStage;
 use crate::tui::core::event::{ActionEvent, LastAppEvent};
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 use crate::tui::view::PopupView;
-
-// region:    --- Wrapper
 
 /// Public wrapper around AppStateCor.
 ///
@@ -16,8 +16,6 @@ use crate::tui::view::PopupView;
 pub struct AppState {
 	pub(in crate::tui::core) core: AppStateCore,
 }
-
-// endregion: --- Wrapper
 
 /// Constructors
 impl AppState {
@@ -58,6 +56,11 @@ impl AppState {
 			run_item_store: RunItemStore::default(),
 			tasks: Vec::new(),
 
+			// -- Stage & Work
+			stage: AppStage::Normal,
+			installing_pack_ref: None,
+			current_work_id: None,
+
 			// -- System & Event
 			mm,
 			last_app_event,
@@ -81,6 +84,8 @@ impl AppState {
 			// -- Popup
 			popup: None,
 			popup_start_us: None,
+
+			installed_start_us: None,
 		};
 
 		Ok(Self { core: inner })
@@ -116,6 +121,22 @@ impl AppState {
 
 /// MainView
 impl AppState {
+	pub fn stage(&self) -> AppStage {
+		self.core.stage
+	}
+
+	pub fn set_stage(&mut self, stage: AppStage) {
+		self.core.stage = stage;
+	}
+
+	pub fn installing_pack_ref(&self) -> Option<&str> {
+		self.core.installing_pack_ref.as_deref()
+	}
+
+	pub fn current_work_id(&self) -> Option<Id> {
+		self.core.current_work_id
+	}
+
 	pub fn show_runs(&self) -> bool {
 		self.core.show_runs
 	}

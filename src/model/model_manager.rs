@@ -32,8 +32,9 @@ impl ModelManager {
 		let run_count = db.exec("DELETE FROM run", [])?;
 		let task_count = db.exec("DELETE FROM task", [])?;
 		let log_count = db.exec("DELETE FROM log", [])?;
+		let work_count = db.exec("DELETE FROM work", [])?;
 
-		Ok(run_count + task_count + log_count)
+		Ok(run_count + task_count + log_count + work_count)
 	}
 
 	pub fn db_size(&self) -> Result<i64> {

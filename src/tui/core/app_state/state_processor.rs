@@ -1,8 +1,8 @@
-use crate::model::{ErrBmc, RunBmc, TaskBmc};
+use crate::model::{ErrBmc, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{ActionEvent, ScrollDir};
-use crate::tui::core::{Action, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden};
+use crate::tui::core::{Action, AppStage, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
@@ -14,6 +14,9 @@ const SCROLL_KEY_MAIN_VIEW: bool = true;
 pub fn process_app_state(state: &mut AppState) {
 	// -- Process tick
 	state.core.time = now_micro();
+
+	// -- Process Stage
+	process_stage(state);
 
 	// -- Process actions (clipboard, show-text popup, tab switch)
 	process_actions(state);
@@ -322,6 +325,66 @@ pub fn process_app_state(state: &mut AppState) {
 }
 
 // region:    --- Action Processing
+
+fn process_stage(state: &mut AppState) {
+	let current_stage = state.stage();
+	let mm = state.mm();
+
+	// -- Check for active "Install" work
+	if let Ok(Some(work)) = WorkBmc::get_active_install(mm) {
+		state.set_stage(AppStage::Installing);
+		let inner = state.core_mut();
+		inner.current_work_id = Some(work.id);
+		inner.installed_start_us = None;
+
+		// Extract pack_ref from data
+		if let Some(data) = work.data
+			&& let Ok(data_val) = serde_json::from_str::<serde_json::Value>(&data)
+		{
+			if let Some(pack_ref) = data_val.get("pack_ref").and_then(|v| v.as_str()) {
+				inner.installing_pack_ref = Some(pack_ref.to_string());
+			}
+		}
+	}
+	// -- Handle transition from Installing to Installed or clearing Installed
+	else {
+		match current_stage {
+			AppStage::Installing => {
+				// If we were installing and now no active install, check if it was successful
+				if let Some(work_id) = state.current_work_id()
+					&& let Ok(work) = WorkBmc::get(mm, work_id)
+					&& matches!(work.end_state, Some(crate::model::EndState::Ok))
+				{
+					state.set_stage(AppStage::Installed);
+					let now = state.core().time;
+					state.core_mut().installed_start_us = Some(now);
+				} else {
+					state.set_stage(AppStage::Normal);
+					state.core_mut().current_work_id = None;
+					state.core_mut().installing_pack_ref = None;
+				}
+			}
+			AppStage::Installed => {
+				// Check if 4 seconds passed
+				if let Some(start) = state.core().installed_start_us {
+					if state.core().time - start > 4_000_000 {
+						state.set_stage(AppStage::Normal);
+						state.core_mut().current_work_id = None;
+						state.core_mut().installing_pack_ref = None;
+						state.core_mut().installed_start_us = None;
+					}
+				} else {
+					state.set_stage(AppStage::Normal);
+				}
+			}
+			AppStage::Normal => {
+				// stay Normal
+				state.core_mut().current_work_id = None;
+				state.core_mut().installing_pack_ref = None;
+			}
+		}
+	}
+}
 
 fn process_actions(state: &mut AppState) {
 	if let Some(action) = state.action().cloned() {

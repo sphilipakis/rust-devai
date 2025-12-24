@@ -232,7 +232,30 @@ CREATE TABLE IF NOT EXISTS pin (
 ) STRICT",
 );
 
-const ALL_MAIN_TABLES: &[(&str, &str)] = &[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE];
+const WORK_TABLE: (&str, &str) = (
+	"work",
+	"
+CREATE TABLE IF NOT EXISTS work (
+		id          INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid         BLOB NOT NULL,
+
+		ctime       INTEGER NOT NULL,
+		mtime       INTEGER NOT NULL,
+
+		kind        TEXT NOT NULL,
+		
+		start       INTEGER,
+		end         INTEGER,
+		end_state   TEXT,
+		end_err_id  INTEGER,
+
+		data        TEXT, -- JSON
+		message     TEXT
+) STRICT",
+);
+
+const ALL_MAIN_TABLES: &[(&str, &str)] =
+	&[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE, WORK_TABLE];
 
 // endregion: --- Main Tables
 

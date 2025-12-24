@@ -1,16 +1,13 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::cli::InstallArgs;
+use crate::exec::packer::InstalledPack;
 use crate::exec::packer::install_pack;
 use crate::hub::get_hub;
 use size::Size;
 
-// region:    --- InstallRef
-
-// endregion: --- InstallRef
-
 /// Executes the install command which installs an aipack file
-pub async fn exec_install(dir_context: DirContext, install_args: InstallArgs) -> Result<()> {
+pub async fn exec_install(dir_context: DirContext, install_args: InstallArgs) -> Result<InstalledPack> {
 	let hub = get_hub();
 	hub.publish(format!(
 		"\n==== Installing aipack:\n\n{:>15} {}",
@@ -41,5 +38,5 @@ pub async fn exec_install(dir_context: DirContext, install_args: InstallArgs) ->
 
 	hub.publish("\n==== DONE".to_string()).await;
 
-	Ok(())
+	Ok(installed_pack)
 }

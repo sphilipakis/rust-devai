@@ -33,13 +33,6 @@ pub const CLR_TXT_GREEN: Color = Color::Indexed(46);
 
 pub const CLR_TXT_RED: Color = Color::Indexed(196);
 
-pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
-pub const CLR_BKG_BLUE: Color = Color::Indexed(20);
-pub const CLR_BKG_TEAL: Color = Color::Indexed(39);
-pub const CLR_BKG_YELLOW: Color = Color::Indexed(226);
-pub const CLR_BKG_GREEN: Color = Color::Indexed(46);
-pub const CLR_BKG_RED: Color = Color::Indexed(124);
-
 pub const CLR_TXT_SKIP: Color = Color::Indexed(225);
 pub const CLR_BKG_SKIP: Color = Color::Indexed(225);
 
@@ -54,7 +47,13 @@ pub const CLR_BKG: Color = CLR_BKG_500;
 pub const CLR_BKG_GRAY_DARK: Color = CLR_BKG_400;
 pub const CLR_BKG_GRAY_DARKER: Color = CLR_BKG;
 // Indexed(0) get styled by the terms
-pub const CLR_BKG_BLACK: Color = CLR_BKG_600;
+pub const CLR_BKG_BLACK: Color = Color::Indexed(0);
+pub const CLR_BKG_WHITE: Color = Color::Indexed(255);
+pub const CLR_BKG_BLUE: Color = Color::Indexed(20);
+pub const CLR_BKG_TEAL: Color = Color::Indexed(39);
+pub const CLR_BKG_YELLOW: Color = Color::Indexed(226);
+pub const CLR_BKG_GREEN: Color = Color::Indexed(46);
+pub const CLR_BKG_RED: Color = Color::Indexed(124);
 
 pub const CLR_BKG_PRIME: Color = Color::Indexed(12);
 
@@ -73,10 +72,10 @@ pub const CLR_TXT_100: Color = Color::Indexed(255);
 pub const CLR_TXT_400: Color = Color::Indexed(253);
 pub const CLR_TXT_500: Color = Color::Indexed(252);
 pub const CLR_TXT_600: Color = Color::Indexed(250);
-pub const CLR_TXT_650: Color = Color::Indexed(247);
+pub const CLR_TXT_650: Color = Color::Indexed(248);
 pub const CLR_TXT_700: Color = Color::Indexed(244);
 pub const CLR_TXT_800: Color = Color::Indexed(242);
-pub const CLR_TXT_850: Color = Color::Indexed(240);
+pub const CLR_TXT_850: Color = Color::Indexed(241);
 pub const CLR_TXT: Color = CLR_TXT_500;
 
 pub const CLR_TXT_HOVER: Color = CLR_TXT_BLUE;
@@ -135,3 +134,7 @@ pub const STL_TAB_ACTIVE_HOVER: Style = Style::new().bg(CLR_BKG_TAB_ACT).fg(CLR_
 //pub const STL_PIN_MARKER: Style = Style::new().bg(Color::Indexed(23)).fg(CLR_TXT_600);
 
 pub const STL_PIN_MARKER: Style = Style::new().bg(CLR_BKG_500).fg(Color::Indexed(122));
+
+// -- Dialog Popup
+pub const STL_POPUP_TITLE: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT_650);
+pub const STL_POPUP_TEXT: Style = Style::new().bg(CLR_BKG_BLACK).fg(CLR_TXT);

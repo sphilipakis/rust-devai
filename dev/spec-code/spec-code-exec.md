@@ -10,9 +10,9 @@ The `exec` module follows a decoupled command pattern. The `Executor` runs an as
 
 - **Executor**: Owns the receiver and manages the active task count. It spawns a new Tokio task for every action received.
 - **ExecutorTx**: A cloneable sender wrapper.
-    - `send(ExecActionEvent)`: Async send.
+    - `send(ExecActionEvent)`: Async send (preferred).
     - `send_sync(ExecActionEvent)`: Synchronous send (flume).
-    - `send_sync_spawn_and_block(ExecActionEvent)`: Used when calling from a sync context where the event must be processed in parallel (e.g., Lua module calls).
+    - `send_sync_spawn_and_block(ExecActionEvent)`: Used when calling from a sync context where the event must be processed in parallel (e.g., Lua module calls like `aip.agent.run`).
 
 ## Event Types
 
@@ -31,11 +31,12 @@ pub enum ExecActionEvent {
     CmdCheckKeys(CheckKeysArgs),
     CmdXelfSetup(XelfSetupArgs),
     CmdXelfUpdate(XelfUpdateArgs),
+    CmdNew(NewArgs),
 
     // -- Interactive/UI Commands
-    OpenAgent,
-    Redo,
-    CancelRun,
+    OpenAgent, // Opens current agent in editor
+    Redo,      // Re-executes the last run
+    CancelRun, // Signals cancellation via CancelTrx
 
     // -- Agent Logic Commands
     RunSubAgent(RunSubAgentParams),
@@ -82,13 +83,13 @@ Handles the `aip self` command group.
 ## Common Utils (src/exec/support.rs)
 
 - `get_available_api_keys()`: Checks environment for standard AI keys (OPENAI_API_KEY, etc.).
-- `open_vscode(path)`: Legacy helper for opening files (prefer `support::editor::open_file_auto`).
 
 ## Lifecycle of a Run
 
 1. `main.rs` parses `CliArgs`.
 2. `Executor` receives `ExecActionEvent::CmdRun(args)`.
-3. `exec_run` initializes the `Runtime`.
-4. `do_run` expands globs into `FileInfo` objects.
-5. `run_agent` is called.
-6. `RunRedoCtx` is stored in the executor for potential future `Redo` actions.
+3. **Auto-Install Detection**: If `find_agent` fails and the name contains `@`, the executor creates a `WorkKind::Install` record and calls `exec_install`.
+4. `exec_run` initializes the `Runtime`.
+5. `do_run` expands globs into `FileInfo` objects.
+6. `run_agent` is called.
+7. `RunRedoCtx` is stored in the executor for potential future `Redo` actions.

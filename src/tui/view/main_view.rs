@@ -1,6 +1,7 @@
-use super::{ActionView, RunsView, SumView};
+use super::{ActionView, InstallView, RunsView, SumView};
 use crate::model::ErrRec;
 use crate::tui::AppState;
+use crate::tui::core::AppStage;
 use crate::tui::view::{PopupOverlay, RunMainView, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
@@ -37,12 +38,21 @@ impl StatefulWidget for MainView {
 		SumView.render(header_a, buf, state);
 
 		// -- Render main
-		if state.show_runs() {
-			RunMainView::clear_scroll_idens(state);
-			RunsView.render(content_a, buf, state);
-		} else {
-			RunsView::clear_scroll_idens(state);
-			RunMainView.render(content_a, buf, state);
+		match state.stage() {
+			AppStage::Normal | AppStage::Installing | AppStage::Installed => {
+				if state.show_runs() {
+					RunMainView::clear_scroll_idens(state);
+					RunsView.render(content_a, buf, state);
+				} else {
+					RunsView::clear_scroll_idens(state);
+					RunMainView.render(content_a, buf, state);
+				}
+
+				// Render Install/Installed overlay
+				if state.stage() != AppStage::Normal {
+					InstallView.render(content_a, buf, state);
+				}
+			}
 		}
 
 		// -- Render action

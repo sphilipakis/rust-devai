@@ -7,6 +7,7 @@ mod pin;
 mod prompt;
 mod run;
 mod task;
+mod work;
 
 pub use err::*;
 pub use inout::*;
@@ -17,5 +18,6 @@ pub use pin::*;
 pub use prompt::*;
 pub use run::*;
 pub use task::*;
+pub use work::*;
 
 // endregion: --- Modules

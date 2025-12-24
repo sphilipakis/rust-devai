@@ -1,6 +1,7 @@
 //! The command executor.
 //! Will create it's own queue and listen to ExecCommand events.
 
+use crate::agent::find_agent;
 use crate::event::{CancelTrx, new_cancel_trx};
 use crate::exec::event_action::ExecActionEvent;
 use crate::exec::exec_cmd_xelf::exec_xelf_update;
@@ -19,10 +20,11 @@ use crate::exec::{
 };
 use crate::hub::{HubEvent, get_hub};
 use crate::model::OnceModelManager;
-use crate::model::{ErrBmc, ErrForCreate};
+use crate::model::{EndState, ErrBmc, ErrForCreate, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
 use crate::support::editor;
+use crate::support::time::now_micro;
 use crate::{Error, Result};
 use flume::{Receiver, Sender};
 use simple_fs::SPath;
@@ -213,7 +215,7 @@ impl Executor {
 			ExecActionEvent::CmdPack(pack_args) => exec_pack(&pack_args).await?,
 
 			ExecActionEvent::CmdInstall(install_args) => {
-				exec_install(init_base_and_dir_context(false).await?, install_args).await?
+				let _ = exec_install(init_base_and_dir_context(false).await?, install_args).await?;
 			}
 
 			ExecActionEvent::CmdCheckKeys(args) => {
@@ -250,17 +252,102 @@ impl Executor {
 				// Here we init base if version changed.
 				// This way we make sure doc and all work as expected
 				init_base(false).await?;
-				// NOTE: We might want to change this at some point and not require a Workspace to run (since now we have the base)
-				// NOTE: 2025-08-02 - Actually, the .aipack/ is useful to mark a project as a folder.
-				//                    Perhaps we will warn the user when run AIPACK and not .aipack/ in current folder
-				//                    but in the parent to avoid confusing behavior
-				let dir_ctx = init_wks(None, false).await?;
 
+				let dir_ctx = init_wks(None, false).await?;
 				let exec_sender = self.sender();
 				let mm = self.once_mm.get().await?;
-				let runtime = Runtime::new(dir_ctx, exec_sender, mm, self.cancel_trx.clone()).await?;
-				let redo = exec_run(run_args, runtime).await?;
-				self.set_current_redo_ctx(redo).await;
+
+				// -- Attempt to find agent early to detect missing packs
+				let agent_name = run_args.cmd_agent_name.clone();
+				let runtime = Runtime::new(
+					dir_ctx.clone(),
+					exec_sender.clone(),
+					mm.clone(),
+					self.cancel_trx.clone(),
+				)
+				.await?;
+
+				let agent_res = find_agent(&agent_name, &runtime, None);
+
+				match agent_res {
+					Ok(_agent) => {
+						let redo = exec_run(run_args, runtime).await?;
+						self.set_current_redo_ctx(redo).await;
+					}
+					Err(err) => {
+						// Check if it's a missing pack candidate
+						if agent_name.contains('@') {
+							let (pack_ref, _) = agent_name.split_once('/').unwrap_or((&agent_name, ""));
+
+							// Create Work entry for installation
+							let work_data = serde_json::json!({ "pack_ref": pack_ref }).to_string();
+							let work_id = WorkBmc::create(
+								&mm,
+								WorkForCreate {
+									kind: WorkKind::Install,
+									data: Some(work_data),
+								},
+							)?;
+
+							// Trigger actual install
+							let install_args = crate::exec::cli::InstallArgs {
+								aipack_ref: pack_ref.to_string(),
+							};
+
+							// Mark work as started
+							WorkBmc::update(
+								&mm,
+								work_id,
+								WorkForUpdate {
+									start: Some(now_micro().into()),
+									..Default::default()
+								},
+							)?;
+
+							match exec_install(dir_ctx, install_args).await {
+								Ok(installed_pack) => {
+									// Mark work as completed
+									WorkBmc::update(
+										&mm,
+										work_id,
+										WorkForUpdate {
+											end: Some(now_micro().into()),
+											end_state: Some(EndState::Ok),
+											message: Some(format!(
+												"{}@{} v{}",
+												installed_pack.pack_toml.namespace,
+												installed_pack.pack_toml.name,
+												installed_pack.pack_toml.version
+											)),
+											..Default::default()
+										},
+									)?;
+
+									// Retry the run after successful installation
+									let redo = exec_run(run_args, runtime).await?;
+									self.set_current_redo_ctx(redo).await;
+								}
+								Err(install_err) => {
+									// Mark work as failed
+									WorkBmc::update(
+										&mm,
+										work_id,
+										WorkForUpdate {
+											end: Some(now_micro().into()),
+											end_state: Some(EndState::Err),
+											message: Some(install_err.to_string()),
+											..Default::default()
+										},
+									)?;
+									hub.publish(install_err).await;
+								}
+							}
+						} else {
+							hub.publish(err).await;
+						}
+					}
+				}
+
 				hub.publish(ExecStatusEvent::RunEnd).await;
 			}
 

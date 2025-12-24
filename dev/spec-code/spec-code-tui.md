@@ -1,0 +1,109 @@
+# AIPack TUI Specification for LLM
+
+This document provides a concise reference for the AIPack TUI architecture, types, and APIs.
+
+## Enums & Core Types
+
+### Stages & Tabs (src/tui/core/...)
+
+```rust
+pub enum AppStage {
+    Normal,     // Main run view
+    Installing, // Dialog-style installation progress overlay
+    Installed,  // Success dialog overlay (auto-dismisses)
+}
+
+pub enum RunTab { Overview, Tasks }
+```
+
+### Events (src/tui/core/event/...)
+
+```rust
+pub enum AppEvent {
+    DoRedraw,
+    Term(crossterm::event::Event),
+    Action(ActionEvent),
+    Hub(HubEvent),
+    Tick(i64),
+}
+
+pub enum ActionEvent {
+    Quit, Redo, CancelRun,
+    Scroll(ScrollDir), ScrollPage(ScrollDir), ScrollToEnd(ScrollDir),
+}
+```
+
+### Actions (src/tui/core/types/action.rs)
+
+```rust
+pub enum Action {
+    Quit, Redo, CancelRun,
+    ToggleRunsNav,
+    CycleTasksOverviewMode,
+    GoToTask { task_id: Id },
+    ToClipboardCopy(String),
+    OpenFile(String), // Opens file at path using auto-editor
+}
+```
+
+## AppState API
+
+`AppState` is the primary interface for views.
+
+### Main Accessors
+- `mm()`, `stage()`, `show_runs()`, `run_tab()`.
+- `installing_pack_ref()`, `current_work_id()`.
+
+### Run & Task Data
+- `run_items()`, `current_run_item()`.
+- `tasks()`, `current_task()`, `task_idx()`.
+- `all_run_children(run_item)`: Returns direct and indirect children.
+
+### Formatting & UI Getters (impl_fmt.rs)
+- `current_run_duration_txt()`, `current_run_cost_fmt()`.
+- `current_run_agent_name()`, `current_run_model_name()`.
+- `tasks_cummulative_duration()`: Cumulative time across parallel tasks.
+- `tasks_cummulative_models(max_width)`: Summary of models used.
+- `current_task_model_name()`, `current_task_cost_fmt()`, `current_task_duration_txt()`.
+- `current_task_prompt_tokens_fmt()`, `current_task_completion_tokens_fmt()`.
+- `current_task_cache_info_fmt()`.
+
+### Interaction
+- `mouse_evt()`, `last_mouse_evt()`, `is_mouse_up_only()`.
+- `set_action(Action)`, `trigger_redraw()`.
+
+### Scrolling
+- `ScrollIden`: `RunsNav`, `TasksNav`, `TaskContent`, `OverviewContent`.
+- `set_scroll_area(ScrollIden, Rect)`, `set_scroll(ScrollIden, u16)`.
+- `clamp_scroll(ScrollIden, line_count) -> u16`.
+
+## Interaction & Components
+
+### LinkZones (src/tui/core/types/link_zone.rs)
+Used to handle hover/click on specific text regions.
+- `start_group() -> u32`: For multi-line section-wide hover.
+- `push_group_zone(...)`: Registers a zone belonging to a group.
+- `is_mouse_over(area, scroll, mouse_evt, spans) -> Option<&mut [Span]>`.
+
+### Popup (src/tui/view/popup_view.rs)
+- `PopupView`: `{ content: String, mode: PopupMode, is_err: bool }`.
+- `PopupMode`: `Timed(Duration)`, `User` (Dismiss with Esc/'x').
+
+### Shared Components (src/tui/view/comp/...)
+- `el_running_ico(state)`: Status icon (▶, ✔, ✘, etc.).
+- `ui_for_marker_section_str(...)`: Indented section with marker.
+- `ui_for_logs_with_hover(...)`, `ui_for_pins_with_hover(...)`, `ui_for_err_with_hover(...)`.
+
+## Styling & Traits
+
+### Traits
+- `UiExt`: `x_bg(Color)`, `x_fg(Color)`, `x_width()`.
+- `RectExt`: `x_row(u16)`, `x_top_right(w, h)`, `x_move_down(y)`, `x_h_margin(u16)`.
+
+### Common Styles
+- `CLR_BKG_BLACK`, `CLR_TXT_WHITE`, `CLR_TXT_BLUE`.
+- `CLR_TXT_HOVER_TO_CLIP`: High-visibility teal for hover/copy areas.
+- `STL_FIELD_LBL`, `STL_FIELD_VAL`: For key-value headers.
+- `STL_SECTION_MARKER`, `STL_SECTION_MARKER_ERR`, `STL_PIN_MARKER`.
+- `STL_TAB_DEFAULT`, `STL_TAB_ACTIVE`.
+- `STL_NAV_ITEM_HIGHLIGHT`.
