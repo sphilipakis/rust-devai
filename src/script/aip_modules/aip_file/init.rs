@@ -75,6 +75,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let file_load_toml_fn = lua.create_function(move |lua, (path,): (String,)| file_load_toml(lua, &rt, path))?;
 
+	// -- load_yaml
+	let rt = runtime.clone();
+	let file_load_yaml_fn = lua.create_function(move |lua, (path,): (String,)| file_load_yaml(lua, &rt, path))?;
+
 	// -- load_ndjson
 	let rt = runtime.clone();
 	let file_load_ndjson_fn = lua.create_function(move |lua, (path,): (String,)| file_load_ndjson(lua, &rt, path))?;
@@ -242,6 +246,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("stats", file_stats_fn)?;
 	table.set("load_json", file_load_json_fn)?;
 	table.set("load_toml", file_load_toml_fn)?;
+	table.set("load_yaml", file_load_yaml_fn)?;
 	table.set("load_ndjson", file_load_ndjson_fn)?;
 	table.set("append_json_line", file_append_json_line_fn)?;
 	table.set("append_json_lines", file_append_json_lines_fn)?;

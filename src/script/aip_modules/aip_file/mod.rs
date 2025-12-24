@@ -11,6 +11,7 @@ mod file_read;
 mod file_spans;
 mod file_toml;
 mod file_write;
+mod file_yaml;
 
 use file_change::*;
 use file_csv::*;
@@ -23,6 +24,7 @@ use file_read::*;
 use file_spans::*;
 use file_toml::*;
 use file_write::*;
+use file_yaml::*;
 
 mod init;
 
