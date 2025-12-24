@@ -8,6 +8,7 @@ impl AppState {
 	pub fn set_action(&mut self, action: impl Into<UiAction>) {
 		let action = action.into();
 		self.core.do_action = Some(action);
+		self.trigger_redraw();
 	}
 
 	pub fn clear_action(&mut self) {
