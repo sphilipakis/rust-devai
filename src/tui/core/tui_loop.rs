@@ -6,12 +6,12 @@ use crate::event::Rx;
 use crate::exec::ExecutorTx;
 use crate::model::ModelManager;
 use crate::support::time::now_micro;
-use crate::tui::{AppStage, AppState};
 use crate::tui::AppTx;
 use crate::tui::ExitTx;
 use crate::tui::MainView;
 use crate::tui::core::app_state::process_app_state;
 use crate::tui::core::{PingTimerTx, start_ping_timer};
+use crate::tui::{ AppState};
 use ratatui::DefaultTerminal;
 use tokio::task::JoinHandle;
 use tracing::error;
@@ -83,13 +83,7 @@ pub fn run_ui_loop(
 					Some(evt) => evt,
 					None => {
 						// Send a ping event (to the ping_tx debouncer)
-						// - running tick
-						// - or if we still have a timed popup (to eventually remove it)
-						// - or if we are in Installed stage (to eventually dismiss it)
-						if app_state.running_tick_count().is_some()
-							|| app_state.popup().is_some_and(|p| p.is_timed())
-							|| app_state.stage() == AppStage::Installed
-						{
+						if app_state.should_be_pinged() {
 							let _ = ping_tx.send(now_micro()).await;
 						}
 

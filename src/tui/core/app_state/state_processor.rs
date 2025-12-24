@@ -367,7 +367,7 @@ fn process_stage(state: &mut AppState) {
 			AppStage::Installed => {
 				// Check if 4 seconds passed
 				if let Some(start) = state.core().installed_start_us {
-					if state.core().time - start > 4_000_000 {
+					if state.core().time - start > 2_000_000 {
 						state.set_stage(AppStage::Normal);
 						state.core_mut().current_work_id = None;
 						state.core_mut().installing_pack_ref = None;

@@ -196,6 +196,12 @@ impl AppState {
 	pub fn trigger_redraw(&mut self) {
 		self.core.do_redraw = true;
 	}
+
+	pub fn should_be_pinged(&self) -> bool {
+		self.running_tick_count().is_some()
+			|| self.popup().is_some_and(|p| p.is_timed())
+			|| self.stage() == AppStage::Installed
+	}
 }
 
 /// Popup
