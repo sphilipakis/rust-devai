@@ -229,7 +229,11 @@ type CmdResponse = {
 
 ## 4. AIPack Lua API (`aip.*`) Reference
 
-All functions return an error table `{ error: string }` on failure, unless otherwise specified (like `aip.path.parent` returning `nil`).
+**General Rules:**
+- All functions return an error table `{ error: string }` on failure, unless otherwise specified (like `aip.path.parent` returning `nil`).
+- Paths starting with `~` are user home. `ns@pack/` are pack references. Relative paths resolve to workspace root.
+- `null` is a global sentinel for missing values (behaves like JSON null). Native Lua `nil` erases properties and stops `ipairs`.
+- Build/dependency folders (e.g., `target/`, `node_modules/`) are excluded from file lists by default.
 
 ### aip.file - File System Operations
 
@@ -238,13 +242,13 @@ aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 aip.file.append(rel_path: string, content: string): FileInfo
 aip.file.delete(path: string): boolean // Only allowed within workspace (not base dir).
-aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo // options.content_when_empty writes content if existing file is empty.
 aip.file.exists(path: string): boolean
 aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[] // Excludes common build directories by default.
 aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[] // Excludes common build directories by default.
 aip.file.first(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 aip.file.info(path: string): FileInfo | nil
-aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: string, absolute?: boolean}): FileStats | nil
+aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: string, absolute?: boolean}): FileStats | nil // Returns nil if globs is nil, otherwise stats (0s if no matches).
 aip.file.load_json(path: string | nil): table | value | nil
 aip.file.load_ndjson(path: string | nil): object[] | nil
 aip.file.load_toml(path: string): table | value
@@ -299,7 +303,7 @@ aip.path.is_file(path: string): boolean
 aip.path.is_dir(path: string): boolean
 aip.path.diff(file_path: string, base_path: string): string
 aip.path.parent(path: string): string | nil
-aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil
+aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil // Returns nil if path is nil.
 aip.path.join(base: string, ...parts: string | string[]): string // Note: All parts are concatenated into one path before joining with base.
 aip.path.parse(path: string | nil): FileInfo | nil
 ```
@@ -322,7 +326,7 @@ aip.text.truncate(content: string | nil, max_len: number, ellipsis?: string): st
 aip.text.replace_markers(content: string | nil, new_sections: list): string | nil
 aip.text.ensure(content: string | nil, {prefix?: string, suffix?: string}): string | nil
 aip.text.ensure_single_trailing_newline(content: string | nil): string | nil
-aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil
+aip.text.format_size(bytes: integer | nil, lowest_size_unit?: "B" | "KB" | "MB" | "GB"): string | nil // lowest_size_unit defaults to "B".
 aip.text.extract_line_blocks(content: string | nil, options: {starts_with: string, extrude?: "content", first?: number}): (string[] | nil, string | nil)
 aip.text.split_first_line(content: string | nil, sep: string): (string | nil, string | nil)
 aip.text.split_last_line(content: string | nil, sep: string): (string | nil, string | nil)
@@ -342,9 +346,9 @@ aip.tag.extract_as_multi_map(content: string, tag_names: string | string[], opti
 aip.md.extract_blocks(md_content: string): MdBlock[]
 aip.md.extract_blocks(md_content: string, lang: string): MdBlock[]
 aip.md.extract_blocks(md_content: string, {lang?: string, extrude: "content"}): (MdBlock[], string)
-aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil)
+aip.md.extract_meta(md_content: string | nil): (table | nil, string | nil) // Returns (nil, nil) if md_content is nil.
 aip.md.outer_block_content_or_raw(md_content: string): string
-aip.md.extract_refs(md_content: string | nil): MdRef[]
+aip.md.extract_refs(md_content: string | nil): MdRef[] // Returns empty list if md_content is nil.
 ```
 
 ### aip.json - JSON Helpers
@@ -374,8 +378,8 @@ aip.yaml.stringify_multi_docs(content: table): string
 ### aip.web - HTTP Requests & URL
 
 ```typescript
-aip.web.get(url: string, options?: WebOptions): WebResponse
-aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse
+aip.web.get(url: string, options?: WebOptions): WebResponse // Default User-Agent is 'aipack'.
+aip.web.post(url: string, data: string | table, options?: WebOptions): WebResponse // Default User-Agent is 'aipack'.
 aip.web.parse_url(url: string | nil): table | nil
 aip.web.resolve_href(href: string | nil, base_url: string): string | nil
 ```
@@ -433,8 +437,8 @@ aip.time.local_tz_id(): string
 
 ```typescript
 aip.lua.dump(value: any): string
-aip.lua.merge(target: table, ...objs: table)
-aip.lua.merge_deep(target: table, ...objs: table)
+aip.lua.merge(target: table, ...objs: table) // Modifies target in-place.
+aip.lua.merge_deep(target: table, ...objs: table) // Modifies target in-place.
 ```
 
 ### aip.pdf - PDF Utilities
@@ -526,10 +530,10 @@ aip.code.comment_line(lang_ext: string, comment_content: string): string | {erro
 ```typescript
 aip.shape.to_record(names: string[], values: any[]): table
 aip.shape.to_records(names: string[], rows: any[][]): object[]
-aip.shape.record_to_values(record: table, names?: string[]): any[]
-aip.shape.records_to_value_lists(records: object[], names: string[]): any[][]
+aip.shape.record_to_values(record: table, names?: string[]): any[] // Alpha-sorts keys if names omitted. Uses NA sentinel for missing keys.
+aip.shape.records_to_value_lists(records: object[], names: string[]): any[][] // Uses null sentinel for missing keys.
 aip.shape.columnar_to_records(cols: { [string]: any[] }): object[]
-aip.shape.records_to_columnar(recs: object[]): { [string]: any[] }
+aip.shape.records_to_columnar(recs: object[]): { [string]: any[] } // Includes only keys present in all records (intersection).
 aip.shape.select_keys(rec: table, keys: string[]): table
 aip.shape.omit_keys(rec: table, keys: string[]): table
 aip.shape.remove_keys(rec: table, keys: string[]): integer
