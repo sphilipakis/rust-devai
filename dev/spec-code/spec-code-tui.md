@@ -22,21 +22,21 @@ pub enum RunTab { Overview, Tasks }
 pub enum AppEvent {
     DoRedraw,
     Term(crossterm::event::Event),
-    Action(ActionEvent),
+    Action(AppActionEvent),
     Hub(HubEvent),
     Tick(i64),
 }
 
-pub enum ActionEvent {
+pub enum AppActionEvent {
     Quit, Redo, CancelRun,
     Scroll(ScrollDir), ScrollPage(ScrollDir), ScrollToEnd(ScrollDir),
 }
 ```
 
-### Actions (src/tui/core/types/action.rs)
+### Actions (src/tui/core/types/ui_action.rs)
 
 ```rust
-pub enum Action {
+pub enum UiAction {
     Quit, Redo, CancelRun,
     ToggleRunsNav,
     CycleTasksOverviewMode,
@@ -45,6 +45,23 @@ pub enum Action {
     OpenFile(String), // Opens file at path using auto-editor
 }
 ```
+
+## Actions vs. Events
+
+AIPack distinguishes between **UI Intents** and **System Commands** to maintain a clean separation between view state and loop execution.
+
+### UiAction (UI Intent)
+`UiAction` represents a deferred request from the view layer. It is stored in `AppState` and processed during the `state_processor` cycle. This allows the system to resolve relative intents (like "Copy this task") into absolute data using the full context of the state before execution.
+
+### AppActionEvent (System Command)
+`AppActionEvent` represents a discrete, asynchronous instruction sent to the main loop via the `AppTx` channel. It triggers global side-effects (like quitting or interacting with the `Executor`).
+
+### Execution Flow
+1. **User Interaction**: A view component sets a `UiAction` in `AppState`.
+2. **State Processing**: `src/tui/core/app_state/state_processor.rs` reads the action.
+3. **Conversion**: The processor executes immediate logic (e.g., clipboard) or converts the intent into a system-level `AppActionEvent`.
+4. **Transport**: The event is sent via the `AppTx` channel.
+5. **Handling**: `src/tui/core/app_event_handlers.rs` performs the final side-effect.
 
 ## AppState API
 

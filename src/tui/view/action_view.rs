@@ -1,4 +1,4 @@
-use crate::tui::core::{Action, AppState, LinkZones};
+use crate::tui::core::{UiAction, AppState, LinkZones};
 use crate::tui::style;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -45,7 +45,7 @@ impl StatefulWidget for ActionView {
 		let mut link_zones = LinkZones::default();
 
 		// Helper to push an action item
-		let push_action = |spans: &mut Vec<Span>, zones: &mut LinkZones, key: &str, label: &str, action: Action| {
+		let push_action = |spans: &mut Vec<Span>, zones: &mut LinkZones, key: &str, label: &str, action: UiAction| {
 			let span_start = spans.len();
 			spans.push(Span::raw("["));
 			spans.push(Span::styled(key.to_string(), style::STL_TXT_ACTION));
@@ -54,16 +54,16 @@ impl StatefulWidget for ActionView {
 			zones.push_link_zone(0, span_start, span_end - span_start, action);
 		};
 
-		push_action(&mut all_spans, &mut link_zones, "r", "] Replay  ", Action::Redo);
+		push_action(&mut all_spans, &mut link_zones, "r", "] Replay  ", UiAction::Redo);
 		push_action(
 			&mut all_spans,
 			&mut link_zones,
 			"x",
 			"] Cancel Run  ",
-			Action::CancelRun,
+			UiAction::CancelRun,
 		);
-		push_action(&mut all_spans, &mut link_zones, "q", "] Quit  ", Action::Quit);
-		push_action(&mut all_spans, &mut link_zones, "n", n_label, Action::ToggleRunsNav);
+		push_action(&mut all_spans, &mut link_zones, "q", "] Quit  ", UiAction::Quit);
+		push_action(&mut all_spans, &mut link_zones, "n", n_label, UiAction::ToggleRunsNav);
 
 		all_spans.push(Span::raw("  "));
 
@@ -73,7 +73,7 @@ impl StatefulWidget for ActionView {
 			&mut link_zones,
 			"t",
 			&format!("] Tasks overview: {overview_mode}  "),
-			Action::CycleTasksOverviewMode,
+			UiAction::CycleTasksOverviewMode,
 		);
 
 		let mut line = Line::from(all_spans);

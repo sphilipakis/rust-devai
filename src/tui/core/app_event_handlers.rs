@@ -1,6 +1,6 @@
 use super::AppTx;
 use super::ExitTx;
-use super::event::{ActionEvent, AppEvent, DataEvent, ScrollDir};
+use super::event::{AppActionEvent, AppEvent, DataEvent, ScrollDir};
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
@@ -66,25 +66,25 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 		// }
 
 		match (key.code, mod_ctrl, mod_shift) {
-			(KeyCode::Char('q'), _, _) | (KeyCode::Char('c'), true, _) => app_tx.send(ActionEvent::Quit).await?,
-			(KeyCode::Char('r'), _, _) => app_tx.send(ActionEvent::Redo).await?,
-			(KeyCode::Char('x'), _, _) => app_tx.send(ActionEvent::CancelRun).await?,
+			(KeyCode::Char('q'), _, _) | (KeyCode::Char('c'), true, _) => app_tx.send(AppActionEvent::Quit).await?,
+			(KeyCode::Char('r'), _, _) => app_tx.send(AppActionEvent::Redo).await?,
+			(KeyCode::Char('x'), _, _) => app_tx.send(AppActionEvent::CancelRun).await?,
 
 			// -- Scroll To End (Shift + Arrow or Home/End)
 			(KeyCode::Up, _, true) | (KeyCode::Home, _, _) => {
-				app_tx.send(ActionEvent::ScrollToEnd(ScrollDir::Up)).await?
+				app_tx.send(AppActionEvent::ScrollToEnd(ScrollDir::Up)).await?
 			}
 			(KeyCode::Down, _, true) | (KeyCode::End, _, _) => {
-				app_tx.send(ActionEvent::ScrollToEnd(ScrollDir::Down)).await?
+				app_tx.send(AppActionEvent::ScrollToEnd(ScrollDir::Down)).await?
 			}
 
 			// -- Scroll Page (PageUp/PageDown)
-			(KeyCode::PageUp, _, _) => app_tx.send(ActionEvent::ScrollPage(ScrollDir::Up)).await?,
-			(KeyCode::PageDown, _, _) => app_tx.send(ActionEvent::ScrollPage(ScrollDir::Down)).await?,
+			(KeyCode::PageUp, _, _) => app_tx.send(AppActionEvent::ScrollPage(ScrollDir::Up)).await?,
+			(KeyCode::PageDown, _, _) => app_tx.send(AppActionEvent::ScrollPage(ScrollDir::Down)).await?,
 
 			// -- Scroll (Arrow)
-			(KeyCode::Up, _, false) => app_tx.send(ActionEvent::Scroll(ScrollDir::Up)).await?,
-			(KeyCode::Down, _, false) => app_tx.send(ActionEvent::Scroll(ScrollDir::Down)).await?,
+			(KeyCode::Up, _, false) => app_tx.send(AppActionEvent::Scroll(ScrollDir::Up)).await?,
+			(KeyCode::Down, _, false) => app_tx.send(AppActionEvent::Scroll(ScrollDir::Down)).await?,
 
 			_ => (),
 		}
@@ -94,26 +94,26 @@ async fn handle_term_event(term_event: &Event, app_tx: &AppTx) -> Result<()> {
 }
 
 async fn handle_action_event(
-	action_event: &ActionEvent,
+	action_event: &AppActionEvent,
 	_terminal: &mut DefaultTerminal,
 	executor_tx: &ExecutorTx,
 	_exit_tx: &ExitTx,
 ) -> Result<()> {
 	match action_event {
-		ActionEvent::Quit => {
+		AppActionEvent::Quit => {
 			// Handled at the main loop
 		}
-		ActionEvent::Redo => {
+		AppActionEvent::Redo => {
 			//
 			executor_tx.send(ExecActionEvent::Redo).await;
 		}
-		ActionEvent::CancelRun => {
+		AppActionEvent::CancelRun => {
 			//
 			executor_tx.send(ExecActionEvent::CancelRun).await;
 		}
-		ActionEvent::Scroll(_) => (),
-		ActionEvent::ScrollPage(_) => (),
-		ActionEvent::ScrollToEnd(_) => (),
+		AppActionEvent::Scroll(_) => (),
+		AppActionEvent::ScrollPage(_) => (),
+		AppActionEvent::ScrollToEnd(_) => (),
 	}
 	Ok(())
 }

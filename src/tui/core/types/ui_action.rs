@@ -1,7 +1,12 @@
 use crate::model::Id;
 
+/// Represents a **UI Intent** stored in `AppState`.
+/// It is stateful and represents a request that might need further context
+/// (for example, "Copy this task's output") before being executed.
+///
+/// See `dev/spec-code/spec-code-tui.md` for the architectural rationale and flow.
 #[derive(Debug, Clone)]
-pub enum Action {
+pub enum UiAction {
 	// -- Global Actions
 	Quit,
 	Redo,

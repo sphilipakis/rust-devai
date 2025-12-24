@@ -1,7 +1,7 @@
 use crate::model::{EndState, RunningState, Stage};
 use crate::model::{Log, LogBmc, PinBmc, Task};
 use crate::tui::AppState;
-use crate::tui::core::{Action, LinkZones, ScrollIden};
+use crate::tui::core::{UiAction, LinkZones, ScrollIden};
 use crate::tui::support::UiExt as _;
 use crate::tui::view::support::{self, RectExt as _};
 use crate::tui::view::{comp, style};
@@ -295,7 +295,7 @@ fn ui_for_task_list(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		// -- Link Zone
 		// +2 for the space + ico (from the ui_label), 2 to take space and label text
 		// NOTE: This should probably be part of the task facade (should not make those assumption here)
-		link_zones.push_link_zone(idx, marker_prefix_spans_len + 2, 2, Action::GoToTask { task_id });
+		link_zones.push_link_zone(idx, marker_prefix_spans_len + 2, 2, UiAction::GoToTask { task_id });
 
 		// -- Gap
 		task_line.push(gap_span.clone());
@@ -391,7 +391,7 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 			all_lines.len(),
 			marker_prefix_spans_len + zone_span_start,
 			zone_span_count,
-			Action::GoToTask { task_id },
+			UiAction::GoToTask { task_id },
 		);
 	}
 

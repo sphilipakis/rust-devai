@@ -1,5 +1,5 @@
 use crate::model::Pin;
-use crate::tui::core::{Action, LinkZones};
+use crate::tui::core::{UiAction, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;
 use crate::types::uc;
@@ -52,7 +52,7 @@ pub fn ui_for_pins_with_hover<'a>(
 			max_width,
 			None,
 			Some(link_zones),
-			Some(Action::ToClipboardCopy(content.clone())),
+			Some(UiAction::ToClipboardCopy(content.clone())),
 			path_color,
 		);
 

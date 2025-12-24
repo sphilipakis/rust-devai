@@ -6,7 +6,7 @@ use crate::model::ModelManager;
 use crate::model::Task;
 use crate::support::time::now_micro;
 use crate::tui::core::AppStage;
-use crate::tui::core::event::{ActionEvent, LastAppEvent};
+use crate::tui::core::event::{AppActionEvent, LastAppEvent};
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 use crate::tui::view::PopupView;
 
@@ -185,7 +185,7 @@ impl AppState {
 
 /// Others
 impl AppState {
-	pub fn take_action_event_to_send(&mut self) -> Option<ActionEvent> {
+	pub fn take_action_event_to_send(&mut self) -> Option<AppActionEvent> {
 		self.core.to_send_action.take()
 	}
 

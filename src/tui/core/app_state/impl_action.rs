@@ -1,11 +1,11 @@
-use crate::tui::core::{Action, AppState};
+use crate::tui::core::{AppState, UiAction};
 
 impl AppState {
-	pub fn action(&self) -> Option<&Action> {
+	pub fn action(&self) -> Option<&UiAction> {
 		self.core.do_action.as_ref()
 	}
 
-	pub fn set_action(&mut self, action: impl Into<Action>) {
+	pub fn set_action(&mut self, action: impl Into<UiAction>) {
 		let action = action.into();
 		self.core.do_action = Some(action);
 	}

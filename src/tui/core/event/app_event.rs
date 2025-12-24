@@ -20,7 +20,7 @@ pub enum AppEvent {
 
 	// App Action Event
 	#[from]
-	Action(ActionEvent),
+	Action(AppActionEvent),
 
 	// Data Event
 	#[from]
@@ -46,8 +46,12 @@ pub enum ScrollDir {
 	Down,
 }
 
+/// Represents a **System Command** sent via transport (`AppTx`).
+/// It is event-driven and represents a discrete instruction for the main loop.
+///
+/// See `dev/spec-code/spec-code-tui.md` for the architectural rationale and flow.
 #[derive(Debug)]
-pub enum ActionEvent {
+pub enum AppActionEvent {
 	Quit,
 	Redo,
 	CancelRun,

@@ -1,4 +1,4 @@
-use crate::tui::core::{Action, LinkZones, ScrollIden};
+use crate::tui::core::{UiAction, LinkZones, ScrollIden};
 use crate::tui::style;
 use crate::tui::support::{UiExt as _, clamp_idx_in_len};
 use crate::tui::view::comp::{self, ui_for_marker_section_str};
@@ -47,7 +47,7 @@ impl StatefulWidget for RunTasksView {
 
 		// -- Process the go to task
 		let mut selection_in_view = false;
-		if let Some(Action::GoToTask { task_id }) = state.action() {
+		if let Some(UiAction::GoToTask { task_id }) = state.action() {
 			if let Some(task_idx) = state.tasks().iter().position(|t| t.id == *task_id) {
 				state.set_task_idx(Some(task_idx));
 				selection_in_view = true;

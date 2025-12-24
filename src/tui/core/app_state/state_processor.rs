@@ -1,8 +1,8 @@
 use crate::model::{ErrBmc, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
-use crate::tui::core::event::{ActionEvent, ScrollDir};
-use crate::tui::core::{Action, AppStage, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden};
+use crate::tui::core::event::{AppActionEvent, ScrollDir};
+use crate::tui::core::{AppStage, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden, UiAction};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
@@ -81,16 +81,16 @@ pub fn process_app_state(state: &mut AppState) {
 		}
 	} else if let Some(action_evt) = state.last_app_event().as_action_event() {
 		match action_evt {
-			ActionEvent::Scroll(dir) => {
+			AppActionEvent::Scroll(dir) => {
 				scroll_dir = Some(*dir);
 				is_key_scroll = true;
 			}
-			ActionEvent::ScrollPage(dir) => {
+			AppActionEvent::ScrollPage(dir) => {
 				scroll_dir = Some(*dir);
 				is_key_scroll = true;
 				is_page = true;
 			}
-			ActionEvent::ScrollToEnd(dir) => {
+			AppActionEvent::ScrollToEnd(dir) => {
 				scroll_dir = Some(*dir);
 				is_key_scroll = true;
 				scroll_to_end = true;
@@ -261,7 +261,7 @@ pub fn process_app_state(state: &mut AppState) {
 		let new_task_idx =
 			offset_and_clamp_option_idx_in_len(&inner.task_idx, nav_tasks_offset, len_tasks).unwrap_or_default();
 		if let Some(task) = state.tasks().get(new_task_idx as usize) {
-			state.set_action(Action::GoToTask { task_id: task.id });
+			state.set_action(UiAction::GoToTask { task_id: task.id });
 			// Note: Little trick to not show the hover when navigating
 			state.clear_mouse_evts();
 		}
@@ -390,30 +390,30 @@ fn process_actions(state: &mut AppState) {
 	if let Some(action) = state.action().cloned() {
 		match action {
 			// -- Global Actions
-			Action::Quit => {
-				state.core_mut().to_send_action = Some(ActionEvent::Quit);
+			UiAction::Quit => {
+				state.core_mut().to_send_action = Some(AppActionEvent::Quit);
 				state.clear_action();
 			}
-			Action::Redo => {
-				state.core_mut().to_send_action = Some(ActionEvent::Redo);
+			UiAction::Redo => {
+				state.core_mut().to_send_action = Some(AppActionEvent::Redo);
 				state.clear_action();
 			}
-			Action::CancelRun => {
-				state.core_mut().to_send_action = Some(ActionEvent::CancelRun);
+			UiAction::CancelRun => {
+				state.core_mut().to_send_action = Some(AppActionEvent::CancelRun);
 				state.clear_action();
 			}
-			Action::ToggleRunsNav => {
+			UiAction::ToggleRunsNav => {
 				let show_runs = !state.core().show_runs;
 				state.core_mut().show_runs = show_runs;
 				state.clear_action();
 			}
-			Action::CycleTasksOverviewMode => {
+			UiAction::CycleTasksOverviewMode => {
 				state.core_mut().next_overview_tasks_mode();
 				state.clear_action();
 			}
 
 			// -- Specific Actions
-			Action::ToClipboardCopy(content) => {
+			UiAction::ToClipboardCopy(content) => {
 				// Ensure we have a clipboard instance
 				let ensure_clipboard: Result<(), String> = if state.core().clipboard.is_some() {
 					Ok(())
@@ -456,7 +456,7 @@ fn process_actions(state: &mut AppState) {
 				});
 				state.clear_action();
 			}
-			Action::ShowText => {
+			UiAction::ShowText => {
 				state.set_popup(PopupView {
 					content: "Click on Content".to_string(),
 					mode: PopupMode::Timed(Duration::from_millis(1000)),
@@ -464,11 +464,11 @@ fn process_actions(state: &mut AppState) {
 				});
 				state.clear_action();
 			}
-			Action::GoToTask { .. } => {
+			UiAction::GoToTask { .. } => {
 				// Switch to Tasks tab; keep the action so the view can select and clear it.
 				state.set_run_tab(RunTab::Tasks);
 			}
-			Action::OpenFile(path) => {
+			UiAction::OpenFile(path) => {
 				let spath = SPath::from(&path);
 				match crate::support::editor::open_file_auto(&spath) {
 					Ok(editor) => {

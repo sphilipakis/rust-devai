@@ -1,7 +1,7 @@
 use crate::model::{EndState, ModelManager, RunningState};
 use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
 use crate::support::text::truncate_with_ellipsis;
-use crate::tui::core::{Action, LinkZones, ScrollIden};
+use crate::tui::core::{UiAction, LinkZones, ScrollIden};
 use crate::tui::view::support::RectExt as _;
 use crate::tui::view::{comp, support};
 use crate::tui::{AppState, style};
@@ -394,7 +394,7 @@ fn ui_for_input(
 				max_width,
 				None,
 				Some(link_zones),
-				Some(Action::ToClipboardCopy(content.clone())),
+				Some(UiAction::ToClipboardCopy(content.clone())),
 				path_color,
 			);
 
@@ -494,7 +494,7 @@ fn ui_for_ai(
 			max_width,
 			None,
 			Some(link_zones),
-			Some(Action::ToClipboardCopy(content.clone())),
+			Some(UiAction::ToClipboardCopy(content.clone())),
 			path_color,
 		)
 	} else {
@@ -520,7 +520,7 @@ fn ui_for_output(
 				max_width,
 				None,
 				Some(link_zones),
-				Some(Action::ToClipboardCopy(content.clone())),
+				Some(UiAction::ToClipboardCopy(content.clone())),
 				path_color,
 			);
 

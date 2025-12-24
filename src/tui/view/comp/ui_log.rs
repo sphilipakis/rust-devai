@@ -69,7 +69,7 @@ pub fn ui_for_logs_with_hover<'a>(
 	link_zones: &mut crate::tui::core::LinkZones,
 	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
-	use crate::tui::core::Action;
+	use crate::tui::core::UiAction;
 
 	let mut all_lines: Vec<Line<'static>> = Vec::new();
 
@@ -109,7 +109,7 @@ pub fn ui_for_logs_with_hover<'a>(
 
 		let is_hover_target = is_hover_log(log);
 		let action = if is_hover_target {
-			Some(Action::ToClipboardCopy(raw_content.clone()))
+			Some(UiAction::ToClipboardCopy(raw_content.clone()))
 		} else {
 			None
 		};

@@ -1,5 +1,5 @@
 use crate::support::VecExt as _;
-use crate::tui::core::{Action, LinkZones};
+use crate::tui::core::{UiAction, LinkZones};
 use crate::tui::style;
 use crate::tui::support::UiExt;
 use crate::tui::view::support;
@@ -17,7 +17,7 @@ pub fn ui_for_marker_section_str(
 	max_width: u16,
 	content_prefix: Option<&Vec<Span<'static>>>,
 	mut link_zones: Option<&mut LinkZones>,
-	action: Option<Action>,
+	action: Option<UiAction>,
 	path_color: Option<Color>,
 ) -> Vec<Line<'static>> {
 	let spacer = " ";
@@ -60,7 +60,7 @@ pub fn ui_for_marker_section_str(
 	                        line_content: &str,
 	                        mut lz_opt: Option<&mut LinkZones>,
 	                        gid_opt: Option<u32>,
-	                        main_action_opt: Option<&Action>| {
+	                        main_action_opt: Option<&UiAction>| {
 		let mut spans = prefix_spans;
 		let content_span_start = spans.len();
 
@@ -77,7 +77,7 @@ pub fn ui_for_marker_section_str(
 
 			if let Some(lz) = lz_opt.as_mut() {
 				if let Some(path) = seg.file_path {
-					lz.push_link_zone(rel_line_idx, span_idx, 1, Action::OpenFile(path.to_string()));
+					lz.push_link_zone(rel_line_idx, span_idx, 1, UiAction::OpenFile(path.to_string()));
 				} else if let (Some(gid), Some(act)) = (gid_opt, main_action_opt) {
 					lz.push_group_zone(rel_line_idx, span_idx, 1, gid, act.clone());
 				}

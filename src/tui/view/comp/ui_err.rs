@@ -1,6 +1,6 @@
 use crate::model::ErrBmc;
 use crate::model::{Id, ModelManager};
-use crate::tui::core::{Action, LinkZones};
+use crate::tui::core::{UiAction, LinkZones};
 use crate::tui::style;
 use crate::tui::view::comp;
 use ratatui::style::Color;
@@ -67,7 +67,7 @@ pub fn ui_for_err_with_hover(
 				max_width,
 				Some(&spans_prefix),
 				Some(link_zones),
-				Some(Action::ToClipboardCopy(content.clone())),
+				Some(UiAction::ToClipboardCopy(content.clone())),
 				path_color,
 			);
 
@@ -85,7 +85,7 @@ pub fn ui_for_err_with_hover(
 				max_width,
 				None,
 				Some(link_zones),
-				Some(Action::ToClipboardCopy(content.clone())),
+				Some(UiAction::ToClipboardCopy(content.clone())),
 				path_color,
 			);
 			out.push(Line::default());

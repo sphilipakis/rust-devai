@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use crate::model::Id;
-use crate::tui::core::{Action, MouseEvt};
+use crate::tui::core::{UiAction, MouseEvt};
 use crate::tui::support::UiExt as _;
 use derive_more::From;
 use ratatui::layout::{Position, Rect};
@@ -31,7 +31,7 @@ impl LinkZones {
 		self.current_line += amount;
 	}
 
-	pub fn push_link_zone(&mut self, rel_line_idx: usize, span_start: usize, span_count: usize, action: Action) {
+	pub fn push_link_zone(&mut self, rel_line_idx: usize, span_start: usize, span_count: usize, action: UiAction) {
 		let line_idx = self.current_line + rel_line_idx;
 		self.zones.push(LinkZone::new(line_idx, span_start, span_count, action));
 	}
@@ -50,7 +50,7 @@ impl LinkZones {
 		span_start: usize,
 		span_count: usize,
 		group_id: u32,
-		action: Action,
+		action: UiAction,
 	) {
 		let line_idx = self.current_line + rel_line_idx;
 		self.zones.push(LinkZone::new_with_group(
@@ -76,14 +76,14 @@ pub struct LinkZone {
 	pub line_idx: usize,
 	pub span_start: usize,
 	pub span_count: usize,
-	pub action: Action,
+	pub action: UiAction,
 	pub group_id: Option<u32>,
 }
 
 /// Constructor
 impl LinkZone {
 	/// relative_line_idx is relative to the current_line
-	pub fn new(line_idx: usize, span_start: usize, span_count: usize, action: Action) -> Self {
+	pub fn new(line_idx: usize, span_start: usize, span_count: usize, action: UiAction) -> Self {
 		Self {
 			line_idx,
 			span_start,
@@ -98,7 +98,7 @@ impl LinkZone {
 		span_start: usize,
 		span_count: usize,
 		group_id: Option<u32>,
-		action: Action,
+		action: UiAction,
 	) -> Self {
 		Self {
 			line_idx,

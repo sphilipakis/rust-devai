@@ -51,7 +51,7 @@ impl LastAppEvent {
 		})
 	}
 
-	pub fn as_action_event(&self) -> Option<&super::ActionEvent> {
+	pub fn as_action_event(&self) -> Option<&super::AppActionEvent> {
 		self.last_event.as_ref().and_then(|e| match e.as_ref() {
 			AppEvent::Action(event) => Some(event),
 			_ => None,
