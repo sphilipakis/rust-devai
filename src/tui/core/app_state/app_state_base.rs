@@ -10,7 +10,7 @@ use crate::tui::core::event::{ActionEvent, LastAppEvent};
 use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 use crate::tui::view::PopupView;
 
-/// Public wrapper around AppStateCor.
+/// Public wrapper around AppStateCore.
 ///
 /// Visible only to the `tui` module so it does not leak to the whole crate.
 pub struct AppState {

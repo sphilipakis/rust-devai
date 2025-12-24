@@ -23,6 +23,7 @@ use crate::model::OnceModelManager;
 use crate::model::{EndState, ErrBmc, ErrForCreate, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
+use crate::types::{PackRef, looks_like_pack_ref};
 use crate::support::editor;
 use crate::support::time::now_micro;
 use crate::{Error, Result};
@@ -276,11 +277,14 @@ impl Executor {
 					}
 					Err(err) => {
 						// Check if it's a missing pack candidate
-						if agent_name.contains('@') {
-							let (pack_ref, _) = agent_name.split_once('/').unwrap_or((&agent_name, ""));
+						let agent_spath = SPath::new(&agent_name);
+						if looks_like_pack_ref(&agent_spath)
+							&& let Ok(pack_ref) = agent_name.parse::<PackRef>()
+						{
+							let pack_ref_base = format!("{}@{}", pack_ref.namespace, pack_ref.name);
 
 							// Create Work entry for installation
-							let work_data = serde_json::json!({ "pack_ref": pack_ref }).to_string();
+							let work_data = serde_json::json!({ "pack_ref": pack_ref_base }).to_string();
 							let work_id = WorkBmc::create(
 								&mm,
 								WorkForCreate {
@@ -291,7 +295,7 @@ impl Executor {
 
 							// Trigger actual install
 							let install_args = crate::exec::cli::InstallArgs {
-								aipack_ref: pack_ref.to_string(),
+								aipack_ref: pack_ref_base.to_string(),
 							};
 
 							// Mark work as started
