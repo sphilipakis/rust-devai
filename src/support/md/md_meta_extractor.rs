@@ -34,12 +34,10 @@ fn merge_values(meta_blocks: Vec<MdBlock>) -> Result<Value> {
 				values.push(json_value);
 			}
 			Some("yaml" | "yml") => {
-				let content = meta_block.content;
-
-				// Probably do not support multi docs now.
-				let json_value: Value = serde_yaml_ng::from_str(&content)
-					.map_err(|err| format!("Cannot parse yaml content.\n    Error: {err}\n    Content: {content}"))?;
-				values.push(json_value);
+				let yaml_docs = crate::support::yamls::parse(&meta_block.content)?;
+				for value in yaml_docs {
+					values.push(value);
+				}
 			}
 			Some(other) => return Err(format!("Lang '{other}' not supported for meta block").into()),
 			None => return Err("Meta block must have a compatible lang".into()),

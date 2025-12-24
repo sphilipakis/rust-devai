@@ -18,6 +18,7 @@ mod pack_ref;
 mod save_options;
 mod web_options;
 mod web_response;
+mod yaml_docs;
 
 pub use changes_info::*;
 pub use csv_content::*;
@@ -37,6 +38,7 @@ pub use pack_ref::*;
 pub use save_options::*;
 pub use web_options::*;
 pub use web_response::*;
+pub use yaml_docs::*;
 
 // Inter UI components
 pub mod uc;

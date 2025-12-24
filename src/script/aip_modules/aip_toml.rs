@@ -9,16 +9,13 @@
 //! ### Functions
 //!
 //! - `aip.toml.parse(content: string) -> table`
-//!   Parses a TOML string into a Lua table.
 //! - `aip.toml.stringify(content: table) -> string`
-//!   Stringifies a Lua table into a TOML string.
 //!
 //! ---
 //!
 
 use crate::runtime::Runtime;
-use crate::script::lua_value_to_serde_value;
-use crate::script::serde_value_to_lua_value;
+use crate::script::{lua_value_to_serde_value, serde_value_to_lua_value};
 use crate::support::tomls;
 use crate::{Error, Result};
 use mlua::{Lua, Table, Value};
@@ -135,7 +132,7 @@ fn parse(lua: &Lua, content: String) -> mlua::Result<Value> {
 /// ```
 fn stringify(_lua: &Lua, content: Value) -> mlua::Result<String> {
 	let json_value = lua_value_to_serde_value(content)?;
-	tomls::stringify_json_value(&json_value)
+	tomls::stringify_json_value_to_toml_string(&json_value)
 		.map_err(|err| Error::custom(format!("aip.toml.stringify fail to stringify. {err}")).into())
 }
 

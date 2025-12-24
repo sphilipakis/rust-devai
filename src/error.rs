@@ -154,6 +154,9 @@ pub enum Error {
 	#[display("{_0}")]
 	Toml(toml::de::Error),
 	#[from]
+	#[display("{_0}")]
+	Yaml(serde_yaml_ng::Error),
+	#[from]
 	JsonValueExt(value_ext::JsonValueExtError),
 	#[from]
 	Handlebars(handlebars::RenderError),

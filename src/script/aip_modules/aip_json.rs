@@ -7,27 +7,23 @@
 //! The `aip.json` module exposes functions to parse and stringify JSON content.
 //!
 //! IMPORTANT: By default, this suppor the parsing of jsonc content, meaning json with optional comments
-//!         
+//!
+//! - Parse function will return nil if content is nil
+//! - stringify return a single line
+//! - use `stringify_pretty` for idented multi-line
 //!
 //! ### Functions
 //!
 //! - `aip.json.parse(content: string | nil) -> table | nil`
-//!   Parses a JSON string into a Lua table. (Supports comments and trailing commas)
 //! - `aip.json.parse_ndjson(content: string | nil) -> table[] | nil`
-//!   Parses a newline-delimited JSON (NDJSON) string into a list of Lua tables.
 //! - `aip.json.stringify(content: table) -> string`
-//!   Stringifies a Lua table into a compact, single-line JSON string.
 //! - `aip.json.stringify_pretty(content: table) -> string`
-//!   Stringifies a Lua table into a JSON string with pretty formatting (2-space indentation).
-//! - `aip.json.stringify_to_line(content: table) -> string` (deprecated alias for `stringify`)
-//!   Deprecated: Use `aip.json.stringify` instead.
 //!
 //! ---
 //!
 
 use crate::runtime::Runtime;
-use crate::script::lua_value_to_serde_value;
-use crate::script::serde_value_to_lua_value;
+use crate::script::{lua_value_to_serde_value, serde_value_to_lua_value};
 use crate::support::jsons;
 use crate::{Error, Result};
 use mlua::{Lua, Table, Value};

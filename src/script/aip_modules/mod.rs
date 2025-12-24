@@ -27,5 +27,6 @@ pub mod aip_time;
 pub mod aip_toml;
 pub mod aip_uuid;
 pub mod aip_web;
+pub mod aip_yaml;
 
 // endregion: --- Modules

@@ -30,6 +30,7 @@ pub mod text;
 pub mod time;
 pub mod tomls;
 pub mod webc;
+pub mod yamls;
 pub mod zip;
 
 // endregion: --- Modules

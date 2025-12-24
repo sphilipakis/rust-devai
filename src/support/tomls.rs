@@ -18,6 +18,6 @@ pub fn parse_toml_into_json(toml_content: &str) -> Result<JsonValue> {
 }
 
 /// Stringify a `serde_json::Value` into a TOML string.
-pub fn stringify_json_value(json_value: &JsonValue) -> Result<String> {
+pub fn stringify_json_value_to_toml_string(json_value: &JsonValue) -> Result<String> {
 	toml::to_string(json_value).map_err(|err| Error::cc(format!("Cannot stringify {json_value:?}"), err))
 }
