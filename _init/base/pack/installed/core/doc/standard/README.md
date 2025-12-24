@@ -11,13 +11,14 @@ The main **aipack** concept is to minimize the friction of creating and running 
 
 | Stage           | Language       | Description                                                                                                |
 |-----------------|----------------|------------------------------------------------------------------------------------------------------------|
-| `# Before All`  | **Lua**        | Reshape/generate inputs and add command global data to scope (the "map" of the map/reduce capability).     |
-| `# Data`        | **Lua**        | Gather additional data per input and return it for the next stages.                                        |
-| `# System`      | **Handlebars** | Customize the system prompt with the `input`, `data`, and `before_all` data.                               |
-| `# Instruction` | **Handlebars** | Customize the user instruction prompt with the `input`, `data`, and `before_all` data.                     |
-| `# Assistant`   | **Handlebars** | Optional for special customizations, such as the "Jedi Mind Trick." Uses `input`, `data`, `before_all`.    |
-| `# Output`      | **Lua**        | Processes the `ai_response` from the LLM. Otherwise, `ai_response.content` will be output to the terminal. |
-| `# After All`   | **Lua**        | Called with `inputs` and `outputs` for post-processing after all inputs are completed.                     |
+| `# Options`     | **TOML**       | **Stage 0 (Config Step)**: Define agent-specific options (model, concurrency, etc.).                       |
+| `# Before All`  | **Lua**        | **Stage 1**: Reshape/generate inputs and add command global data to scope (the "map" of the map/reduce).   |
+| `# Data`        | **Lua**        | **Stage 2**: Gather additional data per input and return it for the next stages.                           |
+| `# System`      | **Handlebars** | **Stage 3**: Customize the system prompt with the `input`, `data`, and `before_all` data.                  |
+| `# Instruction` | **Handlebars** | **Stage 3**: Customize the user instruction prompt with the `input`, `data`, and `before_all` data.        |
+| `# Assistant`   | **Handlebars** | **Stage 3**: Optional for special customizations, such as the "Jedi Mind Trick."                           |
+| `# Output`      | **Lua**        | **Stage 4**: Processes the `ai_response` from the LLM.                                                     |
+| `# After All`   | **Lua**        | **Stage 5**: Called after all inputs are completed for final processing.                                   |
 
 > **Notes:**
 > - Stage names are case insensitive. 
@@ -210,6 +211,10 @@ Here is a full description of the complete flow:
         - `-i` or `--input` to specify one input (multiple `-i`/`--input` flags can be used). The input type is typically a string.
         - `-f some_glob` which creates one input per matched file, with the input structured as a [FileInfo object](lua.md#filemeta) `{path, name, stem, ext, ...}`.
     - Then the following stages occur (all are optional):
+- **Stage 0**: `# Options` (toml block) (optional - Config Step)
+    - This section allows defining agent-specific configuration using TOML.
+    - Supported keys: `model`, `input_concurrency`, and `model_aliases`.
+    - These settings take precedence over the workspace `.aipack/config.toml` and the base `~/.aipack-base/config.toml`.
 - **Stage 1**: `# Before All` (lua block) (optional)
     - The `lua` block has the following in scope:
         - `inputs`: A list of all inputs provided to the agent run (or `nil` if no inputs).
@@ -368,6 +373,15 @@ See the example agent file within this README, or check installed agents like `.
 ## Config
 
 On first run (`aip run`, `aip init`, etc.), `.aipack/config.toml` and `~/.aipack-base/config.toml` files will be created if they don't exist.
+
+### Options Precedence
+
+AIPack uses a cascading merge strategy for agent options (such as `model` and `input_concurrency`). Settings defined at a more specific level override those at a more general level:
+
+1.  **Lua Flow Overrides**: `aip.flow.data_response({options = ...})` or `aip.flow.before_all_response({options = ...})` (Highest precedence).
+2.  **Agent Options Stage**: The `# Options` TOML block within the `.aip` file.
+3.  **Workspace Config**: The project-specific `.aipack/config.toml` file.
+4.  **Base Config**: The global `~/.aipack-base/config.toml` file (Lowest precedence).
 
 **Workspace Config (`.aipack/config.toml`) Example:**
 ```toml

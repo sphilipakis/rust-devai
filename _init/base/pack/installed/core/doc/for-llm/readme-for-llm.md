@@ -17,13 +17,14 @@ An agent file consists of Markdown headings representing stages.
 
 | Stage           | Language    | Frequency    | Scope / Purpose                                                                 |
 |-----------------|-------------|--------------|---------------------------------------------------------------------------------|
-| `# Before All`  | Lua         | Once         | Setup global data, filter/modify `inputs`, override `options`.                  |
-| `# Data`        | Lua         | Per Input    | Gather input-specific data (e.g., file content), return `data` or `aip.flow`.   |
-| `# System`      | Handlebars  | Per Input    | Render the system prompt.                                                       |
-| `# Instruction` | Handlebars  | Per Input    | Render user prompt (Aliases: `# User`, `# Inst`).                               |
-| `# Assistant`   | Handlebars  | Per Input    | Render assistant priming (Aliases: `# Model`, `# Jedi Trick`).                  |
-| `# Output`      | Lua         | Per Response | Process `ai_response`, perform side effects (saving files), return `output`.    |
-| `# After All`   | Lua         | Once         | Final processing using `inputs` and `outputs` lists.                            |
+| `# Options`     | TOML        | Once         | **Stage 0 (Config Step)**: Define agent-specific options.                       |
+| `# Before All`  | Lua         | Once         | **Stage 1**: Setup global data, filter `inputs`, override `options`.            |
+| `# Data`        | Lua         | Per Input    | **Stage 2**: Gather input-specific data, return `data` or `aip.flow`.           |
+| `# System`      | Handlebars  | Per Input    | **Stage 3**: Render the system prompt.                                          |
+| `# Instruction` | Handlebars  | Per Input    | **Stage 3**: Render user prompt (Aliases: `# User`, `# Inst`).                  |
+| `# Assistant`   | Handlebars  | Per Input    | **Stage 3**: Render assistant priming (Aliases: `# Model`, `# Jedi Trick`).     |
+| `# Output`      | Lua         | Per Response | **Stage 4**: Process `ai_response`, side effects, return `output`.               |
+| `# After All`   | Lua         | Once         | **Stage 5**: Final processing using `inputs` and `outputs` lists.               |
 
 ## Input Handling
 
@@ -59,6 +60,15 @@ AIPack uses specific path prefixes:
 - **Pack Run**: `aip run namespace@pack/agent`
 - **Dry Run (Render Only)**: `aip run agent.aip -f file.txt -v --dry req`
 - **Dry Run (With AI, No Output)**: `aip run agent.aip -f file.txt -v --dry res`
+
+## Configuration & Precedence
+
+AIPack options (model, concurrency, etc.) are merged in the following order (highest precedence first):
+
+1.  **Lua Overrides**: via `aip.flow.data_response` or `aip.flow.before_all_response`.
+2.  **Agent `# Options`**: TOML block in the `.aip` file.
+3.  **Workspace Config**: `.aipack/config.toml`.
+4.  **Global Base Config**: `~/.aipack-base/config.toml`.
 
 ## Configuration Files
 

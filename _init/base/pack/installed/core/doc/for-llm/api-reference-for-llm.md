@@ -8,13 +8,14 @@ An AIPack agent is a multi-stage Markdown file where stages define pre-processin
 
 | Stage           | Language       | Runs Per        | Injected Variables (Scope)                                      | Purpose                                                              |
 |-----------------|----------------|-----------------|-----------------------------------------------------------------|----------------------------------------------------------------------|
-| `# Before All`  | **Lua**        | Once            | `aip`, `CTX`, `inputs`                                          | Global setup, filtering `inputs`, customizing `options`.             |
-| `# Data`        | **Lua**        | Per Input       | `aip`, `CTX`, `input`, `before_all`                             | Per-input data gathering (e.g., loading file content), flow control (`aip.flow.skip`), input/option overrides. |
-| `# System`      | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | System prompt template.                                              |
-| `# Instruction` | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | User prompt template (Aliases: `# User`, `# Inst`).                  |
-| `# Assistant`   | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | Optional specialized prompt priming (Aliases: `# Model`, `# Mind Trick`). |
-| `# Output`      | **Lua**        | Per Processed Input | `aip`, `CTX`, `input`, `data`, `before_all`, `ai_response`      | Process AI response (`ai_response`), perform side effects (e.g., save files). Returns result captured in `# After All`. |
-| `# After All`   | **Lua**        | Once            | `aip`, `CTX`, `inputs`, `outputs`, `before_all`                 | Final cleanup, summary generation. `inputs` and `outputs` are aligned lists. |
+| `# Options`     | **TOML**       | Once            | N/A                                                             | **Stage 0 (Config Step)**: Agent-specific configuration.             |
+| `# Before All`  | **Lua**        | Once            | `aip`, `CTX`, `inputs`                                          | **Stage 1**: Global setup, filtering `inputs`.                       |
+| `# Data`        | **Lua**        | Per Input       | `aip`, `CTX`, `input`, `before_all`                             | **Stage 2**: Per-input data gathering and flow control.              |
+| `# System`      | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: System prompt template.                                 |
+| `# Instruction` | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: User instruction prompt template.                       |
+| `# Assistant`   | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: Optional specialized prompt priming.                    |
+| `# Output`      | **Lua**        | Per Processed Input | `aip`, `CTX`, `input`, `data`, `before_all`, `ai_response`      | **Stage 4**: Process AI response and perform side effects.           |
+| `# After All`   | **Lua**        | Once            | `aip`, `CTX`, `inputs`, `outputs`, `before_all`                 | **Stage 5**: Final cleanup and aggregation.                          |
 
 **Injected Variables Detail:**
 
