@@ -10,7 +10,7 @@ This document provides a concise reference for the AIPack TUI architecture, type
 pub enum AppStage {
     Normal,     // Main run view
     Installing, // Dialog-style installation progress overlay
-    Installed,  // Success dialog overlay (auto-dismisses)
+    Installed,  // Success dialog overlay (auto-dismisses after 4s)
 }
 
 pub enum RunTab { Overview, Tasks }
