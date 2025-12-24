@@ -248,6 +248,7 @@ aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: str
 aip.file.load_json(path: string | nil): table | value | nil
 aip.file.load_ndjson(path: string | nil): object[] | nil
 aip.file.load_toml(path: string): table | value
+aip.file.load_yaml(path: string): list
 aip.file.append_json_line(path: string, data: value): FileInfo
 aip.file.append_json_lines(path: string, data: list): FileInfo
 aip.file.save_changes(path: string, changes: string): FileInfo
@@ -360,6 +361,14 @@ aip.json.stringify_pretty(content: table): string
 ```typescript
 aip.toml.parse(content: string): table
 aip.toml.stringify(content: table): string
+```
+
+### aip.yaml - YAML Helpers
+
+```typescript
+aip.yaml.parse(content: string | nil): table[] | nil
+aip.yaml.stringify(content: any): string
+aip.yaml.stringify_multi_docs(content: table): string
 ```
 
 ### aip.web - HTTP Requests & URL

@@ -16,6 +16,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.md`](#aipmd): Markdown processing (extract blocks, extract metadata).
 - [`aip.json`](#aipjson): JSON parsing and stringification.
 - [`aip.toml`](#aiptoml): TOML parsing and stringification helpers.
+- [`aip.yaml`](#aipyaml): YAML parsing and stringification.
 - [`aip.web`](#aipweb): HTTP requests (GET, POST), URL parsing and resolution.
 - [`aip.uuid`](#aipuuid): UUID generation and conversion.
 - [`aip.hash`](#aiphash): Hashing utilities (SHA256, SHA512, Blake3) with various encodings.
@@ -212,6 +213,10 @@ aip.file.first(include_globs: string | string[], options?: {base_dir?: string, a
 aip.file.info(path: string): FileInfo | nil
 
 aip.file.load_json(path: string | nil): table | value | nil
+
+aip.file.load_toml(path: string): table | value
+
+aip.file.load_yaml(path: string): list
 
 aip.file.load_ndjson(path: string | nil): object[] | nil
 
@@ -853,6 +858,47 @@ print(config.owner.name)
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if the file cannot be read, the TOML content is invalid, or the conversion to a Lua value fails.
+
+### aip.file.load_yaml
+
+Load a file, parse its content as YAML, and return the corresponding Lua list of documents.
+
+```lua
+-- API Signature
+aip.file.load_yaml(path: string): list
+```
+
+Loads the content of the file specified by `path`, parses it as YAML (supporting multiple documents
+separated by `---`), and converts the result into a Lua list of tables.
+The path is resolved relative to the workspace root.
+
+#### Arguments
+
+- `path: string`: The path to the YAML file, relative to the workspace root.
+
+#### Returns
+
+- `list`: A Lua list (table indexed from 1) where each element corresponds to a parsed YAML document.
+
+#### Example
+
+```lua
+-- Assuming 'data.yaml' contains:
+-- name: Doc1
+-- ---
+-- name: Doc2
+
+local docs = aip.file.load_yaml("data.yaml")
+print(docs[1].name) -- Output: Doc1
+print(docs[2].name) -- Output: Doc2
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The file cannot be found or read.
+- The file content is not valid YAML.
+- The YAML value cannot be converted to a Lua value.
 
 ### aip.file.load_ndjson
 
@@ -3459,6 +3505,113 @@ local toml_str = aip.toml.stringify(obj)
 #### Error
 
 Returns an error (Lua table `{ error: string }`) if `content` cannot be serialized into TOML.
+
+## aip.yaml
+
+The `aip.yaml` module exposes functions to parse and stringify YAML content.
+
+- Parse function will return nil if content is nil.
+- Parse supports multi-document YAML and returns a list of tables.
+- `stringify` will assume single document.
+- `stringify_multi_docs` will error if content is not a list.
+
+### Functions Summary
+
+```lua
+aip.yaml.parse(content: string | nil): table[] | nil
+
+aip.yaml.stringify(content: any): string
+
+aip.yaml.stringify_multi_docs(content: table): string
+```
+
+### aip.yaml.parse
+
+Parse a YAML string into a list of tables.
+
+```lua
+-- API Signature
+aip.yaml.parse(content: string | nil): table[] | nil
+```
+
+Parse a YAML string, which can contain multiple documents separated by `---`,
+into a Lua list of tables.
+
+#### Arguments
+
+- `content: string | nil` - The YAML string to parse. If nil, returns nil.
+
+#### Returns
+
+- `table[] | nil` - A Lua list (table with integer keys) where each element
+  represents one YAML document from the input.
+
+#### Example
+
+```lua
+local yaml_str = "name: John\n---\nname: Jane"
+local docs = aip.yaml.parse(yaml_str)
+print(docs[1].name) -- prints "John"
+print(docs[2].name) -- prints "Jane"
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the input string is not valid YAML.
+
+### aip.yaml.stringify
+
+Stringify a value into a YAML string.
+
+```lua
+-- API Signature
+aip.yaml.stringify(content: any): string
+```
+
+Convert a Lua value (usually a table) into a YAML string.
+
+#### Arguments
+
+- `content: any` - The Lua value to stringify.
+
+#### Returns
+
+- `string` - A string containing the YAML representation of the input.
+
+#### Example
+
+```lua
+local obj = { name = "John", age = 30 }
+local yaml_str = aip.yaml.stringify(obj)
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the value cannot be serialized into YAML.
+
+### aip.yaml.stringify_multi_docs
+
+Stringify a list of tables into a multi-document YAML string.
+
+```lua
+-- API Signature
+aip.yaml.stringify_multi_docs(content: table): string
+```
+
+Converts a Lua list of tables into a single YAML string where each table
+becomes a separate YAML document separated by `---`.
+
+#### Arguments
+
+- `content: table` - A Lua list of tables to stringify.
+
+#### Returns
+
+- `string` - A multi-document YAML string.
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if serialization fails or if the content is not a list.
 
 ## aip.web
 
