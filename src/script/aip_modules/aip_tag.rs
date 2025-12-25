@@ -203,9 +203,9 @@ fn extract_tag_elems(
 	}
 
 	let tag_names: Vec<&str> = tag_names.iter().map(String::as_str).collect();
-	let extracted_data = tag::extract(content, &tag_names, extrude_enabled);
+	let parts = tag::extract(content, &tag_names, extrude_enabled);
 
-	let (elems, extruded_content) = extracted_data.into_with_extrude_content();
+	let (elems, extruded_content) = parts.into_with_extrude_content();
 
 	let extruded = if extrude_enabled { Some(extruded_content) } else { None };
 

@@ -52,7 +52,7 @@ lazy-regex = "3.4.1"
 num-format = "0.4.4"
 humantime = "2.3.0"
 textwrap = "0.16"
-markex = "0.1.0-alpha.2"
+markex = { version = "0.1.0-alpha.3"}
 # -- HTML & XML
 html-escape = "0.2"
 html-helpers = { version = "0.1.0" }
