@@ -120,7 +120,8 @@ pub fn set_window_name(name: &str) -> bool {
 
 	if term_info.match_any("tmux") {
 		let res = crate::support::os::new_run_command("tmux")
-			.arg("rename-window")
+			.arg("select-pane")
+			.arg("-T")
 			.arg(name)
 			.spawn();
 		return res.is_ok();
