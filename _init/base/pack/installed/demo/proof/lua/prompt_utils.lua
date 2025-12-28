@@ -70,7 +70,9 @@ function should_skip(inst, content)
 		return aip.skip("Empty content and instructions - Start writing, and do a redo.")
 	end
 
-	local first_part = (inst ~= "" and inst) or content
+	if content == "" then
+		return aip.flow.skip("Content is empty, start writting content")
+	end
 
 	-- if starts with placeholder
 	if content and content:sub(1, 13):lower() == "> placeholder" then

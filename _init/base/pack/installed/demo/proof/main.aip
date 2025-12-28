@@ -52,6 +52,7 @@ if meta then
 end
 
 local should_skip = p_utils.should_skip(inst, content)
+
 if should_skip ~= nil then
     local pin = {
         label = "Edit prompt:",
