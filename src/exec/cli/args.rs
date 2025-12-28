@@ -60,6 +60,10 @@ pub enum CliCommand {
 	#[command(name = "check-keys", about = "Check available API keys in the environment")]
 	CheckKeys(CheckKeysArgs),
 
+	/// Create a .gitignore file from a template
+	#[command(name = "create-gitignore", about = "Create a .gitignore file from a template")]
+	CreateGitignore(CreateGitignoreArgs),
+
 	/// Self management commands (e.g., setup, update)
 	#[command(name = "self", about = "Manage the aip CLI itself")]
 	Xelf(XelfArgs),
@@ -79,8 +83,9 @@ impl CliCommand {
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
-			CliCommand::CheckKeys(_) => false, // Non-interactive
-			CliCommand::Xelf(_) => false,      // Non-interactive
+			CliCommand::CheckKeys(_) => false,       // Non-interactive
+			CliCommand::CreateGitignore(_) => false, // Non-interactive
+			CliCommand::Xelf(_) => false,            // Non-interactive
 		}
 	}
 
@@ -93,8 +98,9 @@ impl CliCommand {
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
-			CliCommand::CheckKeys(_) => false, // Non-interactive
-			CliCommand::Xelf(_) => false,      // Non-interactive
+			CliCommand::CheckKeys(_) => false,       // Non-interactive
+			CliCommand::CreateGitignore(_) => false, // Non-interactive
+			CliCommand::Xelf(_) => false,            // Non-interactive
 		}
 	}
 }
@@ -216,6 +222,10 @@ pub struct InitArgs {
 #[derive(Parser, Debug)]
 pub struct CheckKeysArgs {}
 
+/// Arguments for the `create-gitignore` subcommand
+#[derive(Parser, Debug)]
+pub struct CreateGitignoreArgs {}
+
 /// Arguments for the `self` subcommand
 #[derive(Parser, Debug)]
 pub struct XelfArgs {
@@ -259,6 +269,7 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
 			CliCommand::Install(install_args) => ExecActionEvent::CmdInstall(install_args),
 			CliCommand::CheckKeys(args) => ExecActionEvent::CmdCheckKeys(args),
+			CliCommand::CreateGitignore(args) => ExecActionEvent::CmdCreateGitignore(args),
 			CliCommand::Xelf(xelf_args) => {
 				// Map Xelf subcommands to specific ExecActionEvent variants
 				match xelf_args.cmd {

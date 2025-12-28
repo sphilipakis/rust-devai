@@ -2,7 +2,8 @@ use crate::Result;
 use crate::dir_context::{
 	AipackBaseDir, AipackPaths, CONFIG_BASE_DEFAULT_FILE_NAME, CONFIG_BASE_USER_FILE_NAME, DirContext,
 };
-use crate::exec::init::assets;
+use crate::exec::assets;
+use crate::exec::init::init_assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
 use crate::support::files::{DeleteCheck, safer_trash_dir};
@@ -63,7 +64,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Init the installed pack path
 	if force {
-		let installed_pack_file_paths = assets::extract_base_pack_installed_file_paths()?;
+		let installed_pack_file_paths = init_assets::extract_base_pack_installed_file_paths()?;
 		// get the local pack folders
 		// like pack/installed/core/doc, pack/installed/demo/proof
 		let pack_folder_paths = installed_pack_file_paths
@@ -80,7 +81,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Init the built-int custom pack path
 	// old logic
-	let custom_pack_file_paths = assets::extract_base_pack_custom_file_paths()?;
+	let custom_pack_file_paths = init_assets::extract_base_pack_custom_file_paths()?;
 	assets::update_files("base", &base_dir, &custom_pack_file_paths.x_as_strs(), force).await?;
 
 	// -- Display message
@@ -111,7 +112,7 @@ fn extract_after_pack_path(file_path_from_base_dir: &str) -> Option<String> {
 	}
 }
 
-fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool, msg: &str) -> Result<bool> {
+pub fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change: bool, msg: &str) -> Result<bool> {
 	let full_path = aipack_base_dir.join(path);
 
 	if full_path.exists() {
@@ -177,7 +178,7 @@ fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
 	// If force (update version) or does not exist
 	let config_default_path = base_dir.join(CONFIG_BASE_DEFAULT_FILE_NAME);
 	if force || !config_default_path.exists() {
-		let config_zfile = assets::extract_base_config_default_toml_zfile()?;
+		let config_zfile = init_assets::extract_base_config_default_toml_zfile()?;
 		write(&config_default_path, config_zfile.content)?;
 		hub.publish_sync(format!(
 			"-> {label:<18} '{path}'",
@@ -190,7 +191,7 @@ fn update_base_configs(base_dir: &SPath, force: bool) -> Result<()> {
 	// ONLY if it DOES NOT EXISTS
 	let config_user_path = base_dir.join(CONFIG_BASE_USER_FILE_NAME);
 	if !config_user_path.exists() {
-		let config_zfile = assets::extract_base_config_user_toml_zfile()?;
+		let config_zfile = init_assets::extract_base_config_user_toml_zfile()?;
 		write(&config_user_path, config_zfile.content)?;
 		hub.publish_sync(format!(
 			"-> {label:<18} '{path}'",

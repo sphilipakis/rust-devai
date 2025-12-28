@@ -10,6 +10,7 @@ use crate::exec::init::{init_base, init_base_and_dir_context, init_wks};
 use crate::exec::{
 	ExecStatusEvent,
 	exec_check_keys,
+	exec_create_gitignore,
 	exec_install,
 	exec_list,
 	exec_new,
@@ -223,6 +224,10 @@ impl Executor {
 			ExecActionEvent::CmdCheckKeys(args) => {
 				// Does not require dir_context or runtime
 				exec_check_keys(args).await?;
+			}
+
+			ExecActionEvent::CmdCreateGitignore(args) => {
+				exec_create_gitignore(args).await?;
 			}
 
 			ExecActionEvent::CmdXelfSetup(args) => {

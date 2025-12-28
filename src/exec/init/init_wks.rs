@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::dir_context::{AipackPaths, AipackWksDir, DirContext, find_wks_dir};
-use crate::exec::init::assets;
+use crate::exec::init::init_assets;
 use crate::hub::get_hub;
 use crate::support::files::current_dir;
 use simple_fs::{SPath, ensure_dir};
@@ -70,7 +70,7 @@ async fn create_or_refresh_wks_files(aipack_wks_dir: &AipackWksDir) -> Result<()
 	let config_path = aipack_wks_dir.get_config_toml_path()?;
 
 	if !config_path.exists() {
-		let config_zfile = assets::extract_workspace_config_toml_zfile()?;
+		let config_zfile = init_assets::extract_workspace_config_toml_zfile()?;
 		write(&config_path, config_zfile.content)?;
 		hub.publish(format!(
 			"-> {:<18} '{}'",
