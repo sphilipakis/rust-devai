@@ -14,9 +14,12 @@ _*
 *.lockb
 *.log
 
+# -- For lua (optional, to remove the aip warnings) (the _init lua code)
+!.luarc.json
+
 # -- Aipack
 # Only allow .aipack/custom and .aipack/config.toml
-# Note: Here the starting `/` will just include the top .aipack. 
+# Note: Here the starting `/` will just include the top .aipack.
 #       Remove the starting `/` to include all .aipack/custom even if their in a sub dir
 *.aipack
 !.aipack/
@@ -81,7 +84,7 @@ __pycache__/
 
 
 # -- others
-# Allows .env (make sure only dev info) 
+# Allows .env (make sure only dev info)
 # !.env # Commented by default
 
 # Allow vscode

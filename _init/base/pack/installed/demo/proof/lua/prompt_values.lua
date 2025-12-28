@@ -9,6 +9,6 @@ And (optionally) add the code below the `====` as a starting point
 ]]
 
 return {
-  text_prompt_template = text_prompt_template,
-  code_prompt_template = code_prompt_template
+	text_prompt_template = text_prompt_template,
+	code_prompt_template = code_prompt_template
 }
