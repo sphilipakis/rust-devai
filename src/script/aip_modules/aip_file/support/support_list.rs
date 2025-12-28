@@ -1,14 +1,14 @@
-use crate::Error;
-use crate::Result;
 use crate::runtime::Runtime;
 use crate::support::AsStrsExt;
 use crate::types::FileRef;
+use crate::{Error, Result};
 use simple_fs::{ListOptions, SPath, list_files};
 use std::collections::HashSet;
 
 // Those folders need to be explicitly include in the include globs or they will be ignored with `**..**` glob (e.g. `**target/**`)
 const SPECIAL_DEFAULT_FOLDER_EXCLUDES: &[&str] = &[
 	//
+	".aipack/", // otherwise, when `**/*` it get included and can confuse
 	".git/",
 	"target/",
 	"node_modules/",
