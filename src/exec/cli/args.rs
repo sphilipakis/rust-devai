@@ -224,7 +224,11 @@ pub struct CheckKeysArgs {}
 
 /// Arguments for the `create-gitignore` subcommand
 #[derive(Parser, Debug)]
-pub struct CreateGitignoreArgs {}
+pub struct CreateGitignoreArgs {
+	/// Force overwrite if .gitignore already exists
+	#[arg(long = "force")]
+	pub force: bool,
+}
 
 /// Arguments for the `self` subcommand
 #[derive(Parser, Debug)]
