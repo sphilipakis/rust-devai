@@ -189,15 +189,18 @@ impl AppState {
 		let Some(tk_prompt) = task.tk_prompt_total else {
 			let mut msg = String::new();
 
-			if let Some(price) = task.pricing_input {
-				msg.push_str(&format!(".. ${price}/MTk"));
-			} else {
-				msg.push_str("...");
-			}
-
 			if let Some(prompt_size) = task.prompt_size {
 				let size_fmt = simple_fs::pretty_size(prompt_size as u64);
 				msg.push_str(&format!(" ({})", size_fmt.trim()));
+			}
+
+			if let Some(price) = task.pricing_input {
+				if msg.is_empty() {
+					msg.push_str(" ");
+				}
+				msg.push_str(&format!("${price}/MTk"));
+			} else {
+				msg.push_str("...");
 			}
 
 			return msg;
@@ -245,7 +248,7 @@ impl AppState {
 			let mut msg = String::new();
 
 			if let Some(price) = task.pricing_output {
-				msg.push_str(&format!(".. ${price}/MTk"));
+				msg.push_str(&format!("${price}/MTk"));
 			} else {
 				msg.push_str("...");
 			}

@@ -1,5 +1,4 @@
-use crate::model::{EndState, ModelManager, RunningState};
-use crate::model::{Log, LogBmc, PinBmc, Run, Task, TaskBmc};
+use crate::model::{EndState, Log, LogBmc, ModelManager, PinBmc, Run, RunningState, Task, TaskBmc};
 use crate::support::text::truncate_with_ellipsis;
 use crate::tui::core::{LinkZones, ScrollIden, UiAction};
 use crate::tui::view::support::RectExt as _;
@@ -112,7 +111,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 
 	let mut current_row = 0;
 
-	// -- Render l1 - Model Row
+	// -- Render l1 - Model Row (only if multiple tasks)
 	let model_name = state.current_task_model_name();
 	let cost = state.current_task_cost_fmt();
 	let duration = state.current_task_duration_txt();
