@@ -56,7 +56,7 @@ impl StatefulWidget for RunMainView {
 }
 
 fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
-	const VAL_1_WIDTH: u16 = 26; // for the agent and model column
+	const VAL_1_WIDTH: u16 = 25; // for the agent and model column
 
 	// -- Prepare Data
 	let agent_name = state.current_run_agent_name();
