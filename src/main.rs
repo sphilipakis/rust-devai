@@ -35,7 +35,7 @@ pub static VERSION: &str = crate_version!();
 
 // endregion: --- Modules
 
-const DEBUG_LOG: bool = false;
+const DEBUG_LOG: bool = true; // ->> DEBUG
 
 #[tokio::main]
 async fn main() -> Result<()> {
