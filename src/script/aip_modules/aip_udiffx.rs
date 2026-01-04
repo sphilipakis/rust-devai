@@ -35,6 +35,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 /// ```
 ///
 /// Scans `content` for a `<FILE_CHANGES>` block and applies the directives within it.
+/// Directives include `New`, `Patch` (supporting Unified Diff and simplified `@@` hunk headers), `Rename`, and `Delete`.
 /// All paths in the envelope are resolved relative to `base_dir`.
 ///
 /// ### Arguments
@@ -52,7 +53,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///    - `total_count: number`: Total number of directives found.
 ///    - `success_count: number`: Number of successful directives.
 ///    - `fail_count: number`: Number of failed directives.
-///    - `infos: array<table|list>`: List of results for each directive:
+///    - `items: array<table>`: List of results for each directive:
 ///      - `file_path: string`: Path of the affected file.
 ///      - `kind: string`: One of `"New"`, `"Patch"`, `"Rename"`, `"Delete"`, or `"Fail"`.
 ///      - `success: boolean`: `true` if this directive succeeded.
@@ -123,29 +124,29 @@ impl IntoLua for W<ApplyChangesStatus> {
 		let mut fail_count = 0;
 
 		let table = lua.create_table()?;
-		let infos_table = lua.create_table()?;
+		let items_table = lua.create_table()?;
 
-		for (i, info) in status.infos.iter().enumerate() {
+		for (i, item) in status.items.iter().enumerate() {
 			total_count += 1;
-			if info.success() {
+			if item.success() {
 				success_count += 1;
 			} else {
 				fail_count += 1;
 			}
 
 			let info_table = lua.create_table()?;
-			info_table.set("file_path", info.file_path())?;
-			info_table.set("kind", info.kind())?;
-			info_table.set("success", info.success())?;
-			info_table.set("error_msg", info.error_msg())?;
+			info_table.set("file_path", item.file_path())?;
+			info_table.set("kind", item.kind())?;
+			info_table.set("success", item.success())?;
+			info_table.set("error_msg", item.error_msg())?;
 
-			infos_table.set(i + 1, info_table)?;
+			items_table.set(i + 1, info_table)?;
 		}
 
 		table.set("total_count", total_count)?;
 		table.set("success_count", success_count)?;
 		table.set("fail_count", fail_count)?;
-		table.set("infos", infos_table)?;
+		table.set("items", items_table)?;
 		table.set("success", fail_count == 0)?;
 
 		Ok(Value::Table(table))

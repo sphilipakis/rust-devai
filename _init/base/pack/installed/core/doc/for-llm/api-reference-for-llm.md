@@ -116,7 +116,7 @@ type FileChangesStatus = {
   total_count: number,     // Total number of directives
   success_count: number,   // Number of successful directives
   fail_count: number,      // Number of failed directives
-  infos: FileDirectiveStatus[]
+  items: FileDirectiveStatus[]
 }
 
 type FileDirectiveStatus = {

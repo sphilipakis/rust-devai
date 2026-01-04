@@ -3137,6 +3137,7 @@ aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {ext
 ```
 
 Scans `content` for a `<FILE_CHANGES>` block and applies the directives within it.
+Directives include `New`, `Patch` (supporting Unified Diff and simplified `@@` hunk headers), `Rename`, and `Delete`.
 All paths in the envelope are resolved relative to `base_dir`.
 
 #### Arguments
@@ -6153,7 +6154,7 @@ Represents the overall result of applying multi-file changes. Returned by `aip.u
   total_count: number,     // Total number of directives found
   success_count: number,   // Number of successful directives
   fail_count: number,      // Number of failed directives
-  infos: FileDirectiveStatus[] // List of results for each directive
+  items: FileDirectiveStatus[] // List of results for each directive
 }
 ```
 
