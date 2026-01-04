@@ -3133,7 +3133,7 @@ Applies multi-file changes from a `<FILE_CHANGES>` envelope.
 
 ```lua
 -- API Signatures
-aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): status, remaining
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): FileChangesStatus, remaining
 ```
 
 Scans `content` for a `<FILE_CHANGES>` block and applies the directives within it.
@@ -3150,16 +3150,7 @@ All paths in the envelope are resolved relative to `base_dir`.
 
 #### Returns
 
-1. `status: table`:
-   - `success: boolean`: `true` if all directives were applied successfully.
-   - `total_count: number`: Total number of directives found.
-   - `success_count: number`: Number of successful directives.
-   - `fail_count: number`: Number of failed directives.
-   - `infos: array<table|list>`: List of results for each directive:
-     - `file_path: string`: Path of the affected file.
-     - `kind: string`: One of `"New"`, `"Patch"`, `"Rename"`, `"Delete"`, or `"Fail"`.
-     - `success: boolean`: `true` if this directive succeeded.
-     - `error_msg: string | nil`: Error details if `success` is `false`.
+1. `status: FileChangesStatus`: A [`FileChangesStatus`](#filechangesstatus) table indicating the result of the operation.
 2. `remaining: string | nil`: The content without the extracted block (only if `options.extrude == "content"`).
 
 #### Example
@@ -6149,6 +6140,33 @@ Represents a block defined by start and end tags, like `<TAG>content</TAG>`. Ret
   tag: string,       // The tag name (e.g., "FILE", "DATA")
   attrs?: table,     // Key/value map of attributes from the opening tag, optional
   content: string    // The content between the opening and closing tags
+}
+```
+
+### FileChangesStatus
+
+Represents the overall result of applying multi-file changes. Returned by `aip.udiffx.apply_file_changes`.
+
+```ts
+{
+  success: boolean,        // true if all directives were applied successfully
+  total_count: number,     // Total number of directives found
+  success_count: number,   // Number of successful directives
+  fail_count: number,      // Number of failed directives
+  infos: FileDirectiveStatus[] // List of results for each directive
+}
+```
+
+### FileDirectiveStatus
+
+Represents the result of a single directive within a file changes envelope.
+
+```ts
+{
+  file_path: string,       // Path of the affected file
+  kind: string,            // One of "New", "Patch", "Rename", "Delete", or "Fail"
+  success: boolean,        // true if this directive succeeded
+  error_msg: string | nil  // Error details if success is false
 }
 ```
 

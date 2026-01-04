@@ -111,6 +111,21 @@ type SaveOptions = {
   single_trailing_newline?: boolean
 }
 
+type FileChangesStatus = {
+  success: boolean,        // true if all directives were applied successfully
+  total_count: number,     // Total number of directives
+  success_count: number,   // Number of successful directives
+  fail_count: number,      // Number of failed directives
+  infos: FileDirectiveStatus[]
+}
+
+type FileDirectiveStatus = {
+  file_path: string,       // Path of the affected file
+  kind: "New" | "Patch" | "Rename" | "Delete" | "Fail",
+  success: boolean,        // true if this directive succeeded
+  error_msg?: string       // Error details if success is false
+}
+
 type DestOptions = {
   base_dir?: string,
   file_name?: string,
@@ -420,7 +435,7 @@ aip.hash.blake3_b64u(input: string): string
 ### aip.udiffx - Multi-File Changes
 
 ```typescript
-aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): table | (table, string) // If options provided, base_dir must be provided (can be nil).
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): FileChangesStatus | (FileChangesStatus, string) // If options provided, base_dir must be provided (can be nil).
 ```
 
 ### aip.time - Time Utilities
