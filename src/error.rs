@@ -146,6 +146,8 @@ pub enum Error {
 
 	// -- Externals auto froms
 	#[from]
+	Udiffx(udiffx::Error),
+	#[from]
 	FlumeRecv(flume::RecvError),
 	FlumeSend(String),
 	#[from]

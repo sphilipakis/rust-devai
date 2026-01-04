@@ -36,6 +36,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.shape`](#aipshape): Record shaping utilities (rows and columns, key selection/extraction).
 - [`aip.csv`](#aipcsv): CSV parsing and processing utilities.
 - [`aip.pdf`](#aippdf): PDF file utilities (page count, split pages).
+- [`aip.udiffx`](#aipudiffx): Applying multi-file changes (New, Patch, Rename, Delete).
 
 #### File Path supported
 
@@ -3115,6 +3116,76 @@ Returns an error if:
 - The file is not a valid PDF.
 - The destination directory cannot be created.
 - Any page cannot be saved.
+
+## aip.udiffx
+
+Functions for applying multi-file changes (New, Patch, Rename, Delete) encoded in the `<FILE_CHANGES>` envelope format.
+
+### Functions Summary
+
+```lua
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): status, remaining
+```
+
+### aip.udiffx.apply_file_changes
+
+Applies multi-file changes from a `<FILE_CHANGES>` envelope.
+
+```lua
+-- API Signatures
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): status, remaining
+```
+
+Scans `content` for a `<FILE_CHANGES>` block and applies the directives within it.
+All paths in the envelope are resolved relative to `base_dir`.
+
+#### Arguments
+
+- `content: string`: The raw text containing the `<FILE_CHANGES>...</FILE_CHANGES>` envelope.
+- `base_dir: string | nil` (optional): The directory where file changes will be applied, relative to the workspace root.
+  Defaults to the workspace root if `nil` or `""`.
+  **Note**: If `options` is provided, `base_dir` must be provided as well (can be `nil`).
+- `options: table` (optional):
+  - `extrude?: "content"` (optional): If set, returns the `content` string without the first `<FILE_CHANGES>` block as a second return value.
+
+#### Returns
+
+1. `status: table`:
+   - `success: boolean`: `true` if all directives were applied successfully.
+   - `total_count: number`: Total number of directives found.
+   - `success_count: number`: Number of successful directives.
+   - `fail_count: number`: Number of failed directives.
+   - `infos: array<table|list>`: List of results for each directive:
+     - `file_path: string`: Path of the affected file.
+     - `kind: string`: One of `"New"`, `"Patch"`, `"Rename"`, `"Delete"`, or `"Fail"`.
+     - `success: boolean`: `true` if this directive succeeded.
+     - `error_msg: string | nil`: Error details if `success` is `false`.
+2. `remaining: string | nil`: The content without the extracted block (only if `options.extrude == "content"`).
+
+#### Example
+
+```lua
+local ai_response = [[
+Here are the changes:
+<FILE_CHANGES>
+<FILE_NEW file_path="src/new_file.rs">
+pub fn hello() { println!("Hello"); }
+</FILE_NEW>
+</FILE_CHANGES>
+]]
+
+local status, remaining = aip.udiffx.apply_file_changes(ai_response, ".", {extrude = "content"})
+if status.success then
+    print("Changes applied successfully!")
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The `<FILE_CHANGES>` block cannot be parsed.
+- An I/O error occurs during the application process that prevents finishing the cycle.
+- The `base_dir` cannot be resolved.
 
 ## aip.csv
 

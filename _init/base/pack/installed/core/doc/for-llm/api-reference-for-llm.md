@@ -417,6 +417,12 @@ aip.hash.blake3_b64(input: string): string
 aip.hash.blake3_b64u(input: string): string
 ```
 
+### aip.udiffx - Multi-File Changes
+
+```typescript
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): table | (table, string) // If options provided, base_dir must be provided (can be nil).
+```
+
 ### aip.time - Time Utilities
 
 ```typescript

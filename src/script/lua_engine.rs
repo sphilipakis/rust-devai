@@ -259,7 +259,8 @@ fn init_aip(lua_vm: &Lua, runtime: &Runtime) -> Result<()> {
 	init_and_set!(
 		table, lua_vm, runtime, // -- The lua module names that refers to aip_...
 		flow, file, git, web, text, rust, path, md, tag, json, toml, csv, yaml, //
-		html, cmd, lua, code, hbs, semver, agent, uuid, hash, time, shape, pdf, editor
+		html, cmd, lua, code, hbs, semver, agent, uuid, hash, time, shape, pdf, editor, //
+		udiffx
 	);
 
 	init_and_set!(table, lua_vm, runtime, run, task);

@@ -25,6 +25,7 @@ pub mod aip_task;
 pub mod aip_text;
 pub mod aip_time;
 pub mod aip_toml;
+pub mod aip_udiffx;
 pub mod aip_uuid;
 pub mod aip_web;
 pub mod aip_yaml;
