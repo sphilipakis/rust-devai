@@ -576,7 +576,9 @@ Injected into all Lua stages, providing execution environment information. All p
 | CTX.TMP_DIR                    | Temporary directory for this session (`.aipack/.sessions/_uid_/tmp`).     |
 | CTX.SESSION_UID                | The Session Unique ID.                                                    |
 | CTX.RUN_UID                    | The Run Unique ID.                                                        |
+| CTX.RUN_NUM                    | 1-based sequence number of the current agent run in the session.          |
 | CTX.TASK_UID                   | The Task Unique ID (only available during per-input stages: `# Data`, `# Output`). |
+| CTX.TASK_NUM                   | 1-based sequence number of the current task in the run.                   |
 | CTX.PACK_IDENTITY              | Pack identity (`namespace@name`) (nil if not run via pack reference).     |
 | CTX.PACK_WORKSPACE_SUPPORT_DIR | Workspace support directory for the pack (if applicable).                 |
 | CTX.PACK_BASE_SUPPORT_DIR      | Base support directory for the pack (if applicable).                      |

@@ -3,10 +3,9 @@ use crate::hub::{HubEvent, get_hub};
 use crate::model::{LogKind, RuntimeCtx};
 use crate::run::Literals;
 use crate::runtime::Runtime;
-use crate::script::NullSentinel;
 use crate::script::aip_modules::aip_lua;
-use crate::script::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
+use crate::script::{NullSentinel, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -70,11 +69,17 @@ impl LuaEngine {
 			if let Some(run_uid) = rt_ctx.run_uid() {
 				ctx.set("RUN_UID", run_uid.to_string())?;
 			}
+			if let Some(run_num) = rt_ctx.run_num() {
+				ctx.set("RUN_NUM", run_num)?;
+			}
 			if let Some(parent_run_uid) = rt_ctx.parent_run_uid() {
 				ctx.set("PARENT_RUN_UID", parent_run_uid.to_string())?;
 			}
 			if let Some(task_uid) = rt_ctx.task_uid() {
 				ctx.set("TASK_UID", task_uid.to_string())?;
+			}
+			if let Some(task_num) = rt_ctx.task_num() {
+				ctx.set("TASK_NUM", task_num)?;
 			}
 			if let Some(stage) = rt_ctx.stage() {
 				ctx.set("STAGE", stage.to_string())?;

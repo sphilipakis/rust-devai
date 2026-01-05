@@ -1,6 +1,8 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, EpochUs, Id, ModelManager, Result, RunningState, Stage, TypedContent};
-use crate::model::{Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay};
+use crate::model::{
+	EndState, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay, ModelManager, Result, RunningState,
+	Stage, TypedContent,
+};
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
@@ -93,6 +95,13 @@ pub struct TaskForCreate {
 
 	#[field(skip)]
 	pub input_content: Option<TypedContent>,
+}
+
+#[derive(Debug, Clone, Fields, SqliteFromRow)]
+pub struct TaskForIds {
+	pub id: Id,
+	pub uid: Uuid,
+	pub idx: i32,
 }
 
 // region:    --- TaskForCreate Impl
@@ -340,6 +349,11 @@ impl TaskBmc {
 
 /// Task Specific bmcs
 impl TaskBmc {
+	pub fn get_ids(mm: &ModelManager, id: Id) -> Result<TaskForIds> {
+		let ids = base::get::<Self, TaskForIds>(mm, id)?;
+		Ok(ids)
+	}
+
 	/// List the task for a given run_id
 	/// NOTE: Order id ASC (default)
 	pub fn list_for_run(mm: &ModelManager, run_id: Id) -> Result<Vec<Task>> {
@@ -353,8 +367,7 @@ impl TaskBmc {
 		stage: Option<Stage>,
 		error: &crate::error::Error,
 	) -> Result<()> {
-		use crate::model::ContentTyp;
-		use crate::model::{ErrBmc, ErrForCreate};
+		use crate::model::{ContentTyp, ErrBmc, ErrForCreate};
 
 		let task = Self::get(mm, task_id)?;
 

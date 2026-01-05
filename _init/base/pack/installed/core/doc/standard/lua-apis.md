@@ -6280,7 +6280,9 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 | CTX.TMP_DIR              | `.aipack/.session/0196adbf-b792-7070-a5be-eec26698c065/tmp`              | The tmp dir for this session (all redos in same session)          |
 | CTX.SESSION_UID          | `0196adbf-b792-7070-a5be-eec26698c065`                                   | The Session Unique ID for this CLI Session                        |
 | CTX.RUN_UID              | `0196adbf-b792-7070-a5be-ddc33698c065`                                   | The Run Unique ID                                                 |
+| CTX.RUN_NUM              | `1`                                                                      | 1-based sequence number of the current agent run in the session.  |
 | CTX.TASK_UID             | `0196adbf-b792-7070-a5be-aac55698c065`                                   | The Task Unique ID (when in a task stage)                         |
+| CTX.TASK_NUM             | `5`                                                                      | 1-based sequence number of the current task in the run.           |
 
 
 

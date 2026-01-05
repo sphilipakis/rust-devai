@@ -1,7 +1,5 @@
 use crate::model::base::DbBmc as _;
-use crate::model::{Id, ModelManager};
-use crate::model::{Result, Stage};
-use crate::model::{RunBmc, TaskBmc};
+use crate::model::{Id, ModelManager, Result, RunBmc, Stage, TaskBmc};
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use mlua::FromLua;
@@ -15,9 +13,11 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Default)]
 pub struct RuntimeCtx {
 	run_uid: Option<Uuid>,
+	run_num: Option<i32>,
 	#[allow(unused)]
 	parent_run_uid: Option<Uuid>,
 	task_uid: Option<Uuid>,
+	task_num: Option<i32>,
 	stage: Option<Stage>,
 }
 
@@ -27,12 +27,20 @@ impl RuntimeCtx {
 		self.run_uid
 	}
 
+	pub fn run_num(&self) -> Option<i32> {
+		self.run_num
+	}
+
 	pub fn parent_run_uid(&self) -> Option<Uuid> {
 		self.parent_run_uid
 	}
 
 	pub fn task_uid(&self) -> Option<Uuid> {
 		self.task_uid
+	}
+
+	pub fn task_num(&self) -> Option<i32> {
+		self.task_num
 	}
 
 	pub fn stage(&self) -> Option<Stage> {
@@ -57,28 +65,29 @@ impl RuntimeCtx {
 		let run_uids = RunBmc::get_uids(mm, run_id)?;
 		Ok(RuntimeCtx {
 			run_uid: Some(run_uids.uid),
+			run_num: Some(run_uids.id.as_i64() as i32), // For now, use db id as the num
 			parent_run_uid: run_uids.parent_uid,
 			task_uid: None,
+			task_num: None,
 			stage: None,
 		})
 	}
 
 	pub fn from_run_task_ids(runtime: &Runtime, run_id: Option<Id>, task_id: Option<Id>) -> Result<Self> {
-		let mm = runtime.mm();
-		let (run_uid, parent_run_uid) = if let Some(run_id) = run_id {
-			let run_uids = RunBmc::get_uids(mm, run_id)?;
-			(Some(run_uids.uid), run_uids.parent_uid)
+		let mut runtime_ctx = if let Some(run_id) = run_id {
+			RuntimeCtx::from_run_id(runtime, run_id)?
 		} else {
-			(None, None)
+			RuntimeCtx::default()
 		};
 
-		let task_uid = task_id.map(|task_id| TaskBmc::get_uid(mm, task_id)).transpose()?;
-		Ok(RuntimeCtx {
-			run_uid,
-			parent_run_uid,
-			task_uid,
-			stage: None,
-		})
+		if let Some(task_id) = task_id {
+			let mm = runtime.mm();
+			let ids = TaskBmc::get_ids(mm, task_id)?;
+			runtime_ctx.task_uid = Some(ids.uid);
+			runtime_ctx.task_num = Some(ids.idx + 1); // because index start at 0
+		};
+
+		Ok(runtime_ctx)
 	}
 
 	pub fn get_run_id(&self, mm: &ModelManager) -> Result<Option<Id>> {
@@ -114,11 +123,15 @@ impl FromLua for RuntimeCtx {
 		let parent_run_uid = value.x_get_string("PARENT_RUN_UID").and_then(|s| Uuid::parse_str(&s).ok());
 		let task_uid = value.x_get_string("TASK_UID").and_then(|s| Uuid::parse_str(&s).ok());
 		let stage = value.x_get_string("STAGE").and_then(|s| Stage::from_str(&s));
+		let run_num = value.x_get_i64("RUN_NUM").map(|v| v as i32);
+		let task_num = value.x_get_i64("TASK_NUM").map(|v| v as i32);
 
 		Ok(RuntimeCtx {
 			run_uid,
+			run_num,
 			parent_run_uid,
 			task_uid,
+			task_num,
 			stage,
 		})
 	}
