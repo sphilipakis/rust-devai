@@ -53,7 +53,7 @@ num-format = "0.4.4"
 humantime = "2.3.0"
 textwrap = "0.16"
 markex = { version = "0.1.0" }
-udiffx = { version = "0.1.0-alpha.8" }
+udiffx = { version = "0.1.0-alpha.9" }
 # -- HTML & XML
 html-escape = "0.2"
 html-helpers = { version = "0.1.0" }
