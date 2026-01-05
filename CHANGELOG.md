@@ -1,5 +1,29 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2026-01-05 - [v0.8.12](https://github.com/jeremychone/rust-devai/compare/v0.8.11...v0.8.12)
+
+- `+` NEW API - aip.file - Implement `aip.file.load_yaml`, `aip.yaml.parse/stringify` for Lua
+- `+` NEW API - `aip.udiffx.apply_file_changes`
+- `+` NEW API - Add aip.editor.open_file Lua function (with terminal specified editor)
+- `+` tui - File Path click to open in editor (with new editor support logic)
+- `^` tui - Add Shift+Arrow support for scroll to top/bottom (for term that supports mod on shift)
+- `^` tui - Add keyboard scroll support (Up/Down arrows) via normalized ActionEvent
+- `+` cli - Add `aip create-gitignore` to create a default/best practice Add --force option to create-gitignore command
+- `+` cli - `aip run ...` pack auto install when not present
+- `^` cli - run - now -o use the editor logic to open file
+- `^` CTX - added CTX.RUN_NUM and CTX.TASK_NUM
+- `^` term - tmux - set agent name as pane name (not the window name)
+- `^` term - add support for wezterm (set title)
+- `^` doc - Add # Options stage documentation and precedence rules
+- `^` doc - Added readme-for-llm.md for concise AIP framework overview
+- `-` agent - demo@proof - fix when content is empty
+- `-` list files - correctly ignore .git/.., node_modules/ in globs (by default)
+- `.` list files - add `.aipack/` as the default folder excludes (for when list **/*, can be put expclictly to include)
+- `.` demo@proof - disable the open vscode
+- `.` config-default - flash to flash-3-preview
+- `.` pricing - add gemini-3-flash pricing
+
 ## 2025-12-13 - [v0.8.11](https://github.com/jeremychone/rust-devai/compare/v0.8.10...v0.8.11)
 
 - `!` init-base - now delete the builtin installed packs before installing (for consistency, use to trash for recovery)
