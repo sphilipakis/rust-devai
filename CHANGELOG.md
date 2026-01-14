@@ -1,6 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
 
+## 2026-01-14 - [v0.8.13](https://github.com/jeremychone/rust-devai/compare/v0.8.12...v0.8.13)
+
+- `^` aip.udiffx - update dependency. More resilient uniffied patch matching.
+
 ## 2026-01-05 - [v0.8.12](https://github.com/jeremychone/rust-devai/compare/v0.8.11...v0.8.12)
 
 - `+` NEW API - aip.file - Implement `aip.file.load_yaml`, `aip.yaml.parse/stringify` for Lua
