@@ -7,6 +7,7 @@ use crate::exec::init::init_assets;
 use crate::hub::get_hub;
 use crate::support::AsStrsExt;
 use crate::support::files::{DeleteCheck, safer_trash_dir};
+use blake3;
 use simple_fs::{SPath, ensure_dir};
 use std::collections::HashSet;
 use std::fs::{self, write};
@@ -25,6 +26,7 @@ pub async fn init_base_and_dir_context(force: bool) -> Result<DirContext> {
 /// `force`
 pub async fn init_base(force: bool) -> Result<()> {
 	let hub = get_hub();
+
 	// -- Check that the home dir exists
 
 	let mut new = false;
@@ -39,11 +41,11 @@ pub async fn init_base(force: bool) -> Result<()> {
 	let is_new_version = check_is_new_version(&base_dir).await?;
 
 	// if new version, then, force update
-	let force = is_new_version || force;
+	let force_update = is_new_version || force;
 
 	// -- Clean legacy bae content
 	// NOTE: Might be time to remove this one.
-	if force {
+	if force_update {
 		clean_legacy_base_content(&base_dir).await?;
 	}
 
@@ -51,7 +53,7 @@ pub async fn init_base(force: bool) -> Result<()> {
 	if new {
 		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", &*base_dir))
 			.await;
-	} else if force {
+	} else if force_update {
 		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", &*base_dir))
 			.await;
 		if is_new_version {
@@ -60,32 +62,61 @@ pub async fn init_base(force: bool) -> Result<()> {
 	}
 
 	// -- Update the config
-	update_base_configs(&base_dir, force)?;
+	update_base_configs(&base_dir, force_update)?;
 
 	// -- Init the installed pack path
-	if force {
+	if force_update {
 		let installed_pack_file_paths = init_assets::extract_base_pack_installed_file_paths()?;
-		// get the local pack folders
-		// like pack/installed/core/doc, pack/installed/demo/proof
-		let pack_folder_paths = installed_pack_file_paths
+
+		let mut files_to_update = Vec::new();
+		let mut packs_to_check = installed_pack_file_paths
 			.iter()
 			.filter_map(|path| extract_after_pack_path(path))
-			.collect::<HashSet<_>>();
-		// Clean the eventual installed pack
-		for pack_folder_path in pack_folder_paths {
-			// here `false` is just a place holder as we do not maintain the change state in this function
-			delete_aipack_base_folder(&base_dir, &pack_folder_path, false, "Previous built-in pack")?;
+			.collect::<HashSet<_>>()
+			.into_iter()
+			.collect::<Vec<_>>();
+		packs_to_check.sort();
+
+		for pack_folder_path in packs_to_check {
+			let zip_hash = assets::compute_assets_hash("base", &pack_folder_path)?;
+			let local_path = base_dir.join(&pack_folder_path);
+
+			let pack_changed = if local_path.exists() {
+				let local_hash = compute_fs_hash(&local_path)?;
+				local_hash != zip_hash
+			} else {
+				true
+			};
+
+			if pack_changed {
+				delete_aipack_base_folder(&base_dir, &pack_folder_path, false, "Built-in pack")?;
+				for f_path in &installed_pack_file_paths {
+					if f_path.starts_with(&pack_folder_path) {
+						files_to_update.push(f_path.as_str());
+					}
+				}
+			} else {
+				hub.publish(format!(
+					"-> {label:<18} Already in sync - '{path}'",
+					label = "Built-in Pack",
+					path = pack_folder_path
+				))
+				.await;
+			}
 		}
-		assets::update_files("base", &base_dir, &installed_pack_file_paths.x_as_strs(), force).await?;
+
+		if !files_to_update.is_empty() {
+			assets::update_files("base", &base_dir, &files_to_update, true).await?;
+		}
 	}
 
 	// -- Init the built-int custom pack path
 	// old logic
 	let custom_pack_file_paths = init_assets::extract_base_pack_custom_file_paths()?;
-	assets::update_files("base", &base_dir, &custom_pack_file_paths.x_as_strs(), force).await?;
+	assets::update_files("base", &base_dir, &custom_pack_file_paths.x_as_strs(), force_update).await?;
 
 	// -- Display message
-	if new || force {
+	if new || force_update {
 		hub.publish("=== DONE\n").await;
 	}
 
@@ -118,7 +149,9 @@ pub fn delete_aipack_base_folder(aipack_base_dir: &SPath, path: &str, mut change
 	if full_path.exists() {
 		let is_delete = safer_trash_dir(&full_path, Some(DeleteCheck::CONTAINS_AIPACK_BASE))?;
 		if is_delete {
-			get_hub().publish_sync(format!("-> {msg} - '~/.aipack-base/{path}' dir deleted."));
+			get_hub().publish_sync(format!(
+				"-> {msg:<18} Previous deleted - '~/.aipack-base/{path}' dir deleted."
+			));
 		}
 
 		change |= is_delete;
@@ -254,6 +287,21 @@ async fn clean_legacy_base_content(aipack_base_dir: &SPath) -> Result<bool> {
 	change = delete_aipack_base_folder(aipack_base_dir, "pack/installed/demo/craft", change, msg)?;
 
 	Ok(change)
+}
+
+fn compute_fs_hash(dir_path: &SPath) -> Result<blake3::Hash> {
+	let mut files = simple_fs::list_files(dir_path, None, None)?;
+	files.sort_by(|a, b| a.as_str().cmp(b.as_str()));
+
+	let mut hasher = blake3::Hasher::new();
+	for file in files {
+		let rel_path = file.try_diff(dir_path)?;
+		let content = fs::read(file.path())?;
+
+		hasher.update(rel_path.as_str().as_bytes());
+		hasher.update(&content);
+	}
+	Ok(hasher.finalize())
 }
 
 // endregion: --- Legacy Handling
