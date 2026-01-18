@@ -1,8 +1,7 @@
 use crate::Result;
 use crate::dir_context::DirContext;
 use crate::exec::cli::InstallArgs;
-use crate::exec::packer::InstalledPack;
-use crate::exec::packer::install_pack;
+use crate::exec::packer::{InstalledPack, install_pack};
 use crate::hub::get_hub;
 use size::Size;
 

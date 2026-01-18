@@ -10,7 +10,7 @@
 //!
 //! ### Functions
 //!
-//! - `aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo`        
+//! - `aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo`
 //! - `aip.file.append(rel_path: string, content: string)      : FileInfo`
 //! - `aip.file.ensure_exists(path: string, content?, options?) : FileInfo`
 
@@ -167,7 +167,7 @@ pub(super) fn file_delete(lua: &Lua, runtime: &Runtime, rel_path: String) -> mlu
 
 	let removed = if full_path.exists() {
 		// std::fs::remove_file(&full_path).map(|_| true).map_err(Error::from)?
-		safer_trash_file(&full_path)?
+		safer_trash_file(&full_path, None)?
 	} else {
 		false
 	};
@@ -605,7 +605,7 @@ mod tests {
 		let fx_path = "my-dir/some-tmp-file.aip";
 		let fx_code = format!(
 			r#"
-local path = CTX.TMP_DIR .. "/{fx_path}"	
+local path = CTX.TMP_DIR .. "/{fx_path}"
 aip.file.save(path,"{fx_content}")
 return {{
    file    = aip.file.load(path),
