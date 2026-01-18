@@ -2,6 +2,7 @@ use crate::dir_context::DirContext;
 use crate::exec::packer::PackToml;
 use crate::exec::packer::pack_toml::parse_validate_pack_toml;
 use crate::exec::packer::support;
+use crate::support::files::{DeleteCheck, safer_trash_dir, safer_trash_file};
 use crate::support::{webc, zip};
 use crate::types::PackIdentity;
 use crate::{Error, Result};
@@ -127,6 +128,11 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str) -> Result<In
 	// Common installation steps for both local and remote files
 	let mut installed_pack = install_aipack_file(dir_context, &aipack_zipped_file, &pack_uri)?;
 	installed_pack.zip_size = zip_size;
+
+	// If the file was downloaded (RepoPack or HttpLink), trash the temporary file
+	if matches!(pack_uri, PackUri::RepoPack(_) | PackUri::HttpLink(_)) {
+		safer_trash_file(&aipack_zipped_file, Some(DeleteCheck::CONTAINS_AIPACK_BASE))?;
+	}
 
 	Ok(installed_pack)
 }
@@ -315,9 +321,11 @@ fn install_aipack_file(
 
 	// If the directory exists, remove it first to ensure clean installation
 	if pack_target_dir.exists() {
-		std::fs::remove_dir_all(pack_target_dir.path()).map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to remove existing pack directory: {e}"),
+		safer_trash_dir(&pack_target_dir, Some(DeleteCheck::CONTAINS_AIPACK_BASE)).map_err(|e| {
+			Error::FailToInstall {
+				aipack_ref: pack_uri.to_string(),
+				cause: format!("Failed to trash existing pack directory: {e}"),
+			}
 		})?;
 	}
 
