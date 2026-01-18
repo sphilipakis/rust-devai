@@ -31,11 +31,15 @@ pub fn safer_trash_dir(path: &SPath, delete_check: Option<DeleteCheck>) -> Resul
 // region:    --- Support
 
 fn to_options(check: Option<DeleteCheck>) -> SaferTrashOptions<'static> {
-	let options = SaferTrashOptions::default();
+	let mut options = SaferTrashOptions::default();
 
 	let Some(check) = check else {
 		return options;
 	};
+
+	if check.contains(DeleteCheck::CONTAINS_AIPACK_BASE) {
+		options = options.with_restrict_to_current_dir(false);
+	}
 
 	match (
 		check.contains(DeleteCheck::CONTAINS_AIPACK_BASE),
