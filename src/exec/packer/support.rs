@@ -103,23 +103,18 @@ pub fn validate_aipack_file(aipack_file: &SPath, reference: &str) -> Result<()> 
 /// # Returns
 /// - Ok(()): If version comparison passes
 /// - Err(Error): If validation fails
-pub fn validate_version_update(installed_version: &str, new_version: &str) -> Result<()> {
+pub fn validate_version_update(installed_version: &str, new_version: &str) -> Result<std::cmp::Ordering> {
 	// Remove leading 'v' if present for both versions
 	let installed = installed_version.trim_start_matches('v');
 	let new = new_version.trim_start_matches('v');
 
 	// Parse versions into semver::Version
 	if let (Ok(installed_semver), Ok(new_semver)) = (Version::parse(installed), Version::parse(new)) {
-		// Check if installed version is greater than new version
-		if installed_semver > new_semver {
-			return Err(Error::InstallFailInstalledVersionAbove {
-				installed_version: installed_version.to_string(),
-				new_version: new_version.to_string(),
-			});
-		}
+		Ok(new_semver.cmp(&installed_semver))
+	} else {
+		// If not valid semver, fallback to string comparison
+		Ok(new.cmp(installed))
 	}
-
-	Ok(())
 }
 
 /// Validates if the version format is valid for installation
@@ -239,35 +234,27 @@ mod tests {
 
 	#[test]
 	fn test_validate_version_update() -> Result<()> {
+		use std::cmp::Ordering;
+
 		// Test case: New version is greater than installed
-		assert!(validate_version_update("1.0.0", "1.0.1").is_ok());
-		assert!(validate_version_update("1.0.0", "1.1.0").is_ok());
-		assert!(validate_version_update("1.0.0", "2.0.0").is_ok());
+		assert_eq!(validate_version_update("1.0.0", "1.0.1")?, Ordering::Greater);
+		assert_eq!(validate_version_update("1.0.0", "1.1.0")?, Ordering::Greater);
+		assert_eq!(validate_version_update("1.0.0", "2.0.0")?, Ordering::Greater);
 
 		// Test case: New version is equal to installed
-		assert!(validate_version_update("1.0.0", "1.0.0").is_ok());
+		assert_eq!(validate_version_update("1.0.0", "1.0.0")?, Ordering::Equal);
 
 		// Test case: New version is less than installed
-		let err = validate_version_update("1.0.1", "1.0.0").unwrap_err();
-		match err {
-			Error::InstallFailInstalledVersionAbove {
-				installed_version,
-				new_version,
-			} => {
-				assert_eq!(installed_version, "1.0.1");
-				assert_eq!(new_version, "1.0.0");
-			}
-			_ => panic!("Expected InstallFailInstalledVersionAbove error"),
-		}
+		assert_eq!(validate_version_update("1.0.1", "1.0.0")?, Ordering::Less);
 
 		// Test with leading 'v'
-		assert!(validate_version_update("v1.0.0", "1.0.1").is_ok());
-		assert!(validate_version_update("1.0.0", "v1.0.1").is_ok());
+		assert_eq!(validate_version_update("v1.0.0", "1.0.1")?, Ordering::Greater);
+		assert_eq!(validate_version_update("1.0.0", "v1.0.1")?, Ordering::Greater);
 
-		// Test with invalid versions (should pass since we can't compare them)
-		assert!(validate_version_update("invalid", "1.0.0").is_ok());
-		assert!(validate_version_update("1.0.0", "invalid").is_ok());
-		assert!(validate_version_update("invalid", "invalid").is_ok());
+		// Test with invalid versions (string comparison fallback)
+		assert_eq!(validate_version_update("a", "b")?, Ordering::Greater);
+		assert_eq!(validate_version_update("b", "a")?, Ordering::Less);
+		assert_eq!(validate_version_update("a", "a")?, Ordering::Equal);
 
 		Ok(())
 	}

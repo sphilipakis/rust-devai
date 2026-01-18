@@ -178,6 +178,10 @@ pub struct PackArgs {
 /// Arguments for the `install` subcommand
 #[derive(Parser, Debug)]
 pub struct InstallArgs {
+	/// Force installation even if the pack is already installed and up to date
+	#[arg(long = "force")]
+	pub force: bool,
+
 	/// The path to the .aipack file to install
 	/// Can be the path to the `path/to/some-pack.aipack`
 	/// Or later, can be `namspace@pack_name` and in this case, it will look aipack.ai registry

@@ -1,7 +1,6 @@
 use crate::dir_context::DirContext;
-use crate::exec::packer::PackToml;
 use crate::exec::packer::pack_toml::parse_validate_pack_toml;
-use crate::exec::packer::support;
+use crate::exec::packer::{PackToml, support};
 use crate::support::files::{DeleteCheck, safer_trash_dir, safer_trash_file};
 use crate::support::{webc, zip};
 use crate::types::PackIdentity;
@@ -90,6 +89,11 @@ impl LatestToml {
 
 // endregion: --- LatestToml
 
+pub enum InstallResponse {
+	Installed(InstalledPack),
+	UpToDate(InstalledPack),
+}
+
 pub struct InstalledPack {
 	pub pack_toml: PackToml,
 	pub path: SPath,
@@ -109,7 +113,7 @@ pub struct InstalledPack {
 /// - Probably need to remove the existing pack files; otherwise, some leftover files can be an issue.
 ///
 /// Returns the InstalledPack with information about the installed pack.
-pub async fn install_pack(dir_context: &DirContext, pack_uri: &str) -> Result<InstalledPack> {
+pub async fn install_pack(dir_context: &DirContext, pack_uri: &str, force: bool) -> Result<InstallResponse> {
 	let pack_uri = PackUri::parse(pack_uri);
 
 	// Get the aipack file path, downloading if needed
@@ -126,15 +130,20 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str) -> Result<In
 	let zip_size = support::get_file_size(&aipack_zipped_file, &pack_uri.to_string())?;
 
 	// Common installation steps for both local and remote files
-	let mut installed_pack = install_aipack_file(dir_context, &aipack_zipped_file, &pack_uri)?;
-	installed_pack.zip_size = zip_size;
+	let mut install_res = install_aipack_file(dir_context, &aipack_zipped_file, &pack_uri, force)?;
+
+	match install_res {
+		InstallResponse::Installed(ref mut p) | InstallResponse::UpToDate(ref mut p) => {
+			p.zip_size = zip_size;
+		}
+	}
 
 	// If the file was downloaded (RepoPack or HttpLink), trash the temporary file
 	if matches!(pack_uri, PackUri::RepoPack(_) | PackUri::HttpLink(_)) {
 		safer_trash_file(&aipack_zipped_file, Some(DeleteCheck::CONTAINS_AIPACK_BASE))?;
 	}
 
-	Ok(installed_pack)
+	Ok(install_res)
 }
 
 /// Downloads a pack from the repository based on PackIdentity
@@ -267,7 +276,8 @@ fn install_aipack_file(
 	dir_context: &DirContext,
 	aipack_zipped_file: &SPath,
 	pack_uri: &PackUri,
-) -> Result<InstalledPack> {
+	force: bool,
+) -> Result<InstallResponse> {
 	// -- Get the aipack base pack install dir
 	// This is the pack base dir and now, we need ot add `namespace/pack_name`
 	let pack_installed_dir = dir_context.aipack_paths().get_base_pack_installed_dir()?;
@@ -295,24 +305,36 @@ fn install_aipack_file(
 	// -- Check if a pack with the same namespace/name is already installed
 	let potential_existing_path = pack_installed_dir.join(&new_pack_toml.namespace).join(&new_pack_toml.name);
 
-	if potential_existing_path.exists() {
-		// If an existing pack is found, we need to check its version
+	if potential_existing_path.exists() && !force {
 		let existing_pack_toml_path = potential_existing_path.join("pack.toml");
 
-		if existing_pack_toml_path.exists() {
-			// Read the existing pack.toml file
-			let existing_toml_content =
-				std::fs::read_to_string(existing_pack_toml_path.path()).map_err(|e| Error::FailToInstall {
-					aipack_ref: pack_uri.to_string(),
-					cause: format!("Failed to read existing pack.toml: {e}"),
-				})?;
+		// Try to get the existing pack toml (if it fails, we treat it as 0.0.0 and update)
+		let existing_pack_toml = if existing_pack_toml_path.exists() {
+			let content = std::fs::read_to_string(existing_pack_toml_path.path()).ok();
+			content.and_then(|c| parse_validate_pack_toml(&c, existing_pack_toml_path.as_str()).ok())
+		} else {
+			None
+		};
 
-			// Parse the existing pack.toml
-			let existing_pack_toml =
-				parse_validate_pack_toml(&existing_toml_content, existing_pack_toml_path.as_str())?;
-
-			// Check if the installed version is greater than the new version
-			support::validate_version_update(&existing_pack_toml.version, &new_pack_toml.version)?;
+		if let Some(existing_pack_toml) = existing_pack_toml {
+			let ord = support::validate_version_update(&existing_pack_toml.version, &new_pack_toml.version)?;
+			match ord {
+				std::cmp::Ordering::Equal => {
+					return Ok(InstallResponse::UpToDate(InstalledPack {
+						pack_toml: existing_pack_toml,
+						path: potential_existing_path,
+						size: 0,
+						zip_size: 0,
+					}));
+				}
+				std::cmp::Ordering::Less => {
+					return Err(Error::InstallFailInstalledVersionAbove {
+						installed_version: existing_pack_toml.version,
+						new_version: new_pack_toml.version,
+					});
+				}
+				std::cmp::Ordering::Greater => {}
+			}
 		}
 	}
 
@@ -337,12 +359,12 @@ fn install_aipack_file(
 	// Calculate the size of the installed pack
 	let size = support::calculate_directory_size(&pack_target_dir)?;
 
-	Ok(InstalledPack {
+	Ok(InstallResponse::Installed(InstalledPack {
 		pack_toml: new_pack_toml,
 		path: pack_target_dir,
 		size,
 		zip_size: 0, // This will be populated by the caller
-	})
+	}))
 }
 
 // region:    --- Tests

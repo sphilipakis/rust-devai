@@ -20,8 +20,9 @@ use crate::exec::{
 	exec_xelf_setup, // Added import
 };
 use crate::hub::{HubEvent, get_hub};
-use crate::model::OnceModelManager;
-use crate::model::{EndState, ErrBmc, ErrForCreate, InstallData, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind};
+use crate::model::{
+	EndState, ErrBmc, ErrForCreate, InstallData, OnceModelManager, WorkBmc, WorkForCreate, WorkForUpdate, WorkKind,
+};
 use crate::run::{RunQueueExecutor, RunQueueTx, RunRedoCtx};
 use crate::runtime::Runtime;
 use crate::support::editor;
@@ -360,6 +361,7 @@ impl Executor {
 						dir_ctx,
 						crate::exec::cli::InstallArgs {
 							aipack_ref: pack_ref.clone(),
+							force: true,
 						},
 					)
 					.await;
