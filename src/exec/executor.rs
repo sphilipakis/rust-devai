@@ -173,6 +173,10 @@ impl Executor {
 					get_hub()
 						.publish(Error::cc(format!("Fail to perform action '{action_str}'"), err))
 						.await;
+
+					if !is_tui {
+						get_hub().publish(HubEvent::Quit).await;
+					}
 				}
 			});
 		}
