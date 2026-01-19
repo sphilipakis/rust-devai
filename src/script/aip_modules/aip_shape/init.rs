@@ -1,11 +1,10 @@
-use crate::Result;
-use crate::runtime::Runtime;
-use mlua::{Lua, Table, Value};
-
 use super::shape_records::{
 	columnar_to_records, record_to_values, records_to_columnar, records_to_value_lists, to_record, to_records,
 };
+use crate::Result;
+use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_shape::shape_keys::{extract_keys, omit_keys, remove_keys, select_keys};
+use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;

@@ -11,7 +11,8 @@ pub async fn exec_create_gitignore(args: CreateGitignoreArgs) -> Result<()> {
 	let gitignore_path = SPath::from(".gitignore");
 
 	if gitignore_path.exists() && !args.force {
-		hub.publish("-> .gitignore already exists. Skipping creation. (use --force to overwrite)").await;
+		hub.publish("-> .gitignore already exists. Skipping creation. (use --force to overwrite)")
+			.await;
 		return Ok(());
 	}
 

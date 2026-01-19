@@ -24,11 +24,11 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::support::into_option_string; // Added for nil handling
-use mlua::{Lua, Table, Value}; // Added Value for nil handling
-use sha2::{Digest, Sha256, Sha512};
 // Added blake3 Hasher
 use base64::engine::{Engine as _, general_purpose};
 use blake3::Hasher;
+use mlua::{Lua, Table, Value}; // Added Value for nil handling
+use sha2::{Digest, Sha256, Sha512};
 
 /// Initializes the `hash` Lua module.
 ///

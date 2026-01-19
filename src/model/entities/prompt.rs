@@ -1,6 +1,5 @@
-use crate::model::ScalarEnum;
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result};
+use crate::model::{EpochUs, Id, ModelManager, Result, ScalarEnum};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};

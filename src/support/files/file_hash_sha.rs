@@ -1,5 +1,6 @@
 use crate::Result;
-use base64::{Engine as _, engine::general_purpose};
+use base64::Engine as _;
+use base64::engine::general_purpose;
 use sha2::{Digest, Sha256, Sha512};
 use simple_fs::SPath;
 use std::fs::File;

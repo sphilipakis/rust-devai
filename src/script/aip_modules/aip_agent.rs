@@ -16,8 +16,7 @@
 
 use crate::event::new_one_shot_channel;
 use crate::model::RuntimeCtx;
-use crate::run::RunAgentResponse;
-use crate::run::RunSubAgentParams;
+use crate::run::{RunAgentResponse, RunSubAgentParams};
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
 use crate::{Error, Result};

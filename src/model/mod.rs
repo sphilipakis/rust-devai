@@ -9,7 +9,6 @@ mod runtime_ctx;
 mod types;
 
 use derive_aliases::*;
-
 pub use entities::*;
 pub use error::{Error, Result};
 pub use model_manager::*;

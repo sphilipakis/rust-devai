@@ -18,7 +18,6 @@ mod lua_uc;
 pub use aipack_custom::*;
 pub use lua_engine::*;
 pub use lua_helpers::*;
-
 #[cfg(test)] // Needed for test only (beside this script module)
 pub use support::process_lua_eval_result;
 

@@ -1,16 +1,13 @@
 use crate::model::{LogBmc, WorkBmc};
-use crate::tui::AppState;
-use crate::tui::style;
+use crate::tui::core::AppStage;
 use crate::tui::view::comp;
+use crate::tui::{AppState, style};
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, StatefulWidget, Widget as _};
-
-use crate::tui::core::AppStage;
-use ratatui::widgets::{Block, BorderType, Clear, Padding};
+use ratatui::widgets::{Block, BorderType, Clear, Padding, Paragraph, StatefulWidget, Widget as _};
 
 pub struct InstallView;
 

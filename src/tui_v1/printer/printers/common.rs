@@ -1,8 +1,6 @@
-use crossterm::{
-	cursor, execute,
-	style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
-	terminal::{self, ClearType},
-};
+use crossterm::style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor};
+use crossterm::terminal::{self, ClearType};
+use crossterm::{cursor, execute};
 use std::io::stdout;
 
 #[allow(unused)]

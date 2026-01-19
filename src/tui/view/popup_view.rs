@@ -1,5 +1,4 @@
-use crate::tui::AppState;
-use crate::tui::style;
+use crate::tui::{AppState, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize as _;

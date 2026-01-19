@@ -1,8 +1,7 @@
 //! The before all processor
 
 use crate::agent::{Agent, AgentOptions};
-use crate::model::{Id, Stage};
-use crate::model::{LogKind, RuntimeCtx};
+use crate::model::{Id, LogKind, RuntimeCtx, Stage};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, BeforeAllResponse, FromValue};

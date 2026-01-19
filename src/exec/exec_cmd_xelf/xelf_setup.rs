@@ -1,20 +1,16 @@
-use crate::Result;
 use crate::dir_context::AipackBaseDir;
 use crate::exec::cli::XelfSetupArgs;
 use crate::exec::exec_cmd_xelf::support;
 use crate::exec::init::extract_setup_aip_env_sh_zfile; // Import the specific function
 use crate::exec::init::init_base;
-use crate::hub::get_hub;
-use crate::hub::hub_prompt;
+use crate::hub::{get_hub, hub_prompt};
 use crate::support::os;
-use crate::support::os::current_os;
-use crate::support::os::is_windows;
-use crate::term;
+use crate::support::os::{current_os, is_windows};
+use crate::{Result, term};
 use simple_fs::read_to_string;
 use simple_fs::{SPath, ensure_dir}; // Import ensure_dir and SPath
 use std::fs;
-use std::fs::remove_file;
-use std::fs::write;
+use std::fs::{remove_file, write};
 
 // TODO: On Mac/Linux, we need to handle the situation where the `aip` binary is running to avoid issues.
 //       Using `mv` ensures that the running process can continue while the `aip` binary is swapped correctly.
@@ -121,7 +117,6 @@ Remove-Item .\aip.tar.gz
 #[cfg(windows)]
 mod for_windows {
 	use super::*;
-
 	use crate::support::proc::{self, ProcOptions};
 	use crate::term;
 

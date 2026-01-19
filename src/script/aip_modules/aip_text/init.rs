@@ -1,7 +1,3 @@
-use crate::Result;
-use crate::runtime::Runtime;
-use mlua::{Lua, Table};
-
 use super::{
 	aip_truncate,
 	ensure,
@@ -28,6 +24,9 @@ use super::{
 	trim_end,
 	trim_start,
 };
+use crate::Result;
+use crate::runtime::Runtime;
+use mlua::{Lua, Table};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;

@@ -1,11 +1,8 @@
 use crate::Result;
-use crossterm::{
-	cursor,
-	event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-	execute,
-	style::{Color, Print, ResetColor, SetForegroundColor},
-	terminal::{Clear, ClearType},
-};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
+use crossterm::terminal::{Clear, ClearType};
+use crossterm::{cursor, execute};
 use std::io::{Stdout, Write};
 
 pub fn prompt_select(stdout: &mut Stdout, prompt: &str, options: &[&str]) -> Result<usize> {

@@ -1,7 +1,6 @@
 use crate::support::text::format_duration_us;
-use crate::tui::AppState;
-use crate::tui::support;
 use crate::tui::view::style;
+use crate::tui::{AppState, support};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;

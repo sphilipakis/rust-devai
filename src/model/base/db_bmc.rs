@@ -1,5 +1,4 @@
-use crate::model::Result;
-use crate::model::{Id, ModelManager, base};
+use crate::model::{Id, ModelManager, Result, base};
 use uuid::Uuid;
 
 pub trait DbBmc: Sized {

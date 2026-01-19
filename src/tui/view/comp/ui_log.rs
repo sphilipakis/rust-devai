@@ -1,5 +1,4 @@
-use crate::model::Stage;
-use crate::model::{Log, LogKind};
+use crate::model::{Log, LogKind, Stage};
 use crate::tui::style;
 use crate::tui::view::comp;
 use ratatui::style::Color;

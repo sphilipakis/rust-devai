@@ -198,8 +198,7 @@ impl RunBmc {
 	/// NOTE:
 	///   - This does not set the end time (just the end_state)
 	pub fn set_end_error(mm: &ModelManager, run_id: Id, stage: Option<Stage>, error: &crate::Error) -> Result<()> {
-		use crate::model::ContentTyp;
-		use crate::model::{ErrBmc, ErrForCreate};
+		use crate::model::{ContentTyp, ErrBmc, ErrForCreate};
 
 		// -- Create the err rec
 		let err_c = ErrForCreate {

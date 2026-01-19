@@ -1,10 +1,8 @@
 use crate::Result;
-use crossterm::{
-	cursor::MoveToColumn,
-	execute,
-	style::{Color, Print, ResetColor, SetForegroundColor},
-	terminal::{Clear, ClearType},
-};
+use crossterm::cursor::MoveToColumn;
+use crossterm::execute;
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
+use crossterm::terminal::{Clear, ClearType};
 use std::io::{Write as _, stdout};
 
 #[allow(unused_must_use)] // TODO: need to remove and make this function return error

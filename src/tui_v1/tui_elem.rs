@@ -1,9 +1,7 @@
-use crossterm::{
-	cursor::{MoveToColumn, MoveToNextLine},
-	execute,
-	style::{Color, Print, ResetColor, SetForegroundColor},
-	terminal::{Clear, ClearType},
-};
+use crossterm::cursor::{MoveToColumn, MoveToNextLine};
+use crossterm::execute;
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
+use crossterm::terminal::{Clear, ClearType};
 use std::io::{Stdout, stdout};
 
 // region:    --- Bottom Bar

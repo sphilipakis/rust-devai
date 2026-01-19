@@ -17,7 +17,6 @@ mod types;
 pub use app_state::{AppStage, AppState};
 pub use ping_timer::{PingTimerTx, start_ping_timer};
 pub use tui_impl::{AppTx, ExitTx, start_tui};
-
 // -- Public flatten
 pub use types::*;
 

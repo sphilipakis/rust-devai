@@ -1,5 +1,5 @@
-use crate::{Error, Result};
 use crate::types::YamlDocs;
+use crate::{Error, Result};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -22,7 +22,8 @@ pub fn stringify_multi(values: &[Value]) -> Result<String> {
 		if i > 0 {
 			out.push_str("---\n");
 		}
-		let s = serde_yaml_ng::to_string(val).map_err(|err| Error::cc(format!("Cannot stringify multi-doc yaml at index {i}"), err))?;
+		let s = serde_yaml_ng::to_string(val)
+			.map_err(|err| Error::cc(format!("Cannot stringify multi-doc yaml at index {i}"), err))?;
 		out.push_str(&s);
 	}
 	Ok(out)

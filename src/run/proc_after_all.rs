@@ -2,8 +2,7 @@
 
 use crate::Result;
 use crate::agent::Agent;
-use crate::model::RuntimeCtx;
-use crate::model::{Id, Stage};
+use crate::model::{Id, RuntimeCtx, Stage};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use serde_json::Value;

@@ -1,9 +1,8 @@
-use semver::Version;
-
 use crate::VERSION;
 use crate::error::{Error, Result};
 use crate::exec::cli::XelfUpdateArgs;
 use crate::hub::{HubEvent, get_hub};
+use semver::Version;
 use serde::Deserialize; // Current CLI version
 
 const LATEST_TOML_URL: &str = "https://repo.aipack.ai/aip-dist/stable/latest/latest.toml";

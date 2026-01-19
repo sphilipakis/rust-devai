@@ -1,8 +1,7 @@
 use crate::agent::{Agent, find_agent};
 use crate::exec::cli::RunArgs;
 use crate::hub::{HubEvent, get_hub};
-use crate::run::run_agent;
-use crate::run::{RunRedoCtx, RunTopAgentParams};
+use crate::run::{RunRedoCtx, RunTopAgentParams, run_agent};
 use crate::runtime::Runtime;
 use crate::support::jsons::into_values;
 use crate::support::{editor, text};

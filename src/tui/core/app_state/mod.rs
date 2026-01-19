@@ -13,9 +13,8 @@ mod impl_sys;
 mod state_processor;
 mod sys_state;
 
-use app_state_core::*;
-
 pub use app_state_base::*;
+use app_state_core::*;
 pub use common::*;
 pub use state_processor::process_app_state;
 pub use sys_state::*;

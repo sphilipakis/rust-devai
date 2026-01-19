@@ -1,5 +1,4 @@
-use crate::model::Id;
-use crate::model::Run;
+use crate::model::{Id, Run};
 use crate::tui::core::RunItem;
 use std::collections::{HashMap, HashSet};
 

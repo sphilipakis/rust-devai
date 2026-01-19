@@ -1,10 +1,8 @@
 use crate::Result;
 use crate::support::os;
 use crate::term::safer_println;
-use crossterm::{
-	execute,
-	style::{Color, Print, ResetColor, SetForegroundColor},
-};
+use crossterm::execute;
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
 use std::collections::HashSet;
 use std::io::{Write, stdout};
 

@@ -1,6 +1,5 @@
 use crate::Result;
-use crate::model::{EndState, Id, ModelManager, RunStep};
-use crate::model::{LogKind, RunBmc, RunForUpdate, TaskBmc, TaskForUpdate};
+use crate::model::{EndState, Id, LogKind, ModelManager, RunBmc, RunForUpdate, RunStep, TaskBmc, TaskForUpdate};
 use crate::runtime::{RtLog, Runtime};
 use crate::support::time::now_micro;
 use derive_more::From;

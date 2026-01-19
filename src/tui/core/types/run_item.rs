@@ -1,5 +1,4 @@
-use crate::model::Run;
-use crate::model::{Id, RunningState};
+use crate::model::{Id, Run, RunningState};
 
 #[derive(Debug, Clone)]
 pub struct RunItem {

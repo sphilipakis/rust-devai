@@ -1,9 +1,8 @@
 use crate::dir_context::PackDir;
-use crossterm::{
-	execute,
-	style::{Attribute, Print, ResetColor, SetAttribute},
-};
-use std::{collections::HashSet, io::stdout};
+use crossterm::execute;
+use crossterm::style::{Attribute, Print, ResetColor, SetAttribute};
+use std::collections::HashSet;
+use std::io::stdout;
 
 #[allow(unused_must_use)] // TODO: need to remove and make this function return error
 pub fn print_pack_list(pack_dirs: &[&PackDir], _interactive: bool) {

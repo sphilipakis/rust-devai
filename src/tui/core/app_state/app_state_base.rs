@@ -1,13 +1,9 @@
-use super::AppStateCore;
-use super::SysState;
+use super::{AppStateCore, SysState};
 use crate::Result;
-use crate::model::Id;
-use crate::model::ModelManager;
-use crate::model::Task;
+use crate::model::{Id, ModelManager, Task};
 use crate::support::time::now_micro;
-use crate::tui::core::AppStage;
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
-use crate::tui::core::{OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
+use crate::tui::core::{AppStage, OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
 use crate::tui::view::PopupView;
 
 /// Public wrapper around AppStateCore.

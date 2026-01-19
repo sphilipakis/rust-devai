@@ -1,15 +1,12 @@
 use crate::hub::get_hub;
-use crate::model::Id;
-use crate::model::ModelManager;
-use crate::model::Result;
 use crate::model::base::DbBmc;
-use crate::model::base::prep_fields::prep_fields_for_create;
-use crate::model::base::prep_fields::prep_fields_for_create_uid_included;
-use crate::model::base::prep_fields::prep_fields_for_update;
+use crate::model::base::prep_fields::{
+	prep_fields_for_create, prep_fields_for_create_uid_included, prep_fields_for_update,
+};
+use crate::model::{Id, ModelManager, Result};
 use crate::support::consts;
 use modql::SqliteFromRow;
-use modql::field::HasSqliteFields;
-use modql::field::SqliteFields;
+use modql::field::{HasSqliteFields, SqliteFields};
 use modql::filter::ListOptions;
 use rusqlite::ToSql;
 use uuid::Uuid;

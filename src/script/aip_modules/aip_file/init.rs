@@ -2,7 +2,6 @@ use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::*;
 use crate::types::SaveOptions;
-
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {

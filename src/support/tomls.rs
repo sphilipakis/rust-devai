@@ -3,7 +3,6 @@
 //! Note: The goal is that all get serialized to serded_json as this is the cannonical format for now.
 
 use crate::{Error, Result};
-
 use serde_json::Value as JsonValue;
 use toml::Value as TomlValue;
 

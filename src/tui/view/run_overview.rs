@@ -1,5 +1,4 @@
-use crate::model::{EndState, RunningState, Stage};
-use crate::model::{Log, LogBmc, PinBmc, Task};
+use crate::model::{EndState, Log, LogBmc, PinBmc, RunningState, Stage, Task};
 use crate::tui::AppState;
 use crate::tui::core::{LinkZones, ScrollIden, UiAction};
 use crate::tui::support::UiExt as _;

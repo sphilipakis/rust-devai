@@ -1,8 +1,7 @@
 use crate::_test_support::load_reflective_agent;
 use crate::Result;
 use crate::agent::Agent;
-use crate::run::RunBaseOptions;
-use crate::run::run_command_agent_input_for_test;
+use crate::run::{RunBaseOptions, run_command_agent_input_for_test};
 use crate::runtime::Runtime;
 use serde::Serialize;
 use serde_json::Value;

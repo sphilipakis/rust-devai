@@ -1,7 +1,6 @@
 use crate::Result;
 use crate::agent::{Agent, AgentOptions};
-use crate::model::RuntimeCtx;
-use crate::model::{Id, Stage};
+use crate::model::{Id, RuntimeCtx, Stage};
 use crate::run::{Attachments, Literals};
 use crate::runtime::Runtime;
 use crate::script::{AipackCustom, DataResponse, FromValue};

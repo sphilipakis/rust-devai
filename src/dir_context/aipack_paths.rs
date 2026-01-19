@@ -1,9 +1,6 @@
-use super::path_consts::PACK_CUSTOM;
-use super::path_consts::PACK_INSTALLED;
-use crate::dir_context::CONFIG_BASE_DEFAULT_FILE_NAME;
-use crate::dir_context::CONFIG_BASE_USER_FILE_NAME;
+use super::path_consts::{PACK_CUSTOM, PACK_INSTALLED};
 use crate::dir_context::path_consts::{AIPACK_DIR_NAME, PACK_DOWNLOAD};
-use crate::dir_context::{AipackBaseDir, AipackWksDir};
+use crate::dir_context::{AipackBaseDir, AipackWksDir, CONFIG_BASE_DEFAULT_FILE_NAME, CONFIG_BASE_USER_FILE_NAME};
 use crate::runtime::Session;
 use crate::support::files::current_dir;
 use crate::{Error, Result};

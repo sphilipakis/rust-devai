@@ -1,9 +1,8 @@
 use crate::tui::core::{LinkZones, ScrollIden, UiAction};
-use crate::tui::style;
 use crate::tui::support::{UiExt as _, clamp_idx_in_len};
 use crate::tui::view::comp::{self, ui_for_marker_section_str};
 use crate::tui::view::support::RectExt as _;
-use crate::tui::{AppState, TaskView};
+use crate::tui::{AppState, TaskView, style};
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;

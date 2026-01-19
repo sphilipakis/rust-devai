@@ -1,6 +1,5 @@
-use crate::tui::AppState;
 use crate::tui::core::UiAction;
-use crate::tui::style;
+use crate::tui::{AppState, style};
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
@@ -21,13 +20,7 @@ pub struct ActionBarBtn {
 
 /// Renders a standard two-button action bar (A on left, B on right).
 /// Usually A is the "negative/cancel" action and B is the "positive/confirm" action.
-pub fn ui_action_bar_ab(
-	area: Rect,
-	buf: &mut Buffer,
-	state: &mut AppState,
-	btn_a: ActionBarBtn,
-	btn_b: ActionBarBtn,
-) {
+pub fn ui_action_bar_ab(area: Rect, buf: &mut Buffer, state: &mut AppState, btn_a: ActionBarBtn, btn_b: ActionBarBtn) {
 	let [area_a, _gap, area_b] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![Constraint::Fill(1), Constraint::Length(2), Constraint::Fill(1)])

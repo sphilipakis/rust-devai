@@ -1,11 +1,8 @@
 use crate::Result;
-use crossterm::{
-	cursor,
-	event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-	execute, queue,
-	style::{Color, Print, ResetColor, SetForegroundColor},
-	terminal::{Clear, ClearType},
-};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
+use crossterm::terminal::{Clear, ClearType};
+use crossterm::{cursor, execute, queue};
 use std::io::{Stdout, Write};
 
 pub fn prompt_input(stdout: &mut Stdout, prompt_text: &str, clear: bool) -> Result<String> {

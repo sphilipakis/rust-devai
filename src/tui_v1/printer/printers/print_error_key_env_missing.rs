@@ -1,10 +1,8 @@
 use crate::support::os::{OsType, current_os};
-use crossterm::{
-	cursor::MoveToColumn,
-	execute,
-	style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
-	terminal::{Clear, ClearType},
-};
+use crossterm::cursor::MoveToColumn;
+use crossterm::execute;
+use crossterm::style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor};
+use crossterm::terminal::{Clear, ClearType};
 use genai::ModelIden;
 use std::io::stdout;
 

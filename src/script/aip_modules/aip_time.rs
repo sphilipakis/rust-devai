@@ -45,9 +45,8 @@
 //! aip.time.local_tz_id(): string            -- IANA timezone id for local zone
 //! -- e.g., "America/Los_Angeles"
 //! ```
-use crate::Result;
 use crate::runtime::Runtime;
-use crate::support;
+use crate::{Result, support};
 use mlua::{Lua, Table, Value};
 use time::{OffsetDateTime, UtcOffset};
 use time_tz::TimeZone as _;
@@ -170,9 +169,8 @@ mod tests {
 
 	use crate::_test_support::{eval_lua, setup_lua};
 	use crate::script::aip_modules::aip_time;
-	use time::format_description;
 	use time::format_description::well_known::Rfc3339;
-	use time::{Date, OffsetDateTime, UtcOffset};
+	use time::{Date, OffsetDateTime, UtcOffset, format_description};
 
 	const LUA_MOD_NAME: &str = "time";
 

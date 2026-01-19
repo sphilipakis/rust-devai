@@ -1,6 +1,5 @@
 use super::SysState;
-use crate::model::{ErrRec, Task};
-use crate::model::{Id, ModelManager};
+use crate::model::{ErrRec, Id, ModelManager, Task};
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
 use crate::tui::core::{
 	AppStage, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones, UiAction,

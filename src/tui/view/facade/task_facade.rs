@@ -1,5 +1,4 @@
-use crate::model::Task;
-use crate::model::{EndState, RunningState};
+use crate::model::{EndState, RunningState, Task};
 use crate::support::text;
 use crate::tui::style;
 use crate::tui::support::UiExt as _;

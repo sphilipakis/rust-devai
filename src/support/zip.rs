@@ -3,9 +3,8 @@ use simple_fs::SPath;
 use std::fs::{self, File};
 use std::io::{self, Read as _};
 use walkdir::WalkDir;
-use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
-use zip::{CompressionMethod, ZipArchive};
+use zip::{CompressionMethod, ZipArchive, ZipWriter};
 
 /// Creates a zip archive from the directory `src_dir` and writes it to `dest_file`.
 ///
