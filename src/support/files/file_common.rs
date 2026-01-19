@@ -17,7 +17,7 @@ pub fn current_dir() -> Result<SPath> {
 /// This strategy allows AIPACK to run on systems that do not have a home directory,
 /// avoiding downstream complexity.
 pub fn home_dir() -> SPath {
-	let home_dir = std::env::home_dir().and_then(|h| SPath::from_std_path_buf(h).ok());
+	let home_dir = simple_fs::home_dir().ok();
 	let home_dir: SPath = home_dir.unwrap_or_else(|| SPath::new("/"));
 	home_dir
 }
