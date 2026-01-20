@@ -1,5 +1,13 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-01-19 - [v0.8.14](https://github.com/jeremychone/rust-devai/compare/v0.8.13...v0.8.14)
+
+- `^` udiffx - many updates (more resilient)
+- `^` install - Skip installation if pack is already up to date and add --force flag
+- `^` init-base - now update built-in packs only if needed
+- `^` packer - Implement safer cleanup during pack installation using trash
+- `-` error - make sure that error in 'aip install' quit the term
+- `>` support/files - Refactor safer deletes to use simple-fs trash API
 
 ## 2026-01-14 - [v0.8.13](https://github.com/jeremychone/rust-devai/compare/v0.8.12...v0.8.13)
 
