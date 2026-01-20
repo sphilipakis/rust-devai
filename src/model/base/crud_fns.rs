@@ -8,7 +8,6 @@ use crate::support::consts;
 use modql::SqliteFromRow;
 use modql::field::{HasSqliteFields, SqliteFields};
 use modql::filter::ListOptions;
-use rusqlite::ToSql;
 use uuid::Uuid;
 
 pub fn create<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
@@ -109,7 +108,7 @@ where
 
 	// -- Execute the command
 	let mut values = fields.values_as_dyn_to_sql_vec();
-	values.push((&id) as &dyn ToSql);
+	values.push(&*id);
 	let db = mm.db();
 
 	let count = db.exec(&sql, &*values)?;
