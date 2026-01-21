@@ -151,7 +151,7 @@ impl<'a> MdSectionIter<'a> {
 						Some((_level, _name)) => {
 							self.passed_first_heading = true;
 							// TODO: Needs to handle the correct add_new_line flag
-							match MdHeading::parse_line(line.as_ref()) {
+							match MdHeading::parse_line(line.as_ref() as &str) {
 								ParseResponse::Item(heading) => LineData::Heading(heading),
 								// TODO: Here we should never have Other, as the peek_line returns Some.
 								//       But just in case, fall back to other
@@ -400,7 +400,7 @@ And some more heading-1-other-content
 
 Some heading-1-a-content
 
-Some heading-1-a-other-content 
+Some heading-1-a-other-content
 
 
 

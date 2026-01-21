@@ -96,7 +96,7 @@ pub fn aip_truncate(
 	};
 	let ellipsis_str = ellipsis.unwrap_or_default();
 	let res_cow = truncate_with_ellipsis(&content, max_len, &ellipsis_str);
-	lua.create_string(res_cow.as_ref()).map(Value::String)
+	lua.create_string(res_cow.as_ref() as &str).map(Value::String)
 }
 
 // endregion: --- Transform

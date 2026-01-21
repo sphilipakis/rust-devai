@@ -386,7 +386,7 @@ mod tests {
 	and some more content-02
 <<START>>
 	Another set of instructions here. inst-02
-<<END>>	
+<<END>>
 
 And more content-03
 "#;
@@ -425,7 +425,7 @@ And more content-03
 	with some instruction for markers. inst-01
 <<START>>
 	Another set of instructions here. inst-02
-<<END>>	
+<<END>>
 
 And more content-03
 "#;
