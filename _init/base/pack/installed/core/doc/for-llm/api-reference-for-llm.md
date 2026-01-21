@@ -8,14 +8,14 @@ An AIPack agent is a multi-stage Markdown file where stages define pre-processin
 
 | Stage           | Language       | Runs Per        | Injected Variables (Scope)                                      | Purpose                                                              |
 |-----------------|----------------|-----------------|-----------------------------------------------------------------|----------------------------------------------------------------------|
-| `# Options`     | **TOML**       | Once            | N/A                                                             | **Stage 0 (Config Step)**: Agent-specific configuration.             |
-| `# Before All`  | **Lua**        | Once            | `aip`, `CTX`, `inputs`                                          | **Stage 1**: Global setup, filtering `inputs`.                       |
-| `# Data`        | **Lua**        | Per Input       | `aip`, `CTX`, `input`, `before_all`                             | **Stage 2**: Per-input data gathering and flow control.              |
+| `# Options`     | **TOML (Markdown block)** | Once            | N/A                                                             | **Stage 0 (Config Step)**: Agent-specific configuration.             |
+| `# Before All`  | **Lua (Markdown block)**  | Once            | `aip`, `CTX`, `inputs`                                          | **Stage 1**: Global setup, filtering `inputs`.                       |
+| `# Data`        | **Lua (Markdown block)**  | Per Input       | `aip`, `CTX`, `input`, `before_all`                             | **Stage 2**: Per-input data gathering and flow control.              |
 | `# System`      | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: System prompt template.                                 |
 | `# Instruction` | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: User instruction prompt template.                       |
 | `# Assistant`   | **Handlebars** | Per Input       | `input`, `data`, `before_all`                                   | **Stage 3**: Optional specialized prompt priming.                    |
-| `# Output`      | **Lua**        | Per Processed Input | `aip`, `CTX`, `input`, `data`, `before_all`, `ai_response`      | **Stage 4**: Process AI response and perform side effects.           |
-| `# After All`   | **Lua**        | Once            | `aip`, `CTX`, `inputs`, `outputs`, `before_all`                 | **Stage 5**: Final cleanup and aggregation.                          |
+| `# Output`      | **Lua (Markdown block)**  | Per Processed Input | `aip`, `CTX`, `input`, `data`, `before_all`, `ai_response`      | **Stage 4**: Process AI response and perform side effects.           |
+| `# After All`   | **Lua (Markdown block)**  | Once            | `aip`, `CTX`, `inputs`, `outputs`, `before_all`                 | **Stage 5**: Final cleanup and aggregation.                          |
 
 **Injected Variables Detail:**
 
@@ -250,6 +250,7 @@ type CmdResponse = {
 - Paths starting with `~` are user home. `ns@pack/` are pack references. Relative paths resolve to workspace root.
 - `null` is a global sentinel for missing values (behaves like JSON null). Native Lua `nil` erases properties and stops `ipairs`.
 - Build/dependency folders (e.g., `target/`, `node_modules/`) are excluded from file lists by default.
+- **Stage Content Formatting:** Content for code-based stages (Lua and TOML) must be enclosed within triple-backtick Markdown code blocks. For example, use ```lua ... ``` for script stages and ```toml ... ``` for the options stage.
 
 ### aip.file - File System Operations
 

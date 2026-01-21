@@ -17,14 +17,14 @@ An agent file consists of Markdown headings representing stages.
 
 | Stage           | Language    | Frequency    | Scope / Purpose                                                                 |
 |-----------------|-------------|--------------|---------------------------------------------------------------------------------|
-| `# Options`     | TOML        | Once         | **Stage 0 (Config Step)**: Define agent-specific options.                       |
-| `# Before All`  | Lua         | Once         | **Stage 1**: Setup global data, filter `inputs`, override `options`.            |
-| `# Data`        | Lua         | Per Input    | **Stage 2**: Gather input-specific data, return `data` or `aip.flow`.           |
+| `# Options`     | TOML (Markdown block) | Once         | **Stage 0 (Config Step)**: Define agent-specific options.                       |
+| `# Before All`  | Lua (Markdown block)  | Once         | **Stage 1**: Setup global data, filter `inputs`, override `options`.            |
+| `# Data`        | Lua (Markdown block)  | Per Input    | **Stage 2**: Gather input-specific data, return `data` or `aip.flow`.           |
 | `# System`      | Handlebars  | Per Input    | **Stage 3**: Render the system prompt.                                          |
 | `# Instruction` | Handlebars  | Per Input    | **Stage 3**: Render user prompt (Aliases: `# User`, `# Inst`).                  |
 | `# Assistant`   | Handlebars  | Per Input    | **Stage 3**: Render assistant priming (Aliases: `# Model`, `# Jedi Trick`).     |
-| `# Output`      | Lua         | Per Response | **Stage 4**: Process `ai_response`, side effects, return `output`.               |
-| `# After All`   | Lua         | Once         | **Stage 5**: Final processing using `inputs` and `outputs` lists.               |
+| `# Output`      | Lua (Markdown block)  | Per Response | **Stage 4**: Process `ai_response`, side effects, return `output`.               |
+| `# After All`   | Lua (Markdown block)  | Once         | **Stage 5**: Final processing using `inputs` and `outputs` lists.               |
 
 ## Input Handling
 
