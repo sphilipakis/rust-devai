@@ -308,7 +308,10 @@ mod tests {
 				.contains("sandbox-01")
 		);
 		assert!(aipack_paths.aipack_wks_dir().is_some());
-		assert_ends_with(aipack_paths.aipack_wks_dir().unwrap().as_str(), "sandbox-01/.aipack");
+		assert_ends_with(
+			aipack_paths.aipack_wks_dir().ok_or("Should have wks_dir")?.as_str(),
+			"sandbox-01/.aipack",
+		);
 
 		// -- Check paths from get_wks_config_toml_paths
 		// Note: test setup needs `sandbox-01/.aipack/config.toml` to exist

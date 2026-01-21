@@ -192,10 +192,12 @@ impl MdHeading {
 
 #[cfg(test)]
 mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
+
 	use super::*;
 
 	#[test]
-	fn test_md_heading_simple_ok() {
+	fn test_md_heading_simple_ok() -> Result<()> {
 		let headings = vec![
 			("# Heading One", 1, "Heading One"),
 			("## Heading Two", 2, "Heading Two"),
@@ -209,15 +211,17 @@ mod tests {
 
 			assert!(heading.is_some(), "Failed to parse valid heading: '{line}'");
 
-			let heading = heading.unwrap();
+			let heading = heading.ok_or("Should have heading")?;
 
 			assert_eq!(heading.level, expected_level, "Incorrect level for heading: '{line}'");
 			assert_eq!(heading.name(), expected_name, "Incorrect name for heading: '{line}'");
 		}
+
+		Ok(())
 	}
 
 	#[test]
-	fn test_md_heading_simple_none() {
+	fn test_md_heading_simple_none() -> Result<()> {
 		let invalid_headings = vec![
 			" Heading without hash",                           // No leading '#'
 			"    #### Heading with leading space",             // Should fail because leading spaces
@@ -236,5 +240,7 @@ mod tests {
 				"Parsed an invalid heading that should be None: '{line}'"
 			);
 		}
+
+		Ok(())
 	}
 }

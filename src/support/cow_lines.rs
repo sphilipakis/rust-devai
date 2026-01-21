@@ -18,7 +18,7 @@ impl<'a> Iterator for CowLines<'a> {
 	fn next(&mut self) -> Option<Self::Item> {
 		match self {
 			CowLines::StrLines(lines) => lines.next().map(Cow::Borrowed),
-			CowLines::FileLines(lines) => lines.next().map(|line| Cow::Owned(line.unwrap())),
+			CowLines::FileLines(lines) => lines.next().map(|line| Cow::Owned(line.unwrap_or_default())),
 		}
 	}
 }

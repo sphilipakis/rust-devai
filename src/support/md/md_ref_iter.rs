@@ -76,8 +76,8 @@ impl<'a> MdRefIter<'a> {
 
 			// Check if we're inside inline code (single backtick)
 			if let Some(cap) = re.captures(line_remainder) {
-				let match_start = cap.get(0).unwrap().start();
-				let match_end = cap.get(0).unwrap().end();
+				let match_start = cap.get(0)?.start();
+				let match_end = cap.get(0)?.end();
 
 				// Check if this match is inside inline code
 				let prefix = &line[..search_start + match_start];
@@ -89,9 +89,9 @@ impl<'a> MdRefIter<'a> {
 					continue;
 				}
 
-				let bracket = cap.get(1).unwrap().as_str();
-				let text = cap.get(2).unwrap().as_str();
-				let target = cap.get(3).unwrap().as_str();
+				let bracket = cap.get(1)?.as_str();
+				let text = cap.get(2)?.as_str();
+				let target = cap.get(3)?.as_str();
 
 				let inline = bracket == "![";
 				let text = if text.is_empty() { None } else { Some(text.to_string()) };

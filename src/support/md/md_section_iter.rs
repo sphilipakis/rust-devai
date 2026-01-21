@@ -65,7 +65,7 @@ impl<'a> MdSectionIter<'a> {
 
 	/// Creates a new MdSection iterator from the given content source.
 	fn new(source: CowLines<'a>, heading_patterns: Option<&[&str]>) -> Result<Self> {
-		let section_filter = Self::resolve_heading_patterns(heading_patterns).unwrap();
+		let section_filter = Self::resolve_heading_patterns(heading_patterns)?;
 
 		Ok(MdSectionIter {
 			lines: source,

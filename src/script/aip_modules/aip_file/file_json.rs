@@ -861,7 +861,7 @@ invalid json line here
 		// Check first and last lines as a sample
 		assert_eq!(lines[0], r#"{"idx":0,"name":"name-0"}"#); // optional = nil omitted
 		assert_eq!(
-			lines.last().unwrap(),
+			lines.last().ok_or("Should have last")?,
 			&format!("{{\"idx\":{idx},\"name\":\"name-{idx}\"}}", idx = 100 + 4)
 		);
 

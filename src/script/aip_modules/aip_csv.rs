@@ -346,7 +346,7 @@ Jane,25
 		"#;
 		let res = eval_lua(&lua, script);
 		assert!(res.is_err());
-		let err = res.err().unwrap();
+		let err = res.err().ok_or("Should have err")?;
 		assert!(err.to_string().contains("unsupported value type 'function'"));
 
 		Ok(())

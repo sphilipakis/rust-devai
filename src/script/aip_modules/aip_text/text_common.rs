@@ -767,7 +767,7 @@ return { blocks = a, extruded = b }
 		for (content, arg, expected) in data {
 			let script = format!("return aip.text.ensure(\"{content}\", {arg})");
 			let res = eval_lua(&lua, &script)?;
-			assert_eq!(res.as_str().unwrap(), expected);
+			assert_eq!(res.as_str().ok_or("Should have res")?, expected);
 		}
 
 		Ok(())

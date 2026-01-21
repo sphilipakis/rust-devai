@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		if path.ends_with(".DS_Store") {
 			continue;
 		}
-		let name = path.strip_prefix(init_dir)?.to_str().unwrap();
+		let name = path.strip_prefix(init_dir)?.to_str().ok_or("Should have prefix of init dir")?;
 		let name = name.replace("\\", "/");
 
 		if path.is_file() {

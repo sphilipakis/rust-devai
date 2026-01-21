@@ -181,7 +181,7 @@ mod tests {
 
 		// -- Check
 		let err_rec = ErrBmc::get(&mm, id)?;
-		assert!(err_rec.content.unwrap().starts_with("Updated"));
+		assert!(err_rec.content.ok_or("Should have content")?.starts_with("Updated"));
 
 		Ok(())
 	}

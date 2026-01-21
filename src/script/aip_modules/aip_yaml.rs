@@ -204,7 +204,7 @@ name: Doc2
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
-		let s = res.as_str().unwrap();
+		let s = res.as_str().ok_or("Should have res")?;
 		assert_contains(s, "name: John");
 		assert_contains(s, "age: 30");
 		Ok(())
@@ -223,7 +223,7 @@ name: Doc2
 		let res = eval_lua(&lua, script)?;
 
 		// -- Check
-		let s = res.as_str().unwrap();
+		let s = res.as_str().ok_or("Should have res")?;
 		assert_contains(s, "name: D1");
 		assert_contains(s, "---");
 		assert_contains(s, "name: D2");

@@ -203,7 +203,7 @@ return aip.html.slim(html_content)
 		let res = eval_lua(&lua, fx_script)?;
 
 		// -- Check
-		let cleaned_html = res.as_str().unwrap();
+		let cleaned_html = res.as_str().ok_or("Should have res")?;
 		assert!(!cleaned_html.contains("<script>"));
 		assert!(!cleaned_html.contains("<style>"));
 		assert!(!cleaned_html.contains("<!-- comment -->"));
@@ -281,7 +281,7 @@ return aip.html.to_md("")
 		let res = eval_lua(&lua, fx_script)?;
 
 		// -- Check
-		let md_content = res.as_str().unwrap();
+		let md_content = res.as_str().ok_or("Should have res")?;
 		assert_eq!(md_content, "");
 		Ok(())
 	}

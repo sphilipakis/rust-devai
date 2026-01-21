@@ -112,24 +112,30 @@ pub(super) fn file_stats(
 
 	for smeta in smetas {
 		number_of_files += 1;
-
 		total_size += smeta.size;
+
 		let ctime = smeta.created_epoch_us;
 		let mtime = smeta.modified_epoch_us;
 
-		if ctime_first.is_none() || ctime < ctime_first.unwrap() {
-			ctime_first = Some(ctime);
-		}
-		if ctime_last.is_none() || ctime > ctime_last.unwrap() {
-			ctime_last = Some(ctime);
-		}
+		ctime_first = Some(match ctime_first {
+			Some(v) => v.min(ctime),
+			None => ctime,
+		});
 
-		if mtime_first.is_none() || mtime < mtime_first.unwrap() {
-			mtime_first = Some(mtime);
-		}
-		if mtime_last.is_none() || mtime > mtime_last.unwrap() {
-			mtime_last = Some(mtime);
-		}
+		ctime_last = Some(match ctime_last {
+			Some(v) => v.max(ctime),
+			None => ctime,
+		});
+
+		mtime_first = Some(match mtime_first {
+			Some(v) => v.min(mtime),
+			None => mtime,
+		});
+
+		mtime_last = Some(match mtime_last {
+			Some(v) => v.max(mtime),
+			None => mtime,
+		});
 	}
 
 	let file_stats = FileStats {
@@ -275,7 +281,7 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 /// ```
 ///
 /// If the given `path` exists, this function returns a [`FileInfo`] object
-/// containing the file metadata (no content).  
+/// containing the file metadata (no content).
 /// If the path cannot be resolved or the file does not exist, it returns `nil`.
 ///
 /// ### Arguments
@@ -810,7 +816,7 @@ mod tests {
 		let res = run_reflective_agent(&format!(r#"return aip.file.list("{glob}");"#), None).await?;
 
 		// -- Check
-		let res_paths = to_res_paths(&res);
+		let res_paths = to_res_paths(&res)?;
 		assert_eq!(res_paths.len(), 2, "result length");
 		assert_contains(&res_paths, "file-01.txt");
 		assert_contains(&res_paths, "file-02.txt");
@@ -846,7 +852,7 @@ mod tests {
 		let res = run_reflective_agent(&format!(r#"return aip.file.list("{glob}");"#), None).await?;
 
 		// -- Check
-		let res_paths = to_res_paths(&res);
+		let res_paths = to_res_paths(&res)?;
 		assert_eq!(res_paths.len(), 3, "result length");
 		assert_contains(&res_paths, "sub-dir-a/sub-sub-dir/agent-hello-3.aip");
 		assert_contains(&res_paths, "sub-dir-a/sub-sub-dir/main.aip");
@@ -983,13 +989,15 @@ return { files = files }
 
 	// region:    --- Support for Tests
 
-	fn to_res_paths(res: &serde_json::Value) -> Vec<&str> {
-		res.as_array()
-			.ok_or("should have array of path")
-			.unwrap()
+	fn to_res_paths(res: &serde_json::Value) -> Result<Vec<&str>> {
+		let arr = res.as_array().ok_or("should have array of path")?;
+
+		let v = arr
 			.iter()
 			.map(|v| v.x_get_as::<&str>("path").unwrap_or_default())
-			.collect::<Vec<&str>>()
+			.collect::<Vec<&str>>();
+
+		Ok(v)
 	}
 
 	// endregion: --- Support for Tests

@@ -441,7 +441,7 @@ return {
 		// -- Check Blocks
 		let blocks = res.pointer("/blocks").ok_or("Should have blocks")?;
 		assert!(blocks.is_array());
-		let blocks = blocks.as_array().unwrap();
+		let blocks = blocks.as_array().ok_or("Should be arr")?;
 		assert_eq!(blocks.len(), 1, "Should have found 1 lua blocks");
 
 		// Check first and only blockblock
@@ -483,7 +483,7 @@ return {
 		// -- Check Blocks
 		let blocks = res.pointer("/blocks").ok_or("Should have blocks")?;
 		assert!(blocks.is_array());
-		let blocks = blocks.as_array().unwrap();
+		let blocks = blocks.as_array().ok_or("Should be arr")?;
 		assert_eq!(blocks.len(), 2, "Should have found 2 blocks, lua and rust");
 
 		// Check first block (order might vary, so check both)
@@ -703,7 +703,7 @@ return aip.md.outer_block_content_or_raw(content)
 		let res = run_reflective_agent(fx_script, None).await?;
 
 		// -- Check
-		let content = res.as_str().unwrap();
+		let content = res.as_str().ok_or("Should have res")?;
 		assert!(content.contains("fn main()"));
 		assert!(content.contains("const x = 42"));
 		assert!(!content.contains("```rust")); // Should not contain the outer markers
@@ -718,7 +718,7 @@ return aip.md.outer_block_content_or_raw(content)
 		"#;
 
 		let res_raw = run_reflective_agent(fx_script_raw, None).await?;
-		let content_raw = res_raw.as_str().unwrap();
+		let content_raw = res_raw.as_str().ok_or("Should have res")?;
 		assert_eq!(content_raw, "Just some plain\ntext without any code blocks");
 
 		Ok(())

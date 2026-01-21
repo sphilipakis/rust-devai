@@ -190,7 +190,7 @@ mod tests {
 
 		// -- Check
 		let prompt = PromptBmc::get(&mm, id)?;
-		assert!(prompt.title.unwrap().starts_with("Updated"));
+		assert!(prompt.title.ok_or("should have title")?.starts_with("Updated"));
 
 		Ok(())
 	}

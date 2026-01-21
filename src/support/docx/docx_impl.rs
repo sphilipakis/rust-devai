@@ -94,7 +94,7 @@ fn ensure_blank_line_before_block(markdown: &mut String, trailing_newlines: &mut
 /// usuage:
 /// ```rs
 /// let path = Path::new("path/to/file.docx");
-/// let md = docx_convert(&path).unwrap();
+/// let md = docx_convert(&path)?;
 /// println!("{}", md);
 /// ```
 pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {

@@ -266,7 +266,7 @@ mod tests {
 
 		// -- Check
 		let log = LogBmc::get(&mm, id)?;
-		assert!(log.message.unwrap().starts_with("Updated"));
+		assert!(log.message.ok_or("Should have message")?.starts_with("Updated"));
 		assert_eq!(log.kind, Some(LogKind::SysWarn));
 
 		Ok(())

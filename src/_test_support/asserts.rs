@@ -97,10 +97,11 @@ impl DataContainer<'_> {
 	fn ends_with(&self, val: &str) -> bool {
 		match self {
 			DataContainer::Slice(slice) => {
-				if slice.is_empty() {
-					return false;
+				if let Some(last) = slice.last() {
+					last.ends_with(val)
+				} else {
+					false
 				}
-				slice.last().unwrap().ends_with(val)
 			}
 			DataContainer::Str(string) => string.ends_with(val),
 		}

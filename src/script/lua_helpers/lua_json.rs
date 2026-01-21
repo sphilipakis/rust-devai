@@ -92,7 +92,7 @@ pub fn lua_value_to_serde_value(lua_value: mlua::Value) -> Result<serde_json::Va
 			}
 
 			if numeric_only && vec.iter().all(|o| o.is_some()) {
-				let arr = vec.into_iter().map(|o| o.unwrap()).collect();
+				let arr = vec.into_iter().filter_map(|o| o).collect();
 				return Ok(serde_json::Value::Array(arr));
 			}
 		}
