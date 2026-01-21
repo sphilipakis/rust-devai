@@ -91,7 +91,7 @@ impl IntoLua for MdSection {
 		} else {
 			table.set("heading_content", "")?;
 			table.set("heading_level", 0)?;
-			table.set("heading_name", "heading.name()")?;
+			table.set("heading_name", "")?;
 		}
 		Ok(mlua::Value::Table(table))
 	}

@@ -100,6 +100,16 @@ type FileInfo = {
 type FileRecord = FileInfo & {
   content: string  // The text content of the file
 }
+
+type FileStats = {
+  _type: "FileStats",
+  total_size: number,      // Total size of all matched files in bytes
+  number_of_files: number, // Number of files matched
+  ctime_first: number,     // Oldest creation time (epoch microseconds)
+  ctime_last: number,      // Newest creation time (epoch microseconds)
+  mtime_first: number,     // Oldest modification time (epoch microseconds)
+  mtime_last: number       // Newest modification time (epoch microseconds)
+}
 ```
 
 ### Options Types
@@ -111,19 +121,15 @@ type SaveOptions = {
   single_trailing_newline?: boolean
 }
 
-type FileChangesStatus = {
-  success: boolean,        // true if all directives were applied successfully
-  total_count: number,     // Total number of directives
-  success_count: number,   // Number of successful directives
-  fail_count: number,      // Number of failed directives
-  items: FileDirectiveStatus[]
+type ChangesInfo = {
+  changed_count: number,     // Number of successful change count
+  failed_changes?: FailChange[] // List of failed changes, if any
 }
 
-type FileDirectiveStatus = {
-  file_path: string,       // Path of the affected file
-  kind: "New" | "Patch" | "Rename" | "Delete" | "Fail",
-  success: boolean,        // true if this directive succeeded
-  error_msg?: string       // Error details if success is false
+type FailChange = {
+  search: string,
+  replace: string,
+  reason: string
 }
 
 type DestOptions = {
@@ -198,6 +204,13 @@ type CsvOptions = {
   comment?: string,
   skip_header_row?: boolean
 }
+
+type YamlDocs = any[] // List of parsed YAML documents
+
+type Marker = {
+  label: string,
+  content: string
+}
 ```
 
 ### Markdown Types
@@ -205,11 +218,10 @@ type CsvOptions = {
 ```typescript
 type MdSection = {
   content: string,    // Full content of the section
-  heading?: {         // Present if the section starts with a heading
-    content: string,  // Raw heading line (e.g., "## Title")
-    level: number,
-    name: string      // Extracted heading name
-  }
+  heading_raw: string,      // The raw heading line with trailing newline (empty string if no heading)
+  heading_content: string,  // The raw heading line without trailing newline (empty string if no heading)
+  heading_level: number,    // Heading level (1-6), or 0 if no heading
+  heading_name: string      // Extracted and trimmed heading name (empty string if no heading)
 }
 
 type MdBlock = {

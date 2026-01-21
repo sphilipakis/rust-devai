@@ -71,11 +71,14 @@ Important notes:
 - [`MdBlock`](#mdblock) (for `aip.md..`)
 - [`MdRef`](#mdref) (for `aip.md..`)
 - [`TagElem`](#tagelem) (for `aip.tag..`)
+- [`ChangesInfo`](#changesinfo) (for `aip.udiffx..`)
 - [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
 - [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
 - [`SaveOptions`](#saveoptions) (for `aip.file.save(...)`)
 - [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
 - [`CsvContent`](#csvcontent) (for `aip.file.load_csv`)
+- [`YamlDocs`](#yamldocs) (for `aip.file.load_yaml` and `aip.yaml.parse`)
+- [`Marker`](#marker) (for `aip.task.pin` and `aip.run.pin`)
 
 
 #### AI Response
@@ -3151,7 +3154,7 @@ All paths in the envelope are resolved relative to `base_dir`.
 
 #### Returns
 
-1. `status: FileChangesStatus`: A [`FileChangesStatus`](#filechangesstatus) table indicating the result of the operation.
+1. `status: ChangesInfo`: A [`ChangesInfo`](#changesinfo) table indicating the result of the operation.
 2. `remaining: string | nil`: The content without the extracted block (only if `options.extrude == "content"`).
 
 #### Example
@@ -6026,6 +6029,7 @@ Aggregated statistics for a collection of files. Returned by `aip.file.stats`.
 
 ```ts
 {
+  _type: "FileStats",
   total_size: number,      // Total size of all matched files in bytes
   number_of_files: number, // Number of files matched
   ctime_first: number,     // Creation timestamp of the oldest file (microseconds since epoch)
@@ -6098,11 +6102,10 @@ Represents a section of a Markdown document, potentially associated with a headi
 ```ts
 {
   content: string,    // Full content of the section (including heading line and sub-sections)
-  heading?: {         // Present if the section starts with a heading
-    content: string,  // The raw heading line (e.g., "## Section Title")
-    level: number,    // Heading level (1-6)
-    name: string      // Extracted heading name (e.g., "Section Title")
-  }
+  heading_raw: string,      // The raw heading line with trailing newline (empty string if no heading)
+  heading_content: string,  // The raw heading line without trailing newline (empty string if no heading)
+  heading_level: number,    // Heading level (1-6), or 0 if no heading
+  heading_name: string      // Extracted and trimmed heading name (empty string if no heading)
 }
 ```
 
@@ -6144,30 +6147,26 @@ Represents a block defined by start and end tags, like `<TAG>content</TAG>`. Ret
 }
 ```
 
-### FileChangesStatus
+### ChangesInfo
 
 Represents the overall result of applying multi-file changes. Returned by `aip.udiffx.apply_file_changes`.
 
 ```ts
 {
-  success: boolean,        // true if all directives were applied successfully
-  total_count: number,     // Total number of directives found
-  success_count: number,   // Number of successful directives
-  fail_count: number,      // Number of failed directives
-  items: FileDirectiveStatus[] // List of results for each directive
+  changed_count: number,     // Number of successful change count
+  failed_changes?: FailChange[] // List of failed changes, if any
 }
 ```
 
-### FileDirectiveStatus
+### FailChange
 
-Represents the result of a single directive within a file changes envelope.
+Represents a failed change within a file changes operation.
 
 ```ts
 {
-  file_path: string,       // Path of the affected file
-  kind: string,            // One of "New", "Patch", "Rename", "Delete", or "Fail"
-  success: boolean,        // true if this directive succeeded
-  error_msg: string | nil  // Error details if success is false
+  search: string,
+  replace: string,
+  reason: string
 }
 ```
 
@@ -6261,6 +6260,25 @@ return aip.flow.data_response({
   data = data,
   attachments = { file_source = "diagram.png" }
 })
+```
+
+### YamlDocs
+
+Represents a list of parsed YAML documents. Returned by `aip.file.load_yaml` and `aip.yaml.parse`.
+
+```ts
+type YamlDocs = any[] // List of parsed YAML documents
+```
+
+### Marker
+
+Represents a simple labeled content component.
+
+```ts
+{
+  label: string,
+  content: string
+}
 ```
 
 ## CTX
