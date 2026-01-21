@@ -204,14 +204,9 @@ where
 		prep_fields_for_create::<MC>(fields);
 	}
 
-	let db = mm.db();
-	let mut ids: Vec<Id> = Vec::with_capacity(items.len());
-
-	// Single transaction for atomicity and performance
-	db.exec("BEGIN", ())?;
-	let mut committed = false;
-	let res = (|| -> Result<Vec<Id>> {
-		for fields in items.into_iter() {
+	let res = mm.db().exec_in_tx(|tx_db| {
+		let mut ids: Vec<Id> = Vec::with_capacity(items.len());
+		for fields in items {
 			let sql = format!(
 				"INSERT INTO {} ({}) VALUES ({}) RETURNING id",
 				MC::table_ref(),
@@ -220,23 +215,15 @@ where
 			);
 
 			let values = fields.values_as_dyn_to_sql_vec();
-			let id = db.exec_returning_num(&sql, &*values)?;
+			let id = tx_db.exec_returning_num(&sql, &*values)?;
 			ids.push(id.into());
 		}
-
-		db.exec("COMMIT", ())?;
-		committed = true;
-
-		get_hub().publish_rt_model_change_sync();
-
 		Ok(ids)
-	})();
+	})?;
 
-	if !committed {
-		let _ = db.exec("ROLLBACK", ());
-	}
+	get_hub().publish_rt_model_change_sync();
 
-	res
+	Ok(res)
 }
 
 /// Helper to convert a Vec<T> into Vec<SqliteFields> using sqlite_not_none_fields().

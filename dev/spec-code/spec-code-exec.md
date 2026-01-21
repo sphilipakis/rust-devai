@@ -93,3 +93,58 @@ Handles the `aip self` command group.
 5. `do_run` expands globs into `FileInfo` objects.
 6. `run_agent` is called.
 7. `RunRedoCtx` is stored in the executor for potential future `Redo` actions.
+
+## Request: Atomic DB Transactions with Locked Closures
+
+### Problem Analysis
+
+The current implementation of transactions (e.g., in `batch_create` in `src/model/base/crud_fns.rs`) is not thread-safe. While the `Db` struct uses a `Mutex<Connection>`, the lock is acquired and released for every individual `db.exec(...)` call. 
+
+In `batch_create`, the code does:
+1. `db.exec("BEGIN", ...)` -> acquires lock, executes, releases lock.
+2. Multiple `db.exec_returning_num(...)` -> each acquires/releases lock.
+3. `db.exec("COMMIT", ...)` -> acquires lock, executes, releases lock.
+
+Between any of these steps, another thread could acquire the lock and execute a statement, potentially interfering with the transaction state.
+
+### Proposed Implementation Plan
+
+1.  **Preserve existing `Db` API**: Keep `pub fn exec(...)`, `pub fn fetch_all(...)`, etc., as they are. They will continue to acquire a lock for single-shot operations.
+2.  **Internal Refactoring**: Move the core logic of these methods into internal functions or a trait that operates directly on a `&Connection`.
+3.  **Add `pub fn exec_tx`**: This method will manage the transaction lifecycle and the mutex lock:
+    - It acquires the `Mutex` lock once.
+    - It executes `BEGIN`.
+    - It provides a closure (`work_fn`) with a "Transaction Context" object (e.g., `TxDb`) that exposes the same high-level API (`exec`, `fetch_all`, etc.) but operates on the already-locked connection without re-acquiring the mutex (preventing deadlocks).
+    - It handles `COMMIT` on success and `ROLLBACK` on error.
+4.  **Update `batch_create`**: Refactor `src/model/base/crud_fns.rs` to use the new `db.exec_tx` method.
+
+### Example API Concept
+
+```rust
+pub fn exec_tx<F, R>(&self, work_fn: F) -> Result<R>
+where F: FnOnce(&TxDb) -> Result<R> {
+    let mut conn_g = self.con.lock()?; // Mutex held for the whole block
+    
+    // 1. BEGIN
+    conn_g.execute("BEGIN", [])?;
+    
+    // 2. Wrap the locked connection
+    let tx_db = TxDb::new(&conn_g);
+    
+    // 3. Exec work
+    let res = work_fn(&tx_db);
+    
+    // 4. COMMIT or ROLLBACK
+    match res {
+        Ok(_) => { conn_g.execute("COMMIT", [])?; }
+        Err(_) => { let _ = conn_g.execute("ROLLBACK", []); }
+    }
+    
+    res
+}
+```
+
+### Questions & Considerations
+
+- **SQLite Savepoints**: If we need nested transactions in the future, we should use `SAVEPOINT` instead of `BEGIN/COMMIT`. For the current scope, a single top-level transaction is sufficient.
+- **API Consistency**: The `TxDb` should mirror the `Db` interface to make refactoring `batch_create` and other complex operations straightforward.

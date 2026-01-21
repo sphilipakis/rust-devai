@@ -10,6 +10,10 @@ pub struct Db {
 	con: Arc<Mutex<Connection>>,
 }
 
+pub struct DbTx<'a> {
+	tx: &'a rusqlite::Transaction<'a>,
+}
+
 /// Constructor & Setup
 impl Db {
 	pub fn new() -> Result<Self> {
@@ -25,6 +29,26 @@ impl Db {
 		recreate_db(&con)?;
 		Ok(())
 	}
+
+	pub fn exec_in_tx<R, F>(&self, f: F) -> Result<R>
+	where
+		F: FnOnce(&DbTx) -> Result<R>,
+	{
+		let mut conn_g = self.con.lock()?;
+		let tx = conn_g.transaction()?;
+		let tx_db = DbTx { tx: &tx };
+
+		// exec the function
+		let res = f(&tx_db);
+
+		if res.is_ok() {
+			tx.commit()?;
+		} else {
+			tx.rollback()?;
+		}
+
+		res
+	}
 }
 
 // Executors
@@ -33,9 +57,7 @@ impl Db {
 	/// returns: number of rows affected
 	pub fn exec(&self, sql: &str, params: impl Params) -> Result<usize> {
 		let conn_g = self.con.lock()?;
-
-		let row_affected = conn_g.execute(sql, params)?;
-		Ok(row_affected)
+		_exec(&conn_g, sql, params)
 	}
 
 	/// Perform a sql exec and return the first row and first value as num
@@ -43,12 +65,7 @@ impl Db {
 	/// e.g., `db.exec_as_num("select count(*) from person", [] )`
 	pub fn exec_returning_num(&self, sql: &str, params: impl Params) -> Result<i64> {
 		let conn_g = self.con.lock()?;
-
-		let mut stmt = conn_g.prepare(sql)?;
-		// Note: Assume the first column is the id to be returned.
-		let id = stmt.query_row(params, |r| r.get::<_, i64>(0))?;
-
-		Ok(id)
+		_exec_returning_num(&conn_g, sql, params)
 	}
 
 	/// Perform a sql exec and returns the first value of the first row and
@@ -66,22 +83,12 @@ impl Db {
 	/// ```
 	pub fn exec_returning_as<T: FromSql>(&self, sql: &str, params: impl Params) -> Result<T> {
 		let conn_g = self.con.lock()?;
-
-		let mut stmt = conn_g.prepare(sql)?;
-		// Note: Assume the first column is the id to be returned.
-		let res = stmt.query_row(params, |r| r.get::<_, T>(0))?;
-
-		Ok(res)
+		_exec_returning_as(&conn_g, sql, params)
 	}
 
 	pub fn exec_returning_as_optional<T: FromSql>(&self, sql: &str, params: impl Params) -> Result<Option<T>> {
 		let conn_g = self.con.lock()?;
-
-		let mut stmt = conn_g.prepare(sql)?;
-		// Note: Assume the first column is the id to be returned.
-		let res = stmt.query_row(params, |r| r.get::<_, T>(0)).optional()?;
-
-		Ok(res)
+		_exec_returning_as_optional(&conn_g, sql, params)
 	}
 
 	/// Fetch the first row and cast to to Option<T>
@@ -92,9 +99,8 @@ impl Db {
 		P: Params,
 		T: SqliteFromRow,
 	{
-		let all: Vec<T> = self.fetch_all(sql, params)?;
-
-		Ok(all.into_iter().next())
+		let conn_g = self.con.lock()?;
+		_fetch_first::<P, T>(&conn_g, sql, params)
 	}
 
 	pub fn fetch_all<P, T>(&self, sql: &str, params: P) -> Result<Vec<T>>
@@ -103,12 +109,90 @@ impl Db {
 		T: SqliteFromRow,
 	{
 		let conn_g = self.con.lock()?;
-		let mut stmt = conn_g.prepare(sql)?;
-		let iter = stmt.query_and_then(params, |r| T::sqlite_from_row(r))?;
-		let mut res = Vec::new();
-		for item in iter {
-			res.push(item?)
-		}
-		Ok(res)
+		_fetch_all::<P, T>(&conn_g, sql, params)
 	}
 }
+
+impl<'a> DbTx<'a> {
+	pub fn exec(&self, sql: &str, params: impl Params) -> Result<usize> {
+		_exec(self.tx, sql, params)
+	}
+
+	pub fn exec_returning_num(&self, sql: &str, params: impl Params) -> Result<i64> {
+		_exec_returning_num(self.tx, sql, params)
+	}
+
+	pub fn exec_returning_as<T: FromSql>(&self, sql: &str, params: impl Params) -> Result<T> {
+		_exec_returning_as(self.tx, sql, params)
+	}
+
+	pub fn exec_returning_as_optional<T: FromSql>(&self, sql: &str, params: impl Params) -> Result<Option<T>> {
+		_exec_returning_as_optional(self.tx, sql, params)
+	}
+
+	pub fn fetch_first<P, T>(&self, sql: &str, params: P) -> Result<Option<T>>
+	where
+		P: Params,
+		T: SqliteFromRow,
+	{
+		_fetch_first::<P, T>(self.tx, sql, params)
+	}
+
+	pub fn fetch_all<P, T>(&self, sql: &str, params: P) -> Result<Vec<T>>
+	where
+		P: Params,
+		T: SqliteFromRow,
+	{
+		_fetch_all::<P, T>(self.tx, sql, params)
+	}
+}
+
+// region:    --- Support
+
+fn _exec(conn: &Connection, sql: &str, params: impl Params) -> Result<usize> {
+	let row_affected = conn.execute(sql, params)?;
+	Ok(row_affected)
+}
+
+fn _exec_returning_num(conn: &Connection, sql: &str, params: impl Params) -> Result<i64> {
+	let mut stmt = conn.prepare(sql)?;
+	let id = stmt.query_row(params, |r| r.get::<_, i64>(0))?;
+	Ok(id)
+}
+
+fn _exec_returning_as<T: FromSql>(conn: &Connection, sql: &str, params: impl Params) -> Result<T> {
+	let mut stmt = conn.prepare(sql)?;
+	let res = stmt.query_row(params, |r| r.get::<_, T>(0))?;
+	Ok(res)
+}
+
+fn _exec_returning_as_optional<T: FromSql>(conn: &Connection, sql: &str, params: impl Params) -> Result<Option<T>> {
+	let mut stmt = conn.prepare(sql)?;
+	let res = stmt.query_row(params, |r| r.get::<_, T>(0)).optional()?;
+	Ok(res)
+}
+
+fn _fetch_first<P, T>(conn: &Connection, sql: &str, params: P) -> Result<Option<T>>
+where
+	P: Params,
+	T: SqliteFromRow,
+{
+	let all: Vec<T> = _fetch_all(conn, sql, params)?;
+	Ok(all.into_iter().next())
+}
+
+fn _fetch_all<P, T>(conn: &Connection, sql: &str, params: P) -> Result<Vec<T>>
+where
+	P: Params,
+	T: SqliteFromRow,
+{
+	let mut stmt = conn.prepare(sql)?;
+	let iter = stmt.query_and_then(params, |r| T::sqlite_from_row(r))?;
+	let mut res = Vec::new();
+	for item in iter {
+		res.push(item?)
+	}
+	Ok(res)
+}
+
+// endregion: --- Support
