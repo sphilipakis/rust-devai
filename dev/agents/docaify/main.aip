@@ -1,0 +1,100 @@
+
+# Before All
+
+```lua
+local BASE_DIR = "src/"
+
+-- Find all files recursively to identify all unique directories
+local all_files = aip.file.list(BASE_DIR .. "**/*")
+local dir_map = {}
+
+-- Ensure root src is included if present
+local base_info = aip.path.parse(BASE_DIR)
+if base_info then
+    dir_map[base_info.path] = base_info
+end
+
+-- Collect unique directories from the file list
+for _, f in ipairs(all_files) do
+    local d_path = f.dir
+    -- Track every directory in the hierarchy up to BASE_DIR
+    while d_path and d_path ~= "" and (d_path == "src" or d_path:find(BASE_DIR, 1, true) == 1) do
+        if not dir_map[d_path] then
+            local d_info = aip.path.parse(d_path)
+            if d_info then
+                dir_map[d_path] = d_info
+            end
+        else
+            -- If we already found this directory, we've already processed its parents
+            break
+        end
+        d_path = aip.path.parent(d_path)
+    end
+end
+
+local dirs = {}
+for _, d in pairs(dir_map) do
+    table.insert(dirs, d)
+end
+
+-- Return directories as inputs to process stats in parallel (Data stage)
+return aip.flow.before_all_response({
+    inputs = dirs
+})
+```
+
+# Data
+
+```lua
+local d_path = input.path
+
+-- Using base_dir option for aip.file.stats is more robust than prepending to the glob
+-- Direct Size: Sum of files immediately inside the folder
+local direct_stats = aip.file.stats("*", { base_dir = d_path })
+-- Recursive Size: Sum of all files within the folder and sub-folders
+local recursive_stats = aip.file.stats("**/*", { base_dir = d_path })
+
+return aip.flow.data_response({
+    data = {
+        path = d_path,
+        direct = direct_stats and direct_stats.total_size or 0,
+        recursive = recursive_stats and recursive_stats.total_size or 0
+    }
+})
+```
+
+# Output
+
+```lua
+-- Bypass AI processing by returning the gathered data directly to the output collector
+return data
+```
+
+# After All
+
+```lua
+-- Sort results by recursive size (descending)
+table.sort(outputs, function(a, b)
+    return a.recursive > b.recursive
+end)
+
+if not outputs or #outputs == 0 then
+    print("\nNo directories found in src/.\n")
+    return
+end
+
+local header = string.format("%-60s | %14s | %14s", "Directory Path", "Direct Size", "Total Size")
+local sep = string.format("%s-+-%s-+-%s", string.rep("-", 60), string.rep("-", 14), string.rep("-", 14))
+
+local lines = {header, sep}
+
+for _, item in ipairs(outputs) do
+    table.insert(lines, string.format("%-60s | %14s | %14s",
+        item.path,
+        aip.text.format_size(item.direct),
+        aip.text.format_size(item.recursive)
+    ))
+end
+
+print("\n" .. table.concat(lines, "\n") .. "\n")
+```
