@@ -192,8 +192,7 @@ mod tests {
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
-				audio_tokens: None,
-				cache_creation_tokens: None,
+				..Default::default()
 			}),
 			..Default::default()
 		};
@@ -230,8 +229,7 @@ mod tests {
 			completion_tokens: Some(fx_completion_tokens),
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
-				audio_tokens: None,
-				cache_creation_tokens: None,
+				..Default::default()
 			}),
 			..Default::default()
 		};
@@ -268,7 +266,7 @@ mod tests {
 			prompt_tokens_details: Some(PromptTokensDetails {
 				cached_tokens: Some(fx_cached_tokens),
 				cache_creation_tokens: Some(fx_cache_creation_tokens),
-				audio_tokens: None,
+				..Default::default()
 			}),
 			..Default::default()
 		};
