@@ -255,7 +255,16 @@ type CmdResponse = {
 }
 ```
 
-## 4. AIPack Lua API (`aip.*`) Reference
+## 4. Lua Semantics & API Reference
+
+### 4.1 nil vs. null
+
+AIPack introduces a global `null` sentinel to bridge the gap between Lua's `nil` and JSON/SQL nulls.
+
+- **`nil` (Lua Native)**: Use for "no value." In arrays (sequential tables), a `nil` will stop `ipairs` iteration. In objects, setting a property to `nil` deletes the key.
+- **`null` (AIPack Sentinel)**: Use for "null value." It is preserved in arrays and does not stop `ipairs`. It is preserved in JSON serialization.
+
+### 4.2 API (`aip.*`) Reference
 
 **General Rules:**
 - All functions return an error table `{ error: string }` on failure, unless otherwise specified (like `aip.path.parent` returning `nil`).
@@ -271,10 +280,10 @@ aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 aip.file.append(rel_path: string, content: string): FileInfo
 aip.file.delete(path: string): boolean // Only allowed within workspace (not base dir).
-aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo // options.content_when_empty writes content if existing file is empty.
+aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo // If file is empty or whitespace-only, and content_when_empty is true, it writes the content.
 aip.file.exists(path: string): boolean
-aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[] // Excludes common build directories by default.
-aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[] // Excludes common build directories by default.
+aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[] // Excludes heavy directories (target/, node_modules/, .git/, etc.) unless explicitly matched.
+aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[] // Excludes heavy directories unless explicitly matched.
 aip.file.first(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileInfo | nil
 aip.file.info(path: string): FileInfo | nil
 aip.file.stats(include_globs: string | string[] | nil, options?: {base_dir?: string, absolute?: boolean}): FileStats | nil // Returns nil if globs is nil, otherwise stats (0s if no matches).
@@ -472,8 +481,8 @@ aip.time.local_tz_id(): string
 
 ```typescript
 aip.lua.dump(value: any): string
-aip.lua.merge(target: table, ...objs: table) // Modifies target in-place.
-aip.lua.merge_deep(target: table, ...objs: table) // Modifies target in-place.
+aip.lua.merge(target: table, ...objs: table) // Shallow merge into target (mutates target in-place).
+aip.lua.merge_deep(target: table, ...objs: table) // Deep merge into target (mutates target in-place).
 ```
 
 ### aip.pdf - PDF Utilities

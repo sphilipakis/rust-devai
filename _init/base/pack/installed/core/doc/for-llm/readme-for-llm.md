@@ -15,16 +15,16 @@ An agent file consists of Markdown headings representing stages.
 
 ### Execution Stages
 
-| Stage           | Language    | Frequency    | Scope / Purpose                                                                 |
-|-----------------|-------------|--------------|---------------------------------------------------------------------------------|
-| `# Options`     | TOML (Markdown block) | Once         | **Stage 0 (Config Step)**: Define agent-specific options.                       |
-| `# Before All`  | Lua (Markdown block)  | Once         | **Stage 1**: Setup global data, filter `inputs`, override `options`.            |
-| `# Data`        | Lua (Markdown block)  | Per Input    | **Stage 2**: Gather input-specific data, return `data` or `aip.flow`.           |
-| `# System`      | Handlebars  | Per Input    | **Stage 3**: Render the system prompt.                                          |
-| `# Instruction` | Handlebars  | Per Input    | **Stage 3**: Render user prompt (Aliases: `# User`, `# Inst`).                  |
-| `# Assistant`   | Handlebars  | Per Input    | **Stage 3**: Render assistant priming (Aliases: `# Model`, `# Jedi Trick`).     |
-| `# Output`      | Lua (Markdown block)  | Per Response | **Stage 4**: Process `ai_response`, side effects, return `output`.               |
-| `# After All`   | Lua (Markdown block)  | Once         | **Stage 5**: Final processing using `inputs` and `outputs` lists.               |
+| Stage           | Language              | Frequency    | Scope / Purpose                                                             |
+| --------------- | --------------------- | ------------ | --------------------------------------------------------------------------- |
+| `# Options`     | TOML (Markdown block) | Once         | **Stage 0 (Config Step)**: Define agent-specific options.                   |
+| `# Before All`  | Lua (Markdown block)  | Once         | **Stage 1**: Setup global data, filter `inputs`, override `options`.        |
+| `# Data`        | Lua (Markdown block)  | Per Input    | **Stage 2**: Gather input-specific data, return `data` or `aip.flow`.       |
+| `# System`      | Handlebars            | Per Input    | **Stage 3**: Render the system prompt.                                      |
+| `# Instruction` | Handlebars            | Per Input    | **Stage 3**: Render user prompt (Aliases: `# User`, `# Inst`).              |
+| `# Assistant`   | Handlebars            | Per Input    | **Stage 3**: Render assistant priming (Aliases: `# Model`, `# Jedi Trick`). |
+| `# Output`      | Lua (Markdown block)  | Per Response | **Stage 4**: Process `ai_response`, side effects, return `output`.          |
+| `# After All`   | Lua (Markdown block)  | Once         | **Stage 5**: Final processing using `inputs` and `outputs` lists.           |
 
 ## Input Handling
 
@@ -47,6 +47,7 @@ Stages receive specific variables in their scope:
 
 AIPack uses specific path prefixes:
 
+- `/absolute/path`: Absolute paths are fully supported.
 - `relative/path`: Relative to the workspace root.
 - `~/path`: User home directory.
 - `ns@pack/path`: Resolved to the installed pack directory.
@@ -60,6 +61,12 @@ AIPack uses specific path prefixes:
 - **Pack Run**: `aip run namespace@pack/agent`
 - **Dry Run (Render Only)**: `aip run agent.aip -f file.txt -v --dry req`
 - **Dry Run (With AI, No Output)**: `aip run agent.aip -f file.txt -v --dry res`
+
+## Glob Exclusion Rules
+
+Functions using globs (like `aip.file.list`) exclude heavy directories by default to prevent performance degradation:
+- `target/`, `.build/`, `node_modules/`, `.git/`, `__pycache__/`, `.venv/`.
+- To include these, you must explicitly match them in the glob pattern.
 
 ## Configuration & Precedence
 
