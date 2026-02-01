@@ -82,4 +82,10 @@ AIPack options (model, concurrency, etc.) are merged in the following order (hig
 - **Workspace**: `.aipack/config.toml` (Project-specific models, aliases, concurrency).
 - **Global**: `~/.aipack-base/config.toml` (Default model, API key source).
 
+## Security
+
+- **File Write Restrictions**: `aip.file.save` and related functions are limited to the workspace or `~/.aipack-base/`.
+- **File Deletion Restrictions**: `aip.file.delete` is limited to the workspace and forbidden in `~/.aipack-base/`.
+- **Credential Safety**: API keys are never stored in agents. They are retrieved from environment variables or the system keychain (macOS).
+
 Refer to `api-reference-for-llm.md` for the complete `aip.*` Lua API documentation.

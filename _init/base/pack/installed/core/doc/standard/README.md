@@ -181,27 +181,6 @@ New `.aip/` file structure with the `.aip` file extension. See [.aip/ folder str
 
 _P.S. If possible, please refrain from publishing `aipack-custom` type crates on crates.io, as this might be more confusing than helpful. However, feel free to fork and code as you wish._
 
-### API Keys
-
-**aipack** uses the [genai crate](https://crates.io/crates/genai); therefore, the simplest way to provide the API keys for each provider is via environment variables in the terminal when running `aipack`.
-
-Here are the names of the environment variables used:
-
-```
-OPENAI_API_KEY
-ANTHROPIC_API_KEY
-GEMINI_API_KEY
-FIREWORKS_API_KEY
-TOGETHER_API_KEY
-NEBIUS_API_KEY
-XAI_API_KEY
-DEEPSEEK_API_KEY
-GROQ_API_KEY
-COHERE_API_KEY
-```
-
-On macOS, this CLI uses the Mac keychain to store the key if it is not available in the environment variable. This feature will be extended to other operating systems as it becomes more robust.
-
 ## Complete Stages Description
 
 Here is a full description of the complete flow:
@@ -417,3 +396,21 @@ input_concurrency = 4
 #OPENAI_API_KEY = "sk-..."
 #ANTHROPIC_API_KEY = "..."
 ```
+
+## Security
+
+AIPack implements several safeguards to protect your system and data.
+
+### File System Restrictions
+
+To prevent unauthorized access, file operations are restricted by boundaries:
+
+- **Write Restrictions**: The `aip.file.save` and related functions only allow writing within the active workspace or the shared `~/.aipack-base/` directory.
+- **Deletion Restrictions**: The `aip.file.delete` function is more restrictive, only allowing deletions within the workspace. It specifically forbids deleting any files in the `.aipack-base` folder.
+
+### API Key Security
+
+AIPack never stores API keys inside agent files. Keys are managed through external sources:
+
+- **Environment Variables**: The simplest way to provide API keys is via environment variables. AIPack supports: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `FIREWORKS_API_KEY`, `TOGETHER_API_KEY`, `NEBIUS_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY`, and `COHERE_API_KEY`.
+- **System Keychain**: (not active for now) On macOS, AIPack can securely store and retrieve keys from the system keychain if the environment variable is missing. This ensures sensitive credentials remain outside of version-controlled files.
