@@ -239,7 +239,14 @@ type MdRef = {
 }
 ```
 
-### Other Utility Types
+### RunAgentResponse & Other Utility Types
+
+```typescript
+type RunAgentResponse = {
+  outputs: any[],   // List of values returned by each # Output stage for each input.
+  after_all: any    // The value returned by the # After All stage (or nil).
+}
+```
 
 ```typescript
 type TagElem = {

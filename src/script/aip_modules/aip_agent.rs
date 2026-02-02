@@ -16,9 +16,10 @@
 
 use crate::event::new_one_shot_channel;
 use crate::model::RuntimeCtx;
-use crate::run::{RunAgentResponse, RunSubAgentParams};
+use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
+use crate::types::RunAgentResponse;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
@@ -86,18 +87,12 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ### Returns
 ///
-/// The result of the agent execution. The type of the returned value depends on the agent's output:
-///
-/// - If the agent produces an AI response without a specific output script, it returns a table representing the `AiResponse` object.
-/// - If the agent has an output script, it returns the value returned by that output script.
+/// Returns a `RunAgentResponse` table containing the outputs from the agent's stages.
 ///
 /// ```ts
-/// // Example structure of a returned AiResponse object (if no output script)
 /// {
-///   action: string, // e.g., "PrintToConsole", "WriteFiles"
-///   outputs: any,   // Depends on the action/output
-///   options: table  // Options used during the run
-///   // ... other properties from AiResponse
+///   outputs: any[],   // List of values returned by each # Output stage for each input.
+///   after_all: any    // The value returned by the # After All stage (or nil).
 /// }
 /// ```
 ///
