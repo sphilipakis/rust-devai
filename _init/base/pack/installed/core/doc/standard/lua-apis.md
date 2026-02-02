@@ -2896,10 +2896,11 @@ Parses `md_content` and extracts fenced code blocks (``` ```).
 ```lua
 local md = "```rust\nfn main() {}\n```\nSome text.\n```lua\nprint('hi')\n```"
 local rust_blocks = aip.md.extract_blocks(md, "rust")
--- rust_blocks = { { content = "fn main() {}", lang = "rust", info = "" } }
+-- rust_blocks = { { content = "fn main() {}", lang = "rust" } }
 
-local lua_blocks, remain = aip.md.extract_blocks(md, {lang = "lua", extrude = "content"})
+local lua_blocks, remain = aip.md.extract_blocks(md, { lang = "lua", extrude = "content" })
 -- lua_blocks = { { content = "print('hi')", lang = "lua", info = "" } }
+-- lua_blocks = { { content = "print('hi')", lang = "lua" } }
 -- remain = "Some text.\n" (approx.)
 ```
 
@@ -5985,6 +5986,7 @@ Represents a file with its metadata and content. Returned by `aip.file.load` and
 
 ```ts
 {
+  _type: "FileRecord",
   path : string,    // Relative or absolute path used to load/find the file
   dir: string,      // Parent directory of the path (empty if no parent)
   name : string,    // File name with extension (e.g., "main.rs")
@@ -6005,6 +6007,7 @@ Represents file metadata without content. Returned by `aip.file.list`, `aip.file
 
 ```ts
 {
+  _type: "FileInfo",
   path : string,     // Relative or absolute path
   dir: string,       // Parent directory of the path
   name : string,     // File name with extension
@@ -6053,7 +6056,8 @@ Options table used for specifying the destination path in functions like `aip.fi
 {
   base_dir?: string,  // Base directory for resolving the destination
   file_name?: string, // Custom file name for the output
-  suffix?: string     // Suffix appended to the source file stem
+  suffix?: string,    // Suffix appended to the source file stem
+  slim?: boolean      // Whether to slim the HTML content (default false)
 }
 ```
 
@@ -6095,6 +6099,7 @@ Represents a section of a Markdown document, potentially associated with a headi
 
 ```ts
 {
+  _type: "MdSection",
   content: string,    // Full content of the section (including heading line and sub-sections)
   heading_raw: string,      // The raw heading line with trailing newline (empty string if no heading)
   heading_content: string,  // The raw heading line without trailing newline (empty string if no heading)
@@ -6109,9 +6114,9 @@ Represents a fenced block (usually code) in Markdown. Returned by `aip.md.extrac
 
 ```ts
 {
+  _type: "MdBlock",
   content: string,     // Content inside the block (excluding fence lines)
-  lang?: string,        // Language identifier (e.g., "rust", "lua"), optional
-  info: string         // Full info string from the opening fence (e.g., "rust file:main.rs"), optional
+  lang?: string        // Language identifier (e.g., "rust", "lua"), optional
 }
 ```
 

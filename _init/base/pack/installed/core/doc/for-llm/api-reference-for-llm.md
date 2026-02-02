@@ -135,7 +135,8 @@ type FailChange = {
 type DestOptions = {
   base_dir?: string,
   file_name?: string,
-  suffix?: string
+  suffix?: string,
+  slim?: boolean
 }
 
 type AgentOptions = {
@@ -227,7 +228,6 @@ type MdSection = {
 type MdBlock = {
   content: string,     // Content inside the block (excluding fence lines)
   lang?: string,        // Language identifier (e.g., "rust")
-  info: string         // Full info string (e.g., "rust file:main.rs")
 }
 
 type MdRef = {
