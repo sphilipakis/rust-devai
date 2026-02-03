@@ -19,7 +19,7 @@ use crate::model::RuntimeCtx;
 use crate::run::RunSubAgentParams;
 use crate::runtime::Runtime;
 use crate::script::LuaValueExt;
-use crate::types::RunAgentResponse;
+use crate::types::{RunAgentOptions, RunAgentResponse};
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
@@ -28,9 +28,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let rt = runtime.clone();
-	let agent_run = lua.create_function(move |lua, (agent_name, options): (String, Option<Value>)| {
-		aip_agent_run(lua, &rt, agent_name, options)
-	})?;
+	let agent_run = lua.create_function(
+		move |lua, (agent_name, run_options): (String, Option<RunAgentOptions>)| {
+			aip_agent_run(lua, &rt, agent_name, run_options.unwrap_or_default())
+		},
+	)?;
 
 	let extract_options = lua.create_function(move |lua, value: Value| aip_agent_extract_options(lua, value))?;
 
@@ -113,9 +115,10 @@ pub fn aip_agent_run(
 	lua: &Lua,
 	runtime: &Runtime,
 	agent_name: String,
-	run_params: Option<Value>,
+	run_options: RunAgentOptions,
 ) -> mlua::Result<Value> {
-	let agent_dir = get_agent_dir_from_lua(lua);
+	// get the parent agent dir
+	let parent_agent_dir = get_agent_dir_from_lua(lua);
 
 	// -- Parse the Lua Options to the the LuaAgentRunOptions with inputs and agent options
 	let (tx, rx) = new_one_shot_channel::<Result<RunAgentResponse>>("agent-run");
@@ -127,13 +130,12 @@ pub fn aip_agent_run(
 
 	let run_agent_params = RunSubAgentParams::new(
 		//
-		lua,
 		runtime.clone(),
 		parent_uid,
-		agent_dir,
+		parent_agent_dir,
 		agent_name,
+		run_options,
 		Some(tx),
-		run_params,
 	)?;
 
 	// NOTE: Needs to use the send_sync_spawn_and_block, otherwise, message not sent as it wait for this CmdRun to complete

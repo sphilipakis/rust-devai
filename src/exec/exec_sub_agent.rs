@@ -17,7 +17,7 @@ pub async fn exec_run_sub_agent(params: RunSubAgentParams) -> Result<()> {
 
 	// -- Find agent and build run base options
 	// NOTE: For now, do not pass through the caller baseOptions.
-	// TODO: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
+	// NOTE: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
 
 	let result: Result<RunAgentResponse> = (async || {
 		// find the agent

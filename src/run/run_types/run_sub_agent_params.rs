@@ -2,9 +2,7 @@ use crate::Result;
 use crate::agent::AgentOptions;
 use crate::event::OneShotTx;
 use crate::runtime::Runtime;
-use crate::script::{LuaValueExt as _, lua_value_to_serde_value};
-use crate::types::RunAgentResponse;
-use mlua::{FromLua, Lua};
+use crate::types::{RunAgentOptions, RunAgentResponse};
 use simple_fs::SPath;
 use uuid::Uuid;
 
@@ -31,41 +29,22 @@ pub struct RunSubAgentParams {
 
 impl RunSubAgentParams {
 	pub fn new(
-		lua: &Lua,
 		runtime: Runtime,
 		parent_uid: Uuid,
-		agent_dir: Option<SPath>,
+		parent_agent_dir: Option<SPath>,
 		agent_name: impl Into<String>,
+		run_options: RunAgentOptions,
 		response_shot: Option<OneShotTx<Result<RunAgentResponse>>>,
-		params: Option<mlua::Value>,
 	) -> mlua::Result<Self> {
-		let (inputs, agent_options) = if let Some(params) = params {
-			let inputs = params.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
-			let agent_options = params
-				.x_get_value("options")
-				.map(|o| AgentOptions::from_lua(o, lua))
-				.transpose()?;
-			(inputs, agent_options)
-		} else {
-			(None, None)
-		};
-
-		// extract the inputs
-		let inputs = match inputs {
-			Some(serde_json::Value::Array(values)) => Some(values),
-			None => None,
-			_ => {
-				return Err(crate::Error::custom(
-					"The 'inputs' `aip.agent.run(agent_name, {inputs: ..})` must be a Lua array",
-				)
-				.into());
-			}
-		};
+		let RunAgentOptions {
+			inputs,
+			options: agent_options,
+		} = run_options;
 
 		Ok(Self {
 			runtime,
 			parent_uid,
-			agent_dir,
+			agent_dir: parent_agent_dir,
 			agent_name: agent_name.into(),
 			inputs,
 			agent_options,
