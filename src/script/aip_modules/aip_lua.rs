@@ -163,8 +163,12 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 						indent_str_for_entry = "  ".repeat(indent + 1)
 					));
 				}
-				let inner = entries.join(",\n");
-				Ok(format!("{{\n{inner}\n{indent_str}}}"))
+				if entries.is_empty() {
+					Ok("{}".to_string())
+				} else {
+					let inner = entries.join(",\n");
+					Ok(format!("{{\n{inner}\n{indent_str}}}"))
+				}
 			}
 			Value::Function(f) => {
 				let name = f.info().name.unwrap_or("<anonymous>".to_string());
