@@ -760,9 +760,9 @@ If the path cannot be resolved or the file does not exist, it returns `nil`.
 #### Example
 
 ```lua
-local meta = aip.file.info("README.md")
-if meta then
-  print("Size:", meta.size)
+local file_info = aip.file.info("README.md")
+if file_info then
+  print("Size:", file_info.size)
 end
 ```
 
@@ -4234,9 +4234,9 @@ Lua value inspection and manipulation functions.
 ```lua
 aip.lua.dump(value: any): string
 
-aip.lua.merge(target: table, ...objs: table)
+aip.lua.merge(target: table, ...objs: table | nil): table
 
-aip.lua.merge_deep(target: table, ...objs: table)
+aip.lua.merge_deep(target: table, ...objs: table | nil): table
 ```
 
 ### aip.lua.dump
@@ -4272,23 +4272,23 @@ Returns an error (Lua table `{ error: string }`) if the value cannot be converte
 
 ### aip.lua.merge
 
-Shallow merge one or more tables into `target` (in place).
+Shallow merge one or more tables into `target` (in place) and return target as well.
 
 ```lua
 -- API Signature
-aip.lua.merge(target: table, ...objs: table)
+aip.lua.merge(target: table, ...objs: table | nil): table
 ```
 
-Iterates through each table in `objs` and copies its key-value pairs into `target`. Later tables override earlier ones for the same key.
+Iterates through each table in `objs` and copies its key-value pairs into `target` and return `target` as well. Later tables override earlier ones for the same key. `target` must be a table (cannot be `nil` or `null`). `objs` can also be `nil` or `null`, in which case they are ignored.
 
 #### Arguments
 
-- `target: table`: The table to merge into (modified in place).
-- `...objs: table`: One or more tables whose key-value pairs are merged into `target`.
+- `target: table`: The table to merge into (modified in place). Cannot be `nil` or `null`.
+- `...objs: table`: One or more tables whose key-value pairs are merged into `target`. Can be `nil` or `null`.
 
 #### Returns
 
-Nothing (modifies `target` in place).
+- `table`: The target table after merging.
 
 #### Example
 
@@ -4306,23 +4306,23 @@ Returns an error (Lua table `{ error: string }`) if table iteration fails.
 
 ### aip.lua.merge_deep
 
-Deep merge one or more tables into `target` (in place).
+Deep merge one or more tables into `target` (in place) and return target as well.
 
 ```lua
 -- API Signature
-aip.lua.merge_deep(target: table, ...objs: table)
+aip.lua.merge_deep(target: table, ...objs: table | nil): table
 ```
 
-Recursively merges key-value pairs from each table in `objs` into `target`. When both `target` and the overlay have a table value for the same key, those nested tables are merged recursively. Otherwise, the overlay value replaces the target value.
+Recursively merges key-value pairs from each table in `objs` into `target`. When both `target` and the overlay have a table value for the same key, those nested tables are merged recursively. Otherwise, the overlay value replaces the target value and returns target as well. `target` must be a table (cannot be `nil` or `null`). `objs` can also be `nil` or `null`, in which case they are ignored.
 
 #### Arguments
 
-- `target: table`: The table to merge into (modified in place).
-- `...objs: table`: One or more tables to deep merge into `target`.
+- `target: table`: The table to merge into (modified in place). Cannot be `nil` or `null`.
+- `...objs: table`: One or more tables to deep merge into `target`. Can be `nil` or `null`.
 
 #### Returns
 
-Nothing (modifies `target` in place).
+- `table`: The target table after merging.
 
 #### Example
 

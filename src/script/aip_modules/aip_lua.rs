@@ -9,8 +9,8 @@
 //!
 //! - `aip.lua.dump(value: any) -> string`
 
-use crate::Result;
 use crate::runtime::Runtime;
+use crate::{Error, Result};
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -32,31 +32,37 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 
 /// ## Lua Documentation
 ///
-/// Shallow merge one or more tables into `target` (in place).
+/// Shallow merge one or more tables into `target` (in place) and return target as well
 ///
 /// ```lua
 /// -- API Signature
-/// aip.lua.merge(target: table, ...objs: table)
+/// aip.lua.merge(target: table, ...objs: table | nil): table
 /// ```
-fn merge(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Table>)) -> mlua::Result<()> {
+///
+/// IMPORTANT: `target` must be a table (cannot be `nil` or `null`). `objs` can be table, `nil` or `null`.
+fn merge(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Value>)) -> mlua::Result<Value> {
 	for obj in objs {
-		for pair in obj.pairs::<Value, Value>() {
-			let (k, v) = pair?;
-			target.set(k, v)?;
+		if let Some(obj) = extract_table(obj)? {
+			for pair in obj.pairs::<Value, Value>() {
+				let (k, v) = pair?;
+				target.set(k, v)?;
+			}
 		}
 	}
-	Ok(())
+	Ok(Value::Table(target))
 }
 
 /// ## Lua Documentation
 ///
-/// Deep merge one or more tables into `target` (in place).
+/// Deep merge one or more tables into `target` (in place) and return target as well.
 ///
 /// ```lua
 /// -- API Signature
-/// aip.lua.merge_deep(target: table, ...objs: table)
+/// aip.lua.merge_deep(target: table, ...objs: table | nil): table
 /// ```
-fn merge_deep(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Table>)) -> mlua::Result<()> {
+///
+/// IMPORTANT: `target` must be a table (cannot be `nil` or `null`). `objs` can be table, `nil` or `null`.
+fn merge_deep(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Value>)) -> mlua::Result<Value> {
 	fn deep_merge_into(target: &Table, overlay: &Table) -> mlua::Result<()> {
 		for pair in overlay.pairs::<Value, Value>() {
 			let (k, v_overlay) = pair?;
@@ -77,9 +83,30 @@ fn merge_deep(_lua: &Lua, (target, objs): (Table, mlua::Variadic<Table>)) -> mlu
 	}
 
 	for obj in objs {
-		deep_merge_into(&target, &obj)?;
+		if let Some(obj) = extract_table(obj)? {
+			deep_merge_into(&target, &obj)?
+		}
 	}
-	Ok(())
+	Ok(Value::Table(target))
+}
+
+/// Extract the value if table, if nil/null return None, otherwise error
+fn extract_table(obj: Value) -> Result<Option<Table>> {
+	if obj == Value::NULL {
+		return Ok(None);
+	} else {
+		match obj {
+			Value::Nil => Ok(None),
+			Value::Table(table) => Ok(Some(table)),
+			other => {
+				return Err(Error::Custom(format!(
+					"Cannot merge a non table type. Actual type: {}",
+					other.type_name()
+				))
+				.into());
+			}
+		}
+	}
 }
 
 /// ## Lua Documentation

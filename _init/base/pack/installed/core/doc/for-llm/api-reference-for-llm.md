@@ -496,8 +496,8 @@ aip.time.local_tz_id(): string
 
 ```typescript
 aip.lua.dump(value: any): string
-aip.lua.merge(target: table, ...objs: table) // Shallow merge into target (mutates target in-place).
-aip.lua.merge_deep(target: table, ...objs: table) // Deep merge into target (mutates target in-place).
+aip.lua.merge(target: table, ...objs: table | nil): table // Shallow merge into target (mutates target in-place, return targets as well). nil/null are ignored. target cannot be nil/null.
+aip.lua.merge_deep(target: table, ...objs: table | nil): table // Deep merge into target (mutates target in-place, return targets as well). nil/null are ignored. target cannot be nil/null.
 ```
 
 ### aip.pdf - PDF Utilities
