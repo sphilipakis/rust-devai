@@ -75,7 +75,7 @@ pub fn find_agent(name: &str, runtime: &Runtime, base_dir: Option<&SPath>) -> Re
 
 // region:    --- Support
 
-/// Returns the ossible .aip path for a given path
+/// Returns the possible .aip path for a given path
 ///
 /// - `as_dir` allows to treat the path as dir even if it does not end with /
 ///

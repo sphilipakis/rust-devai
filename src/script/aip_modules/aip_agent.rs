@@ -65,7 +65,9 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
 ///     execution environment and can override settings defined in the called agent's `.aip` file.
 ///   - `agent_base_dir?: string`: (since 0.8.15) The base directory used to resolve relative agent paths.
-///     If provided, it overrides the default behavior of resolving relative to the calling agent's directory.
+ ///     By default, it is the directory of the caller agent. If provided, it overrides the default (e.g., 
+ ///     using `CTX.WORKSPACE_DIR`). Note that pack references (e.g., `ns@pack/`) are still resolved to 
+ ///     their pack path regardless of this base directory.
 ///
 /// #### Input Examples:
 ///

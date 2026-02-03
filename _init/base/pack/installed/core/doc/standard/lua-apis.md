@@ -4334,15 +4334,19 @@ to complete and returns its result. This allows for chaining agents together.
   (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
   from the directory of the calling agent.
 - `options?: table`: An optional table containing input data and agent options.
-  - `inputs?: string | list | table`: Input data for the agent. Can be a single string, a list of strings, or a table of structured inputs.
+  - `inputs?: list`: A list of inputs for the agent. Each element can be a string, a FileInfo, or a structured table.
   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
     execution environment and can override settings defined in the called agent's `.aip` file.
+  - `agent_base_dir?: string`: (since 0.8.15) The base directory used to resolve relative agent paths.
+    By default, it is the directory of the caller agent. If provided, it overrides the default (e.g.,
+    using `CTX.WORKSPACE_DIR`). Note that pack references (e.g., `ns@pack/`) are still resolved to
+    their pack path regardless of this base directory.
 
 ##### Input Examples:
 
 ```lua
 -- Run an agent with a single string input
-local response = aip.agent.run("agent-name", { inputs = "hello" })
+local response = aip.agent.run("agent-name", { inputs = {"hello"} })
 
 -- Run an agent with multiple string inputs
 local response = aip.agent.run("agent-name", { inputs = {"input1", "input2"} })

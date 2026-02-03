@@ -517,7 +517,7 @@ aip.hbs.render(content: string, data: any): string | {error: string}
 ### aip.agent - Agent Chaining
 
 ```typescript
-aip.agent.run(agent_name: string, options?: {inputs?: string | list | table, options?: table}): any
+aip.agent.run(agent_name: string, options?: {inputs?: any[], options?: table, agent_base_dir?: string}): any
 aip.agent.extract_options(value: any): table | nil
 ```
 
