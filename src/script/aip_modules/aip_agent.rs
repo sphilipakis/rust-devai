@@ -64,6 +64,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///   - `inputs?: list`: Must be a list of input. e.g. `inputs = { "one", "two" }` will be two inputs
 ///   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
 ///     execution environment and can override settings defined in the called agent's `.aip` file.
+///   - `agent_base_dir?: string`: (since 0.8.15) The base directory used to resolve relative agent paths.
+///     If provided, it overrides the default behavior of resolving relative to the calling agent's directory.
 ///
 /// #### Input Examples:
 ///

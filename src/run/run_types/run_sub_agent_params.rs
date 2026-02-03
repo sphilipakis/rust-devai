@@ -39,12 +39,15 @@ impl RunSubAgentParams {
 		let RunAgentOptions {
 			inputs,
 			options: agent_options,
+			agent_base_dir,
 		} = run_options;
+
+		let agent_dir = agent_base_dir.or(parent_agent_dir);
 
 		Ok(Self {
 			runtime,
 			parent_uid,
-			agent_dir: parent_agent_dir,
+			agent_dir,
 			agent_name: agent_name.into(),
 			inputs,
 			agent_options,

@@ -598,7 +598,7 @@ Injected into all Lua stages, providing execution environment information. All p
 | Key                            | Description                                                               |
 |--------------------------------|---------------------------------------------------------------------------|
 | CTX.WORKSPACE_DIR              | Absolute path to the workspace directory (parent of `.aipack/`).          |
-| CTX.BASE_AIPack_DIR            | Absolute path to the user's base AIPack directory (`~/.aipack-base`).     |
+| CTX.BASE_AIPACK_DIR            | Absolute path to the user's base AIPack directory (`~/.aipack-base`).     |
 | CTX.AGENT_NAME                 | Name or path used to invoke the agent (e.g., `my_pack/my-agent`).         |
 | CTX.AGENT_FILE_PATH            | Absolute path to the resolved agent `.aip` file.                          |
 | CTX.AGENT_FILE_DIR             | Absolute path to the directory containing the agent file.                 |

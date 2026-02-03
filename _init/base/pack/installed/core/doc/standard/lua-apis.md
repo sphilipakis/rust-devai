@@ -6288,7 +6288,7 @@ All Lua scripts get the `CTX` table in scope, providing context about the curren
 |--------------------------|--------------------------------------------------------------------------|-------------------------------------------------------------------|
 | CTX.WORKSPACE_DIR        | `/Users/dev/my-project`                                                  | Absolute path to the workspace directory (containing `.aipack/`). |
 | CTX.WORKSPACE_AIPack_DIR | `/Users/dev/my-project/.aipack`                                          | Absolute path to the `.aipack/` directory in the workspace.       |
-| CTX.BASE_AIPack_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPack directory.                |
+| CTX.BASE_AIPACK_DIR      | `/Users/dev/.aipack-base`                                                | Absolute path to the user's base AIPack directory.                |
 | CTX.AGENT_NAME           | `my_pack/my-agent` or `path/to/my-agent.aip`                             | The name or path used to invoke the agent.                        |
 | CTX.AGENT_FILE_PATH      | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack/my-agent.aip` | Absolute path to the resolved agent `.aip` file.                  |
 | CTX.AGENT_FILE_DIR       | `/Users/home/john/.aipack-base/pack/installed/acme/my_pack`              | Absolute path to the directory containing the agent file.         |
