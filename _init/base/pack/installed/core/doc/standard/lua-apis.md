@@ -4334,7 +4334,9 @@ to complete and returns its result. This allows for chaining agents together.
   (e.g., `"my-ns@my-pack/feature/my-agent.aip"`). Relative paths are resolved
   from the directory of the calling agent.
 - `options?: table`: An optional table containing input data and agent options.
+  - `input?: any`: (since 0.8.15) A single input value of any type.
   - `inputs?: list`: A list of inputs for the agent. Each element can be a string, a FileInfo, or a structured table.
+    Note: If both `input` and `inputs` are provided, `input` is prepended to the `inputs` list.
   - `options?: table`: Agent-specific options. These options are passed directly to the called agent's
     execution environment and can override settings defined in the called agent's `.aip` file.
   - `agent_base_dir?: string`: (since 0.8.15) The base directory used to resolve relative agent paths.

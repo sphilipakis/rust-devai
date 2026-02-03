@@ -4,6 +4,9 @@ use mlua::{FromLua, Lua, Value};
 use simple_fs::SPath;
 
 /// Options for the `aip.agent.run(name, options)` function, including inputs and agent option overrides.
+///
+/// NOTE: In Lua, this supports both `.input` (single) and `.inputs` (array), which are merged
+///       into the `inputs` field here.
 #[derive(Debug, Default)]
 pub struct RunAgentOptions {
 	pub inputs: Option<Vec<serde_json::Value>>,
@@ -16,11 +19,24 @@ impl FromLua for RunAgentOptions {
 		match value {
 			Value::Nil => Ok(Self::default()),
 			Value::Table(table) => {
-				// -- inputs
-				let inputs = table.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
-				// validate it is an array
-				let inputs = match inputs {
-					Some(serde_json::Value::Array(values)) => Some(values),
+				// -- input (single value, since 0.8.15)
+				let input = table.x_get_value("input").map(lua_value_to_serde_value).transpose()?;
+
+				// -- inputs (array of values)
+				let inputs_raw = table.x_get_value("inputs").map(lua_value_to_serde_value).transpose()?;
+
+				// Validate inputs_raw is an array if present, and merge with input
+				let inputs_vec = match inputs_raw {
+					Some(serde_json::Value::Array(mut values)) => {
+						if let Some(input_val) = input {
+							let mut vec = Vec::with_capacity(values.len() + 1);
+							vec.push(input_val);
+							vec.append(&mut values);
+							vec
+						} else {
+							values
+						}
+					}
 					Some(_) => {
 						return Err(mlua::Error::FromLuaConversionError {
 							from: "Table",
@@ -28,8 +44,10 @@ impl FromLua for RunAgentOptions {
 							message: Some("The 'inputs' field must be a Lua array".into()),
 						});
 					}
-					None => None,
+					None => input.map(|v| vec![v]).unwrap_or_default(),
 				};
+
+				let inputs = if inputs_vec.is_empty() { None } else { Some(inputs_vec) };
 
 				// -- options
 				let options = table
