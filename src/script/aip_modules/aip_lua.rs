@@ -11,7 +11,6 @@
 
 use crate::Result;
 use crate::runtime::Runtime;
-use crate::script::NullSentinel;
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -171,14 +170,14 @@ pub fn dump(lua: &Lua, value: Value) -> mlua::Result<String> {
 				let name = f.info().name.unwrap_or("<anonymous>".to_string());
 				Ok(format!("<function {name}>"))
 			}
-			Value::UserData(ud) => {
-				if let Ok(ns) = ud.borrow::<NullSentinel>() {
-					Ok(ns.to_string())
+			Value::UserData(_ud) => Ok("<UserData>".into()),
+			Value::LightUserData(ld) => {
+				if Value::LightUserData(ld) == Value::NULL {
+					Ok("NULL".to_string())
 				} else {
-					Ok("<UserData>".into())
+					Ok("<LightUserData>".to_string())
 				}
 			}
-			Value::LightUserData(_) => Ok("<LightUserData>".to_string()),
 			Value::Thread(_) => Ok("<Thread>".to_string()),
 			_ => Ok("<OtherType>".to_string()),
 		}

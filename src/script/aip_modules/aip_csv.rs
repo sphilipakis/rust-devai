@@ -53,15 +53,20 @@ pub fn lua_value_to_csv_string(value: Value) -> mlua::Result<String> {
 		Value::Number(n) => Ok(n.to_string()),
 		Value::Boolean(b) => Ok(b.to_string()), // "true" or "false"
 		Value::Nil => Ok("".to_string()),
-		Value::UserData(ud) if ud.is::<crate::script::NullSentinel>() => Ok("".to_string()),
 		Value::Table(t) => {
 			let serde_val = lua_value_to_serde_value(Value::Table(t)).map_err(mlua::Error::external)?;
 			serde_json::to_string(&serde_val).map_err(mlua::Error::external)
 		}
-		other => Err(mlua::Error::external(format!(
-			"unsupported value type '{}'",
-			other.type_name()
-		))),
+		other => {
+			if other == Value::NULL {
+				Ok("".to_string())
+			} else {
+				Err(mlua::Error::external(format!(
+					"unsupported value type '{}'",
+					other.type_name()
+				)))
+			}
+		}
 	}
 }
 

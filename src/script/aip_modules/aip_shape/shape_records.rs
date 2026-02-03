@@ -18,7 +18,6 @@
 //!
 
 use crate::Error;
-use crate::script::NullSentinel;
 use crate::script::support::{
 	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence, expect_table,
 };
@@ -176,7 +175,7 @@ pub fn to_records(lua: &Lua, names: Value, value_lists: Value) -> mlua::Result<V
 ///
 /// ```lua
 /// local rec = { id = 1, name = "Alice", email = "a@x.com" }
-/// local v1  = aip.shape.record_to_values(rec)                
+/// local v1  = aip.shape.record_to_values(rec)
 /// -- { 1, "a@x.com", "Alice" } (alpha by keys: email, id, name)
 ///
 /// local v2  = aip.shape.record_to_values(rec, { "name", "id", "missing" })
@@ -210,8 +209,7 @@ pub fn record_to_values(lua: &Lua, rec: Value, names_opt: Option<Value>) -> mlua
 			for name_str in ordered_names {
 				let val: Value = rec.get(name_str.clone())?;
 				if let Value::Nil = val {
-					let na = lua.create_userdata(NullSentinel)?;
-					out.set(idx, na)?;
+					out.set(idx, Value::NULL)?;
 				} else {
 					out.set(idx, val)?;
 				}
@@ -273,8 +271,7 @@ pub fn records_to_value_lists(lua: &Lua, recs: Value, names: Value) -> mlua::Res
 		for (col_idx, name) in ordered_names.iter().enumerate() {
 			let val: Value = rec_tbl.get(name.clone())?;
 			if let Value::Nil = val {
-				let na = lua.create_userdata(NullSentinel)?;
-				row_tbl.set(col_idx + 1, na)?;
+				row_tbl.set(col_idx + 1, Value::NULL)?;
 			} else {
 				row_tbl.set(col_idx + 1, val)?;
 			}

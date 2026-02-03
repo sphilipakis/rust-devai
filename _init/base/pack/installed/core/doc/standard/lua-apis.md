@@ -129,7 +129,7 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
 
 Lua has the `nil` keyword which partially acts like a common `null` but not exactly.
 
-For that reason, AIPack also adds the global concept of `null` that behaves closer to JSON, JS, SQL, and other nulls.
+ For that reason, AIPack also adds the global concept of `null` (also aliased as `Null` and `NULL`) that behaves closer to JSON, JS, SQL, and other nulls.
 
 Here are the key differences:
 
@@ -150,7 +150,7 @@ end
 
 **`null`**
 
-- Added by `AIPack` to all Lua contexts, with keyword `null` (it can be `Null` as well, but it's better to use `null` if possible)
+ Added by `AIPack` to all Lua contexts, with keyword `null`. (It is also aliased as `Null` and `NULL` for convenience).
 - Behaves like a JavaScript null, and can be used in variables, property values, and array items
 - In Array
 ```lua
@@ -188,6 +188,42 @@ print(contact_json)
     - In object property values when it's okay to not preserve the property name when it's nil. 
 
 So, if you're still not sure, use `null` in arrays, and you can use either `nil` or `null` in other scenarios.
+
+**Important Comparison Note**
+
+In Lua, `nil` and the `null` sentinel are different types. A simple `val == nil` check will return `false` if `val` is `null`. Always use the [Global Null Helpers](#global-null-helpers) (`is_null`, `nil_if_null`, `value_or`) to safely compare or handle these values.
+
+
+### Global Null Helpers
+
+AIPack provides several global functions to safely handle both `nil` and `null` values.
+
+**`is_null(value)`**
+
+Returns `true` if the `value` is either `nil` or the `null` sentinel.
+
+```lua
+is_null(nil)   -- true
+is_null(null)  -- true
+is_null(false) -- false
+```
+
+**`nil_if_null(value)`**
+
+Returns `nil` if the `value` is `null` or `nil`. Otherwise, returns the value itself. This is useful when calling functions that do not support the `null` sentinel.
+
+```lua
+local v = nil_if_null(null) -- v is nil
+```
+
+**`value_or(value, alt)`**
+
+Returns `value` if it is not `nil` and not `null`. Otherwise, returns `alt`.
+
+```lua
+local name = value_or(input.name, "Anonymous")
+```
+
 
 ## aip.file
 

@@ -1,4 +1,3 @@
-use crate::script::NullSentinel;
 use crate::{Error, Result};
 use mlua::{Lua, LuaSerdeExt as _};
 
@@ -127,8 +126,15 @@ pub fn lua_value_to_serde_value(lua_value: mlua::Value) -> Result<serde_json::Va
 		Value::Number(n) => serde_json::Value::Number(number_from_f64(n)?),
 		Value::String(s) => serde_json::Value::String(s.to_str()?.to_string()),
 		Value::Table(t) => convert_table(t)?,
-		Value::UserData(ud) if ud.is::<NullSentinel>() => serde_json::Value::Null,
-		Value::LightUserData(_) => serde_json::Value::Null,
+		Value::LightUserData(ldata) => {
+			if Value::LightUserData(ldata) == Value::NULL {
+				serde_json::Value::Null
+			} else {
+				// for now, still null
+				serde_json::Value::Null
+			}
+		}
+
 		Value::Function(_) | Value::Thread(_) | Value::UserData(_) => {
 			return Err(Error::custom(
 				"Cannot serialize Lua value to JSON: unsupported type (Function/LigthUserData/UserData)",

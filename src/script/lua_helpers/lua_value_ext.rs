@@ -23,10 +23,7 @@ pub trait LuaValueExt {
 
 impl LuaValueExt for Value {
 	fn x_is_null(&self) -> bool {
-		match self {
-			Value::UserData(ud) => ud.is::<crate::script::NullSentinel>(),
-			_ => false,
-		}
+		self == &Value::NULL
 	}
 
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
@@ -87,10 +84,7 @@ impl LuaValueExt for Option<Value> {
 	fn x_is_null(&self) -> bool {
 		let Some(val) = self.as_ref() else { return false };
 
-		match val {
-			Value::UserData(ud) => ud.is::<crate::script::NullSentinel>(),
-			_ => false,
-		}
+		val == &Value::NULL
 	}
 
 	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {

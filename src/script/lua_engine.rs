@@ -4,8 +4,8 @@ use crate::model::{LogKind, RuntimeCtx};
 use crate::run::Literals;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_lua;
+use crate::script::serde_value_to_lua_value;
 use crate::script::support::process_lua_eval_result;
-use crate::script::{NullSentinel, serde_value_to_lua_value};
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub struct LuaEngine {
@@ -179,10 +179,41 @@ impl LuaEngine {
 // region:    --- null
 
 fn init_null(lua: &Lua) -> Result<()> {
-	let null = lua.create_userdata(NullSentinel)?;
-	// Expose globally (optional)
-	lua.globals().set("null", null.clone())?;
-	lua.globals().set("Null", null.clone())?;
+	let globals = lua.globals();
+	globals.set("null", Value::NULL)?;
+	globals.set("Null", Value::NULL)?;
+	globals.set("NULL", Value::NULL)?;
+
+	// is_null(x) -> boolean
+	globals.set(
+		"is_null",
+		lua.create_function(|_, v: Value| Ok(matches!(v, Value::Nil) || v == Value::NULL))?,
+	)?;
+
+	// nil_if_null(x) -> x or nil
+	globals.set(
+		"nil_if_null",
+		lua.create_function(|_, v: Value| {
+			if matches!(v, Value::Nil) || v == Value::NULL {
+				Ok(Value::Nil)
+			} else {
+				Ok(v)
+			}
+		})?,
+	)?;
+
+	// value_or(value, alt) -> value or alt
+	globals.set(
+		"value_or",
+		lua.create_function(|_, (v, alt): (Value, Value)| {
+			if matches!(v, Value::Nil) || v == Value::NULL {
+				Ok(alt)
+			} else {
+				Ok(v)
+			}
+		})?,
+	)?;
+
 	Ok(())
 }
 

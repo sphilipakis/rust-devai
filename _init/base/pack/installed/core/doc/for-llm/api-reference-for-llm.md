@@ -269,7 +269,15 @@ type CmdResponse = {
 AIPack introduces a global `null` sentinel to bridge the gap between Lua's `nil` and JSON/SQL nulls.
 
 - **`nil` (Lua Native)**: Use for "no value." In arrays (sequential tables), a `nil` will stop `ipairs` iteration. In objects, setting a property to `nil` deletes the key.
-- **`null` (AIPack Sentinel)**: Use for "null value." It is preserved in arrays and does not stop `ipairs`. It is preserved in JSON serialization.
+- **`null` (AIPack Sentinel)**: Use for "null value." It is preserved in arrays and does not stop `ipairs`. It is preserved in JSON serialization. Also available as `Null` and `NULL`.
+
+**Recommendation:** In Lua, `nil` and the `null` sentinel are different types. Always use the global helpers (`is_null`, `nil_if_null`, `value_or`) to check or handle these values, as standard Lua comparison (e.g., `val == nil`) will not detect the `null` sentinel.
+
+**Global Helpers:**
+
+- `is_null(v)`: returns `true` if `v` is `nil` or `null`.
+- `nil_if_null(v)`: returns `nil` if `v` is `nil` or `null`, otherwise `v`.
+- `value_or(v, alt)`: returns `alt` if `v` is `nil` or `null`, otherwise `v`.
 
 ### 4.2 API (`aip.*`) Reference
 
