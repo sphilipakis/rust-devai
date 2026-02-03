@@ -1,5 +1,6 @@
 use crate::agent::find_agent;
 use crate::run::{RunBaseOptions, RunSubAgentParams, run_agent};
+use crate::types::RunAgentResponse;
 use crate::{Error, Result};
 
 pub async fn exec_run_sub_agent(params: RunSubAgentParams) -> Result<()> {
@@ -18,23 +19,27 @@ pub async fn exec_run_sub_agent(params: RunSubAgentParams) -> Result<()> {
 	// NOTE: For now, do not pass through the caller baseOptions.
 	// TODO: Might need to find a way to pass it through (perhaps via CTX, or a _aipack_.run_base_options)
 
-	// Find and build the agent
-	let agent = find_agent(&agent_name, &runtime, agent_dir.as_ref())
-		.map_err(|e| Error::custom(format!("Failed to find agent '{agent_name}': {e}")))?;
+	let result: Result<RunAgentResponse> = (async || {
+		// find the agent
+		let agent = find_agent(&agent_name, &runtime, agent_dir.as_ref())
+			.map_err(|e| Error::custom(format!("Failed to find agent '{agent_name}': {e}")))?;
 
-	// -- If we had a agent options, need to overrid the agent options.
-	let agent = match agent_options {
-		Some(agent_options) => agent.new_merge(agent_options)?,
-		None => agent,
-	};
+		// -- If we had a agent options, need to overrid the agent options.
+		let agent = match agent_options {
+			Some(agent_options) => agent.new_merge(agent_options)?,
+			None => agent,
+		};
 
-	// -- Build the environment
-	// NOTE: For now, do not inherit the parent run, But eventually mgith be past in the RunAgentParams
-	let run_base_options = RunBaseOptions::default();
+		// -- Build the environment
+		// NOTE: For now, do not inherit the parent run, But eventually mgith be past in the RunAgentParams
+		let run_base_options = RunBaseOptions::default();
 
-	let result = run_agent(&runtime, Some(parent_uid), agent, inputs, &run_base_options, true)
-		.await
-		.map_err(|e| Error::custom(format!("Failed to run agent '{agent_name}': {e}")));
+		let res = run_agent(&runtime, Some(parent_uid), agent, inputs, &run_base_options, true)
+			.await
+			.map_err(|e| Error::custom(format!("Failed to run agent '{agent_name}': {e}")))?;
+		Ok(res)
+	})()
+	.await;
 
 	match response_shot {
 		Some(response_shot) => {
