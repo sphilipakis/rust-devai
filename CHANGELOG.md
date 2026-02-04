@@ -1,5 +1,24 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2026-02-04 - [v0.8.15](https://github.com/jeremychone/rust-devai/compare/v0.8.13...v0.8.14)
+
+- `+` aip.file - Add .copy(..) and .move(..)
+- `^` api.lua.merge.. - now accept Value::Nil and Value::NULL as objs (will be ignored)
+- `!` Now using lua Value::NULL (removed custom NullSentinel) and now is_null(v), value_or(v,alt),  and nil_if_null(v)
+- `^` agent - Add .input support to aip.agent.run options
+- `^` aip.agent.run - Add agent_base_dir option to aip.agent.run
+- `>` aip.agent.run - refactoring to type RunAgentOptions
+- `-` aip.agent.run - fix error reporting issue when fail during prep run (find agent)
+- `>` types - add AgentRunResponse into types::
+- `^` core@doc - update for-llm
+- `.` config - update codex to gpt-5.2-codex
+- `.` doc - Update documentation with missing and corrected types and fix MdSection typo
+- `.` add first dev/agents/docaify
+- `>` code clean - remove all .unwrap() (should not have been)
+- `-` fix concurrency db transaction issue
+
+
 ## 2026-01-19 - [v0.8.14](https://github.com/jeremychone/rust-devai/compare/v0.8.13...v0.8.14)
 
 - `^` udiffx - many updates (more resilient)
