@@ -293,8 +293,8 @@ AIPack introduces a global `null` sentinel to bridge the gap between Lua's `nil`
 ```typescript
 aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
-aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
-aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo // (since 0.8.15) Workspace restricted. Default overwrite: false.
+aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo // (since 0.8.15) Workspace restricted. Default overwrite: false.
 aip.file.append(rel_path: string, content: string): FileInfo
 aip.file.delete(path: string): boolean // Only allowed within workspace (not base dir).
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo // If file is empty or whitespace-only, and content_when_empty is true, it writes the content.

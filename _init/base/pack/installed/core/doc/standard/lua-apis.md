@@ -236,6 +236,10 @@ aip.file.load(rel_path: string, options?: {base_dir: string}): FileRecord
 
 aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo
 
+aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+
+aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+
 aip.file.append(rel_path: string, content: string)
 
 aip.file.delete(path: string): boolean
@@ -391,6 +395,62 @@ aip.file.save("config.txt", "  new_setting=true  \n\n", {
 #### Error
 
 Returns an error (Lua table `{ error: string }`) on write failure, permission issues, path restrictions, or if no workspace context.
+
+### aip.file.copy
+
+Copies a file from `src_path` to `dest_path`, returning a [FileInfo](#fileinfo) object for the destination. (since 0.8.15)
+
+```lua
+-- API Signature
+aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+```
+
+Performs a binary copy of the file at `src_path` to `dest_path`.
+Both paths are resolved relative to the workspace root and support pack references (`ns@pack/...`).
+Parent directories for the destination are created automatically if they don't exist.
+
+#### Arguments
+
+- `src_path: string` - The source file path.
+- `dest_path: string` - The destination file path.
+- `options?: table` (optional) - Options:
+  - `overwrite?: boolean`: If `false` (default), the operation fails if the destination exists.
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the copied destination file.
+
+#### Error
+
+Returns an error if the source file doesn't exist, if the destination is outside the workspace, or if the destination exists and `overwrite` is false.
+
+### aip.file.move
+
+Moves (renames) a file from `src_path` to `dest_path`, returning a [FileInfo](#fileinfo) object for the destination. (since 0.8.15)
+
+```lua
+-- API Signature
+aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+```
+
+Renames the file at `src_path` to `dest_path`.
+Both paths are resolved relative to the workspace root and support pack references (`ns@pack/...`).
+Parent directories for the destination are created automatically if they don't exist.
+
+#### Arguments
+
+- `src_path: string` - The source file path.
+- `dest_path: string` - The destination file path.
+- `options?: table` (optional) - Options:
+  - `overwrite?: boolean`: If `false` (default), the operation fails if the destination exists.
+
+#### Returns
+
+- `FileInfo`: Metadata ([FileInfo](#fileinfo)) about the moved destination file.
+
+#### Error
+
+Returns an error if the source file doesn't exist, if the source or destination is outside the workspace (e.g., `.aipack-base`), or if the destination exists and `overwrite` is false.
 
 ### aip.file.append
 
