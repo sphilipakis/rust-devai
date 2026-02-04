@@ -10,9 +10,11 @@
 //!
 //! ### Functions
 //!
-//! - `aip.file.save(rel_path: string, content: string, options?: SaveOptions): FileInfo`
-//! - `aip.file.append(rel_path: string, content: string)      : FileInfo`
-//! - `aip.file.ensure_exists(path: string, content?, options?) : FileInfo`
+//! - `aip.file.save(rel_path: string, content: string, options?: SaveOptions) : FileInfo`
+//! - `aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}) : FileInfo`
+//! - `aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}) : FileInfo`
+//! - `aip.file.append(rel_path: string, content: string)       : FileInfo`
+//! - `aip.file.ensure_exists(path: string, content?, options?)  : FileInfo`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
@@ -120,6 +122,78 @@ pub(super) fn file_save(
 	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
 
 	let file_info = FileInfo::new(runtime.dir_context(), full_path, true);
+	let file_info = file_info.into_lua(lua)?;
+
+	Ok(file_info)
+}
+
+/// ## Lua Documentation
+///
+/// Moves a file from `src_path` to `dest_path`, returning a [`FileInfo`] object for the destination.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+/// ```
+///
+/// Renames (moves) the file at `src_path` to `dest_path`.
+/// Both paths are resolved relative to the workspace root and support pack references (`ns@pack/...`).
+/// Parent directories for the destination are created automatically if they don't exist.
+///
+/// ### Arguments
+///
+/// - `src_path: string` - The source file path.
+/// - `dest_path: string` - The destination file path.
+/// - `options?: table` (optional) - Options:
+///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `true`.
+///
+/// ### Returns
+///
+/// - `FileInfo`: A [`FileInfo`] object for the moved destination file.
+///
+/// ### Error
+///
+/// Returns an error if the source file doesn't exist, if the source or destination is outside the workspace
+/// (or restricted areas), or if an I/O error occurs (e.g., cross-device move failure).
+pub(super) fn file_move(
+	lua: &Lua,
+	runtime: &Runtime,
+	src_path: String,
+	dest_path: String,
+	options: Option<FileOverOptions>,
+) -> mlua::Result<mlua::Value> {
+	let dir_context = runtime.dir_context();
+	let options = options.unwrap_or_default();
+
+	let src_full = process_path_reference(runtime, &src_path)?;
+	let dest_full = process_path_reference(runtime, &dest_path)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.move requires a aipack workspace setup")?;
+
+	check_access_delete(&src_full, wks_dir)?;
+	check_access_write(&dest_full, wks_dir)?;
+
+	if !src_full.exists() {
+		return Err(Error::custom(format!("Move file failed - Source `{src_path}` does not exist")).into());
+	}
+
+	if !options.overwrite() && dest_full.exists() {
+		return Err(Error::custom(format!(
+			"Move file failed - Destination `{dest_path}` already exists and overwrite is set to false"
+		))
+		.into());
+	}
+
+	ensure_file_dir(&dest_full).map_err(Error::from)?;
+
+	std::fs::rename(&src_full, &dest_full)
+		.map_err(|err| Error::custom(format!("Fail to move from `{src_path}` to `{dest_path}`.\nCause {err}")))?;
+
+	let rel_dest = dest_full.diff(wks_dir).unwrap_or_else(|| dest_full.clone());
+	get_hub().publish_sync(format!("-> Lua aip.file.move called to: {rel_dest}"));
+
+	let file_info = FileInfo::new(runtime.dir_context(), dest_full, true);
 	let file_info = file_info.into_lua(lua)?;
 
 	Ok(file_info)
@@ -452,7 +526,7 @@ impl FromLua for EnsureExistsOptions {
 mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	use crate::_test_support::run_reflective_agent;
+	use crate::_test_support::{assert_contains, run_reflective_agent};
 	use crate::runtime::Runtime;
 
 	/// Note: need the multi-thread, because save do a `get_hub().publish_sync`
@@ -697,6 +771,38 @@ mod tests {
 		let src_content = std::fs::read_to_string(fx_src_path)?;
 		let dest_content = std::fs::read_to_string(fx_dest_path)?;
 		assert_eq!(src_content, dest_content);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_move_simple_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let fx_src = ".tmp/move_src.txt";
+		let fx_dest = ".tmp/move_dest.txt";
+		let fx_content = "move content";
+
+		// -- Exec
+		let res = run_reflective_agent(
+			&format!(
+				r#"
+                aip.file.save("{fx_src}", "{fx_content}")
+                local info = aip.file.move("{fx_src}", "{fx_dest}")
+                return {{
+                    exists_src = aip.file.exists("{fx_src}"),
+                    exists_dest = aip.file.exists("{fx_dest}"),
+                    dest_path = info.path
+                }}
+            "#
+			),
+			None,
+		)
+		.await?;
+
+		// -- Check
+		assert_eq!(res.x_get_bool("exists_src")?, false);
+		assert_eq!(res.x_get_bool("exists_dest")?, true);
+		assert_contains(res.x_get_str("dest_path")?, fx_dest);
 
 		Ok(())
 	}

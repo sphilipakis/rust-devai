@@ -28,6 +28,14 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		},
 	)?;
 
+	// -- move
+	let rt = runtime.clone();
+	let file_move_fn = lua.create_function(
+		move |lua, (src, dest, options): (String, String, Option<FileOverOptions>)| {
+			file_move(lua, &rt, src, dest, options)
+		},
+	)?;
+
 	// -- append
 	let rt = runtime.clone();
 	let file_append_fn =
@@ -243,6 +251,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
 	table.set("copy", file_copy_fn)?;
+	table.set("move", file_move_fn)?;
 	table.set("append", file_append_fn)?;
 	table.set("delete", file_delete_fn)?;
 	table.set("ensure_exists", file_ensure_exists_fn)?;
