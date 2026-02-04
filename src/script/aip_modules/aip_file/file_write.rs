@@ -145,7 +145,7 @@ pub(super) fn file_save(
 /// - `src_path: string` - The source file path.
 /// - `dest_path: string` - The destination file path.
 /// - `options?: table` (optional) - Options:
-///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `true`.
+///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `false`.
 ///
 /// ### Returns
 ///
@@ -180,7 +180,7 @@ pub(super) fn file_move(
 
 	if !options.overwrite() && dest_full.exists() {
 		return Err(Error::custom(format!(
-			"Move file failed - Destination `{dest_path}` already exists and overwrite is set to false"
+			"Move file failed - Destination `{dest_path}` already exists and overwrite is set to false.\nUse `aip.file.move(src_path, dst_path,{{overwrite = true}}` to allow overwrite."
 		))
 		.into());
 	}
@@ -217,7 +217,7 @@ pub(super) fn file_move(
 /// - `src_path: string` - The source file path.
 /// - `dest_path: string` - The destination file path.
 /// - `options?: table` (optional) - Options:
-///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `true`.
+///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `false`.
 ///
 /// ### Returns
 ///
@@ -247,7 +247,7 @@ pub(super) fn file_copy(
 
 	if !options.overwrite() && dest_full.exists() {
 		return Err(Error::custom(format!(
-			"Copy file failed - Destination `{dest_path}` already exists and overwrite is set to false"
+			"Copy file failed - Destination `{dest_path}` already exists and overwrite is set to false.\nUse `aip.file.copy(src_path, dst_path,{{overwrite = true}}` to allow overwrite."
 		))
 		.into());
 	}

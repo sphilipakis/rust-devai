@@ -9,7 +9,7 @@ pub struct FileOverOptions {
 
 impl FileOverOptions {
 	pub fn overwrite(&self) -> bool {
-		self.overwrite.unwrap_or(true)
+		self.overwrite.unwrap_or(false)
 	}
 }
 
