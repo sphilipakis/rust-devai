@@ -18,13 +18,13 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::script::aip_modules::aip_file::support::{check_access_delete, check_access_write};
+use crate::script::aip_modules::aip_file::support::{check_access_delete, check_access_write, process_path_reference};
 use crate::support::files::safer_trash_file;
 use crate::support::text::{ensure_single_trailing_newline, trim_end_if_needed, trim_start_if_needed};
-use crate::types::{FileInfo, SaveOptions};
+use crate::types::{FileInfo, FileOverOptions, SaveOptions};
 use mlua::{FromLua, IntoLua, Lua, Value};
 use simple_fs::ensure_file_dir;
-use std::fs::write;
+use std::fs::{File, write};
 use std::io::Write;
 
 /// ## Lua Documentation
@@ -120,6 +120,82 @@ pub(super) fn file_save(
 	get_hub().publish_sync(format!("-> Lua aip.file.save called on: {rel_path}"));
 
 	let file_info = FileInfo::new(runtime.dir_context(), full_path, true);
+	let file_info = file_info.into_lua(lua)?;
+
+	Ok(file_info)
+}
+
+/// ## Lua Documentation
+///
+/// Copies a file from `src_path` to `dest_path`, returning a [`FileInfo`] object for the destination.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.copy(src_path: string, dest_path: string, options?: {overwrite?: boolean}): FileInfo
+/// ```
+///
+/// Performs a binary, streaming copy of the file at `src_path` to `dest_path`.
+/// Both paths are resolved relative to the workspace root and support pack references (`ns@pack/...`).
+/// Parent directories for the destination are created automatically if they don't exist.
+///
+/// ### Arguments
+///
+/// - `src_path: string` - The source file path.
+/// - `dest_path: string` - The destination file path.
+/// - `options?: table` (optional) - Options:
+///   - `overwrite?: boolean`: If `false`, the operation fails if the destination exists. Defaults to `true`.
+///
+/// ### Returns
+///
+/// - `FileInfo`: A [`FileInfo`] object for the copied destination file.
+///
+/// ### Error
+///
+/// Returns an error if the source file doesn't exist, if the destination is outside the workspace,
+/// or if an I/O error occurs.
+pub(super) fn file_copy(
+	lua: &Lua,
+	runtime: &Runtime,
+	src_path: String,
+	dest_path: String,
+	options: Option<FileOverOptions>,
+) -> mlua::Result<mlua::Value> {
+	let dir_context = runtime.dir_context();
+	let options = options.unwrap_or_default();
+
+	let src_full = process_path_reference(runtime, &src_path)?;
+	let dest_full = process_path_reference(runtime, &dest_path)?;
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.copy requires a aipack workspace setup")?;
+
+	check_access_write(&dest_full, wks_dir)?;
+
+	if !options.overwrite() && dest_full.exists() {
+		return Err(Error::custom(format!(
+			"Copy file failed - Destination `{dest_path}` already exists and overwrite is set to false"
+		))
+		.into());
+	}
+
+	ensure_file_dir(&dest_full).map_err(Error::from)?;
+
+	let mut src_file = File::open(&src_full)
+		.map_err(|err| Error::custom(format!("Fail to open source file `{src_path}` for copy.\nCause {err}")))?;
+
+	let mut dest_file = File::create(&dest_full).map_err(|err| {
+		Error::custom(format!(
+			"Fail to create destination file `{dest_path}` for copy.\nCause {err}"
+		))
+	})?;
+
+	std::io::copy(&mut src_file, &mut dest_file)
+		.map_err(|err| Error::custom(format!("Fail to copy from `{src_path}` to `{dest_path}`.\nCause {err}")))?;
+
+	let rel_dest = dest_full.diff(wks_dir).unwrap_or_else(|| dest_full.clone());
+	get_hub().publish_sync(format!("-> Lua aip.file.copy called to: {rel_dest}"));
+
+	let file_info = FileInfo::new(runtime.dir_context(), dest_full, true);
 	let file_info = file_info.into_lua(lua)?;
 
 	Ok(file_info)
@@ -594,6 +670,33 @@ mod tests {
 		// -- Check
 		let file_content = std::fs::read_to_string(fx_dest_path)?;
 		assert_eq!(file_content, fx_content_expected);
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_copy_simple_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_src_path = "agent-script/agent-hello.aip";
+		let fx_dest_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_copy_simple_ok.aip");
+
+		// -- Exec
+		let _res = run_reflective_agent(
+			&format!(r#"return aip.file.copy("{fx_src_path}", "{fx_dest_path}");"#),
+			None,
+		)
+		.await?;
+
+		// -- Check
+		assert!(fx_dest_path.exists());
+		let src_content = std::fs::read_to_string(fx_src_path)?;
+		let dest_content = std::fs::read_to_string(fx_dest_path)?;
+		assert_eq!(src_content, dest_content);
 
 		Ok(())
 	}

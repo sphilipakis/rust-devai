@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::runtime::Runtime;
 use crate::script::aip_modules::aip_file::*;
-use crate::types::SaveOptions;
+use crate::types::{FileOverOptions, SaveOptions};
 use mlua::{Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -17,6 +17,14 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_save_fn = lua.create_function(
 		move |lua, (path, content, options): (String, String, Option<SaveOptions>)| {
 			file_save(lua, &rt, path, content, options)
+		},
+	)?;
+
+	// -- copy
+	let rt = runtime.clone();
+	let file_copy_fn = lua.create_function(
+		move |lua, (src, dest, options): (String, String, Option<FileOverOptions>)| {
+			file_copy(lua, &rt, src, dest, options)
 		},
 	)?;
 
@@ -234,6 +242,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	// -- Add all functions to the module
 	table.set("load", file_load_fn)?;
 	table.set("save", file_save_fn)?;
+	table.set("copy", file_copy_fn)?;
 	table.set("append", file_append_fn)?;
 	table.set("delete", file_delete_fn)?;
 	table.set("ensure_exists", file_ensure_exists_fn)?;
