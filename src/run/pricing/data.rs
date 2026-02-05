@@ -3,6 +3,13 @@ use crate::run::pricing::{ModelPricing, ProviderPricing};
 // Define Anthropic pricing
 const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "claude-opus-4-6",
+		input_cached: Some(0.5),
+		input_normal: 5.0,
+		output_normal: 25.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "claude-opus-4-5",
 		input_cached: Some(0.5),
 		input_normal: 5.0,
@@ -38,13 +45,6 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-3-7-sonnet",
-		input_cached: Some(0.3),
-		input_normal: 3.0,
-		output_normal: 15.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "claude-haiku-4-5",
 		input_cached: Some(0.1),
 		input_normal: 1.0,
@@ -56,6 +56,13 @@ const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		input_cached: Some(0.08),
 		input_normal: 0.8,
 		output_normal: 4.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "claude-haiku-3",
+		input_cached: Some(0.03),
+		input_normal: 0.25,
+		output_normal: 1.25,
 		output_reasoning: None,
 	},
 ];
@@ -275,24 +282,10 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-3-pro-batch",
-		input_cached: Some(0.2),
-		input_normal: 1.0,
-		output_normal: 6.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gemini-3-flash",
 		input_cached: Some(0.05),
 		input_normal: 0.5,
 		output_normal: 3.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-3-flash-batch",
-		input_cached: Some(0.05),
-		input_normal: 0.25,
-		output_normal: 1.5,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -303,24 +296,10 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-2.5-pro-batch",
-		input_cached: Some(0.125),
-		input_normal: 0.625,
-		output_normal: 5.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gemini-2.5-flash",
 		input_cached: Some(0.03),
 		input_normal: 0.3,
 		output_normal: 2.5,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-2.5-flash-batch",
-		input_cached: Some(0.03),
-		input_normal: 0.15,
-		output_normal: 1.25,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -331,24 +310,10 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-2.5-flash-lite-batch",
-		input_cached: Some(0.01),
-		input_normal: 0.05,
-		output_normal: 0.2,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gemini-2.0-flash",
 		input_cached: Some(0.025),
 		input_normal: 0.1,
 		output_normal: 0.4,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-2.0-flash-batch",
-		input_cached: Some(0.025),
-		input_normal: 0.05,
-		output_normal: 0.2,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -359,13 +324,6 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-2.0-flash-lite-batch",
-		input_cached: None,
-		input_normal: 0.0375,
-		output_normal: 0.15,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gemini-flash-latest",
 		input_cached: Some(0.03),
 		input_normal: 0.3,
@@ -373,24 +331,10 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "gemini-flash-latest-batch",
-		input_cached: Some(0.03),
-		input_normal: 0.15,
-		output_normal: 1.25,
-		output_reasoning: None,
-	},
-	ModelPricing {
 		name: "gemini-pro-latest",
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
-		output_reasoning: None,
-	},
-	ModelPricing {
-		name: "gemini-pro-latest-batch",
-		input_cached: Some(0.125),
-		input_normal: 0.625,
-		output_normal: 5.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -763,7 +707,7 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 	},
 	ModelPricing {
 		// Renamed computer-use-preview
-		name: "computer-use",
+		name: "computer-use-preview",
 		input_cached: None,
 		input_normal: 3.0,
 		output_normal: 12.0,

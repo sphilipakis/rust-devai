@@ -28,13 +28,10 @@ local base_dir = p_utils.base_dir
 local inputs = {
    -- This openai link does not work with puppeteer, needs to copy/paste conine in the pricing-openai.md
    {name = "openai",    do_json = false,  url = ""},
-   
-   {name = "gemini",    do_json = true,  url = ""},
+   {name = "gemini",    do_json = false,  url = ""},
    {name = "deepseek",  do_json = false,  url = "https://api-docs.deepseek.com/quick_start/pricing"},
-   {name = "anthropic", do_json = false,   url = ""},
-
+   {name = "anthropic", do_json = true,   url = ""},
    {name = "xai",       do_json = false,  url = ""}, 
-
    {name = "groq",      do_json = false,  url = ""},
    {name = "fireworks", do_json = false,  url = ""},
    {name = "together",  do_json = false,  url = ""}
@@ -102,13 +99,15 @@ return {
 
 # Instruction
 
-From this content for the {{data.provider}}: 
+Here are the data for this {{data.provider}} AI Provider: 
 
 ```md
 {{data.content}}
 ```
 
-- Create a pricing JSON
+Create a pricing JSON for this provider, following the following rules (pick the right rules for this provider)
+
+
 - Make sure all models are all lowercase
 - for OpenAI models
     - for OpenAI modelsDo not add the gpt-image-1 or audio models
@@ -132,14 +131,16 @@ From this content for the {{data.provider}}:
     - Set the flag `recent: true` only for the model names that match the `<h1>recent</h1>` list, and all the other should be `recent: false`
     - Also, only extract the models about Llama, qwen, deepseek, glm, gemma, mixtral, mistral, and openai. 
 - For Anthropic 
-    - Here are the correct names to usefor the anthropic models: 
-        - `claude-opus-4-5`, `claude-sonnet-4-5`, `claude-haiku-4-5`
+    - Here are the correct patterns to usefor the anthropic models (use use `-` rather than `.` in the model names)
+        - `claude-opus-4-5`, ...,  `claude-sonnet-4-5`, `claude-haiku-4-5`
         - `claude-opus-4-1`, `claude-sonnet-4`, 
         - `claude-3-7-sonnet`, `claude-opus-4`, `claude-3-5-haiku`
     - So match the model names in the pages to those one. 
-    - For Anthropic Models (Claude), only the model name ending `4-5` are `recent: true`, the other models are `recent: false`
+    - For Anthropic Models (Claude), Make sure to have only one `recent: true` for each model type, Sonnet, Haiku, Opus. Pick the highest number for each of them to mark as `recent: true`
+    - Make sure to remove / not add the "deprecated" ones
     - For Anthropic Models (Claude), the name/value is inverse. For value, and then, label of this value. 
     - For Anthropic Models (Claude), when caching write value, put it in `.cache_write`, and then, the cache value goes in `.cached`
+    - For Anthropic Models, cache write price, take the `5m` price
     - For Anthropic models (Claude), make sure you get the model names from the model is, and remove the `-2025...`
     - For Anthropic models (Claude), only sonnet/haiku 4.5 and opus 4.1 are recent: true, all others are recent: false
 - For gemini models,
