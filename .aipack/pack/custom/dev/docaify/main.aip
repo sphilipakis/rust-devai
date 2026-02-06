@@ -3,9 +3,10 @@
 
 ```lua
 local BASE_DIR = "src/"
+local GLOB_SUFFIX = "{*.rs}"
 
 -- Find all files recursively to identify all unique directories
-local all_files = aip.file.list(BASE_DIR .. "**/*")
+local all_files = aip.file.list(BASE_DIR .. "**/" .. GLOB_SUFFIX)
 local dir_map = {}
 
 -- Ensure root src is included if present
@@ -46,13 +47,16 @@ return aip.flow.before_all_response({
 # Data
 
 ```lua
+local BASE_DIR = "src/"
+local GLOB_SUFFIX = "{*.rs}"
+
 local d_path = input.path
 
 -- Using base_dir option for aip.file.stats is more robust than prepending to the glob
 -- Direct Size: Sum of files immediately inside the folder
-local direct_stats = aip.file.stats("*", { base_dir = d_path })
+local direct_stats = aip.file.stats(GLOB_SUFFIX, { base_dir = d_path })
 -- Recursive Size: Sum of all files within the folder and sub-folders
-local recursive_stats = aip.file.stats("**/*", { base_dir = d_path })
+local recursive_stats = aip.file.stats("**/" .. GLOB_SUFFIX, { base_dir = d_path })
 
 return aip.flow.data_response({
     data = {
