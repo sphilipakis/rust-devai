@@ -1,9 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-02-06 - [v0.8.15](https://github.com/jeremychone/rust-devai/compare/v0.8.15...v0.8.16)
 
-## 2026-02-04 - [v0.8.15](https://github.com/jeremychone/rust-devai/compare/v0.8.13...v0.8.14)
+- `^` Anthropic - add `opus-4-6 `pricing and default for `opus` alias
 
-- `+` aip.file - Add .copy(..) and .move(..)
+## 2026-02-04 - [v0.8.15](https://github.com/jeremychone/rust-devai/compare/v0.8.14...v0.8.15)
+
+- `+` aip.file - Add `.copy(..)` and `.move(..)`
 - `^` api.lua.merge.. - now accept Value::Nil and Value::NULL as objs (will be ignored)
 - `!` Now using lua Value::NULL (removed custom NullSentinel) and now is_null(v), value_or(v,alt),  and nil_if_null(v)
 - `^` agent - Add .input support to aip.agent.run options
