@@ -75,7 +75,7 @@ nano          = "gpt-5-nano"
 # -- Google
 # As shown below, Gemini model names also support the use of `-high`, `-medium`, or `-low` suffixes,
 # in addition to the `-zero` suffix for Flash or pro
-gpro          = "gemini-3-pro-preview" # "gemini-pro-latest" (for 2.5)
+gpro          = "gemini-3.1-pro-preview"
 flash         = "gemini-3-flash-preview"
 lite          = "gemini-flash-lite-latest"
 # -- Fireworks (namespaced with `fireworks::_model_name`
