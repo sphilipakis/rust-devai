@@ -87,7 +87,7 @@
           "cached": 0.08,
           "normal": 0.8
         },
-        "name": "claude-haiku-3-5",
+        "name": "claude-3-5-haiku",
         "output": 4,
         "recent": false
       },
@@ -97,7 +97,7 @@
           "cached": 0.03,
           "normal": 0.25
         },
-        "name": "claude-haiku-3",
+        "name": "claude-3-haiku",
         "output": 1.25,
         "recent": false
       }
@@ -607,9 +607,19 @@
           "cached": 0.2,
           "normal": 2
         },
-        "name": "gemini-3-pro",
+        "name": "gemini-3.1-pro",
         "output": 12,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.2,
+          "normal": 2
+        },
+        "name": "gemini-3-pro",
+        "output": 12,
+        "recent": false
       },
       {
         "input": {
@@ -620,6 +630,16 @@
         "name": "gemini-3-flash",
         "output": 3,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 2
+        },
+        "name": "gemini-3-pro-image",
+        "output": 120,
+        "recent": false
       },
       {
         "input": {
@@ -649,6 +669,26 @@
         },
         "name": "gemini-2.5-flash-lite",
         "output": 0.4,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.3
+        },
+        "name": "gemini-2.5-flash-image",
+        "output": 30,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 1.25
+        },
+        "name": "gemini-2.5-computer-use",
+        "output": 10,
         "recent": false
       },
       {
@@ -674,26 +714,6 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.3
-        },
-        "name": "gemini-flash-latest",
-        "output": 2.5,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.125,
-          "normal": 1.25
-        },
-        "name": "gemini-pro-latest",
-        "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
           "cached": null,
           "normal": 0.15
         },
@@ -714,31 +734,21 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.03,
+          "normal": 0.3
+        },
+        "name": "gemini-flash-latest",
+        "output": 2.5,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.125,
           "normal": 1.25
         },
-        "name": "gemini-2.5-computer-use",
+        "name": "gemini-pro-latest",
         "output": 10,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0,
-          "normal": 0
-        },
-        "name": "gemma-3",
-        "output": 0,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0,
-          "normal": 0
-        },
-        "name": "gemma-3n",
-        "output": 0,
         "recent": false
       }
     ]

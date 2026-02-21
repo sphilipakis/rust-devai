@@ -63,14 +63,14 @@ pub const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-haiku-3-5",
+		name: "claude-3-5-haiku",
 		input_cached: Some(0.08),
 		input_normal: 0.8,
 		output_normal: 4.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-haiku-3",
+		name: "claude-3-haiku",
 		input_cached: Some(0.03),
 		input_normal: 0.25,
 		output_normal: 1.25,
