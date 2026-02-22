@@ -138,8 +138,9 @@ Create a pricing JSON for this provider, following the following rules (pick the
     - For Gemini models, `gemini-3-pro-preview` and `gemini-3-flash-preview` remove the `-preview` in the name
     - For Gemini models, for `gemini-2.5-pro` remove the release number after pro like the `-09...` same for other gemini models. Just have the main one. 
     - For the Gemini models, add new models for 
-      - `gemini-flash-latest` based on `gemini flash 2.5` pricing. 
-      - `gemini-pro-latest` based on `gemini pro 2.5` pricing. 
+      - `gemini-flash-latest` based on `gemini flash 3 preview` pricing. 
+      - `gemini-flash-lite-latest` based on `gemini-2.5-flash-lite` pricing
+      - `gemini-pro-latest` based on `gemini pro 3` pricing. 
       - Not that bothg of this latest will be `recent: false` as they ar aboused on the 2.5
     - For gemini models, only add the model that starts with `gemini...`
 - For Groq models, 

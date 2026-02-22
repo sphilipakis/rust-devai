@@ -634,11 +634,11 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.2,
           "normal": 2
         },
         "name": "gemini-3-pro-image",
-        "output": 120,
+        "output": 12,
         "recent": false
       },
       {
@@ -674,21 +674,11 @@
       {
         "input": {
           "cache_write": null,
-          "cached": null,
+          "cached": 0.03,
           "normal": 0.3
         },
         "name": "gemini-2.5-flash-image",
-        "output": 30,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
-          "normal": 1.25
-        },
-        "name": "gemini-2.5-computer-use",
-        "output": 10,
+        "output": 2.5,
         "recent": false
       },
       {
@@ -719,7 +709,7 @@
         },
         "name": "gemini-embedding-001",
         "output": 0,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -729,26 +719,46 @@
         },
         "name": "gemini-robotics-er-1.5",
         "output": 2.5,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.03,
-          "normal": 0.3
-        },
-        "name": "gemini-flash-latest",
-        "output": 2.5,
-        "recent": false
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": 0.125,
+          "cached": null,
           "normal": 1.25
         },
-        "name": "gemini-pro-latest",
+        "name": "gemini-2.5-computer-use",
         "output": 10,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.05,
+          "normal": 0.5
+        },
+        "name": "gemini-flash-latest",
+        "output": 3,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.01,
+          "normal": 0.1
+        },
+        "name": "gemini-flash-lite-latest",
+        "output": 0.4,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.2,
+          "normal": 2
+        },
+        "name": "gemini-pro-latest",
+        "output": 12,
         "recent": false
       }
     ]
