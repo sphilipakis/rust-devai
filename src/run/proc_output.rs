@@ -30,7 +30,7 @@ pub async fn process_output(
 		lua_scope.set("ai_response", ai_response)?;
 		lua_scope.set("options", agent.options_as_ref())?;
 
-		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
+		let lua_value = lua_engine.eval(output_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()])).await?;
 		let output_response = serde_json::to_value(lua_value)?;
 
 		if let Ok(FromValue::AipackCustom(AipackCustom::Redo)) = AipackCustom::from_value(output_response.clone()) {

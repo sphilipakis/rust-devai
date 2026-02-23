@@ -100,7 +100,7 @@ impl LuaEngine {
 
 /// Public Function
 impl LuaEngine {
-	pub fn eval(&self, script: &str, scope: Option<Table>, addl_lua_paths: Option<&[&str]>) -> Result<Value> {
+	pub async fn eval(&self, script: &str, scope: Option<Table>, addl_lua_paths: Option<&[&str]>) -> Result<Value> {
 		let lua = &self.lua;
 
 		let chunck = lua.load(script);
@@ -112,7 +112,7 @@ impl LuaEngine {
 			chunck
 		};
 
-		let res = chunck.eval::<Value>();
+		let res = chunck.eval_async::<Value>().await;
 		// let res = res?;
 
 		let res = process_lua_eval_result(&self.lua, res, script)?;
@@ -335,7 +335,7 @@ return "Hello " .. my_name .. " - " .. square_root
 		// -- Exec
 		let scope = engine.create_table()?;
 		scope.set("my_name", "Lua World")?;
-		let res = engine.eval(fx_script, Some(scope), None)?;
+		let res = engine.eval(fx_script, Some(scope), None).await?;
 
 		// -- Check
 		let res = serde_json::to_value(res)?;

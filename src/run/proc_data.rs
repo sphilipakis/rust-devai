@@ -88,7 +88,7 @@ pub async fn process_data(
 		rt_step.step_task_data_start(run_id, task_id).await?;
 
 		// -- Exec
-		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir.as_str()]))?;
+		let lua_value = lua_engine.eval(data_script, Some(lua_scope), Some(&[agent_dir.as_str()])).await?;
 		let data_res = serde_json::to_value(lua_value)?;
 
 		// -- Rt Step - Start Dt Start

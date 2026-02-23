@@ -28,9 +28,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let rt = runtime.clone();
-	let agent_run = lua.create_function(
+	let agent_run = lua.create_async_function(
 		move |lua, (agent_name, run_options): (String, Option<RunAgentOptions>)| {
-			aip_agent_run(lua, &rt, agent_name, run_options.unwrap_or_default())
+			let rt = rt.clone();
+			async move { aip_agent_run(&lua, &rt, agent_name, run_options.unwrap_or_default()).await }
 		},
 	)?;
 
@@ -117,7 +118,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///   error: string // Error message
 /// }
 /// ```
-pub fn aip_agent_run(
+pub async fn aip_agent_run(
 	lua: &Lua,
 	runtime: &Runtime,
 	agent_name: String,
@@ -144,10 +145,12 @@ pub fn aip_agent_run(
 		Some(tx),
 	)?;
 
-	// NOTE: Needs to use the send_sync_spawn_and_block, otherwise, message not sent as it wait for this CmdRun to complete
-	runtime.executor_sender().send_sync_spawn_and_block(run_agent_params.into())?;
-	let res = rx.recv_sync();
-	let run_agent_response = res??;
+	// Send asynchronously
+	runtime.executor_sender().send(run_agent_params.into()).await;
+
+	// Wait asynchronously
+	let res = rx.recv().await;
+	let run_agent_response = res.map_err(|err| Error::custom(format!("rx.recv_async fail. Cause: {err}")))??;
 
 	run_agent_response.into_lua(lua)
 }
@@ -186,7 +189,14 @@ pub fn aip_agent_extract_options(lua: &Lua, value: Value) -> mlua::Result<Value>
 			let result_table = lua.create_table()?;
 
 			// List of keys to copy
-			let keys_to_copy = ["model", "model_aliases", "input_concurrency", "temperature", "top_p", "allow_run_on_task_fail"];
+			let keys_to_copy = [
+				"model",
+				"model_aliases",
+				"input_concurrency",
+				"temperature",
+				"top_p",
+				"allow_run_on_task_fail",
+			];
 
 			for key in keys_to_copy.iter() {
 				if let Some(val) = table.x_get_value(key)

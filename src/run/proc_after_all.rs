@@ -48,7 +48,7 @@ pub async fn process_after_all(
 		// -- Rt Step - After All Start
 		rt_step.step_aa_start(run_id).await?;
 
-		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))?;
+		let lua_value = lua_engine.eval(after_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()])).await?;
 
 		// -- Rt Step - After All End
 		rt_step.step_aa_end(run_id).await?;

@@ -45,7 +45,7 @@ mod tests {
         return {file1,file2}  -- Return an array of File structs
     "#;
 		let tmpl = r#"
-The files are: 
+The files are:
 {{#each data}}
 - {{this.path}}
 {{/each}}
@@ -53,7 +53,7 @@ The files are:
 
 		// -- Exec
 		let lua_engine = runtime.new_lua_engine_without_ctx_test_only()?;
-		let data = lua_engine.eval(script, None, None)?;
+		let data = lua_engine.eval(script, None, None).await?;
 		let data = serde_json::to_value(data)?;
 		let value = json!({
 			"data": data
