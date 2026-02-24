@@ -1,0 +1,42 @@
+
+
+# Before All
+
+```lua
+
+-- Load 60 (max) files
+local all_files = aip.file.list({
+	"src/**/*.{rs,js,txt,cpp,hpp,qml}",
+})
+local max = 60
+local files = {}
+for i = 1, math.min(#all_files, max) do
+    files[i] = all_files[i]
+end
+
+print("agent-main files:", #files)
+
+return aip.flow.before_all_response({
+	inputs = files,
+	options = {
+		input_concurrency = 22
+	}
+})
+```
+
+# Data
+
+```lua
+
+aip.agent.run("agent-sub.aip", {
+	inputs  = {input},
+	options = {model = "lite"}
+})
+-- aip.agent.run("agent-bouba.aip", {
+-- 	inputs = {input},
+-- 	options = {model = "lite"}
+-- })
+
+print("agent-main data DONE")
+
+```

@@ -1,0 +1,15 @@
+
+# Data
+
+```lua
+print("agent-alfred", input)
+
+return input
+
+```
+
+# Instruction
+
+Give the file name of this path
+
+{{data.path}}
