@@ -301,7 +301,10 @@ async fn run_tasks(
 
 	// extract concurrency and allow_run_on_task_fail
 	let concurrency = agent.options().input_concurrency().unwrap_or(DEFAULT_CONCURRENCY);
-	let allow_run_on_task_fail = agent.options().allow_run_on_task_fail().unwrap_or(DEFAULT_ALLOW_RUN_ON_TASK_FAIL);
+	let allow_run_on_task_fail = agent
+		.options()
+		.allow_run_on_task_fail()
+		.unwrap_or(DEFAULT_ALLOW_RUN_ON_TASK_FAIL);
 
 	// -- Rt Update - model name & concurrency
 	let _ = rt_model
@@ -435,11 +438,7 @@ async fn process_join_set_res(
 		}
 		Err(e) => {
 			let err = Error::custom(format!("Error while running input. Cause {e}"));
-			if allow_run_on_task_fail {
-				Ok(false)
-			} else {
-				Err(err)
-			}
+			if allow_run_on_task_fail { Ok(false) } else { Err(err) }
 		}
 	}
 }

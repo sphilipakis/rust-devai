@@ -443,7 +443,7 @@ return {
 		let options_table = options_lua.as_table().ok_or("Should be a table")?;
 		assert_eq!(&options_table.get::<String>("model")?, "gpt-4o-mini");
 		assert_eq!(options_table.get::<f64>("temperature")?, 0.3);
-		assert_eq!(options_table.get::<bool>("allow_run_on_task_fail")?, true);
+		assert!(options_table.get::<bool>("allow_run_on_task_fail")?);
 		let aliases_table = options_table.get::<mlua::Value>("model_aliases")?;
 		let aliases_table = aliases_table.as_table().ok_or("model_aliases should be table")?;
 		assert_eq!(&aliases_table.get::<String>("small")?, "flash-001");

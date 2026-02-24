@@ -2,7 +2,8 @@ use super::SysState;
 use crate::model::{ErrRec, Id, ModelManager, Task};
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
 use crate::tui::core::{
-	AppStage, ConfigTab, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones, UiAction,
+	AppStage, ConfigTab, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, ScrollIden, ScrollZone, ScrollZones,
+	UiAction,
 };
 use crate::tui::support;
 use crate::tui::view::PopupView;

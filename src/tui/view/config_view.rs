@@ -34,11 +34,7 @@ impl StatefulWidget for ConfigView {
 
 		let [tabs_a, _gap, content_a] = Layout::default()
 			.direction(Direction::Vertical)
-			.constraints([
-				Constraint::Length(1),
-				Constraint::Length(1),
-				Constraint::Fill(1),
-			])
+			.constraints([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)])
 			.areas(inner_area);
 
 		// -- Tabs
@@ -69,4 +65,3 @@ impl StatefulWidget for ConfigView {
 		}
 	}
 }
-
