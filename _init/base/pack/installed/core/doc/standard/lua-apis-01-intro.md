@@ -58,29 +58,6 @@ Important notes:
 - The pack support directory suffixes `$workspace` and `$base` must appear immediately after the pack name.
 - These paths can be used in globs (e.g., `aip.file.list({"~/path/to/**/*.md", "pro@rust10x/guide/**/*.md"})`).
 
-
-
-#### Common Data Types:
-
-- [`FileInfo`](#fileinfo) (for `aip.file..`) (FileInfo + `.content`)
-- [`FileRecord`](#filerecord) (for `aip.file..`)
-- [`FileStats`](#filestats) (for `aip.file..`)
-- [`WebResponse`](#webresponse) (for `aip.web..`)
-- [`WebOptions`](#weboptions) (for `aip.web..`)
-- [`MdSection`](#mdsection) (for `aip.md..`)
-- [`MdBlock`](#mdblock) (for `aip.md..`)
-- [`MdRef`](#mdref) (for `aip.md..`)
-- [`TagElem`](#tagelem) (for `aip.tag..`)
-- [`ApplyChangesStatus`](#applychangesstatus) (for `aip.udiffx..`)
-- [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
-- [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
-- [`SaveOptions`](#saveoptions) (for `aip.file.save(...)`)
-- [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
-- [`CsvContent`](#csvcontent) (for `aip.file.load_csv`)
-- [`YamlDocs`](#yamldocs) (for `aip.file.load_yaml` and `aip.yaml.parse`)
-- [`Marker`](#marker) (for `aip.task.pin` and `aip.run.pin`)
-
-
 #### AI Response
 
 An `ai_response` variable will be injected into the scope in the `# Output` Lua code block if an instruction was given and an AI request occurred (otherwise, it will be `nil`).
@@ -108,6 +85,7 @@ An `ai_response` variable will be injected into the scope in the `# Output` Lua 
   reasoning_content?: string,
 }
 ```
+
 
 #### Global and Injected Variables:
 
@@ -223,3 +201,24 @@ Returns `value` if it is not `nil` and not `null`. Otherwise, returns `alt`.
 ```lua
 local name = value_or(input.name, "Anonymous")
 ```
+
+
+#### Common Data Types:
+
+- [`FileInfo`](#fileinfo) (for `aip.file..`) (FileInfo + `.content`)
+- [`FileRecord`](#filerecord) (for `aip.file..`)
+- [`FileStats`](#filestats) (for `aip.file..`)
+- [`WebResponse`](#webresponse) (for `aip.web..`)
+- [`WebOptions`](#weboptions) (for `aip.web..`)
+- [`MdSection`](#mdsection) (for `aip.md..`)
+- [`MdBlock`](#mdblock) (for `aip.md..`)
+- [`MdRef`](#mdref) (for `aip.md..`)
+- [`TagElem`](#tagelem) (for `aip.tag..`)
+- [`ApplyChangesStatus`](#applychangesstatus) (for `aip.udiffx..`)
+- [`CmdResponse`](#cmdresponse) (for `aip.cmd..`)
+- [`DestOptions`](#destoptions) (for `aip.file.save_...to_...(src_path, dest))`)
+- [`SaveOptions`](#saveoptions) (for `aip.file.save(...)`)
+- [`CsvOptions`](#csvoptions) (for `aip.csv..` and `aip.file..csv..`)
+- [`CsvContent`](#csvcontent) (for `aip.file.load_csv`)
+- [`YamlDocs`](#yamldocs) (for `aip.file.load_yaml` and `aip.yaml.parse`)
+- [`Marker`](#marker) (for `aip.task.pin` and `aip.run.pin`)
