@@ -131,6 +131,7 @@ aip run @proof -f ./README.md
 ### Thanks to
 
 - **[Stephane Philipakis](https://github.com/sphilipakis)**, a key [aipack](https://aipack.ai) collaborator.
+- [savi0ur](https://github.com/pratraut) for [PR #67 - ^ run - Add 'allow_run_on_task_fail' option](https://github.com/aipack-ai/aipack/pull/67)
 - [Diaa Kasem](https://github.com/diaakasem) for `--non-interactive`/`--ni` (Now, in `v0.7.x` `-s` or `--single-shot`) mode ([#28](https://github.com/aipack-ai/aipack/pull/28))
 
 

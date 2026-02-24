@@ -1,6 +1,20 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2026-02-06 - [v0.8.15](https://github.com/jeremychone/rust-devai/compare/v0.8.15...v0.8.16)
+## 2026-02-23 - [v0.8.17](https://github.com/jeremychone/rust-devai/compare/v0.8.16...v0.8.17))
+
+- `+` aip.udiffx - add `aip.udiffx.load_files_context(..)`, `aip.udiffx.file_changes_instruction()`
+- `-` fix nested task/run freeze on core limit
+- `^` udiffx - more resilient patches
+- `^` run - Add 'allow_run_on_task_fail' option to control run behavior on task failure (#67) (thanks to [savi0ur](https://github.com/pratraut))
+- `.` aip.flow.redo() - first pass at the redo (not official API yet)
+- `.` tui - Infra for config popup (disabled for now)
+- `.` tui - Update spec-code-tui.md to match current TUI implementation
+- `.` doc-for-llm - format
+- `.` udiffx - v0.1.17 (more resilience)
+- `.` config-default & pricing - sonnet-4-6, gemini 3.1
+- `.` doc - update doc-for-llm
+
+## 2026-02-06 - [v0.8.16](https://github.com/jeremychone/rust-devai/compare/v0.8.15...v0.8.16)
 
 - `^` Anthropic - add `opus-4-6 `pricing and default for `opus` alias
 
