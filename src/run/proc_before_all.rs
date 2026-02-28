@@ -104,7 +104,7 @@ async fn process_before_all_script(
 
 	// -- Exec the script
 	let lua_value = lua_engine
-		.eval(before_all_script, Some(lua_scope), Some(&[agent.file_dir()?.as_str()]))
+		.eval_with_paths(before_all_script, Some(lua_scope), agent.context_dirs())
 		.await?;
 	let before_all_res = serde_json::to_value(lua_value)?;
 

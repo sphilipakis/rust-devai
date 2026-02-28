@@ -100,7 +100,15 @@ impl LuaEngine {
 
 /// Public Function
 impl LuaEngine {
-	pub async fn eval(&self, script: &str, scope: Option<Table>, addl_lua_paths: Option<&[&str]>) -> Result<Value> {
+	pub async fn eval(&self, script: &str, scope: Option<Table>) -> Result<Value> {
+		self.eval_with_paths(script, scope, std::iter::empty::<&str>()).await
+	}
+
+	pub async fn eval_with_paths<I, S>(&self, script: &str, scope: Option<Table>, addl_lua_paths: I) -> Result<Value>
+	where
+		I: IntoIterator<Item = S>,
+		S: AsRef<str>,
+	{
 		let lua = &self.lua;
 
 		let chunck = lua.load(script);
@@ -147,7 +155,11 @@ impl LuaEngine {
 	/// Upgrade a custom scope to full scope with all of the globals added.
 	/// NOTE: A `base_lua_path` is the container of the `lua/` dir. So
 	///       `base_lua_path = /some/dir`, the path added to lua package path will be `/some/dir/lua/?.lua,/some/dir/lua/?/init.lua`
-	fn upgrade_scope(&self, scope: Table, addl_base_lua_paths: Option<&[&str]>) -> Result<Table> {
+	fn upgrade_scope<I, S>(&self, scope: Table, addl_base_lua_paths: I) -> Result<Table>
+	where
+		I: IntoIterator<Item = S>,
+		S: AsRef<str>,
+	{
 		// Get the globals table
 		let globals = self.lua.globals();
 
@@ -158,9 +170,11 @@ impl LuaEngine {
 		}
 
 		// -- Prepend the additional lua path
-		if let Some(addl_lua_paths) = addl_base_lua_paths {
+		let lua_paths = addl_base_lua_paths.into_iter().collect::<Vec<_>>();
+		if !lua_paths.is_empty() {
 			let mut paths: Vec<String> = Vec::new();
-			for path in addl_lua_paths {
+			for path in lua_paths {
+				let path = path.as_ref();
 				paths.push(format!("{path}/lua/?.lua;{path}/lua/?/init.lua"));
 			}
 			if let Ok(lua_package) = globals.get::<Table>("package") {
@@ -335,7 +349,7 @@ return "Hello " .. my_name .. " - " .. square_root
 		// -- Exec
 		let scope = engine.create_table()?;
 		scope.set("my_name", "Lua World")?;
-		let res = engine.eval(fx_script, Some(scope), None).await?;
+		let res = engine.eval(fx_script, Some(scope)).await?;
 
 		// -- Check
 		let res = serde_json::to_value(res)?;

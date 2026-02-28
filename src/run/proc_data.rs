@@ -65,8 +65,6 @@ pub async fn process_data(
 	// (for comparison later)
 	let run_model_resolved = agent.model_resolved().clone();
 
-	let agent_dir = agent.file_dir()?;
-
 	// -- Execute data
 	let DataResponse {
 		input,
@@ -89,7 +87,7 @@ pub async fn process_data(
 
 		// -- Exec
 		let lua_value = lua_engine
-			.eval(data_script, Some(lua_scope), Some(&[agent_dir.as_str()]))
+			.eval_with_paths(data_script, Some(lua_scope), agent.context_dirs())
 			.await?;
 		let data_res = serde_json::to_value(lua_value)?;
 

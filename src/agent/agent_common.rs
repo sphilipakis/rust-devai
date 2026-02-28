@@ -114,10 +114,35 @@ impl Agent {
 		&self.inner.file_path
 	}
 
+	/// The specific agent file directory
 	pub fn file_dir(&self) -> Result<SPath> {
 		Ok(SPath::new(&self.inner.file_path)
 			.parent()
 			.ok_or("Agent does not have a parent dir")?)
+	}
+
+	/// return the pack dir if it is a pack ref
+	pub fn pack_dir(&self) -> Option<&SPath> {
+		match self.agent_ref() {
+			AgentRef::LocalPath(_) => None,
+			AgentRef::PackRef(local_pack_ref) => Some(local_pack_ref.pack_dir()),
+		}
+	}
+
+	/// Return all of the context dirs for this agent.
+	/// Those are directory of the pack ref, and the agent file dir
+	/// NOTE: Used in lua_engine.eval to have the dirs for the lua `require("...")`
+	///       (order matters, further to )
+	pub fn context_dirs(&self) -> Vec<SPath> {
+		let mut res = Vec::new();
+
+		if let Ok(file_dir) = self.file_dir() {
+			res.push(file_dir)
+		}
+		if let Some(pack_dir) = self.pack_dir() {
+			res.push(pack_dir.clone())
+		}
+		res
 	}
 
 	pub fn before_all_script(&self) -> Option<&str> {
