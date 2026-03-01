@@ -24,6 +24,7 @@ use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
 use crate::script::support::{into_option_string, into_vec_of_strings};
+use crate::support::W;
 use crate::types::FileInfo;
 use mlua::{FromLua, IntoLua, Lua, MultiValue, Table, Value, Variadic};
 use simple_fs::{SPath, SortByGlobsOptions, get_glob_set, sort_by_globs};
@@ -669,7 +670,7 @@ fn path_sort_by_globs(lua: &Lua, files: Value, globs: Value, options: Value) -> 
 	let glob_refs: Vec<&str> = glob_patterns.iter().map(|s| s.as_str()).collect();
 
 	// -- Parse options into SortByGlobsOptions
-	let sort_options = crate::support::W::<SortByGlobsOptions>::from_lua(options, lua)?.0;
+	let sort_options = W::<SortByGlobsOptions>::from_lua(options, lua)?.0;
 
 	// -- Build SortedItem vec from the Lua files list
 	let files_table = files
