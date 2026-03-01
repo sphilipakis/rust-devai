@@ -23,6 +23,8 @@ aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | n
 
 aip.path.join(base: string, ...parts: string | string[]): string
 
+aip.path.sort_by_globs(files: any[], globs: string | string[], options?: any): any[]
+
 aip.path.parse(path: string | nil): FileInfo | nil
 ```
 
@@ -395,3 +397,58 @@ print(aip.path.matches_glob(nil, "*.rs"))                         -- nil
 
 Returns an error (Lua table `{ error: string }`) if `globs` is not a string
 or a list of strings.
+
+### aip.path.sort_by_globs
+
+Sorts a list of file paths or file objects by glob priority order.
+
+```lua
+-- API Signature
+aip.path.sort_by_globs(
+  files: string[] | FileInfo[] | FileRecord[],
+  globs: string | string[],
+  options?: boolean | "start" | "end" | { end_weighted?: boolean, no_match_position?: "start" | "end" }
+): any[]
+```
+
+Sorts the given list of file paths or file objects by the priority order defined by the `globs` patterns.
+Items matching the first glob pattern come first, then items matching the second, and so on.
+Items not matching any glob pattern are placed at the end by default (or start, if configured).
+Within the same glob priority group, items are sorted by their path string.
+
+#### Arguments
+
+- `files: string[] | FileInfo[] | FileRecord[]`: A list of file paths (strings) or file objects with a `path` property (such as `FileInfo` or `FileRecord` tables).
+- `globs: string | string[]`: One or more glob patterns defining the sort priority. Earlier patterns have higher priority.
+- `options?: boolean | "start" | "end" | table`: Optional sort configuration:
+  - `boolean`: If `true`, enables end-weighted mode (ties broken by placing later matches at end).
+  - `"start"`: Non-matching items are placed at the start of the result.
+  - `"end"`: Non-matching items are placed at the end of the result (default).
+  - `table`: A table with optional fields:
+    - `end_weighted?: boolean`: If `true`, enables end-weighted mode.
+    - `no_match_position?: "start" | "end"`: Where to place non-matching items.
+
+#### Returns
+
+- `any[]`: The input list reordered by glob priority. The type of each element matches the input type.
+
+#### Example
+
+```lua
+-- Sort strings by glob priority
+local files = {"src/main.rs", "README.md", "src/lib.rs", "Cargo.toml"}
+local sorted = aip.path.sort_by_globs(files, {"*.toml", "*.md"})
+-- Result: {"Cargo.toml", "README.md", "src/lib.rs", "src/main.rs"}
+
+-- Sort with non-matches at start
+local sorted2 = aip.path.sort_by_globs(files, {"*.toml"}, "start")
+-- Result: {"README.md", "src/lib.rs", "src/main.rs", "Cargo.toml"}
+
+-- Sort FileInfo objects
+local file_infos = aip.file.list("src/", {"**/*.rs", "**/*.toml"})
+local sorted3 = aip.path.sort_by_globs(file_infos, {"**/*.toml", "**/*.rs"})
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if the `files` argument is not a list, if any element cannot be resolved to a path, or if the `globs` argument is invalid.

@@ -365,6 +365,7 @@ aip.path.diff(file_path: string, base_path: string): string // Relative path fro
 aip.path.parent(path: string): string | nil // Returns parent dir or nil.
 aip.path.matches_glob(path: string | nil, globs: string | string[]): boolean | nil // Returns nil if path is nil.
 aip.path.join(base: string, ...parts: string | string[]): string // Parts are concatenated into one string first, then joined to base with separator. Use table for path separation.
+aip.path.sort_by_globs(files: any[], globs: string | string[], options?: any): any[] // Sorts file paths or objects by glob priority.
 aip.path.parse(path: string | nil): FileInfo | nil
 ```
 
