@@ -23,11 +23,10 @@
 use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::LuaValueExt;
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::types::FileInfo;
-use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
-use simple_fs::{NoMatchPosition, SPath, SortByGlobsOptions, get_glob_set, sort_by_globs};
+use mlua::{FromLua, IntoLua, Lua, MultiValue, Table, Value, Variadic};
+use simple_fs::{SPath, SortByGlobsOptions, get_glob_set, sort_by_globs};
 use std::path::Path;
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -670,57 +669,7 @@ fn path_sort_by_globs(lua: &Lua, files: Value, globs: Value, options: Value) -> 
 	let glob_refs: Vec<&str> = glob_patterns.iter().map(|s| s.as_str()).collect();
 
 	// -- Parse options into SortByGlobsOptions
-	let sort_options: SortByGlobsOptions = match &options {
-		Value::Nil => SortByGlobsOptions::default(),
-		Value::Boolean(end_weighted) => SortByGlobsOptions {
-			end_weighted: *end_weighted,
-			no_match_position: NoMatchPosition::End,
-		},
-		Value::String(s) => {
-			let s = s
-				.to_str()
-				.map_err(|e| mlua::Error::runtime(format!("aip.path.sort_by_globs options string error: {e}")))?;
-			let s = s.to_string();
-			let no_match_position = match s.as_str() {
-				"start" => NoMatchPosition::Start,
-				"end" => NoMatchPosition::End,
-				other => {
-					return Err(mlua::Error::runtime(format!(
-						"aip.path.sort_by_globs options string must be 'start' or 'end', got '{other}'"
-					)));
-				}
-			};
-			SortByGlobsOptions {
-				end_weighted: false,
-				no_match_position,
-			}
-		}
-		Value::Table(tbl) => {
-			let end_weighted = tbl
-				.get::<Value>("end_weighted")
-				.ok()
-				.and_then(|v| v.as_boolean())
-				.unwrap_or(false);
-			let no_match_position = tbl
-				.get::<Value>("no_match_position")
-				.ok()
-				.and_then(|v| v.x_to_string())
-				.map(|s| match s.as_ref() {
-					"start" => NoMatchPosition::Start,
-					_ => NoMatchPosition::End,
-				})
-				.unwrap_or(NoMatchPosition::End);
-			SortByGlobsOptions {
-				end_weighted,
-				no_match_position,
-			}
-		}
-		_ => {
-			return Err(mlua::Error::runtime(
-				"aip.path.sort_by_globs options must be nil, boolean, 'start'/'end' string, or a table",
-			));
-		}
-	};
+	let sort_options = crate::support::W::<SortByGlobsOptions>::from_lua(options, lua)?.0;
 
 	// -- Build SortedItem vec from the Lua files list
 	let files_table = files

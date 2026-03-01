@@ -19,6 +19,7 @@ mod pack_ref;
 mod run_agent_options;
 mod run_agent_response;
 mod save_options;
+mod sort_by_globs_options;
 mod web_options;
 mod web_response;
 mod yaml_docs;
