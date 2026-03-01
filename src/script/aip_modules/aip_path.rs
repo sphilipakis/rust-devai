@@ -21,10 +21,11 @@
 use crate::Result;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
+use crate::script::LuaValueExt;
 use crate::script::support::{into_option_string, into_vec_of_strings};
 use crate::types::FileInfo;
 use mlua::{IntoLua, Lua, MultiValue, Table, Value, Variadic};
-use simple_fs::{SPath, get_glob_set};
+use simple_fs::{NoMatchPosition, SPath, SortByGlobsOptions, get_glob_set, sort_by_globs};
 use std::path::Path;
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -69,6 +70,11 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let path_matches_glob_fn =
 		lua.create_function(move |_lua, (path, globs): (Value, Value)| path_matches_glob(path, globs))?;
 
+	// -- sort_by_globs
+	let path_sort_by_globs_fn = lua.create_function(move |lua, (files, globs, options): (Value, Value, Value)| {
+		path_sort_by_globs(lua, files, globs, options)
+	})?;
+
 	// -- Add all functions to the module
 	table.set("parse", path_parse_fn)?;
 	table.set("resolve", path_resolve_fn)?;
@@ -80,6 +86,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("parent", path_parent_fn)?;
 	table.set("matches_glob", path_matches_glob_fn)?;
 	table.set("split", path_split_fn)?;
+	table.set("sort_by_globs", path_sort_by_globs_fn)?;
 
 	Ok(table)
 }
@@ -553,6 +560,182 @@ fn path_matches_glob(path: Value, globs: Value) -> mlua::Result<Value> {
 	Ok(Value::Boolean(is_match))
 }
 
+/// ## Lua Documentation
+///
+/// Sorts a list of file paths or file objects by glob priority order.
+///
+/// ```lua
+/// -- API Signature
+/// aip.path.sort_by_globs(
+///   files: string[] | FileInfo[] | FileRecord[],
+///   globs: string | string[],
+///   options?: boolean | "start" | "end" | { end_weighted?: boolean, no_match_position?: "start" | "end" }
+/// ): any[]
+/// ```
+///
+/// Sorts the given list of file paths or file objects by the priority order defined by the `globs` patterns.
+/// Items matching the first glob pattern come first, then items matching the second, and so on.
+/// Items not matching any glob pattern are placed at the end by default (or start, if configured).
+/// Within the same glob priority group, items are sorted by their path string.
+///
+/// ### Arguments
+///
+/// - `files: string[] | FileInfo[] | FileRecord[]`: A list of file paths (strings) or file objects
+///   with a `path` property (such as `FileInfo` or `FileRecord` tables).
+/// - `globs: string | string[]`: One or more glob patterns defining the sort priority. Earlier patterns
+///   have higher priority.
+/// - `options?: boolean | "start" | "end" | table`: Optional sort configuration:
+///   - `boolean`: If `true`, enables end-weighted mode (ties broken by placing later matches at end).
+///   - `"start"`: Non-matching items are placed at the start of the result.
+///   - `"end"`: Non-matching items are placed at the end of the result (default).
+///   - `table`: A table with optional fields:
+///     - `end_weighted?: boolean`: If `true`, enables end-weighted mode.
+///     - `no_match_position?: "start" | "end"`: Where to place non-matching items.
+///
+/// ### Returns
+///
+/// - `any[]`: The input list reordered by glob priority. The type of each element matches the input type.
+///
+/// ### Example
+///
+/// ```lua
+/// -- Sort strings by glob priority
+/// local files = {"src/main.rs", "README.md", "src/lib.rs", "Cargo.toml"}
+/// local sorted = aip.path.sort_by_globs(files, {"*.toml", "*.md"})
+/// -- Result: {"Cargo.toml", "README.md", "src/main.rs", "src/lib.rs"}
+///
+/// -- Sort with non-matches at start
+/// local sorted2 = aip.path.sort_by_globs(files, {"*.toml"}, "start")
+/// -- Result: {"README.md", "src/main.rs", "src/lib.rs", "Cargo.toml"}
+///
+/// -- Sort FileInfo objects
+/// local file_infos = aip.file.list("src/", {"**/*.rs", "**/*.toml"})
+/// local sorted3 = aip.path.sort_by_globs(file_infos, {"**/*.toml", "**/*.rs"})
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if the `files` argument is not a list, if any element cannot be resolved to a path,
+/// or if the `globs` argument is invalid.
+///
+/// ```ts
+/// {
+///   error: string // Error message
+/// }
+/// ```
+fn path_sort_by_globs(lua: &Lua, files: Value, globs: Value, options: Value) -> mlua::Result<Value> {
+	// -- Parse globs
+	let glob_patterns = into_vec_of_strings(globs, "aip.path.sort_by_globs")?;
+	let glob_refs: Vec<&str> = glob_patterns.iter().map(|s| s.as_str()).collect();
+
+	// -- Parse options into SortByGlobsOptions
+	let sort_options: SortByGlobsOptions = match &options {
+		Value::Nil => SortByGlobsOptions::default(),
+		Value::Boolean(end_weighted) => SortByGlobsOptions {
+			end_weighted: *end_weighted,
+			no_match_position: NoMatchPosition::End,
+		},
+		Value::String(s) => {
+			let s = s
+				.to_str()
+				.map_err(|e| mlua::Error::runtime(format!("aip.path.sort_by_globs options string error: {e}")))?;
+			let s = s.to_string();
+			let no_match_position = match s.as_str() {
+				"start" => NoMatchPosition::Start,
+				"end" => NoMatchPosition::End,
+				other => {
+					return Err(mlua::Error::runtime(format!(
+						"aip.path.sort_by_globs options string must be 'start' or 'end', got '{other}'"
+					)));
+				}
+			};
+			SortByGlobsOptions {
+				end_weighted: false,
+				no_match_position,
+			}
+		}
+		Value::Table(tbl) => {
+			let end_weighted = tbl
+				.get::<Value>("end_weighted")
+				.ok()
+				.and_then(|v| v.as_boolean())
+				.unwrap_or(false);
+			let no_match_position = tbl
+				.get::<Value>("no_match_position")
+				.ok()
+				.and_then(|v| v.x_to_string())
+				.map(|s| match s.as_ref() {
+					"start" => NoMatchPosition::Start,
+					_ => NoMatchPosition::End,
+				})
+				.unwrap_or(NoMatchPosition::End);
+			SortByGlobsOptions {
+				end_weighted,
+				no_match_position,
+			}
+		}
+		_ => {
+			return Err(mlua::Error::runtime(
+				"aip.path.sort_by_globs options must be nil, boolean, 'start'/'end' string, or a table",
+			));
+		}
+	};
+
+	// -- Build SortedItem vec from the Lua files list
+	let files_table = files
+		.as_table()
+		.ok_or_else(|| mlua::Error::runtime("aip.path.sort_by_globs 'files' argument must be a list (table)"))?;
+
+	struct SortedItem {
+		path: SPath,
+		value: Value,
+	}
+	impl AsRef<SPath> for SortedItem {
+		fn as_ref(&self) -> &SPath {
+			&self.path
+		}
+	}
+
+	let mut items: Vec<SortedItem> = Vec::new();
+	for pair in files_table.clone().sequence_values::<Value>() {
+		let val = pair?;
+		let path_str = match &val {
+			Value::String(s) => s
+				.to_str()
+				.map(|s| s.to_string())
+				.map_err(|e| mlua::Error::runtime(format!("aip.path.sort_by_globs file string error: {e}")))?,
+			Value::Table(tbl) => tbl
+				.get::<Value>("path")
+				.ok()
+				.and_then(|v| v.as_string().map(|v| v.to_string_lossy()))
+				.ok_or_else(|| {
+					mlua::Error::runtime("aip.path.sort_by_globs each file table must have a 'path' string field")
+				})?,
+			_ => {
+				return Err(mlua::Error::runtime(
+					"aip.path.sort_by_globs each file must be a string or a table with a 'path' field",
+				));
+			}
+		};
+		items.push(SortedItem {
+			path: SPath::from(path_str),
+			value: val,
+		});
+	}
+
+	// -- Sort
+	let sorted = sort_by_globs(items, &glob_refs, sort_options)
+		.map_err(|e| mlua::Error::runtime(format!("aip.path.sort_by_globs error: {e}")))?;
+
+	// -- Build result Lua table
+	let result = lua.create_table()?;
+	for (i, item) in sorted.into_iter().enumerate() {
+		result.set(i + 1, item.value)?;
+	}
+
+	Ok(Value::Table(result))
+}
+
 // endregion: --- Lua Functions
 
 // region:    --- Tests
@@ -776,6 +959,76 @@ mod tests {
 			assert_eq!(parent, *expected_parent, "Parent mismatch for path: {path}");
 			assert_eq!(filename, *expected_filename, "Filename mismatch for path: {path}");
 		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_path_sort_by_globs_strings() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_path::init_module, "path").await?;
+		let code = r#"
+			local files = {"src/main.rs", "README.md", "src/lib.rs", "Cargo.toml"}
+			return aip.path.sort_by_globs(files, {"*.toml", "*.md"})
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, code)?;
+
+		// -- Check
+		let arr = res.as_array().ok_or("Expected array")?;
+		assert_eq!(arr.len(), 4);
+		assert_eq!(arr[0].as_str().ok_or("str")?, "Cargo.toml");
+		assert_eq!(arr[1].as_str().ok_or("str")?, "README.md");
+		// non-matches sorted by path
+		assert_eq!(arr[2].as_str().ok_or("str")?, "src/lib.rs");
+		assert_eq!(arr[3].as_str().ok_or("str")?, "src/main.rs");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_path_sort_by_globs_no_match_start() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_path::init_module, "path").await?;
+		let code = r#"
+			local files = {"src/main.rs", "README.md", "src/lib.rs", "Cargo.toml"}
+			return aip.path.sort_by_globs(files, {"*.toml"}, "start")
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, code)?;
+
+		// -- Check
+		let arr = res.as_array().ok_or("Expected array")?;
+		assert_eq!(arr.len(), 4);
+		// non-matches at start, sorted by path
+		assert_eq!(arr[0].as_str().ok_or("str")?, "README.md");
+		assert_eq!(arr[1].as_str().ok_or("str")?, "src/lib.rs");
+		assert_eq!(arr[2].as_str().ok_or("str")?, "src/main.rs");
+		assert_eq!(arr[3].as_str().ok_or("str")?, "Cargo.toml");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_lua_path_sort_by_globs_table_options() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_path::init_module, "path").await?;
+		let code = r#"
+			local files = {"src/main.rs", "README.md", "Cargo.toml"}
+			return aip.path.sort_by_globs(files, {"*.toml", "*.md"}, {no_match_position = "start"})
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, code)?;
+
+		// -- Check
+		let arr = res.as_array().ok_or("Expected array")?;
+		assert_eq!(arr.len(), 3);
+		assert_eq!(arr[0].as_str().ok_or("str")?, "src/main.rs");
+		assert_eq!(arr[1].as_str().ok_or("str")?, "Cargo.toml");
+		assert_eq!(arr[2].as_str().ok_or("str")?, "README.md");
 
 		Ok(())
 	}

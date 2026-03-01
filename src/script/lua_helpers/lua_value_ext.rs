@@ -12,6 +12,8 @@ pub trait LuaValueExt {
 	fn x_as_i64(&self) -> Option<i64>;
 	fn x_as_f64(&self) -> Option<f64>;
 
+	fn x_to_string(&self) -> Option<String>;
+
 	/// Return the Lua value for a key.
 	/// NOTE: Will return None if value is Nil
 	fn x_get_value(&self, key: &str) -> Option<Value>;
@@ -43,6 +45,10 @@ impl LuaValueExt for Value {
 			Value::Number(num) => Some(*num),
 			_ => None,
 		}
+	}
+
+	fn x_to_string(&self) -> Option<String> {
+		self.as_string().map(|v| v.to_string_lossy())
 	}
 
 	fn x_get_value(&self, key: &str) -> Option<Value> {
@@ -100,6 +106,10 @@ impl LuaValueExt for Option<Value> {
 		val.x_as_f64()
 	}
 
+	fn x_to_string(&self) -> Option<String> {
+		self.as_ref().and_then(|v| v.x_to_string())
+	}
+
 	fn x_get_value(&self, key: &str) -> Option<Value> {
 		self.as_ref()?.x_get_value(key)
 	}
@@ -133,6 +143,10 @@ impl LuaValueExt for Table {
 		None
 	}
 	fn x_as_f64(&self) -> Option<f64> {
+		None
+	}
+
+	fn x_to_string(&self) -> Option<String> {
 		None
 	}
 
