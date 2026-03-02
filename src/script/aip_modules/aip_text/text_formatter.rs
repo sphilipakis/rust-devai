@@ -22,7 +22,7 @@ use simple_fs::PrettySizeOptions;
 ///
 /// ### Arguments
 ///
-/// - `bytes: integer | nil`: The number of bytes to format.  
+/// - `bytes: integer | nil`: The number of bytes to format.
 ///   Accepts both Lua `integer` and `number` (floats are truncated).
 /// - `options: string | {lowest_unit: string, trim: boolean} | nil`:
 ///   Either a string representing the lowest unit (like "MB"), or a table with:
