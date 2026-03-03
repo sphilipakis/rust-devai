@@ -11,16 +11,17 @@ use simple_fs::SPath;
 /// NOTE: Just json serializer to add the _type..
 #[derive(Debug)]
 pub struct FileInfo {
-	path: String,
+	pub path: String,
 	/// The dir/parent path of this file from path (will be empty if no parent of the rel path)
-	dir: String,
-	name: String,
-	stem: String,
-	ext: String,
+	pub dir: String,
+	pub name: String,
+	pub stem: String,
+	pub ext: String,
 
-	ctime: Option<i64>, // seconds since epoch, or nil in Lua
-	mtime: Option<i64>,
-	size: Option<i64>, // size in bytes
+	pub ctime: Option<i64>, // seconds since epoch, or nil in Lua
+	pub mtime: Option<i64>,
+	pub size: Option<i64>, // size in bytes
+	pub is_likely_text: bool,
 }
 
 pub struct WithMeta<'a> {
@@ -68,6 +69,7 @@ impl FileInfo {
 				res.ctime = Some(meta.created_epoch_us);
 				res.mtime = Some(meta.modified_epoch_us);
 				res.size = Some(meta.size as i64);
+				res.is_likely_text = full_path.is_likely_text();
 			}
 			res
 		} else {
@@ -80,13 +82,14 @@ impl FileInfo {
 	pub fn from_file_ref(dir_context: &DirContext, file_ref: FileRef) -> Self {
 		let smeta = file_ref.smeta;
 		// make it home
-		let spath = dir_context.maybe_home_path_into_tilde(file_ref.spath);
+		let spath = dir_context.maybe_home_path_into_tilde(file_ref.spath.clone());
 
 		let mut file_info = FileInfo::from_path(spath);
 		if let Some(smeta) = smeta {
 			file_info.ctime = Some(smeta.created_epoch_us);
 			file_info.mtime = Some(smeta.modified_epoch_us);
 			file_info.size = Some(smeta.size as i64);
+			file_info.is_likely_text = file_ref.spath.is_likely_text();
 		}
 
 		file_info
@@ -95,6 +98,7 @@ impl FileInfo {
 	/// Internal from spath (note: do not make public)
 	fn from_path(file: SPath) -> Self {
 		let dir = file.parent().map(|p| p.to_string()).unwrap_or_default();
+		let is_likely_text = file.is_likely_text();
 		FileInfo {
 			path: file.to_string(),
 			name: file.name().to_string(),
@@ -105,6 +109,7 @@ impl FileInfo {
 			ctime: None,
 			mtime: None,
 			size: None,
+			is_likely_text,
 		}
 	}
 }
@@ -117,8 +122,8 @@ impl Serialize for FileInfo {
 		S: Serializer,
 	{
 		use serde::ser::SerializeStruct;
-		// Max 9 fields (path, dir, name, stem, ext, ctime, mtime, size, _type)
-		let mut state = serializer.serialize_struct("FileInfo", 9)?;
+		// Max 10 fields (path, dir, name, stem, ext, ctime, mtime, size, is_likely_text, _type)
+		let mut state = serializer.serialize_struct("FileInfo", 10)?;
 
 		state.serialize_field("_type", "FileInfo")?;
 		state.serialize_field("path", &self.path)?;
@@ -136,6 +141,7 @@ impl Serialize for FileInfo {
 		if let Some(size) = self.size {
 			state.serialize_field("size", &size)?;
 		}
+		state.serialize_field("is_likely_text", &self.is_likely_text)?;
 
 		state.end()
 	}
@@ -164,6 +170,7 @@ impl IntoLua for FileInfo {
 		if let Some(size) = self.size {
 			table.set("size", size)?;
 		}
+		table.set("is_likely_text", self.is_likely_text)?;
 		Ok(mlua::Value::Table(table))
 	}
 }

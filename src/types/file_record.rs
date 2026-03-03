@@ -2,8 +2,7 @@ use crate::dir_context::DirContext;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua};
 use serde::{Serialize, Serializer};
-use simple_fs::SPath;
-use std::fs::read_to_string;
+use simple_fs::{read_to_string, SPath};
 
 /// FileRecord contains the metadata information about the file (name, ext, etc.) as well as the content.
 pub struct FileRecord {
@@ -23,6 +22,7 @@ pub struct FileRecord {
 	pub ctime: i64,
 	pub mtime: i64,
 	pub size: i64,
+	pub is_likely_text: bool,
 }
 
 /// Constructors
@@ -43,6 +43,7 @@ impl FileRecord {
 			ctime: meta.created_epoch_us,
 			mtime: meta.modified_epoch_us,
 			size: meta.size as i64,
+			is_likely_text: full_path.is_likely_text(),
 		})
 	}
 }
@@ -55,8 +56,8 @@ impl Serialize for FileRecord {
 		S: Serializer,
 	{
 		use serde::ser::SerializeStruct;
-		// 10 fields: _type + 9 struct fields
-		let mut state = serializer.serialize_struct("FileRecord", 10)?;
+		// 11 fields: _type + 10 struct fields
+		let mut state = serializer.serialize_struct("FileRecord", 11)?;
 		state.serialize_field("_type", "FileRecord")?;
 
 		state.serialize_field("path", &self.path)?;
@@ -68,6 +69,7 @@ impl Serialize for FileRecord {
 		state.serialize_field("ctime", &self.ctime)?;
 		state.serialize_field("mtime", &self.mtime)?;
 		state.serialize_field("size", &self.size)?;
+		state.serialize_field("is_likely_text", &self.is_likely_text)?;
 
 		state.end()
 	}
@@ -91,6 +93,7 @@ impl IntoLua for FileRecord {
 		table.set("ctime", self.ctime)?;
 		table.set("mtime", self.mtime)?;
 		table.set("size", self.size)?;
+		table.set("is_likely_text", self.is_likely_text)?;
 
 		table.set("content", self.content)?;
 

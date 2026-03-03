@@ -95,6 +95,7 @@ type FileInfo = {
   ctime?: number; // Creation timestamp (microseconds since epoch)
   mtime?: number; // Modification timestamp (microseconds)
   size?: number; // File size in bytes
+  is_likely_text: boolean; // True if the file is likely a text file
 };
 
 type FileRecord = FileInfo & {

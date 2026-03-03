@@ -15,9 +15,10 @@ Represents a file with its metadata and content. Returned by `aip.file.load` and
   stem : string,    // File name without extension (e.g., "main")
   ext  : string,    // File extension (e.g., "rs")
 
-  ctime?: number,   // Creation timestamp (microseconds since epoch), optional
-  ctime?: number,   // Modification timestamp (microseconds), optional
-  size?: number,    // File size in bytes, optional
+  ctime: number,    // Creation timestamp (microseconds since epoch)
+  mtime: number,    // Modification timestamp (microseconds)
+  size: number,     // File size in bytes
+  is_likely_text: boolean, // True if the file is likely a text file
 
   content: string   // The text content of the file
 }
@@ -38,7 +39,8 @@ Represents file metadata without content. Returned by `aip.file.list`, `aip.file
 
   ctime?: number,    // Creation timestamp (microseconds), optional (if with_meta=true for list)
   mtime?: number,    // Modification timestamp (microseconds), optional (if with_meta=true for list)
-  size?: number      // File size in bytes, optional (if with_meta=true for list)
+  size?: number,     // File size in bytes, optional (if with_meta=true for list)
+  is_likely_text: boolean // True if the file is likely a text file
 }
 ```
 
