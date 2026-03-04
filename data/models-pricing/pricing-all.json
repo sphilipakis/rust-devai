@@ -719,7 +719,7 @@
         },
         "name": "gemini-robotics-er-1.5",
         "output": 2.5,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -727,9 +727,9 @@
           "cached": null,
           "normal": 1.25
         },
-        "name": "gemini-2.5-computer-use",
+        "name": "gemini-2.5-computer-use-preview",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -927,7 +927,7 @@
         },
         "name": "gpt-5.2",
         "output": 14,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -975,9 +975,19 @@
           "cached": 0.175,
           "normal": 1.75
         },
-        "name": "gpt-5.2-chat-latest",
+        "name": "gpt-5.3-chat-latest",
         "output": 14,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.175,
+          "normal": 1.75
+        },
+        "name": "gpt-5.2-chat-latest",
+        "output": 14,
+        "recent": false
       },
       {
         "input": {
@@ -1005,9 +1015,19 @@
           "cached": 0.175,
           "normal": 1.75
         },
-        "name": "gpt-5.2-codex",
+        "name": "gpt-5.3-codex",
         "output": 14,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.175,
+          "normal": 1.75
+        },
+        "name": "gpt-5.2-codex",
+        "output": 14,
+        "recent": false
       },
       {
         "input": {
@@ -1047,7 +1067,7 @@
         },
         "name": "gpt-5.2-pro",
         "output": 168,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -1116,6 +1136,16 @@
           "normal": 4
         },
         "name": "gpt-realtime",
+        "output": 16,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.4,
+          "normal": 4
+        },
+        "name": "gpt-realtime-1.5",
         "output": 16,
         "recent": false
       },

@@ -16,7 +16,7 @@ local base_dir = p_utils.base_dir
 
 -- GROQ      - https://console.groq.com/docs/models pricing: https://groq.com/pricing/
 -- OPENAI    - https://platform.openai.com/docs/pricing/
---             https://developers.openai.com/api/docs/pricing.md (unfortunately, does not have the dat)
+--             https://developers.openai.com/api/docs/pricing.md (unfortunately, does not have the data)
 -- ANTHROPIC - https://platform.claude.com/docs/en/about-claude/pricing
 --             https://claude.com/pricing#api
 --             Overview https://docs.anthropic.com/en/docs/about-claude/models/overview
@@ -102,7 +102,7 @@ Create a pricing JSON for this provider, following the following rules (pick the
     - for OpenAI models Only take the "standards" pricing,
     - For OpenAI Models, set `cache_write: null` when not defined. 
     - for OpenAI models ignore the legacy models
-    - For OpenAI Models, model starting with `gpt-5.2`. and `gpt-5-mini` are all `recent: true`, and then everything else is `recent: false`. 
+    - For OpenAI Models, model starting with `gpt-5.3..` and `gpt-5-mini` are all `recent: true`, and then everything else is `recent: false`. 
     - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13` 
     - For OpenAI Models, only take the Text tokens section, ignore the other sections. 
     - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output. 

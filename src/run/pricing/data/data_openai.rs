@@ -42,6 +42,13 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gpt-5.3-chat-latest",
+		input_cached: Some(0.175),
+		input_normal: 1.75,
+		output_normal: 14.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gpt-5.2-chat-latest",
 		input_cached: Some(0.175),
 		input_normal: 1.75,
@@ -60,6 +67,13 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 		input_cached: Some(0.125),
 		input_normal: 1.25,
 		output_normal: 10.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-5.3-codex",
+		input_cached: Some(0.175),
+		input_normal: 1.75,
+		output_normal: 14.0,
 		output_reasoning: None,
 	},
 	ModelPricing {
@@ -141,6 +155,13 @@ const OPENAI_MODELS: &[ModelPricing] = &[
 	},
 	ModelPricing {
 		name: "gpt-realtime",
+		input_cached: Some(0.4),
+		input_normal: 4.0,
+		output_normal: 16.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gpt-realtime-1.5",
 		input_cached: Some(0.4),
 		input_normal: 4.0,
 		output_normal: 16.0,
