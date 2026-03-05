@@ -79,32 +79,41 @@ if not aip.path.exists(md_path) then
 end
 
 local file = aip.file.load(md_path)
-local sections = aip.file.load_md_sections(CTX.AGENT_FILE_DIR .. "/instructions.md", provider_name)
-local provider_rules = nil
+local sections = aip.file.load_md_sections(CTX.AGENT_FILE_DIR .. "/instructions.md", "# " .. provider_name)
+local provider_instruction = nil
 
 if sections and #sections > 0 then
-  provider_rules = aip.text.trim(sections[1].content)
+  provider_instruction = aip.text.trim(sections[1].content)
 end
+print("provider instruction:", provider_instruction)
 
-if is_null(provider_rules) or provider_rules == "" then
+if is_null(provider_instruction) or provider_instruction == "" then
   return aip.flow.skip("" .. input.name .. " missing instructions section in instructions.md, so skipping")
 end
 
-local instruction = [[
-Here are the data for this ]] .. provider_name .. [[ AI Provider: 
+return {
+    provider = input.name,
+    content = file.content,
+    instruction = provider_instruction
+}
+```
+
+# Instruction
+
+Here are the data for this {{data.provider}} AI Provider:
 
 ```md
-]] .. file.content .. [[
+{{data.content}}
 ```
 
 Create a pricing JSON for this provider, following the following rules:
 
-]] .. provider_rules .. [[
+{{data.instruction}}
 
 - Do not put in code block, just the raw json, pretty formatted.
 - If caching price not available, set to `null`
 - If price has text and audio, take the text price
-- When decimal, do not end with 0s. Just up to the number. 
+- When decimal, do not end with 0s. Just up to the number.
 
 with following schema
 
@@ -118,23 +127,11 @@ with following schema
                 cached: number | null,
                 normal: number | null,
             },
-            output: number, 
+            output: number,
             recent: boolean, // default true if not sure
         }[]
 }
 ```
-]]
-
-return {
-    provider = input.name,
-    content = file.content,
-    instruction = instruction
-}
-```
-
-# Instruction
-
-{{data.instruction}}
 
 
 # Output 

@@ -2,12 +2,12 @@
   "providers": [
     {
       "name": "openai",
-      "do_json": true,
+      "do_json": false,
       "url": ""
     },
     {
       "name": "gemini",
-      "do_json": false,
+      "do_json": true,
       "url": ""
     },
     {

@@ -54,8 +54,8 @@
   - For gemini models there is no `caching write`, so cache value is for the `.cached` property.
   - For Gemini models, do not add the audio or tts model.
   - For gemini models, keep the `.` in the name.
+  - Remove the `-preview` suffixes of the model names
   - For gemini models the `pro`, `flash`, and `flash-lite` there can be only one `recent: true` for each of those type. Make sure to take the highest version of each. The rest is `recent: false`
-  - For Gemini models, `gemini-3-pro-preview` and `gemini-3-flash-preview` remove the `-preview` in the name
   - For Gemini models, for `gemini-2.5-pro` remove the release number after pro like the `-09...` same for other gemini models. Just have the main one.
   - For the Gemini models, add new models for
     - `gemini-flash-latest` based on `gemini flash 3 preview` pricing.
