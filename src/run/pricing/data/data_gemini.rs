@@ -14,6 +14,27 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
+		name: "gemini-3.1-pro-customtools",
+		input_cached: Some(0.2),
+		input_normal: 2.0,
+		output_normal: 12.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-3.1-flash-lite",
+		input_cached: Some(0.025),
+		input_normal: 0.25,
+		output_normal: 1.5,
+		output_reasoning: None,
+	},
+	ModelPricing {
+		name: "gemini-3.1-flash-image",
+		input_cached: None,
+		input_normal: 0.5,
+		output_normal: 3.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "gemini-3-pro",
 		input_cached: Some(0.2),
 		input_normal: 2.0,
@@ -29,7 +50,7 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 	},
 	ModelPricing {
 		name: "gemini-3-pro-image",
-		input_cached: Some(0.2),
+		input_cached: None,
 		input_normal: 2.0,
 		output_normal: 12.0,
 		output_reasoning: None,
@@ -57,7 +78,7 @@ const GEMINI_MODELS: &[ModelPricing] = &[
 	},
 	ModelPricing {
 		name: "gemini-2.5-flash-image",
-		input_cached: Some(0.03),
+		input_cached: None,
 		input_normal: 0.3,
 		output_normal: 2.5,
 		output_reasoning: None,

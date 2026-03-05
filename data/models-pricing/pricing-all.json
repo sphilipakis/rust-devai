@@ -617,6 +617,36 @@
           "cached": 0.2,
           "normal": 2
         },
+        "name": "gemini-3.1-pro-customtools",
+        "output": 12,
+        "recent": false
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.025,
+          "normal": 0.25
+        },
+        "name": "gemini-3.1-flash-lite",
+        "output": 1.5,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.5
+        },
+        "name": "gemini-3.1-flash-image",
+        "output": 3,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.2,
+          "normal": 2
+        },
         "name": "gemini-3-pro",
         "output": 12,
         "recent": false
@@ -634,7 +664,7 @@
       {
         "input": {
           "cache_write": null,
-          "cached": 0.2,
+          "cached": null,
           "normal": 2
         },
         "name": "gemini-3-pro-image",
@@ -669,12 +699,12 @@
         },
         "name": "gemini-2.5-flash-lite",
         "output": 0.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
           "cache_write": null,
-          "cached": 0.03,
+          "cached": null,
           "normal": 0.3
         },
         "name": "gemini-2.5-flash-image",
@@ -705,21 +735,11 @@
         "input": {
           "cache_write": null,
           "cached": null,
-          "normal": 0.15
-        },
-        "name": "gemini-embedding-001",
-        "output": 0,
-        "recent": true
-      },
-      {
-        "input": {
-          "cache_write": null,
-          "cached": null,
           "normal": 0.3
         },
         "name": "gemini-robotics-er-1.5",
         "output": 2.5,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -727,9 +747,19 @@
           "cached": null,
           "normal": 1.25
         },
-        "name": "gemini-2.5-computer-use-preview",
+        "name": "gemini-2.5-computer-use",
         "output": 10,
-        "recent": false
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": null,
+          "normal": 0.15
+        },
+        "name": "gemini-embedding-001",
+        "output": 0,
+        "recent": true
       },
       {
         "input": {
