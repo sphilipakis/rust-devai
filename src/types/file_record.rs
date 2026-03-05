@@ -2,7 +2,7 @@ use crate::dir_context::DirContext;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua};
 use serde::{Serialize, Serializer};
-use simple_fs::{read_to_string, SPath};
+use simple_fs::{SPath, read_to_string};
 
 /// FileRecord contains the metadata information about the file (name, ext, etc.) as well as the content.
 pub struct FileRecord {
