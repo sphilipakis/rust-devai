@@ -103,6 +103,7 @@ semver = "1.0.27"
 uuid = {version = "1.18", features = ["v4", "v7", "fast-rng"]}
 uuid-extra = "0.0.2"
 bitflags = "2.8.0"
+dashmap = "6.1.0"
 
 [build-dependencies]
 simple-fs = { version = "0.11.0", features = ["with-json"]}
