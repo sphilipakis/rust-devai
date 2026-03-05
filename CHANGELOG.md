@@ -1,6 +1,18 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2026-02-23 - [v0.8.17](https://github.com/jeremychone/rust-devai/compare/v0.8.16...v0.8.17))
+
+## 2026-03-05 [v0.8.18](https://github.com/jeremychone/rust-devai/compare/v0.8.17...v0.8.18)
+
+- `^` API - FileRecord & FileInfo now have `.is_likely_text`
+- `^` aip file append - now fully concurrent proof (atomic file append per file)
+- `^` run - report task errors when allow_run_on_task_fail is enabled (#68)
+- `^` Model Pricing & Alias default updated - gpt 5.3, gemini-3.1-flash-lite-preview
+- `^` udiffx - 0.1.19 - white line drifting
+- `.` genai 0.6.0-beta.3
+- `+` aip_path - Add aip.path.sort_by_globs Lua function with tests
+- `.` lua engine - include pack ref base dir when present as well as the file agent dir (for lua includes)
+
+## 2026-02-23 - [v0.8.17](https://github.com/jeremychone/rust-devai/compare/v0.8.16...v0.8.17)
 
 - `+` aip.udiffx - add `aip.udiffx.load_files_context(..)`, `aip.udiffx.file_changes_instruction()`
 - `-` fix nested task/run freeze on core limit
