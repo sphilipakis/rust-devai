@@ -6,10 +6,13 @@
   - for OpenAI models Only take the "standards" pricing,
   - For OpenAI Models, set `cache_write: null` when not defined.
   - for OpenAI models ignore the legacy models
-  - For OpenAI Models, model starting with `gpt-5.3..` and `gpt-5-mini` are all `recent: true`, and then everything else is `recent: false`.
+  - For OpenAI Models, for the `recent`
+    - All later version of gpt 5, gpt 5 pro, gpt 5 codex, codex mini and gpt mini, ONLY the  latest dot version of each of this can be marked `recent: true`. also the exact model `gpt-5-mini` is `recent: true`)
+    - All others, `recent: false` (codex-mini-latest is alwys `recent: false`)
   - For OpenAI Models, ignore the lines have have dates like text, like `2024-05-13`
   - For OpenAI Models, only take the Text tokens section, ignore the other sections.
   - For OpenAI Models, there are not cash write, so, only input and cached when present, and then the output.
+  - Only take the price and names for the lesser context tokens, when there is multiple (do not have the `(.... context ..)` in the name)
 
 # fireworks
 

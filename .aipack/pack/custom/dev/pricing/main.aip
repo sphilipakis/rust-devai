@@ -1,7 +1,7 @@
 # Options
 
 ```toml
-model = "gemini-3-flash-preview"
+model = "codex"
 input_concurrency = 6
 ```
 
