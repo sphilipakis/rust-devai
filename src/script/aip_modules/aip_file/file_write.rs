@@ -391,6 +391,8 @@ pub(super) fn file_append(
 
 	check_access_write(&full_path, wks_dir)?;
 
+	check_access_write(&full_path, wks_dir)?;
+
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
