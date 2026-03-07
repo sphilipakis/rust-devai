@@ -381,18 +381,22 @@ pub(super) fn file_append(
 	rel_path: String,
 	content: String,
 ) -> mlua::Result<mlua::Value> {
-	let path = runtime
-		.dir_context()
-		.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
-	let lock_handle = runtime.file_write_manager().lock_for_path(&path);
+	let dir_context = runtime.dir_context();
+	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
 
-	ensure_file_dir(&path).map_err(Error::from)?;
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.append requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
 		.append(true)
 		.create(true)
-		.open(&path)
+		.open(&full_path)
 		.map_err(Error::from)?;
 
 	file.write_all(content.as_bytes())?;
@@ -400,7 +404,7 @@ pub(super) fn file_append(
 	// NOTE: Could be too many prints
 	// get_hub().publish_sync(format!("-> Lua aip.file.append called on: {}", rel_path));
 
-	let file_info = FileInfo::new(runtime.dir_context(), path, true);
+	let file_info = FileInfo::new(runtime.dir_context(), full_path, true);
 	let file_info = file_info.into_lua(lua)?;
 
 	Ok(file_info)

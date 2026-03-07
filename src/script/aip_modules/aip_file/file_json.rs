@@ -14,6 +14,7 @@
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
+use crate::script::aip_modules::support::check_access_write;
 use crate::script::{lua_value_list_to_serde_values, lua_value_to_serde_value, serde_value_to_lua_value};
 use crate::support::jsons;
 use crate::types::FileInfo;
@@ -220,13 +221,17 @@ pub(super) fn file_load_ndjson(lua: &Lua, runtime: &Runtime, path: String) -> ml
 /// }
 /// ```
 pub(super) fn file_append_json_line(lua: &Lua, runtime: &Runtime, path: String, data: Value) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
 	// Resolve the path relative to the workspace directory
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
+
+	// We might not want that once workspace is truely optional
+	let wks_dir =
+		dir_context.try_wks_dir_with_err_ctx("aip.file.append_json_line requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
 
 	// Convert Lua value to serde_json::Value
 	let json_value = lua_value_to_serde_value(data).map_err(|e| {
@@ -319,13 +324,17 @@ pub(super) fn file_append_json_lines(lua: &Lua, runtime: &Runtime, path: String,
 		))
 	})?;
 
+	let dir_context = runtime.dir_context();
 	// -- Resolve path and ensure directory
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
+
+	// We might not want that once workspace is truely optional
+	let wks_dir =
+		dir_context.try_wks_dir_with_err_ctx("aip.file.append_json_lines requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	// -- Append using simple_fs
