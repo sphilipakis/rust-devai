@@ -18,7 +18,6 @@
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
-use crate::script::FileWriteManager;
 use crate::script::aip_modules::aip_csv::{lua_matrix_to_rows, lua_value_to_csv_string};
 use crate::script::aip_modules::support::check_access_write;
 use crate::script::support::{collect_string_sequence, expect_table};
@@ -257,10 +256,9 @@ pub(super) fn file_append_csv_rows(
 	value_lists: Value,
 	options: Option<Value>,
 ) -> mlua::Result<Value> {
-	let file_write_manager = FileWriteManager::global();
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let lock_handle = file_write_manager.lock_for_path(&full_path);
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
 
 	// We might not want that once workspace is truely optional
@@ -312,10 +310,9 @@ pub(super) fn file_append_csv_row(
 	values: Value,
 	options: Option<Value>,
 ) -> mlua::Result<Value> {
-	let file_write_manager = FileWriteManager::global();
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let lock_handle = file_write_manager.lock_for_path(&full_path);
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
 
 	// We might not want that once workspace is truely optional

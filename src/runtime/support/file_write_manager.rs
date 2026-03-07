@@ -2,21 +2,21 @@ use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use simple_fs::SPath;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, LazyLock, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 /// Shared process-level manager for per-file write serialization.
+#[derive(Debug)]
 pub struct FileWriteManager {
 	locks: ArcSwap<DashMap<String, Arc<Mutex<()>>>>,
 	used_in_generation: AtomicBool,
 }
 
 impl FileWriteManager {
-	pub fn global() -> &'static Self {
-		static INSTANCE: LazyLock<FileWriteManager> = LazyLock::new(|| FileWriteManager {
+	pub fn new() -> Self {
+		Self {
 			locks: ArcSwap::from_pointee(DashMap::new()),
 			used_in_generation: AtomicBool::new(false),
-		});
-		&INSTANCE
+		}
 	}
 
 	/// Returns a lock handle for the given path. The caller should call `.lock()`
@@ -64,6 +64,7 @@ impl FileWriteManager {
 /// A handle to a per-file lock. Call `.lock()` to acquire the mutex guard.
 /// The returned `MutexGuard` borrows from this handle, so the handle must
 /// outlive the guard (which is naturally enforced by Rust's borrow checker).
+#[derive(Debug)]
 pub struct FilePathLockHandle {
 	mutex: Arc<Mutex<()>>,
 }
@@ -73,3 +74,4 @@ impl FilePathLockHandle {
 		self.mutex.lock().unwrap_or_else(|e| e.into_inner())
 	}
 }
+

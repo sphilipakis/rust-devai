@@ -20,7 +20,6 @@ use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::hub::get_hub;
 use crate::runtime::Runtime;
-use crate::script::FileWriteManager;
 use crate::script::aip_modules::support::{check_access_delete, check_access_write, process_path_reference};
 use crate::support::files::safer_trash_file;
 use crate::support::text::{ensure_single_trailing_newline, trim_end_if_needed, trim_start_if_needed};
@@ -382,11 +381,10 @@ pub(super) fn file_append(
 	rel_path: String,
 	content: String,
 ) -> mlua::Result<mlua::Value> {
-	let file_write_manager = FileWriteManager::global();
 	let path = runtime
 		.dir_context()
 		.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
-	let lock_handle = file_write_manager.lock_for_path(&path);
+	let lock_handle = runtime.file_write_manager().lock_for_path(&path);
 	let _guard = lock_handle.lock();
 
 	ensure_file_dir(&path).map_err(Error::from)?;
@@ -485,6 +483,8 @@ pub(super) fn file_ensure_exists(
 		runtime
 			.dir_context()
 			.resolve_path(runtime.session(), rel_path.clone(), PathResolver::WksDir, None)?;
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
+	let _guard = lock_handle.lock();
 
 	// if the file does not exist, create it.
 	if !full_path.exists() {

@@ -7,6 +7,7 @@ use crate::model::{ModelManager, RuntimeCtx};
 use crate::run::{Literals, new_genai_client};
 use crate::runtime::queue::{RunEvent, RunQueue};
 use crate::runtime::runtime_inner::RuntimeInner;
+use crate::runtime::support::FileWriteManager;
 use crate::runtime::{RtLog, RtModel, RtStep};
 use crate::script::LuaEngine;
 use genai::Client;
@@ -46,6 +47,7 @@ impl Runtime {
 			run_tx,
 			session: Session::new(),
 			mm,
+			file_write_manager: FileWriteManager::new().into(),
 			cancel_trx,
 		};
 
@@ -135,6 +137,10 @@ impl Runtime {
 
 	pub fn cancel_rx(&self) -> Option<&CancelRx> {
 		self.inner.cancel_trx.as_ref().map(|trx| trx.rx())
+	}
+
+	pub fn file_write_manager(&self) -> &FileWriteManager {
+		self.inner.file_write_manager()
 	}
 }
 

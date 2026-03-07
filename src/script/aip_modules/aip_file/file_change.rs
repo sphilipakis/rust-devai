@@ -73,6 +73,8 @@ pub(super) fn file_save_changes(
 ) -> mlua::Result<(Value, Value)> {
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
+	let _guard = lock_handle.lock();
 
 	// We might not want that once workspace is truely optional
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.save requires a aipack workspace setup")?;
