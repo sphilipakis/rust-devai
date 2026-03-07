@@ -18,9 +18,10 @@
 use crate::Error;
 use crate::dir_context::PathResolver;
 use crate::runtime::Runtime;
+use crate::script::FileWriteManager;
 use crate::script::aip_modules::aip_csv::{lua_matrix_to_rows, lua_value_to_csv_string};
 use crate::script::aip_modules::support::check_access_write;
-use crate::script::support::{FileWriteManager, collect_string_sequence, expect_table};
+use crate::script::support::{collect_string_sequence, expect_table};
 use crate::support::W;
 use crate::types::{CsvContent, CsvOptions, FileInfo};
 use mlua::{FromLua as _, IntoLua, Lua, Value};

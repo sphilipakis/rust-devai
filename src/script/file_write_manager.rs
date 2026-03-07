@@ -1,15 +1,21 @@
+use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use simple_fs::SPath;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock, Mutex, MutexGuard};
 
 /// Shared process-level manager for per-file write serialization.
 pub struct FileWriteManager {
-	locks: DashMap<String, Arc<Mutex<()>>>,
+	locks: ArcSwap<DashMap<String, Arc<Mutex<()>>>>,
+	used_in_generation: AtomicBool,
 }
 
 impl FileWriteManager {
 	pub fn global() -> &'static Self {
-		static INSTANCE: LazyLock<FileWriteManager> = LazyLock::new(|| FileWriteManager { locks: DashMap::new() });
+		static INSTANCE: LazyLock<FileWriteManager> = LazyLock::new(|| FileWriteManager {
+			locks: ArcSwap::from_pointee(DashMap::new()),
+			used_in_generation: AtomicBool::new(false),
+		});
 		&INSTANCE
 	}
 
@@ -25,11 +31,23 @@ impl FileWriteManager {
 	/// // guard is dropped here, releasing the lock
 	/// ```
 	pub fn lock_for_path(&self, path: &SPath) -> FilePathLockHandle {
+		self.used_in_generation.store(true, Ordering::Relaxed);
 		let lock_key = Self::resolve_lock_key(path);
+		let locks = self.locks.load();
 
-		let lock_arc = self.locks.entry(lock_key).or_insert_with(|| Arc::new(Mutex::new(()))).clone();
+		let lock_arc = locks.entry(lock_key).or_insert_with(|| Arc::new(Mutex::new(()))).clone();
 
 		FilePathLockHandle { mutex: lock_arc }
+	}
+
+	pub fn swap_if_used(&self) -> bool {
+		if !self.used_in_generation.load(Ordering::Relaxed) {
+			return false;
+		}
+
+		self.locks.store(Arc::new(DashMap::new()));
+		self.used_in_generation.store(false, Ordering::Relaxed);
+		true
 	}
 
 	fn resolve_lock_key(path: &SPath) -> String {

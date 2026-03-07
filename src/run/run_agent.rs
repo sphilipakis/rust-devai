@@ -7,7 +7,7 @@ use crate::run::proc_after_all::{ProcAfterAllResponse, process_after_all};
 use crate::run::proc_before_all::{ProcBeforeAllResponse, process_before_all};
 use crate::run::run_agent_task::run_agent_task_outer;
 use crate::runtime::Runtime;
-use crate::script::{AipackCustom, FromValue};
+use crate::script::{AipackCustom, FileWriteManager, FromValue};
 use crate::types::RunAgentResponse;
 use crate::{Error, Result};
 use serde_json::Value;
@@ -69,6 +69,9 @@ pub async fn run_agent(
 			// NOTE: If the run error is already set, it won't reset it.
 			rt_step.step_run_end_err(run_id, err).await?;
 		}
+	}
+	if parent_uid.is_none() {
+		FileWriteManager::global().swap_if_used();
 	}
 
 	run_agent_res

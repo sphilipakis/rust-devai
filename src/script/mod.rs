@@ -8,6 +8,7 @@
 
 mod aip_modules;
 mod error_lua_support;
+mod file_write_manager;
 mod lua_helpers;
 mod support;
 
@@ -16,6 +17,7 @@ mod lua_engine;
 mod lua_uc;
 
 pub use aipack_custom::*;
+pub use file_write_manager::*;
 pub use lua_engine::*;
 pub use lua_helpers::*;
 #[cfg(test)] // Needed for test only (beside this script module)
