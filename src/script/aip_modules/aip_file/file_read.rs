@@ -324,7 +324,7 @@ pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::
 /// reference, invalid format, …). If the path resolves successfully but the
 /// file does not exist, the function simply returns `nil`.
 pub(super) fn file_info(lua: &Lua, runtime: &Runtime, path: Value) -> mlua::Result<Value> {
-	let Some(path) = into_option_string(path, "aip.text.replace_markers")? else {
+	let Some(path) = into_option_string(path, "aip.file.info")? else {
 		return Ok(Value::Nil);
 	};
 
