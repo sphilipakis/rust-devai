@@ -284,7 +284,7 @@ pub(super) fn file_load(
 /// }
 /// ```
 pub(super) fn file_exists(_lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<bool> {
-	Ok(crate::script::support::path_exits(runtime, &path))
+	Ok(crate::script::support::path_exists(runtime, &path))
 }
 
 /// ## Lua Documentation

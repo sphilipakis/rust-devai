@@ -356,7 +356,7 @@ fn path_resolve(runtime: &Runtime, path: String) -> mlua::Result<String> {
 /// }
 /// ```
 fn path_exists(runtime: &Runtime, path: String) -> mlua::Result<bool> {
-	Ok(crate::script::support::path_exits(runtime, &path))
+	Ok(crate::script::support::path_exists(runtime, &path))
 }
 
 /// ## Lua Documentation

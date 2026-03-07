@@ -109,7 +109,7 @@ pub fn get_value_prop_as_string(
 
 // region:    --- Common Paths Support
 
-pub fn path_exits(runtime: &Runtime, path: &str) -> bool {
+pub fn path_exists(runtime: &Runtime, path: &str) -> bool {
 	let dir_context = runtime.dir_context();
 	// Resolve the path relative to the workspace directory
 	let full_path = dir_context
