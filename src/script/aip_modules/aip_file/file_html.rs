@@ -54,7 +54,7 @@ use std::fs::{read_to_string, write};
 ///       - `base_dir?: string`: Base directory for resolving the destination.
 ///       - `file_name?: string`: Custom file name for the Markdown output.
 ///       - `suffix?: string`: Suffix appended to the source file stem before `.md`.
-///       - `slim?: boolean`: Default true. When `true`, slims HTML (removes scripts, etc.) before conversion to markdown. Defaults to `false`.
+///       - `slim?: boolean`: Default true. When `true`, slims HTML (removes scripts, etc.) before conversion to markdown.
 ///
 /// ### Returns
 ///

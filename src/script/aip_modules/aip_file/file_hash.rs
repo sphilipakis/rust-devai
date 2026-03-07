@@ -45,6 +45,28 @@ use crate::support::files::{
 };
 use mlua::{IntoLua, Lua, Value};
 
+// region:    --- Support
+
+fn hash_path_to_lua_value<F>(
+	lua: &Lua,
+	runtime: &Runtime,
+	path: String,
+	ctx: &'static str,
+	hash_fn: F,
+) -> mlua::Result<Value>
+where
+	F: FnOnce(simple_fs::SPath) -> crate::Result<String>,
+{
+	let full_path = runtime
+		.dir_context()
+		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+	let hash_string =
+		hash_fn(full_path).map_err(|e| Error::from(format!("{ctx} - Failed to hash file '{path}'.\nCause: {e}")))?;
+	hash_string.into_lua(lua)
+}
+
+// endregion: --- Support
+
 // region:    --- SHA256 Hashing Functions
 
 /// ## Lua Documentation
@@ -63,16 +85,7 @@ use mlua::{IntoLua, Lua, Value};
 /// print(hex_hash) -- e.g., "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
 /// ```
 pub(super) fn file_hash_sha256(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha256_hex(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha256 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha256", hash_file_sha256_hex)
 }
 
 /// ## Lua Documentation
@@ -84,16 +97,7 @@ pub(super) fn file_hash_sha256(lua: &Lua, runtime: &Runtime, path: String) -> ml
 /// aip.file.hash_sha256_b64(path: string): string
 /// ```
 pub(super) fn file_hash_sha256_b64(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha256_b64(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha256_b64 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha256_b64", hash_file_sha256_b64)
 }
 
 /// ## Lua Documentation
@@ -105,16 +109,7 @@ pub(super) fn file_hash_sha256_b64(lua: &Lua, runtime: &Runtime, path: String) -
 /// aip.file.hash_sha256_b64u(path: string): string
 /// ```
 pub(super) fn file_hash_sha256_b64u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha256_b64u(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha256_b64u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha256_b64u", hash_file_sha256_b64u)
 }
 
 /// ## Lua Documentation
@@ -127,16 +122,7 @@ pub(super) fn file_hash_sha256_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 /// aip.file.hash_sha256_b58u(path: string): string
 /// ```
 pub(super) fn file_hash_sha256_b58u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha256_b58(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha256_b58u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha256_b58u", hash_file_sha256_b58)
 }
 
 // endregion: --- SHA256 Hashing Functions
@@ -152,16 +138,7 @@ pub(super) fn file_hash_sha256_b58u(lua: &Lua, runtime: &Runtime, path: String) 
 /// aip.file.hash_sha512(path: string): string
 /// ```
 pub(super) fn file_hash_sha512(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha512_hex(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha512 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha512", hash_file_sha512_hex)
 }
 
 /// ## Lua Documentation
@@ -173,16 +150,7 @@ pub(super) fn file_hash_sha512(lua: &Lua, runtime: &Runtime, path: String) -> ml
 /// aip.file.hash_sha512_b64(path: string): string
 /// ```
 pub(super) fn file_hash_sha512_b64(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha512_b64(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha512_b64 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha512_b64", hash_file_sha512_b64)
 }
 
 /// ## Lua Documentation
@@ -194,16 +162,7 @@ pub(super) fn file_hash_sha512_b64(lua: &Lua, runtime: &Runtime, path: String) -
 /// aip.file.hash_sha512_b64u(path: string): string
 /// ```
 pub(super) fn file_hash_sha512_b64u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha512_b64u(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha512_b64u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha512_b64u", hash_file_sha512_b64u)
 }
 
 /// ## Lua Documentation
@@ -216,16 +175,7 @@ pub(super) fn file_hash_sha512_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 /// aip.file.hash_sha512_b58u(path: string): string
 /// ```
 pub(super) fn file_hash_sha512_b58u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = hash_file_sha512_b58(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_sha512_b58u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_sha512_b58u", hash_file_sha512_b58)
 }
 
 // endregion: --- SHA512 Hashing Functions
@@ -241,16 +191,7 @@ pub(super) fn file_hash_sha512_b58u(lua: &Lua, runtime: &Runtime, path: String) 
 /// aip.file.hash_blake3(path: string): string
 /// ```
 pub(super) fn file_hash_blake3(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = blake3_hash_file_hex(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_blake3 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_blake3", blake3_hash_file_hex)
 }
 
 /// ## Lua Documentation
@@ -262,16 +203,7 @@ pub(super) fn file_hash_blake3(lua: &Lua, runtime: &Runtime, path: String) -> ml
 /// aip.file.hash_blake3_b64(path: string): string
 /// ```
 pub(super) fn file_hash_blake3_b64(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = blake3_hash_file_b64(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_blake3_b64 - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_blake3_b64", blake3_hash_file_b64)
 }
 
 /// ## Lua Documentation
@@ -283,16 +215,7 @@ pub(super) fn file_hash_blake3_b64(lua: &Lua, runtime: &Runtime, path: String) -
 /// aip.file.hash_blake3_b64u(path: string): string
 /// ```
 pub(super) fn file_hash_blake3_b64u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = blake3_hash_file_b64u(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_blake3_b64u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_blake3_b64u", blake3_hash_file_b64u)
 }
 
 /// ## Lua Documentation
@@ -305,16 +228,7 @@ pub(super) fn file_hash_blake3_b64u(lua: &Lua, runtime: &Runtime, path: String) 
 /// aip.file.hash_blake3_b58u(path: string): string
 /// ```
 pub(super) fn file_hash_blake3_b58u(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<Value> {
-	let full_path =
-		runtime
-			.dir_context()
-			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
-	let hash_string = blake3_hash_file_b58(full_path).map_err(|e| {
-		Error::from(format!(
-			"aip.file.hash_blake3_b58u - Failed to hash file '{path}'.\nCause: {e}"
-		))
-	})?;
-	hash_string.into_lua(lua)
+	hash_path_to_lua_value(lua, runtime, path, "aip.file.hash_blake3_b58u", blake3_hash_file_b58)
 }
 
 // endregion: --- BLAKE3 Hashing Functions

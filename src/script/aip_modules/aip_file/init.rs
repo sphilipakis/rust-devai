@@ -193,7 +193,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let file_load_docx_as_md_fn =
 		lua.create_function(move |lua, (docx_path,): (String,)| file_load_docx_as_md(lua, &rt, docx_path))?;
 
-	// -- save_chages
+	// -- save_changes
+
 	let rt = runtime.clone();
 	let file_save_changes_fn =
 		lua.create_function(move |lua, (path, changes): (String, String)| file_save_changes(lua, &rt, path, changes))?;

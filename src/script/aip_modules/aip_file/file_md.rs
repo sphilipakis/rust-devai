@@ -43,8 +43,9 @@ pub(super) fn file_load_md_sections(
 	headings: Option<Value>,
 ) -> mlua::Result<Value> {
 	let headings = headings
-		.map(|headings| into_vec_of_strings(headings, "file::load_md_sections headings argument"))
+		.map(|headings| into_vec_of_strings(headings, "aip.file.load_md_sections headings argument"))
 		.transpose()?;
+
 	let headings: Option<Vec<&str>> = headings
 		.as_deref()
 		.map(|vec| vec.iter().map(|s| s.as_str()).collect::<Vec<&str>>());
