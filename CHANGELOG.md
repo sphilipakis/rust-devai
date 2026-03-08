@@ -1,5 +1,12 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-03-08 [v0.8.19](https://github.com/jeremychone/rust-devai/compare/v0.8.18...v0.8.19)
+
+- `^` udiffx - crlf handling, lot of resiliency tuning in file patch
+- `&` udiffx - file_patch fix when append with file_append directive (simpler, more accurate when just appending)
+- `^` aip.file - code clean, enforce file write on all file_append
+- `>` file write manager - now have ArcSwap and auto cleanup. Memory optimization
+- `.` pricing / aliases - gpt 5.4
 
 ## 2026-03-05 [v0.8.18](https://github.com/jeremychone/rust-devai/compare/v0.8.17...v0.8.18)
 
