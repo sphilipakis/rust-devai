@@ -1,4 +1,5 @@
-use lazy_regex::regex;
+use regex::Regex;
+use std::sync::LazyLock;
 
 pub struct TextSeg<'a> {
 	pub text: String,
@@ -10,9 +11,25 @@ pub fn segment_line_path(line: &str) -> Vec<TextSeg<'_>> {
 	//   - Paths with directories (optionally starting with ~): ~/foo/bar.rs, src/main.rs
 	//   - Standalone filenames with extension: tsconfig.json, Cargo.toml
 	//   - Dotfiles (with optional chained extensions): .env, .gitignore, .env.local
-	let re = regex!(
-		r#"~?[a-zA-Z0-9_@\-\./]+/[a-zA-Z0-9_@\-\.]+\.[a-zA-Z0-9]{2,5}|[a-zA-Z0-9_@\-]+\.[a-zA-Z0-9]{2,5}|\.[a-zA-Z0-9_\-]+(?:\.[a-zA-Z0-9]{2,5})*"#
-	);
+	static RE: LazyLock<Regex> = LazyLock::new(|| {
+		Regex::new(
+			r#"(?x)
+			# Path with directory separator (permissive extension)
+			~?[a-zA-Z0-9_@\-\./]+/[a-zA-Z0-9_@\-\.]+\.[a-zA-Z0-9]{2,5}
+			|
+			# Standalone filename: extension must start with a letter, only alphanumeric, no hyphen/underscore, 2-5 chars total.
+			# Post-filter rejects matches followed by continuation characters (hyphen, underscore, dot, alnum)
+			# to avoid false positives on model-version patterns like gpt-5.some-preview or gpt-5.2026-02-12.
+			[a-zA-Z0-9_@\-]+\.[a-zA-Z][a-zA-Z0-9]{0,4}
+			|
+			# Dotfiles (with optional chained extensions): .env, .gitignore, .env.local
+			\.[a-zA-Z][a-zA-Z0-9_\-]*(?:\.[a-zA-Z][a-zA-Z0-9]*)*
+		"#,
+		)
+		.expect("Failed to compile segment_line_path regex")
+	});
+
+	let re = &*RE;
 	let mut segments = Vec::new();
 	let mut last_idx = 0;
 
@@ -20,6 +37,19 @@ pub fn segment_line_path(line: &str) -> Vec<TextSeg<'_>> {
 		let start = m.start();
 		let end = m.end();
 		let text = &line[start..end];
+
+		// Post-filter: reject standalone filename matches (no '/') when followed by
+		// continuation characters (alphanumeric, hyphen, underscore, dot), which
+		// indicates the token is part of a longer identifier (e.g. model versions).
+		if !text.contains('/') && !text.starts_with('.') {
+			let next_byte = line.as_bytes().get(end).copied();
+			if let Some(b) = next_byte
+				&& (b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b'.')
+			{
+				// Not a real filename; skip this match
+				continue;
+			}
+		}
 
 		if start > last_idx {
 			segments.push(TextSeg {
@@ -214,6 +244,134 @@ mod tests {
 		// -- Check
 		assert_eq!(segs.len(), 1);
 		assert_eq!(segs[0].text, "No files here at all");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_version_numeric_suffix_not_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.4 for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.4 for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_date_suffix_not_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.2026-02-12 for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.2026-02-12 for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_preview_date_suffix_not_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.2026-02-12-preview for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.2026-02-12-preview for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_hyphenated_suffix_not_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.some-preview for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.some-preview for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_name_not_partially_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.6 for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.6 for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_date_not_partially_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.2026-02-12 for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.2026-02-12 for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_preview_not_partially_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.2026-02-12-preview for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.2026-02-12-preview for this run");
+		assert!(segs[0].file_path.is_none());
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_model_hyphenated_suffix_not_partially_matched() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Use gpt-5.some-preview for this run";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 1);
+		assert_eq!(segs[0].text, "Use gpt-5.some-preview for this run");
 		assert!(segs[0].file_path.is_none());
 
 		Ok(())
