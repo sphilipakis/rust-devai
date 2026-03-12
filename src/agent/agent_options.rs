@@ -173,10 +173,10 @@ impl AgentOptions {
 }
 
 /// If extract the possible reasoning suffix of a model name
-/// Reasoning suffix can be `-zero`, `-minimal`, `-low`, `-medium`, `-high`
+/// Reasoning suffix can be `-zero`, `-minimal`, `-low`, `-medium`, `-high`, `-max`
 /// returns: (model_name, Some(suffix))
 fn extract_reasoning_suffix(model: &str) -> (&str, Option<&str>) {
-	let suffixes = ["-zero", "-minimal", "-low", "-medium", "-high"];
+	let suffixes = ["-zero", "-minimal", "-low", "-medium", "-high", "-max"];
 
 	for suffix in suffixes.iter() {
 		if let Some(stripped) = model.strip_suffix(suffix) {
