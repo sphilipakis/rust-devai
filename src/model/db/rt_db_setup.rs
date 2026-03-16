@@ -232,6 +232,22 @@ CREATE TABLE IF NOT EXISTS pin (
 ) STRICT",
 );
 
+const UCONTENT_TABLE: (&str, &str) = (
+	"ucontent",
+	"
+CREATE TABLE IF NOT EXISTS ucontent (
+		id        INTEGER PRIMARY KEY AUTOINCREMENT,
+		uid       BLOB NOT NULL,
+
+		ctime     INTEGER NOT NULL,
+		mtime     INTEGER NOT NULL,
+
+		hash      TEXT NOT NULL,
+		is_json   INTEGER NOT NULL DEFAULT 0,
+		content   TEXT
+) STRICT",
+);
+
 const WORK_TABLE: (&str, &str) = (
 	"work",
 	"
@@ -255,7 +271,7 @@ CREATE TABLE IF NOT EXISTS work (
 );
 
 const ALL_MAIN_TABLES: &[(&str, &str)] =
-	&[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE, WORK_TABLE];
+	&[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE, UCONTENT_TABLE, WORK_TABLE];
 
 // endregion: --- Main Tables
 
@@ -307,6 +323,13 @@ fn create_schema(con: &Connection) -> Result<()> {
 			)?;
 		}
 	}
+
+	con.execute(
+		"
+CREATE INDEX IF NOT EXISTS idx_ucontent_hash ON ucontent(hash);
+		",
+		(),
+	)?;
 
 	Ok(())
 }
