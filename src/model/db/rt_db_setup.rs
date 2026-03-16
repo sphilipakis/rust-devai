@@ -30,11 +30,11 @@ CREATE TABLE IF NOT EXISTS run (
 		parent_id   INTEGER,
 
 		ctime  INTEGER NOT NULL,
-		mtime  INTEGER NOT NULL,			
+		mtime  INTEGER NOT NULL,
 
 		has_prompt_parts INTEGER,
-		has_task_stages  INTEGER,			
-		
+		has_task_stages  INTEGER,
+
 		-- Step Timestamps
 		start       INTEGER,
 		ba_start    INTEGER,	-- Before All start/end
@@ -71,14 +71,14 @@ CREATE TABLE IF NOT EXISTS task (
 		uid    BLOB NOT NULL,
 
 		ctime  INTEGER NOT NULL,
-		mtime  INTEGER NOT NULL,								
+		mtime  INTEGER NOT NULL,
 
 		run_id INTEGER NOT NULL,
 		idx    INTEGER, -- Relative to the run (as created by Run)
-		
+
 		-- Step Timestamps
 		start          INTEGER,
-		data_start     INTEGER,    
+		data_start     INTEGER,
 		data_end       INTEGER,
 		ai_start       INTEGER,
 		ai_gen_start   INTEGER,
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS task (
 		model_upstream   TEXT,    -- from te provider
 
 		-- Model Pricing
-		pricing_model         TEXT, 
+		pricing_model         TEXT,
 		pricing_input         REAL,
 		pricing_input_cached  REAL,
 		pricing_output        REAL,
@@ -114,10 +114,10 @@ CREATE TABLE IF NOT EXISTS task (
 		tk_prompt_cache_creation    INTEGER,
 		tk_completion_total         INTEGER,
 		tk_completion_reasoning     INTEGER,
-		
+
 		cost                REAL,
-		cost_cache_write    REAL, 
-		cost_cache_saving   REAL, 
+		cost_cache_write    REAL,
+		cost_cache_saving   REAL,
 
 		label               TEXT,
 
@@ -140,17 +140,17 @@ CREATE TABLE IF NOT EXISTS log (
 		uid     BLOB NOT NULL,
 
 		ctime   INTEGER NOT NULL,
-		mtime   INTEGER NOT NULL,							
+		mtime   INTEGER NOT NULL,
 
 		run_id  INTEGER NOT NULL, -- Should always belong to a run
 		task_id INTEGER,          -- Might belong to a task
 
 		kind    TEXT,  -- UserPrint, SysInfo, SysWarn, SysDebug
 
-		stage   TEXT, 
+		stage   TEXT,
 
-		step    TEXT, 
-		
+		step    TEXT,
+
 		message TEXT
 ) STRICT",
 );
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS prompt (
 		uid     BLOB NOT NULL,
 
 		ctime   INTEGER NOT NULL,
-		mtime   INTEGER NOT NULL,							
+		mtime   INTEGER NOT NULL,
 
 		kind    TEXT,    -- Sys, Agent (from what part of the system)
 
@@ -221,14 +221,14 @@ CREATE TABLE IF NOT EXISTS pin (
 		uid       BLOB NOT NULL,
 
 		ctime     INTEGER NOT NULL,
-		mtime     INTEGER NOT NULL,							
+		mtime     INTEGER NOT NULL,
 
 		run_id    INTEGER NOT NULL, -- Should always belong to a run
 		task_id   INTEGER,          -- Might belong to a task
-	  
+
 		iden      TEXT NOT NULL,    -- The identifier of this pin. Unique for this run/task
 		priority  REAL,             -- The priority (if none, will be last)
-		content   TEXT              -- JSON UI Component
+		ucontent_id INTEGER
 ) STRICT",
 );
 
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS work (
 		mtime       INTEGER NOT NULL,
 
 		kind        TEXT NOT NULL,
-		
+
 		start       INTEGER,
 		end         INTEGER,
 		end_state   TEXT,
@@ -270,8 +270,16 @@ CREATE TABLE IF NOT EXISTS work (
 ) STRICT",
 );
 
-const ALL_MAIN_TABLES: &[(&str, &str)] =
-	&[RUN_TABLE, TASK_TABLE, ERR_TABLE, LOG_TABLE, PROMPT_TABLE, PIN_TABLE, UCONTENT_TABLE, WORK_TABLE];
+const ALL_MAIN_TABLES: &[(&str, &str)] = &[
+	RUN_TABLE,
+	TASK_TABLE,
+	ERR_TABLE,
+	LOG_TABLE,
+	PROMPT_TABLE,
+	PIN_TABLE,
+	UCONTENT_TABLE,
+	WORK_TABLE,
+];
 
 // endregion: --- Main Tables
 
@@ -291,7 +299,7 @@ CREATE TABLE IF NOT EXISTS inout (
 		uid      BLOB NOT NULL,
 
 		ctime    INTEGER NOT NULL,
-		mtime    INTEGER NOT NULL,							
+		mtime    INTEGER NOT NULL,
 
 		task_uid BLOB NOT NULL, -- might not be needed but used to guarantee on task
 

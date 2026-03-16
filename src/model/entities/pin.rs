@@ -1,7 +1,7 @@
 // region:    --- Modules
 
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result};
+use crate::model::{EpochUs, Id, ModelManager, Result, UcontentBmc};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
@@ -68,7 +68,7 @@ struct PinForCreate {
 
 	pub iden: String,
 	pub priority: Option<f64>,
-	pub content: Option<String>,
+	pub ucontent_id: Option<Id>,
 }
 
 /// This is private to thie module
@@ -76,49 +76,7 @@ struct PinForCreate {
 #[allow(unused)]
 struct PinForUpdate {
 	pub priority: Option<f64>,
-	pub content: Option<String>,
-}
-
-impl From<PinForRunSave> for PinForCreate {
-	fn from(pin_s: PinForRunSave) -> Self {
-		Self {
-			run_id: pin_s.run_id,
-			task_id: None,
-			iden: pin_s.iden,
-			priority: pin_s.priority,
-			content: pin_s.content,
-		}
-	}
-}
-
-impl From<PinForRunSave> for PinForUpdate {
-	fn from(pin_s: PinForRunSave) -> Self {
-		Self {
-			priority: pin_s.priority,
-			content: pin_s.content,
-		}
-	}
-}
-
-impl From<PinForTaskSave> for PinForCreate {
-	fn from(pin_s: PinForTaskSave) -> Self {
-		Self {
-			run_id: pin_s.run_id,
-			task_id: Some(pin_s.task_id),
-			iden: pin_s.iden,
-			priority: pin_s.priority,
-			content: pin_s.content,
-		}
-	}
-}
-
-impl From<PinForTaskSave> for PinForUpdate {
-	fn from(pin_s: PinForTaskSave) -> Self {
-		Self {
-			priority: pin_s.priority,
-			content: pin_s.content,
-		}
-	}
+	pub ucontent_id: Option<Id>,
 }
 
 // endregion: --- Private Types
@@ -141,12 +99,13 @@ impl PinBmc {
 	///   - NOTE: There is an argument for not updating if it was created concurrently.
 	pub fn save_run_pin(mm: &ModelManager, pin_s: PinForRunSave) -> Result<Id> {
 		let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
+		let pin_u = Self::resolve_run_pin_fields(mm, &pin_s)?;
 
 		let id = if let Some(pin_id) = pin_id {
-			Self::update(mm, pin_id, pin_s.into())?;
+			Self::update(mm, pin_id, pin_u.clone())?;
 			pin_id
 		} else {
-			let pin_c: PinForCreate = pin_s.clone().into();
+			let pin_c = pin_u.clone();
 
 			// -- Attempt to create
 			let fields = pin_c.sqlite_not_none_fields();
@@ -164,7 +123,7 @@ impl PinBmc {
 				let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
 				let pin_id = pin_id.ok_or(format!("Should have returned a pin id for pin: {}", pin_s.iden))?;
 				// NOTE: we might not want to update here. This was was perhaps late?
-				Self::update(mm, pin_id, pin_s.into())?;
+				Self::update(mm, pin_id, pin_u)?;
 
 				pin_id
 			}
@@ -175,12 +134,13 @@ impl PinBmc {
 
 	pub fn save_task_pin(mm: &ModelManager, pin_s: PinForTaskSave) -> Result<Id> {
 		let pin_id = Self::get_task_pin_by_iden(mm, pin_s.task_id, &pin_s.iden)?;
+		let pin_u = Self::resolve_task_pin_fields(mm, &pin_s)?;
 
 		let id = if let Some(pin_id) = pin_id {
-			Self::update(mm, pin_id, pin_s.into())?;
+			Self::update(mm, pin_id, pin_u)?;
 			pin_id
 		} else {
-			Self::create(mm, pin_s.into())?
+			Self::create(mm, pin_u)?
 		};
 
 		Ok(id)
@@ -190,7 +150,18 @@ impl PinBmc {
 
 	#[allow(unused)]
 	pub fn get(mm: &ModelManager, id: Id) -> Result<Pin> {
-		base::get::<Self, _>(mm, id)
+		let sql = format!(
+			"SELECT {} FROM {} p LEFT JOIN ucontent uc ON p.ucontent_id = uc.id WHERE p.id = ? LIMIT 1",
+			Self::pin_select_columns(),
+			Self::table_ref()
+		);
+
+		let db = mm.db();
+		let entity: Pin = db
+			.fetch_first(&sql, [(&id)])?
+			.ok_or_else(|| format!("Cannot get entity '{}'", Self::TABLE))?;
+
+		Ok(entity)
 	}
 
 	/// List for run
@@ -206,8 +177,8 @@ impl PinBmc {
 			.unwrap_or_else(|| "id".to_string());
 
 		let sql = format!(
-			"SELECT {} FROM {} WHERE run_id = ? AND task_id IS NULL ORDER BY {order_by}",
-			Pin::sql_columns(),
+			"SELECT {} FROM {} p LEFT JOIN ucontent uc ON p.ucontent_id = uc.id WHERE run_id = ? AND task_id IS NULL ORDER BY {order_by}",
+			Self::pin_select_columns(),
 			PinBmc::table_ref()
 		);
 
@@ -219,18 +190,24 @@ impl PinBmc {
 
 	/// List for task
 	pub fn list_for_task(mm: &ModelManager, task_id: Id) -> Result<Vec<Pin>> {
-		let filter = PinFilter {
-			task_id: Some(task_id),
-			..Default::default()
-		};
-
 		// Sort by priority (nulls last), then by creation time.
 		let order_bys = OrderBys::from(vec!["priority IS NULL", "priority", "ctime"]);
 		let list_options = ListOptions::from(order_bys);
+		let order_by = list_options
+			.order_bys
+			.map(|ob| ob.join_for_sql())
+			.unwrap_or_else(|| "id".to_string());
 
-		let filter = filter.sqlite_not_none_fields();
+		let sql = format!(
+			"SELECT {} FROM {} p LEFT JOIN ucontent uc ON p.ucontent_id = uc.id WHERE task_id = ? ORDER BY {order_by}",
+			Self::pin_select_columns(),
+			Self::table_ref()
+		);
 
-		base::list::<Self, _>(mm, Some(list_options), Some(filter))
+		let db = mm.db();
+		let entities: Vec<Pin> = db.fetch_all(&sql, (task_id,))?;
+
+		Ok(entities)
 	}
 }
 
@@ -244,6 +221,40 @@ impl PinBmc {
 	fn update(mm: &ModelManager, id: Id, pin_c: PinForCreate) -> Result<usize> {
 		let fields = pin_c.sqlite_not_none_fields();
 		base::update::<Self>(mm, id, fields)
+	}
+
+	fn resolve_run_pin_fields(mm: &ModelManager, pin_s: &PinForRunSave) -> Result<PinForCreate> {
+		let ucontent_id = Self::resolve_ucontent_id(mm, pin_s.content.as_deref())?;
+
+		Ok(PinForCreate {
+			run_id: pin_s.run_id,
+			task_id: None,
+			iden: pin_s.iden.clone(),
+			priority: pin_s.priority,
+			ucontent_id,
+		})
+	}
+
+	fn resolve_task_pin_fields(mm: &ModelManager, pin_s: &PinForTaskSave) -> Result<PinForCreate> {
+		let ucontent_id = Self::resolve_ucontent_id(mm, pin_s.content.as_deref())?;
+
+		Ok(PinForCreate {
+			run_id: pin_s.run_id,
+			task_id: Some(pin_s.task_id),
+			iden: pin_s.iden.clone(),
+			priority: pin_s.priority,
+			ucontent_id,
+		})
+	}
+
+	fn resolve_ucontent_id(mm: &ModelManager, content: Option<&str>) -> Result<Option<Id>> {
+		content
+			.map(|content| UcontentBmc::get_or_create_for_text(mm, content, true))
+			.transpose()
+	}
+
+	fn pin_select_columns() -> &'static str {
+		r#"p.id AS "id", p.uid AS "uid", p.ctime AS "ctime", p.mtime AS "mtime", p.run_id AS "run_id", p.task_id AS "task_id", p.iden AS "iden", p.priority AS "priority", uc.content AS "content""#
 	}
 
 	// return the pin ID
