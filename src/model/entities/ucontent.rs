@@ -1,24 +1,24 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result};
+use crate::model::{Id, ModelManager, Result};
 use crate::support::text;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields as _};
-use uuid::Uuid;
 
 // region:    --- Public Types
 
-#[derive(Debug, Clone, Fields, SqliteFromRow)]
-pub struct Ucontent {
-	pub id: Id,
-	pub uid: Uuid,
+// NOTE: Not needed
+// #[derive(Debug, Clone, Fields, SqliteFromRow)]
+// pub struct Ucontent {
+// 	pub id: Id,
+// 	pub uid: Uuid,
 
-	pub ctime: EpochUs,
-	pub mtime: EpochUs,
+// 	pub ctime: EpochUs,
+// 	pub mtime: EpochUs,
 
-	pub hash: String,
-	pub is_json: bool,
-	pub content: Option<String>,
-}
+// 	pub hash: String,
+// 	pub is_json: bool,
+// 	pub content: Option<String>,
+// }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
 pub struct UcontentForCreate {

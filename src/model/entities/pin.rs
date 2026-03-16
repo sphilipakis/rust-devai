@@ -3,7 +3,7 @@
 use crate::model::base::{self, DbBmc};
 use crate::model::{EpochUs, Id, ModelManager, Result, UcontentBmc};
 use modql::SqliteFromRow;
-use modql::field::{Fields, HasFields as _, HasSqliteFields, SqliteField, SqliteFields};
+use modql::field::{Fields, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
 use uuid::Uuid;
 
@@ -48,12 +48,6 @@ pub struct PinForTaskSave {
 
 	pub priority: Option<f64>,
 	pub content: Option<String>,
-}
-
-#[derive(Debug, Default, Clone, Fields, SqliteFromRow)]
-pub struct PinFilter {
-	pub run_id: Option<Id>,
-	pub task_id: Option<Id>,
 }
 
 // endregion: --- Public Types
