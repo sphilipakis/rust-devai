@@ -1,5 +1,20 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-03-19 [v0.8.20](https://github.com/jeremychone/rust-devai/compare/v0.8.19...v0.8.20)
+
+- `^` model - gpt-5.4 mini/nano pricing update and aliases
+- `^` model suffix - add support for `-xhigh` and `-max` (with property fallback)
+- `-` tui text_helpers - Fix file path highlighting for folder-less filenames, add `~` support, and fix false positives
+- `^` udiffx
+  - add new `~` patch command, and fix error when partial hunks fail
+  - fix wrong hunk order in patches
+  - add `FILE_COPY` directive
+  - fully ignore surround-only hunks (no operations hunks), add `error_hunks` in report, and apply possible hunks per file
+  - handle wrapper text (e.g. `*** End Patch`) and ignore unactionable hunks
+  - update to `0.6.0-beta.5`, add Anthropic adaptive thinking and `-max`
+- `>` memory optimization - ucontent - Now pins share common content.
+- `>` genai - Now genai points GPT-5 to the OpenAI Responses API endpoint
+
 ## 2026-03-08 [v0.8.19](https://github.com/jeremychone/rust-devai/compare/v0.8.18...v0.8.19)
 
 - `^` udiffx - crlf handling, lot of resiliency tuning in file patch
