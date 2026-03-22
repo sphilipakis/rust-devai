@@ -17,10 +17,11 @@ pub fn segment_line_path(line: &str) -> Vec<TextSeg<'_>> {
 			# Path with directory separator (permissive extension)
 			~?[a-zA-Z0-9_@\-\./]+/[a-zA-Z0-9_@\-\.]+\.[a-zA-Z0-9]{2,5}
 			|
-			# Standalone filename: extension must start with a letter, only alphanumeric, no hyphen/underscore, 2-5 chars total.
+			# Standalone filename: allow chained dot segments so files like pcss.config.js
+			# or lightningcss.config.js are detected as a single file path.
 			# Post-filter rejects matches followed by continuation characters (hyphen, underscore, dot, alnum)
 			# to avoid false positives on model-version patterns like gpt-5.some-preview or gpt-5.2026-02-12.
-			[a-zA-Z0-9_@\-]+\.[a-zA-Z][a-zA-Z0-9]{0,4}
+			[a-zA-Z0-9_@\-]+(?:\.[a-zA-Z0-9_@\-]+)*\.[a-zA-Z][a-zA-Z0-9]{0,4}
 			|
 			# Dotfiles (with optional chained extensions): .env, .gitignore, .env.local
 			\.[a-zA-Z][a-zA-Z0-9_\-]*(?:\.[a-zA-Z][a-zA-Z0-9]*)*
@@ -158,6 +159,60 @@ mod tests {
 		assert_eq!(segs[0].text, "Update ");
 		assert_eq!(segs[1].text, "Cargo.toml");
 		assert_eq!(segs[1].file_path, Some("Cargo.toml"));
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_multi_dot_js_config_filename() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "Update pcss.config.js please";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 3);
+		assert_eq!(segs[0].text, "Update ");
+		assert_eq!(segs[1].text, "pcss.config.js");
+		assert_eq!(segs[1].file_path, Some("pcss.config.js"));
+		assert_eq!(segs[2].text, " please");
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_rolldown_config_js() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "See rolldown.config.js for setup";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 3);
+		assert_eq!(segs[0].text, "See ");
+		assert_eq!(segs[1].text, "rolldown.config.js");
+		assert_eq!(segs[1].file_path, Some("rolldown.config.js"));
+		assert_eq!(segs[2].text, " for setup");
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_text_helpers_segment_line_path_lightningcss_config_js() -> Result<()> {
+		// -- Setup & Fixtures
+		let line = "See lightningcss.config.js for setup";
+
+		// -- Exec
+		let segs = segment_line_path(line);
+
+		// -- Check
+		assert_eq!(segs.len(), 3);
+		assert_eq!(segs[0].text, "See ");
+		assert_eq!(segs[1].text, "lightningcss.config.js");
+		assert_eq!(segs[1].file_path, Some("lightningcss.config.js"));
+		assert_eq!(segs[2].text, " for setup");
 
 		Ok(())
 	}
