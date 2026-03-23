@@ -191,9 +191,14 @@ Represents the result for a single directive in a multi-file change operation.
 ```ts
 {
   file_path: string,       // Path of the affected file
-  kind: string,            // One of "New", "Patch", "Rename", "Delete", or "Fail"
+  kind: string,            // One of "New", "Patch", "Append", "Copy", "Rename", "Delete", or "Fail"
   success: boolean,        // true if this directive succeeded
-  error_msg?: string       // Error details if success is false
+  error_msg?: string,      // Error details if success is false
+  match_tier?: string,     // Patch matching tier when available, primarily for Patch directives, since 0.8.20
+  error_hunks?: {          // Per-hunk patch failures when available, since 0.8.20
+    hunk_body: string,     // The hunk body that failed to apply
+    cause: string          // Failure reason for this hunk
+  }[]
 }
 ```
 
