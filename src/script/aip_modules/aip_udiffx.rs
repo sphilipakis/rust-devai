@@ -231,6 +231,17 @@ impl IntoLua for W<ApplyChangesStatus> {
 			info_table.set("success", item.success())?;
 			info_table.set("error_msg", item.error_msg())?;
 
+			if !item.error_hunks.is_empty() {
+				let error_hunks_table = lua.create_table()?;
+				for (j, hunk) in item.error_hunks.iter().enumerate() {
+					let hunk_table = lua.create_table()?;
+					hunk_table.set("hunk_body", hunk.hunk_body.as_str())?;
+					hunk_table.set("cause", hunk.cause.as_str())?;
+					error_hunks_table.set(j + 1, hunk_table)?;
+				}
+				info_table.set("error_hunks", error_hunks_table)?;
+			}
+
 			items_table.set(i + 1, info_table)?;
 		}
 
