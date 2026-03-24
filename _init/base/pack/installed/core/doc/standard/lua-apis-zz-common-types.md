@@ -202,6 +202,8 @@ Represents the result for a single directive in a multi-file change operation.
 }
 ```
 
+When patch application fails with hunk-level diagnostics, `error_hunks` is included in the Lua result returned by `aip.udiffx.apply_file_changes`, mirroring the per-hunk failure details from the underlying apply status.
+
 ### WebResponse
 
 Represents the result of an HTTP request made by `aip.web.get` or `aip.web.post`.

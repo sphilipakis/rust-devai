@@ -485,7 +485,7 @@ aip.hash.blake3_b64u(input: string): string
 ### aip.udiffx - Multi-File Changes
 
 ```typescript
-aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): ApplyChangesStatus | (ApplyChangesStatus, string) // Applies <FILE_CHANGES> envelope. base_dir defaults to workspace. If options provided, base_dir MUST be explicitly passed (can be nil).
+aip.udiffx.apply_file_changes(content: string, base_dir?: string, options?: {extrude?: "content"}): ApplyChangesStatus | (ApplyChangesStatus, string) // (the returned string, is the extruded text content around) Applies <FILE_CHANGES> envelope. base_dir defaults to workspace. If options provided, base_dir MUST be explicitly passed (can be nil).
 aip.udiffx.load_files_context(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): string | nil
 aip.udiffx.file_changes_instruction(): string
 ```

@@ -69,6 +69,7 @@ Returns an error (Lua table `{ error: string }`) if:
 - `status.items[].kind` can also include `"Append"` and `"Copy"` since `0.8.20`.
 - `status.items[].match_tier` may be present for patch application details, since `0.8.20`.
 - `status.items[].error_hunks` may be present for per-hunk patch failures, since `0.8.20`.
+- When present, `status.items[].error_hunks` is serialized into the Lua return value from `aip.udiffx.apply_file_changes(...)`, with each item containing `hunk_body` and `cause`.
 
 
 ### aip.udiffx.load_files_context
