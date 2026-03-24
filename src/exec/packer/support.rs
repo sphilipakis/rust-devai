@@ -3,8 +3,248 @@ use crate::exec::packer::pack_toml::{PartialPackToml, parse_validate_pack_toml};
 use crate::support::zip;
 use crate::{Error, Result};
 use lazy_regex::regex;
+use reqwest::Client;
 use semver::Version;
 use simple_fs::SPath;
+use simple_fs::ensure_dir;
+use time::OffsetDateTime;
+use time_tz::OffsetDateTimeExt;
+
+use crate::dir_context::DirContext;
+use crate::support::webc;
+use crate::types::PackIdentity;
+
+use serde::Deserialize;
+use std::str::FromStr;
+
+// region:    --- PackUri
+
+#[derive(Debug, Clone)]
+pub enum PackUri {
+	RepoPack(PackIdentity),
+	LocalPath(String),
+	HttpLink(String),
+}
+
+impl PackUri {
+	pub fn parse(uri: &str) -> Self {
+		// Try to parse as PackIdentity first
+		if let Ok(pack_identity) = PackIdentity::from_str(uri) {
+			return PackUri::RepoPack(pack_identity);
+		}
+
+		// If not a PackIdentity, check if it's an HTTP link
+		if uri.starts_with("http://") || uri.starts_with("https://") {
+			PackUri::HttpLink(uri.to_string())
+		} else {
+			// Otherwise, treat as local path
+			PackUri::LocalPath(uri.to_string())
+		}
+	}
+}
+
+impl std::fmt::Display for PackUri {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			PackUri::RepoPack(identity) => write!(f, "{identity}"),
+			PackUri::LocalPath(path) => write!(f, "local file '{path}'"),
+			PackUri::HttpLink(url) => write!(f, "URL '{url}'"),
+		}
+	}
+}
+
+// endregion: --- PackUri
+
+// region:    --- LatestToml
+
+#[derive(Deserialize, Debug)]
+pub(super) struct LatestToml {
+	pub latest_stable: Option<LatestStableInfo>,
+}
+
+#[derive(Deserialize, Debug)]
+pub(super) struct LatestStableInfo {
+	pub version: Option<String>,
+	pub rel_path: Option<String>,
+}
+
+impl LatestToml {
+	pub fn validate(&self) -> Result<(&str, &str)> {
+		// Check if latest_stable exists
+		let latest_stable = self
+			.latest_stable
+			.as_ref()
+			.ok_or_else(|| Error::custom("Missing 'latest_stable' section in latest.toml".to_string()))?;
+
+		// Check if version is provided
+		let version = latest_stable
+			.version
+			.as_deref()
+			.ok_or_else(|| Error::custom("Missing 'version' in latest_stable section of latest.toml".to_string()))?;
+
+		// Check if rel_path is provided
+		let rel_path = latest_stable
+			.rel_path
+			.as_deref()
+			.ok_or_else(|| Error::custom("Missing 'rel_path' in latest_stable section of latest.toml".to_string()))?;
+
+		Ok((version, rel_path))
+	}
+}
+
+// endregion: --- LatestToml
+
+// region:    --- Shared Repo/Download Helpers
+
+/// Fetches the latest.toml metadata from the remote repository for a given pack identity.
+///
+/// Returns the parsed LatestToml, which can be validated for version and rel_path.
+pub(super) async fn fetch_repo_latest_toml(pack_identity: &PackIdentity) -> Result<LatestToml> {
+	let latest_toml_url = format!(
+		"https://repo.aipack.ai/pack/{}/{}/stable/latest.toml",
+		pack_identity.namespace, pack_identity.name
+	);
+
+	let client = Client::new();
+	let response = client.get(&latest_toml_url).send().await.map_err(|e| Error::FailToInstall {
+		aipack_ref: pack_identity.to_string(),
+		cause: format!("Failed to download latest.toml: {e}"),
+	})?;
+
+	if !response.status().is_success() {
+		return Err(Error::FailToInstall {
+			aipack_ref: pack_identity.to_string(),
+			cause: format!("HTTP error when fetching latest.toml: {}", response.status()),
+		});
+	}
+
+	let latest_toml_content = response.text().await.map_err(|e| Error::FailToInstall {
+		aipack_ref: pack_identity.to_string(),
+		cause: format!("Failed to read latest.toml content: {e}"),
+	})?;
+
+	let latest_toml: LatestToml = toml::from_str(&latest_toml_content).map_err(|e| Error::FailToInstall {
+		aipack_ref: pack_identity.to_string(),
+		cause: format!("Failed to parse latest.toml: {e}"),
+	})?;
+
+	Ok(latest_toml)
+}
+
+/// Constructs the full download URL for a pack from its identity and a relative path from latest.toml.
+pub(super) fn build_repo_pack_url(pack_identity: &PackIdentity, rel_path: &str) -> String {
+	format!(
+		"https://repo.aipack.ai/pack/{}/{}/stable/{rel_path}",
+		pack_identity.namespace, pack_identity.name
+	)
+}
+
+/// Downloads a pack from a repo pack identity, resolving via latest.toml.
+///
+/// Returns the path to the downloaded `.aipack` file and the original PackUri.
+pub(super) async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::RepoPack(ref pack_identity) = pack_uri {
+		let latest_toml = fetch_repo_latest_toml(pack_identity).await?;
+
+		// Validate the latest.toml content
+		let (_version, rel_path) = latest_toml.validate()?;
+
+		// Construct the full URL to the .aipack file
+		let aipack_url = build_repo_pack_url(pack_identity, rel_path);
+
+		// Use HttpLink to download the actual pack
+		let http_uri = PackUri::HttpLink(aipack_url);
+		let (aipack_file, _) = download_pack(dir_context, http_uri).await?;
+
+		return Ok((aipack_file, pack_uri));
+	}
+
+	Err(Error::custom(
+		"Expected RepoPack variant but got a different one".to_string(),
+	))
+}
+
+/// Resolves a local path to an absolute SPath
+pub(super) fn resolve_local_path(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::LocalPath(ref path) = pack_uri {
+		let aipack_zipped_file = SPath::from(path);
+
+		if aipack_zipped_file.path().is_absolute() {
+			Ok((aipack_zipped_file, pack_uri))
+		} else {
+			let absolute_path = dir_context.current_dir().join(aipack_zipped_file.as_str());
+			Ok((absolute_path, pack_uri))
+		}
+	} else {
+		Err(Error::custom(
+			"Expected LocalPath variant but got a different one".to_string(),
+		))
+	}
+}
+
+/// Downloads a pack from a URL and returns the path to the downloaded file
+pub(super) async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
+	if let PackUri::HttpLink(ref url) = pack_uri {
+		// Get the download directory
+		let download_dir = dir_context.aipack_paths().get_base_pack_download_dir()?;
+
+		// Create the download directory if it doesn't exist
+		if !download_dir.exists() {
+			ensure_dir(&download_dir)?;
+		}
+
+		// Extract the filename from the URL
+		let url_path = url.split('/').next_back().unwrap_or("unknown.aipack");
+		let filename = url_path.replace(' ', "-");
+
+		// Create a timestamped filename using the time crate
+		let now = OffsetDateTime::now_utc();
+		// attempt to get local now (otherwise, no big deal, same machine so should be consistent return)
+		let now = if let Ok(local) = time_tz::system::get_timezone() {
+			now.to_timezone(local)
+		} else {
+			now
+		};
+
+		let timestamp =
+			now.format(&time::format_description::well_known::Rfc3339)
+				.map_err(|e| Error::FailToInstall {
+					aipack_ref: pack_uri.to_string(),
+					cause: format!("Failed to format timestamp: {e}"),
+				})?;
+
+		// Create a cleaner timestamp for filenames (removing colons, etc.)
+		let file_timestamp = timestamp.replace([':', 'T'], "-");
+		let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
+		let timestamped_filename = format!("{file_timestamp}-{filename}");
+		let download_path = download_dir.join(&timestamped_filename);
+
+		// Download the file
+		webc::web_download_to_file(url, &download_path).await?;
+
+		return Ok((download_path, pack_uri));
+	}
+
+	Err(Error::custom(
+		"Expected HttpLink variant but got a different one".to_string(),
+	))
+}
+
+/// Fetches the latest remote version string from the repository for a given pack identity.
+///
+/// Returns `Ok(Some(version))` if the remote latest.toml was successfully fetched and validated,
+/// or `Ok(None)` if the remote could not be reached or the metadata was invalid.
+pub(super) async fn fetch_repo_latest_version(pack_identity: &PackIdentity) -> Result<Option<String>> {
+	match fetch_repo_latest_toml(pack_identity).await {
+		Ok(latest_toml) => match latest_toml.validate() {
+			Ok((version, _rel_path)) => Ok(Some(version.to_string())),
+			Err(_) => Ok(None),
+		},
+		Err(_) => Ok(None),
+	}
+}
+
+// endregion: --- Shared Repo/Download Helpers
 
 /// Extracts and validates the pack.toml from an .aipack file
 ///
@@ -213,89 +453,7 @@ pub fn calculate_directory_size(dir_path: &SPath) -> Result<usize> {
 // region:    --- Tests
 
 #[cfg(test)]
-mod tests {
-	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
-
-	use super::*;
-	use crate::Error;
-
-	// #[test]
-	// fn test_packer_support_normalize_version_simple() -> Result<()> {
-	// 	assert_eq!(normalize_version("1.0.0"), "1-0-0");
-	// 	assert_eq!(normalize_version("1.0-alpha"), "1-0-alpha");
-	// 	assert_eq!(normalize_version("1.0 beta"), "1-0-beta");
-	// 	assert_eq!(normalize_version("1.0-beta-2"), "1-0-beta-2");
-	// 	assert_eq!(normalize_version("1.0--beta--2"), "1-0-beta-2");
-	// 	assert_eq!(normalize_version("v1.0.0_rc1"), "v1-0-0-rc1");
-	// 	assert_eq!(normalize_version("1.0.0!@#$%^&*()"), "1-0-0");
-
-	// 	Ok(())
-	// }
-
-	#[test]
-	fn test_validate_version_update() -> Result<()> {
-		use std::cmp::Ordering;
-
-		// Test case: New version is greater than installed
-		assert_eq!(validate_version_update("1.0.0", "1.0.1")?, Ordering::Greater);
-		assert_eq!(validate_version_update("1.0.0", "1.1.0")?, Ordering::Greater);
-		assert_eq!(validate_version_update("1.0.0", "2.0.0")?, Ordering::Greater);
-
-		// Test case: New version is equal to installed
-		assert_eq!(validate_version_update("1.0.0", "1.0.0")?, Ordering::Equal);
-
-		// Test case: New version is less than installed
-		assert_eq!(validate_version_update("1.0.1", "1.0.0")?, Ordering::Less);
-
-		// Test with leading 'v'
-		assert_eq!(validate_version_update("v1.0.0", "1.0.1")?, Ordering::Greater);
-		assert_eq!(validate_version_update("1.0.0", "v1.0.1")?, Ordering::Greater);
-
-		// Test with invalid versions (string comparison fallback)
-		assert_eq!(validate_version_update("a", "b")?, Ordering::Greater);
-		assert_eq!(validate_version_update("b", "a")?, Ordering::Less);
-		assert_eq!(validate_version_update("a", "a")?, Ordering::Equal);
-
-		Ok(())
-	}
-
-	#[test]
-	fn test_validate_version_for_install() -> Result<()> {
-		// Test valid versions
-		assert!(validate_version_for_install("0.1.0").is_ok());
-		assert!(validate_version_for_install("1.0.0").is_ok());
-		assert!(validate_version_for_install("0.1.1-alpha.1").is_ok());
-		assert!(validate_version_for_install("0.1.1-beta.123").is_ok());
-		assert!(validate_version_for_install("0.1.1-rc.1.2").is_ok());
-		assert!(validate_version_for_install("v1.0.0-alpha.1").is_ok());
-
-		// Test invalid versions
-		let err = validate_version_for_install("0.1.1-alpha").unwrap_err();
-		match err {
-			Error::InvalidPrereleaseFormat { version } => {
-				assert_eq!(version, "0.1.1-alpha");
-			}
-			_ => panic!("Expected InvalidPrereleaseFormat error"),
-		}
-
-		let err = validate_version_for_install("0.1.1-alpha.text").unwrap_err();
-		match err {
-			Error::InvalidPrereleaseFormat { version } => {
-				assert_eq!(version, "0.1.1-alpha.text");
-			}
-			_ => panic!("Expected InvalidPrereleaseFormat error"),
-		}
-
-		let err = validate_version_for_install("0.1.1-alpha.1.some").unwrap_err();
-		match err {
-			Error::InvalidPrereleaseFormat { version } => {
-				assert_eq!(version, "0.1.1-alpha.1.some");
-			}
-			_ => panic!("Expected InvalidPrereleaseFormat error"),
-		}
-
-		Ok(())
-	}
-}
+#[path = "support_tests.rs"]
+mod tests;
 
 // endregion: --- Tests

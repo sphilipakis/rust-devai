@@ -94,7 +94,13 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 			zip_file: src_zip.to_string(),
 			cause: format!("Fail to get item by_index {i}.\nCause: {err}"),
 		})?;
-		let outpath = dest_dir.join(file.name());
+
+		let entry_name = file.name().to_string();
+
+		// Reject unsafe archive entry paths
+		validate_zip_entry_name(&entry_name, src_zip)?;
+
+		let outpath = dest_dir.join(&entry_name);
 
 		if file.name().ends_with('/') {
 			// Create the directory if it doesn't exist.
@@ -107,6 +113,43 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 			// Create and write the file.
 			let mut outfile = File::create(outpath.as_std_path())?;
 			io::copy(&mut file, &mut outfile)?;
+		}
+	}
+
+	Ok(())
+}
+
+/// Validates a zip archive entry name for safety.
+///
+/// Rejects:
+/// - Absolute paths (starting with `/` or a Windows drive letter like `C:`)
+/// - Path traversal components (`..`)
+fn validate_zip_entry_name(entry_name: &str, src_zip: &SPath) -> Result<()> {
+	// Reject absolute paths (Unix-style leading slash)
+	if entry_name.starts_with('/') || entry_name.starts_with('\\') {
+		return Err(Error::UnzipZipFail {
+			zip_file: src_zip.to_string(),
+			cause: format!("Unsafe zip entry with absolute path: '{entry_name}'"),
+		});
+	}
+
+	// Reject absolute paths (Windows-style drive letter, e.g. "C:" or "D:\")
+	if entry_name.len() >= 2 && entry_name.as_bytes()[1] == b':' && entry_name.as_bytes()[0].is_ascii_alphabetic() {
+		return Err(Error::UnzipZipFail {
+			zip_file: src_zip.to_string(),
+			cause: format!("Unsafe zip entry with absolute path: '{entry_name}'"),
+		});
+	}
+
+	// Reject path traversal components (..)
+	// Normalize backslashes to forward slashes for consistent checking
+	let normalized = entry_name.replace('\\', "/");
+	for component in normalized.split('/') {
+		if component == ".." {
+			return Err(Error::UnzipZipFail {
+				zip_file: src_zip.to_string(),
+				cause: format!("Unsafe zip entry with path traversal: '{entry_name}'"),
+			});
 		}
 	}
 

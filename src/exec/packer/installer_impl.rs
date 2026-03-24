@@ -1,93 +1,11 @@
 use crate::dir_context::DirContext;
 use crate::exec::packer::pack_toml::parse_validate_pack_toml;
 use crate::exec::packer::{PackToml, support};
+use crate::exec::packer::support::{PackUri, download_from_repo, download_pack, resolve_local_path};
 use crate::support::files::{DeleteCheck, safer_trash_dir, safer_trash_file};
-use crate::support::{webc, zip};
-use crate::types::PackIdentity;
+use crate::support::zip;
 use crate::{Error, Result};
-use reqwest::Client;
-use serde::Deserialize;
 use simple_fs::{SPath, ensure_dir};
-use std::str::FromStr;
-use time::OffsetDateTime;
-use time_tz::OffsetDateTimeExt;
-
-// region:    --- PackUri
-
-#[derive(Debug, Clone)]
-pub enum PackUri {
-	RepoPack(PackIdentity),
-	LocalPath(String),
-	HttpLink(String),
-}
-
-impl PackUri {
-	pub fn parse(uri: &str) -> Self {
-		// Try to parse as PackIdentity first
-		if let Ok(pack_identity) = PackIdentity::from_str(uri) {
-			return PackUri::RepoPack(pack_identity);
-		}
-
-		// If not a PackIdentity, check if it's an HTTP link
-		if uri.starts_with("http://") || uri.starts_with("https://") {
-			PackUri::HttpLink(uri.to_string())
-		} else {
-			// Otherwise, treat as local path
-			PackUri::LocalPath(uri.to_string())
-		}
-	}
-}
-
-impl std::fmt::Display for PackUri {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			PackUri::RepoPack(identity) => write!(f, "{identity}"),
-			PackUri::LocalPath(path) => write!(f, "local file '{path}'"),
-			PackUri::HttpLink(url) => write!(f, "URL '{url}'"),
-		}
-	}
-}
-
-// endregion: --- PackUri
-
-// region:    --- LatestToml
-
-#[derive(Deserialize, Debug)]
-struct LatestToml {
-	latest_stable: Option<LatestStableInfo>,
-}
-
-#[derive(Deserialize, Debug)]
-struct LatestStableInfo {
-	version: Option<String>,
-	rel_path: Option<String>,
-}
-
-impl LatestToml {
-	fn validate(&self) -> Result<(&str, &str)> {
-		// Check if latest_stable exists
-		let latest_stable = self
-			.latest_stable
-			.as_ref()
-			.ok_or_else(|| Error::custom("Missing 'latest_stable' section in latest.toml".to_string()))?;
-
-		// Check if version is provided
-		let version = latest_stable
-			.version
-			.as_deref()
-			.ok_or_else(|| Error::custom("Missing 'version' in latest_stable section of latest.toml".to_string()))?;
-
-		// Check if rel_path is provided
-		let rel_path = latest_stable
-			.rel_path
-			.as_deref()
-			.ok_or_else(|| Error::custom("Missing 'rel_path' in latest_stable section of latest.toml".to_string()))?;
-
-		Ok((version, rel_path))
-	}
-}
-
-// endregion: --- LatestToml
 
 pub enum InstallResponse {
 	Installed(InstalledPack),
@@ -118,9 +36,9 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str, force: bool)
 
 	// Get the aipack file path, downloading if needed
 	let (aipack_zipped_file, pack_uri) = match pack_uri {
-		pack_uri @ PackUri::RepoPack(_) => download_from_repo(dir_context, pack_uri).await?,
-		pack_uri @ PackUri::LocalPath(_) => resolve_local_path(dir_context, pack_uri)?,
-		pack_uri @ PackUri::HttpLink(_) => download_pack(dir_context, pack_uri).await?,
+		pack_uri @ PackUri::RepoPack(_) => support::download_from_repo(dir_context, pack_uri).await?,
+		pack_uri @ PackUri::LocalPath(_) => support::resolve_local_path(dir_context, pack_uri)?,
+		pack_uri @ PackUri::HttpLink(_) => support::download_pack(dir_context, pack_uri).await?,
 	};
 
 	// Validate file exists and has correct extension
@@ -144,130 +62,6 @@ pub async fn install_pack(dir_context: &DirContext, pack_uri: &str, force: bool)
 	}
 
 	Ok(install_res)
-}
-
-/// Downloads a pack from the repository based on PackIdentity
-async fn download_from_repo(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
-	if let PackUri::RepoPack(ref pack_identity) = pack_uri {
-		// Construct the URL to the latest.toml file
-		let latest_toml_url = format!(
-			"https://repo.aipack.ai/pack/{}/{}/stable/latest.toml",
-			pack_identity.namespace, pack_identity.name
-		);
-
-		// Fetch the latest.toml file
-		let client = Client::new();
-		let response = client.get(&latest_toml_url).send().await.map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to download latest.toml: {e}"),
-		})?;
-
-		// Check if the request was successful
-		if !response.status().is_success() {
-			return Err(Error::FailToInstall {
-				aipack_ref: pack_uri.to_string(),
-				cause: format!("HTTP error when fetching latest.toml: {}", response.status()),
-			});
-		}
-
-		// Parse the latest.toml content
-		let latest_toml_content = response.text().await.map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to read latest.toml content: {e}"),
-		})?;
-
-		let latest_toml: LatestToml = toml::from_str(&latest_toml_content).map_err(|e| Error::FailToInstall {
-			aipack_ref: pack_uri.to_string(),
-			cause: format!("Failed to parse latest.toml: {e}"),
-		})?;
-
-		// Validate the latest.toml content
-		let (_version, rel_path) = latest_toml.validate()?;
-
-		// Construct the full URL to the .aipack file
-		let base_url = format!(
-			"https://repo.aipack.ai/pack/{}/{}/stable/",
-			pack_identity.namespace, pack_identity.name
-		);
-
-		let aipack_url = format!("{base_url}{rel_path}");
-
-		// Use HttpLink to download the actual pack
-		let http_uri = PackUri::HttpLink(aipack_url);
-		let (aipack_file, _) = download_pack(dir_context, http_uri).await?;
-
-		return Ok((aipack_file, pack_uri));
-	}
-
-	Err(Error::custom(
-		"Expected RepoPack variant but got a different one".to_string(),
-	))
-}
-
-/// Resolves a local path to an absolute SPath
-fn resolve_local_path(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
-	if let PackUri::LocalPath(ref path) = pack_uri {
-		let aipack_zipped_file = SPath::from(path);
-
-		if aipack_zipped_file.path().is_absolute() {
-			Ok((aipack_zipped_file, pack_uri))
-		} else {
-			let absolute_path = dir_context.current_dir().join(aipack_zipped_file.as_str());
-			Ok((absolute_path, pack_uri))
-		}
-	} else {
-		Err(Error::custom(
-			"Expected LocalPath variant but got a different one".to_string(),
-		))
-	}
-}
-
-/// Downloads a pack from a URL and returns the path to the downloaded file
-async fn download_pack(dir_context: &DirContext, pack_uri: PackUri) -> Result<(SPath, PackUri)> {
-	if let PackUri::HttpLink(ref url) = pack_uri {
-		// Get the download directory
-		let download_dir = dir_context.aipack_paths().get_base_pack_download_dir()?;
-
-		// Create the download directory if it doesn't exist
-		if !download_dir.exists() {
-			ensure_dir(&download_dir)?;
-		}
-
-		// Extract the filename from the URL
-		let url_path = url.split('/').next_back().unwrap_or("unknown.aipack");
-		let filename = url_path.replace(' ', "-");
-
-		// Create a timestamped filename using the time crate
-		let now = OffsetDateTime::now_utc();
-		// attempt to get local now (otherwise, no big deal, same machine so should be consistent return)
-		let now = if let Ok(local) = time_tz::system::get_timezone() {
-			now.to_timezone(local)
-		} else {
-			now
-		};
-
-		let timestamp =
-			now.format(&time::format_description::well_known::Rfc3339)
-				.map_err(|e| Error::FailToInstall {
-					aipack_ref: pack_uri.to_string(),
-					cause: format!("Failed to format timestamp: {e}"),
-				})?;
-
-		// Create a cleaner timestamp for filenames (removing colons, etc.)
-		let file_timestamp = timestamp.replace([':', 'T'], "-");
-		let file_timestamp = file_timestamp.split('.').next().unwrap_or(timestamp.as_str());
-		let timestamped_filename = format!("{file_timestamp}-{filename}");
-		let download_path = download_dir.join(&timestamped_filename);
-
-		// Download the file
-		webc::web_download_to_file(url, &download_path).await?;
-
-		return Ok((download_path, pack_uri));
-	}
-
-	Err(Error::custom(
-		"Expected HttpLink variant but got a different one".to_string(),
-	))
 }
 
 /// Common installation logic for both local and remote aipack files
