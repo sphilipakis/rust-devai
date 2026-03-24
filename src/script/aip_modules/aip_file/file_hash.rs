@@ -57,9 +57,10 @@ fn hash_path_to_lua_value<F>(
 where
 	F: FnOnce(simple_fs::SPath) -> crate::Result<String>,
 {
-	let full_path = runtime
-		.dir_context()
-		.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
+	let full_path =
+		runtime
+			.dir_context()
+			.resolve_path(runtime.session(), path.clone().into(), PathResolver::WksDir, None)?;
 	let hash_string =
 		hash_fn(full_path).map_err(|e| Error::from(format!("{ctx} - Failed to hash file '{path}'.\nCause: {e}")))?;
 	hash_string.into_lua(lua)

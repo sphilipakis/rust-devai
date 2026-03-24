@@ -143,7 +143,10 @@ fn test_packer_support_pack_uri_display() -> Result<()> {
 	// -- Setup & Fixtures
 	let data = [
 		("pro@coder", "pro@coder"),
-		("https://example.com/pack.aipack", "URL 'https://example.com/pack.aipack'"),
+		(
+			"https://example.com/pack.aipack",
+			"URL 'https://example.com/pack.aipack'",
+		),
 		("./local.aipack", "local file './local.aipack'"),
 	];
 

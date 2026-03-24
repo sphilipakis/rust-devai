@@ -225,7 +225,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::_test_support::{self, gen_test_dir_path, remove_test_dir, save_file_content};
+	use crate::_test_support::{gen_test_dir_path, save_file_content};
 
 	// region:    --- determine_source tests
 
@@ -264,7 +264,11 @@ mod tests {
 		let source = determine_source(&installed_version, &remote_version, Some(&installed_dir));
 
 		// -- Check
-		assert_eq!(source, UnpackSource::Remote, "Should prefer remote when remote version is newer");
+		assert_eq!(
+			source,
+			UnpackSource::Remote,
+			"Should prefer remote when remote version is newer"
+		);
 
 		// -- Cleanup
 		// remove_test_dir(&installed_dir)?;
@@ -389,7 +393,10 @@ mod tests {
 		let dir = gen_test_dir_path();
 		std::fs::create_dir_all(dir.path())?;
 		let pack_toml = dir.join("pack.toml");
-		save_file_content(&pack_toml, "[pack]\nversion = \"1.2.3\"\nnamespace = \"test\"\nname = \"example\"\n")?;
+		save_file_content(
+			&pack_toml,
+			"[pack]\nversion = \"1.2.3\"\nnamespace = \"test\"\nname = \"example\"\n",
+		)?;
 
 		// -- Exec
 		let version = read_installed_version(&dir);

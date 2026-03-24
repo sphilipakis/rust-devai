@@ -74,4 +74,3 @@ impl FilePathLockHandle {
 		self.mutex.lock().unwrap_or_else(|e| e.into_inner())
 	}
 }
-
