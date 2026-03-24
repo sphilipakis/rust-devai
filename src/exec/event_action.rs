@@ -3,8 +3,8 @@
 //!       but this will eventual change to have it's own
 
 use crate::exec::cli::{
-	CheckKeysArgs, CreateGitignoreArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, XelfSetupArgs,
-	XelfUpdateArgs,
+	CheckKeysArgs, CreateGitignoreArgs, InitArgs, InstallArgs, ListArgs, NewArgs, PackArgs, RunArgs, UnpackArgs,
+	XelfSetupArgs, XelfUpdateArgs,
 };
 use crate::model::Id;
 use crate::run::RunSubAgentParams;
@@ -32,6 +32,7 @@ pub enum ExecActionEvent {
 	CmdList(ListArgs),
 	CmdPack(PackArgs),
 	CmdInstall(InstallArgs),
+	CmdUnpack(UnpackArgs),
 	/// Check for API keys in the environment
 	CmdCheckKeys(CheckKeysArgs),
 	/// Create a .gitignore file from template

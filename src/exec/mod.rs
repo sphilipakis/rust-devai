@@ -12,6 +12,7 @@ mod exec_cmd_list;
 mod exec_cmd_new;
 mod exec_cmd_pack;
 mod exec_cmd_run;
+mod exec_cmd_unpack;
 mod exec_cmd_xelf;
 mod exec_sub_agent;
 mod executor;
@@ -25,6 +26,7 @@ use exec_cmd_list::*;
 use exec_cmd_new::*;
 use exec_cmd_pack::*;
 use exec_cmd_run::*;
+use exec_cmd_unpack::*;
 use exec_cmd_xelf::*;
 #[allow(unused)]
 use exec_sub_agent::*;

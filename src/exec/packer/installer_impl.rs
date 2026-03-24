@@ -1,7 +1,7 @@
 use crate::dir_context::DirContext;
 use crate::exec::packer::pack_toml::parse_validate_pack_toml;
 use crate::exec::packer::{PackToml, support};
-use crate::exec::packer::support::{PackUri, download_from_repo, download_pack, resolve_local_path};
+use crate::exec::packer::support::PackUri;
 use crate::support::files::{DeleteCheck, safer_trash_dir, safer_trash_file};
 use crate::support::zip;
 use crate::{Error, Result};

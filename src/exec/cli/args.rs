@@ -56,6 +56,9 @@ pub enum CliCommand {
 	/// Install an aipack file
 	Install(InstallArgs),
 
+	/// Unpack a repo pack into the workspace custom pack area
+	Unpack(UnpackArgs),
+
 	/// Check available API keys in the environment
 	#[command(name = "check-keys", about = "Check available API keys in the environment")]
 	CheckKeys(CheckKeysArgs),
@@ -83,6 +86,7 @@ impl CliCommand {
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
+			CliCommand::Unpack(_) => false,
 			CliCommand::CheckKeys(_) => false,       // Non-interactive
 			CliCommand::CreateGitignore(_) => false, // Non-interactive
 			CliCommand::Xelf(_) => false,            // Non-interactive
@@ -98,6 +102,7 @@ impl CliCommand {
 			CliCommand::List(_) => false,
 			CliCommand::Pack(_) => false,
 			CliCommand::Install(_) => false,
+			CliCommand::Unpack(_) => false,
 			CliCommand::CheckKeys(_) => false,       // Non-interactive
 			CliCommand::CreateGitignore(_) => false, // Non-interactive
 			CliCommand::Xelf(_) => false,            // Non-interactive
@@ -188,6 +193,17 @@ pub struct InstallArgs {
 	pub aipack_ref: String,
 }
 
+/// Arguments for the `unpack` subcommand
+#[derive(Parser, Debug)]
+pub struct UnpackArgs {
+	/// The pack identity to unpack (e.g., `namespace@pack_name`)
+	pub pack_ref: String,
+
+	/// Force unpack even if the destination already exists (trashes existing directory first)
+	#[arg(long = "force")]
+	pub force: bool,
+}
+
 /// Arguments for the `list` subcommand
 #[derive(Parser, Debug)]
 pub struct ListArgs {
@@ -276,6 +292,7 @@ impl From<CliCommand> for ExecActionEvent {
 			CliCommand::List(list_args) => ExecActionEvent::CmdList(list_args),
 			CliCommand::Pack(pack_args) => ExecActionEvent::CmdPack(pack_args),
 			CliCommand::Install(install_args) => ExecActionEvent::CmdInstall(install_args),
+			CliCommand::Unpack(unpack_args) => ExecActionEvent::CmdUnpack(unpack_args),
 			CliCommand::CheckKeys(args) => ExecActionEvent::CmdCheckKeys(args),
 			CliCommand::CreateGitignore(args) => ExecActionEvent::CmdCreateGitignore(args),
 			CliCommand::Xelf(xelf_args) => {

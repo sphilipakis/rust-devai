@@ -18,6 +18,7 @@ use crate::exec::{
 	exec_run,
 	exec_run_redo,
 	exec_xelf_setup, // Added import
+	exec_unpack,
 };
 use crate::hub::{HubEvent, get_hub};
 use crate::model::{
@@ -224,6 +225,10 @@ impl Executor {
 
 			ExecActionEvent::CmdInstall(install_args) => {
 				let _ = exec_install(init_base_and_dir_context(false).await?, install_args).await?;
+			}
+
+			ExecActionEvent::CmdUnpack(unpack_args) => {
+				exec_unpack(init_base_and_dir_context(false).await?, unpack_args).await?;
 			}
 
 			ExecActionEvent::CmdCheckKeys(args) => {
