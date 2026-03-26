@@ -89,7 +89,6 @@ async fn process_agent_response_to_output(
 
 		// Any other AipackCustom is not supported at output stage
 		FromValue::AipackCustom(other) => match other {
-			AipackCustom::Redo => run_input_value,
 			_ => {
 				return Err(Error::custom(format!(
 					"Aipack custom '{}' not supported at the Output stage",
@@ -126,7 +125,6 @@ fn get_input_label(input: &Value) -> Option<String> {
 pub enum RunAgentInputResponse {
 	AiReponse(AiResponse),
 	OutputResponse(Value),
-	Redo,
 }
 
 impl RunAgentInputResponse {
@@ -134,7 +132,6 @@ impl RunAgentInputResponse {
 		match self {
 			RunAgentInputResponse::AiReponse(ai_response) => ai_response.content.as_deref(),
 			RunAgentInputResponse::OutputResponse(value) => value.as_str(),
-			RunAgentInputResponse::Redo => None,
 		}
 	}
 
@@ -146,11 +143,6 @@ impl RunAgentInputResponse {
 		match self {
 			RunAgentInputResponse::AiReponse(ai_response) => ai_response.content.into(),
 			RunAgentInputResponse::OutputResponse(value) => value,
-			RunAgentInputResponse::Redo => serde_json::json!({
-				"_aipack_": {
-					"kind": "Redo"
-				}
-			}),
 		}
 	}
 }
@@ -214,14 +206,11 @@ pub async fn run_agent_task(
 		attachments,
 		run_model_resolved,
 		skip,
-		redo: redo_data,
+		redo: _redo_data,
 	} = res?;
 	if skip {
 		rt_model.set_task_end_state_to_skip(run_id, task_id)?;
 		return Ok(None);
-	}
-	if redo_data {
-		return Ok(Some(RunAgentInputResponse::Redo));
 	}
 
 	// -- Execute genai if we have an instruction

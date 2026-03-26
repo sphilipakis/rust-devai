@@ -24,6 +24,13 @@ Instructs the executor to stop processing the current task and move to the next 
 
 Instructs the executor to finish the current active tasks and then restart the entire agent execution from the beginning.
 - This is useful for self-correcting agents or when the agent needs to reload its own code/configuration.
+- This directive is valid only when returned from:
+  - `# Before All`
+  - `# After All`
+- Returning it from:
+  - `# Data`
+  - `# Output`
+  fails with an explicit stage error.
 - Redo is propagated as a run-level request, then scheduled by the executor as a follow-up `Redo` action.
 - Automatic redo chaining is supported, meaning a redo-triggered rerun can request redo again and continue the cycle.
 - Before dispatching the next redo action, the executor waits `500ms`.
@@ -40,8 +47,8 @@ Used in `data` to override the input or options for a single task.
 ### Stage-based behavior
 
 - **BeforeAll**: If `skip` or `redo` is returned, the `Data` and `Ai` stages are never entered.
-- **Data**: If `skip` or `redo` is returned for a specific input, the `Ai` and `Output` stages for that input are bypassed.
-- **Output**: If `redo` is returned, the task is marked completed, and the redo flag is raised for the overall run.
+- **Data**: If `skip` is returned for a specific input, the `Ai` and `Output` stages for that input are bypassed. If `redo` is returned, the stage fails with an explicit error because redo is not allowed from `# Data`.
+- **Output**: If `redo` is returned, the stage fails with an explicit error because redo is not allowed from `# Output`.
 - **AfterAll**: If `redo` is returned, the overall run is marked for redo.
 
 ### Redo lifecycle

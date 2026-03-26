@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Error, Result};
 use crate::agent::Agent;
 use crate::model::{RuntimeCtx, Stage};
 use crate::run::run_agent_task::RunAgentInputResponse;
@@ -36,7 +36,9 @@ pub async fn process_output(
 		let output_response = serde_json::to_value(lua_value)?;
 
 		if let Ok(FromValue::AipackCustom(AipackCustom::Redo)) = AipackCustom::from_value(output_response.clone()) {
-			return Ok(Some(RunAgentInputResponse::Redo));
+			return Err(Error::custom(
+				"aip.flow.redo() can be returned only from # Before All or # After All stages. Returned from # Output stage.",
+			));
 		}
 
 		Ok(Some(RunAgentInputResponse::OutputResponse(output_response)))

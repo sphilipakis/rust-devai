@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Error, Result};
 use crate::agent::{Agent, AgentOptions};
 use crate::model::{Id, RuntimeCtx, Stage};
 use crate::run::{Attachments, Literals};
@@ -29,18 +29,6 @@ impl ProcDataResponse {
 			run_model_resolved,
 			skip: true,
 			redo: false,
-		}
-	}
-
-	pub fn new_redo(agent: Agent, input: Value, run_model_resolved: ModelName) -> Self {
-		Self {
-			agent,
-			input,
-			data: Value::Null,
-			attachments: Attachments::new(Vec::new()),
-			run_model_resolved,
-			skip: false,
-			redo: true,
 		}
 	}
 }
@@ -112,7 +100,9 @@ pub async fn process_data(
 
 			// If we have a redo, we redo
 			FromValue::AipackCustom(AipackCustom::Redo) => {
-				return Ok(ProcDataResponse::new_redo(agent, input, run_model_resolved));
+				return Err(Error::custom(
+					"aip.flow.redo() can be returned only from # Before All or # After All stages. Returned from # Data stage.",
+				));
 			}
 
 			// We have a `return aip.flow.data_response(...)``
