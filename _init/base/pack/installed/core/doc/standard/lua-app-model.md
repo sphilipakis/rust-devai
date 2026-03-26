@@ -136,3 +136,14 @@ See [aip.flow documentation in lua-apis](lua-apis#aipflow) for detailed API sign
 
     return { file_content = file.content } -- Proceed normally
     ````
+
+- **`aip.flow.redo_run()`**:
+    - Returned from the `# Before All` or `# After All` script.
+    - Instructs the agent executor to rerun the entire agent using the same initial arguments and the latest agent file content.
+
+    ````lua
+    -- Example (# After All script)
+    if before_all and before_all.retry_needed then
+      return aip.flow.redo_run()
+    end
+    ````

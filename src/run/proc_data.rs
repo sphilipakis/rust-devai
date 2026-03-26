@@ -101,7 +101,7 @@ pub async fn process_data(
 			// If we have a redo, we redo
 			FromValue::AipackCustom(AipackCustom::Redo) => {
 				return Err(Error::custom(
-					"aip.flow.redo() can be returned only from # Before All or # After All stages. Returned from # Data stage.",
+					"aip.flow.redo_run() can be returned only from # Before All or # After All stages. Returned from # Data stage.",
 				));
 			}
 

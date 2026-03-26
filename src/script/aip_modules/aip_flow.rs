@@ -12,6 +12,7 @@
 //! - `aip.flow.before_all_response(data: BeforeAllData) -> table`
 //! - `aip.flow.data_response(data: DataData) -> table`
 //! - `aip.flow.skip(reason?: string) -> table`
+//! - `aip.flow.redo_run() -> table`
 
 use crate::Result;
 use crate::runtime::Runtime;
@@ -26,8 +27,8 @@ pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
 	let before_all_response_fn = lua.create_function(aipack_before_all_response)?;
 	table.set("before_all_response", before_all_response_fn)?;
 
-	let redo_fn = lua.create_function(aipack_redo)?;
-	table.set("redo", redo_fn)?;
+	let redo_fn = lua.create_function(aipack_redo_run)?;
+	table.set("redo_run", redo_fn)?;
 
 	let skip_fn = lua.create_function(aipack_skip)?;
 	table.set("skip", skip_fn)?;
@@ -239,7 +240,7 @@ fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.flow.redo() -> table
+/// aip.flow.redo_run() -> table
 /// ```
 ///
 /// ### Example
@@ -247,7 +248,7 @@ fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 /// ```lua
 /// -- Trigger a redo if some condition is met in the output stage
 /// if ai_response.content == "RETRY" then
-///   return aip.flow.redo()
+///   return aip.flow.redo_run()
 /// end
 /// ```
 ///
@@ -266,7 +267,7 @@ fn aipack_skip(lua: &Lua, reason: Option<String>) -> mlua::Result<Value> {
 ///   }
 /// }
 /// ```
-fn aipack_redo(lua: &Lua, _: ()) -> mlua::Result<Value> {
+fn aipack_redo_run(lua: &Lua, _: ()) -> mlua::Result<Value> {
 	let inner = lua.create_table()?;
 	inner.set("kind", "Redo")?;
 
@@ -348,6 +349,23 @@ mod tests {
 		let data = res.x_remove::<Value>("/_aipack_/data")?;
 		let reason = data.x_get::<String>("reason").ok();
 		assert!(reason.is_none(), "reason should be none");
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_script_lua_aip_flow_redo_run() -> Result<()> {
+		// -- Setup & Fixtures
+		let lua = setup_lua(aip_flow::init_module, "flow").await?;
+		let script = r#"
+			return aip.flow.redo_run()
+		"#;
+
+		// -- Exec
+		let res = eval_lua(&lua, script)?;
+
+		// -- Check
+		let kind = res.x_get_str("/_aipack_/kind")?;
+		assert_eq!(kind, "Redo");
 		Ok(())
 	}
 }

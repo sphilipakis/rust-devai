@@ -57,6 +57,9 @@ aip.flow.data_response(data: DataData): table
 
 /** Skips processing the current input cycle (use as return value in # Data). */
 aip.flow.skip(reason?: string): table
+
+/** Requests a full agent run redo (use as return value in # Before All or # After All). */
+aip.flow.redo_run(): table
 ```
 
 ## 3. Core Data Types

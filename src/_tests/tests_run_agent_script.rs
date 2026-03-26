@@ -282,3 +282,75 @@ return "output for: " .. input
 
 	Ok(())
 }
+
+#[tokio::test]
+async fn test_run_agent_script_data_redo_run_fails() -> Result<()> {
+	// -- Setup & Fixtures
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+	let fx_agent = r#"
+# Data
+```lua
+return aip.flow.redo_run()
+```
+	"#;
+	let agent = load_inline_agent("./dummy/path.aip", fx_agent)?;
+
+	// -- Execute
+	let err = run_agent(
+		&runtime,
+		None,
+		agent,
+		Some(vec![Value::String("one".to_string())]),
+		&RunBaseOptions::default(),
+		true,
+	)
+	.await
+	.expect_err("should fail when redo_run is returned from # Data");
+
+	// -- Check
+	assert_contains(
+		&err.to_string(),
+		"aip.flow.redo_run() can be returned only from # Before All or # After All stages. Returned from # Data stage.",
+	);
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_run_agent_script_output_redo_run_fails() -> Result<()> {
+	// -- Setup & Fixtures
+	let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+	let fx_agent = r#"
+# Data
+```lua
+return { value = input }
+```
+
+# Output
+```lua
+return aip.flow.redo_run()
+```
+	"#;
+	let agent = load_inline_agent("./dummy/path.aip", fx_agent)?;
+
+	// -- Execute
+	let err = run_agent(
+		&runtime,
+		None,
+		agent,
+		Some(vec![Value::String("one".to_string())]),
+		&RunBaseOptions::default(),
+		true,
+	)
+	.await
+	.expect_err("should fail when redo_run is returned from # Output");
+
+	// -- Check
+	assert_contains(
+		&err.to_string(),
+		"aip.flow.redo_run() can be returned only from # Before All or # After All stages. Returned from # Output stage.",
+	);
+
+	Ok(())
+}
+

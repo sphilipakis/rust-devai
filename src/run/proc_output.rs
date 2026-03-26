@@ -37,7 +37,7 @@ pub async fn process_output(
 
 		if let Ok(FromValue::AipackCustom(AipackCustom::Redo)) = AipackCustom::from_value(output_response.clone()) {
 			return Err(Error::custom(
-				"aip.flow.redo() can be returned only from # Before All or # After All stages. Returned from # Output stage.",
+				"aip.flow.redo_run() can be returned only from # Before All or # After All stages. Returned from # Output stage.",
 			));
 		}
 

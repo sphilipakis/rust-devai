@@ -10,6 +10,8 @@ aip.flow.before_all_response(data: BeforeAllData) -> table
 aip.flow.data_response(data: DataData) -> table
 
 aip.flow.skip(reason?: string): table
+
+aip.flow.redo_run(): table
 ```
 
 These functions return special tables that instruct the agent executor how to proceed. They should be the return value of the script block.
@@ -50,6 +52,36 @@ local result = aip.flow.before_all_response({
   before_all = {some_data = "hello world" } -- Arbitrary data is allowed
 })
 -- The agent executor will process this result table.
+```
+
+#### Error
+
+This function does not directly return any errors. Errors might occur during the creation of lua table.
+
+### aip.flow.redo_run
+
+Requests a full agent run redo.
+
+```lua
+-- API Signature
+aip.flow.redo_run(): table
+```
+
+This function can be returned from the `before_all` or `after_all` block
+to instruct AIPack to rerun the whole agent execution using the same initial arguments
+while reloading the latest agent file content.
+
+#### Arguments
+
+- None.
+
+#### Example
+
+```lua
+-- Trigger a redo if some condition is met
+if before_all and before_all.retry_needed then
+  return aip.flow.redo_run()
+end
 ```
 
 #### Error
