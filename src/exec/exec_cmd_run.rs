@@ -53,12 +53,12 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<(RunR
 	match do_run(&run_options, &runtime, &agent).await {
 		Ok(run_agent_res) => {
 			let redo_requested = run_agent_res.redo_requested;
-			return Ok((RunRedoCtx::new(runtime, agent, run_options), redo_requested));
+			return Ok((RunRedoCtx::new(runtime, agent, run_options, redo_requested), redo_requested));
 		}
 		Err(err) => hub.publish(err).await,
 	};
 
-	Ok((RunRedoCtx::new(runtime, agent, run_options), false))
+	Ok((RunRedoCtx::new(runtime, agent, run_options, false), false))
 }
 
 /// Redo the exec_run, with its context
@@ -80,7 +80,12 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 	};
 
 	match do_run(run_options, runtime, &agent).await {
-		Ok(_) => Some(RunRedoCtx::new(runtime.clone(), agent, run_options.clone())),
+		Ok(run_agent_res) => Some(RunRedoCtx::new(
+			runtime.clone(),
+			agent,
+			run_options.clone(),
+			run_agent_res.redo_requested,
+		)),
 		Err(err) => {
 			hub.publish(err).await;
 			None

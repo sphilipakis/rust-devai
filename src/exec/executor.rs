@@ -34,8 +34,10 @@ use flume::{Receiver, Sender};
 use simple_fs::SPath;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 use tokio::runtime::Handle;
 use tokio::sync::Mutex;
+use tokio::time::sleep;
 
 /// The executor executes all actions of the system.
 /// There are three types of action sources:
@@ -287,7 +289,7 @@ impl Executor {
 						self.set_current_redo_ctx(redo_ctx).await;
 
 						if redo_requested {
-							self.sender().send(ExecActionEvent::Redo).await;
+							self.send_redo_with_delay().await;
 						}
 					}
 					Err(err) => {
@@ -327,7 +329,11 @@ impl Executor {
 					hub.publish(ExecStatusEvent::RunStart).await;
 					// if sucessful, we recapture the redo_ctx to have the latest agent.
 					if let Some(redo_ctx) = exec_run_redo(&redo_ctx).await {
+						let redo_requested = redo_ctx.redo_requested();
 						self.set_current_redo_ctx(redo_ctx).await;
+						if redo_requested {
+							self.send_redo_with_delay().await;
+						}
 					}
 					// if fail, we set the old one to make sure it can be retried
 					else {
@@ -438,6 +444,11 @@ impl Executor {
 		}
 
 		Ok(())
+	}
+
+	async fn send_redo_with_delay(&self) {
+		sleep(Duration::from_millis(500)).await;
+		self.sender().send(ExecActionEvent::Redo).await;
 	}
 }
 
