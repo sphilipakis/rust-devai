@@ -57,3 +57,14 @@ The `RuntimeCtx` is a lightweight structure (UIDs only) injected into Lua as a g
 3. **Phases**: `BeforeAll`, `Data`, `Ai`, `Output`, `AfterAll` are executed.
 4. **Task Iteration**: Tasks are created in `Data` and processed through `Ai` and `Output`.
 5. **Completion**: `rt_step().step_run_end_ok(run_id)` (or `err`/`canceled`) finalizes the database records.
+
+## Redo Interaction with Runtime
+
+- The runtime and run pipeline are responsible for detecting redo directives returned by agent stages and surfacing redo intent in the run result.
+- The runtime does not directly schedule the next redo action.
+- Instead, redo scheduling is delegated to the executor, which:
+  - stores the latest redo context
+  - waits `500ms`
+  - enqueues the next executor `Redo` action when the completed run requested redo
+
+This separation keeps runtime concerns focused on execution, state transitions, and result production, while the executor owns lifecycle scheduling for follow-up runs.

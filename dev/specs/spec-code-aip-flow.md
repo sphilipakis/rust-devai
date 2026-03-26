@@ -24,6 +24,9 @@ Instructs the executor to stop processing the current task and move to the next 
 
 Instructs the executor to finish the current active tasks and then restart the entire agent execution from the beginning.
 - This is useful for self-correcting agents or when the agent needs to reload its own code/configuration.
+- Redo is propagated as a run-level request, then scheduled by the executor as a follow-up `Redo` action.
+- Automatic redo chaining is supported, meaning a redo-triggered rerun can request redo again and continue the cycle.
+- Before dispatching the next redo action, the executor waits `500ms`.
 
 ### `aip.flow.before_all_response(data)`
 
@@ -40,6 +43,29 @@ Used in `data` to override the input or options for a single task.
 - **Data**: If `skip` or `redo` is returned for a specific input, the `Ai` and `Output` stages for that input are bypassed.
 - **Output**: If `redo` is returned, the task is marked completed, and the redo flag is raised for the overall run.
 - **AfterAll**: If `redo` is returned, the overall run is marked for redo.
+
+### Redo lifecycle
+
+The redo behavior is split between the run pipeline and the executor.
+
+- The run pipeline detects `_aipack_ = { kind = "Redo" }` and surfaces this as `redo_requested = true` in the run response.
+- The executor owns the redo scheduling policy.
+- When a run or redo-run completes successfully with `redo_requested = true`, the executor:
+  - refreshes and stores the latest `RunRedoCtx`
+  - waits `500ms`
+  - enqueues the next `ExecActionEvent::Redo`
+- This applies to:
+  - the initial `Run` path
+  - the `Redo` path itself
+
+This design ensures redo is not a one-shot follow-up. As long as each completed rerun keeps requesting redo, the executor continues to schedule the next redo cycle.
+
+### Design considerations
+
+- Redo scheduling is intentionally centralized in the executor instead of being recursively handled inside the run pipeline.
+- The stored redo context must be refreshed after each successful rerun so the next redo uses the latest execution context.
+- If a redo execution fails, the previous redo context should remain available for manual retry behavior.
+- The `500ms` wait is a pacing delay before dispatching the next full redo event.
 
 ### Propagation
 Directives are wrapped in an `_aipack_` internal table structure:

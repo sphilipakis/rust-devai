@@ -73,6 +73,8 @@ The bridge between the CLI/Executor and the `run_agent` core.
 - Handles input normalization (merging `-i` inputs and `-f` file globs).
 - Manages `RunRedoCtx` for re-execution.
 - Implements `exec_run_watch` using the `simple-fs` watcher.
+- `exec_run` returns `(RunRedoCtx, redo_requested)`.
+- `exec_run_redo` returns `Option<RunRedoCtx>` and refreshes the redo context from the latest completed rerun.
 
 ### Self Management (src/exec/exec_cmd_xelf/...)
 
@@ -93,6 +95,27 @@ Handles the `aip self` command group.
 5. `do_run` expands globs into `FileInfo` objects.
 6. `run_agent` is called.
 7. `RunRedoCtx` is stored in the executor for potential future `Redo` actions.
+
+## Redo Scheduling Design
+
+- The run layer reports redo intent through `RunAgentResponse.redo_requested`.
+- The executor owns redo scheduling.
+- After a successful `Run` or `Redo` action:
+  - the latest `RunRedoCtx` is stored
+  - if `redo_requested` is true, the executor waits `500ms`
+  - then it enqueues `ExecActionEvent::Redo`
+- This rule applies equally to:
+  - the initial `Run` path
+  - subsequent `Redo` paths
+
+This avoids the earlier one-shot behavior where only the initial run auto-enqueued a redo. The current design supports repeated redo chains as long as each rerun continues to request redo.
+
+## Redo Design Considerations
+
+- Redo propagation should stay centralized in `src/exec/executor.rs`.
+- The executor should be the only place that decides when to enqueue the next redo event.
+- The redo context should be refreshed after every successful rerun so future redo actions operate on the latest state.
+- If a redo execution fails, the prior redo context should be preserved so a manual retry remains possible.
 
 ## Request: Atomic DB Transactions with Locked Closures
 
