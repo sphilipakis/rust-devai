@@ -35,6 +35,10 @@ impl Literals {
 
 		store.push(("SESSION_UID", session_str.to_string()));
 
+		if let Some(redo_count) = runtime.runtime_ctx().and_then(|ctx| ctx.redo_count()) {
+			store.push(("REDO_COUNT", redo_count.to_string()));
+		}
+
 		if let Some(tmp_dir) = aipack_paths.tmp_dir(runtime.session()) {
 			store.push(("TMP_DIR", tmp_dir.to_string()))
 		}
@@ -132,6 +136,7 @@ mod tests {
 return {
 		TMP_DIR                     = CTX.TMP_DIR,
 		SESSION_UID                 = CTX.SESSION_UID,
+		REDO_COUNT                  = CTX.REDO_COUNT,
 	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
 		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
 		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
@@ -153,6 +158,7 @@ return {
 		let session = res.x_get_str("SESSION_UID")?;
 		assert_eq!(session.len(), 36);
 		assert_contains(session, "-7"); // v7
+		assert!(res.get("REDO_COUNT").is_none(), "REDO_COUNT should be absent for initial runs");
 		// check tmp_dir
 		let tmp_dir = res.x_get_str("TMP_DIR")?;
 		assert_ends_with(tmp_dir, &format!(".aipack/.session/{session}/tmp"));

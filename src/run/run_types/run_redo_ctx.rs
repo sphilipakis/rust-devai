@@ -29,13 +29,20 @@ pub struct RunRedoCtx {
 
 /// constructor
 impl RunRedoCtx {
-	pub fn new(runtime: Runtime, agent: Agent, run_options: RunTopAgentParams, redo_requested: bool) -> Self {
+	pub fn new(
+		runtime: Runtime,
+		agent: Agent,
+		run_options: RunTopAgentParams,
+		redo_requested: bool,
+		redo_count: i32,
+	) -> Self {
 		Self {
 			inner: Arc::new(CtxInner {
 				runtime,
 				agent,
 				run_options,
 				redo_requested,
+				redo_count,
 			}),
 		}
 	}
@@ -58,6 +65,10 @@ impl RunRedoCtx {
 	pub fn redo_requested(&self) -> bool {
 		self.inner.redo_requested
 	}
+
+	pub fn redo_count(&self) -> i32 {
+		self.inner.redo_count
+	}
 }
 
 /// A Context that hold the information to redo this run
@@ -67,4 +78,5 @@ struct CtxInner {
 	agent: Agent,
 	run_options: RunTopAgentParams,
 	redo_requested: bool,
+	redo_count: i32,
 }

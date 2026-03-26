@@ -110,12 +110,21 @@ Handles the `aip self` command group.
 
 This avoids the earlier one-shot behavior where only the initial run auto-enqueued a redo. The current design supports repeated redo chains as long as each rerun continues to request redo.
 
+## Redo Count Flow
+
+- The initial top-level run starts with redo count `0`.
+- Each successful redo transition increments the count for the next rerun.
+- The current redo count is carried in run context and exposed to Lua through `CTX.REDO_COUNT`.
+- `CTX.REDO_COUNT` is absent for a normal first run and present for redo-chain reruns.
+- The executor still owns redo scheduling; the run context only carries the current chain count.
+
 ## Redo Design Considerations
 
 - Redo propagation should stay centralized in `src/exec/executor.rs`.
 - The executor should be the only place that decides when to enqueue the next redo event.
 - The redo context should be refreshed after every successful rerun so future redo actions operate on the latest state.
 - If a redo execution fails, the prior redo context should be preserved so a manual retry remains possible.
+- Redo count should reset on a new top-level run and only advance on accepted redo transitions.
 
 ## Request: Atomic DB Transactions with Locked Closures
 

@@ -19,6 +19,7 @@ pub struct RuntimeCtx {
 	task_uid: Option<Uuid>,
 	task_num: Option<i32>,
 	stage: Option<Stage>,
+	redo_count: Option<i32>,
 }
 
 #[allow(unused)]
@@ -46,6 +47,10 @@ impl RuntimeCtx {
 	pub fn stage(&self) -> Option<Stage> {
 		self.stage
 	}
+
+	pub fn redo_count(&self) -> Option<i32> {
+		self.redo_count
+	}
 }
 
 /// Builder with_, ...
@@ -53,6 +58,12 @@ impl RuntimeCtx {
 	pub fn with_stage(&self, stage: Stage) -> Self {
 		let mut ctx = self.clone();
 		ctx.stage = Some(stage);
+		ctx
+	}
+
+	pub fn with_redo_count(&self, redo_count: i32) -> Self {
+		let mut ctx = self.clone();
+		ctx.redo_count = Some(redo_count);
 		ctx
 	}
 }
@@ -70,6 +81,7 @@ impl RuntimeCtx {
 			task_uid: None,
 			task_num: None,
 			stage: None,
+			redo_count: None,
 		})
 	}
 
@@ -125,6 +137,7 @@ impl FromLua for RuntimeCtx {
 		let stage = value.x_get_string("STAGE").and_then(|s| Stage::from_str(&s));
 		let run_num = value.x_get_i64("RUN_NUM").map(|v| v as i32);
 		let task_num = value.x_get_i64("TASK_NUM").map(|v| v as i32);
+		let redo_count = value.x_get_i64("REDO_COUNT").map(|v| v as i32);
 
 		Ok(RuntimeCtx {
 			run_uid,
@@ -133,6 +146,7 @@ impl FromLua for RuntimeCtx {
 			task_uid,
 			task_num,
 			stage,
+			redo_count,
 		})
 	}
 }
