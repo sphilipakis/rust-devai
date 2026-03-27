@@ -48,6 +48,7 @@ Unified logging interface:
 The `RuntimeCtx` is a lightweight structure (UIDs only) injected into Lua as a global `CTX` table. It allows Lua module calls to know:
 - Which `RUN_UID` and `TASK_UID` they are operating under.
 - The current execution `STAGE`.
+- The current redo-chain count through `CTX.REDO_COUNT` when the run is part of a redo rerun.
 - It is extracted using `RuntimeCtx::extract_from_global(lua)`.
 
 ## Execution Lifecycle
@@ -62,9 +63,19 @@ The `RuntimeCtx` is a lightweight structure (UIDs only) injected into Lua as a g
 
 - The runtime and run pipeline are responsible for detecting redo directives returned by agent stages and surfacing redo intent in the run result.
 - The runtime does not directly schedule the next redo action.
+- The runtime carries the current redo count in run context for the active execution.
 - Instead, redo scheduling is delegated to the executor, which:
   - stores the latest redo context
+  - increments the redo count for the next rerun
   - waits `500ms`
   - enqueues the next executor `Redo` action when the completed run requested redo
 
 This separation keeps runtime concerns focused on execution, state transitions, and result production, while the executor owns lifecycle scheduling for follow-up runs.
+
+## Redo Count Flow
+
+- A new top-level run starts with redo count `0`.
+- Each accepted redo transition advances the count by `1` for the next rerun in the same chain.
+- The count is exposed to Lua through `CTX.REDO_COUNT`.
+- `CTX.REDO_COUNT` is not present for the initial non-redo run.
+- Invalid redo attempts do not advance the count because no rerun is scheduled.

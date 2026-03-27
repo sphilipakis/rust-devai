@@ -71,6 +71,8 @@ This function can be returned from the `before_all` or `after_all` block
 to instruct AIPack to rerun the whole agent execution using the same initial arguments
 while reloading the latest agent file content.
 
+Redo chaining is supported. The initial top-level run starts with redo count `0`, and each accepted redo transition increments the count for the next rerun. The current redo count is exposed to Lua through `CTX.REDO_COUNT` on redo-chain reruns.
+
 #### Arguments
 
 - None.
