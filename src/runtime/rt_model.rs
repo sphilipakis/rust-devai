@@ -83,6 +83,16 @@ impl<'a> RtModel<'a> {
 		Ok(())
 	}
 
+	pub async fn update_run_flow_redo_count(&self, run_id: Id, flow_redo_count: i32) -> Result<()> {
+		let run_u = RunForUpdate {
+			flow_redo_count: Some(flow_redo_count),
+			..Default::default()
+		};
+		RunBmc::update(self.mm(), run_id, run_u)?;
+
+		Ok(())
+	}
+
 	pub fn set_run_end_error(&self, run_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
 		RunBmc::set_end_error(self.mm(), run_id, stage, err)?;
 		Ok(())

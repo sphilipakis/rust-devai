@@ -59,7 +59,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<(RunR
 					agent,
 					run_options.clone(),
 					redo_requested,
-					run_options.redo_count(),
+					run_options.flow_redo_count(),
 				),
 				redo_requested,
 			));
@@ -68,7 +68,7 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<(RunR
 	};
 
 	Ok((
-		RunRedoCtx::new(runtime, agent, run_options.clone(), false, run_options.redo_count()),
+		RunRedoCtx::new(runtime, agent, run_options.clone(), false, run_options.flow_redo_count()),
 		false,
 	))
 }
@@ -97,7 +97,7 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 			agent,
 			run_options.clone(),
 			run_agent_res.redo_requested,
-			run_options.redo_count(),
+			run_options.flow_redo_count(),
 		)),
 		Err(err) => {
 			hub.publish(err).await;

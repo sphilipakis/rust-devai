@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS run (
 
 		-- Computed
 		total_cost    REAL,
-		total_task_ms INTEGER -- cummulative time
+		total_task_ms INTEGER, -- cummulative time
+		flow_redo_count INTEGER
 
 ) STRICT",
 );

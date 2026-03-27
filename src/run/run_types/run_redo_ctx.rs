@@ -34,7 +34,7 @@ impl RunRedoCtx {
 		agent: Agent,
 		run_options: RunTopAgentParams,
 		redo_requested: bool,
-		redo_count: i32,
+		flow_redo_count: i32,
 	) -> Self {
 		Self {
 			inner: Arc::new(CtxInner {
@@ -42,7 +42,7 @@ impl RunRedoCtx {
 				agent,
 				run_options,
 				redo_requested,
-				redo_count,
+				flow_redo_count,
 			}),
 		}
 	}
@@ -66,8 +66,8 @@ impl RunRedoCtx {
 		self.inner.redo_requested
 	}
 
-	pub fn redo_count(&self) -> i32 {
-		self.inner.redo_count
+	pub fn flow_redo_count(&self) -> i32 {
+		self.inner.flow_redo_count
 	}
 }
 
@@ -78,5 +78,5 @@ struct CtxInner {
 	agent: Agent,
 	run_options: RunTopAgentParams,
 	redo_requested: bool,
-	redo_count: i32,
+	flow_redo_count: i32,
 }

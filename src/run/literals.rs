@@ -132,7 +132,7 @@ mod tests {
 return {
 		TMP_DIR                     = CTX.TMP_DIR,
 		SESSION_UID                 = CTX.SESSION_UID,
-		REDO_COUNT                  = CTX.REDO_COUNT,
+		FLOW_REDO_RUN_COUNT         = CTX.FLOW_REDO_RUN_COUNT,
 	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
 		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
 		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
@@ -155,8 +155,8 @@ return {
 		assert_eq!(session.len(), 36);
 		assert_contains(session, "-7"); // v7
 		assert!(
-			res.get("REDO_COUNT").is_none(),
-			"REDO_COUNT should be absent for initial runs"
+			res.get("FLOW_REDO_RUN_COUNT").is_none(),
+			"FLOW_REDO_RUN_COUNT should be absent for initial runs"
 		);
 		// check tmp_dir
 		let tmp_dir = res.x_get_str("TMP_DIR")?;

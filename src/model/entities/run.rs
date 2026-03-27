@@ -50,6 +50,7 @@ pub struct Run {
 
 	pub total_cost: Option<f64>,
 	pub total_task_ms: Option<i64>,
+	pub flow_redo_count: Option<i32>,
 }
 
 #[derive(Debug, Clone, Fields, SqliteFromRow)]
@@ -116,6 +117,7 @@ pub struct RunForUpdate {
 
 	pub total_cost: Option<f64>,
 	pub total_task_ms: Option<i64>,
+	pub flow_redo_count: Option<i32>,
 }
 
 // endregion: --- Types

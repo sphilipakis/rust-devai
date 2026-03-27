@@ -14,7 +14,7 @@ pub struct RunTopAgentParams {
 struct ParamsInner {
 	on_file_globs: Option<Vec<String>>,
 	on_inputs: Option<Vec<String>>,
-	redo_count: i32,
+	flow_redo_count: i32,
 
 	base_run_options: RunBaseOptions,
 }
@@ -42,8 +42,8 @@ impl RunTopAgentParams {
 		&self.inner.base_run_options
 	}
 
-	pub fn redo_count(&self) -> i32 {
-		self.inner.redo_count
+	pub fn flow_redo_count(&self) -> i32 {
+		self.inner.flow_redo_count
 	}
 }
 
@@ -88,17 +88,17 @@ impl RunTopAgentParams {
 		Ok(ParamsInner {
 			on_file_globs,
 			on_inputs: args.on_inputs,
-			redo_count: 0,
+			flow_redo_count: 0,
 			base_run_options,
 		}
 		.into())
 	}
 
-	pub fn with_redo_count(&self, redo_count: i32) -> Self {
+	pub fn with_flow_redo_count(&self, flow_redo_count: i32) -> Self {
 		ParamsInner {
 			on_file_globs: self.inner.on_file_globs.clone(),
 			on_inputs: self.inner.on_inputs.clone(),
-			redo_count,
+			flow_redo_count,
 			base_run_options: self.inner.base_run_options.clone(),
 		}
 		.into()
@@ -145,7 +145,7 @@ impl RunBaseOptions {
 		self.open
 	}
 
-	pub fn redo_count(&self) -> i32 {
+	pub fn flow_redo_count(&self) -> i32 {
 		0
 	}
 }
