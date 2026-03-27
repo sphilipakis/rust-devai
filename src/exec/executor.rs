@@ -327,11 +327,12 @@ impl Executor {
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
+					let current_flow_redo_count = redo_ctx.flow_redo_count();
 					// if sucessful, we recapture the redo_ctx to have the latest agent.
 					if let Some(redo_ctx) = exec_run_redo(&redo_ctx).await {
 						let redo_requested = redo_ctx.redo_requested();
 						let next_redo_ctx = if redo_requested {
-							let flow_redo_count = redo_ctx.flow_redo_count() + 1;
+							let flow_redo_count = current_flow_redo_count + 1;
 							let run_options = redo_ctx.run_options().with_flow_redo_count(flow_redo_count);
 							RunRedoCtx::new(
 								redo_ctx.runtime().clone(),

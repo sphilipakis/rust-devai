@@ -80,7 +80,9 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 
 	let runtime = run_redo_ctx.runtime();
 	let agent = run_redo_ctx.agent();
-	let run_options = run_redo_ctx.run_options();
+	let run_options = run_redo_ctx
+		.run_options()
+		.with_flow_redo_count(run_redo_ctx.flow_redo_count());
 
 	// make sure to reload the agent
 	let agent = match find_agent(agent.name(), runtime, None) {
@@ -91,13 +93,13 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 		}
 	};
 
-	match do_run(run_options, runtime, &agent).await {
+	match do_run(&run_options, runtime, &agent).await {
 		Ok(run_agent_res) => Some(RunRedoCtx::new(
 			runtime.clone(),
 			agent,
-			run_options.clone(),
+			run_options,
 			run_agent_res.redo_requested,
-			run_options.flow_redo_count(),
+			run_redo_ctx.flow_redo_count(),
 		)),
 		Err(err) => {
 			hub.publish(err).await;

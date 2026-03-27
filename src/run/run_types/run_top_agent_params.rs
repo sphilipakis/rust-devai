@@ -83,6 +83,7 @@ impl RunTopAgentParams {
 			verbose: args.verbose,
 			dry_mode,
 			open: args.open,
+			flow_redo_count: 0,
 		};
 
 		Ok(ParamsInner {
@@ -99,7 +100,10 @@ impl RunTopAgentParams {
 			on_file_globs: self.inner.on_file_globs.clone(),
 			on_inputs: self.inner.on_inputs.clone(),
 			flow_redo_count,
-			base_run_options: self.inner.base_run_options.clone(),
+			base_run_options: RunBaseOptions {
+				flow_redo_count,
+				..self.inner.base_run_options.clone()
+			},
 		}
 		.into()
 	}
@@ -126,6 +130,7 @@ pub struct RunBaseOptions {
 	verbose: bool,
 	dry_mode: DryMode,
 	open: bool,
+	flow_redo_count: i32,
 }
 
 impl RunBaseOptions {
@@ -146,7 +151,7 @@ impl RunBaseOptions {
 	}
 
 	pub fn flow_redo_count(&self) -> i32 {
-		0
+		self.flow_redo_count
 	}
 }
 
