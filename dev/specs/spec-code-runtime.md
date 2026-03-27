@@ -48,7 +48,7 @@ Unified logging interface:
 The `RuntimeCtx` is a lightweight structure (UIDs only) injected into Lua as a global `CTX` table. It allows Lua module calls to know:
 - Which `RUN_UID` and `TASK_UID` they are operating under.
 - The current execution `STAGE`.
-- The current redo-chain count through `CTX.REDO_COUNT` when the run is part of a redo rerun.
+- The current redo-chain count through `CTX.RUN_FLOW_REDO_COUNT` when the run is part of a redo rerun.
 - It is extracted using `RuntimeCtx::extract_from_global(lua)`.
 
 ## Execution Lifecycle
@@ -76,6 +76,6 @@ This separation keeps runtime concerns focused on execution, state transitions, 
 
 - A new top-level run starts with redo count `0`.
 - Each accepted redo transition advances the count by `1` for the next rerun in the same chain.
-- The count is exposed to Lua through `CTX.REDO_COUNT`.
-- `CTX.REDO_COUNT` is not present for the initial non-redo run.
+- The count is exposed to Lua through `CTX.RUN_FLOW_REDO_COUNT`.
+- `CTX.RUN_FLOW_REDO_COUNT` is not present for the initial non-redo run.
 - Invalid redo attempts do not advance the count because no rerun is scheduled.

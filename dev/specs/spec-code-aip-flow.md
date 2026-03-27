@@ -37,8 +37,8 @@ Instructs the executor to finish the current active tasks and then restart the e
 - Before dispatching the next redo action, the executor waits `500ms`.
 - The initial top-level run starts with redo count `0`.
 - Each accepted redo transition increments the redo count by `1` for the next rerun.
-- The current redo count is exposed to Lua through `CTX.REDO_COUNT`.
-- `CTX.REDO_COUNT` is absent for a normal first run and present for redo-chain reruns.
+- The current redo count is exposed to Lua through `CTX.RUN_FLOW_REDO_COUNT`.
+- `CTX.RUN_FLOW_REDO_COUNT` is absent for a normal first run and present for redo-chain reruns.
 
 ### `aip.flow.before_all_response(data)`
 

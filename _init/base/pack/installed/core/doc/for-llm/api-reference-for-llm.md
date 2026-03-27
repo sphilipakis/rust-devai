@@ -66,8 +66,8 @@ Redo chaining uses a count model:
 
 - The initial top-level run starts with redo count `0`.
 - Each accepted redo transition increments the redo count by `1` for the next rerun.
-- The current redo count is exposed to Lua through `CTX.REDO_COUNT`.
-- `CTX.REDO_COUNT` is absent for a normal first run and present for redo-chain reruns.
+- The current redo count is exposed to Lua through `CTX.RUN_FLOW_REDO_COUNT`.
+- `CTX.RUN_FLOW_REDO_COUNT` is absent for a normal first run and present for redo-chain reruns.
 
 ## 3. Core Data Types
 
@@ -642,7 +642,7 @@ Injected into all Lua stages, providing execution environment information. All p
 | CTX.SESSION_UID                | The Session Unique ID.                                                             |
 | CTX.RUN_UID                    | The Run Unique ID.                                                                 |
 | CTX.RUN_NUM                    | 1-based sequence number of the current agent run in the session.                   |
-| CTX.REDO_COUNT                 | Current redo-chain count for this run, present on redo-chain reruns.               |
+| CTX.RUN_FLOW_REDO_COUNT        | Current redo-chain count for this run, present on redo-chain reruns.               |
 | CTX.TASK_UID                   | The Task Unique ID (only available during per-input stages: `# Data`, `# Output`). |
 | CTX.TASK_NUM                   | 1-based sequence number of the current task in the run.                            |
 | CTX.PACK_IDENTITY              | Pack identity (`namespace@name`) (nil if not run via pack reference).              |
