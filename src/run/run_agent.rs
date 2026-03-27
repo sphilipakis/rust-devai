@@ -97,7 +97,7 @@ async fn run_agent_inner(
 		.await?;
 
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?
-		.append("FLOW_REDO_RUN_COUNT", run_base_options.flow_redo_count().to_string());
+		.append("RUN_FLOW_REDO_COUNT", run_base_options.flow_redo_count().to_string());
 
 	// -- Process Before All
 	// Rt Step - Start Before All

@@ -137,7 +137,7 @@ impl FromLua for RuntimeCtx {
 		let stage = value.x_get_string("STAGE").and_then(|s| Stage::from_str(&s));
 		let run_num = value.x_get_i64("RUN_NUM").map(|v| v as i32);
 		let task_num = value.x_get_i64("TASK_NUM").map(|v| v as i32);
-		let flow_redo_run_count = value.x_get_i64("FLOW_REDO_RUN_COUNT").map(|v| v as i32);
+		let flow_redo_run_count = value.x_get_i64("RUN_FLOW_REDO_COUNT").map(|v| v as i32);
 
 		Ok(RuntimeCtx {
 			run_uid,

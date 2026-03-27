@@ -138,7 +138,7 @@ mod tests {
 return {
 		TMP_DIR                     = CTX.TMP_DIR,
 		SESSION_UID                 = CTX.SESSION_UID,
-		FLOW_REDO_RUN_COUNT         = CTX.FLOW_REDO_RUN_COUNT,
+		RUN_FLOW_REDO_COUNT         = CTX.RUN_FLOW_REDO_COUNT,
 	  WORKSPACE_DIR               = CTX.WORKSPACE_DIR,
 		WORKSPACE_AIPACK_DIR        = CTX.WORKSPACE_AIPACK_DIR,
 		BASE_AIPACK_DIR             = CTX.BASE_AIPACK_DIR,
@@ -160,7 +160,7 @@ return {
 		let session = res.x_get_str("SESSION_UID")?;
 		assert_eq!(session.len(), 36);
 		assert_contains(session, "-7"); // v7
-		assert_eq!(res.x_get_i64("FLOW_REDO_RUN_COUNT")?, 0);
+		assert_eq!(res.x_get_i64("RUN_FLOW_REDO_COUNT")?, 0);
 		// check tmp_dir
 		let tmp_dir = res.x_get_str("TMP_DIR")?;
 		assert_ends_with(tmp_dir, &format!(".aipack/.session/{session}/tmp"));

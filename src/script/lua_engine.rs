@@ -85,7 +85,7 @@ impl LuaEngine {
 				ctx.set("STAGE", stage.to_string())?;
 			}
 			if let Some(flow_redo_run_count) = rt_ctx.flow_redo_run_count() {
-				ctx.set("FLOW_REDO_RUN_COUNT", flow_redo_run_count)?;
+				ctx.set("RUN_FLOW_REDO_COUNT", flow_redo_run_count)?;
 			}
 			Value::Table(ctx)
 		} else {
