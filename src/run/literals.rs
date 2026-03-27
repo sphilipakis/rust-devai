@@ -102,6 +102,12 @@ impl Literals {
 	pub fn as_strs(&self) -> Vec<(&str, &str)> {
 		self.store.iter().map(|(p, v)| (*p, v.as_str())).collect()
 	}
+
+	pub fn append(&self, pattern: &'static str, value: impl Into<String>) -> Self {
+		let mut store = self.store.as_ref().clone();
+		store.push((pattern, value.into()));
+		Self { store: Arc::new(store) }
+	}
 }
 
 /// Transformers
@@ -154,10 +160,7 @@ return {
 		let session = res.x_get_str("SESSION_UID")?;
 		assert_eq!(session.len(), 36);
 		assert_contains(session, "-7"); // v7
-		assert!(
-			res.get("FLOW_REDO_RUN_COUNT").is_none(),
-			"FLOW_REDO_RUN_COUNT should be absent for initial runs"
-		);
+		assert_eq!(res.x_get_i64("FLOW_REDO_RUN_COUNT")?, 0);
 		// check tmp_dir
 		let tmp_dir = res.x_get_str("TMP_DIR")?;
 		assert_ends_with(tmp_dir, &format!(".aipack/.session/{session}/tmp"));

@@ -96,7 +96,8 @@ async fn run_agent_inner(
 		.update_run_flow_redo_count(run_id, run_base_options.flow_redo_count())
 		.await?;
 
-	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
+	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?
+		.append("FLOW_REDO_RUN_COUNT", run_base_options.flow_redo_count().to_string());
 
 	// -- Process Before All
 	// Rt Step - Start Before All
