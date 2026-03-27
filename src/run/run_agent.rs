@@ -90,13 +90,9 @@ async fn run_agent_inner(
 	let rt_step = runtime.rt_step();
 	let rt_model = runtime.rt_model();
 
+	let base_rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?.with_redo_count(run_base_options.redo_count());
+
 	let literals = Literals::from_runtime_and_agent_path(runtime, &agent)?;
-	let mut base_rt_ctx = RuntimeCtx::from_run_id(runtime, run_id)?;
-	if let Some(runtime_ctx) = runtime.runtime_ctx()
-		&& let Some(redo_count) = runtime_ctx.redo_count()
-	{
-		base_rt_ctx = base_rt_ctx.with_redo_count(redo_count);
-	}
 
 	// -- Process Before All
 	// Rt Step - Start Before All

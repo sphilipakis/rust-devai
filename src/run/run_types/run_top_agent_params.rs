@@ -144,6 +144,10 @@ impl RunBaseOptions {
 	pub fn open(&self) -> bool {
 		self.open
 	}
+
+	pub fn redo_count(&self) -> i32 {
+		0
+	}
 }
 
 // endregion: --- Common
