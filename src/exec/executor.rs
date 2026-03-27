@@ -267,6 +267,11 @@ impl Executor {
 				// This way we make sure doc and all work as expected
 				init_base(false).await?;
 
+				{
+					let mut guard = self.current_redo_ctx.lock().await;
+					*guard = None;
+				}
+
 				let dir_ctx = init_wks(None, false).await?;
 				let exec_sender = self.sender();
 				let mm = self.once_mm.get().await?;
@@ -327,19 +332,18 @@ impl Executor {
 			ExecActionEvent::Redo => {
 				if let Some(redo_ctx) = self.take_current_redo_ctx().await {
 					hub.publish(ExecStatusEvent::RunStart).await;
-					let current_flow_redo_count = redo_ctx.flow_redo_count();
+					let next_flow_redo_count = redo_ctx.flow_redo_count() + 1;
 					// if sucessful, we recapture the redo_ctx to have the latest agent.
 					if let Some(redo_ctx) = exec_run_redo(&redo_ctx).await {
 						let redo_requested = redo_ctx.redo_requested();
 						let next_redo_ctx = if redo_requested {
-							let flow_redo_count = current_flow_redo_count + 1;
-							let run_options = redo_ctx.run_options().with_flow_redo_count(flow_redo_count);
+							let run_options = redo_ctx.run_options().with_flow_redo_count(next_flow_redo_count);
 							RunRedoCtx::new(
 								redo_ctx.runtime().clone(),
 								redo_ctx.agent().clone(),
 								run_options,
 								redo_requested,
-								flow_redo_count,
+								next_flow_redo_count,
 							)
 						} else {
 							redo_ctx
