@@ -4,10 +4,19 @@
 !.gitignore
 
 # -- AIPack
-# By default, ignore all paths starting with .aipack
-.aipack
-# And all .aipack package files
+# Ignore all .aipack files
 *.aipack
+# Ignore all .aipack/ folder by default
+.aipack/**
+
+## Optional: uncomment to allow the the .aipack/config.toml
+# !.aipack/
+# !.aipack/config.toml
+
+## Optional: uncomment to allow the .aipack/pack/custom/**
+# !.aipack/pack/
+# !.aipack/pack/custom/
+# !.aipack/pack/custom/**
 
 # -- Dev default
 tmp/
