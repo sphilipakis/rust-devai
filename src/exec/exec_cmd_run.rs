@@ -68,7 +68,13 @@ pub async fn exec_run_first(run_args: RunArgs, runtime: Runtime) -> Result<(RunR
 	};
 
 	Ok((
-		RunRedoCtx::new(runtime, agent, run_options.clone(), false, run_options.flow_redo_count()),
+		RunRedoCtx::new(
+			runtime,
+			agent,
+			run_options.clone(),
+			false,
+			run_options.flow_redo_count(),
+		),
 		false,
 	))
 }
@@ -80,9 +86,7 @@ pub async fn exec_run_redo(run_redo_ctx: &RunRedoCtx) -> Option<RunRedoCtx> {
 
 	let runtime = run_redo_ctx.runtime();
 	let agent = run_redo_ctx.agent();
-	let run_options = run_redo_ctx
-		.run_options()
-		.with_flow_redo_count(run_redo_ctx.flow_redo_count());
+	let run_options = run_redo_ctx.run_options().with_flow_redo_count(run_redo_ctx.flow_redo_count());
 
 	// make sure to reload the agent
 	let agent = match find_agent(agent.name(), runtime, None) {
