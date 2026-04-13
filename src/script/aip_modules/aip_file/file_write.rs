@@ -15,6 +15,7 @@
 //! - `aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolean}) : FileInfo`
 //! - `aip.file.append(rel_path: string, content: string)       : FileInfo`
 //! - `aip.file.ensure_exists(path: string, content?, options?)  : FileInfo`
+//! - `aip.file.ensure_dir(path: string)                         : boolean`
 
 use crate::Error;
 use crate::dir_context::PathResolver;
@@ -509,6 +510,75 @@ pub(super) fn file_ensure_exists(
 	file_info.into_lua(lua)
 }
 
+/// ## Lua Documentation
+///
+/// Ensures a directory exists, returning whether it was created.
+///
+/// ```lua
+/// -- API Signature
+/// aip.file.ensure_dir(path: string): boolean
+/// ```
+///
+/// Checks if the directory at `path` (relative to the workspace root) exists.
+/// - If the directory does not exist:
+///   - Creates the necessary parent directory structure.
+///   - Creates the directory.
+/// - If the directory already exists:
+///   - Leaves it as-is and returns `false`.
+///
+/// If the target path exists but is a file, this function returns an error.
+///
+/// ### Arguments
+///
+/// - `path: string` - The path to the directory, relative to the workspace root.
+///
+/// ### Returns
+///
+/// - `boolean`: `true` if the directory was created, `false` if it already existed.
+///
+/// ### Example
+///
+/// ```lua
+/// local created = aip.file.ensure_dir("docs/generated")
+/// if created then
+///   print("Directory created")
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The path attempts to write outside the allowed workspace or base directories.
+/// - The target path exists but is not a directory.
+/// - The directory cannot be created due to permissions or other I/O errors.
+pub(super) fn file_ensure_dir(lua: &Lua, runtime: &Runtime, path: String) -> mlua::Result<mlua::Value> {
+	let dir_context = runtime.dir_context();
+	let full_path = process_path_reference(runtime, &path)?;
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
+	let _guard = lock_handle.lock();
+
+	// We might not want that once workspace is truely optional
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.ensure_dir requires a aipack workspace setup")?;
+
+	check_access_write(&full_path, wks_dir)?;
+
+	if full_path.exists() {
+		if !full_path.is_dir() {
+			return Err(Error::custom(format!(
+				"Ensure dir failed - Path `{path}` already exists and is not a directory"
+			))
+			.into());
+		}
+
+		return false.into_lua(lua);
+	}
+
+	std::fs::create_dir_all(&full_path)
+		.map_err(|err| Error::custom(format!("Fail to ensure dir `{path}`.\nCause {err}")))?;
+
+	true.into_lua(lua)
+}
+
 // region:    --- Options
 #[derive(Debug, Default)]
 pub struct EnsureExistsOptions {
@@ -879,6 +949,70 @@ return {{
 		assert_eq!(file_name, "tmp_with_var_file.txt");
 		assert_ends_with(path, &fx_tmp_path);
 		// assert_ends_with(path, &format!("$tmp/{fx_path}"));
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_ensure_dir_create_ok() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dir_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_ensure_dir_create_ok/nested/dir");
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.ensure_dir("{fx_dir_path}");"#), None).await?;
+
+		// -- Check
+		assert!(res.as_bool().ok_or("Should return bool")?);
+		assert!(fx_dir_path.exists());
+		assert!(fx_dir_path.is_dir());
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_ensure_dir_existing_dir_returns_false() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_dir_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_ensure_dir_existing_dir_returns_false");
+		std::fs::create_dir_all(&fx_dir_path)?;
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.ensure_dir("{fx_dir_path}");"#), None).await?;
+
+		// -- Check
+		assert!(!res.as_bool().ok_or("Should return bool")?);
+		assert!(fx_dir_path.exists());
+		assert!(fx_dir_path.is_dir());
+
+		Ok(())
+	}
+
+	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+	async fn test_lua_file_ensure_dir_err_when_file_exists() -> Result<()> {
+		// -- Setup & Fixtures
+		let runtime = Runtime::new_test_runtime_sandbox_01().await?;
+		let dir_context = runtime.dir_context();
+		let fx_file_path = dir_context
+			.wks_dir()
+			.ok_or("Should have workspace setup")?
+			.join(".tmp/test_lua_file_ensure_dir_err_when_file_exists.txt");
+		std::fs::write(&fx_file_path, "some content")?;
+
+		// -- Exec
+		let res = run_reflective_agent(&format!(r#"return aip.file.ensure_dir("{fx_file_path}");"#), None).await;
+
+		// -- Check
+		let Err(err) = res else { panic!("Should return error") };
+		assert_contains(&err.to_string(), "already exists and is not a directory");
 
 		Ok(())
 	}

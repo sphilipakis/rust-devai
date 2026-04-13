@@ -316,6 +316,7 @@ aip.file.move(src_path: string, dest_path: string, options?: {overwrite?: boolea
 aip.file.append(rel_path: string, content: string): FileInfo // Creates file/dirs if missing.
 aip.file.delete(path: string): boolean // Allowed ONLY within workspace; forbidden in .aipack-base/.
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo // content_when_empty: writes content if file exists but is whitespace-only.
+aip.file.ensure_dir(path: string): boolean // Creates directory and parents if missing. Returns true if created, false if already existed. Errors if path exists as a file.
 aip.file.exists(path: string): boolean // Supports pack refs and relative/absolute paths.
 aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[] // absolute: paths in result will be absolute (default false, but absolute if outside base_dir). with_meta: includes ctime, mtime, size (default true). Heavy dirs (target/, node_modules/) excluded unless explicitly matched.
 aip.file.list_load(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean}): FileRecord[] // Loads content for all matching files.

@@ -19,6 +19,8 @@ aip.file.delete(path: string): boolean
 
 aip.file.ensure_exists(path: string, content?: string, options?: {content_when_empty?: boolean}): FileInfo
 
+aip.file.ensure_dir(path: string): boolean
+
 aip.file.exists(path: string): boolean
 
 aip.file.list(include_globs: string | string[], options?: {base_dir?: string, absolute?: boolean, with_meta?: boolean}): FileInfo[]
@@ -343,6 +345,45 @@ aip.file.ensure_exists("src/module.lua", "-- TODO", {content_when_empty = true})
 #### Error
 
 Returns an error (Lua table `{ error: string }`) on creation/write failure, permission issues, or metadata retrieval failure.
+
+### aip.file.ensure_dir
+
+Ensure a directory exists at the given path.
+
+```lua
+-- API Signature
+aip.file.ensure_dir(path: string): boolean
+```
+
+Checks if the directory exists. If not, creates it and any missing parent directories. If it already exists, it is left unchanged.
+
+If the target path already exists but is a file, this function returns an error.
+
+#### Arguments
+
+- `path: string`: The directory path relative to the workspace root.
+
+#### Returns
+
+- `boolean`: `true` if the directory was created, `false` if it already existed.
+
+#### Example
+
+```lua
+local created = aip.file.ensure_dir("build/output/reports")
+if created then
+  print("Directory created")
+else
+  print("Directory already existed")
+end
+```
+
+#### Error
+
+Returns an error (Lua table `{ error: string }`) if:
+- The path attempts to write outside the allowed workspace or base directories.
+- The target path exists but is not a directory.
+- The directory cannot be created due to permissions or other I/O errors.
 
 ### aip.file.exists
 

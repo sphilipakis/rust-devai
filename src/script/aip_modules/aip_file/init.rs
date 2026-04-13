@@ -53,6 +53,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 		},
 	)?;
 
+	// -- ensure_dir
+	let rt = runtime.clone();
+	let file_ensure_dir_fn = lua.create_function(move |lua, (path,): (String,)| file_ensure_dir(lua, &rt, path))?;
+
 	// -- exists
 	let rt = runtime.clone();
 	let file_exists_fn = lua.create_function(move |lua, path: String| file_exists(lua, &rt, path))?;
@@ -256,6 +260,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	table.set("append", file_append_fn)?;
 	table.set("delete", file_delete_fn)?;
 	table.set("ensure_exists", file_ensure_exists_fn)?;
+	table.set("ensure_dir", file_ensure_dir_fn)?;
 	table.set("exists", file_exists_fn)?;
 	table.set("info", file_info_fn)?;
 	table.set("list", file_list_fn)?;
