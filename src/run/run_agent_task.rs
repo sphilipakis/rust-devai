@@ -88,14 +88,12 @@ async fn process_agent_response_to_output(
 		}
 
 		// Any other AipackCustom is not supported at output stage
-		FromValue::AipackCustom(other) => match other {
-			_ => {
-				return Err(Error::custom(format!(
-					"Aipack custom '{}' not supported at the Output stage",
-					other.as_ref()
-				)));
-			}
-		},
+		FromValue::AipackCustom(other) => {
+			return Err(Error::custom(format!(
+				"Aipack custom '{}' not supported at the Output stage",
+				other.as_ref()
+			)));
+		}
 
 		// Plain value passthrough
 		FromValue::OriginalValue(value) => value,
