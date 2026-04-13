@@ -28,8 +28,8 @@ pub async fn run_reflective_agent_with_runtime(
 		(0, uuid::Uuid::now_v7(), 0, 0),
 	)?;
 	db.exec(
-		"INSERT INTO task (id, uid, ctime, mtime, run_id) values (?, ?, ?, ?, ?)",
-		(0, uuid::Uuid::now_v7(), 0, 0, 0),
+		"INSERT INTO task (id, idx, uid, ctime, mtime, run_id) values (?, ?, ?, ?, ?, ?)",
+		(0, 0, uuid::Uuid::now_v7(), 0, 0, 0),
 	)?;
 
 	// -- Load the agent
