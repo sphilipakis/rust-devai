@@ -180,3 +180,24 @@ pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str)
 
 	Ok(content)
 }
+
+pub fn list_entries(src_zip_path: impl AsRef<SPath>) -> Result<Vec<String>> {
+	let src_zip_path = src_zip_path.as_ref();
+	let file = File::open(src_zip_path)?;
+
+	let mut archive = ZipArchive::new(file).map_err(|err| Error::Zip {
+		zip_file: src_zip_path.name().to_string(),
+		cause: err.to_string(),
+	})?;
+
+	let mut entries = Vec::with_capacity(archive.len());
+	for i in 0..archive.len() {
+		let file = archive.by_index(i).map_err(|err| Error::Zip {
+			zip_file: src_zip_path.name().to_string(),
+			cause: format!("Fail to get item by_index {i}.\nCause: {err}"),
+		})?;
+		entries.push(file.name().to_string());
+	}
+
+	Ok(entries)
+}
