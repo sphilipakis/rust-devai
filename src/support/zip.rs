@@ -171,7 +171,11 @@ pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str)
 	})?;
 
 	let mut data: Vec<u8> = Vec::new();
-	file.read_to_end(&mut data)?;
+	file.read_to_end(&mut data).map_err(|err| Error::ZipContent {
+		zip_file: src_zip_path.name().to_string(),
+		content_path: content_path.to_string(),
+		cause: format!("Fail to read content. Cause: {err}"),
+	})?;
 	let content = String::from_utf8(data).map_err(|err| Error::ZipContent {
 		zip_file: src_zip_path.name().to_string(),
 		content_path: content_path.to_string(),
