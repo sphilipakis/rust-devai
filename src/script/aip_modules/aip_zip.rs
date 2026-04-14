@@ -10,13 +10,15 @@
 //!
 //! - `aip.zip.create(src_dir: string, dest_zip?: string): FileInfo`
 //!   Creates a ZIP archive from a directory.
+//! - `aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]`
+//!   Extracts a ZIP archive into a directory and returns the extracted files.
 
 use crate::runtime::Runtime;
 use crate::script::aip_modules::support::{check_access_write, process_path_reference};
 use crate::support::zip;
 use crate::types::FileInfo;
 use crate::{Error, Result};
-use mlua::{IntoLua, Lua, Table};
+use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
 
 pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
@@ -25,8 +27,12 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let create_fn =
 		lua.create_function(move |lua, (src_dir, dest_zip): (String, Option<String>)| zip_create(lua, &rt, src_dir, dest_zip))?;
+	let rt = runtime.clone();
+	let extract_fn =
+		lua.create_function(move |lua, (src_zip, dest_dir): (String, Option<String>)| zip_extract(lua, &rt, src_zip, dest_dir))?;
 
 	table.set("create", create_fn)?;
+	table.set("extract", extract_fn)?;
 
 	Ok(table)
 }
@@ -96,5 +102,87 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 
 	let file_info = FileInfo::new(runtime.dir_context(), dest_zip_path.clone(), true);
 	file_info.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Extracts a ZIP archive into a directory.
+///
+/// ```lua
+/// -- API Signature
+/// aip.zip.extract(src_zip: string, dest_dir?: string): list<FileInfo>
+/// ```
+///
+/// Extracts the ZIP archive at `src_zip` into `dest_dir`.
+///
+/// If `dest_dir` is not provided, the destination defaults to a folder
+/// in the same location as the source ZIP, named after the ZIP's stem (filename without extension).
+///
+/// For example, if `src_zip` is `"build/site.zip"`, the default destination would be `"build/site/"`.
+///
+/// The returned list includes extracted file entries only, in archive order.
+/// Directory-only archive entries are not included.
+///
+/// ### Arguments
+///
+/// - `src_zip: string` - The source ZIP file path.
+/// - `dest_dir?: string` (optional) - The destination directory for extracted content.
+///   If not provided, defaults to a folder named after the ZIP stem in the same directory.
+///
+/// ### Returns
+///
+/// - `list<FileInfo>` - A list of [`FileInfo`] objects for each extracted file.
+///
+/// ### Example
+///
+/// ```lua
+/// local files = aip.zip.extract("build/site.zip")
+/// for _, file in ipairs(files) do
+///   print(file.path) -- e.g., "build/site/index.html"
+/// end
+///
+/// local files = aip.zip.extract("build/site.zip", "output/site")
+/// for _, file in ipairs(files) do
+///   print(file.name, file.size)
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The source ZIP file does not exist or cannot be read.
+/// - The destination path is outside the allowed workspace directory or base directories.
+/// - The ZIP archive contains unsafe entry paths.
+/// - Any extracted file or directory cannot be created.
+fn zip_extract(lua: &Lua, runtime: &Runtime, src_zip: String, dest_dir: Option<String>) -> mlua::Result<Value> {
+	let dir_context = runtime.dir_context();
+
+	let src_zip_path =
+		process_path_reference(runtime, &src_zip).map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
+
+	let dest_dir_path = if let Some(dest_dir) = dest_dir {
+		process_path_reference(runtime, &dest_dir)
+			.map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?
+	} else {
+		let parent = src_zip_path.parent().unwrap_or_else(|| SPath::new("."));
+		let stem = src_zip_path.stem();
+		parent.join(stem)
+	};
+
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.zip.extract requires a aipack workspace setup")?;
+	check_access_write(&dest_dir_path, wks_dir).map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
+
+	let extracted_files = zip::unzip_file_with_entries(&src_zip_path, &dest_dir_path)
+		.map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
+
+	let file_infos: Vec<FileInfo> = extracted_files
+		.into_iter()
+		.map(|rel_path| {
+			let full_path = dest_dir_path.join(&rel_path);
+			FileInfo::new(dir_context, full_path.clone(), &full_path)
+		})
+		.collect();
+
+	file_infos.into_lua(lua)
 }
 

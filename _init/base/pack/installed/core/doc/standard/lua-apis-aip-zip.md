@@ -6,6 +6,7 @@ ZIP archive functions for creating archives, extracting files, reading archive t
 
 ```lua
 aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
+aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
 ```
 
 ### aip.zip.create
@@ -46,4 +47,50 @@ Returns an error if:
 - The source directory does not exist or is not a directory.
 - The destination path is outside the allowed workspace or base directories.
 - The ZIP file cannot be created.
+
+### aip.zip.extract
+
+Extract a ZIP archive into a directory.
+
+```lua
+-- API Signature
+aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
+```
+
+Extracts the ZIP archive at `src_zip` into `dest_dir`.
+
+If `dest_dir` is not provided, the destination defaults to a folder next to the ZIP file using the ZIP stem.
+
+Only extracted file entries are returned, in archive order. Directory-only archive entries are not included.
+
+#### Arguments
+
+- `src_zip: string`: The source ZIP file path.
+- `dest_dir?: string` (optional): The destination directory for extracted content.
+
+#### Returns
+
+- `[FileInfo](#fileinfo)[]`: Metadata for the extracted files.
+
+#### Example
+
+```lua
+local files = aip.zip.extract("build/site.zip")
+for _, file in ipairs(files) do
+  print(file.path) -- e.g. "build/site/index.html"
+end
+
+local files2 = aip.zip.extract("build/site.zip", "output/site")
+for _, file in ipairs(files2) do
+  print(file.name, file.size)
+end
+```
+
+#### Error
+
+Returns an error if:
+- The source ZIP file does not exist or cannot be read.
+- The destination path is outside the allowed workspace or base directories.
+- The ZIP archive contains unsafe entry paths.
+- A file or directory cannot be created during extraction.
 
