@@ -7,6 +7,7 @@ ZIP archive functions for creating archives, extracting files, reading archive t
 ```lua
 aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
 aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
+aip.zip.read_text(src_zip: string, content_path: string): string | nil
 ```
 
 ### aip.zip.create
@@ -93,4 +94,43 @@ Returns an error if:
 - The destination path is outside the allowed workspace or base directories.
 - The ZIP archive contains unsafe entry paths.
 - A file or directory cannot be created during extraction.
+
+### aip.zip.read_text
+
+Read a UTF-8 text entry from inside a ZIP archive.
+
+```lua
+-- API Signature
+aip.zip.read_text(src_zip: string, content_path: string): string | nil
+```
+
+Loads the archive entry at `content_path` from the ZIP file at `src_zip`.
+
+If the requested archive entry does not exist, this function returns `nil`.
+
+#### Arguments
+
+- `src_zip: string`: The source ZIP file path.
+- `content_path: string`: The path of the entry inside the ZIP archive.
+
+#### Returns
+
+- `string | nil`: The UTF-8 text content of the archive entry, or `nil` if the entry is not found.
+
+#### Example
+
+```lua
+local manifest = aip.zip.read_text("bundle.zip", "manifest.json")
+if manifest ~= nil then
+  print(manifest)
+end
+```
+
+#### Error
+
+Returns an error if:
+- The source ZIP file does not exist or cannot be read.
+- The ZIP archive cannot be opened.
+- The requested archive entry exists but is not valid UTF-8.
+- The archive entry cannot be read.
 

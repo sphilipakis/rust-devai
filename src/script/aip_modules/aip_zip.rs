@@ -12,6 +12,8 @@
 //!   Creates a ZIP archive from a directory.
 //! - `aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]`
 //!   Extracts a ZIP archive into a directory and returns the extracted files.
+//! - `aip.zip.read_text(src_zip: string, content_path: string): string | nil`
+//!   Reads a UTF-8 text entry from a ZIP archive, returning `nil` when the entry is missing.
 
 use crate::runtime::Runtime;
 use crate::script::aip_modules::support::{check_access_write, process_path_reference};
@@ -30,9 +32,13 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let extract_fn =
 		lua.create_function(move |lua, (src_zip, dest_dir): (String, Option<String>)| zip_extract(lua, &rt, src_zip, dest_dir))?;
+	let rt = runtime.clone();
+	let read_text_fn = lua
+		.create_function(move |lua, (src_zip, content_path): (String, String)| zip_read_text(lua, &rt, src_zip, content_path))?;
 
 	table.set("create", create_fn)?;
 	table.set("extract", extract_fn)?;
+	table.set("read_text", read_text_fn)?;
 
 	Ok(table)
 }
@@ -184,5 +190,54 @@ fn zip_extract(lua: &Lua, runtime: &Runtime, src_zip: String, dest_dir: Option<S
 		.collect();
 
 	file_infos.into_lua(lua)
+}
+
+/// ## Lua Documentation
+///
+/// Reads a UTF-8 text file from inside a ZIP archive.
+///
+/// ```lua
+/// -- API Signature
+/// aip.zip.read_text(src_zip: string, content_path: string): string | nil
+/// ```
+///
+/// Loads the archive entry at `content_path` from the ZIP file at `src_zip`.
+///
+/// If the requested archive entry does not exist, this function returns `nil`.
+///
+/// ### Arguments
+///
+/// - `src_zip: string` - The source ZIP file path.
+/// - `content_path: string` - The path of the entry inside the ZIP archive.
+///
+/// ### Returns
+///
+/// - `string | nil` - The UTF-8 text content of the archive entry, or `nil` if the entry is not found.
+///
+/// ### Example
+///
+/// ```lua
+/// local manifest = aip.zip.read_text("bundle.zip", "manifest.json")
+/// if manifest ~= nil then
+///   print(manifest)
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The source ZIP file does not exist or cannot be read.
+/// - The archive cannot be opened.
+/// - The requested archive entry exists but is not valid UTF-8.
+/// - The archive entry cannot be read.
+fn zip_read_text(lua: &Lua, runtime: &Runtime, src_zip: String, content_path: String) -> mlua::Result<Value> {
+	let src_zip_path =
+		process_path_reference(runtime, &src_zip).map_err(|err| Error::custom(format!("aip.zip.read_text failed. {err}")))?;
+
+	match zip::extract_text_content(&src_zip_path, &content_path) {
+		Ok(content) => content.into_lua(lua),
+		Err(Error::ZipFileNotFound { .. }) => Ok(Value::Nil),
+		Err(err) => Err(mlua::Error::external(Error::custom(format!("aip.zip.read_text failed. {err}")))),
+	}
 }
 
