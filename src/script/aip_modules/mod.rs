@@ -31,5 +31,6 @@ pub mod aip_udiffx;
 pub mod aip_uuid;
 pub mod aip_web;
 pub mod aip_yaml;
+pub mod aip_zip;
 
 // endregion: --- Modules

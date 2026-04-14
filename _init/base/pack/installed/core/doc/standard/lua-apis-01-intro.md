@@ -36,6 +36,7 @@ The `aip` top module provides a comprehensive set of functions for interacting w
 - [`aip.shape`](#aipshape): Record shaping utilities (rows and columns, key selection/extraction).
 - [`aip.csv`](#aipcsv): CSV parsing and processing utilities.
 - [`aip.pdf`](#aippdf): PDF file utilities (page count, split pages).
+- [`aip.zip`](#aipzip): ZIP archive utilities (create, extract, read text, list entries).
 - [`aip.udiffx`](#aipudiffx): Applying multi-file changes (New, Patch, Rename, Delete).
 
 #### File Path supported
@@ -222,3 +223,8 @@ local name = value_or(input.name, "Anonymous")
 - [`CsvContent`](#csvcontent) (for `aip.file.load_csv`)
 - [`YamlDocs`](#yamldocs) (for `aip.file.load_yaml` and `aip.yaml.parse`)
 - [`Marker`](#marker) (for `aip.task.pin` and `aip.run.pin`)
+
+## aip.zip
+
+ZIP archive utilities for creating archives, extracting files, reading text entries, and listing archive content.
+
