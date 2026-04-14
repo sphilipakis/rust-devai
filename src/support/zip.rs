@@ -2,6 +2,7 @@ use crate::{Error, Result};
 use simple_fs::SPath;
 use std::fs::{self, File};
 use std::io::{self, Read as _};
+use std::path::Path;
 use walkdir::WalkDir;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -78,6 +79,14 @@ pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Resu
 /// `src_zip` is the path to the zip archive.
 /// `dest_dir` is the destination directory where the contents of the zip will be extracted.
 pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Result<()> {
+	unzip_file_with_entries(src_zip, dest_dir).map(|_| ())
+}
+
+/// Extracts the zip archive from `src_zip` into the directory `dest_dir` and returns
+/// the extracted file paths relative to `dest_dir`, preserving archive order.
+///
+/// Directory-only entries are not included in the returned list.
+pub fn unzip_file_with_entries(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Result<Vec<String>> {
 	let src_zip = src_zip.as_ref();
 	let dest_dir = dest_dir.as_ref();
 
@@ -87,6 +96,8 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 		zip_file: src_zip.to_string(),
 		cause: format!("Fail to create new archive.\nCause: {err}"),
 	})?;
+
+	let mut extracted_files = Vec::new();
 
 	// Iterate over zip entries.
 	for i in 0..archive.len() {
@@ -113,10 +124,11 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 			// Create and write the file.
 			let mut outfile = File::create(outpath.as_std_path())?;
 			io::copy(&mut file, &mut outfile)?;
+			extracted_files.push(normalize_zip_entry_relative_path(&entry_name));
 		}
 	}
 
-	Ok(())
+	Ok(extracted_files)
 }
 
 /// Validates a zip archive entry name for safety.
@@ -154,6 +166,14 @@ fn validate_zip_entry_name(entry_name: &str, src_zip: &SPath) -> Result<()> {
 	}
 
 	Ok(())
+}
+
+fn normalize_zip_entry_relative_path(entry_name: &str) -> String {
+	Path::new(entry_name)
+		.components()
+		.map(|component| component.as_os_str().to_string_lossy().to_string())
+		.collect::<Vec<_>>()
+		.join("/")
 }
 
 pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str) -> Result<String> {
