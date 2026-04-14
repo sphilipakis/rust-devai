@@ -17,6 +17,19 @@ pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Resu
 	let src_dir = src_dir.as_ref();
 	let dest_file = dest_file.as_ref();
 
+	if !src_dir.exists() {
+		return Err(Error::ZipFail {
+			zip_dir: src_dir.to_string(),
+			cause: format!("Fail to zip directory. Source directory does not exist: '{src_dir}'"),
+		});
+	}
+	if !src_dir.is_dir() {
+		return Err(Error::ZipFail {
+			zip_dir: src_dir.to_string(),
+			cause: format!("Fail to zip directory. Source path is not a directory: '{src_dir}'"),
+		});
+	}
+
 	// Create the destination zip file.
 	let file = File::create(dest_file)?;
 	let mut zip = ZipWriter::new(file);
@@ -42,20 +55,22 @@ pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Resu
 		// Convert relative path to UTF-8 string and normalize slashes for cross-platform compatibility.
 		let name = relative_path.as_str().replace("\\", "/");
 
+		if name.is_empty() {
+			continue;
+		}
+
 		if path.is_dir() {
 			// Add directory entry to zip archive.
-			if !name.is_empty() {
-				// Ensure directory name ends with '/'.
-				let dir_name = if name.ends_with('/') {
-					name.to_string()
-				} else {
-					format!("{name}/")
-				};
-				zip.add_directory(&dir_name, options).map_err(|err| Error::ZipFail {
-					zip_dir: src_dir.to_string(),
-					cause: format!("Fail add directory '{dir_name}'. Cause {err}"),
-				})?;
-			}
+			// Ensure directory name ends with '/'.
+			let dir_name = if name.ends_with('/') {
+				name.to_string()
+			} else {
+				format!("{name}/")
+			};
+			zip.add_directory(&dir_name, options).map_err(|err| Error::ZipFail {
+				zip_dir: src_dir.to_string(),
+				cause: format!("Fail add directory '{dir_name}'. Cause {err}"),
+			})?;
 		} else {
 			// Add file entry to zip archive.
 			zip.start_file(&name, options).map_err(|err| Error::ZipFail {
@@ -225,3 +240,82 @@ pub fn list_entries(src_zip_path: impl AsRef<SPath>) -> Result<Vec<String>> {
 
 	Ok(entries)
 }
+
+// region:    --- Tests
+
+#[cfg(test)]
+mod tests {
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+
+	use super::*;
+	use crate::_test_support::{gen_test_dir_path, remove_test_dir};
+
+	#[test]
+	fn test_support_zip_dir_requires_existing_directory() -> Result<()> {
+		// -- Setup & Fixtures
+		let root = gen_test_dir_path();
+		let src_dir = root.join("missing_src");
+		let dest_zip = root.join("missing_src_dest").join("archive.zip");
+
+		// -- Exec
+		let err = zip_dir(&src_dir, &dest_zip).err().ok_or("should have zip error")?;
+
+		// -- Check
+		let err_text = err.to_string();
+		assert!(err_text.contains("Source directory does not exist"));
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_zip_dir_requires_directory_source() -> Result<()> {
+		// -- Setup & Fixtures
+		let root = gen_test_dir_path();
+		std::fs::create_dir_all(root.as_std_path())?;
+		let src_file = root.join("source.txt");
+		std::fs::write(src_file.as_std_path(), "hello")?;
+		let dest_zip = root.join("archive.zip");
+
+		// -- Exec
+		let err = zip_dir(&src_file, &dest_zip).err().ok_or("should have zip error")?;
+
+		// -- Check
+		let err_text = err.to_string();
+		assert!(err_text.contains("Source path is not a directory"));
+
+		// -- Cleanup
+		let _ = remove_test_dir(&root);
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_zip_dir_writes_relative_archive_entries() -> Result<()> {
+		// -- Setup & Fixtures
+		let root = gen_test_dir_path();
+		let src_dir = root.join("source");
+		let nested_dir = src_dir.join("nested");
+		std::fs::create_dir_all(nested_dir.as_std_path())?;
+		std::fs::write(src_dir.join("root.txt").as_std_path(), "root file")?;
+		std::fs::write(nested_dir.join("child.txt").as_std_path(), "nested file")?;
+		let dest_zip = root.join("archive.zip");
+
+		// -- Exec
+		zip_dir(&src_dir, &dest_zip)?;
+		let entries = list_entries(&dest_zip)?;
+
+		// -- Check
+		assert!(!entries.iter().any(|entry| entry.is_empty()));
+		assert!(entries.iter().any(|entry| entry == "nested/"));
+		assert!(entries.iter().any(|entry| entry == "root.txt"));
+		assert!(entries.iter().any(|entry| entry == "nested/child.txt"));
+		assert!(entries.iter().all(|entry| !entry.contains('\\')));
+
+		// -- Cleanup
+		let _ = remove_test_dir(&root);
+
+		Ok(())
+	}
+}
+
+// endregion: --- Tests
