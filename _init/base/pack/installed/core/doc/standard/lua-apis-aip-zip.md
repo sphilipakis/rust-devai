@@ -8,6 +8,7 @@ ZIP archive functions for creating archives, extracting files, reading archive t
 aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
 aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
 aip.zip.read_text(src_zip: string, content_path: string): string | nil
+aip.zip.list(src_zip: string): string[]
 ```
 
 ### aip.zip.create
@@ -133,4 +134,41 @@ Returns an error if:
 - The ZIP archive cannot be opened.
 - The requested archive entry exists but is not valid UTF-8.
 - The archive entry cannot be read.
+
+### aip.zip.list
+
+List archive entry paths from a ZIP archive.
+
+```lua
+-- API Signature
+aip.zip.list(src_zip: string): string[]
+```
+
+Returns archive entry paths exactly as stored in the ZIP, in archive order.
+
+Directory entries are included as-is when present in the archive, for example with a trailing `/`.
+
+#### Arguments
+
+- `src_zip: string`: The source ZIP file path.
+
+#### Returns
+
+- `string[]`: Archive entry paths exactly as stored in the ZIP.
+
+#### Example
+
+```lua
+local entries = aip.zip.list("bundle.zip")
+for _, entry in ipairs(entries) do
+  print(entry)
+end
+```
+
+#### Error
+
+Returns an error if:
+- The source ZIP file does not exist or cannot be read.
+- The ZIP archive cannot be opened.
+- The archive entries cannot be enumerated.
 

@@ -14,6 +14,8 @@
 //!   Extracts a ZIP archive into a directory and returns the extracted files.
 //! - `aip.zip.read_text(src_zip: string, content_path: string): string | nil`
 //!   Reads a UTF-8 text entry from a ZIP archive, returning `nil` when the entry is missing.
+//! - `aip.zip.list(src_zip: string): string[]`
+//!   Lists ZIP archive entry paths exactly as stored in archive order.
 
 use crate::runtime::Runtime;
 use crate::script::aip_modules::support::{check_access_write, process_path_reference};
@@ -35,10 +37,13 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let rt = runtime.clone();
 	let read_text_fn = lua
 		.create_function(move |lua, (src_zip, content_path): (String, String)| zip_read_text(lua, &rt, src_zip, content_path))?;
+	let rt = runtime.clone();
+	let list_fn = lua.create_function(move |lua, src_zip: String| zip_list(lua, &rt, src_zip))?;
 
 	table.set("create", create_fn)?;
 	table.set("extract", extract_fn)?;
 	table.set("read_text", read_text_fn)?;
+	table.set("list", list_fn)?;
 
 	Ok(table)
 }
@@ -239,5 +244,51 @@ fn zip_read_text(lua: &Lua, runtime: &Runtime, src_zip: String, content_path: St
 		Err(Error::ZipFileNotFound { .. }) => Ok(Value::Nil),
 		Err(err) => Err(mlua::Error::external(Error::custom(format!("aip.zip.read_text failed. {err}")))),
 	}
+}
+
+/// ## Lua Documentation
+///
+/// Lists archive entry paths from a ZIP archive.
+///
+/// ```lua
+/// -- API Signature
+/// aip.zip.list(src_zip: string): string[]
+/// ```
+///
+/// Returns ZIP archive entry paths exactly as stored in archive order.
+///
+/// Directory entries are included as-is when present in the archive, for example
+/// with a trailing `/`.
+///
+/// ### Arguments
+///
+/// - `src_zip: string` - The source ZIP file path.
+///
+/// ### Returns
+///
+/// - `string[]` - Archive entry paths exactly as stored in the ZIP.
+///
+/// ### Example
+///
+/// ```lua
+/// local entries = aip.zip.list("bundle.zip")
+/// for _, entry in ipairs(entries) do
+///   print(entry)
+/// end
+/// ```
+///
+/// ### Error
+///
+/// Returns an error if:
+/// - The source ZIP file does not exist or cannot be read.
+/// - The archive cannot be opened.
+/// - The archive entries cannot be enumerated.
+fn zip_list(lua: &Lua, runtime: &Runtime, src_zip: String) -> mlua::Result<Value> {
+	let src_zip_path =
+		process_path_reference(runtime, &src_zip).map_err(|err| Error::custom(format!("aip.zip.list failed. {err}")))?;
+
+	let entries =
+		zip::list_entries(&src_zip_path).map_err(|err| Error::custom(format!("aip.zip.list failed. {err}")))?;
+	entries.into_lua(lua)
 }
 
