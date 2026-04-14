@@ -1,5 +1,6 @@
 use crate::{Error, Result};
 use simple_fs::SPath;
+use simple_fs::get_glob_set;
 use std::fs::{self, File};
 use std::io::{self, Read as _};
 use std::path::Path;
@@ -14,6 +15,20 @@ use zip::{CompressionMethod, ZipArchive, ZipWriter};
 ///
 /// This function recursively adds files and subdirectories from `src_dir` to the zip archive.
 pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Result<()> {
+	zip_dir_with_globs(src_dir, dest_file, None::<&[String]>)
+}
+
+/// Creates a zip archive from the directory `src_dir` and writes it to `dest_file`,
+/// optionally filtering source files by relative archive-style glob paths.
+///
+/// Directory entries are still emitted as needed for traversed directories, but file entries
+/// are included only when `globs` is omitted, empty, or the relative archive path matches
+/// at least one glob pattern.
+pub fn zip_dir_with_globs(
+	src_dir: impl AsRef<SPath>,
+	dest_file: impl AsRef<SPath>,
+	globs: Option<impl AsRef<[String]>>,
+) -> Result<()> {
 	let src_dir = src_dir.as_ref();
 	let dest_file = dest_file.as_ref();
 
@@ -72,6 +87,10 @@ pub fn zip_dir(src_dir: impl AsRef<SPath>, dest_file: impl AsRef<SPath>) -> Resu
 				cause: format!("Fail add directory '{dir_name}'. Cause {err}"),
 			})?;
 		} else {
+			if !matches_zip_globs(&name, globs.as_ref())? {
+				continue;
+			}
+
 			// Add file entry to zip archive.
 			zip.start_file(&name, options).map_err(|err| Error::ZipFail {
 				zip_dir: src_dir.to_string(),
@@ -102,6 +121,19 @@ pub fn unzip_file(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Re
 ///
 /// Directory-only entries are not included in the returned list.
 pub fn unzip_file_with_entries(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<SPath>) -> Result<Vec<String>> {
+	unzip_file_with_entries_and_globs(src_zip, dest_dir, None::<&[String]>)
+}
+
+/// Extracts the zip archive from `src_zip` into the directory `dest_dir` and returns
+/// the extracted file paths relative to `dest_dir`, preserving archive order.
+///
+/// Directory-only entries are not included in the returned list.
+/// When `globs` is provided and not empty, matching is applied against stored archive entry paths.
+pub fn unzip_file_with_entries_and_globs(
+	src_zip: impl AsRef<SPath>,
+	dest_dir: impl AsRef<SPath>,
+	globs: Option<impl AsRef<[String]>>,
+) -> Result<Vec<String>> {
 	let src_zip = src_zip.as_ref();
 	let dest_dir = dest_dir.as_ref();
 
@@ -125,6 +157,10 @@ pub fn unzip_file_with_entries(src_zip: impl AsRef<SPath>, dest_dir: impl AsRef<
 
 		// Reject unsafe archive entry paths
 		validate_zip_entry_name(&entry_name, src_zip)?;
+
+		if !matches_zip_globs(&entry_name, globs.as_ref())? {
+			continue;
+		}
 
 		let outpath = dest_dir.join(&entry_name);
 
@@ -221,6 +257,10 @@ pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str)
 }
 
 pub fn list_entries(src_zip_path: impl AsRef<SPath>) -> Result<Vec<String>> {
+	list_entries_with_globs(src_zip_path, None::<&[String]>)
+}
+
+pub fn list_entries_with_globs(src_zip_path: impl AsRef<SPath>, globs: Option<impl AsRef<[String]>>) -> Result<Vec<String>> {
 	let src_zip_path = src_zip_path.as_ref();
 	let file = File::open(src_zip_path)?;
 
@@ -235,10 +275,28 @@ pub fn list_entries(src_zip_path: impl AsRef<SPath>) -> Result<Vec<String>> {
 			zip_file: src_zip_path.name().to_string(),
 			cause: format!("Fail to get item by_index {i}.\nCause: {err}"),
 		})?;
-		entries.push(file.name().to_string());
+		let entry_name = file.name().to_string();
+		if matches_zip_globs(&entry_name, globs.as_ref())? {
+			entries.push(entry_name);
+		}
 	}
 
 	Ok(entries)
+}
+
+fn matches_zip_globs(entry_name: &str, globs: Option<&impl AsRef<[String]>>) -> Result<bool> {
+	let Some(globs) = globs else {
+		return Ok(true);
+	};
+	let globs = globs.as_ref();
+	if globs.is_empty() {
+		return Ok(true);
+	}
+
+	let glob_refs = globs.iter().map(String::as_str).collect::<Vec<_>>();
+	let glob_set = get_glob_set(&glob_refs)
+		.map_err(|err| Error::custom(format!("Invalid zip glob patterns. Cause: {err}")))?;
+	Ok(glob_set.is_match(entry_name))
 }
 
 // region:    --- Tests
@@ -313,6 +371,19 @@ mod tests {
 
 		// -- Cleanup
 		let _ = remove_test_dir(&root);
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_matches_zip_globs_uses_archive_style_paths() -> Result<()> {
+		// -- Setup & Fixtures
+		let globs = vec!["nested/*.txt".to_string(), "root.txt".to_string()];
+
+		// -- Check
+		assert!(matches_zip_globs("root.txt", Some(&globs))?);
+		assert!(matches_zip_globs("nested/child.txt", Some(&globs))?);
+		assert!(!matches_zip_globs("nested/child.md", Some(&globs))?);
 
 		Ok(())
 	}

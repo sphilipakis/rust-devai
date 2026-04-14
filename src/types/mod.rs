@@ -23,6 +23,7 @@ mod sort_by_globs_options;
 mod web_options;
 mod web_response;
 mod yaml_docs;
+mod zip_options;
 
 pub use changes_info::*;
 pub use csv_content::*;
@@ -43,6 +44,7 @@ pub use pack_ref::*;
 pub use run_agent_options::*;
 pub use run_agent_response::*;
 pub use save_options::*;
+pub use zip_options::*;
 pub use web_options::*;
 pub use web_response::*;
 pub use yaml_docs::*;
