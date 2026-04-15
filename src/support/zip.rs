@@ -256,10 +256,6 @@ pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str)
 	Ok(content)
 }
 
-pub fn list_entries(src_zip_path: impl AsRef<SPath>) -> Result<Vec<String>> {
-	list_entries_with_globs(src_zip_path, None::<&[String]>)
-}
-
 pub fn list_entries_with_globs(src_zip_path: impl AsRef<SPath>, globs: Option<impl AsRef<[String]>>) -> Result<Vec<String>> {
 	let src_zip_path = src_zip_path.as_ref();
 	let file = File::open(src_zip_path)?;
@@ -360,7 +356,7 @@ mod tests {
 
 		// -- Exec
 		zip_dir(&src_dir, &dest_zip)?;
-		let entries = list_entries(&dest_zip)?;
+		let entries = list_entries_with_globs(&dest_zip, None::<&[String]>)?;
 
 		// -- Check
 		assert!(!entries.iter().any(|entry| entry.is_empty()));

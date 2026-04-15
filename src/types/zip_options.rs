@@ -6,12 +6,6 @@ pub struct ZipOptions {
 	pub globs: Option<Vec<String>>,
 }
 
-impl ZipOptions {
-	pub fn has_globs(&self) -> bool {
-		self.globs.as_ref().is_some_and(|globs| !globs.is_empty())
-	}
-}
-
 impl FromLua for ZipOptions {
 	fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
 		match value {
