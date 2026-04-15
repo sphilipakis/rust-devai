@@ -20,7 +20,7 @@
 use crate::runtime::Runtime;
 use crate::script::aip_modules::support::{check_access_write, process_path_reference};
 use crate::support::zip;
-use crate::types::FileInfo;
+use crate::types::{FileInfo, ZipOptions};
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, Table, Value};
 use simple_fs::SPath;
@@ -29,11 +29,13 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 	let table = lua.create_table()?;
 
 	let rt = runtime.clone();
-	let create_fn =
-		lua.create_function(move |lua, (src_dir, dest_zip): (String, Option<String>)| zip_create(lua, &rt, src_dir, dest_zip))?;
+	let create_fn = lua.create_function(move |lua, (src_dir, dest_zip, options): (String, Option<String>, Option<Value>)| {
+		zip_create(lua, &rt, src_dir, dest_zip, options)
+	})?;
 	let rt = runtime.clone();
-	let extract_fn =
-		lua.create_function(move |lua, (src_zip, dest_dir): (String, Option<String>)| zip_extract(lua, &rt, src_zip, dest_dir))?;
+	let extract_fn = lua.create_function(move |lua, (src_zip, dest_dir, options): (String, Option<String>, Option<Value>)| {
+		zip_extract(lua, &rt, src_zip, dest_dir, options)
+	})?;
 	let rt = runtime.clone();
 	let read_text_fn = lua
 		.create_function(move |lua, (src_zip, content_path): (String, String)| zip_read_text(lua, &rt, src_zip, content_path))?;
@@ -54,7 +56,7 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// ```lua
 /// -- API Signature
-/// aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
+/// aip.zip.create(src_dir: string, dest_zip?: string, options?: ZipOptions): FileInfo
 /// ```
 ///
 /// Creates a ZIP archive from the directory at `src_dir`.
@@ -70,6 +72,8 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 /// - `src_dir: string` - The source directory to archive.
 /// - `dest_zip?: string` (optional) - The destination ZIP file path.
 ///   If not provided, defaults to `{src_dir_stem}.zip` next to the source directory.
+/// - `options?: ZipOptions` (optional) - ZIP creation options.
+///   - `globs?: string[]` - Include only files whose relative archive-style paths match at least one glob.
 ///
 /// ### Returns
 ///
@@ -83,6 +87,10 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 ///
 /// local zip_file = aip.zip.create("docs/site", "build/site.zip")
 /// print(zip_file.name) -- e.g., "site.zip"
+///
+/// local zip_file = aip.zip.create("docs/site", "build/site.zip", {
+///   globs = { "**/*.html", "assets/**/*.css" }
+/// })
 /// ```
 ///
 /// ### Error
@@ -91,8 +99,16 @@ pub fn init_module(lua: &Lua, runtime: &Runtime) -> Result<Table> {
 /// - The source directory does not exist or is not a directory.
 /// - The destination path is outside the allowed workspace or base directories.
 /// - The destination ZIP file cannot be created.
-fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<String>) -> mlua::Result<mlua::Value> {
+fn zip_create(
+	lua: &Lua,
+	runtime: &Runtime,
+	src_dir: String,
+	dest_zip: Option<String>,
+	options: Option<Value>,
+) -> mlua::Result<mlua::Value> {
 	let dir_context = runtime.dir_context();
+	let options = ZipOptions::from_lua(options.unwrap_or(Value::Nil), lua)
+		.map_err(|e| Error::custom(format!("Failed to parse zip options.\nCause: {e}")))?;
 
 	let src_dir_path =
 		process_path_reference(runtime, &src_dir).map_err(|err| Error::custom(format!("aip.zip.create failed. {err}")))?;
@@ -109,7 +125,8 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.zip.create requires a aipack workspace setup")?;
 	check_access_write(&dest_zip_path, wks_dir).map_err(|err| Error::custom(format!("aip.zip.create failed. {err}")))?;
 
-	zip::zip_dir(&src_dir_path, &dest_zip_path).map_err(|err| Error::custom(format!("aip.zip.create failed. {err}")))?;
+	zip::zip_dir_with_globs(&src_dir_path, &dest_zip_path, options.globs.as_ref())
+		.map_err(|err| Error::custom(format!("aip.zip.create failed. {err}")))?;
 
 	let file_info = FileInfo::new(runtime.dir_context(), dest_zip_path.clone(), true);
 	file_info.into_lua(lua)
@@ -121,7 +138,7 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 ///
 /// ```lua
 /// -- API Signature
-/// aip.zip.extract(src_zip: string, dest_dir?: string): list<FileInfo>
+/// aip.zip.extract(src_zip: string, dest_dir?: string, options?: ZipOptions): list<FileInfo>
 /// ```
 ///
 /// Extracts the ZIP archive at `src_zip` into `dest_dir`.
@@ -139,6 +156,8 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 /// - `src_zip: string` - The source ZIP file path.
 /// - `dest_dir?: string` (optional) - The destination directory for extracted content.
 ///   If not provided, defaults to a folder named after the ZIP stem in the same directory.
+/// - `options?: ZipOptions` (optional) - ZIP extraction options.
+///   - `globs?: string[]` - Extract and return only archive entries whose stored relative paths match at least one glob.
 ///
 /// ### Returns
 ///
@@ -156,6 +175,10 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 /// for _, file in ipairs(files) do
 ///   print(file.name, file.size)
 /// end
+///
+/// local html_files = aip.zip.extract("build/site.zip", "output/site", {
+///   globs = { "**/*.html" }
+/// })
 /// ```
 ///
 /// ### Error
@@ -165,8 +188,16 @@ fn zip_create(lua: &Lua, runtime: &Runtime, src_dir: String, dest_zip: Option<St
 /// - The destination path is outside the allowed workspace directory or base directories.
 /// - The ZIP archive contains unsafe entry paths.
 /// - Any extracted file or directory cannot be created.
-fn zip_extract(lua: &Lua, runtime: &Runtime, src_zip: String, dest_dir: Option<String>) -> mlua::Result<Value> {
+fn zip_extract(
+	lua: &Lua,
+	runtime: &Runtime,
+	src_zip: String,
+	dest_dir: Option<String>,
+	options: Option<Value>,
+) -> mlua::Result<Value> {
 	let dir_context = runtime.dir_context();
+	let options = ZipOptions::from_lua(options.unwrap_or(Value::Nil), lua)
+		.map_err(|e| Error::custom(format!("Failed to parse zip options.\nCause: {e}")))?;
 
 	let src_zip_path =
 		process_path_reference(runtime, &src_zip).map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
@@ -183,7 +214,7 @@ fn zip_extract(lua: &Lua, runtime: &Runtime, src_zip: String, dest_dir: Option<S
 	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.zip.extract requires a aipack workspace setup")?;
 	check_access_write(&dest_dir_path, wks_dir).map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
 
-	let extracted_files = zip::unzip_file_with_entries(&src_zip_path, &dest_dir_path)
+	let extracted_files = zip::unzip_file_with_entries_and_globs(&src_zip_path, &dest_dir_path, options.globs.as_ref())
 		.map_err(|err| Error::custom(format!("aip.zip.extract failed. {err}")))?;
 
 	let file_infos: Vec<FileInfo> = extracted_files
