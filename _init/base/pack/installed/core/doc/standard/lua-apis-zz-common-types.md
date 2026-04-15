@@ -85,6 +85,18 @@ Options table used for specifying the destination path in functions like `aip.fi
 }
 ```
 
+### ZipOptions
+
+Options table used for ZIP entry filtering in functions like `aip.zip.create`, `aip.zip.extract`, and `aip.zip.list`.
+
+```ts
+{
+  globs?: string[] // Include-only glob patterns matched against stored relative archive paths
+}
+```
+
+When `globs` is omitted or empty, ZIP behavior is unchanged.
+
 ### CsvContent
 
 Represents the table returned by `aip.file.load_csv`, which includes the `_type = "CsvContent"` marker, the parsed `headers` (empty when no header row was requested), and the `rows` matrix.

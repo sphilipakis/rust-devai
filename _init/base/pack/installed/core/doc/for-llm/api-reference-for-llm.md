@@ -156,6 +156,10 @@ type DestOptions = {
   slim?: boolean;
 };
 
+type ZipOptions = {
+  globs?: string[];
+};
+
 type AgentOptions = {
   model?: string;
   temperature?: number;
@@ -359,10 +363,10 @@ aip.file.hash_blake3(path: string): string // Hex encoding.
 aip.file.hash_blake3_b64(path: string): string // Base64 encoding.
 aip.file.hash_blake3_b64u(path: string): string // URL-safe Base64 (no padding).
 aip.file.hash_blake3_b58u(path: string): string // Base58 encoding.
-aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
-aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
+aip.zip.create(src_dir: string, dest_zip?: string, options?: ZipOptions): FileInfo
+aip.zip.extract(src_zip: string, dest_dir?: string, options?: ZipOptions): FileInfo[]
 aip.zip.read_text(src_zip: string, content_path: string): string | nil
-aip.zip.list(src_zip: string): string[]
+aip.zip.list(src_zip: string, options?: ZipOptions): string[]
 ```
 
 ### aip.editor - Editor Integration

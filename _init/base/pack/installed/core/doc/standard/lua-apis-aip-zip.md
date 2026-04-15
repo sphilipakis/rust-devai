@@ -5,11 +5,23 @@ ZIP archive functions for creating archives, extracting files, reading archive t
 ### Functions Summary
 
 ```lua
-aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
-aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
+aip.zip.create(src_dir: string, dest_zip?: string, options?: ZipOptions): FileInfo
+aip.zip.extract(src_zip: string, dest_dir?: string, options?: ZipOptions): FileInfo[]
 aip.zip.read_text(src_zip: string, content_path: string): string | nil
-aip.zip.list(src_zip: string): string[]
+aip.zip.list(src_zip: string, options?: ZipOptions): string[]
 ```
+
+### ZipOptions
+
+Options table used for ZIP entry filtering in `aip.zip.create`, `aip.zip.extract`, and `aip.zip.list`.
+
+```ts
+{
+  globs?: string[] // Include-only glob patterns matched against stored relative archive paths
+}
+```
+
+When `options` is omitted, or `options.globs` is omitted or empty, ZIP behavior remains unchanged.
 
 ### aip.zip.create
 
@@ -17,7 +29,7 @@ Create a ZIP archive from a directory.
 
 ```lua
 -- API Signature
-aip.zip.create(src_dir: string, dest_zip?: string): FileInfo
+aip.zip.create(src_dir: string, dest_zip?: string, options?: ZipOptions): FileInfo
 ```
 
 Creates a ZIP archive from the directory at `src_dir`.
@@ -28,6 +40,8 @@ If `dest_zip` is not provided, the destination defaults to a `.zip` file next to
 
 - `src_dir: string`: The source directory to archive.
 - `dest_zip?: string` (optional): The destination ZIP file path.
+- `options?: ZipOptions` (optional): ZIP creation options.
+  - `globs?: string[]`: Include only files whose relative archive-style paths match at least one glob.
 
 #### Returns
 
@@ -41,6 +55,10 @@ print(zip_file.path) -- e.g. "docs/site.zip"
 
 local zip_file2 = aip.zip.create("docs/site", "build/site.zip")
 print(zip_file2.name) -- e.g. "site.zip"
+
+local zip_file3 = aip.zip.create("docs/site", "build/site.zip", {
+  globs = { "**/*.html", "assets/**/*.css" }
+})
 ```
 
 #### Error
@@ -56,7 +74,7 @@ Extract a ZIP archive into a directory.
 
 ```lua
 -- API Signature
-aip.zip.extract(src_zip: string, dest_dir?: string): FileInfo[]
+aip.zip.extract(src_zip: string, dest_dir?: string, options?: ZipOptions): FileInfo[]
 ```
 
 Extracts the ZIP archive at `src_zip` into `dest_dir`.
@@ -68,7 +86,11 @@ Only extracted file entries are returned, in archive order. Directory-only archi
 #### Arguments
 
 - `src_zip: string`: The source ZIP file path.
+- `options?: ZipOptions` (optional): ZIP listing options.
+  - `globs?: string[]`: Return only archive entries whose stored relative paths match at least one glob.
 - `dest_dir?: string` (optional): The destination directory for extracted content.
+- `options?: ZipOptions` (optional): ZIP extraction options.
+  - `globs?: string[]`: Extract and return only archive entries whose stored relative paths match at least one glob.
 
 #### Returns
 
@@ -86,6 +108,10 @@ local files2 = aip.zip.extract("build/site.zip", "output/site")
 for _, file in ipairs(files2) do
   print(file.name, file.size)
 end
+
+local html_files = aip.zip.extract("build/site.zip", "output/site", {
+  globs = { "**/*.html" }
+})
 ```
 
 #### Error
@@ -141,7 +167,7 @@ List archive entry paths from a ZIP archive.
 
 ```lua
 -- API Signature
-aip.zip.list(src_zip: string): string[]
+aip.zip.list(src_zip: string, options?: ZipOptions): string[]
 ```
 
 Returns archive entry paths exactly as stored in the ZIP, in archive order.
@@ -163,6 +189,10 @@ local entries = aip.zip.list("bundle.zip")
 for _, entry in ipairs(entries) do
   print(entry)
 end
+
+local html_entries = aip.zip.list("bundle.zip", {
+  globs = { "**/*.html" }
+})
 ```
 
 #### Error
