@@ -1,6 +1,5 @@
 use crate::{Error, Result};
-use simple_fs::SPath;
-use simple_fs::get_glob_set;
+use simple_fs::{SPath, get_glob_set};
 use std::fs::{self, File};
 use std::io::{self, Read as _};
 use std::path::Path;
@@ -256,7 +255,10 @@ pub fn extract_text_content(src_zip_path: impl AsRef<SPath>, content_path: &str)
 	Ok(content)
 }
 
-pub fn list_entries_with_globs(src_zip_path: impl AsRef<SPath>, globs: Option<impl AsRef<[String]>>) -> Result<Vec<String>> {
+pub fn list_entries_with_globs(
+	src_zip_path: impl AsRef<SPath>,
+	globs: Option<impl AsRef<[String]>>,
+) -> Result<Vec<String>> {
 	let src_zip_path = src_zip_path.as_ref();
 	let file = File::open(src_zip_path)?;
 
@@ -290,8 +292,8 @@ fn matches_zip_globs(entry_name: &str, globs: Option<&impl AsRef<[String]>>) -> 
 	}
 
 	let glob_refs = globs.iter().map(String::as_str).collect::<Vec<_>>();
-	let glob_set = get_glob_set(&glob_refs)
-		.map_err(|err| Error::custom(format!("Invalid zip glob patterns. Cause: {err}")))?;
+	let glob_set =
+		get_glob_set(&glob_refs).map_err(|err| Error::custom(format!("Invalid zip glob patterns. Cause: {err}")))?;
 	Ok(glob_set.is_match(entry_name))
 }
 
