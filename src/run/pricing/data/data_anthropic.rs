@@ -7,6 +7,13 @@ pub const ANTHROPIC: ProviderPricing = ProviderPricing {
 
 pub const ANTHROPIC_MODELS: &[ModelPricing] = &[
 	ModelPricing {
+		name: "claude-opus-4-7",
+		input_cached: Some(0.5),
+		input_normal: 5.0,
+		output_normal: 25.0,
+		output_reasoning: None,
+	},
+	ModelPricing {
 		name: "claude-opus-4-6",
 		input_cached: Some(0.5),
 		input_normal: 5.0,
@@ -70,7 +77,7 @@ pub const ANTHROPIC_MODELS: &[ModelPricing] = &[
 		output_reasoning: None,
 	},
 	ModelPricing {
-		name: "claude-3-haiku",
+		name: "claude-haiku-3",
 		input_cached: Some(0.03),
 		input_normal: 0.25,
 		output_normal: 1.25,

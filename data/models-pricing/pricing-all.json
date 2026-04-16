@@ -7,9 +7,19 @@
           "cached": 0.5,
           "normal": 5
         },
-        "name": "claude-opus-4-6",
+        "name": "claude-opus-4-7",
         "output": 25,
         "recent": true
+      },
+      {
+        "input": {
+          "cache_write": 6.25,
+          "cached": 0.5,
+          "normal": 5
+        },
+        "name": "claude-opus-4-6",
+        "output": 25,
+        "recent": false
       },
       {
         "input": {
@@ -97,7 +107,7 @@
           "cached": 0.03,
           "normal": 0.25
         },
-        "name": "claude-3-haiku",
+        "name": "claude-haiku-3",
         "output": 1.25,
         "recent": false
       }
