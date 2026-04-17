@@ -134,7 +134,14 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add the tasks ui
 	let task_list_lines = if is_grid {
-		ui_for_task_grid(state.tasks(), max_width, &mut link_zones)
+		ui_for_task_grid_viewport(
+			state.tasks(),
+			max_width,
+			task_section_start,
+			scroll as usize,
+			area.height as usize,
+			&mut link_zones,
+		)
 	} else {
 		ui_for_task_list_viewport(
 			state.tasks(),
@@ -481,74 +488,23 @@ fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) 
 		return Vec::new();
 	}
 
-	// -- Prep
-	let tasks_len = tasks.len();
-
-	// let mut line: u16 = 0;
-	let (marker, marker_spacer) = tasks_marker();
-	let marker_width = marker.x_width();
-	let marker_spacer_width = marker_spacer.x_width();
-	let marker_prefix_spans_len = marker.len() + marker_spacer.len();
-
-	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
-	let gap_span = Span::raw(" ");
-	let gap_width = gap_span.width() as u16;
-
-	let mut all_lines: Vec<Vec<Span<'static>>> = Vec::new();
-
-	// -- Render tasks
-	let mut line: Vec<Span<'static>> = Vec::new();
-	let max_num = tasks_len;
-	for task in tasks {
-		let task_block = task.ui_short_block(max_num);
-
-		let zone_span_start = line.len();
-		let zone_span_count = task_block.len();
-
-		// -- decide the create new line
-		if line.x_width() + task_block.x_width() + gap_width <= content_width {
-			// We append
-			line.extend(task_block);
-			// line.push(gap_span.clone());
-		}
-		// otherwise create a new line
-		else {
-			// end the previous line
-			all_lines.push(line);
-			// new lines
-			// all_lines.push(vec![Span::raw("")]);
-			// start the new one
-			line = task_block;
-			// line.push(gap_span.clone());
-		}
-
-		// -- Link Zone
-		// +2 for the space + ico (fomrom the ui_label), 2 to take space and label text
-		// NOTE: This should probably be part of the task facade (should not make those assumption here)
-		let task_id = task.id;
-		link_zones.push_link_zone(
-			all_lines.len(),
-			marker_prefix_spans_len + zone_span_start,
-			zone_span_count,
-			UiAction::GoToTask { task_id },
-		);
-	}
-
-	// -- add the last line
-	all_lines.push(line);
-
-	// -- render legend (on top of list)
-	// build legend_line
-	all_lines.push(Vec::new());
-	all_lines.push(ui_for_legend(tasks));
-
-	// -- Build the marker component
-	comp::ui_for_marker_section(marker, marker_spacer, all_lines)
+	ui_for_task_grid_viewport(tasks, max_width, 0, 0, usize::MAX, link_zones)
 }
 
 // endregion: --- UI Builders
 
 // region:    --- Support
+
+#[derive(Debug, Clone, Copy)]
+struct OverviewTaskGridLayout {
+	items_per_row: usize,
+	task_row_count: usize,
+	logical_line_count: usize,
+	content_width: u16,
+	marker_width: u16,
+	marker_spacer_width: u16,
+	marker_prefix_spans_len: usize,
+}
 
 fn tasks_marker() -> (Vec<Span<'static>>, Vec<Span<'static>>) {
 	let marker = vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)];
@@ -565,27 +521,135 @@ fn task_grid_line_count(tasks: &[Task], max_width: u16) -> usize {
 		return 0;
 	}
 
-	let max_num = tasks.len();
+	task_grid_layout(tasks, max_width).logical_line_count
+}
+
+fn task_grid_layout(tasks: &[Task], max_width: u16) -> OverviewTaskGridLayout {
 	let (marker, marker_spacer) = tasks_marker();
 	let marker_width = marker.x_width();
 	let marker_spacer_width = marker_spacer.x_width();
+	let marker_prefix_spans_len = marker.len() + marker_spacer.len();
 	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
-	let gap_width = Span::raw(" ").width() as u16;
 
-	let mut row_count = 1;
-	let mut current_width: u16 = 0;
+	let sample_block_width = tasks
+		.first()
+		.map(|task| task.ui_short_block(tasks.len()).x_width())
+		.unwrap_or_default();
 
-	for task in tasks {
-		let task_width = task.ui_short_block(max_num).x_width();
-		if current_width == 0 || current_width + task_width + gap_width <= content_width {
-			current_width += task_width;
-		} else {
-			row_count += 1;
-			current_width = task_width;
+	let items_per_row = if sample_block_width == 0 {
+		1
+	} else {
+		(content_width / sample_block_width).max(1) as usize
+	};
+
+	let task_row_count = tasks.len().div_ceil(items_per_row);
+	let logical_line_count = task_row_count + 2;
+
+	OverviewTaskGridLayout {
+		items_per_row,
+		task_row_count,
+		logical_line_count,
+		content_width,
+		marker_width,
+		marker_spacer_width,
+		marker_prefix_spans_len,
+	}
+}
+
+fn task_section_visible_local_range(
+	task_section_start: usize,
+	section_line_count: usize,
+	scroll: usize,
+	viewport_height: usize,
+) -> Option<(usize, usize)> {
+	let section_end = task_section_start + section_line_count;
+	let viewport_end = scroll.saturating_add(viewport_height);
+
+	if viewport_end <= task_section_start || scroll >= section_end {
+		return None;
+	}
+
+	let local_start = scroll.saturating_sub(task_section_start);
+	let local_end = viewport_end.saturating_sub(task_section_start).min(section_line_count);
+
+	(local_start < local_end).then_some((local_start, local_end))
+}
+
+fn ui_for_task_grid_viewport(
+	tasks: &[Task],
+	max_width: u16,
+	task_section_start: usize,
+	scroll: usize,
+	viewport_height: usize,
+	link_zones: &mut LinkZones,
+) -> Vec<Line<'static>> {
+	if tasks.is_empty() {
+		return Vec::new();
+	}
+
+	let layout = task_grid_layout(tasks, max_width);
+	let Some((local_start, local_end)) =
+		task_section_visible_local_range(task_section_start, layout.logical_line_count, scroll, viewport_height)
+	else {
+		return Vec::new();
+	};
+
+	let mut lines: Vec<Line<'static>> = Vec::new();
+
+	for local_row_idx in local_start..local_end {
+		if local_row_idx < layout.task_row_count {
+			let task_start = local_row_idx * layout.items_per_row;
+			let task_end = (task_start + layout.items_per_row).min(tasks.len());
+			let mut row_spans: Vec<Span<'static>> = Vec::new();
+
+			for task in &tasks[task_start..task_end] {
+				let task_block = task.ui_short_block(tasks.len());
+				let zone_span_start = row_spans.len();
+				let zone_span_count = task_block.len();
+				let task_id = task.id;
+
+				row_spans.extend(task_block);
+
+				link_zones.push_link_zone(
+					lines.len(),
+					layout.marker_prefix_spans_len + zone_span_start,
+					zone_span_count,
+					UiAction::GoToTask { task_id },
+				);
+			}
+
+			let prefix = if local_row_idx == 0 {
+				vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)]
+			} else {
+				vec![Span::raw(" ".repeat(layout.marker_width as usize))]
+			};
+			let mut spans = prefix;
+			spans.push(Span::raw(" ".repeat(layout.marker_spacer_width as usize)));
+			spans.extend(row_spans);
+			lines.push(Line::from(spans));
+		} else if local_row_idx == layout.task_row_count {
+			let prefix = if layout.task_row_count == 0 {
+				vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)]
+			} else {
+				vec![Span::raw(" ".repeat(layout.marker_width as usize))]
+			};
+			let mut spans = prefix;
+			spans.push(Span::raw(" ".repeat(layout.marker_spacer_width as usize)));
+			lines.push(Line::from(spans));
+		} else if local_row_idx == layout.task_row_count + 1 {
+			let prefix = if layout.task_row_count == 0 {
+				vec![comp::new_marker("Tasks:", style::STL_SECTION_MARKER)]
+			} else {
+				vec![Span::raw(" ".repeat(layout.marker_width as usize))]
+			};
+			let mut spans = prefix;
+			spans.push(Span::raw(" ".repeat(layout.marker_spacer_width as usize)));
+			spans.extend(ui_for_legend(tasks));
+			lines.push(Line::from(spans));
 		}
 	}
 
-	row_count + 2
+	lines
 }
 
 fn ui_for_legend(tasks: &[Task]) -> Vec<Span<'static>> {
