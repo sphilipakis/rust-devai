@@ -210,11 +210,10 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state
 	let is_mouse_in_nav = state.is_last_mouse_over(tasks_list_a);
 
 	let start_idx = scroll as usize;
-	let end_idx = start_idx
-		.saturating_add(tasks_list_a.height as usize)
-		.min(tasks.len());
+	let end_idx = start_idx.saturating_add(tasks_list_a.height as usize).min(tasks.len());
 
 	let mut visible_lines: Vec<Line<'static>> = Vec::with_capacity(end_idx.saturating_sub(start_idx));
+	#[allow(clippy::needless_range_loop)] // this is ok there I think
 	for idx in start_idx..end_idx {
 		let task = &tasks[idx];
 		let mut line = Line::from(task.ui_label(Some(" "), area.width, tasks_len));

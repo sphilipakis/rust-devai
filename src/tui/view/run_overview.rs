@@ -404,19 +404,7 @@ fn ui_for_task_list_viewport(
 	let full_lines = ui_for_task_list(tasks, max_width, link_zones);
 	// Keep only the visible logical task-section lines and let the caller insert
 	// the top padding corresponding to the current scroll offset.
-	full_lines
-		.into_iter()
-		.skip(local_start)
-		.take(local_end - local_start)
-		.collect()
-}
-
-fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
-	if tasks.is_empty() {
-		return Vec::new();
-	}
-
-	ui_for_task_grid_viewport(tasks, max_width, 0, 0, usize::MAX, link_zones)
+	full_lines.into_iter().skip(local_start).take(local_end - local_start).collect()
 }
 
 // endregion: --- UI Builders
@@ -428,7 +416,6 @@ struct OverviewTaskGridLayout {
 	items_per_row: usize,
 	task_row_count: usize,
 	logical_line_count: usize,
-	content_width: u16,
 	marker_width: u16,
 	marker_spacer_width: u16,
 	marker_prefix_spans_len: usize,
@@ -477,7 +464,6 @@ fn task_grid_layout(tasks: &[Task], max_width: u16) -> OverviewTaskGridLayout {
 		items_per_row,
 		task_row_count,
 		logical_line_count,
-		content_width,
 		marker_width,
 		marker_spacer_width,
 		marker_prefix_spans_len,
