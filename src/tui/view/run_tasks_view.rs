@@ -7,7 +7,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Paragraph, StatefulWidget, Widget as _};
+use ratatui::widgets::{Block, Paragraph, StatefulWidget, Widget as _};
 
 /// Renders the *Tasks* tab (tasks list and content).
 pub struct RunTasksView;
@@ -183,31 +183,9 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state
 	//       inconsistent states. For now, tasks nav is rendered first, so this approach is acceptable.
 	process_mouse_for_task_nav(state, tasks_list_a, scroll);
 
-	// -- Build Tasks UI
-	let tasks = state.tasks();
+	// -- Selection-in-view adjustment
+	// NOTE: Must run before computing the visible slice so the slice reflects the adjusted scroll.
 	let task_sel_idx = state.task_idx().unwrap_or_default();
-	let is_mouse_in_nav = state.is_last_mouse_over(tasks_list_a);
-	let items: Vec<ListItem> = tasks
-		.iter()
-		.enumerate()
-		.map(|(idx, task)| {
-			let mut line = Line::from(task.ui_label(Some(" "), area.width, tasks_len));
-			if task_sel_idx == idx {
-				line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
-				line = line.x_fg(style::CLR_TXT_BLACK);
-			} else if is_mouse_in_nav && state.is_last_mouse_over(tasks_list_a.x_row((idx + 1) as u16 - scroll)) {
-				line = line.fg(style::CLR_TXT_HOVER);
-			}
-			ListItem::new(line)
-		})
-		.collect();
-	let item_count = items.len() as u16;
-
-	// -- Render with widget
-	let list_w = List::new(items)
-		// .highlight_style(styles::STL_NAV_ITEM_HIGHLIGHT)
-		.highlight_spacing(HighlightSpacing::Always);
-
 	if selection_in_view {
 		let visible_top_idx = scroll as usize;
 		let area_height = tasks_list_a.height as usize;
@@ -225,17 +203,44 @@ fn render_tasks_nav(area: Rect, buf: &mut Buffer, selection_in_view: bool, state
 		}
 	}
 
-	let mut list_s = ListState::default().with_offset(scroll as usize);
-	// list_s.select(state.task_idx());
+	// -- Build visible-only task lines (virtualization)
+	// NOTE: We only format tasks in the visible window, so render cost scales with
+	//       viewport height instead of the full task count.
+	let tasks = state.tasks();
+	let is_mouse_in_nav = state.is_last_mouse_over(tasks_list_a);
 
-	StatefulWidget::render(list_w, tasks_list_a, buf, &mut list_s);
+	let start_idx = scroll as usize;
+	let end_idx = start_idx
+		.saturating_add(tasks_list_a.height as usize)
+		.min(tasks.len());
+
+	let mut visible_lines: Vec<Line<'static>> = Vec::with_capacity(end_idx.saturating_sub(start_idx));
+	for idx in start_idx..end_idx {
+		let task = &tasks[idx];
+		let mut line = Line::from(task.ui_label(Some(" "), area.width, tasks_len));
+		if task_sel_idx == idx {
+			line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
+			line = line.x_fg(style::CLR_TXT_BLACK);
+		} else {
+			// Map visible row index relative to the nav area for hover testing
+			let visible_row = (idx - start_idx) as u16;
+			if is_mouse_in_nav && state.is_last_mouse_over(tasks_list_a.x_row(visible_row + 1)) {
+				line = line.fg(style::CLR_TXT_HOVER);
+			}
+		}
+		visible_lines.push(line);
+	}
+
+	// -- Render with Paragraph (visible lines only, no widget-level offset needed)
+	Paragraph::new(visible_lines).render(tasks_list_a, buf);
 
 	// -- Render scroll icons
-	if item_count - scroll > tasks_list_a.height {
+	let item_count = tasks_len as u16;
+	if item_count.saturating_sub(scroll) > tasks_list_a.height {
 		let bottom_ico = tasks_list_a.x_bottom_right(1, 1);
 		comp::ico_scroll_down().render(bottom_ico, buf);
 	}
-	if scroll > 0 && item_count > tasks_list_a.height - scroll {
+	if scroll > 0 && item_count > tasks_list_a.height.saturating_sub(scroll) {
 		let top_ico = tasks_list_a.x_top_right(1, 1);
 		comp::ico_scroll_up().render(top_ico, buf);
 	}
