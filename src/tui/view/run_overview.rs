@@ -150,14 +150,21 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		));
 		lines
 	} else {
-		ui_for_task_list_viewport(
+		let top_padding = scroll.saturating_sub(task_section_start as u16) as usize;
+		let mut lines = if top_padding > 0 {
+			vec![Line::from(vec![Span::raw("")]); top_padding]
+		} else {
+			Vec::new()
+		};
+		lines.extend(ui_for_task_list_viewport(
 			state.tasks(),
 			max_width,
 			task_section_start,
 			scroll as usize,
 			area.height as usize,
 			&mut link_zones,
-		)
+		));
+		lines
 	};
 	support::extend_lines(&mut all_lines, task_list_lines, true);
 
@@ -394,100 +401,7 @@ fn ui_for_task_list_viewport(
 		return Vec::new();
 	}
 
-	let tasks_len = tasks.len();
-	let mut lines: Vec<Line<'static>> = Vec::new();
-	let (marker, marker_spacer) = tasks_marker();
-	let marker_width = marker.x_width();
-	let marker_spacer_width = marker_spacer.x_width();
-	let marker_prefix_spans_len = marker.len() + marker_spacer.len();
-
-	let content_width = max_width.saturating_sub(marker_spacer_width + marker_width);
-	let gap_span = Span::raw("  ");
-	let gap_width = gap_span.width() as u16;
-
-	let [label_a, _, input_a, _, _ai_a, _, output_a] = Layout::default()
-		.direction(Direction::Horizontal)
-		.constraints(vec![
-			Constraint::Length(12),        // label_a
-			Constraint::Length(gap_width), // gap
-			Constraint::Fill(3),           // input_a
-			Constraint::Length(gap_width), // gap
-			Constraint::Length(6),         // ai_a (hardcode in task.ui_ai())
-			Constraint::Length(gap_width), // gap
-			Constraint::Fill(5),           // output_a
-		])
-		.areas(Rect::new(0, 0, content_width, 1));
-
-	let visible_task_start = local_start.min(tasks_len);
-	let visible_task_end = local_end.min(tasks_len);
-
-	for task_idx in visible_task_start..visible_task_end {
-		let task = &tasks[task_idx];
-		let mut task_line = task.ui_label(None, label_a.width, tasks_len);
-		let task_id = task.id;
-
-		link_zones.push_link_zone(
-			lines.len(),
-			marker_prefix_spans_len + 2,
-			2,
-			UiAction::GoToTask { task_id },
-		);
-
-		task_line.push(gap_span.clone());
-
-		let input_spans = task.ui_input(input_a.width);
-		task_line.extend(input_spans);
-
-		task_line.push(gap_span.clone());
-
-		let ai_spans = task.ui_ai();
-		task_line.extend(ai_spans);
-
-		task_line.push(gap_span.clone());
-
-		if task.has_skip() {
-			let skip_spans = task.ui_skip(output_a.width);
-			task_line.extend(skip_spans);
-		} else {
-			let output_spans = task.ui_output(output_a.width);
-			task_line.extend(output_spans);
-		}
-
-		let prefix = if task_idx == 0 {
-			marker.clone()
-		} else {
-			vec![Span::raw(" ".repeat(marker_width as usize))]
-		};
-		let mut spans = prefix;
-		spans.extend(marker_spacer.clone());
-		spans.extend(task_line);
-		lines.push(Line::from(spans));
-	}
-
-	if local_start <= tasks_len && local_end > tasks_len {
-		let prefix = if tasks_len == 0 {
-			marker.clone()
-		} else {
-			vec![Span::raw(" ".repeat(marker_width as usize))]
-		};
-		let mut spans = prefix;
-		spans.extend(marker_spacer.clone());
-		lines.push(Line::from(spans));
-	}
-
-	if local_start <= tasks_len + 1 && local_end > tasks_len + 1 {
-		let prefix = if tasks_len == 0 {
-			marker.clone()
-		} else {
-			vec![Span::raw(" ".repeat(marker_width as usize))]
-		};
-		let mut spans = prefix;
-		spans.extend(marker_spacer.clone());
-		spans.extend(ui_for_legend(tasks));
-		lines.push(Line::from(spans));
-	}
-
-	lines
+	ui_for_task_list(tasks, max_width, link_zones)
 }
 
 fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
