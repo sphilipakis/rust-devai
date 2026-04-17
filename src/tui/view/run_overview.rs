@@ -591,6 +591,7 @@ fn ui_for_task_grid_viewport(
 	}
 
 	let mut lines: Vec<Line<'static>> = Vec::new();
+	let rendered_row_offset = local_start;
 
 	for local_row_idx in local_start..local_end {
 		if local_row_idx < layout.task_row_count {
@@ -607,7 +608,7 @@ fn ui_for_task_grid_viewport(
 				row_spans.extend(task_block);
 
 				link_zones.push_link_zone(
-					lines.len(),
+					rendered_row_offset + lines.len(),
 					layout.marker_prefix_spans_len + zone_span_start,
 					zone_span_count,
 					UiAction::GoToTask { task_id },
