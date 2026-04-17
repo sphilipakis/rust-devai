@@ -134,14 +134,21 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 
 	// -- Add the tasks ui
 	let task_list_lines = if is_grid {
-		ui_for_task_grid_viewport(
+		let top_padding = scroll.saturating_sub(task_section_start as u16) as usize;
+		let mut lines = if top_padding > 0 {
+			vec![Line::from(vec![Span::raw("")]); top_padding]
+		} else {
+			Vec::new()
+		};
+		lines.extend(ui_for_task_grid_viewport(
 			state.tasks(),
 			max_width,
 			task_section_start,
 			scroll as usize,
 			area.height as usize,
 			&mut link_zones,
-		)
+		));
+		lines
 	} else {
 		ui_for_task_list_viewport(
 			state.tasks(),
@@ -556,25 +563,6 @@ fn task_grid_layout(tasks: &[Task], max_width: u16) -> OverviewTaskGridLayout {
 	}
 }
 
-fn task_section_visible_local_range(
-	task_section_start: usize,
-	section_line_count: usize,
-	scroll: usize,
-	viewport_height: usize,
-) -> Option<(usize, usize)> {
-	let section_end = task_section_start + section_line_count;
-	let viewport_end = scroll.saturating_add(viewport_height);
-
-	if viewport_end <= task_section_start || scroll >= section_end {
-		return None;
-	}
-
-	let local_start = scroll.saturating_sub(task_section_start);
-	let local_end = viewport_end.saturating_sub(task_section_start).min(section_line_count);
-
-	(local_start < local_end).then_some((local_start, local_end))
-}
-
 fn ui_for_task_grid_viewport(
 	tasks: &[Task],
 	max_width: u16,
@@ -588,11 +576,19 @@ fn ui_for_task_grid_viewport(
 	}
 
 	let layout = task_grid_layout(tasks, max_width);
-	let Some((local_start, local_end)) =
-		task_section_visible_local_range(task_section_start, layout.logical_line_count, scroll, viewport_height)
-	else {
+	let section_end = task_section_start + layout.logical_line_count;
+	let viewport_end = scroll.saturating_add(viewport_height);
+
+	if viewport_end <= task_section_start || scroll >= section_end {
 		return Vec::new();
-	};
+	}
+
+	let local_start = scroll.saturating_sub(task_section_start);
+	let local_end = viewport_end.saturating_sub(task_section_start).min(layout.logical_line_count);
+
+	if local_start >= local_end {
+		return Vec::new();
+	}
 
 	let mut lines: Vec<Line<'static>> = Vec::new();
 
