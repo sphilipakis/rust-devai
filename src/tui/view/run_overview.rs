@@ -401,7 +401,14 @@ fn ui_for_task_list_viewport(
 		return Vec::new();
 	}
 
-	ui_for_task_list(tasks, max_width, link_zones)
+	let full_lines = ui_for_task_list(tasks, max_width, link_zones);
+	// Keep only the visible logical task-section lines and let the caller insert
+	// the top padding corresponding to the current scroll offset.
+	full_lines
+		.into_iter()
+		.skip(local_start)
+		.take(local_end - local_start)
+		.collect()
 }
 
 fn ui_for_task_grid(tasks: &[Task], max_width: u16, link_zones: &mut LinkZones) -> Vec<Line<'static>> {
