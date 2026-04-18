@@ -1,4 +1,4 @@
-use crate::model::{EntityType, ErrBmc, InstallData, ModelEvent, RunBmc, TaskBmc, WorkBmc};
+use crate::model::{EntityType, EpochUs, ErrBmc, InstallData, ModelEvent, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{AppActionEvent, ScrollDir};
@@ -310,7 +310,12 @@ fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, mo
 				refresh.refresh_task_rows = true;
 			}
 		}
-		EntityType::Log | EntityType::Err | EntityType::Prompt | EntityType::Pin | EntityType::Ucontent | EntityType::Inout => {
+		EntityType::Log
+		| EntityType::Err
+		| EntityType::Prompt
+		| EntityType::Pin
+		| EntityType::Ucontent
+		| EntityType::Inout => {
 			refresh.refresh_sys_err = true;
 		}
 		EntityType::Work => {
@@ -407,7 +412,29 @@ fn refresh_tasks(state: &mut AppState) {
 		if let Some(run_id) = current_run_id {
 			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
 			let tasks_len = tasks.len();
+			let mut tasks_cummulative_time_us: i64 = 0;
+			let mut last_task_mtime: Option<EpochUs> = None;
+			for task in &tasks {
+				last_task_mtime = match last_task_mtime {
+					Some(current_mtime) if current_mtime.as_i64() >= task.mtime.as_i64() => Some(current_mtime),
+					_ => Some(task.mtime),
+				};
+
+				let duration_us = match (&task.start, &task.end) {
+					(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
+					(Some(start), None) => state.core().time - start.as_i64(),
+					_ => 0,
+				};
+				tasks_cummulative_time_us += duration_us;
+			}
+
 			state.core_mut().tasks = tasks;
+			state.core_mut().run_tasks_info = Some(crate::tui::core::RunTasksInfo::new(
+				run_id,
+				tasks_len,
+				last_task_mtime,
+				tasks_cummulative_time_us,
+			));
 			// Important to avoid the "no current task" where there is ne.
 			// Need to reset task_idx to 0 if current task_idx is > that tasks
 			if let Some(current_task_idx) = state.core().task_idx
@@ -417,6 +444,7 @@ fn refresh_tasks(state: &mut AppState) {
 			}
 		} else {
 			state.core_mut().tasks.clear(); // Important when no run is selected
+			state.core_mut().run_tasks_info = None;
 		}
 	}
 }

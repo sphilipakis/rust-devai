@@ -245,7 +245,7 @@ if input == "one" then
 end
 ```
 
-# Output 
+# Output
 
 ```lua
 return "output for: " .. input
