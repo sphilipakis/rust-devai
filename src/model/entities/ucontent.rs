@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{Id, ModelManager, Result};
+use crate::model::{EntityType, Id, ModelManager, Result};
 use crate::support::text;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields as _};
@@ -35,6 +35,7 @@ pub struct UcontentBmc;
 
 impl DbBmc for UcontentBmc {
 	const TABLE: &'static str = "ucontent";
+	const ENTITY_TYPE: EntityType = EntityType::Ucontent;
 }
 
 impl UcontentBmc {

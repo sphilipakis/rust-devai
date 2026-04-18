@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{ContentTyp, EpochUs, Id, ModelManager, Result, ScalarEnum};
+use crate::model::{ContentTyp, EntityType, EpochUs, Id, ModelManager, Result, ScalarEnum};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -80,6 +80,7 @@ pub struct InoutBmc;
 
 impl DbBmc for InoutBmc {
 	const TABLE: &'static str = "inout";
+	const ENTITY_TYPE: EntityType = EntityType::Inout;
 }
 
 impl InoutBmc {

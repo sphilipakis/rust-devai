@@ -1,7 +1,7 @@
 // region:    --- Modules
 
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result, UcontentBmc};
+use crate::model::{EntityType, EpochUs, Id, ModelManager, Result, UcontentBmc};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
@@ -81,6 +81,7 @@ pub struct PinBmc;
 
 impl DbBmc for PinBmc {
 	const TABLE: &'static str = "pin";
+	const ENTITY_TYPE: EntityType = EntityType::Pin;
 }
 
 /// Public Bmcs

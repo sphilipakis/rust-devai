@@ -1,5 +1,6 @@
 use crate::Error;
 use crate::exec::ExecStatusEvent;
+use crate::model::DataEvent;
 use crate::tui_v1::{PrintEvent, PromptParams};
 use derive_more::derive::From;
 use std::sync::Arc;
@@ -34,6 +35,9 @@ pub enum HubEvent {
 	Print(Arc<PrintEvent>),
 
 	Prompt(PromptParams),
+
+	#[from]
+	Data(DataEvent),
 
 	// Used to ping the tui2 AppEvent to refresh
 	RtModelChange,

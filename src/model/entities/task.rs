@@ -1,7 +1,7 @@
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	EndState, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay, ModelManager, Result, RunningState,
-	Stage, TypedContent,
+	EndState, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay, ModelManager, Result,
+	RunningState, Stage, TypedContent,
 };
 use crate::support::time::now_micro;
 use modql::SqliteFromRow;
@@ -290,6 +290,7 @@ pub struct TaskBmc;
 
 impl DbBmc for TaskBmc {
 	const TABLE: &'static str = "task";
+	const ENTITY_TYPE: EntityType = EntityType::Task;
 }
 
 /// Basic CRUD

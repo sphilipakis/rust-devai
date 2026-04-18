@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, EpochUs, Id, ModelManager, Result, RunningState, Stage};
+use crate::model::{EndState, EntityType, EpochUs, Id, ModelManager, Result, RunningState, Stage};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
 use modql::filter::ListOptions;
@@ -144,6 +144,7 @@ pub struct RunBmc;
 
 impl DbBmc for RunBmc {
 	const TABLE: &'static str = "run";
+	const ENTITY_TYPE: EntityType = EntityType::Run;
 }
 
 /// Basic CRUD

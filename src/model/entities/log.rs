@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result, RunStep, RuntimeCtx, ScalarEnum, Stage};
+use crate::model::{EntityType, EpochUs, Id, ModelManager, Result, RunStep, RuntimeCtx, ScalarEnum, Stage};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -93,6 +93,7 @@ pub struct LogBmc;
 
 impl DbBmc for LogBmc {
 	const TABLE: &'static str = "log";
+	const ENTITY_TYPE: EntityType = EntityType::Log;
 }
 
 /// Basic Cruds

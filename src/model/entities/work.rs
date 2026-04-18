@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, EpochUs, Error, Id, ModelManager, Result, RunningState, ScalarEnum};
+use crate::model::{EndState, EntityType, EpochUs, Error, Id, ModelManager, Result, RunningState, ScalarEnum};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
@@ -96,6 +96,7 @@ pub struct WorkBmc;
 
 impl DbBmc for WorkBmc {
 	const TABLE: &'static str = "work";
+	const ENTITY_TYPE: EntityType = EntityType::Work;
 }
 
 impl WorkBmc {

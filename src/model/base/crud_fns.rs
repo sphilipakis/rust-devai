@@ -3,7 +3,7 @@ use crate::model::base::DbBmc;
 use crate::model::base::prep_fields::{
 	prep_fields_for_create, prep_fields_for_create_uid_included, prep_fields_for_update,
 };
-use crate::model::{Id, ModelManager, Result};
+use crate::model::{DataEvent, EntityAction, Id, ModelManager, RelIds, Result};
 use crate::support::consts;
 use modql::SqliteFromRow;
 use modql::field::{HasSqliteFields, SqliteFields};
@@ -92,7 +92,12 @@ where
 	let id = db.exec_returning_num(&sql, &*values)?;
 
 	// -- Publish Change Event
-	get_hub().publish_rt_model_change_sync();
+	get_hub().publish_sync(DataEvent {
+		entity: MC::ENTITY_TYPE,
+		action: EntityAction::Created,
+		id: Some(id.into()),
+		rel_ids: RelIds::default(),
+	});
 
 	Ok(id.into())
 }
@@ -114,7 +119,12 @@ where
 	let count = db.exec(&sql, &*values)?;
 
 	// -- Publish Change Event
-	get_hub().publish_rt_model_change_sync();
+	get_hub().publish_sync(DataEvent {
+		entity: MC::ENTITY_TYPE,
+		action: EntityAction::Updated,
+		id: Some(id),
+		rel_ids: RelIds::default(),
+	});
 
 	Ok(count)
 }

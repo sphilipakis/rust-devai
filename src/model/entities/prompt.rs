@@ -1,5 +1,5 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EpochUs, Id, ModelManager, Result, ScalarEnum};
+use crate::model::{EntityType, EpochUs, Id, ModelManager, Result, ScalarEnum};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -68,6 +68,7 @@ pub struct PromptBmc;
 
 impl DbBmc for PromptBmc {
 	const TABLE: &'static str = "prompt";
+	const ENTITY_TYPE: EntityType = EntityType::Prompt;
 }
 
 impl PromptBmc {

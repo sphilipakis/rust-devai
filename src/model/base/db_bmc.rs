@@ -1,8 +1,9 @@
-use crate::model::{Id, ModelManager, Result, base};
+use crate::model::{EntityType, Id, ModelManager, Result, base};
 use uuid::Uuid;
 
 pub trait DbBmc: Sized {
 	const TABLE: &'static str;
+	const ENTITY_TYPE: EntityType;
 
 	fn table_ref() -> &'static str {
 		Self::TABLE
