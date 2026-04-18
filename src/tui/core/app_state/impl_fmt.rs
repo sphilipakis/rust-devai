@@ -83,22 +83,12 @@ impl AppState {
 			return None;
 		};
 
-		let tasks = self.tasks();
-		if tasks.len() <= 1 {
+		let run_tasks_info = self.run_tasks_info()?;
+		if run_tasks_info.run_id() != run_item.id() || run_tasks_info.tasks_count() <= 1 {
 			return None;
 		}
 
-		let mut cumul_us: i64 = 0;
-		for task in tasks {
-			let du = match (task.start, task.end) {
-				(Some(start), Some(end)) => end.as_i64() - start.as_i64(),
-				(Some(start), None) => now_micro() - start.as_i64(),
-				_ => 0,
-			};
-			cumul_us += du;
-		}
-
-		Some(format_duration_us(cumul_us))
+		Some(format_duration_us(run_tasks_info.tasks_cummulative_time_us()))
 	}
 
 	/// Returns a string describing the models used by the tasks of the

@@ -4,6 +4,7 @@ use crate::model::{EpochUs, Id};
 pub struct RunTasksInfo {
 	run_id: Id,
 	tasks_count: usize,
+	#[allow(unused)]
 	last_task_mtime: Option<EpochUs>,
 	tasks_cummulative_time_us: i64,
 }
@@ -31,6 +32,7 @@ impl RunTasksInfo {
 		self.tasks_count
 	}
 
+	#[allow(unused)]
 	pub fn last_task_mtime(&self) -> Option<EpochUs> {
 		self.last_task_mtime
 	}
