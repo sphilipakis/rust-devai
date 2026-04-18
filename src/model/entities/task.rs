@@ -1,9 +1,11 @@
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	EndState, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay, ModelManager, Result,
+	DataEvent, EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay,
+	ModelManager, RelIds, Result,
 	RunningState, Stage, TypedContent,
 };
 use crate::support::time::now_micro;
+use crate::hub::get_hub;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;
@@ -328,6 +330,8 @@ impl TaskBmc {
 	/// Batch create tasks in a single transaction.
 	/// Returns created ids in input order. Post-insert, applies input_content logic per task.
 	pub fn create_batch(mm: &ModelManager, mut items: Vec<TaskForCreate>) -> Result<Vec<Id>> {
+		let run_id = items.first().map(|item| item.run_id);
+
 		// Extract and consume input_content to preserve it while building SqliteFields
 		let input_contents: Vec<Option<TypedContent>> = items.iter_mut().map(|t| t.input_content.take()).collect();
 
@@ -343,6 +347,16 @@ impl TaskBmc {
 				Self::update_input(mm, id, input)?;
 			}
 		}
+
+		get_hub().publish_sync(DataEvent {
+			entity: EntityType::Task,
+			action: EntityAction::Created,
+			id: None,
+			rel_ids: RelIds {
+				run_id,
+				..Default::default()
+			},
+		});
 
 		Ok(ids)
 	}
@@ -418,6 +432,18 @@ impl TaskBmc {
 
 		let num = db.exec(&sql, &*values)?;
 
+		if num > 0 {
+			get_hub().publish_sync(DataEvent {
+				entity: EntityType::Task,
+				action: EntityAction::Updated,
+				id: None,
+				rel_ids: RelIds {
+					run_id: Some(run_id),
+					..Default::default()
+				},
+			});
+		}
+
 		Ok(num)
 	}
 }
@@ -477,6 +503,8 @@ impl TaskBmc {
 
 	/// Update the input (called by create)
 	pub fn update_input(mm: &ModelManager, id: Id, input_content: TypedContent) -> Result<()> {
+		let task = TaskBmc::get(mm, id)?;
+
 		if let (Some(short), has_more) = input_content.extract_short() {
 			// -- update the Task
 			// NOTE: Important, if no more than short content, do not set input_uid
@@ -512,12 +540,24 @@ impl TaskBmc {
 					},
 				)?;
 			}
+
+			get_hub().publish_sync(DataEvent {
+				entity: EntityType::Task,
+				action: EntityAction::Updated,
+				id: Some(id),
+				rel_ids: RelIds {
+					run_id: Some(task.run_id),
+					..Default::default()
+				},
+			});
 		}
 		Ok(())
 	}
 
 	/// Note: used from runtime_rec
 	pub fn update_output(mm: &ModelManager, id: Id, output_content: TypedContent) -> Result<()> {
+		let task = TaskBmc::get(mm, id)?;
+
 		if let (Some(short), has_more) = output_content.extract_short() {
 			// -- update the Task
 			// NOTE: Important, if no more than short content, do not set input_uid
@@ -553,6 +593,16 @@ impl TaskBmc {
 					},
 				)?;
 			}
+
+			get_hub().publish_sync(DataEvent {
+				entity: EntityType::Task,
+				action: EntityAction::Updated,
+				id: Some(id),
+				rel_ids: RelIds {
+					run_id: Some(task.run_id),
+					..Default::default()
+				},
+			});
 		}
 		Ok(())
 	}

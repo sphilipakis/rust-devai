@@ -1,5 +1,6 @@
 use crate::model::base::{self, DbBmc};
-use crate::model::{EntityType, EpochUs, Id, ModelManager, Result, RunStep, RuntimeCtx, ScalarEnum, Stage};
+use crate::hub::get_hub;
+use crate::model::{DataEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, RunStep, RuntimeCtx, ScalarEnum, Stage};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields};
@@ -100,8 +101,22 @@ impl DbBmc for LogBmc {
 impl LogBmc {
 	#[allow(unused)]
 	pub fn create(mm: &ModelManager, log_c: LogForCreate) -> Result<Id> {
+		let rel_ids = RelIds {
+			run_id: Some(log_c.run_id),
+			task_id: log_c.task_id,
+			..Default::default()
+		};
 		let fields = log_c.sqlite_not_none_fields();
-		base::create::<Self>(mm, fields)
+		let id = base::create::<Self>(mm, fields)?;
+
+		get_hub().publish_sync(DataEvent {
+			entity: EntityType::Log,
+			action: EntityAction::Created,
+			id: Some(id),
+			rel_ids,
+		});
+
+		Ok(id)
 	}
 
 	#[allow(unused)]

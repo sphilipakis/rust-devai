@@ -1,5 +1,6 @@
+use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
-use crate::model::{EndState, EntityType, EpochUs, Error, Id, ModelManager, Result, RunningState, ScalarEnum};
+use crate::model::{DataEvent, EndState, EntityAction, EntityType, EpochUs, Error, Id, ModelManager, RelIds, Result, RunningState, ScalarEnum};
 use macro_rules_attribute as mra;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
@@ -102,7 +103,16 @@ impl DbBmc for WorkBmc {
 impl WorkBmc {
 	pub fn create(mm: &ModelManager, work_c: WorkForCreate) -> Result<Id> {
 		let fields = work_c.sqlite_not_none_fields();
-		base::create::<Self>(mm, fields)
+		let id = base::create::<Self>(mm, fields)?;
+
+		get_hub().publish_sync(DataEvent {
+			entity: EntityType::Work,
+			action: EntityAction::Created,
+			id: Some(id),
+			rel_ids: RelIds::default(),
+		});
+
+		Ok(id)
 	}
 
 	pub fn update(mm: &ModelManager, id: Id, work_u: WorkForUpdate) -> Result<usize> {

@@ -231,7 +231,12 @@ where
 		Ok(ids)
 	})?;
 
-	get_hub().publish_rt_model_change_sync();
+	get_hub().publish_sync(DataEvent {
+		entity: MC::ENTITY_TYPE,
+		action: EntityAction::Created,
+		id: None,
+		rel_ids: RelIds::default(),
+	});
 
 	Ok(res)
 }

@@ -1,7 +1,8 @@
 // region:    --- Modules
 
 use crate::model::base::{self, DbBmc};
-use crate::model::{EntityType, EpochUs, Id, ModelManager, Result, UcontentBmc};
+use crate::hub::get_hub;
+use crate::model::{DataEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, UcontentBmc};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
@@ -93,12 +94,13 @@ impl PinBmc {
 	///   - If creation did not occur (i.e., it was created concurrently), we assume it was created concurrently and try to update.
 	///   - NOTE: There is an argument for not updating if it was created concurrently.
 	pub fn save_run_pin(mm: &ModelManager, pin_s: PinForRunSave) -> Result<Id> {
+		let run_id = pin_s.run_id;
 		let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
 		let pin_u = Self::resolve_run_pin_fields(mm, &pin_s)?;
 
-		let id = if let Some(pin_id) = pin_id {
+		let (id, action) = if let Some(pin_id) = pin_id {
 			Self::update(mm, pin_id, pin_u.clone())?;
-			pin_id
+			(pin_id, EntityAction::Updated)
 		} else {
 			let pin_c = pin_u.clone();
 
@@ -113,30 +115,55 @@ impl PinBmc {
 				base::create_where_not_exists::<Self>(mm, fields, where_not_exists_fields, Some("task_id IS NULL"))?;
 
 			if let Some(id) = may_id {
-				id
+				(id, EntityAction::Created)
 			} else {
 				let pin_id = Self::get_run_pin_by_iden(mm, pin_s.run_id, &pin_s.iden)?;
 				let pin_id = pin_id.ok_or(format!("Should have returned a pin id for pin: {}", pin_s.iden))?;
 				// NOTE: we might not want to update here. This was was perhaps late?
 				Self::update(mm, pin_id, pin_u)?;
 
-				pin_id
+				(pin_id, EntityAction::Updated)
 			}
 		};
+
+		get_hub().publish_sync(DataEvent {
+			entity: EntityType::Pin,
+			action,
+			id: Some(id),
+			rel_ids: RelIds {
+				run_id: Some(run_id),
+				pin_id: Some(id),
+				..Default::default()
+			},
+		});
 
 		Ok(id)
 	}
 
 	pub fn save_task_pin(mm: &ModelManager, pin_s: PinForTaskSave) -> Result<Id> {
+		let run_id = pin_s.run_id;
+		let task_id = pin_s.task_id;
 		let pin_id = Self::get_task_pin_by_iden(mm, pin_s.task_id, &pin_s.iden)?;
 		let pin_u = Self::resolve_task_pin_fields(mm, &pin_s)?;
 
-		let id = if let Some(pin_id) = pin_id {
+		let (id, action) = if let Some(pin_id) = pin_id {
 			Self::update(mm, pin_id, pin_u)?;
-			pin_id
+			(pin_id, EntityAction::Updated)
 		} else {
-			Self::create(mm, pin_u)?
+			(Self::create(mm, pin_u)?, EntityAction::Created)
 		};
+
+		get_hub().publish_sync(DataEvent {
+			entity: EntityType::Pin,
+			action,
+			id: Some(id),
+			rel_ids: RelIds {
+				run_id: Some(run_id),
+				task_id: Some(task_id),
+				pin_id: Some(id),
+				..Default::default()
+			},
+		});
 
 		Ok(id)
 	}
