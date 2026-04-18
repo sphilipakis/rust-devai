@@ -3,7 +3,7 @@ use crate::model::base::DbBmc;
 use crate::model::base::prep_fields::{
 	prep_fields_for_create, prep_fields_for_create_uid_included, prep_fields_for_update,
 };
-use crate::model::{ModelEvent, EntityAction, Id, ModelManager, RelIds, Result};
+use crate::model::{EntityAction, Id, ModelEvent, ModelManager, RelIds, Result};
 use crate::support::consts;
 use modql::SqliteFromRow;
 use modql::field::{HasSqliteFields, SqliteFields};
@@ -15,6 +15,33 @@ where
 	MC: DbBmc,
 {
 	create_inner::<MC>(mm, fields, true)
+}
+
+pub fn update_with_rel_ids<MC>(mm: &ModelManager, id: Id, mut fields: SqliteFields, rel_ids: RelIds) -> Result<usize>
+where
+	MC: DbBmc,
+{
+	prep_fields_for_update::<MC>(&mut fields);
+
+	// -- Build sql
+	let sql = format!("UPDATE {} SET {} WHERE id = ?", MC::table_ref(), fields.sql_setters(),);
+
+	// -- Execute the command
+	let mut values = fields.values_as_dyn_to_sql_vec();
+	values.push(&*id);
+	let db = mm.db();
+
+	let count = db.exec(&sql, &*values)?;
+
+	// -- Publish Change Event
+	get_hub().publish_sync(ModelEvent {
+		entity: MC::ENTITY_TYPE,
+		action: EntityAction::Updated,
+		id: Some(id),
+		rel_ids,
+	});
+
+	Ok(count)
 }
 
 pub fn create_uid_included<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
@@ -102,31 +129,11 @@ where
 	Ok(id.into())
 }
 
-pub fn update<MC>(mm: &ModelManager, id: Id, mut fields: SqliteFields) -> Result<usize>
+pub fn update<MC>(mm: &ModelManager, id: Id, fields: SqliteFields) -> Result<usize>
 where
 	MC: DbBmc,
 {
-	prep_fields_for_update::<MC>(&mut fields);
-
-	// -- Build sql
-	let sql = format!("UPDATE {} SET {} WHERE id = ?", MC::table_ref(), fields.sql_setters(),);
-
-	// -- Execute the command
-	let mut values = fields.values_as_dyn_to_sql_vec();
-	values.push(&*id);
-	let db = mm.db();
-
-	let count = db.exec(&sql, &*values)?;
-
-	// -- Publish Change Event
-	get_hub().publish_sync(ModelEvent {
-		entity: MC::ENTITY_TYPE,
-		action: EntityAction::Updated,
-		id: Some(id),
-		rel_ids: RelIds::default(),
-	});
-
-	Ok(count)
+	update_with_rel_ids::<MC>(mm, id, fields, RelIds::default())
 }
 
 pub fn get<MC, E>(mm: &ModelManager, id: Id) -> Result<E>

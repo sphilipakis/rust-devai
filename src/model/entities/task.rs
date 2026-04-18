@@ -1,7 +1,7 @@
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	ModelEvent, EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay,
+	EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay, ModelEvent,
 	ModelManager, RelIds, Result, RunningState, Stage, TypedContent,
 };
 use crate::support::time::now_micro;
@@ -313,7 +313,16 @@ impl TaskBmc {
 
 	pub fn update(mm: &ModelManager, id: Id, task_u: TaskForUpdate) -> Result<usize> {
 		let fields = task_u.sqlite_not_none_fields();
-		base::update::<Self>(mm, id, fields)
+		let run_id = Self::get(mm, id)?.run_id;
+		base::update_with_rel_ids::<Self>(
+			mm,
+			id,
+			fields,
+			RelIds {
+				run_id: Some(run_id),
+				..Default::default()
+			},
+		)
 	}
 
 	#[allow(unused)]
@@ -616,6 +625,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
+	use crate::hub::{Hub, HubEvent};
 	use crate::model::{RunBmc, RunForCreate};
 	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
@@ -816,6 +826,48 @@ mod tests {
 			.filter_map(|t| t.end_state)
 			.collect();
 		assert_eq!(&format!("{states:?}"), "[Ok, Cancel, Cancel]");
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_task_update_publishes_model_event_with_run_id() -> Result<()> {
+		// -- Fixture
+		let hub = Hub::new();
+		let rx = hub.take_rx()?;
+		let mm = ModelManager::new().await?;
+		let run_id = create_run(&mm, "run-1").await?;
+		let task_id = TaskBmc::create(
+			&mm,
+			TaskForCreate {
+				run_id,
+				idx: 1,
+				label: Some("Test Task".to_string()),
+				input_content: None,
+			},
+		)?;
+
+		// -- Exec
+		TaskBmc::update(
+			&mm,
+			task_id,
+			TaskForUpdate {
+				start: Some(now_micro().into()),
+				..Default::default()
+			},
+		)?;
+
+		// -- Check
+		let event = rx.recv().await?;
+		match event {
+			HubEvent::Data(evt) => {
+				assert_eq!(evt.entity, EntityType::Task);
+				assert_eq!(evt.action, EntityAction::Updated);
+				assert_eq!(evt.id, Some(task_id));
+				assert_eq!(evt.rel_ids.run_id, Some(run_id));
+			}
+			_ => return Err("Should receive HubEvent::Data".into()),
+		}
 
 		Ok(())
 	}
