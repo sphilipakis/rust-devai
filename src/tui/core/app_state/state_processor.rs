@@ -1,4 +1,4 @@
-use crate::model::{ErrBmc, InstallData, RunBmc, TaskBmc, WorkBmc};
+use crate::model::{DataEvent, EntityType, ErrBmc, InstallData, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{AppActionEvent, ScrollDir};
@@ -167,56 +167,6 @@ pub fn process_app_state(state: &mut AppState) {
 		state.core_mut().next_overview_tasks_mode();
 	}
 
-	// -- Load runs and keep previous idx for later comparison
-	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
-	let runs_len = new_runs.len();
-	let has_new_runs = new_runs.len() != state.run_items().len();
-	let run_item_store = RunItemStore::new(new_runs);
-	state.core_mut().run_item_store = run_item_store;
-
-	// only change if we have new runs
-	if has_new_runs {
-		let prev_run_idx = state.core().run_idx;
-		let prev_run_id = state.core().run_id;
-
-		{
-			let inner = state.core_mut();
-
-			// When the runs panel is hidden, always pin the latest run (first run index) run.
-			if !inner.show_runs {
-				inner.set_run_by_idx(0);
-			} else {
-				// if the prev_run_idx was at 0, then, we keep it at 0
-				if prev_run_idx == Some(0) {
-					inner.set_run_by_idx(0);
-				}
-				// otherwise, we preserve the previous id
-				else if let Some(prev_run_id) = prev_run_id {
-					inner.set_run_by_id(prev_run_id);
-				} else {
-					inner.set_run_by_idx(0);
-				}
-			}
-		}
-
-		// -- Reset some view state if run selection changed
-		// TODO: Need to check if still needed.
-		if state.core().run_idx != prev_run_idx {
-			let inner = state.core_mut();
-			inner.task_idx = None;
-		}
-	}
-
-	// -- Fetch System Error
-	// NOTE: For now, we will assume that system errors are before the first run
-	// TODO: Eventually, this might not be true, as user could break the config.toml.
-	if runs_len == 0 {
-		// For now, ignore potential infra erro
-		if let Ok(sys_err) = ErrBmc::first_system_err(state.mm()) {
-			state.core_mut().sys_err = sys_err
-		}
-	}
-
 	// -- Navigation inside the runs list
 	let runs_nav_offset: i32 = if state.core().show_runs
 		&& let Some(code) = state.last_app_event().as_key_code()
@@ -233,24 +183,8 @@ pub fn process_app_state(state: &mut AppState) {
 		state.core_mut().offset_run_idx(runs_nav_offset);
 	}
 
-	// -- Load tasks for current run
-	let current_run_id = state.current_run_item().map(|r| r.id());
-	{
-		if let Some(run_id) = current_run_id {
-			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
-			let tasks_len = tasks.len();
-			state.core_mut().tasks = tasks;
-			// Important to avoid the "no current task" where there is ne.
-			// Need to reset task_idx to 0 if current task_idx is > that tasks
-			if let Some(current_task_idx) = state.core().task_idx
-				&& current_task_idx > tasks_len as i32 - 1
-			{
-				state.set_task_idx(Some(0));
-			}
-		} else {
-			state.core_mut().tasks.clear(); // Important when no run is selected
-		}
-	}
+	let refresh = compute_refresh_decision(state);
+	refresh_data(state, refresh);
 
 	// -- Initialise RunDetailsView if needed
 	{
@@ -340,6 +274,153 @@ pub fn process_app_state(state: &mut AppState) {
 }
 
 // region:    --- Action Processing
+
+#[derive(Debug, Clone, Copy, Default)]
+struct RefreshDecision {
+	refresh_runs: bool,
+	refresh_tasks: bool,
+	refresh_sys_err: bool,
+}
+
+fn compute_refresh_decision(state: &AppState) -> RefreshDecision {
+	let mut refresh = RefreshDecision::default();
+
+	if let Some(data_event) = state.last_data_event() {
+		apply_data_event_refresh(&mut refresh, state, data_event);
+	} else {
+		refresh.refresh_runs = true;
+		refresh.refresh_tasks = true;
+		refresh.refresh_sys_err = true;
+	}
+
+	if refresh.refresh_runs {
+		refresh.refresh_tasks = true;
+		refresh.refresh_sys_err = true;
+	}
+
+	refresh
+}
+
+fn apply_data_event_refresh(refresh: &mut RefreshDecision, state: &AppState, data_event: &DataEvent) {
+	match data_event.entity {
+		EntityType::Run => {
+			refresh.refresh_runs = true;
+		}
+		EntityType::Task => {
+			if should_refresh_tasks_for_event(state, data_event) {
+				refresh.refresh_tasks = true;
+			}
+		}
+		EntityType::Log | EntityType::Err | EntityType::Prompt | EntityType::Pin | EntityType::Ucontent | EntityType::Inout => {
+			if should_refresh_tasks_for_event(state, data_event) {
+				refresh.refresh_tasks = true;
+			}
+			refresh.refresh_sys_err = true;
+		}
+		EntityType::Work => {
+			refresh.refresh_runs = true;
+			refresh.refresh_tasks = true;
+			refresh.refresh_sys_err = true;
+		}
+	}
+}
+
+fn should_refresh_tasks_for_event(state: &AppState, data_event: &DataEvent) -> bool {
+	match data_event.rel_ids.run_id {
+		Some(run_id) => Some(run_id) == state.current_run_item().map(|run| run.id()),
+		None => true,
+	}
+}
+
+fn refresh_data(state: &mut AppState, refresh: RefreshDecision) {
+	if refresh.refresh_runs {
+		refresh_runs(state);
+	}
+
+	if refresh.refresh_sys_err {
+		refresh_sys_err(state);
+	}
+
+	if refresh.refresh_tasks {
+		refresh_tasks(state);
+	}
+}
+
+fn refresh_runs(state: &mut AppState) {
+	// -- Load runs and keep previous idx for later comparison
+	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
+	let has_new_runs = new_runs.len() != state.run_items().len();
+	let run_item_store = RunItemStore::new(new_runs);
+	state.core_mut().run_item_store = run_item_store;
+
+	// only change if we have new runs
+	if has_new_runs {
+		let prev_run_idx = state.core().run_idx;
+		let prev_run_id = state.core().run_id;
+
+		{
+			let inner = state.core_mut();
+
+			// When the runs panel is hidden, always pin the latest run (first run index) run.
+			if !inner.show_runs {
+				inner.set_run_by_idx(0);
+			} else {
+				// if the prev_run_idx was at 0, then, we keep it at 0
+				if prev_run_idx == Some(0) {
+					inner.set_run_by_idx(0);
+				}
+				// otherwise, we preserve the previous id
+				else if let Some(prev_run_id) = prev_run_id {
+					inner.set_run_by_id(prev_run_id);
+				} else {
+					inner.set_run_by_idx(0);
+				}
+			}
+		}
+
+		// -- Reset some view state if run selection changed
+		// TODO: Need to check if still needed.
+		if state.core().run_idx != prev_run_idx {
+			let inner = state.core_mut();
+			inner.task_idx = None;
+		}
+	}
+}
+
+fn refresh_sys_err(state: &mut AppState) {
+	let runs_len = state.run_items().len();
+
+	// -- Fetch System Error
+	// NOTE: For now, we will assume that system errors are before the first run
+	// TODO: Eventually, this might not be true, as user could break the config.toml.
+	if runs_len == 0 {
+		// For now, ignore potential infra erro
+		if let Ok(sys_err) = ErrBmc::first_system_err(state.mm()) {
+			state.core_mut().sys_err = sys_err
+		}
+	}
+}
+
+fn refresh_tasks(state: &mut AppState) {
+	// -- Load tasks for current run
+	let current_run_id = state.current_run_item().map(|r| r.id());
+	{
+		if let Some(run_id) = current_run_id {
+			let tasks = TaskBmc::list_for_run(state.mm(), run_id).unwrap_or_default();
+			let tasks_len = tasks.len();
+			state.core_mut().tasks = tasks;
+			// Important to avoid the "no current task" where there is ne.
+			// Need to reset task_idx to 0 if current task_idx is > that tasks
+			if let Some(current_task_idx) = state.core().task_idx
+				&& current_task_idx > tasks_len as i32 - 1
+			{
+				state.set_task_idx(Some(0));
+			}
+		} else {
+			state.core_mut().tasks.clear(); // Important when no run is selected
+		}
+	}
+}
 
 fn process_stage(state: &mut AppState) {
 	let current_stage = state.stage();

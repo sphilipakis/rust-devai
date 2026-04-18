@@ -1,6 +1,6 @@
 use super::{AppStateCore, SysState};
 use crate::Result;
-use crate::model::{Id, ModelManager, Task};
+use crate::model::{DataEvent, Id, ModelManager, Task};
 use crate::support::time::now_micro;
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
 use crate::tui::core::{AppStage, ConfigTab, OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
@@ -190,6 +190,10 @@ impl AppState {
 
 	pub fn last_app_event(&self) -> &LastAppEvent {
 		&self.core.last_app_event
+	}
+
+	pub fn last_data_event(&self) -> Option<&DataEvent> {
+		self.core.last_app_event.as_data_event()
 	}
 }
 
