@@ -1,4 +1,4 @@
-use crate::model::{DataEvent, EntityType, ErrBmc, InstallData, RunBmc, TaskBmc, WorkBmc};
+use crate::model::{EntityType, ErrBmc, InstallData, ModelEvent, RunBmc, TaskBmc, WorkBmc};
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{AppActionEvent, ScrollDir};
@@ -285,8 +285,8 @@ struct RefreshDecision {
 fn compute_refresh_decision(state: &AppState) -> RefreshDecision {
 	let mut refresh = RefreshDecision::default();
 
-	if let Some(data_event) = state.last_data_event() {
-		apply_data_event_refresh(&mut refresh, state, data_event);
+	if let Some(model_event) = state.last_model_event() {
+		apply_model_event_refresh(&mut refresh, state, model_event);
 	} else {
 		refresh.refresh_runs = true;
 		refresh.refresh_tasks = true;
@@ -301,13 +301,13 @@ fn compute_refresh_decision(state: &AppState) -> RefreshDecision {
 	refresh
 }
 
-fn apply_data_event_refresh(refresh: &mut RefreshDecision, state: &AppState, data_event: &DataEvent) {
-	match data_event.entity {
+fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, model_event: &ModelEvent) {
+	match model_event.entity {
 		EntityType::Run => {
 			refresh.refresh_runs = true;
 		}
 		EntityType::Task => {
-			if should_refresh_tasks_for_event(state, data_event) {
+			if should_refresh_tasks_for_event(state, model_event) {
 				refresh.refresh_tasks = true;
 			}
 		}
@@ -317,7 +317,7 @@ fn apply_data_event_refresh(refresh: &mut RefreshDecision, state: &AppState, dat
 		| EntityType::Pin
 		| EntityType::Ucontent
 		| EntityType::Inout => {
-			if should_refresh_tasks_for_event(state, data_event) {
+			if should_refresh_tasks_for_event(state, model_event) {
 				refresh.refresh_tasks = true;
 			}
 			refresh.refresh_sys_err = true;
@@ -330,8 +330,8 @@ fn apply_data_event_refresh(refresh: &mut RefreshDecision, state: &AppState, dat
 	}
 }
 
-fn should_refresh_tasks_for_event(state: &AppState, data_event: &DataEvent) -> bool {
-	match data_event.rel_ids.run_id {
+fn should_refresh_tasks_for_event(state: &AppState, model_event: &ModelEvent) -> bool {
+	match model_event.rel_ids.run_id {
 		Some(run_id) => Some(run_id) == state.current_run_item().map(|run| run.id()),
 		None => true,
 	}

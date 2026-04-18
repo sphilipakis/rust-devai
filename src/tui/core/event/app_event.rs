@@ -1,6 +1,6 @@
 use crate::exec::cli::RunArgs;
 use crate::hub::HubEvent;
-use crate::model::DataEvent;
+use crate::model::ModelEvent;
 use derive_more::From;
 
 /// The main application event enum.
@@ -26,7 +26,7 @@ pub enum AppEvent {
 
 	// Data Event
 	#[from]
-	Data(DataEvent),
+	Data(ModelEvent),
 
 	// Hub Event
 	#[from]

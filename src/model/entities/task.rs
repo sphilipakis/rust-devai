@@ -1,7 +1,7 @@
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	DataEvent, EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay,
+	ModelEvent, EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay,
 	ModelManager, RelIds, Result, RunningState, Stage, TypedContent,
 };
 use crate::support::time::now_micro;
@@ -347,7 +347,7 @@ impl TaskBmc {
 			}
 		}
 
-		get_hub().publish_sync(DataEvent {
+		get_hub().publish_sync(ModelEvent {
 			entity: EntityType::Task,
 			action: EntityAction::Created,
 			id: None,
@@ -432,7 +432,7 @@ impl TaskBmc {
 		let num = db.exec(&sql, &*values)?;
 
 		if num > 0 {
-			get_hub().publish_sync(DataEvent {
+			get_hub().publish_sync(ModelEvent {
 				entity: EntityType::Task,
 				action: EntityAction::Updated,
 				id: None,
@@ -540,7 +540,7 @@ impl TaskBmc {
 				)?;
 			}
 
-			get_hub().publish_sync(DataEvent {
+			get_hub().publish_sync(ModelEvent {
 				entity: EntityType::Task,
 				action: EntityAction::Updated,
 				id: Some(id),
@@ -593,7 +593,7 @@ impl TaskBmc {
 				)?;
 			}
 
-			get_hub().publish_sync(DataEvent {
+			get_hub().publish_sync(ModelEvent {
 				entity: EntityType::Task,
 				action: EntityAction::Updated,
 				id: Some(id),

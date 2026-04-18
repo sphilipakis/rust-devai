@@ -1,6 +1,8 @@
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
-use crate::model::{ContentTyp, DataEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, Stage};
+use crate::model::{
+	ContentTyp, EntityAction, EntityType, EpochUs, Id, ModelEvent, ModelManager, RelIds, Result, Stage,
+};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasFields as _, HasSqliteFields};
 use uuid::Uuid;
@@ -72,7 +74,7 @@ impl ErrBmc {
 		let fields = err_c.sqlite_not_none_fields();
 		let id = base::create::<Self>(mm, fields)?;
 
-		get_hub().publish_sync(DataEvent {
+		get_hub().publish_sync(ModelEvent {
 			entity: EntityType::Err,
 			action: EntityAction::Created,
 			id: Some(id),
@@ -202,7 +204,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_model_err_bmc_create_publishes_relation_aware_data_event() -> Result<()> {
+	async fn test_model_err_bmc_create_publishes_relation_aware_model_event() -> Result<()> {
 		// -- Setup & Fixtures
 		let hub = Hub::new();
 		let rx = hub.take_rx()?;
@@ -219,23 +221,23 @@ mod tests {
 
 		// -- Exec
 		let id = ErrBmc::create(&mm, err_c)?;
-		let mut found_data_event = None;
+		let mut found_model_event = None;
 		for _ in 0..8 {
 			let event = rx.recv().await?;
-			if let HubEvent::Data(data_event) = event
-				&& data_event.entity == EntityType::Err
-				&& data_event.id == Some(id)
+			if let HubEvent::Data(model_event) = event
+				&& model_event.entity == EntityType::Err
+				&& model_event.id == Some(id)
 			{
-				found_data_event = Some(data_event);
+				found_model_event = Some(model_event);
 				break;
 			}
 		}
 
 		// -- Check
-		let data_event = found_data_event.ok_or("Should have HubEvent::Data for err create")?;
-		assert_eq!(data_event.action, EntityAction::Created);
-		assert_eq!(data_event.rel_ids.run_id, Some(run_id));
-		assert_eq!(data_event.rel_ids.task_id, Some(task_id));
+		let model_event = found_model_event.ok_or("Should have HubEvent::Data for err create")?;
+		assert_eq!(model_event.action, EntityAction::Created);
+		assert_eq!(model_event.rel_ids.run_id, Some(run_id));
+		assert_eq!(model_event.rel_ids.task_id, Some(task_id));
 
 		Ok(())
 	}

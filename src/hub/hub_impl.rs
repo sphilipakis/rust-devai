@@ -89,14 +89,14 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::model::{DataEvent, EntityAction, EntityType, RelIds};
+	use crate::model::{EntityAction, EntityType, ModelEvent, RelIds};
 
 	#[tokio::test]
-	async fn test_hub_publish_data_event_simple() -> Result<()> {
+	async fn test_hub_publish_model_event_simple() -> Result<()> {
 		// -- Setup & Fixtures
 		let hub = Hub::new();
 		let rx = hub.take_rx()?;
-		let data_event = DataEvent {
+		let model_event = ModelEvent {
 			entity: EntityType::Run,
 			action: EntityAction::Created,
 			id: Some(42.into()),
@@ -104,7 +104,7 @@ mod tests {
 		};
 
 		// -- Exec
-		hub.publish(data_event).await;
+		hub.publish(model_event).await;
 		let event = rx.recv().await?;
 
 		// -- Check

@@ -1,7 +1,7 @@
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	DataEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, RunStep, RuntimeCtx, ScalarEnum,
+	ModelEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, RunStep, RuntimeCtx, ScalarEnum,
 	Stage,
 };
 use macro_rules_attribute as mra;
@@ -112,7 +112,7 @@ impl LogBmc {
 		let fields = log_c.sqlite_not_none_fields();
 		let id = base::create::<Self>(mm, fields)?;
 
-		get_hub().publish_sync(DataEvent {
+		get_hub().publish_sync(ModelEvent {
 			entity: EntityType::Log,
 			action: EntityAction::Created,
 			id: Some(id),

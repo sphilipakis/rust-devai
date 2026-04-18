@@ -3,7 +3,7 @@ use super::{AppTx, ExitTx};
 use crate::Result;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::HubEvent;
-use crate::model::{DataEvent, LogBmc, LogForCreate, LogKind, ModelManager};
+use crate::model::{LogBmc, LogForCreate, LogKind, ModelEvent, ModelManager};
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::DefaultTerminal;
 
@@ -32,8 +32,8 @@ pub async fn handle_app_event(
 		AppEvent::Action(action_event) => {
 			handle_action_event(action_event, terminal, executor_tx, exit_tx).await?;
 		}
-		AppEvent::Data(data_event) => {
-			handle_data_event(data_event).await?;
+		AppEvent::Data(model_event) => {
+			handle_model_event(model_event).await?;
 		}
 		AppEvent::Hub(hub_event) => {
 			handle_hub_event(mm, hub_event).await?;
@@ -125,8 +125,8 @@ async fn handle_action_event(
 	Ok(())
 }
 
-async fn handle_data_event(_data_event: &DataEvent) -> Result<()> {
-	// println!("DataEvent {data_event:?}"); // NOTE: Not sure why we had this before
+async fn handle_model_event(_model_event: &ModelEvent) -> Result<()> {
+	// println!("DataEvent {model_event:?}"); // NOTE: Not sure why we had this before
 	Ok(())
 }
 

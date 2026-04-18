@@ -37,7 +37,7 @@ pub struct RelIds {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DataEvent {
+pub struct ModelEvent {
 	pub entity: EntityType,
 	pub action: EntityAction,
 	pub id: Option<Id>,

@@ -58,7 +58,7 @@ impl LastAppEvent {
 		})
 	}
 
-	pub fn as_data_event(&self) -> Option<&crate::model::DataEvent> {
+	pub fn as_model_event(&self) -> Option<&crate::model::ModelEvent> {
 		self.last_event.as_ref().and_then(|e| match e.as_ref() {
 			AppEvent::Data(event) => Some(event),
 			_ => None,
