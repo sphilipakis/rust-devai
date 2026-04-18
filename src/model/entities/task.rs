@@ -341,7 +341,10 @@ impl TaskBmc {
 		let run_id = items.first().map(|item| item.run_id);
 
 		// Extract and consume input_content to preserve it while building SqliteFields
-		let input_contents: Vec<Option<TypedContent>> = items.iter_mut().map(|t| t.input_content.take()).collect();
+		let input_updates: Vec<Option<TaskInputPersistence>> = items
+			.iter_mut()
+			.map(|task| task.input_content.take().map(TaskInputPersistence::from_typed_content))
+			.collect();
 
 		// Build fields for batch insert (input_content is #[field(skip)], so not included)
 		let items_fields = base::map_items_to_sqlite_fields(items);
@@ -350,10 +353,51 @@ impl TaskBmc {
 		let ids = base::batch_create::<Self>(mm, items_fields)?;
 
 		// Apply input handling per task (short/display + inout record when needed)
-		for (id, may_input) in ids.iter().cloned().zip(input_contents.into_iter()) {
-			if let Some(input) = may_input {
-				Self::update_input(mm, id, input)?;
+		let task_uids: Vec<Uuid> = ids
+			.iter()
+			.cloned()
+			.map(|id| TaskBmc::get_uid(mm, id))
+			.collect::<Result<Vec<_>>>()?;
+		let mut inout_to_create: Vec<InoutForCreate> = Vec::new();
+		for ((id, task_uid), may_input_update) in
+			ids.iter().cloned().zip(task_uids.into_iter()).zip(input_updates.into_iter())
+		{
+			if let Some(input_update) = may_input_update {
+				let TaskInputPersistence {
+					input_uid,
+					input_short,
+					input_has_display,
+					inout_uid,
+					inout_typ,
+					inout_content,
+					inout_display,
+				} = input_update;
+
+				TaskBmc::update(
+					mm,
+					id,
+					TaskForUpdate {
+						input_uid,
+						input_short,
+						input_has_display,
+						..Default::default()
+					},
+				)?;
+
+				if let Some(inout_c) = inout_uid.map(|uid| InoutForCreate {
+					uid,
+					task_uid,
+					typ: inout_typ,
+					content: inout_content,
+					display: inout_display,
+				}) {
+					inout_to_create.push(inout_c);
+				}
 			}
+		}
+
+		for inout_c in inout_to_create {
+			InoutBmc::create(mm, inout_c)?;
 		}
 
 		get_hub().publish_sync(ModelEvent {
@@ -488,6 +532,53 @@ impl TaskBmc {
 }
 
 // endregion: --- Bmc
+
+// region:    --- Support Types
+
+#[derive(Debug)]
+struct TaskInputPersistence {
+	input_uid: Option<Uuid>,
+	input_short: Option<String>,
+	input_has_display: Option<bool>,
+	inout_uid: Option<Uuid>,
+	inout_typ: Option<crate::model::ContentTyp>,
+	inout_content: Option<String>,
+	inout_display: Option<String>,
+}
+
+impl TaskInputPersistence {
+	fn from_typed_content(input_content: TypedContent) -> Self {
+		if let (Some(short), has_more) = input_content.extract_short() {
+			let (input_uid, input_has_display) = if has_more {
+				(Some(input_content.uid), Some(input_content.display.is_some()))
+			} else {
+				(None, None)
+			};
+
+			Self {
+				input_uid,
+				input_short: Some(short),
+				input_has_display,
+				inout_uid: has_more.then_some(input_content.uid),
+				inout_typ: has_more.then_some(input_content.typ),
+				inout_content: has_more.then_some(input_content.content).flatten(),
+				inout_display: has_more.then_some(input_content.display).flatten(),
+			}
+		} else {
+			Self {
+				input_uid: None,
+				input_short: None,
+				input_has_display: None,
+				inout_uid: None,
+				inout_typ: None,
+				inout_content: None,
+				inout_display: None,
+			}
+		}
+	}
+}
+
+// endregion: --- Support Types
 
 // region:    --- Bmc going to Content Model
 
@@ -660,6 +751,7 @@ mod tests {
 	use crate::model::{RunBmc, RunForCreate};
 	use crate::support::time::now_micro;
 	use modql::filter::OrderBy;
+	use serde_json::json;
 
 	// region:    --- Support
 	async fn create_run(mm: &ModelManager, label: &str) -> Result<Id> {
@@ -899,6 +991,37 @@ mod tests {
 			}
 			_ => return Err("Should receive HubEvent::Data".into()),
 		}
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_task_bmc_create_batch_persists_input_fields() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_id = create_run(&mm, "run-batch").await?;
+		let long_input = "x".repeat(80);
+		let items = vec![
+			TaskForCreate::new_with_input(run_id, 0, None, &json!("short input")),
+			TaskForCreate::new_with_input(run_id, 1, None, &json!(long_input)),
+		];
+
+		// -- Exec
+		let ids = TaskBmc::create_batch(&mm, items)?;
+
+		// -- Check
+		assert_eq!(ids.len(), 2);
+
+		let task_short = TaskBmc::get(&mm, ids[0])?;
+		assert_eq!(task_short.input_short, Some("short input".to_string()));
+		assert!(task_short.input_uid.is_none());
+
+		let task_long = TaskBmc::get(&mm, ids[1])?;
+		assert!(task_long.input_short.is_some());
+		assert!(task_long.input_uid.is_some());
+
+		let stored_input = TaskBmc::get_input_for_display(&mm, &task_long)?;
+		assert_eq!(stored_input, Some("x".repeat(80)));
 
 		Ok(())
 	}
