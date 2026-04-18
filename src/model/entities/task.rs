@@ -1,11 +1,10 @@
+use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
 use crate::model::{
 	DataEvent, EndState, EntityAction, EntityType, EpochUs, Id, Inout, InoutBmc, InoutForCreate, InoutOnlyDisplay,
-	ModelManager, RelIds, Result,
-	RunningState, Stage, TypedContent,
+	ModelManager, RelIds, Result, RunningState, Stage, TypedContent,
 };
 use crate::support::time::now_micro;
-use crate::hub::get_hub;
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField};
 use modql::filter::ListOptions;

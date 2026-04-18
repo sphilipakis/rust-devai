@@ -311,7 +311,12 @@ fn apply_data_event_refresh(refresh: &mut RefreshDecision, state: &AppState, dat
 				refresh.refresh_tasks = true;
 			}
 		}
-		EntityType::Log | EntityType::Err | EntityType::Prompt | EntityType::Pin | EntityType::Ucontent | EntityType::Inout => {
+		EntityType::Log
+		| EntityType::Err
+		| EntityType::Prompt
+		| EntityType::Pin
+		| EntityType::Ucontent
+		| EntityType::Inout => {
 			if should_refresh_tasks_for_event(state, data_event) {
 				refresh.refresh_tasks = true;
 			}

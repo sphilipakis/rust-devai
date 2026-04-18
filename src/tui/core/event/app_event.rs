@@ -64,5 +64,3 @@ pub enum AppActionEvent {
 	WorkCancel(crate::model::Id),
 	Run(RunArgs),
 }
-
-
