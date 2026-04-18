@@ -278,7 +278,7 @@ pub fn process_app_state(state: &mut AppState) {
 #[derive(Debug, Clone, Copy, Default)]
 struct RefreshDecision {
 	refresh_runs: bool,
-	refresh_tasks: bool,
+	refresh_task_rows: bool,
 	refresh_sys_err: bool,
 }
 
@@ -289,12 +289,11 @@ fn compute_refresh_decision(state: &AppState) -> RefreshDecision {
 		apply_model_event_refresh(&mut refresh, state, model_event);
 	} else {
 		refresh.refresh_runs = true;
-		refresh.refresh_tasks = true;
+		refresh.refresh_task_rows = true;
 		refresh.refresh_sys_err = true;
 	}
 
 	if refresh.refresh_runs {
-		refresh.refresh_tasks = true;
 		refresh.refresh_sys_err = true;
 	}
 
@@ -308,23 +307,14 @@ fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, mo
 		}
 		EntityType::Task => {
 			if should_refresh_tasks_for_event(state, model_event) {
-				refresh.refresh_tasks = true;
+				refresh.refresh_task_rows = true;
 			}
 		}
-		EntityType::Log
-		| EntityType::Err
-		| EntityType::Prompt
-		| EntityType::Pin
-		| EntityType::Ucontent
-		| EntityType::Inout => {
-			if should_refresh_tasks_for_event(state, model_event) {
-				refresh.refresh_tasks = true;
-			}
+		EntityType::Log | EntityType::Err | EntityType::Prompt | EntityType::Pin | EntityType::Ucontent | EntityType::Inout => {
 			refresh.refresh_sys_err = true;
 		}
 		EntityType::Work => {
 			refresh.refresh_runs = true;
-			refresh.refresh_tasks = true;
 			refresh.refresh_sys_err = true;
 		}
 	}
@@ -346,13 +336,14 @@ fn refresh_data(state: &mut AppState, refresh: RefreshDecision) {
 		refresh_sys_err(state);
 	}
 
-	if refresh.refresh_tasks {
+	if refresh.refresh_task_rows {
 		refresh_tasks(state);
 	}
 }
 
 fn refresh_runs(state: &mut AppState) {
 	// -- Load runs and keep previous idx for later comparison
+	let prev_run_id = state.core().run_id;
 	let new_runs = RunBmc::list_for_display(state.mm(), None).unwrap_or_default();
 	let has_new_runs = new_runs.len() != state.run_items().len();
 	let run_item_store = RunItemStore::new(new_runs);
@@ -361,7 +352,6 @@ fn refresh_runs(state: &mut AppState) {
 	// only change if we have new runs
 	if has_new_runs {
 		let prev_run_idx = state.core().run_idx;
-		let prev_run_id = state.core().run_id;
 
 		{
 			let inner = state.core_mut();
@@ -389,6 +379,10 @@ fn refresh_runs(state: &mut AppState) {
 			let inner = state.core_mut();
 			inner.task_idx = None;
 		}
+	}
+
+	if state.core().run_id != prev_run_id {
+		refresh_tasks(state);
 	}
 }
 
