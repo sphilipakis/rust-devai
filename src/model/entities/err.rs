@@ -117,7 +117,7 @@ mod tests {
 	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
 	use super::*;
-	use crate::hub::HubEvent;
+	use crate::hub::{Hub, HubEvent};
 	use crate::model::{RunBmc, RunForCreate, TaskBmc, TaskForCreate};
 	use crate::support::time::now_micro;
 
