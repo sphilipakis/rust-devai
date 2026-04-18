@@ -396,8 +396,8 @@ impl TaskBmc {
 			}
 		}
 
-		for inout_c in inout_to_create {
-			InoutBmc::create(mm, inout_c)?;
+		if !inout_to_create.is_empty() {
+			InoutBmc::create_batch(mm, inout_to_create)?;
 		}
 
 		get_hub().publish_sync(ModelEvent {
@@ -1022,6 +1022,38 @@ mod tests {
 
 		let stored_input = TaskBmc::get_input_for_display(&mm, &task_long)?;
 		assert_eq!(stored_input, Some("x".repeat(80)));
+
+		Ok(())
+	}
+
+	#[tokio::test]
+	async fn test_model_task_bmc_create_batch_creates_large_inputs_in_batch() -> Result<()> {
+		// -- Fixture
+		let mm = ModelManager::new().await?;
+		let run_id = create_run(&mm, "run-batch-large").await?;
+		let long_input_a = "a".repeat(80);
+		let long_input_b = "b".repeat(90);
+		let items = vec![
+			TaskForCreate::new_with_input(run_id, 0, None, &json!(long_input_a.clone())),
+			TaskForCreate::new_with_input(run_id, 1, None, &json!(long_input_b.clone())),
+		];
+
+		// -- Exec
+		let ids = TaskBmc::create_batch(&mm, items)?;
+
+		// -- Check
+		assert_eq!(ids.len(), 2);
+
+		let task_a = TaskBmc::get(&mm, ids[0])?;
+		let task_b = TaskBmc::get(&mm, ids[1])?;
+		let input_uid_a = task_a.input_uid.ok_or("Should have input_uid for first long input")?;
+		let input_uid_b = task_b.input_uid.ok_or("Should have input_uid for second long input")?;
+
+		let inout_a = InoutBmc::get_by_uid::<Inout>(&mm, input_uid_a)?;
+		let inout_b = InoutBmc::get_by_uid::<Inout>(&mm, input_uid_b)?;
+
+		assert_eq!(inout_a.content, Some(long_input_a));
+		assert_eq!(inout_b.content, Some(long_input_b));
 
 		Ok(())
 	}

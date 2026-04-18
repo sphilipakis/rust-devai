@@ -89,6 +89,11 @@ impl InoutBmc {
 		base::create_uid_included::<Self>(mm, fields)
 	}
 
+	pub fn create_batch(mm: &ModelManager, items: Vec<InoutForCreate>) -> Result<Vec<Id>> {
+		let items_fields = base::map_items_to_sqlite_fields(items);
+		base::batch_create::<Self>(mm, items_fields)
+	}
+
 	#[allow(unused)]
 	pub fn update(mm: &ModelManager, id: Id, input_u: InoutForUpdate) -> Result<usize> {
 		let fields = input_u.sqlite_not_none_fields();
