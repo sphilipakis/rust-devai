@@ -82,36 +82,44 @@ pub fn get_hub() -> &'static Hub {
 	&HUB
 }
 
-// Example usage in an async context
+// region:    --- Tests
+
 #[cfg(test)]
 mod tests {
-	use super::*;
+	type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>; // For tests.
 
-	pub type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+	use super::*;
+	use crate::model::{DataEvent, EntityAction, EntityType, RelIds};
 
 	#[tokio::test]
-	async fn test_hub() -> Result<()> {
-		let hub = get_hub();
-
+	async fn test_hub_publish_data_event_simple() -> Result<()> {
+		// -- Setup & Fixtures
+		let hub = Hub::new();
 		let rx = hub.take_rx()?;
-		tokio::spawn(async move {
-			while let Ok(event) = rx.recv().await {
-				#[allow(clippy::single_match)]
-				match event {
-					HubEvent::Message(msg) => {
-						println!("Received Message: {msg}");
-					}
-					_ => (),
-				}
+		let data_event = DataEvent {
+			entity: EntityType::Run,
+			action: EntityAction::Created,
+			id: Some(42.into()),
+			rel_ids: RelIds::default(),
+		};
+
+		// -- Exec
+		hub.publish(data_event).await;
+		let event = rx.recv().await?;
+
+		// -- Check
+		match event {
+			HubEvent::Data(evt) => {
+				assert_eq!(evt.entity, EntityType::Run);
+				assert_eq!(evt.action, EntityAction::Created);
+				assert_eq!(evt.id, Some(42.into()));
+				assert_eq!(evt.rel_ids, RelIds::default());
 			}
-		});
-
-		// Testing async publish
-		hub.publish(HubEvent::Message("Hello, world!".into())).await;
-
-		// NOTE: Call below will fail in test because require multi-thread
-		// hub.publish_sync(Event::Message("Hello from sync!".to_string()));
+			_ => return Err("Should receive HubEvent::Data".into()),
+		}
 
 		Ok(())
 	}
 }
+
+// endregion: --- Tests
