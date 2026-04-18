@@ -354,7 +354,7 @@ impl<'a> RtStep<'a> {
 		// -- if we do not have a end_err_id, we set this one
 		// Note: this will se the end_state as well
 		if task.end_err_id.is_none() {
-			TaskBmc::set_end_error(mm, task_id, None, err)?;
+			TaskBmc::set_end_error_no_end(mm, task_id, None, err)?;
 		}
 
 		// -- Update Task State

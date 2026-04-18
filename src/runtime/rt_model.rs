@@ -249,7 +249,7 @@ impl<'a> RtModel<'a> {
 	}
 
 	pub fn set_task_end_error(&self, _run_id: Id, task_id: Id, stage: Option<Stage>, err: &crate::Error) -> Result<()> {
-		TaskBmc::set_end_error(self.mm(), task_id, stage, err)?;
+		TaskBmc::set_end_error_no_end(self.mm(), task_id, stage, err)?;
 		Ok(())
 	}
 
