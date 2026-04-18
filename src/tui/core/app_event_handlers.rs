@@ -125,8 +125,8 @@ async fn handle_action_event(
 	Ok(())
 }
 
-async fn handle_data_event(data_event: &DataEvent) -> Result<()> {
-	println!("DataEvent {data_event:?}");
+async fn handle_data_event(_data_event: &DataEvent) -> Result<()> {
+	// println!("DataEvent {data_event:?}"); // NOTE: Not sure why we had this before
 	Ok(())
 }
 
