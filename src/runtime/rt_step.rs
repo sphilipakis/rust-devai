@@ -133,6 +133,10 @@ impl<'a> RtStep<'a> {
 		Ok(())
 	}
 
+	pub async fn step_task_schedule(&self, run_id: Id, task_id: Id) -> Result<()> {
+		self.step_task_start(run_id, task_id).await
+	}
+
 	pub async fn step_task_data_start(&self, run_id: Id, task_id: Id) -> Result<()> {
 		// -- Update Task State
 		let task_u = TaskForUpdate {

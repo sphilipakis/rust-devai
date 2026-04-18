@@ -44,6 +44,13 @@ where
 	Ok(count)
 }
 
+pub fn update<MC>(mm: &ModelManager, id: Id, fields: SqliteFields) -> Result<usize>
+where
+	MC: DbBmc,
+{
+	update_with_rel_ids::<MC>(mm, id, fields, RelIds::default())
+}
+
 pub fn create_uid_included<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
 where
 	MC: DbBmc,
@@ -127,13 +134,6 @@ where
 	});
 
 	Ok(id.into())
-}
-
-pub fn update<MC>(mm: &ModelManager, id: Id, fields: SqliteFields) -> Result<usize>
-where
-	MC: DbBmc,
-{
-	update_with_rel_ids::<MC>(mm, id, fields, RelIds::default())
 }
 
 pub fn get<MC, E>(mm: &ModelManager, id: Id) -> Result<E>

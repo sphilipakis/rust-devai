@@ -173,6 +173,8 @@ pub async fn run_agent_task(
 
 	let client = runtime.genai_client();
 
+	rt_step.step_task_schedule(run_id, task_id).await?;
+
 	// -- Build Base Rt Context
 	let base_rt_ctx = RuntimeCtx::from_run_task_ids(runtime, Some(run_id), Some(task_id))?;
 
