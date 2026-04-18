@@ -3,7 +3,7 @@ use crate::Result;
 use crate::model::{Id, ModelEvent, ModelManager, Task};
 use crate::support::time::now_micro;
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
-use crate::tui::core::{AppStage, ConfigTab, OverviewTasksMode, RunItemStore, RunTab, ScrollZones};
+use crate::tui::core::{AppStage, ConfigTab, OverviewTasksMode, RunItemStore, RunTab, RunTasksInfo, ScrollZones};
 use crate::tui::view::PopupView;
 
 /// Public wrapper around AppStateCore.
@@ -51,6 +51,7 @@ impl AppState {
 			// -- Data
 			run_item_store: RunItemStore::default(),
 			tasks: Vec::new(),
+			run_tasks_info: None,
 
 			// -- Stage & Work
 			stage: AppStage::Normal,
@@ -171,6 +172,10 @@ impl AppState {
 
 	pub fn tasks(&self) -> &[Task] {
 		&self.core.tasks
+	}
+
+	pub fn run_tasks_info(&self) -> Option<&RunTasksInfo> {
+		self.core.run_tasks_info.as_ref()
 	}
 
 	pub fn current_task(&self) -> Option<&Task> {

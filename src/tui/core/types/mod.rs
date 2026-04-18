@@ -7,6 +7,7 @@ mod overview_tasks_mode;
 mod run_item;
 mod run_item_store;
 mod run_tab;
+mod run_tasks_info;
 mod scroll_zone;
 mod ui_action;
 
@@ -17,6 +18,7 @@ pub use overview_tasks_mode::*;
 pub use run_item::*;
 pub use run_item_store::*;
 pub use run_tab::*;
+pub use run_tasks_info::*;
 pub use scroll_zone::*;
 pub use ui_action::*;
 
