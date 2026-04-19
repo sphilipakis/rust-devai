@@ -142,7 +142,7 @@ fn current_event_refreshes_tasks(app_event: &AppEvent) -> bool {
 	};
 
 	if let Some(model_event) = model_event {
-		matches!(model_event.entity, EntityType::Task)
+		matches!(model_event.entity, EntityType::Task | EntityType::Run)
 	} else {
 		false
 	}
