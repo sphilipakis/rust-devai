@@ -3,7 +3,8 @@ use super::event::{AppActionEvent, AppEvent, LastAppEvent};
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
-use crate::model::{EntityType, ModelEvent, ModelManager};
+use crate::hub::HubEvent;
+use crate::model::{EntityType, ModelManager};
 use crate::support::time::now_micro;
 use crate::tui::core::app_state::{ProcessAppStateOpts, process_app_state};
 use crate::tui::core::{PingTimerTx, start_ping_timer};
@@ -118,7 +119,6 @@ pub fn run_ui_loop(
 			if let Some(action_event) = app_state.take_action_event_to_send() {
 				let _ = app_tx.send(action_event).await;
 			}
-
 		}
 	});
 	Ok(handle)
@@ -135,12 +135,15 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 }
 
 fn current_event_refreshes_tasks(app_event: &AppEvent) -> bool {
-	match model_event.entity {
-		EntityType::Task => match (current_run_id, model_event.rel_ids.run_id) {
-			(Some(current_run_id), Some(event_run_id)) => current_run_id == event_run_id,
-			(Some(_), None) => true,
-			(None, _) => false,
-		},
-		_ => false,
+	let model_event = match app_event {
+		AppEvent::Data(model_event) => Some(model_event),
+		AppEvent::Hub(HubEvent::Data(model_event)) => Some(model_event),
+		_ => None,
+	};
+
+	if let Some(model_event) = model_event {
+		matches!(model_event.entity, EntityType::Task)
+	} else {
+		false
 	}
 }
