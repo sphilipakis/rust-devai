@@ -392,7 +392,7 @@ impl TaskBmc {
 			.map(|id| TaskBmc::get_uid(mm, id))
 			.collect::<Result<Vec<_>>>()?;
 		let mut inout_to_create: Vec<InoutForCreate> = Vec::new();
-		for ((id, task_uid), may_input_update) in
+		for ((_id, task_uid), may_input_update) in
 			ids.iter().cloned().zip(task_uids.into_iter()).zip(input_updates.into_iter())
 		{
 			if let Some(input_update) = may_input_update {
@@ -684,7 +684,8 @@ impl TaskBmc {
 						typ: Some(input_content.typ),
 						content: input_content.content,
 						display: input_content.display,
-					},
+					}
+					.sqlite_not_none_fields(),
 					RelIds {
 						run_id: Some(task.run_id),
 						task_id: Some(id),
@@ -732,7 +733,8 @@ impl TaskBmc {
 						typ: Some(output_content.typ),
 						content: output_content.content,
 						display: output_content.display,
-					},
+					}
+					.sqlite_not_none_fields(),
 					RelIds {
 						run_id: Some(task.run_id),
 						task_id: Some(id),

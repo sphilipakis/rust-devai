@@ -222,14 +222,18 @@ where
 
 /// Batch create with a single transaction and a single publish event.
 /// Returns created ids in input order.
-pub fn batch_create<MC>(mm: &ModelManager, mut items: Vec<SqliteFields>) -> Result<Vec<Id>>
+pub fn batch_create<MC>(mm: &ModelManager, items: Vec<SqliteFields>) -> Result<Vec<Id>>
 where
 	MC: DbBmc,
 {
 	batch_create_with_rel_ids::<MC>(mm, items, RelIds::default())
 }
 
-pub fn batch_create_with_rel_ids<MC>(mm: &ModelManager, mut items: Vec<SqliteFields>, rel_ids: RelIds) -> Result<Vec<Id>>
+pub fn batch_create_with_rel_ids<MC>(
+	mm: &ModelManager,
+	mut items: Vec<SqliteFields>,
+	rel_ids: RelIds,
+) -> Result<Vec<Id>>
 where
 	MC: DbBmc,
 {
