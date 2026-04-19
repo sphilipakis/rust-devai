@@ -516,57 +516,7 @@ impl TaskBmc {
 	}
 }
 
-// endregion: --- Bmc
-
-// region:    --- Support Types
-
-#[derive(Debug)]
-struct TaskInputPersistence {
-	input_uid: Option<Uuid>,
-	input_short: Option<String>,
-	input_has_display: Option<bool>,
-	inout_uid: Option<Uuid>,
-	inout_typ: Option<crate::model::ContentTyp>,
-	inout_content: Option<String>,
-	inout_display: Option<String>,
-}
-
-impl TaskInputPersistence {
-	fn from_typed_content(input_content: TypedContent) -> Self {
-		if let (Some(short), has_more) = input_content.extract_short() {
-			let (input_uid, input_has_display) = if has_more {
-				(Some(input_content.uid), Some(input_content.display.is_some()))
-			} else {
-				(None, None)
-			};
-
-			Self {
-				input_uid,
-				input_short: Some(short),
-				input_has_display,
-				inout_uid: has_more.then_some(input_content.uid),
-				inout_typ: has_more.then_some(input_content.typ),
-				inout_content: has_more.then_some(input_content.content).flatten(),
-				inout_display: has_more.then_some(input_content.display).flatten(),
-			}
-		} else {
-			Self {
-				input_uid: None,
-				input_short: None,
-				input_has_display: None,
-				inout_uid: None,
-				inout_typ: None,
-				inout_content: None,
-				inout_display: None,
-			}
-		}
-	}
-}
-
-// endregion: --- Support Types
-
-// region:    --- Bmc going to Content Model
-
+/// To content
 impl TaskBmc {
 	/// Note: Used by tui
 	pub fn get_input_for_display(mm: &ModelManager, task: &Task) -> Result<Option<String>> {
@@ -714,6 +664,55 @@ impl TaskBmc {
 		Ok(())
 	}
 }
+
+// endregion: --- Bmc
+
+// region:    --- Support Types
+
+#[derive(Debug)]
+struct TaskInputPersistence {
+	input_uid: Option<Uuid>,
+	input_short: Option<String>,
+	input_has_display: Option<bool>,
+	inout_uid: Option<Uuid>,
+	inout_typ: Option<crate::model::ContentTyp>,
+	inout_content: Option<String>,
+	inout_display: Option<String>,
+}
+
+impl TaskInputPersistence {
+	fn from_typed_content(input_content: TypedContent) -> Self {
+		if let (Some(short), has_more) = input_content.extract_short() {
+			let (input_uid, input_has_display) = if has_more {
+				(Some(input_content.uid), Some(input_content.display.is_some()))
+			} else {
+				(None, None)
+			};
+
+			Self {
+				input_uid,
+				input_short: Some(short),
+				input_has_display,
+				inout_uid: has_more.then_some(input_content.uid),
+				inout_typ: has_more.then_some(input_content.typ),
+				inout_content: has_more.then_some(input_content.content).flatten(),
+				inout_display: has_more.then_some(input_content.display).flatten(),
+			}
+		} else {
+			Self {
+				input_uid: None,
+				input_short: None,
+				input_has_display: None,
+				inout_uid: None,
+				inout_typ: None,
+				inout_content: None,
+				inout_display: None,
+			}
+		}
+	}
+}
+
+// endregion: --- Support Types
 
 // endregion: --- Bmc going to Content Model
 
