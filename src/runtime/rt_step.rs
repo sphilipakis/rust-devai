@@ -328,6 +328,11 @@ impl<'a> RtStep<'a> {
 		};
 
 		// -- Update Task State
+		tracing::debug!(
+			"->> step_task_end_ok run_id: {} - task_idx: {}",
+			run_id,
+			task.idx.unwrap_or_default()
+		);
 		let task_u = TaskForUpdate {
 			end: Some(now_micro().into()),
 			end_state,

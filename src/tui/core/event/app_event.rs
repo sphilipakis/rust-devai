@@ -26,7 +26,7 @@ pub enum AppEvent {
 
 	// Data Event
 	#[from]
-	Data(ModelEvent),
+	Model(ModelEvent),
 
 	// Hub Event
 	#[from]
@@ -38,7 +38,7 @@ pub enum AppEvent {
 
 impl AppEvent {
 	pub fn is_refresh_event(&self) -> bool {
-		matches!(self, AppEvent::DoRedraw | AppEvent::Data(_) | AppEvent::Hub(_))
+		matches!(self, AppEvent::DoRedraw | AppEvent::Model(_) | AppEvent::Hub(_))
 	}
 }
 

@@ -136,8 +136,8 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 
 fn current_event_refreshes_tasks(app_event: &AppEvent) -> bool {
 	let model_event = match app_event {
-		AppEvent::Data(model_event) => Some(model_event),
-		AppEvent::Hub(HubEvent::Data(model_event)) => Some(model_event),
+		AppEvent::Model(model_event) => Some(model_event),
+		AppEvent::Hub(HubEvent::Model(model_event)) => Some(model_event),
 		_ => None,
 	};
 

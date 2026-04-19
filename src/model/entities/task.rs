@@ -959,7 +959,7 @@ mod tests {
 		// -- Check
 		let event = rx.recv().await?;
 		match event {
-			HubEvent::Data(evt) => {
+			HubEvent::Model(evt) => {
 				assert_eq!(evt.entity, EntityType::Task);
 				assert_eq!(evt.action, EntityAction::Updated);
 				assert_eq!(evt.id, Some(task_id));

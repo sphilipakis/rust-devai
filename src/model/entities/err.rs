@@ -224,7 +224,7 @@ mod tests {
 		let mut found_model_event = None;
 		for _ in 0..8 {
 			let event = rx.recv().await?;
-			if let HubEvent::Data(model_event) = event
+			if let HubEvent::Model(model_event) = event
 				&& model_event.entity == EntityType::Err
 				&& model_event.id == Some(id)
 			{

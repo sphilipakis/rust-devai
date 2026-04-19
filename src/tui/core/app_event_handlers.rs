@@ -32,7 +32,7 @@ pub async fn handle_app_event(
 		AppEvent::Action(action_event) => {
 			handle_action_event(action_event, terminal, executor_tx, exit_tx).await?;
 		}
-		AppEvent::Data(model_event) => {
+		AppEvent::Model(model_event) => {
 			handle_model_event(model_event).await?;
 		}
 		AppEvent::Hub(hub_event) => {

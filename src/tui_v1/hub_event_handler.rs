@@ -49,7 +49,7 @@ pub async fn handle_hub_event(
 		HubEvent::Quit => {
 			exit_tx.send(()).await?;
 		}
-		HubEvent::Data(_model_event) => (), // TODO: needs to decide what to do here
+		HubEvent::Model(_model_event) => (), // TODO: needs to decide what to do here
 	}
 
 	Ok(())

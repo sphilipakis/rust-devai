@@ -37,7 +37,7 @@ pub enum HubEvent {
 	Prompt(PromptParams),
 
 	#[from]
-	Data(ModelEvent),
+	Model(ModelEvent),
 
 	// Used to ping the tui2 AppEvent to refresh
 	RtModelChange,

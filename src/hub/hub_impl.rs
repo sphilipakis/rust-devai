@@ -109,7 +109,7 @@ mod tests {
 
 		// -- Check
 		match event {
-			HubEvent::Data(evt) => {
+			HubEvent::Model(evt) => {
 				assert_eq!(evt.entity, EntityType::Run);
 				assert_eq!(evt.action, EntityAction::Created);
 				assert_eq!(evt.id, Some(42.into()));
