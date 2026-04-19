@@ -16,7 +16,7 @@ mod sys_state;
 pub use app_state_base::*;
 use app_state_core::*;
 pub use common::*;
-pub use state_processor::process_app_state;
+pub use state_processor::*;
 pub use sys_state::*;
 
 // endregion: --- Modules

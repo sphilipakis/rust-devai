@@ -11,7 +11,12 @@ use std::time::Duration;
 
 const SCROLL_KEY_MAIN_VIEW: bool = true;
 
-pub fn process_app_state(state: &mut AppState) {
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ProcessAppStateOpts {
+	pub do_refresh_current_tasks: bool,
+}
+
+pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 	// -- Process tick
 	state.core.time = now_micro();
 
@@ -183,7 +188,7 @@ pub fn process_app_state(state: &mut AppState) {
 		state.core_mut().offset_run_idx(runs_nav_offset);
 	}
 
-	let refresh = compute_refresh_decision(state);
+	let refresh = compute_refresh_decision(state, opts);
 	refresh_data(state, refresh);
 
 	// -- Initialise RunDetailsView if needed
@@ -282,14 +287,16 @@ struct RefreshDecision {
 	refresh_sys_err: bool,
 }
 
-fn compute_refresh_decision(state: &AppState) -> RefreshDecision {
-	let mut refresh = RefreshDecision::default();
+fn compute_refresh_decision(state: &AppState, opts: ProcessAppStateOpts) -> RefreshDecision {
+	let mut refresh = RefreshDecision {
+		refresh_task_rows: opts.do_refresh_current_tasks,
+		..Default::default()
+	};
 
 	if let Some(model_event) = state.last_model_event() {
 		apply_model_event_refresh(&mut refresh, state, model_event);
 	} else {
 		refresh.refresh_runs = true;
-		refresh.refresh_task_rows = true;
 		refresh.refresh_sys_err = true;
 	}
 
@@ -305,11 +312,7 @@ fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, mo
 		EntityType::Run => {
 			refresh.refresh_runs = true;
 		}
-		EntityType::Task => {
-			if should_refresh_tasks_for_event(state, model_event) {
-				refresh.refresh_task_rows = true;
-			}
-		}
+		EntityType::Task => {}
 		EntityType::Log
 		| EntityType::Err
 		| EntityType::Prompt
@@ -322,13 +325,6 @@ fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, mo
 			refresh.refresh_runs = true;
 			refresh.refresh_sys_err = true;
 		}
-	}
-}
-
-fn should_refresh_tasks_for_event(state: &AppState, model_event: &ModelEvent) -> bool {
-	match model_event.rel_ids.run_id {
-		Some(run_id) => Some(run_id) == state.current_run_item().map(|run| run.id()),
-		None => true,
 	}
 }
 

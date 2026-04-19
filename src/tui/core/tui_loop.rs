@@ -3,9 +3,9 @@ use super::event::{AppActionEvent, AppEvent, LastAppEvent};
 use crate::Result;
 use crate::event::Rx;
 use crate::exec::ExecutorTx;
-use crate::model::ModelManager;
+use crate::model::{EntityType, ModelEvent, ModelManager};
 use crate::support::time::now_micro;
-use crate::tui::core::app_state::process_app_state;
+use crate::tui::core::app_state::{ProcessAppStateOpts, process_app_state};
 use crate::tui::core::{PingTimerTx, start_ping_timer};
 use crate::tui::{AppState, AppTx, ExitTx, MainView};
 use ratatui::DefaultTerminal;
@@ -28,14 +28,6 @@ pub fn run_ui_loop(
 
 	let handle = tokio::spawn(async move {
 		loop {
-			// -- Update App State
-			process_app_state(&mut app_state);
-
-			// -- If action to send, send it
-			if let Some(action_event) = app_state.take_action_event_to_send() {
-				let _ = app_tx.send(action_event).await;
-			}
-
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
 
@@ -113,6 +105,18 @@ pub fn run_ui_loop(
 			)
 			.await;
 
+			let process_opts = ProcessAppStateOpts {
+				do_refresh_current_tasks: should_refresh_current_tasks(&app_state, &app_event),
+			};
+
+			// -- Update App State
+			process_app_state(&mut app_state, process_opts);
+
+			// -- If action to send, send it
+			if let Some(action_event) = app_state.take_action_event_to_send() {
+				let _ = app_tx.send(action_event).await;
+			}
+
 			// Update the last_app_event
 			app_state.core_mut().last_app_event = app_event.into();
 		}
@@ -128,4 +132,35 @@ fn terminal_draw(terminal: &mut DefaultTerminal, app_state: &mut AppState) -> Re
 	})?;
 
 	Ok(())
+}
+
+fn should_refresh_current_tasks(app_state: &AppState, app_event: &AppEvent) -> bool {
+	if app_state.tasks().is_empty() {
+		return true;
+	}
+
+	let current_run_id = app_state.current_run_item().map(|run| run.id());
+	let loaded_run_id = app_state.run_tasks_info().map(|info| info.run_id());
+	if current_run_id != loaded_run_id {
+		return true;
+	}
+
+	match app_event {
+		AppEvent::Data(model_event) => should_refresh_current_tasks_for_model_event(current_run_id, model_event),
+		_ => false,
+	}
+}
+
+fn should_refresh_current_tasks_for_model_event(
+	current_run_id: Option<crate::model::Id>,
+	model_event: &ModelEvent,
+) -> bool {
+	match model_event.entity {
+		EntityType::Task => match (current_run_id, model_event.rel_ids.run_id) {
+			(Some(current_run_id), Some(event_run_id)) => current_run_id == event_run_id,
+			(Some(_), None) => true,
+			(None, _) => false,
+		},
+		_ => false,
+	}
 }
