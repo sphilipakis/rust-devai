@@ -109,6 +109,8 @@ pub fn run_ui_loop(
 				do_refresh_current_tasks: should_refresh_current_tasks(&app_state, &app_event),
 			};
 
+			app_state.core_mut().last_app_event = app_event.into();
+
 			// -- Update App State
 			process_app_state(&mut app_state, process_opts);
 
@@ -117,8 +119,6 @@ pub fn run_ui_loop(
 				let _ = app_tx.send(action_event).await;
 			}
 
-			// Update the last_app_event
-			app_state.core_mut().last_app_event = app_event.into();
 		}
 	});
 	Ok(handle)
