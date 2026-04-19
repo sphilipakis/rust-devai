@@ -13,7 +13,7 @@ const SCROLL_KEY_MAIN_VIEW: bool = true;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ProcessAppStateOpts {
-	pub do_refresh_current_tasks: bool,
+	pub current_event_refreshes_tasks: bool,
 }
 
 pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
@@ -288,10 +288,7 @@ struct RefreshDecision {
 }
 
 fn compute_refresh_decision(state: &AppState, opts: ProcessAppStateOpts) -> RefreshDecision {
-	let mut refresh = RefreshDecision {
-		refresh_task_rows: opts.do_refresh_current_tasks,
-		..Default::default()
-	};
+	let mut refresh = RefreshDecision::default();
 
 	if let Some(model_event) = state.last_model_event() {
 		apply_model_event_refresh(&mut refresh, state, model_event);
@@ -304,10 +301,17 @@ fn compute_refresh_decision(state: &AppState, opts: ProcessAppStateOpts) -> Refr
 		refresh.refresh_sys_err = true;
 	}
 
+	let current_run_id = state.current_run_item().map(|run| run.id());
+	let loaded_run_id = state.run_tasks_info().map(|info| info.run_id());
+	refresh.refresh_task_rows = state.tasks().is_empty()
+		|| current_run_id != loaded_run_id
+		|| (opts.current_event_refreshes_tasks && current_run_id.is_some());
+
 	refresh
 }
 
 fn apply_model_event_refresh(refresh: &mut RefreshDecision, state: &AppState, model_event: &ModelEvent) {
+	let _ = state;
 	match model_event.entity {
 		EntityType::Run => {
 			refresh.refresh_runs = true;
@@ -380,10 +384,6 @@ fn refresh_runs(state: &mut AppState) {
 			let inner = state.core_mut();
 			inner.task_idx = None;
 		}
-	}
-
-	if state.core().run_id != prev_run_id {
-		refresh_tasks(state);
 	}
 }
 
