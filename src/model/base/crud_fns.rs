@@ -14,7 +14,7 @@ pub fn create<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
 where
 	MC: DbBmc,
 {
-	create_inner::<MC>(mm, fields, true)
+	create_inner::<MC>(mm, fields, true, RelIds::default())
 }
 
 pub fn update_with_rel_ids<MC>(mm: &ModelManager, id: Id, mut fields: SqliteFields, rel_ids: RelIds) -> Result<usize>
@@ -55,7 +55,7 @@ pub fn create_uid_included<MC>(mm: &ModelManager, fields: SqliteFields) -> Resul
 where
 	MC: DbBmc,
 {
-	create_inner::<MC>(mm, fields, false)
+	create_inner::<MC>(mm, fields, false, RelIds::default())
 }
 
 pub fn create_where_not_exists<MC>(
@@ -102,7 +102,21 @@ RETURNING id",
 	Ok(id.map(|id| id.into()))
 }
 
-fn create_inner<MC>(mm: &ModelManager, mut fields: SqliteFields, generate_uuid: bool) -> Result<Id>
+pub fn create_with_rel_ids<MC>(mm: &ModelManager, fields: SqliteFields, rel_ids: RelIds) -> Result<Id>
+where
+	MC: DbBmc,
+{
+	create_inner::<MC>(mm, fields, true, rel_ids)
+}
+
+pub fn create_uid_included_with_rel_ids<MC>(mm: &ModelManager, fields: SqliteFields, rel_ids: RelIds) -> Result<Id>
+where
+	MC: DbBmc,
+{
+	create_inner::<MC>(mm, fields, false, rel_ids)
+}
+
+fn create_inner<MC>(mm: &ModelManager, mut fields: SqliteFields, generate_uuid: bool, rel_ids: RelIds) -> Result<Id>
 where
 	MC: DbBmc,
 {
@@ -130,7 +144,7 @@ where
 		entity: MC::ENTITY_TYPE,
 		action: EntityAction::Created,
 		id: Some(id.into()),
-		rel_ids: RelIds::default(),
+		rel_ids,
 	});
 
 	Ok(id.into())
@@ -212,6 +226,13 @@ pub fn batch_create<MC>(mm: &ModelManager, mut items: Vec<SqliteFields>) -> Resu
 where
 	MC: DbBmc,
 {
+	batch_create_with_rel_ids::<MC>(mm, items, RelIds::default())
+}
+
+pub fn batch_create_with_rel_ids<MC>(mm: &ModelManager, mut items: Vec<SqliteFields>, rel_ids: RelIds) -> Result<Vec<Id>>
+where
+	MC: DbBmc,
+{
 	if items.is_empty() {
 		return Ok(Vec::new());
 	}
@@ -242,7 +263,7 @@ where
 		entity: MC::ENTITY_TYPE,
 		action: EntityAction::Created,
 		id: None,
-		rel_ids: RelIds::default(),
+		rel_ids,
 	});
 
 	Ok(res)

@@ -86,12 +86,28 @@ impl DbBmc for InoutBmc {
 impl InoutBmc {
 	pub fn create(mm: &ModelManager, input_c: InoutForCreate) -> Result<Id> {
 		let fields = input_c.sqlite_not_none_fields();
-		base::create_uid_included::<Self>(mm, fields)
+		base::create_uid_included_with_rel_ids::<Self>(
+			mm,
+			fields,
+			crate::model::RelIds {
+				inout_id: None,
+				..Default::default()
+			},
+		)
 	}
 
 	pub fn create_batch(mm: &ModelManager, items: Vec<InoutForCreate>) -> Result<Vec<Id>> {
 		let items_fields = base::map_items_to_sqlite_fields(items);
-		base::batch_create::<Self>(mm, items_fields)
+		base::batch_create_with_rel_ids::<Self>(mm, items_fields, Default::default())
+	}
+
+	pub fn create_batch_with_rel_ids(
+		mm: &ModelManager,
+		items: Vec<InoutForCreate>,
+		rel_ids: crate::model::RelIds,
+	) -> Result<Vec<Id>> {
+		let items_fields = base::map_items_to_sqlite_fields(items);
+		base::batch_create_with_rel_ids::<Self>(mm, items_fields, rel_ids)
 	}
 
 	#[allow(unused)]

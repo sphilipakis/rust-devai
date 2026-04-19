@@ -298,10 +298,18 @@ impl DbBmc for TaskBmc {
 impl TaskBmc {
 	pub fn create(mm: &ModelManager, mut task_c: TaskForCreate) -> Result<Id> {
 		let input_content = task_c.input_content.take();
+		let run_id = task_c.run_id;
 
 		// -- Add input_uid
 		let task_fields = task_c.sqlite_not_none_fields();
-		let id = base::create::<Self>(mm, task_fields)?;
+		let id = base::create_with_rel_ids::<Self>(
+			mm,
+			task_fields,
+			RelIds {
+				run_id: Some(run_id),
+				..Default::default()
+			},
+		)?;
 
 		// -- Add input Content
 		if let Some(input_content) = input_content {
@@ -347,10 +355,35 @@ impl TaskBmc {
 			.collect();
 
 		// Build fields for batch insert (input_content is #[field(skip)], so not included)
-		let items_fields = base::map_items_to_sqlite_fields(items);
+		let items_fields = items
+			.into_iter()
+			.zip(input_updates.iter())
+			.map(|(task, may_input_update)| {
+				let mut fields = task.sqlite_not_none_fields();
+				if let Some(input_update) = may_input_update {
+					if let Some(input_uid) = input_update.input_uid {
+						fields.push(SqliteField::new("input_uid", input_uid));
+					}
+					if let Some(input_short) = input_update.input_short.as_ref() {
+						fields.push(SqliteField::new("input_short", input_short.clone()));
+					}
+					if let Some(input_has_display) = input_update.input_has_display {
+						fields.push(SqliteField::new("input_has_display", input_has_display));
+					}
+				}
+				fields
+			})
+			.collect();
 
 		// Batch insert tasks
-		let ids = base::batch_create::<Self>(mm, items_fields)?;
+		let ids = base::batch_create_with_rel_ids::<Self>(
+			mm,
+			items_fields,
+			RelIds {
+				run_id,
+				..Default::default()
+			},
+		)?;
 
 		// Apply input handling per task (short/display + inout record when needed)
 		let task_uids: Vec<Uuid> = ids
@@ -364,25 +397,12 @@ impl TaskBmc {
 		{
 			if let Some(input_update) = may_input_update {
 				let TaskInputPersistence {
-					input_uid,
-					input_short,
-					input_has_display,
 					inout_uid,
 					inout_typ,
 					inout_content,
 					inout_display,
+					..
 				} = input_update;
-
-				TaskBmc::update(
-					mm,
-					id,
-					TaskForUpdate {
-						input_uid,
-						input_short,
-						input_has_display,
-						..Default::default()
-					},
-				)?;
 
 				if let Some(inout_c) = inout_uid.map(|uid| InoutForCreate {
 					uid,
@@ -397,18 +417,15 @@ impl TaskBmc {
 		}
 
 		if !inout_to_create.is_empty() {
-			InoutBmc::create_batch(mm, inout_to_create)?;
+			InoutBmc::create_batch_with_rel_ids(
+				mm,
+				inout_to_create,
+				RelIds {
+					run_id,
+					..Default::default()
+				},
+			)?;
 		}
-
-		get_hub().publish_sync(ModelEvent {
-			entity: EntityType::Task,
-			action: EntityAction::Created,
-			id: None,
-			rel_ids: RelIds {
-				run_id,
-				..Default::default()
-			},
-		});
 
 		Ok(ids)
 	}
@@ -659,7 +676,7 @@ impl TaskBmc {
 			if has_more {
 				// let (short, has_more) = input_content.extract_short()
 				let task_uid = TaskBmc::get_uid(mm, id)?;
-				InoutBmc::create(
+				base::create_uid_included_with_rel_ids::<InoutBmc>(
 					mm,
 					InoutForCreate {
 						uid: input_content.uid,
@@ -668,18 +685,13 @@ impl TaskBmc {
 						content: input_content.content,
 						display: input_content.display,
 					},
+					RelIds {
+						run_id: Some(task.run_id),
+						task_id: Some(id),
+						..Default::default()
+					},
 				)?;
 			}
-
-			get_hub().publish_sync(ModelEvent {
-				entity: EntityType::Task,
-				action: EntityAction::Updated,
-				id: Some(id),
-				rel_ids: RelIds {
-					run_id: Some(task.run_id),
-					..Default::default()
-				},
-			});
 		}
 		Ok(())
 	}
@@ -712,7 +724,7 @@ impl TaskBmc {
 			if has_more {
 				// let (short, has_more) = input_content.extract_short()
 				let task_uid = TaskBmc::get_uid(mm, id)?;
-				InoutBmc::create(
+				base::create_uid_included_with_rel_ids::<InoutBmc>(
 					mm,
 					InoutForCreate {
 						uid: output_content.uid,
@@ -721,18 +733,13 @@ impl TaskBmc {
 						content: output_content.content,
 						display: output_content.display,
 					},
+					RelIds {
+						run_id: Some(task.run_id),
+						task_id: Some(id),
+						..Default::default()
+					},
 				)?;
 			}
-
-			get_hub().publish_sync(ModelEvent {
-				entity: EntityType::Task,
-				action: EntityAction::Updated,
-				id: Some(id),
-				rel_ids: RelIds {
-					run_id: Some(task.run_id),
-					..Default::default()
-				},
-			});
 		}
 		Ok(())
 	}
