@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
 	// NOTE: need to keep the handle, otherwise dropped, and nothing get added to the file
 	let _tracing_guard = if DEBUG_LOG {
 		// Create a file appender (will write all logs to ".tmp.log" in the current dir)
-		let file_appender = never(".aip-debug-log", "file.log");
+		let file_appender = never(".aip-debug-log", "log.txt");
 		let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
 		// Set up the subscriber with the file writer and log level
