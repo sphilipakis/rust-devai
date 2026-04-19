@@ -445,38 +445,6 @@ impl TaskBmc {
 		Self::list(mm, None, Some(filter))
 	}
 
-	pub fn set_end_error(
-		mm: &ModelManager,
-		task_id: Id,
-		stage: Option<Stage>,
-		error: &crate::error::Error,
-	) -> Result<()> {
-		use crate::model::{ContentTyp, ErrBmc, ErrForCreate};
-
-		let task = Self::get(mm, task_id)?;
-
-		// -- Create the err rec
-		let err_c = ErrForCreate {
-			stage,
-			run_id: Some(task.run_id),
-			task_id: Some(task_id),
-			typ: Some(ContentTyp::Text),
-			content: Some(error.to_string()),
-		};
-		let err_id = ErrBmc::create(mm, err_c)?;
-
-		// -- Update the task
-		let task_u = TaskForUpdate {
-			end: Some(now_micro().into()),
-			end_state: Some(EndState::Err),
-			end_err_id: Some(err_id),
-			..Default::default()
-		};
-		Self::update(mm, task_id, task_u)?;
-
-		Ok(())
-	}
-
 	pub fn set_end_error_no_end(
 		mm: &ModelManager,
 		task_id: Id,

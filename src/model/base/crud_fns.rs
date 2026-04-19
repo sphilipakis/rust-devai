@@ -51,13 +51,6 @@ where
 	update_with_rel_ids::<MC>(mm, id, fields, RelIds::default())
 }
 
-pub fn create_uid_included<MC>(mm: &ModelManager, fields: SqliteFields) -> Result<Id>
-where
-	MC: DbBmc,
-{
-	create_inner::<MC>(mm, fields, false, RelIds::default())
-}
-
 pub fn create_where_not_exists<MC>(
 	mm: &ModelManager,
 	mut fields: SqliteFields,
@@ -218,15 +211,6 @@ where
 	let id: Id = db.exec_returning_as(&sql, (uid,))?;
 
 	Ok(id)
-}
-
-/// Batch create with a single transaction and a single publish event.
-/// Returns created ids in input order.
-pub fn batch_create<MC>(mm: &ModelManager, items: Vec<SqliteFields>) -> Result<Vec<Id>>
-where
-	MC: DbBmc,
-{
-	batch_create_with_rel_ids::<MC>(mm, items, RelIds::default())
 }
 
 pub fn batch_create_with_rel_ids<MC>(
