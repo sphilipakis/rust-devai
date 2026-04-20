@@ -29,17 +29,6 @@ pub fn run_ui_loop(
 
 	let handle = tokio::spawn(async move {
 		'outer: loop {
-			// -- Draw
-			let _ = terminal_draw(&mut terminal, &mut app_state);
-
-			// -- Trigger the redraw if needed
-			// TODO: We might want to have a timestamp so that we do not process the redraw
-			//       if another event happened before.
-			if app_state.should_redraw() {
-				app_state.core_mut().do_redraw = false;
-				let _ = app_tx.send(AppEvent::DoRedraw).await;
-			}
-
 			// -- Debounce the event
 			let (new_app_rx, events) = debounce_events(app_rx);
 			app_rx = new_app_rx;
@@ -48,28 +37,19 @@ pub fn run_ui_loop(
 				let _ = ping_tx.send(now_micro()).await;
 			}
 
-			//// TODO: WE will ahve to put this in the debounce_events
-			// match evt {
-			// 	// No need to do the running tick
-			// 	Some(evt) => evt,
-			// 	None => {
-			// 		// Send a ping event (to the ping_tx debouncer)
-			// 		if app_state.should_be_pinged() {
-			// 			let _ = ping_tx.send(now_micro()).await;
-			// 		}
-
-			// 		// Then, we wait for next event
-			// 		match app_rx.recv().await {
-			// 			Ok(evt) => evt,
-			// 			Err(err) => {
-			// 				error!("UI LOOP ERROR.\nCause: {err}");
-			// 				continue;
-			// 			}
-			// 		}
-			// 	}
-			// }
-
 			for app_event in events {
+				// -- Draw
+				let _ = terminal_draw(&mut terminal, &mut app_state);
+
+				// -- Trigger the redraw if needed
+				// TODO: We might want to have a timestamp so that we do not process the redraw
+				//       if another event happened before.
+				if app_state.should_redraw() {
+					app_state.core_mut().do_redraw = false;
+					let _ = app_tx.send(AppEvent::DoRedraw).await;
+				}
+
+				// -- HANDLE Quit
 				// NOTE: Handle this specific event here because we need to break the loop
 				//       Later, handle_app_event might return a control flow enum
 				if let AppEvent::Action(AppActionEvent::Quit) = &app_event {
@@ -78,6 +58,7 @@ pub fn run_ui_loop(
 					break 'outer;
 				}
 
+				// -- Normal handle
 				let _ = handle_app_event(
 					&mut terminal,
 					app_state.mm(),
@@ -128,17 +109,12 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 					AppEvent::DoRedraw => {
 						last_redraw_event = {
 							//
-							tracing::debug!("->> debounce_events DoRedraw");
 							Some(AppEvent::DoRedraw)
 						}
 					}
-					AppEvent::Term(event) => {
-						tracing::debug!("->> debounce_events Term {event:?}");
-						ui_events.push(AppEvent::Term(event))
-					}
+					AppEvent::Term(event) => ui_events.push(AppEvent::Term(event)),
 					AppEvent::Action(action_event) => {
 						//
-						tracing::debug!("->> debounce_events Action {action_event:?}");
 						ui_events.push(AppEvent::Action(action_event))
 					}
 					AppEvent::Model(model_event) | AppEvent::Hub(HubEvent::Model(model_event)) => {
