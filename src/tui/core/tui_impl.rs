@@ -2,7 +2,7 @@ use super::event::AppEvent;
 use super::term_reader::run_term_read;
 use super::tui_loop::run_ui_loop;
 use crate::Result;
-use crate::event::{Tx, new_channel};
+use crate::event::{Rx, Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
@@ -34,6 +34,9 @@ pub struct ExitTx(Tx<()>);
 #[derive(Clone, From, Deref)]
 pub struct AppTx(Tx<AppEvent>);
 
+#[derive(Clone, From, Deref)]
+pub struct AppRx(Rx<AppEvent>);
+
 // Terminal<CrosstermBackend<Stdout>>
 async fn exec_app(
 	mut terminal: DefaultTerminal,
@@ -51,6 +54,7 @@ async fn exec_app(
 	// -- Create AppEvent channels
 	let (app_tx, app_rx) = new_channel::<AppEvent>("app_event");
 	let app_tx = AppTx::from(app_tx);
+	let app_rx = AppRx::from(app_rx);
 
 	// -- Running the term_reader tasks
 	let _tin_read_handle = run_term_read(app_tx.clone())?;

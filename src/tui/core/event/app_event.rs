@@ -1,6 +1,6 @@
 use crate::exec::cli::RunArgs;
 use crate::hub::HubEvent;
-use crate::model::ModelEvent;
+use crate::model::{EntityType, ModelEvent};
 use derive_more::From;
 
 /// The main application event enum.
@@ -37,8 +37,19 @@ pub enum AppEvent {
 }
 
 impl AppEvent {
+	/// If this event is a refresh only event (meaning it's data does not matter for the TUI)
+	/// If refresh only event, then, it will go to next if there is one, or pick this one if no more event.
 	pub fn is_refresh_event(&self) -> bool {
-		matches!(self, AppEvent::DoRedraw | AppEvent::Model(_) | AppEvent::Hub(_))
+		match self {
+			AppEvent::DoRedraw => true,
+			AppEvent::Model(_) => true, // NOTE: Today, this does not get emitted
+			AppEvent::Hub(HubEvent::Model(evt)) => {
+				// if it is run
+				!matches!(evt.entity, EntityType::Task)
+			}
+			AppEvent::Hub(_) => true, // those needs to be collapsed
+			_ => false,
+		}
 	}
 }
 
