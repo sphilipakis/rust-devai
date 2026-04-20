@@ -9,6 +9,7 @@ use crate::tui::core::app_state::{ProcessAppStateOpts, process_app_state};
 use crate::tui::core::tui_impl::AppRx;
 use crate::tui::core::{PingTimerTx, start_ping_timer};
 use crate::tui::{AppState, AppTx, ExitTx, MainView};
+use crossterm::event::Event as TermEvent;
 use ratatui::DefaultTerminal;
 use std::collections::HashMap;
 use tokio::task::JoinHandle;
@@ -38,8 +39,8 @@ pub fn run_ui_loop(
 			}
 
 			for app_event in events {
-				if let AppEvent::Term(term) = &app_event {
-					tracing::debug!("->> APP EVENT TERM {term:?}");
+				if let AppEvent::Term(TermEvent::Mouse(mouse_event)) = &app_event {
+					app_state.set_mouse_event(mouse_event);
 				}
 				// -- Draw
 				let _ = terminal_draw(&mut terminal, &mut app_state);
@@ -48,7 +49,6 @@ pub fn run_ui_loop(
 				// TODO: We might want to have a timestamp so that we do not process the redraw
 				//       if another event happened before.
 				if app_state.should_redraw() {
-					tracing::debug!("->> SHOULD REDRAW");
 					app_state.core_mut().do_redraw = false;
 					let _ = app_tx.send(AppEvent::DoRedraw).await;
 				}
@@ -118,7 +118,6 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 					}
 					AppEvent::Term(event) => {
 						//
-						tracing::debug!("->> TERM_EVENT {event:?}");
 						ui_events.push(AppEvent::Term(event))
 					}
 					AppEvent::Action(action_event) => {

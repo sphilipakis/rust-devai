@@ -2,7 +2,7 @@ use crate::model::{EntityType, EpochUs, ErrBmc, InstallData, ModelEvent, RunBmc,
 use crate::support::time::now_micro;
 use crate::tui::AppState;
 use crate::tui::core::event::{AppActionEvent, ScrollDir};
-use crate::tui::core::{AppStage, ConfigTab, MouseEvt, NavDir, RunItemStore, RunTab, ScrollIden, UiAction};
+use crate::tui::core::{AppStage, ConfigTab, NavDir, RunItemStore, RunTab, ScrollIden, UiAction};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 use crate::tui::view::{PopupMode, PopupView};
 use crossterm::event::{KeyCode, MouseEventKind};
@@ -57,15 +57,10 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 	}
 
 	// -- Capture the mouse Event
-	if let Some(mouse_event) = state.last_app_event().as_mouse_event() {
-		let mouse_evt: MouseEvt = mouse_event.into();
-		state.core_mut().mouse_evt = Some(mouse_evt);
-		// Here we update the persistent mouse
-		state.core_mut().last_mouse_evt = Some(mouse_evt);
 
+	if let Some(mouse_evt) = state.mouse_evt() {
 		// Find the active scroll zone
 		let zone_iden = state.core().find_zone_for_pos(mouse_evt);
-
 		state.core_mut().active_scroll_zone_iden = zone_iden;
 	} else {
 		state.core_mut().mouse_evt = None;

@@ -18,10 +18,7 @@ impl AppState {
 		self.core.mouse_evt = None;
 		self.core.last_mouse_evt = None;
 		if trigger_redraw {
-			tracing::debug!("->> clear_mouse_evts trigger_redraw: TRUE");
 			self.trigger_redraw();
-		} else {
-			tracing::debug!("->> clear_mouse_evts trigger_redraw: FALSE");
 		}
 	}
 

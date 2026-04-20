@@ -3,8 +3,11 @@ use crate::Result;
 use crate::model::{Id, ModelEvent, ModelManager, Task};
 use crate::support::time::now_micro;
 use crate::tui::core::event::{AppActionEvent, LastAppEvent};
-use crate::tui::core::{AppStage, ConfigTab, OverviewTasksMode, RunItemStore, RunTab, RunTasksInfo, ScrollZones};
+use crate::tui::core::{
+	AppStage, ConfigTab, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, RunTasksInfo, ScrollZones,
+};
 use crate::tui::view::PopupView;
+use crossterm::event::MouseEvent;
 
 /// Public wrapper around AppStateCore.
 ///
@@ -114,6 +117,16 @@ impl AppState {
 
 	pub(in crate::tui::core) fn dec_debug_clr(&mut self) {
 		self.core.debug_clr = self.core.debug_clr.wrapping_sub(1);
+	}
+}
+
+/// MouseEvt
+impl AppState {
+	pub fn set_mouse_event(&mut self, mouse_event: &MouseEvent) {
+		let mouse_evt: MouseEvt = mouse_event.into();
+		self.core_mut().mouse_evt = Some(mouse_evt);
+		// Here we update the persistent mouse
+		self.core_mut().last_mouse_evt = Some(mouse_evt);
 	}
 }
 
