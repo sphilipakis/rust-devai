@@ -28,7 +28,7 @@ pub fn run_ui_loop(
 	let ping_tx: PingTimerTx = start_ping_timer(app_tx.clone())?;
 
 	let handle = tokio::spawn(async move {
-		loop {
+		'outer: loop {
 			// -- Draw
 			let _ = terminal_draw(&mut terminal, &mut app_state);
 
@@ -75,7 +75,7 @@ pub fn run_ui_loop(
 				if let AppEvent::Action(AppActionEvent::Quit) = &app_event {
 					let _ = terminal.clear();
 					let _ = exit_tx.send(()).await;
-					break;
+					break 'outer;
 				}
 
 				let _ = handle_app_event(
@@ -127,7 +127,11 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 				match app_event {
 					AppEvent::DoRedraw => last_redraw_event = Some(AppEvent::DoRedraw),
 					AppEvent::Term(event) => ui_events.push(AppEvent::Term(event)),
-					AppEvent::Action(action_event) => ui_events.push(AppEvent::Action(action_event)),
+					AppEvent::Action(action_event) => {
+						//
+						tracing::debug!("->> debounce_events Action {action_event:?}");
+						ui_events.push(AppEvent::Action(action_event))
+					}
 					AppEvent::Model(model_event) | AppEvent::Hub(HubEvent::Model(model_event)) => {
 						let for_run_id = match &model_event.entity {
 							EntityType::Task if let Some(run_id) = model_event.rel_ids.run_id => Some(run_id),
