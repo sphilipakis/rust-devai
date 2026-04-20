@@ -1,7 +1,6 @@
 use super::app_event_handlers::handle_app_event;
 use super::event::{AppActionEvent, AppEvent, LastAppEvent};
 use crate::Result;
-use crate::event::Rx;
 use crate::exec::ExecutorTx;
 use crate::hub::HubEvent;
 use crate::model::{EntityType, Id, ModelManager};
@@ -11,15 +10,14 @@ use crate::tui::core::tui_impl::AppRx;
 use crate::tui::core::{PingTimerTx, start_ping_timer};
 use crate::tui::{AppState, AppTx, ExitTx, MainView};
 use ratatui::DefaultTerminal;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tokio::task::JoinHandle;
-use tracing::error;
 
 pub fn run_ui_loop(
 	mut terminal: DefaultTerminal,
 	mm: ModelManager,
 	executor_tx: ExecutorTx,
-	app_rx: AppRx,
+	mut app_rx: AppRx,
 	app_tx: AppTx,
 	exit_tx: ExitTx,
 ) -> Result<JoinHandle<()>> {
@@ -42,84 +40,67 @@ pub fn run_ui_loop(
 				let _ = app_tx.send(AppEvent::DoRedraw).await;
 			}
 
-			// -- Get Next App Event
-			let app_event = {
-				// -- First we try to see if there one already in the queue
-				// and get the last "refresh_event" if they are stacked
-				let mut last_refresh = None;
+			// -- Debounce the event
+			let (new_app_rx, events) = debounce_events(app_rx);
+			app_rx = new_app_rx;
 
-				let evt = loop {
-					match app_rx.try_recv() {
-						Ok(Some(r)) => {
-							if r.is_refresh_event() {
-								last_refresh = Some(r);
-								continue;
-							} else {
-								break Some(r);
-							}
-						}
-						Ok(None) => {
-							break last_refresh;
-						}
-						Err(err) => {
-							// NOTE: This might become an infinit loop if the error keep repeating (not sure)
-							error!("UI LOOP ERROR.\nCause: {err}");
-							continue;
-						}
-					}
-				};
-
-				match evt {
-					// No need to do the running tick
-					Some(evt) => evt,
-					None => {
-						// Send a ping event (to the ping_tx debouncer)
-						if app_state.should_be_pinged() {
-							let _ = ping_tx.send(now_micro()).await;
-						}
-
-						// Then, we wait for next event
-						match app_rx.recv().await {
-							Ok(evt) => evt,
-							Err(err) => {
-								error!("UI LOOP ERROR.\nCause: {err}");
-								continue;
-							}
-						}
-					}
-				}
-			};
-
-			// NOTE: Handle this specific event here because we need to break the loop
-			//       Later, handle_app_event might return a control flow enum
-			if let AppEvent::Action(AppActionEvent::Quit) = &app_event {
-				let _ = terminal.clear();
-				let _ = exit_tx.send(()).await;
-				break;
+			if events.is_empty() && app_state.should_be_pinged() {
+				let _ = ping_tx.send(now_micro()).await;
 			}
 
-			let _ = handle_app_event(
-				&mut terminal,
-				app_state.mm(),
-				&executor_tx,
-				&app_tx,
-				&exit_tx,
-				&app_event,
-			)
-			.await;
+			//// TODO: WE will ahve to put this in the debounce_events
+			// match evt {
+			// 	// No need to do the running tick
+			// 	Some(evt) => evt,
+			// 	None => {
+			// 		// Send a ping event (to the ping_tx debouncer)
+			// 		if app_state.should_be_pinged() {
+			// 			let _ = ping_tx.send(now_micro()).await;
+			// 		}
 
-			let process_opts = ProcessAppStateOpts {
-				current_event_refreshes_tasks: current_event_refreshes_tasks(&app_event),
-			};
+			// 		// Then, we wait for next event
+			// 		match app_rx.recv().await {
+			// 			Ok(evt) => evt,
+			// 			Err(err) => {
+			// 				error!("UI LOOP ERROR.\nCause: {err}");
+			// 				continue;
+			// 			}
+			// 		}
+			// 	}
+			// }
 
-			app_state.core_mut().last_app_event = app_event.into();
+			for app_event in events {
+				// NOTE: Handle this specific event here because we need to break the loop
+				//       Later, handle_app_event might return a control flow enum
+				if let AppEvent::Action(AppActionEvent::Quit) = &app_event {
+					let _ = terminal.clear();
+					let _ = exit_tx.send(()).await;
+					break;
+				}
 
-			// -- Update App State
-			process_app_state(&mut app_state, process_opts);
+				let _ = handle_app_event(
+					&mut terminal,
+					app_state.mm(),
+					&executor_tx,
+					&app_tx,
+					&exit_tx,
+					&app_event,
+				)
+				.await;
 
-			// -- If action to send, send it
-			if let Some(action_event) = app_state.take_action_event_to_send() {
-				let _ = app_tx.send(action_event).await;
+				let process_opts = ProcessAppStateOpts {
+					current_event_refreshes_tasks: current_event_refreshes_tasks(&app_event),
+				};
+
+				app_state.core_mut().last_app_event = app_event.into();
+
+				// -- Update App State
+				process_app_state(&mut app_state, process_opts);
+
+				// -- If action to send, send it
+				if let Some(action_event) = app_state.take_action_event_to_send() {
+					let _ = app_tx.send(action_event).await;
+				}
 			}
 		}
 	});
