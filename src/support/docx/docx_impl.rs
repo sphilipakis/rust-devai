@@ -251,20 +251,18 @@ pub fn docx_convert(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
 				push_and_update(&mut markdown, &text, &mut trailing_newlines, &mut started);
 			}
 			Ok(Event::End(e)) => match e.name().as_ref() {
-				b"w:tbl" => {
-					if !table_rows.is_empty() {
-						let headers = table_rows[0].clone();
-						let data_rows = if table_rows.len() > 1 {
-							table_rows[1..].to_vec()
-						} else {
-							Vec::new()
-						};
-						let tbl_md = to_markdown_table(&headers, &data_rows);
-						push_and_update(&mut markdown, &tbl_md, &mut trailing_newlines, &mut started);
-						push_and_update(&mut markdown, "\n", &mut trailing_newlines, &mut started);
-						table_rows = Vec::new();
-						styles = Styles::default();
-					}
+				b"w:tbl" if !table_rows.is_empty() => {
+					let headers = table_rows[0].clone();
+					let data_rows = if table_rows.len() > 1 {
+						table_rows[1..].to_vec()
+					} else {
+						Vec::new()
+					};
+					let tbl_md = to_markdown_table(&headers, &data_rows);
+					push_and_update(&mut markdown, &tbl_md, &mut trailing_newlines, &mut started);
+					push_and_update(&mut markdown, "\n", &mut trailing_newlines, &mut started);
+					table_rows = Vec::new();
+					styles = Styles::default();
 				}
 				b"w:tr" => {
 					table_rows.push(current_row);

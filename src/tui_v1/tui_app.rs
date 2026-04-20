@@ -97,27 +97,21 @@ impl TuiAppV1 {
 				while let Ok(key_event) = in_rx.recv_async().await {
 					match key_event.code {
 						// -- Redo
-						KeyCode::Char('r') => {
+						KeyCode::Char('r') if key_event.kind == KeyEventKind::Press => {
 							// clear_last_n_lines(1);
-							if key_event.kind == KeyEventKind::Press {
-								safer_println("\n-- R pressed - Redo\n", interactive);
-								exec_tx.send(ExecActionEvent::Redo).await;
-							}
+							safer_println("\n-- R pressed - Redo\n", interactive);
+							exec_tx.send(ExecActionEvent::Redo).await;
 						}
 
 						// -- Quit
-						KeyCode::Char('q') => {
-							if key_event.kind == KeyEventKind::Press {
-								hub.publish(HubEvent::Quit).await
-							}
+						KeyCode::Char('q') if key_event.kind == KeyEventKind::Press => {
+							hub.publish(HubEvent::Quit).await
 						}
 
 						// -- Open agent
-						KeyCode::Char('a') => {
+						KeyCode::Char('a') if key_event.kind == KeyEventKind::Press => {
 							// clear_last_n_lines(1);
-							if key_event.kind == KeyEventKind::Press {
-								exec_tx.send(ExecActionEvent::OpenAgent).await;
-							}
+							exec_tx.send(ExecActionEvent::OpenAgent).await;
 						}
 
 						// -- Ctrl c

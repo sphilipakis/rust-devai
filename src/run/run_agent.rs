@@ -336,7 +336,7 @@ async fn run_tasks(
 	let input_idx_task_id_list: Vec<(Value, usize, Id)> = inputs
 		.iter()
 		.cloned()
-		.zip(task_ids.into_iter())
+		.zip(task_ids)
 		.enumerate()
 		.map(|(idx, (input, task_id))| (input, idx, task_id))
 		.collect();

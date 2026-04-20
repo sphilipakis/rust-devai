@@ -451,11 +451,8 @@ fn task_grid_layout(tasks: &[Task], max_width: u16) -> OverviewTaskGridLayout {
 		.map(|task| task.ui_short_block(tasks.len()).x_width())
 		.unwrap_or_default();
 
-	let items_per_row = if sample_block_width == 0 {
-		1
-	} else {
-		(content_width / sample_block_width).max(1) as usize
-	};
+	// avoid div by zero and ensure at least 1 item
+	let items_per_row = (content_width / sample_block_width.max(1)).max(1) as usize;
 
 	let task_row_count = tasks.len().div_ceil(items_per_row);
 	let logical_line_count = task_row_count + 2;

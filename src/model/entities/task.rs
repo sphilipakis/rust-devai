@@ -392,9 +392,7 @@ impl TaskBmc {
 			.map(|id| TaskBmc::get_uid(mm, id))
 			.collect::<Result<Vec<_>>>()?;
 		let mut inout_to_create: Vec<InoutForCreate> = Vec::new();
-		for ((_id, task_uid), may_input_update) in
-			ids.iter().cloned().zip(task_uids.into_iter()).zip(input_updates.into_iter())
-		{
+		for ((_id, task_uid), may_input_update) in ids.iter().cloned().zip(task_uids).zip(input_updates) {
 			if let Some(input_update) = may_input_update {
 				let TaskInputPersistence {
 					inout_uid,

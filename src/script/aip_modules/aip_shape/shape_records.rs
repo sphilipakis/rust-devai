@@ -123,9 +123,8 @@ pub fn to_records(lua: &Lua, names: Value, value_lists: Value) -> mlua::Result<V
 
 	// Build records
 	let out = lua.create_table()?;
-	let mut out_idx = 1usize;
 
-	for row_val in rows_tbl.sequence_values::<Value>() {
+	for (idx, row_val) in rows_tbl.sequence_values::<Value>().enumerate() {
 		let row_val = row_val?;
 		let row_tbl = match row_val {
 			Value::Table(t) => t,
@@ -149,8 +148,7 @@ pub fn to_records(lua: &Lua, names: Value, value_lists: Value) -> mlua::Result<V
 			}
 		}
 
-		out.set(out_idx, rec)?;
-		out_idx += 1;
+		out.set(idx + 1, rec)?; // because lua table start at 1
 	}
 
 	Ok(Value::Table(out))
@@ -203,17 +201,15 @@ pub fn record_to_values(lua: &Lua, rec: Value, names_opt: Option<Value>) -> mlua
 			}
 		}
 		Some(names) => {
-			let mut idx = 1usize;
 			let ordered_names = collect_string_sequence(names, "aip.shape.record_to_values", "Column names")?;
 
-			for name_str in ordered_names {
+			for (i, name_str) in ordered_names.iter().enumerate() {
 				let val: Value = rec.get(name_str.clone())?;
 				if let Value::Nil = val {
-					out.set(idx, Value::NULL)?;
+					out.set(i + 1, Value::NULL)?;
 				} else {
-					out.set(idx, val)?;
+					out.set(i + 1, val)?;
 				}
-				idx += 1;
 			}
 		}
 	}
@@ -253,9 +249,8 @@ pub fn records_to_value_lists(lua: &Lua, recs: Value, names: Value) -> mlua::Res
 	let recs = expect_table(recs, "aip.shape.records_to_value_lists", "Records")?;
 
 	let out = lua.create_table()?;
-	let mut row_idx = 1usize;
 
-	for rec_val in recs.sequence_values::<Value>() {
+	for (i, rec_val) in recs.sequence_values::<Value>().enumerate() {
 		let rec_tbl = match rec_val? {
 			Value::Table(t) => t,
 			other => {
@@ -277,8 +272,7 @@ pub fn records_to_value_lists(lua: &Lua, recs: Value, names: Value) -> mlua::Res
 			}
 		}
 
-		out.set(row_idx, row_tbl)?;
-		row_idx += 1;
+		out.set(i + 1, row_tbl)?;
 	}
 
 	Ok(Value::Table(out))
