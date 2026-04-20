@@ -20,8 +20,7 @@
 - For Fireworks models:
   - For the Fireworks models, the model name is after the `/models/fireworks/`. So, `/models/fireworks/qwen3-coder-480b-a35b-instruct` the model name will be `qwen3-coder-480b-a35b-instruct`
   - For the Fireworks models, when only one price, it means same price for input and output.
-  - For the fireworks models, have only the gpt-oss, qwen3, Kimi, lama 4, and gml 4 are to be flagged recent, the rest flagged recent = false.
-  - For the fireworks models, when end with date like versioning like `qwen3-235b-a22b-thinking-2507` remove the versioning, so it becomes `qwen3-235b-a22b-thinking`
+  - For the fireworks models, Look at the version number for each model type, and make the one with the highest number `recent: true` (if only version for that model type, then, `recent: true`) otherwise, false. 
 
 # together
 
