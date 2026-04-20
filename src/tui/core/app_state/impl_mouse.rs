@@ -14,9 +14,15 @@ impl AppState {
 	/// Remove both the mouse_evt and last_mouse_evt
 	/// This is good to avoid having a mouse event impacting the next redraw
 	#[allow(unused)]
-	pub fn clear_mouse_evts(&mut self) {
+	pub fn clear_mouse_evts(&mut self, trigger_redraw: bool) {
 		self.core.mouse_evt = None;
 		self.core.last_mouse_evt = None;
+		if trigger_redraw {
+			tracing::debug!("->> clear_mouse_evts trigger_redraw: TRUE");
+			self.trigger_redraw();
+		} else {
+			tracing::debug!("->> clear_mouse_evts trigger_redraw: FALSE");
+		}
 	}
 
 	#[allow(unused)]

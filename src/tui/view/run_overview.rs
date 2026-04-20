@@ -231,7 +231,7 @@ fn render_body(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 		if state.is_mouse_up_only() {
 			state.set_action(action);
 			// Note: Little trick to not show hover on the next tasks tab screen
-			state.clear_mouse_evts();
+			state.clear_mouse_evts(true);
 		}
 	}
 

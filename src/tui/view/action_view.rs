@@ -101,7 +101,7 @@ impl StatefulWidget for ActionView {
 
 			if state.is_mouse_up_only() && state.is_last_mouse_over(actions_a) {
 				state.set_action(action);
-				state.clear_mouse_evts();
+				state.clear_mouse_evts(true);
 			}
 		}
 

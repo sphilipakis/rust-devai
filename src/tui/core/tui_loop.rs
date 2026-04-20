@@ -38,6 +38,9 @@ pub fn run_ui_loop(
 			}
 
 			for app_event in events {
+				if let AppEvent::Term(term) = &app_event {
+					tracing::debug!("->> APP EVENT TERM {term:?}");
+				}
 				// -- Draw
 				let _ = terminal_draw(&mut terminal, &mut app_state);
 
@@ -45,6 +48,7 @@ pub fn run_ui_loop(
 				// TODO: We might want to have a timestamp so that we do not process the redraw
 				//       if another event happened before.
 				if app_state.should_redraw() {
+					tracing::debug!("->> SHOULD REDRAW");
 					app_state.core_mut().do_redraw = false;
 					let _ = app_tx.send(AppEvent::DoRedraw).await;
 				}
@@ -69,13 +73,13 @@ pub fn run_ui_loop(
 				)
 				.await;
 
+				// -- Process app sate
 				let process_opts = ProcessAppStateOpts {
 					current_event_refreshes_tasks: current_event_refreshes_tasks(&app_event),
 				};
 
 				app_state.core_mut().last_app_event = app_event.into();
 
-				// -- Update App State
 				process_app_state(&mut app_state, process_opts);
 
 				// -- If action to send, send it
@@ -112,7 +116,11 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 							Some(AppEvent::DoRedraw)
 						}
 					}
-					AppEvent::Term(event) => ui_events.push(AppEvent::Term(event)),
+					AppEvent::Term(event) => {
+						//
+						tracing::debug!("->> TERM_EVENT {event:?}");
+						ui_events.push(AppEvent::Term(event))
+					}
 					AppEvent::Action(action_event) => {
 						//
 						ui_events.push(AppEvent::Action(action_event))

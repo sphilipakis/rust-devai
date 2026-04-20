@@ -113,8 +113,7 @@ impl StatefulWidget for PopupOverlay {
 				&& mouse_evt.is_over(x_area)
 			{
 				state.clear_popup();
-				state.trigger_redraw();
-				state.clear_mouse_evts();
+				state.clear_mouse_evts(true);
 			}
 		}
 	}

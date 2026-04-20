@@ -251,12 +251,13 @@ fn process_for_run_tab_state(state: &mut AppState, overview_a: Rect, tasks_a: Re
 	if let Some(mouse_evt) = state.mouse_evt()
 		&& mouse_evt.is_up()
 	{
+		tracing::debug!("->> run_main_view mouse UP ");
 		if mouse_evt.is_over(overview_a) {
 			state.set_run_tab(RunTab::Overview);
-			state.clear_mouse_evts();
+			state.clear_mouse_evts(true);
 		} else if mouse_evt.is_over(tasks_a) {
 			state.set_run_tab(RunTab::Tasks);
-			state.clear_mouse_evts();
+			state.clear_mouse_evts(true);
 		}
 	} else {
 		// tracing::debug!("->> process_for_run_tab_state NO MOUSE EVENT");

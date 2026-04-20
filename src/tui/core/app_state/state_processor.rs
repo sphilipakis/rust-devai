@@ -222,7 +222,7 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 		if let Some(task) = state.tasks().get(new_task_idx as usize) {
 			state.set_action(UiAction::GoToTask { task_id: task.id });
 			// Note: Little trick to not show the hover when navigating
-			state.clear_mouse_evts();
+			state.clear_mouse_evts(true);
 		}
 	}
 
