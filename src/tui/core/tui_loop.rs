@@ -125,8 +125,17 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 			Ok(Some(app_event)) => {
 				//
 				match app_event {
-					AppEvent::DoRedraw => last_redraw_event = Some(AppEvent::DoRedraw),
-					AppEvent::Term(event) => ui_events.push(AppEvent::Term(event)),
+					AppEvent::DoRedraw => {
+						last_redraw_event = {
+							//
+							tracing::debug!("->> debounce_events DoRedraw");
+							Some(AppEvent::DoRedraw)
+						}
+					}
+					AppEvent::Term(event) => {
+						tracing::debug!("->> debounce_events Term {event:?}");
+						ui_events.push(AppEvent::Term(event))
+					}
 					AppEvent::Action(action_event) => {
 						//
 						tracing::debug!("->> debounce_events Action {action_event:?}");
