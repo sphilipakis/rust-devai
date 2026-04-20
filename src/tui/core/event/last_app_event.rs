@@ -8,26 +8,24 @@ pub struct LastAppEvent {
 }
 
 /// Getters
-#[allow(unused)]
 impl LastAppEvent {
-	pub fn get(&self) -> Option<Arc<AppEvent>> {
-		self.last_event.clone()
-	}
+	// pub fn get(&self) -> Option<Arc<AppEvent>> {
+	// 	self.last_event.clone()
+	// }
 
-	pub fn take(&mut self) -> LastAppEvent {
-		match self.last_event.take() {
-			Some(e) => LastAppEvent { last_event: Some(e) },
-			None => LastAppEvent::default(),
-		}
-	}
+	// pub fn take(&mut self) -> LastAppEvent {
+	// 	match self.last_event.take() {
+	// 		Some(e) => LastAppEvent { last_event: Some(e) },
+	// 		None => LastAppEvent::default(),
+	// 	}
+	// }
 
-	// -- As Term Events
-	pub fn as_term_event(&self) -> Option<&crossterm::event::Event> {
-		self.last_event.as_ref().and_then(|e| match e.as_ref() {
-			AppEvent::Term(event) => Some(event),
-			_ => None,
-		})
-	}
+	// pub fn as_term_event(&self) -> Option<&crossterm::event::Event> {
+	// 	self.last_event.as_ref().and_then(|e| match e.as_ref() {
+	// 		AppEvent::Term(event) => Some(event),
+	// 		_ => None,
+	// 	})
+	// }
 
 	pub fn as_key_event(&self) -> Option<&crossterm::event::KeyEvent> {
 		self.last_event.as_ref().and_then(|e| match e.as_ref() {
