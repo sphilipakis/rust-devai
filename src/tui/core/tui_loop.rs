@@ -31,6 +31,10 @@ pub fn run_ui_loop(
 
 	let handle = tokio::spawn(async move {
 		'outer: loop {
+			if app_state.should_be_pinged() {
+				let _ = ping_tx.send(now_micro()).await;
+			}
+
 			// This allows to not have an infinit loop and async way
 			let app_event = match app_rx.recv().await {
 				Ok(app_event) => app_event,
@@ -42,10 +46,6 @@ pub fn run_ui_loop(
 			// -- Debounce the events (with this first_event and the eventual ones in the list)
 			let (new_app_rx, events) = debounce_events(app_rx, app_event);
 			app_rx = new_app_rx;
-
-			if events.is_empty() && app_state.should_be_pinged() {
-				let _ = ping_tx.send(now_micro()).await;
-			}
 
 			for app_event in events {
 				if let AppEvent::Term(TermEvent::Mouse(mouse_event)) = &app_event {
