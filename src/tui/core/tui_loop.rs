@@ -31,10 +31,6 @@ pub fn run_ui_loop(
 
 	let handle = tokio::spawn(async move {
 		'outer: loop {
-			if app_state.should_be_pinged() {
-				let _ = ping_tx.send(now_micro()).await;
-			}
-
 			// This allows to not have an infinit loop and async way
 			let app_event = match app_rx.recv().await {
 				Ok(app_event) => app_event,
@@ -82,6 +78,10 @@ pub fn run_ui_loop(
 				app_state.core_mut().last_app_event = app_event.into();
 
 				process_app_state(&mut app_state, process_opts);
+
+				if app_state.should_be_pinged() {
+					let _ = ping_tx.send(now_micro()).await;
+				}
 
 				// -- If action to send, send it
 				if let Some(action_event) = app_state.take_action_event_to_send() {

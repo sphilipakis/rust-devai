@@ -245,10 +245,12 @@ impl AppState {
 	pub fn set_popup(&mut self, popup: PopupView) {
 		self.core.popup_start_us = Some(self.core.time);
 		self.core.popup = Some(popup);
+		self.trigger_redraw();
 	}
 
 	pub fn clear_popup(&mut self) {
 		self.core.popup = None;
 		self.core.popup_start_us = None;
+		self.trigger_redraw();
 	}
 }
