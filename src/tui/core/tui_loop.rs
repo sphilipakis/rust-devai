@@ -13,6 +13,7 @@ use crossterm::event::Event as TermEvent;
 use ratatui::DefaultTerminal;
 use std::collections::HashMap;
 use tokio::task::JoinHandle;
+use tracing::error;
 
 pub fn run_ui_loop(
 	mut terminal: DefaultTerminal,
@@ -30,8 +31,16 @@ pub fn run_ui_loop(
 
 	let handle = tokio::spawn(async move {
 		'outer: loop {
-			// -- Debounce the event
-			let (new_app_rx, events) = debounce_events(app_rx);
+			// This allows to not have an infinit loop and async way
+			let app_event = match app_rx.recv().await {
+				Ok(app_event) => app_event,
+				Err(err) => {
+					error!("Fail to app_rx.recv().await  in tui_loop. Cause: {err}");
+					break;
+				}
+			};
+			// -- Debounce the events (with this first_event and the eventual ones in the list)
+			let (new_app_rx, events) = debounce_events(app_rx, app_event);
 			app_rx = new_app_rx;
 
 			if events.is_empty() && app_state.should_be_pinged() {
@@ -44,14 +53,6 @@ pub fn run_ui_loop(
 				}
 				// -- Draw
 				let _ = terminal_draw(&mut terminal, &mut app_state);
-
-				// -- Trigger the redraw if needed
-				// TODO: We might want to have a timestamp so that we do not process the redraw
-				//       if another event happened before.
-				if app_state.should_redraw() {
-					app_state.core_mut().do_redraw = false;
-					let _ = app_tx.send(AppEvent::DoRedraw).await;
-				}
 
 				// -- HANDLE Quit
 				// NOTE: Handle this specific event here because we need to break the loop
@@ -86,10 +87,82 @@ pub fn run_ui_loop(
 				if let Some(action_event) = app_state.take_action_event_to_send() {
 					let _ = app_tx.send(action_event).await;
 				}
+
+				// -- Trigger the redraw if needed
+				// TODO: We might want to have a timestamp so that we do not process the redraw
+				//       if another event happened before.
+				if app_state.should_redraw() {
+					app_state.core_mut().do_redraw = false;
+					let _ = app_tx.send(AppEvent::DoRedraw).await;
+				}
 			}
 		}
 	});
 	Ok(handle)
+}
+
+struct Debouncer {
+	last_redraw_event: Option<AppEvent>,
+	ui_events: Vec<AppEvent>,
+	event_by_run_id: HashMap<Id, AppEvent>,
+}
+
+impl Debouncer {
+	fn new(first_event: AppEvent) -> Self {
+		let mut debouncer = Self {
+			last_redraw_event: None,
+			ui_events: Vec::new(),
+			event_by_run_id: HashMap::new(),
+		};
+		debouncer.process(first_event);
+		debouncer
+	}
+
+	fn process(&mut self, app_event: AppEvent) {
+		match app_event {
+			AppEvent::DoRedraw => {
+				self.last_redraw_event = {
+					//
+					Some(AppEvent::DoRedraw)
+				}
+			}
+			AppEvent::Term(event) => {
+				//
+				self.ui_events.push(AppEvent::Term(event))
+			}
+			AppEvent::Action(action_event) => {
+				//
+				self.ui_events.push(AppEvent::Action(action_event))
+			}
+			AppEvent::Model(model_event) | AppEvent::Hub(HubEvent::Model(model_event)) => {
+				let for_run_id = match &model_event.entity {
+					EntityType::Task if let Some(run_id) = model_event.rel_ids.run_id => Some(run_id),
+					EntityType::Run if let Some(run_id) = model_event.id => Some(run_id),
+					_ => None,
+				};
+
+				// add back the app event as appropriate
+				let app_event = AppEvent::Model(model_event);
+				if let Some(run_id) = for_run_id {
+					self.event_by_run_id.insert(run_id, app_event);
+				} else {
+					self.last_redraw_event = Some(app_event);
+				}
+			}
+			AppEvent::Hub(hub_event) => self.last_redraw_event = Some(AppEvent::Hub(hub_event)),
+			AppEvent::Tick(tick) => self.last_redraw_event = Some(AppEvent::Tick(tick)),
+		}
+	}
+
+	fn into_events(self) -> Vec<AppEvent> {
+		let mut events = self.ui_events;
+		events.extend(self.event_by_run_id.into_values());
+		// for now, append the last redraw (might not be needed)
+		if let Some(last_redraw_event) = self.last_redraw_event {
+			events.push(last_redraw_event);
+		}
+		events
+	}
 }
 
 /// Here we draing the AppRx AppEvents with a debounced version
@@ -99,49 +172,12 @@ pub fn run_ui_loop(
 ///     - Will be added at the event of the list
 /// - HubEvent(other) will be ingored (or latest)
 /// -
-fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
-	let mut last_redraw_event: Option<AppEvent> = None;
-	let mut ui_events = Vec::new();
-
-	let mut event_by_run_id: HashMap<Id, AppEvent> = HashMap::new();
-
+fn debounce_events(app_rx: AppRx, first_event: AppEvent) -> (AppRx, Vec<AppEvent>) {
+	let mut debouncer = Debouncer::new(first_event);
 	loop {
 		match app_rx.try_recv() {
 			Ok(Some(app_event)) => {
-				//
-				match app_event {
-					AppEvent::DoRedraw => {
-						last_redraw_event = {
-							//
-							Some(AppEvent::DoRedraw)
-						}
-					}
-					AppEvent::Term(event) => {
-						//
-						ui_events.push(AppEvent::Term(event))
-					}
-					AppEvent::Action(action_event) => {
-						//
-						ui_events.push(AppEvent::Action(action_event))
-					}
-					AppEvent::Model(model_event) | AppEvent::Hub(HubEvent::Model(model_event)) => {
-						let for_run_id = match &model_event.entity {
-							EntityType::Task if let Some(run_id) = model_event.rel_ids.run_id => Some(run_id),
-							EntityType::Run if let Some(run_id) = model_event.id => Some(run_id),
-							_ => None,
-						};
-
-						// add back the app event as appropriate
-						let app_event = AppEvent::Model(model_event);
-						if let Some(run_id) = for_run_id {
-							event_by_run_id.insert(run_id, app_event);
-						} else {
-							last_redraw_event = Some(app_event);
-						}
-					}
-					AppEvent::Hub(hub_event) => last_redraw_event = Some(AppEvent::Hub(hub_event)),
-					AppEvent::Tick(tick) => last_redraw_event = Some(AppEvent::Tick(tick)),
-				}
+				debouncer.process(app_event);
 			}
 
 			Ok(None) => break,
@@ -151,13 +187,7 @@ fn debounce_events(app_rx: AppRx) -> (AppRx, Vec<AppEvent>) {
 		}
 	}
 
-	//
-	let mut events = ui_events;
-	events.extend(event_by_run_id.into_values());
-	// for now, append the last redraw (might not be needed)
-	if let Some(last_redraw_event) = last_redraw_event {
-		events.push(last_redraw_event);
-	}
+	let events = debouncer.into_events();
 
 	(app_rx, events)
 }

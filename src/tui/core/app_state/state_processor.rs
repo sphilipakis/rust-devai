@@ -140,6 +140,7 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 	if let Some(KeyCode::Char('n')) = state.last_app_event().as_key_code() {
 		let show_runs = !state.core().show_runs;
 		state.core_mut().show_runs = show_runs;
+		state.core_mut().do_redraw = true;
 	}
 
 	// -- Show config popup
@@ -165,6 +166,7 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 	// -- Cycle tasks overview mode
 	if let Some(KeyCode::Char('t')) = state.last_app_event().as_key_code() {
 		state.core_mut().next_overview_tasks_mode();
+		state.core_mut().do_redraw = true;
 	}
 
 	// -- Navigation inside the runs list
@@ -181,6 +183,7 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 	};
 	if runs_nav_offset != 0 {
 		state.core_mut().offset_run_idx(runs_nav_offset);
+		state.core_mut().do_redraw = true;
 	}
 
 	let refresh = compute_refresh_decision(state, opts);
@@ -219,14 +222,21 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 			// Note: Little trick to not show the hover when navigating
 			state.clear_mouse_evts(true);
 		}
+		state.core_mut().do_redraw = true;
 	}
 
 	// -- Tabs navigation (Run view)
 	if let Some(code) = state.last_app_event().as_key_code() {
 		let current_run_tab = state.run_tab();
 		match code {
-			KeyCode::Char('j') => state.set_run_tab(current_run_tab.prev()),
-			KeyCode::Char('l') => state.set_run_tab(current_run_tab.next()),
+			KeyCode::Char('j') => {
+				state.set_run_tab(current_run_tab.prev());
+				state.core_mut().do_redraw = true;
+			}
+			KeyCode::Char('l') => {
+				state.set_run_tab(current_run_tab.next());
+				state.core_mut().do_redraw = true;
+			}
 			_ => (),
 		}
 	};
@@ -267,8 +277,14 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 		0
 	};
 	match offset {
-		-1 => state.dec_debug_clr(),
-		1 => state.inc_debug_clr(),
+		-1 => {
+			state.dec_debug_clr();
+			state.core_mut().do_redraw = true;
+		}
+		1 => {
+			state.inc_debug_clr();
+			state.core_mut().do_redraw = true;
+		}
 		_ => (),
 	}
 }
