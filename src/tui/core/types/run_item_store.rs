@@ -14,6 +14,13 @@ impl RunItemStore {
 		&self.items
 	}
 
+	pub fn visible_items_for_root_branch(&self, root_id: Option<Id>) -> Vec<&RunItem> {
+		self.items
+			.iter()
+			.filter(|item| item.is_root() || root_id.is_some_and(|root_id| item.belongs_to_root_branch(root_id)))
+			.collect()
+	}
+
 	#[allow(unused)]
 	pub fn get(&self, id: Id) -> Option<&RunItem> {
 		self.items_by_id.get(&id)

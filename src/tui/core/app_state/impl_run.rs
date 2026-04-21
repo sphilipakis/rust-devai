@@ -1,4 +1,5 @@
 use crate::support::time::tick_count;
+use crate::model::Id;
 use crate::tui::core::{AppState, RunItem, RunTab};
 
 /// RunsView
@@ -39,6 +40,20 @@ impl AppState {
 		} else {
 			None
 		}
+	}
+
+	pub fn current_root_run_id(&self) -> Option<Id> {
+		let run_item = self.current_run_item()?;
+
+		if run_item.is_root() {
+			Some(run_item.id())
+		} else {
+			run_item.ancestors().first().copied()
+		}
+	}
+
+	pub fn visible_run_items_for_nav<'a>(&'a self) -> Vec<&'a RunItem> {
+		self.core.run_item_store.visible_items_for_root_branch(self.current_root_run_id())
 	}
 
 	#[allow(unused)]

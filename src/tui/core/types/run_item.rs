@@ -67,6 +67,10 @@ impl RunItem {
 		self.parent_id().is_none()
 	}
 
+	pub fn belongs_to_root_branch(&self, root_id: Id) -> bool {
+		self.id() == root_id || self.ancestors.first().is_some_and(|ancestor_id| *ancestor_id == root_id)
+	}
+
 	#[allow(unused)]
 	pub fn ancestors(&self) -> &[Id] {
 		&self.ancestors
