@@ -1,7 +1,7 @@
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
 use crate::model::{
-	ModelEvent, EndState, EntityAction, EntityType, EpochUs, Error, Id, ModelManager, RelIds, Result, RunningState,
+	EndState, EntityAction, EntityType, EpochUs, Error, Id, ModelEvent, ModelManager, RelIds, Result, RunningState,
 	ScalarEnum,
 };
 use macro_rules_attribute as mra;

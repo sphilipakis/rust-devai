@@ -54,7 +54,7 @@ pub fn run_ui_loop(
 				// -- Draw
 				let _ = terminal_draw(&mut terminal, &mut app_state);
 
-				// -- HANDLE Quit
+				// -- handle Quit
 				// NOTE: Handle this specific event here because we need to break the loop
 				//       Later, handle_app_event might return a control flow enum
 				if let AppEvent::Action(AppActionEvent::Quit) = &app_event {

@@ -2,7 +2,7 @@
 
 use crate::hub::get_hub;
 use crate::model::base::{self, DbBmc};
-use crate::model::{ModelEvent, EntityAction, EntityType, EpochUs, Id, ModelManager, RelIds, Result, UcontentBmc};
+use crate::model::{EntityAction, EntityType, EpochUs, Id, ModelEvent, ModelManager, RelIds, Result, UcontentBmc};
 use modql::SqliteFromRow;
 use modql::field::{Fields, HasSqliteFields, SqliteField, SqliteFields};
 use modql::filter::{ListOptions, OrderBys};
