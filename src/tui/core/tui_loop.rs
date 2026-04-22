@@ -105,6 +105,7 @@ struct Debouncer {
 	last_redraw_event: Option<AppEvent>,
 	ui_events: Vec<AppEvent>,
 	event_by_run_id: HashMap<Id, AppEvent>,
+	tick_event: Option<AppEvent>,
 }
 
 impl Debouncer {
@@ -113,6 +114,7 @@ impl Debouncer {
 			last_redraw_event: None,
 			ui_events: Vec::new(),
 			event_by_run_id: HashMap::new(),
+			tick_event: None,
 		};
 		debouncer.process(first_event);
 		debouncer
@@ -150,7 +152,7 @@ impl Debouncer {
 				}
 			}
 			AppEvent::Hub(hub_event) => self.last_redraw_event = Some(AppEvent::Hub(hub_event)),
-			AppEvent::Tick(tick) => self.last_redraw_event = Some(AppEvent::Tick(tick)),
+			AppEvent::Tick(tick) => self.tick_event = Some(AppEvent::Tick(tick)),
 		}
 	}
 
@@ -160,6 +162,11 @@ impl Debouncer {
 		// for now, append the last redraw (might not be needed)
 		if let Some(last_redraw_event) = self.last_redraw_event {
 			events.push(last_redraw_event);
+		}
+		if events.is_empty()
+			&& let Some(tick) = self.tick_event
+		{
+			events.push(tick)
 		}
 		events
 	}
