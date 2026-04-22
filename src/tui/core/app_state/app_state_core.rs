@@ -5,7 +5,6 @@ use crate::tui::core::{
 	AppStage, ConfigTab, MouseEvt, OverviewTasksMode, RunItemStore, RunTab, RunTasksInfo, ScrollIden, ScrollZone,
 	ScrollZones, UiAction,
 };
-use crate::tui::support;
 use crate::tui::view::PopupView;
 use arboard::Clipboard;
 use ratatui::layout::Position;
@@ -97,14 +96,6 @@ impl AppStateCore {
 		self.run_idx = run_idx.map(|v| v as i32);
 		// For now, we set it a None if not found (need to revise strategy, can syncup with the by_idx)
 		self.run_id = run_idx.map(|_| run_id);
-	}
-
-	pub fn offset_run_idx(&mut self, offset: i32) {
-		let runs_len = self.run_item_store.items().len();
-		let new_idx = support::offset_and_clamp_option_idx_in_len(&self.run_idx, offset, runs_len);
-		if let Some(new_idx) = new_idx {
-			self.set_run_by_idx(new_idx);
-		}
 	}
 
 	pub fn next_overview_tasks_mode(&mut self) -> OverviewTasksMode {

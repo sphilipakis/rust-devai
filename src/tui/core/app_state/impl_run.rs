@@ -1,14 +1,10 @@
-use crate::support::time::tick_count;
 use crate::model::Id;
+use crate::support::time::tick_count;
 use crate::tui::core::{AppState, RunItem, RunTab};
 use crate::tui::support::offset_and_clamp_option_idx_in_len;
 
 /// RunsView
 impl AppState {
-	pub fn run_idx(&self) -> Option<usize> {
-		self.core.run_idx.map(|idx| idx as usize)
-	}
-
 	pub fn running_tick_count(&self) -> Option<i64> {
 		let running_start = self.core().running_tick_start?;
 
@@ -23,12 +19,6 @@ impl AppState {
 		let ticks = self.running_tick_count()?;
 
 		Some((ticks / 3) % 2 == 0)
-	}
-
-	pub fn set_run_idx(&mut self, idx: Option<usize>) {
-		if let Some(idx) = idx {
-			self.core.set_run_by_idx(idx as i32);
-		}
 	}
 
 	pub fn set_run_id(&mut self, run_id: Id) {
@@ -57,8 +47,10 @@ impl AppState {
 		}
 	}
 
-	pub fn visible_run_items_for_nav<'a>(&'a self) -> Vec<&'a RunItem> {
-		self.core.run_item_store.visible_items_for_root_branch(self.current_root_run_id())
+	pub fn visible_run_items_for_nav(&self) -> Vec<&RunItem> {
+		self.core
+			.run_item_store
+			.visible_items_for_root_branch(self.current_root_run_id())
 	}
 
 	/// Move the run selection by `offset` within the currently visible nav list.
