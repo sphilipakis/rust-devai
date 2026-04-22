@@ -30,6 +30,10 @@ impl AppState {
 		}
 	}
 
+	pub fn set_run_id(&mut self, run_id: Id) {
+		self.core.set_run_by_id(run_id);
+	}
+
 	pub fn run_items(&self) -> &[RunItem] {
 		self.core.run_item_store.items()
 	}

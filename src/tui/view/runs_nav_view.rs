@@ -45,8 +45,8 @@ impl StatefulWidget for RunsNavView {
 
 		// -- Scroll & Select logic
 		state.set_scroll_area(SCROLL_IDEN, list_a);
-		let runs_len = state.run_items().len();
-		let scroll = state.clamp_scroll(SCROLL_IDEN, runs_len);
+		let visible_runs_len = state.visible_run_items_for_nav().len();
+		let scroll = state.clamp_scroll(SCROLL_IDEN, visible_runs_len);
 
 		// -- Process UI Event
 		// NOTE: In this case (contrarery to the Tasks Nav),
@@ -57,10 +57,10 @@ impl StatefulWidget for RunsNavView {
 		}
 
 		// -- Build Runs UI
-		let runs = state.run_items();
-		let run_sel_idx = state.run_idx().unwrap_or_default();
+		let visible_runs = state.visible_run_items_for_nav();
+		let current_run_id = state.current_run_item().map(|r| r.id());
 		let is_mouse_in_nav = state.is_last_mouse_over(list_a);
-		let items: Vec<ListItem> = runs
+		let items: Vec<ListItem> = visible_runs
 			.iter()
 			.enumerate()
 			.map(|(idx, run_item)| {
@@ -88,7 +88,7 @@ impl StatefulWidget for RunsNavView {
 					Span::styled(label, style::STL_TXT),
 				]);
 
-				if run_sel_idx == idx {
+				if current_run_id == Some(run_item.id()) {
 					line = line.style(style::STL_NAV_ITEM_HIGHLIGHT);
 					line = line.x_fg(style::CLR_TXT_BLACK);
 				} else if is_mouse_in_nav && state.is_last_mouse_over(list_a.x_row((idx + 1) as u16 - scroll)) {
@@ -134,18 +134,18 @@ fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> 
 	{
 		// NOTE: Here not using clamp_idx_in_len to fix issue about last item selected
 		//       when clicking on end of nav panel
-		let current_run_idx = state.run_idx();
+		let current_run_id = state.current_run_item().map(|r| r.id());
 
 		let new_idx = mouse_evt.y() - nav_a.y + scroll;
-		let runs_len = state.run_items().len();
 		let new_idx = new_idx as usize;
 
-		if new_idx >= runs_len {
+		let visible_runs = state.visible_run_items_for_nav();
+		let Some(target_run_id) = visible_runs.get(new_idx).map(|r| r.id()) else {
 			return false;
-		}
+		};
 
-		if Some(new_idx) != current_run_idx {
-			state.set_run_idx(Some(new_idx));
+		if Some(target_run_id) != current_run_id {
+			state.set_run_id(target_run_id);
 			return true;
 		}
 	}
