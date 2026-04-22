@@ -146,6 +146,10 @@ fn process_mouse_for_run_nav(state: &mut AppState, nav_a: Rect, scroll: u16) -> 
 
 		if Some(target_run_id) != current_run_id {
 			state.set_run_id(target_run_id);
+			// Clear the mouse event so the same click is not reprocessed on the
+			// next render, which would remap the same y-coordinate against a new
+			// visible list (now expanding the clicked root) and select a descendant.
+			state.clear_mouse_evts(true);
 			return true;
 		}
 	}
