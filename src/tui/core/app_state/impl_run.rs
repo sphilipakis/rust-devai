@@ -1,6 +1,7 @@
 use crate::support::time::tick_count;
 use crate::model::Id;
 use crate::tui::core::{AppState, RunItem, RunTab};
+use crate::tui::support::offset_and_clamp_option_idx_in_len;
 
 /// RunsView
 impl AppState {
@@ -58,6 +59,29 @@ impl AppState {
 
 	pub fn visible_run_items_for_nav<'a>(&'a self) -> Vec<&'a RunItem> {
 		self.core.run_item_store.visible_items_for_root_branch(self.current_root_run_id())
+	}
+
+	/// Move the run selection by `offset` within the currently visible nav list.
+	/// This keeps keyboard navigation aligned with the visible rows so collapsed
+	/// sub-run branches are skipped.
+	pub fn offset_run_idx_in_visible_nav(&mut self, offset: i32) {
+		let visible_ids: Vec<Id> = self.visible_run_items_for_nav().iter().map(|r| r.id()).collect();
+		let len = visible_ids.len();
+		if len == 0 {
+			return;
+		}
+
+		let current_run_id = self.current_run_item().map(|r| r.id());
+		let current_visible_idx: Option<i32> = current_run_id
+			.and_then(|id| visible_ids.iter().position(|vid| *vid == id))
+			.map(|i| i as i32);
+
+		let new_idx = offset_and_clamp_option_idx_in_len(&current_visible_idx, offset, len);
+		if let Some(new_idx) = new_idx
+			&& let Some(target_id) = visible_ids.get(new_idx as usize).copied()
+		{
+			self.set_run_id(target_id);
+		}
 	}
 
 	#[allow(unused)]

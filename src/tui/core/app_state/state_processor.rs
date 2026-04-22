@@ -182,7 +182,7 @@ pub fn process_app_state(state: &mut AppState, opts: ProcessAppStateOpts) {
 		0
 	};
 	if runs_nav_offset != 0 {
-		state.core_mut().offset_run_idx(runs_nav_offset);
+		state.offset_run_idx_in_visible_nav(runs_nav_offset);
 		state.core_mut().do_redraw = true;
 	}
 
