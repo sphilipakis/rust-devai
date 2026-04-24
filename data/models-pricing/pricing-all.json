@@ -652,12 +652,22 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.5,
+          "normal": 5
+        },
+        "name": "gpt-5.5",
+        "output": 30,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.25,
           "normal": 2.5
         },
         "name": "gpt-5.4",
         "output": 15,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -767,7 +777,7 @@
         },
         "name": "gpt-4.1",
         "output": 8,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -777,7 +787,7 @@
         },
         "name": "gpt-4.1-mini",
         "output": 1.6,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -787,7 +797,7 @@
         },
         "name": "gpt-4.1-nano",
         "output": 0.4,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -797,7 +807,7 @@
         },
         "name": "gpt-4o",
         "output": 10,
-        "recent": false
+        "recent": true
       },
       {
         "input": {
@@ -807,7 +817,7 @@
         },
         "name": "gpt-4o-mini",
         "output": 0.6,
-        "recent": false
+        "recent": true
       },
       {
         "input": {

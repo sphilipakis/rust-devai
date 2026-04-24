@@ -1,6 +1,6 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
-## 2026-04-23 [v0.8.21](https://github.com/jeremychone/rust-devai/compare/v0.8.21...v0.8.22)
+## 2026-04-24 [v0.8.21](https://github.com/jeremychone/rust-devai/compare/v0.8.21...v0.8.22)
 
 - `^` NEW API `aip.zip` - `aip.zip.create`, `aip.zip.extract`, and `aip.zip.list` 
 - `+` `aip.file` - add workspace-safe `ensure_dir` directory creation
