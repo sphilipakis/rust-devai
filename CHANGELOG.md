@@ -1,5 +1,27 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-04-23 [v0.8.21](https://github.com/jeremychone/rust-devai/compare/v0.8.21...v0.8.22)
+
+- `^` NEW API `aip.zip` - `aip.zip.create`, `aip.zip.extract`, and `aip.zip.list` 
+- `+` `aip.file` - add workspace-safe `ensure_dir` directory creation
+- `^` TUI - Big TUI perf improvement when many (3k+ tasks)
+- `^` TUI - Expand only selected top run
+- `!` flow redo rename redo API to `redo_run`
+- `^` udiffx - include `error_hunks`, ignore no-op hunks, normalize single-hunk errors, and more resilience
+- `^` perf - use batch create for task and related entities
+- `^` tui - detect multi-dot js config file paths in help text
+- `>` internal - data/model/task event cleanup
+- `.` Model pricing / model aliases - gpt 5.4, opus 4.7 
+- `.` Model pricing - gpt 5.5 (not aliased yet as not available as API) 
+
+## 2026-03-25 [v0.8.21](https://github.com/jeremychone/rust-devai/compare/v0.8.20...v0.8.21)
+
+- `+` unpack - add unpack command specification
+- `^` aip.udiffx - include error_hunks data
+- `^` tui - detect multi-dot js config file paths in help text
+- `.` docs - update udiffx `ApplyChangesItem` error_hunks serialization docs
+- `.` doc/udiffx - update ApplyChangesStatus and error_hunks
+
 ## 2026-03-19 [v0.8.20](https://github.com/jeremychone/rust-devai/compare/v0.8.19...v0.8.20)
 
 - `^` model - gpt-5.4 mini/nano pricing update and aliases
