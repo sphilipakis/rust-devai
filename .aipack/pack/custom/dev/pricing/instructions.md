@@ -7,7 +7,7 @@
   - ignore the legacy models
   - Do not add the gpt-image-1 or audio models
   - for the `recent`
-    - Only the `gpt-..` can have recent true, and also take the high version of each variant for `recent: true` (the rest are false)
+    - Only the `gpt-5...` can have recent true, and also take the high version of each variant for `recent: true` (the rest are false)
       - So, only 1 true, for base `gpt-...` one for `gpt-...-mini` and so on. 
     - All others, `recent: false` (codex-mini-latest is alwys `recent: false`)
   - ignore the lines have have dates like text, like `2024-05-13`

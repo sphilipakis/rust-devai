@@ -777,7 +777,7 @@
         },
         "name": "gpt-4.1",
         "output": 8,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -787,7 +787,7 @@
         },
         "name": "gpt-4.1-mini",
         "output": 1.6,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -797,7 +797,7 @@
         },
         "name": "gpt-4.1-nano",
         "output": 0.4,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -807,7 +807,7 @@
         },
         "name": "gpt-4o",
         "output": 10,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
@@ -817,7 +817,7 @@
         },
         "name": "gpt-4o-mini",
         "output": 0.6,
-        "recent": true
+        "recent": false
       },
       {
         "input": {
