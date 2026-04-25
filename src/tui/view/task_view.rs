@@ -82,7 +82,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	const L1_VAL_2_WIDTH: u16 = 12; // cost value
 
 	const L2_VAL_1_WIDTH: u16 = 26;
-	const L2_VAL_2_WIDTH: u16 = 26;
+	const L2_VAL_2_WIDTH: u16 = L1_VAL_2_WIDTH;
 
 	// -- Columns layout
 	// l1_ is for the model, cost, duration
@@ -173,7 +173,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			.render(l2_label_2.x_row(current_row), buf);
 		Paragraph::new(completion_tk)
 			.style(style::STL_FIELD_VAL)
-			.render(l2_val_2.union(l2_val_3).x_row(current_row), buf);
+			.render(l2_val_2.x_row(current_row), buf);
 
 		//current_task_cache_write_fmt
 		if let Some(cache_info) = cache_info {
@@ -183,7 +183,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 				.render(l2_label_3.x_row(current_row), buf);
 			Paragraph::new(cache_info)
 				.style(style::STL_FIELD_VAL)
-				.render(l2_val_3.union(l2_val_3).x_row(current_row), buf);
+				.render(l2_val_3.x_row(current_row), buf);
 		}
 	}
 }
