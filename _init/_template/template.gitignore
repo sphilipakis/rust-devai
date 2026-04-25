@@ -3,6 +3,11 @@
 .*
 !.gitignore
 
+# Ignore all file/paths starting with _, except in src/
+_*
+!**/src/**/_*/
+!**/src/**/_*
+
 # -- AIPack
 # Ignore all .aipack files
 *.aipack
