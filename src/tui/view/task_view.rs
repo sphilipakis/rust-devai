@@ -84,6 +84,18 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	const L2_VAL_1_WIDTH: u16 = 26;
 	const L2_VAL_2_WIDTH: u16 = L1_VAL_2_WIDTH;
 
+	let completion_tk_width = Span::raw(state.current_task_completion_tokens_fmt())
+		.width()
+		.min(u16::MAX as usize) as u16;
+	let header_val_2_default_width = L1_VAL_2_WIDTH.max(L2_VAL_2_WIDTH);
+	let header_val_2_width = if completion_tk_width > header_val_2_default_width {
+		let fixed_width = 10 + L1_VAL_1_WIDTH + 7 + 13 + 5;
+		let max_width = area.width.saturating_sub(fixed_width);
+		completion_tk_width.min(max_width).max(header_val_2_default_width)
+	} else {
+		header_val_2_default_width
+	};
+
 	// -- Columns layout
 	// l1_ is for the model, cost, duration
 	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
@@ -92,7 +104,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			Constraint::Length(10),             // Model
 			Constraint::Length(L1_VAL_1_WIDTH), //
 			Constraint::Length(7),              // Cost
-			Constraint::Length(L1_VAL_2_WIDTH), //
+			Constraint::Length(header_val_2_width), //
 			Constraint::Length(13),             // Duration
 			Constraint::Fill(1),                //
 		])
@@ -105,7 +117,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 			Constraint::Length(10),             // Prompt
 			Constraint::Length(L2_VAL_1_WIDTH), //
 			Constraint::Length(7),              // Completion
-			Constraint::Length(L2_VAL_2_WIDTH), //
+			Constraint::Length(header_val_2_width), //
 			Constraint::Length(13),             // Cache Info
 			Constraint::Fill(1),                //
 		])
@@ -154,7 +166,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	let prompt_tk = truncate_with_ellipsis(&prompt_tk, L2_VAL_1_WIDTH as usize, ".)");
 	let completion_tk = state.current_task_completion_tokens_fmt();
 	// Here we assume if overflow is because have a (123 KB)
-	let completion_tk = truncate_with_ellipsis(&completion_tk, L2_VAL_2_WIDTH as usize, ".)");
+	let completion_tk = truncate_with_ellipsis(&completion_tk, header_val_2_width as usize, ".)");
 	let cache_info = state.current_task_cache_info_fmt();
 
 	if matches!(header_mode, HeaderMode::Full | HeaderMode::TokensOnly) {
