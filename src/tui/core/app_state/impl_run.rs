@@ -47,6 +47,13 @@ impl AppState {
 		}
 	}
 
+	/// Returns true when the current run belongs to a nested run tree.
+	pub fn current_run_is_in_nested_run_tree(&self) -> bool {
+		self.current_run_item()
+			.map(|run_item| run_item.has_parent() || run_item.has_children())
+			.unwrap_or_default()
+	}
+
 	pub fn visible_run_items_for_nav(&self) -> Vec<&RunItem> {
 		self.core
 			.run_item_store

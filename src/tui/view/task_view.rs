@@ -35,7 +35,10 @@ impl StatefulWidget for TaskView {
 
 	fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
 		// (run.has_prompt_parts, many_runs)
-		let header_mode = match (state.current_run_has_prompt_parts(), state.tasks().len() > 1) {
+		// Nested run tree context also uses the full header even for one task.
+		let has_many_tasks = state.tasks().len() > 1;
+		let use_full_header = has_many_tasks || state.current_run_is_in_nested_run_tree();
+		let header_mode = match (state.current_run_has_prompt_parts(), use_full_header) {
 			// For now, none has_prompt, like we have some
 			(None | Some(true), true) => HeaderMode::Full,
 			(None | Some(true), false) => HeaderMode::TokensOnly,
