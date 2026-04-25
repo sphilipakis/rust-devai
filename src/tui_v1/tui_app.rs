@@ -3,6 +3,7 @@ use crate::event::{Tx, new_channel};
 use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::{HubEvent, get_hub};
+use crate::term::TermTitleGuard;
 use crate::term::safer_println;
 use crate::tui_v1::hub_event_handler::handle_hub_event;
 use crate::tui_v1::in_reader::InReader;
@@ -39,6 +40,7 @@ pub struct ExitTx(Tx<()>);
 impl TuiAppV1 {
 	/// Start the app with arg
 	pub async fn start_with_args(self, cli_args: CliArgs) -> Result<()> {
+		let title_guard = TermTitleGuard::capture();
 		let (exit_tx, exit_rx) = new_channel::<()>("exit_term");
 
 		// let hub_rx_for_exit = get_hub().subscriber();
@@ -59,6 +61,8 @@ impl TuiAppV1 {
 
 		// -- Wait for the exit
 		let _ = exit_rx.recv().await;
+
+		let _ = title_guard.restore();
 
 		// -- Make sure to close the in_reader if one to restore states
 		if let Some(in_reader) = in_reader {

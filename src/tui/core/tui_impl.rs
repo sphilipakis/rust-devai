@@ -7,6 +7,7 @@ use crate::exec::cli::CliArgs;
 use crate::exec::{ExecActionEvent, ExecutorTx};
 use crate::hub::get_hub;
 use crate::model::ModelManager;
+use crate::term::TermTitleGuard;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::execute;
 use derive_more::{Deref, From};
@@ -14,6 +15,8 @@ use ratatui::DefaultTerminal;
 use std::io::stdout;
 
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
+	let title_guard = TermTitleGuard::capture();
+
 	// -- init terminal
 	let terminal = ratatui::init();
 	// Enable mouse capture
@@ -21,6 +24,7 @@ pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs)
 
 	let _ = exec_app(terminal, mm, executor_tx, args).await;
 
+	let _ = title_guard.restore();
 	ratatui::restore();
 	// Enable mouse capture
 	execute!(stdout(), DisableMouseCapture)?;

@@ -102,6 +102,48 @@ impl Default for TermInfo {
 
 // endregion: --- TermInfo
 
+// region:    --- TermTitleGuard
+
+#[derive(Debug)]
+pub struct TermTitleGuard {
+	previous_title: Option<String>,
+	restored: bool,
+}
+
+impl TermTitleGuard {
+	pub fn capture() -> Self {
+		Self {
+			previous_title: tmux_pane_title(),
+			restored: false,
+		}
+	}
+
+	pub fn restore(mut self) -> bool {
+		let restored = self.restore_inner();
+		self.restored = true;
+		restored
+	}
+
+	fn restore_inner(&self) -> bool {
+		let Some(title) = &self.previous_title else {
+			return false;
+		};
+
+		set_window_name(title)
+	}
+}
+
+impl Drop for TermTitleGuard {
+	fn drop(&mut self) {
+		if !self.restored {
+			let _ = self.restore_inner();
+			self.restored = true;
+		}
+	}
+}
+
+// endregion: --- TermTitleGuard
+
 // region:    --- Public Functions
 
 pub fn term_info() -> Option<TermInfo> {
@@ -119,12 +161,7 @@ pub fn set_window_name(name: &str) -> bool {
 	};
 
 	if term_info.match_any("tmux") {
-		let res = crate::support::os::new_run_command("tmux")
-			.arg("select-pane")
-			.arg("-T")
-			.arg(name)
-			.spawn();
-		return res.is_ok();
+		return set_tmux_pane_title(name);
 	} else if term_info.match_any("wezterm") {
 		let prog = if let Ok(dir) = env::var("WEZTERM_EXECUTABLE_DIR") {
 			Cow::from(format!("{dir}/wezterm"))
@@ -140,3 +177,42 @@ pub fn set_window_name(name: &str) -> bool {
 }
 
 // endregion: --- Public Functions
+
+// region:    --- Support
+
+fn tmux_pane_title() -> Option<String> {
+	let term_info = term_info()?;
+	if !term_info.match_any("tmux") {
+		return None;
+	}
+
+	let output = crate::support::os::new_run_command("tmux")
+		.arg("display-message")
+		.arg("-p")
+		.arg("#T")
+		.output()
+		.ok()?;
+
+	if !output.status.success() {
+		return None;
+	}
+
+	let title = String::from_utf8(output.stdout).ok()?;
+	let title = title.trim_end_matches(['\r', '\n']).to_string();
+	if title.is_empty() {
+		Some("term".to_string())
+	} else {
+		Some(title)
+	}
+}
+
+fn set_tmux_pane_title(name: &str) -> bool {
+	crate::support::os::new_run_command("tmux")
+		.arg("select-pane")
+		.arg("-T")
+		.arg(name)
+		.status()
+		.is_ok_and(|status| status.success())
+}
+
+// endregion: --- Support
