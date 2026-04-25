@@ -14,7 +14,6 @@ local base_dir = p_utils.base_dir
 
 -- NOTE: Just delete the .md file for the provider name to have it load it. 
 
--- GROQ      - https://console.groq.com/docs/models pricing: https://groq.com/pricing/
 -- OPENAI    - https://platform.openai.com/docs/pricing/
 --             https://developers.openai.com/api/docs/pricing.md (unfortunately, does not have the data)
 -- ANTHROPIC - https://platform.claude.com/docs/en/about-claude/pricing
@@ -22,6 +21,8 @@ local base_dir = p_utils.base_dir
 --             Overview https://docs.anthropic.com/en/docs/about-claude/models/overview
 -- GEMINI    - https://ai.google.dev/pricing
 -- XAI       - https://console.x.ai/team/5577cfb2-dfde-4893-9817-4eb4de1d4098/models
+-- GROQ      - https://console.groq.com/docs/models 
+--           - pricing: https://groq.com/pricing/
 -- FIREWORKS - Login with filter https://app.fireworks.ai/models?filter=LLM&serverless=true, 
 --             Static https://fireworks.ai/pricing#serverless-pricing
 -- TOGETHER  - login models price: https://api.together.ai/models
