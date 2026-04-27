@@ -12,7 +12,7 @@
     },
     {
       "name": "deepseek",
-      "do_json": true,
+      "do_json": false,
       "url": ""
     },
     {
@@ -32,7 +32,7 @@
     },
     {
       "name": "fireworks",
-      "do_json": false,
+      "do_json": true,
       "url": ""
     },
     {
