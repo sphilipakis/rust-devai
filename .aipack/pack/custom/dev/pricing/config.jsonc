@@ -2,7 +2,7 @@
   "providers": [
     {
       "name": "openai",
-      "do_json": true,
+      "do_json": false,
       "url": ""
     },
     {
@@ -12,8 +12,8 @@
     },
     {
       "name": "deepseek",
-      "do_json": false,
-      "url": "https://api-docs.deepseek.com/quick_start/pricing"
+      "do_json": true,
+      "url": ""
     },
     {
       "name": "anthropic",

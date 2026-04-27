@@ -118,11 +118,32 @@
       {
         "input": {
           "cache_write": null,
+          "cached": 0.0028,
+          "normal": 0.14
+        },
+        "name": "deepseek-v4-flash",
+        "output": 0.28,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
+          "cached": 0.0145,
+          "normal": 1.74
+        },
+        "name": "deepseek-v4-pro",
+        "output": 3.48,
+        "recent": true
+      },
+      {
+        "input": {
+          "cache_write": null,
           "cached": 0.07,
           "normal": 0.27
         },
         "name": "deepseek-chat",
-        "output": 1.1
+        "output": 1.1,
+        "recent": false
       },
       {
         "input": {
@@ -131,7 +152,8 @@
           "normal": 0.55
         },
         "name": "deepseek-reasoner",
-        "output": 2.19
+        "output": 2.19,
+        "recent": false
       }
     ]
   },

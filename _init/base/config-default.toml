@@ -89,4 +89,5 @@ gpt-oss-120b  = "fireworks::gpt-oss-120b"
 gpt-oss-small = "fireworks::gpt-oss-20b"
 gpt-oss-20b   = "fireworks::gpt-oss-20b"
 # -- DeepSeek (from deepseek.com)
-r1            = "deepseek-reasoner"
+dflash        = "deepseek-v4-flash"
+dpro          = "deepseek-v4-pro"

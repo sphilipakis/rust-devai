@@ -34,6 +34,10 @@
   - Set the flag `recent: true` only for the model names that match the `<h1>recent</h1>` list, and all the other should be `recent: false`
   - Also, only extract the models about Llama, qwen, deepseek, glm, gemma, mixtral, mistral, and openai.
 
+# deepseek
+
+- Only the `-v4` model are `recent: true`
+
 # anthropic
 
 - Make sure all models are all lowercase
