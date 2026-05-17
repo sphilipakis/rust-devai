@@ -6,9 +6,3 @@ pub struct ModelPricing {
 	pub output_normal: f64,
 	pub output_reasoning: Option<f64>,
 }
-
-#[derive(Debug)]
-pub struct ProviderPricing {
-	pub name: &'static str,
-	pub models: &'static [ModelPricing],
-}
