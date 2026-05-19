@@ -75,7 +75,8 @@ codex         = "gpt-5.5"  # much better than gpt-5.3-codex
 # As shown below, Gemini model names also support the use of `-high`, `-medium`, or `-low` suffixes,
 # in addition to the `-zero` suffix for Flash or pro
 gpro          = "gemini-3.1-pro-preview"
-flash         = "gemini-3-flash-preview"
+flash3        = "gemini-3-flash-preview" # older, but 3x cheaper (might get discountinued by google)
+flash         = "gemini-3.5-flash"
 lite          = "gemini-3.1-flash-lite"
 # -- Fireworks (namespaced with `fireworks::_model_name`
 qwen-coder    = "fireworks::qwen3-coder-480b-a35b-instruct"
