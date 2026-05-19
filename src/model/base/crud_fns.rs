@@ -28,7 +28,7 @@ where
 
 	// -- Execute the command
 	let mut values = fields.values_as_dyn_to_sql_vec();
-	values.push(&*id);
+	values.push(&id);
 	let db = mm.db();
 
 	let count = db.exec(&sql, &*values)?;
