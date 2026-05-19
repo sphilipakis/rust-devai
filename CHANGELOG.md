@@ -1,5 +1,10 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-05-19 [v0.8.26](https://github.com/jeremychone/rust-devai/compare/v0.8.25...v0.8.26)
+
+- `^` model - gemini flash 3.5 pricing and `flash` alias 
+- `.` model - `flash3` alias to the old `gemini-3-flash-preview` (3x cheaper)
+
 ## 2026-05-15 [v0.8.25](https://github.com/jeremychone/rust-devai/compare/v0.8.24...v0.8.25)
 
 - `-` aip.file - Fix negative globs with absolute paths
