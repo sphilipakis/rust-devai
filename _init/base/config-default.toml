@@ -79,16 +79,16 @@ flash3        = "gemini-3-flash-preview" # older, but 3x cheaper (might get disc
 flash         = "gemini-3.5-flash"
 lite          = "gemini-3.1-flash-lite"
 # -- Fireworks (namespaced with `fireworks::_model_name`
-qwen-coder    = "fireworks::qwen3-coder-480b-a35b-instruct"
-qwen          = "fireworks::qwen3-235b-a22b-instruct-2507"
-qwen-thinker  = "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507" # can be full fireworks name
-kimi          = "fireworks::kimi-k2-instruct"
-glm           = "fireworks::glm-4p5"
+kimi          = "fireworks::kimi-k2p6"
+minimax       = "fireworks::minimax-m2p7"
+glm           = "fireworks::glm-5p1"
 glm-air       = "fireworks::glm-4p5-air"
 gpt-oss       = "fireworks::gpt-oss-120b"
 gpt-oss-120b  = "fireworks::gpt-oss-120b"
 gpt-oss-small = "fireworks::gpt-oss-20b"
 gpt-oss-20b   = "fireworks::gpt-oss-20b"
+fdflash       = "fireworks::deepseek-v4-flash"
+fdpro         = "fireworks::deepseek-v4-pro"
 # -- DeepSeek (from deepseek.com)
 dflash        = "deepseek-v4-flash"
 dpro          = "deepseek-v4-pro"
