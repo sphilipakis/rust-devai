@@ -20,7 +20,7 @@ use crate::support::{AsStrsExt, W};
 use crate::types::Extrude;
 use crate::{Error, Result};
 use mlua::{IntoLua, Lua, MultiValue, Table, Value};
-use udiffx::ApplyChangesStatus;
+use udiffx::{ApplyChangesStatus, SecurityPolicy};
 
 // region:    --- Module Init
 
@@ -115,7 +115,8 @@ fn apply_file_changes(
 	let abs_base_dir = runtime.resolve_path_default(base_dir_str.into(), None)?;
 
 	// -- 4) Apply changes
-	let status = udiffx::apply_file_changes(&abs_base_dir, file_changes).map_err(crate::Error::from)?;
+	let status = udiffx::apply_file_changes(&abs_base_dir, file_changes, SecurityPolicy::trusted_cwd())
+		.map_err(crate::Error::from)?;
 
 	// -- 5) Build return values
 	let mut values = MultiValue::new();
