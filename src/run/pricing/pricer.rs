@@ -14,7 +14,6 @@ use genai::chat::Usage;
 /// * `Option<PriceResult>` - The calculated price information, or None if the provider or model was not found
 pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<AiPrice> {
 	let ai_cost = aicost::compute(provider_type, model_name, usage).ok()?;
-
 	Some(AiPrice {
 		cost: ai_cost.total,
 		cost_cache_write: (ai_cost.input_cache_write > 0.0).then_some(ai_cost.input_cache_write),
