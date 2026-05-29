@@ -170,10 +170,10 @@ So, if you're still not sure, use `null` in arrays, and you can use either `nil`
 
 **Important Comparison Note**
 
-In Lua, `nil` and the `null` sentinel are different types. A simple `val == nil` check will return `false` if `val` is `null`. Always use the [Global Null Helpers](#global-null-helpers) (`is_null`, `nil_if_null`, `value_or`) to safely compare or handle these values.
+In Lua, `nil` and the `null` sentinel are different types. A simple `val == nil` check will return `false` if `val` is `null`. Always use the [Global Helpers](#global-helpers) (`is_null`, `nil_if_null`, `value_or`) to safely compare or handle these values.
 
 
-### Global Null Helpers
+### Global Helpers
 
 AIPack provides several global functions to safely handle both `nil` and `null` values.
 
@@ -201,6 +201,48 @@ Returns `value` if it is not `nil` and not `null`. Otherwise, returns `alt`.
 
 ```lua
 local name = value_or(input.name, "Anonymous")
+```
+
+**`is_not_null(value)`**
+
+Returns `true` if `value` is neither `nil` nor `null`.
+
+```lua
+is_not_null(nil)   -- false
+is_not_null(null)  -- false
+is_not_null(false) -- true
+```
+
+**`is_table(value)`**
+
+Returns `true` if `value` is not `nil`/`null` and is a Lua table (list or object).
+
+```lua
+is_table({})       -- true
+is_table({"a"})    -- true
+is_table(nil)      -- false
+is_table(null)     -- false
+```
+
+**`is_list(value)`**
+
+Returns `true` if `value` is not `nil`/`null`, is a table, and has at least index 1 (i.e., `rawget(1)` is not `nil`).
+
+```lua
+is_list({"a", "b"}) -- true
+is_list({})         -- false (empty table has no index 1)
+is_list({x=1})      -- false
+```
+
+**`is_object(value)`**
+
+Returns `true` if `value` is not `nil`/`null`, is a table, and does not have index 1 (i.e., `rawget(1)` is `nil`). This includes empty tables and string-keyed tables.
+
+```lua
+is_object({})       -- true
+is_object({x=1})    -- true
+is_object({"a"})    -- false
+is_object(nil)      -- false
 ```
 
 

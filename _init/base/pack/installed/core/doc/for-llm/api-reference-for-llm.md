@@ -297,8 +297,14 @@ AIPack introduces a global `null` sentinel to bridge the gap between Lua's `nil`
 **Global Helpers:**
 
 - `is_null(v)`: returns `true` if `v` is `nil` or `null`.
+- `is_not_null(v)`: returns `true` if `v` is not `nil` and not `null`.
+- `value_or(v, alt)`: returns `alt` if `v` is `nil` or `null`, otherwise `v`. Use this when possible
+
 - `nil_if_null(v)`: returns `nil` if `v` is `nil` or `null`, otherwise `v`.
-- `value_or(v, alt)`: returns `alt` if `v` is `nil` or `null`, otherwise `v`.
+
+- `is_table(v)`: returns `true` if `v` is not nil/null and is a Lua table (list or object).
+- `is_list(v)`: returns `true` if `v` is not nil/null, is a table, and has at least index 1.
+- `is_object(v)`: returns `true` if `v` is not nil/null, is a table, and has no index 1.
 
 ### 4.2 API (`aip.*`) Reference
 

@@ -231,6 +231,55 @@ fn init_null(lua: &Lua) -> Result<()> {
 		})?,
 	)?;
 
+	// is_not_null(x) -> boolean
+	globals.set(
+		"is_not_null",
+		lua.create_function(|_, v: Value| Ok(!(matches!(v, Value::Nil) || v == Value::NULL)))?,
+	)?;
+
+	// is_table(x) -> boolean
+	globals.set(
+		"is_table",
+		lua.create_function(|_, v: Value| {
+			if matches!(v, Value::Nil) || v == Value::NULL {
+				return Ok(false);
+			}
+			Ok(matches!(v, Value::Table(_)))
+		})?,
+	)?;
+
+	// is_list(x) -> boolean
+	globals.set(
+		"is_list",
+		lua.create_function(|_lua, v: Value| {
+			if matches!(v, Value::Nil) || v == Value::NULL {
+				return Ok(false);
+			}
+			if let Value::Table(t) = v {
+				let val = t.raw_get(1)?;
+				Ok(!matches!(val, Value::Nil))
+			} else {
+				Ok(false)
+			}
+		})?,
+	)?;
+
+	// is_object(x) -> boolean
+	globals.set(
+		"is_object",
+		lua.create_function(|_lua, v: Value| {
+			if matches!(v, Value::Nil) || v == Value::NULL {
+				return Ok(false);
+			}
+			if let Value::Table(t) = v {
+				let val = t.raw_get(1)?;
+				Ok(matches!(val, Value::Nil))
+			} else {
+				Ok(false)
+			}
+		})?,
+	)?;
+
 	Ok(())
 }
 
