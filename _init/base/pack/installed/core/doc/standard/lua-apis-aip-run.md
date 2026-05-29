@@ -2,6 +2,8 @@
 
 Functions for recording pins and updating run metadata (attached to the overall run).
 
+These functions can be called from any stage (`# Before All`, `# Data`, `# Output`, `# After All`).
+
 ### Functions Summary
 
 ```lua

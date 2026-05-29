@@ -35,11 +35,11 @@ aip.task.set_label("Task: Validate inputs")
 
 #### Error
 
-Returns an error (Lua table `{ error: string }`) if called outside a task context or if arguments are invalid.
+Returns an error (Lua table `{ error: string }`) if called outside a task context (i.e., from `# Before All` or `# After All`) or if arguments are invalid.
 
 ### aip.task.pin
 
-Creates a pin attached to the current task. Requires that both [CTX](#ctx).RUN_UID and [CTX](#ctx).TASK_UID are available (i.e., must be called during a task cycle, not in before_all or after_all).
+Creates a pin attached to the current task. Requires that both [CTX](#ctx).RUN_UID and [CTX](#ctx).TASK_UID are available (i.e., must be called during a task cycle, not in `# Before All` or `# After All`).
 
 ```lua
 -- API Signatures

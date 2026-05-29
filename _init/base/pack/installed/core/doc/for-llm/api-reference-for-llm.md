@@ -566,12 +566,12 @@ aip.agent.extract_options(value: any): table | nil
 ### aip.run & aip.task - Metadata/Pinning
 
 ```typescript
-// aip.run (Requires CTX.RUN_UID). Global for the entire agent run.
+// aip.run (Requires CTX.RUN_UID). Global for the entire agent run; callable from any stage (# Before All, # Data, # Output, # After All).
 aip.run.set_label(label: string)
 aip.run.pin(iden: string, content: string | {label?: string, content: string})
 aip.run.pin(iden: string, priority: number, content: string | {label?: string, content: string})
 
-// aip.task (Requires CTX.RUN_UID and CTX.TASK_UID). Specific to current input task.
+// aip.task (Requires CTX.RUN_UID and CTX.TASK_UID). Specific to current input task; only callable during # Data or # Output stages (not # Before All or # After All).
 aip.task.set_label(label: string)
 aip.task.pin(iden: string, content: string | {label?: string, content: string})
 aip.task.pin(iden: string, priority: number, content: string | {label?: string, content: string})
