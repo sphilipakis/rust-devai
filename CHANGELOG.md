@@ -1,5 +1,19 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-05-30 [v0.8.27](https://github.com/jeremychone/rust-devai/compare/v0.8.26...v0.8.27)
+
+- `^` Model - Opus 4.8 cost, alias, opus 4.8 
+- `^` Model - OpenAI '-max' suffix matches to 'max' reasoning effort (was xhigh)
+- `^` Model - Added Mimo provider with v2.5 pricing (and aliases, `mimo-pro/mpro`, `mimo/mflash`)
+- `^` Model - Updated deepseek.com v4 permanent pricing (top model for open source dev) (`dpro` and `dflash` aliases)
+- `^` Model - Now all OpenAI compatible providers support reasoning effort suffix (e.g., -low) (genai v0.6.1)
+- `^` udiffx updates (emphasis on multiple hunks, instruction rewrite, emphasis on file_changes container)
+- `+` Lua builtins - Add `is_not_null`, `is_table`, `is_list`, `is_object` helpers
+- `.` Doc - Clarify that aip.task functions cannot be called from Before All or After All
+- `.` Silent trash (simple-fs v0.12.2)
+- `.` sqlite 3.53.1 (rusqlite v0.40.0)
+- `.` aip.json.parse - Fully relax format (support for single or no key quotes, missing commas, and more)
+
 ## 2026-05-19 [v0.8.26](https://github.com/jeremychone/rust-devai/compare/v0.8.25...v0.8.26)
 
 - `^` model - gemini flash 3.5 pricing and `flash` alias 
