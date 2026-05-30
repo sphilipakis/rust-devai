@@ -31,8 +31,8 @@ flume = "0.12"
 futures-timer = "3.0.3"
 futures = "0.3.31"
 # -- AI
-genai = { version = "0.6.2"}
-udiffx = { version = "0.2.0-beta.3", features = ["prompt"]}
+genai = { version = "0.6.3"}
+udiffx = { version = "0.2.0-beta.4", features = ["prompt"]}
 aicost = { version = "0.1.6" }
 # -- Json & Data Files
 serde = { version = "1", features = ["derive"] }
