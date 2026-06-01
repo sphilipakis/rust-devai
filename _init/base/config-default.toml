@@ -80,7 +80,7 @@ flash         = "gemini-3.5-flash"
 lite          = "gemini-3.1-flash-lite"
 # -- Fireworks (namespaced with `fireworks::_model_name`
 kimi          = "fireworks::kimi-k2p6"
-minimax       = "fireworks::minimax-m2p7"
+fminimax      = "fireworks::minimax-m2p7"
 glm           = "fireworks::glm-5p1"
 glm-air       = "fireworks::glm-4p5-air"
 gpt-oss       = "fireworks::gpt-oss-120b"
@@ -92,6 +92,9 @@ fdpro         = "fireworks::deepseek-v4-pro"
 # -- DeepSeek (from deepseek.com)
 dflash        = "deepseek-v4-flash"
 dpro          = "deepseek-v4-pro"
+# -- minimax
+minimax       = "MiniMax-M3"
+minimax-speed = "MiniMax-M2.7-highspeed"
 # -- mimo
 mimo          = "mimo::mimo-v2.5"
 mimo-pro      = "mimo::mimo-v2.5-pro"
