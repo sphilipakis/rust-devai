@@ -17,16 +17,17 @@ use std::io::stdout;
 pub async fn start_tui(mm: ModelManager, executor_tx: ExecutorTx, args: CliArgs) -> Result<()> {
 	let title_guard = TermTitleGuard::capture();
 
-	// -- init terminal
+	// -- Init Terminal
 	let terminal = ratatui::init();
 	// Enable mouse capture
 	execute!(stdout(), EnableMouseCapture)?;
 
 	let _ = exec_app(terminal, mm, executor_tx, args).await;
 
+	// -- Restoring Terminal
 	let _ = title_guard.restore();
 	ratatui::restore();
-	// Enable mouse capture
+	// Disable mouse capture
 	execute!(stdout(), DisableMouseCapture)?;
 
 	Ok(())

@@ -54,7 +54,9 @@ pub fn run_ui_loop(
 				// NOTE: Handle this specific event here because we need to break the loop
 				//       Later, handle_app_event might return a control flow enum
 				if let AppEvent::Action(AppActionEvent::Quit) = &app_event {
-					let _ = terminal.clear();
+					// Note: We should not need this (it is assking .5s to 1s to shutdown)
+					// let _ = terminal.clear();
+
 					let _ = exit_tx.send(()).await;
 					break 'outer;
 				}
