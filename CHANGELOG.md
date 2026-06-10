@@ -1,5 +1,13 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+## 2026-06-10 [v0.8.28](https://github.com/jeremychone/rust-devai/compare/v0.8.27...v0.8.28)
+
+- `^` Model - added Clause Fable (Alias & pricing)
+- `^` Model - added Minimax M3 cost and `minimax::..` namespace
+- `^` added support for custom adapters (`"genai_1::gemma-4-26b-a4b-it-4bit"` 
+- `^` aip.tag.extractor - now support self-closing tags
+- `.` tui - change done check mark color for flow redo
+
 ## 2026-05-30 [v0.8.27](https://github.com/jeremychone/rust-devai/compare/v0.8.26...v0.8.27)
 
 - `^` Model - Opus 4.8 cost, alias, opus 4.8 
