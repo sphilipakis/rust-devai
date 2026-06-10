@@ -86,6 +86,8 @@ pub const CLR_TXT_WAITING: Color = CLR_TXT_400;
 pub const CLR_TXT_RUNNING: Color = CLR_TXT_TEAL;
 pub const CLR_TXT_DONE: Color = CLR_TXT_GREEN;
 
+pub const CLR_TXT_DONE_LOOPED: Color = Color::Indexed(50); // when flow redo count > 0
+
 // Private since should use the
 const CLR_TXT_PATH: Color = Color::Indexed(81); //CLR_TXT_TEAL; // 85, 81
 // same color, as it will be underlined.

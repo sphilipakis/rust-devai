@@ -118,7 +118,7 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState) {
 	if let Some(run_item) = state.current_run_item() {
 		let is_running = run_item.is_running();
 		if !is_running || matches!(state.running_tick_flag(), Some(true) | None) {
-			line_1.push_span(comp::el_running_ico(run_item));
+			line_1.push_span(comp::el_running_ico_with_flow(run_item, run_item.run().flow_redo_count));
 		}
 	}
 

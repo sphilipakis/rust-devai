@@ -65,7 +65,7 @@ impl StatefulWidget for RunsNavView {
 			.enumerate()
 			.map(|(idx, run_item)| {
 				let run = run_item.run();
-				let run_ico = comp::el_running_ico(run);
+				let run_ico = comp::el_running_ico_with_flow(run, run.flow_redo_count);
 
 				let label = if let Some(_parent_id) = run_item.parent_id() {
 					run.agent_name.as_deref().unwrap_or("no agent name").to_string()
