@@ -77,20 +77,20 @@ codex         = "gpt-5.5"  # much better than gpt-5.3-codex
 # As shown below, Gemini model names also support the use of `-high`, `-medium`, or `-low` suffixes,
 # in addition to the `-zero` suffix for Flash or pro
 gpro          = "gemini-3.1-pro-preview"
-flash3        = "gemini-3-flash-preview" # older, but 3x cheaper (might get discountinued by google)
 flash         = "gemini-3.5-flash"
 lite          = "gemini-3.1-flash-lite"
-# -- Fireworks (namespaced with `fireworks::_model_name`
-kimi          = "fireworks::kimi-k2p6"
-fminimax      = "fireworks::minimax-m2p7"
-glm           = "fireworks::glm-5p1"
-glm-air       = "fireworks::glm-4p5-air"
-gpt-oss       = "fireworks::gpt-oss-120b"
-gpt-oss-120b  = "fireworks::gpt-oss-120b"
-gpt-oss-small = "fireworks::gpt-oss-20b"
-gpt-oss-20b   = "fireworks::gpt-oss-20b"
-fdflash       = "fireworks::deepseek-v4-flash"
-fdpro         = "fireworks::deepseek-v4-pro"
+flash3        = "gemini-3-flash-preview" # older, but 3x cheaper (might get discountinued by google)
+# -- Fireworks models, prefixed with `f-` (namespaced with `fireworks::_model_name`)
+f-kimi          = "fireworks::kimi-k2p7-code"
+f-qwen          = "fireworks::qwen3p7-plus"
+f-minimax       = "fireworks::minimax-m3"
+f-glm           = "fireworks::glm-5p1"
+f-glm-air       = "fireworks::glm-4p5-air"
+f-gpt-oss       = "fireworks::gpt-oss-120b"
+f-gpt-oss-120b  = "fireworks::gpt-oss-120b"
+f-gpt-oss-20b   = "fireworks::gpt-oss-20b"
+f-dflash        = "fireworks::deepseek-v4-flash"
+f-dpro          = "fireworks::deepseek-v4-pro"
 # -- DeepSeek (from deepseek.com)
 dflash        = "deepseek-v4-flash"
 dpro          = "deepseek-v4-pro"
