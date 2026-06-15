@@ -235,7 +235,7 @@ mod tests {
 	async fn test_lua_time_today_utc_and_local() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_time::init_module, LUA_MOD_NAME).await?;
-		let fmt = format_description::parse("[year]-[month]-[day]")?;
+		let fmt = format_description::parse_borrowed::<3>("[year]-[month]-[day]")?;
 		let valid_weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 		// -- Exec
@@ -266,7 +266,7 @@ mod tests {
 	async fn test_lua_time_today_iso_utc_and_local() -> Result<()> {
 		// -- Setup & Fixtures
 		let lua = setup_lua(aip_time::init_module, LUA_MOD_NAME).await?;
-		let fmt = format_description::parse("[year]-[month]-[day]")?;
+		let fmt = format_description::parse_borrowed::<3>("[year]-[month]-[day]")?;
 
 		// -- Exec
 		let utc = eval_lua(&lua, r#"return aip.time.today_iso_utc()"#)?;
