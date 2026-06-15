@@ -101,12 +101,12 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	let [l1_label_1, l1_val_1, l1_label_2, l1_val_2, l1_label_3, l1_val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(10),             // Model
-			Constraint::Length(L1_VAL_1_WIDTH), //
-			Constraint::Length(7),              // Cost
+			Constraint::Length(10),                 // Model
+			Constraint::Length(L1_VAL_1_WIDTH),     //
+			Constraint::Length(7),                  // Cost
 			Constraint::Length(header_val_2_width), //
-			Constraint::Length(13),             // Duration
-			Constraint::Fill(1),                //
+			Constraint::Length(13),                 // Duration
+			Constraint::Fill(1),                    //
 		])
 		.spacing(1)
 		.areas(area);
@@ -114,12 +114,12 @@ fn render_header(area: Rect, buf: &mut Buffer, state: &mut AppState, header_mode
 	let [l2_label_1, l2_val_1, l2_label_2, l2_val_2, l2_label_3, l2_val_3] = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints(vec![
-			Constraint::Length(10),             // Prompt
-			Constraint::Length(L2_VAL_1_WIDTH), //
-			Constraint::Length(7),              // Completion
+			Constraint::Length(10),                 // Prompt
+			Constraint::Length(L2_VAL_1_WIDTH),     //
+			Constraint::Length(7),                  // Completion
 			Constraint::Length(header_val_2_width), //
-			Constraint::Length(13),             // Cache Info
-			Constraint::Fill(1),                //
+			Constraint::Length(13),                 // Cache Info
+			Constraint::Fill(1),                    //
 		])
 		.spacing(1)
 		.areas(area);
