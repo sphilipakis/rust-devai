@@ -53,10 +53,9 @@ impl FileWriteManager {
 	fn resolve_lock_key(path: &SPath) -> String {
 		// TODO: Later we will need to do absolute to be more accurate
 		//       The trick, is that assume the path exist
-		// if let Ok(canonical) = path.canonicalize() {
-		// 	return canonical.to_string();
-		// }
-
+		if let Ok(canonical) = path.canonicalize() {
+			return canonical.to_string();
+		}
 		path.to_string()
 	}
 }

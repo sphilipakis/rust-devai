@@ -92,6 +92,9 @@ pub(super) fn file_save(
 	let dir_context = runtime.dir_context();
 	let full_path = dir_context.resolve_path(runtime.session(), (&rel_path).into(), PathResolver::WksDir, None)?;
 
+	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
+	let _guard = lock_handle.lock();
+
 	// Apply options if present
 	if let Some(opts) = options
 		&& !opts.is_empty()
@@ -392,8 +395,6 @@ pub(super) fn file_append(
 
 	check_access_write(&full_path, wks_dir)?;
 
-	check_access_write(&full_path, wks_dir)?;
-
 	ensure_file_dir(&full_path).map_err(Error::from)?;
 
 	let mut file = std::fs::OpenOptions::new()
@@ -490,8 +491,13 @@ pub(super) fn file_ensure_exists(
 		runtime
 			.dir_context()
 			.resolve_path(runtime.session(), rel_path.clone(), PathResolver::WksDir, None)?;
+
 	let lock_handle = runtime.file_write_manager().lock_for_path(&full_path);
 	let _guard = lock_handle.lock();
+
+	let dir_context = runtime.dir_context();
+	let wks_dir = dir_context.try_wks_dir_with_err_ctx("aip.file.ensure_exists requires a aipack workspace setup")?;
+	check_access_write(&full_path, wks_dir)?;
 
 	// if the file does not exist, create it.
 	if !full_path.exists() {

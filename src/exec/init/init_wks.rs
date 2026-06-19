@@ -14,10 +14,19 @@ pub async fn init_wks(ref_dir: Option<&str>, show_info_always: bool) -> Result<D
 
 	let wks_dir = if let Some(dir) = ref_dir {
 		SPath::new(dir)
-	} else if let Some(path) = find_wks_dir(current_dir()?)? {
-		path
 	} else {
-		current_dir()?
+		// NOTE: We only adopt an existing `.aipack/` workspace when it is found in the
+		//       current directory itself. We do NOT climb to an ancestor `.aipack/` for a
+		//       fresh `aip run`, because doing so locks the workspace root to a far parent
+		//       and makes workspace support pack refs (e.g. `ns@pack$workspace/...`) resolve
+		//       against the ancestor `.aipack/` while plain relative paths resolve against
+		//       the current dir. That mismatch caused directories to be created locally while
+		//       file writes were silently sent to (or rejected against) the ancestor workspace.
+		let current_dir = current_dir()?;
+		match find_wks_dir(current_dir.clone())? {
+			Some(found_wks_dir) if found_wks_dir.canonicalize()? == current_dir.canonicalize()? => found_wks_dir,
+			_ => current_dir,
+		}
 	};
 
 	let wks_dir = wks_dir.canonicalize()?;

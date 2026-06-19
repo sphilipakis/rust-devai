@@ -45,10 +45,12 @@ impl AipackPaths {
 		match wks_dir {
 			Some(wks_dir) => Self::from_wks_dir(wks_dir),
 			None => {
+				let current_dir = current_dir()?.canonicalize()?;
 				let aipack_base_dir = AipackBaseDir::new()?;
+				let aipack_wks_dir = Some(AipackWksDir::new_from_wks_dir(&current_dir)?);
 				Ok(Self {
-					wks_dir: None,
-					aipack_wks_dir: None,
+					wks_dir: Some(current_dir),
+					aipack_wks_dir,
 					aipack_base_dir,
 				})
 			}
