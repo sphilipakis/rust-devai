@@ -17,7 +17,7 @@ use crate::script::support::into_vec_of_strings;
 use crate::support::W;
 use crate::support::text::trim_if_needed;
 use crate::{Result, support};
-use html_helpers::Elem;
+use htmlr::Elem;
 use mlua::{IntoLua, Lua, Table, Value};
 
 pub fn init_module(lua: &Lua, _runtime: &Runtime) -> Result<Table> {
@@ -93,7 +93,7 @@ fn html_select(lua: &Lua, html_content: String, selectors: Value) -> mlua::Resul
 	// extract as selectors
 	let selectors = into_vec_of_strings(selectors, "aip.html.select")?;
 
-	let els = html_helpers::select(&html_content, &selectors)
+	let els = htmlr::select(&html_content, &selectors)
 		.map_err(|err| crate::Error::custom(format!("Cannot apply selector '{selectors:?}'.\nCause: {err}")))?;
 
 	let els: Vec<mlua::Value> = els
