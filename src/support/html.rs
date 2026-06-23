@@ -1,5 +1,6 @@
 //! HTML Utilities
 use crate::{Error, Result};
+use html_helpers::SlimOptions;
 
 /// Strips non-content elements from the provided HTML content and returns the cleaned HTML as a string.
 ///
@@ -20,7 +21,8 @@ use crate::{Error, Result};
 /// - `Err` if any parsing or serialization errors occur.
 ///
 pub fn slim(html_content: String) -> Result<String> {
-	let res = html_helpers::slim(&html_content).map_err(|err| Error::cc("Cannot slim HTML", err))?;
+	let res = html_helpers::slim(&html_content, SlimOptions::default().with_indent(2))
+		.map_err(|err| Error::cc("Cannot slim HTML", err))?;
 	Ok(res)
 }
 

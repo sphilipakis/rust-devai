@@ -42,7 +42,7 @@ value-ext = "0.1.2"
 toml = "1"
 serde_yaml_ng = "0.10"
 csv = "1"
-lopdf = "0.40"
+lopdf = "0.41"
 # -- Tracing
 tracing = "0.1"
 tracing-subscriber = {version = "0.3", features = ["env-filter"]}
@@ -61,7 +61,7 @@ textwrap = "0.16"
 markex = { version = "0.1.1" }
 # -- HTML & XML
 html-escape = "0.2"
-html-helpers = { version = "0.1.0" }
+html-helpers = { version = "0.2.0" }
 htmd = "0.5"
 url = "2.5.7"
 quick-xml = "0.40"
