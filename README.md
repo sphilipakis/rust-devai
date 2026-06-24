@@ -226,3 +226,7 @@ You can also run the `ask-aipack` agent.
 aip run core@ask-aipack
 # The prompt file will be at `.aipack/.prompt/core@ask-aipack/ask-prompt.md`
 ```
+
+---
+
+[This Repo](https://github.com/aipack-ai/aipack)

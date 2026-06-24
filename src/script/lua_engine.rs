@@ -222,12 +222,14 @@ fn init_null(lua: &Lua) -> Result<()> {
 	// value_or(value, alt) -> value or alt
 	globals.set(
 		"value_or",
-		lua.create_function(|_, (v, alt): (Value, Value)| {
-			if matches!(v, Value::Nil) || v == Value::NULL {
-				Ok(alt)
-			} else {
-				Ok(v)
+		lua.create_function(|_, args: mlua::Variadic<Value>| {
+			let last = args.last().cloned();
+			for arg in args {
+				if !matches!(arg, Value::Nil) && arg != Value::NULL {
+					return Ok(arg);
+				}
 			}
+			Ok(last.unwrap_or(Value::Nil))
 		})?,
 	)?;
 
