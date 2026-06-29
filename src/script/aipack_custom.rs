@@ -37,6 +37,7 @@ pub struct BeforeAllResponse {
 }
 
 /// Return of the `AipackCustom::from_value` allowing to avoid cloning in case it's not a AipackCustom.
+#[allow(clippy::large_enum_variant)] // ok for now
 #[derive(Debug)]
 pub enum FromValue {
 	AipackCustom(AipackCustom),
