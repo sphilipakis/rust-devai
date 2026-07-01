@@ -1,6 +1,7 @@
 //! Module about AI support functions.
 
 use crate::Result;
+use genai::adapter::AdapterKind;
 use genai::chat::ChatOptions;
 use genai::resolver::AuthData;
 use genai::{Client, ModelIden};
@@ -45,9 +46,14 @@ pub fn new_genai_client() -> Result<genai::Client> {
 				// }
 				// #[cfg(not(target_os = "macos"))]
 				{
-					Err(genai::resolver::Error::ApiKeyEnvNotFound {
-						env_name: key_name.to_string(),
-					})
+					// NOTE: for now, for omlx, we allow that if we did not find the env, it might be ok.
+					if model.adapter_kind == AdapterKind::Omlx {
+						Ok(None)
+					} else {
+						Err(genai::resolver::Error::ApiKeyEnvNotFound {
+							env_name: key_name.to_string(),
+						})
+					}
 				}
 			}
 		})
