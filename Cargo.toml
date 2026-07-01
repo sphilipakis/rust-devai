@@ -22,6 +22,10 @@ redundant_closure_call = "allow"
 name = "aip"
 path = "src/main.rs"
 
+# for local genai testing (set local version to match below)
+# [patch.crates-io]
+# genai = { path = "..." }
+
 [dependencies]
 # -- Async
 tokio = { version = "1", features = ["process"]}
@@ -31,7 +35,7 @@ flume = "0.12"
 futures-timer = "3.0.3"
 futures = "0.3.31"
 # -- AI
-genai = { version = "0.7.0-beta.7"}
+genai = { version = "0.7.0-beta.8"}
 udiffx = { version = "0.2.2", features = ["prompt"]}
 aicost = { version = "0.1.15" }
 # -- Json & Data Files
