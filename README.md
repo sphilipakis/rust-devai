@@ -150,14 +150,23 @@ This is the agent I use every day for my production coding.
 OPENAI_API_KEY
 ANTHROPIC_API_KEY
 GEMINI_API_KEY
+DEEPSEEK_API_KEY
+KIMI_API_KEY
+ZAI_API_KEY
 FIREWORKS_API_KEY
 TOGETHER_API_KEY
 NEBIUS_API_KEY
-XAI_API_KEY
-DEEPSEEK_API_KEY
 GROQ_API_KEY
 COHERE_API_KEY
+XAI_API_KEY
 ```
+
+On mac, you can also use OMLX with for example
+
+```
+OMLX_ENDPOINT=http://127.0.0.1:8000/v1/
+```
+
 
 ## More Info
 
