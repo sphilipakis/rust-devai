@@ -1,5 +1,19 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
+
+## 2026-06-30 [v0.8.29](https://github.com/jeremychone/rust-devai/compare/v0.8.28...v0.8.29)
+
+- `+` Provider - omlx (local llm) (with `OMLX_API_KEY` and `OMLX_ENDPOINT` envs)
+- `+` Provider - added Kimi access, aliases, and pricing (`KIMI_API_KEY`)
+- `^` Models - fireworks - minimax-m3, qwen3p7-plus, kimi-k2p7-code, zai - glm5.1
+- `^` Models - Sonnet 5 pricing and alias
+- `!` config-default aliases - updated the fireworks models with f- prefix
+- `-` Provider - fix 5k output limit on fireworks
+- `^` value_or takes variadic
+- `>` use htmlr (from html-helpers) (slim with indent now)
+- `.` udiffx 0.2.2 - prompt - emphasis to only use file_changes
+- `-` fix first run not creating files when .aipack/ did not exist
+
 ## 2026-06-10 [v0.8.28](https://github.com/jeremychone/rust-devai/compare/v0.8.27...v0.8.28)
 
 - `^` Model - added Clause Fable (Alias & pricing)
