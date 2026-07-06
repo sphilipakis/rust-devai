@@ -140,9 +140,9 @@ pub fn expect_table(value: Value, ctx: &str, item_label: &str) -> mlua::Result<T
 /// ### Example
 /// Input table: `{ "id", "name" }`
 /// Output vector: `["id", "name"]`
-pub fn collect_string_sequence(value: Value, ctx: &str, item_label: &str) -> mlua::Result<Vec<mlua::String>> {
+pub fn collect_string_sequence(value: Value, ctx: &str, item_label: &str) -> mlua::Result<Vec<mlua::LuaString>> {
 	let table = expect_table(value, ctx, item_label)?;
-	let mut items: Vec<mlua::String> = Vec::new();
+	let mut items: Vec<mlua::LuaString> = Vec::new();
 
 	for (idx, value) in table.sequence_values::<Value>().enumerate() {
 		let value = value?;

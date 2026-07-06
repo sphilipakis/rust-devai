@@ -21,7 +21,7 @@ use crate::Error;
 use crate::script::support::{
 	build_columnar_table, collect_rows_and_intersection, collect_sequence_values, collect_string_sequence, expect_table,
 };
-use mlua::{Lua, Value};
+use mlua::{Lua, LuaString, Value};
 
 /// ## Lua Documentation
 ///
@@ -310,7 +310,7 @@ pub fn columnar_to_records(lua: &Lua, cols: Value) -> mlua::Result<Value> {
 	let cols = expect_table(cols, "aip.shape.columnar_to_records", "Columns")?;
 
 	// Collect column names and their values (as vectors)
-	let mut col_names: Vec<mlua::String> = Vec::new();
+	let mut col_names: Vec<LuaString> = Vec::new();
 	let mut col_values: Vec<Vec<Value>> = Vec::new();
 	let mut expected_len: Option<usize> = None;
 

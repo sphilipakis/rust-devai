@@ -12,7 +12,7 @@
 //! - `aip.text.split_last_line(content: string | nil, sep: string): (string | nil, string | nil)`
 
 use crate::script::support::into_option_string;
-use mlua::{Lua, MultiValue, String as LuaString, Value};
+use mlua::{Lua, LuaString, MultiValue, Value};
 
 /// ## Lua Documentation
 ///

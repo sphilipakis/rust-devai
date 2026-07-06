@@ -7,7 +7,7 @@ use mlua::{BorrowedStr, Table, Value};
 pub trait LuaValueExt {
 	fn x_is_null(&self) -> bool;
 
-	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>>;
+	fn x_as_lua_str(&self) -> Option<BorrowedStr>;
 	/// Note: Will round if floating number
 	fn x_as_i64(&self) -> Option<i64>;
 	fn x_as_f64(&self) -> Option<f64>;
@@ -28,7 +28,7 @@ impl LuaValueExt for Value {
 		self == &Value::NULL
 	}
 
-	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr> {
 		self.as_string().and_then(|s| s.to_str().ok())
 	}
 
@@ -93,7 +93,7 @@ impl LuaValueExt for Option<Value> {
 		val == &Value::NULL
 	}
 
-	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr> {
 		self.as_ref()?.as_string().and_then(|s| s.to_str().ok())
 	}
 
@@ -135,7 +135,7 @@ impl LuaValueExt for Table {
 		false
 	}
 
-	fn x_as_lua_str(&self) -> Option<BorrowedStr<'_>> {
+	fn x_as_lua_str(&self) -> Option<BorrowedStr> {
 		None
 	}
 
