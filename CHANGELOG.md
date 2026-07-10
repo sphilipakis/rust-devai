@@ -1,6 +1,15 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
 
+## 2026-07-09 [v0.8.30](https://github.com/jeremychone/rust-devai/compare/v0.8.29...v0.8.30)
+
+- `+` Models - added GPT-5.6 pricing and aliases (`luna`, `terra`, `sol`, `gpt == terra`)
+- `+` Models - added Grok 4.5 pricing with `sol`, `terra`, and `luna` aliases
+- `^` Provider - improved OMLX support with an optional `OMLX_API_KEY` and corrected default endpoint
+- `^` Anthropic - improved adaptive thinking support, including Sonnet 5 updates and `-zero` support
+- `^` File detection - classify `.db`, `.db3`, `.sqlite`, and `.sqlite3` files as binary
+- `.` Provider - added ZAI and KIMI API key information
+
 ## 2026-06-30 [v0.8.29](https://github.com/jeremychone/rust-devai/compare/v0.8.28...v0.8.29)
 
 - `+` Provider - omlx (local llm) (with `OMLX_API_KEY` and `OMLX_ENDPOINT` envs)
