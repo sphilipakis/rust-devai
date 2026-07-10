@@ -213,11 +213,13 @@ impl AppState {
 
 		let mut buf = String::new();
 
-		if let Some(tk_cached) = task.tk_prompt_cached
-			&& tk_cached > 0
-			&& let Some(cache_saving) = task.cost_cache_saving
+		if let Some(cache_saving) = task.cost_cache_saving
 		{
-			buf.push_str(&format!("-${cache_saving} saving"));
+			if cache_saving > 0.0 {
+				buf.push_str(&format!("-${cache_saving} saving"));
+			} else if cache_saving < 0.0 {
+				buf.push_str(&format!("+${} surcharge", cache_saving.abs()));
+			}
 		}
 
 		if let Some(tk_cache_creation) = task.tk_prompt_cache_creation
@@ -226,9 +228,6 @@ impl AppState {
 			let prefix = if buf.is_empty() { "" } else { " | " };
 			let t = text::format_num(tk_cache_creation);
 			buf.push_str(&format!("{prefix}{} tk write", t));
-			if let Some(cost_cache_write) = task.cost_cache_write {
-				buf.push_str(&format!(" (+${cost_cache_write} cost)"));
-			}
 		}
 
 		if buf.is_empty() { None } else { Some(buf) }

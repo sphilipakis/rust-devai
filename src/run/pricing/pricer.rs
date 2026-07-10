@@ -17,7 +17,7 @@ pub fn price_it(provider_type: &str, model_name: &str, usage: &Usage) -> Option<
 	Some(AiPrice {
 		cost: ai_cost.total,
 		cost_cache_write: (ai_cost.input_cache_write > 0.0).then_some(ai_cost.input_cache_write),
-		cost_cache_saving: (ai_cost.input_cache_saving > 0.0).then_some(ai_cost.input_cache_saving),
+		cost_cache_saving: (ai_cost.input_cache_saving != 0.0).then_some(ai_cost.input_cache_saving),
 	})
 }
 

@@ -51,10 +51,10 @@ pub async fn init_base(force: bool) -> Result<()> {
 
 	// -- Display user update
 	if new {
-		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", &*base_dir))
+		hub.publish(format!("\n=== {} '{}'", "Initializing ~/.aipack-base at", *base_dir))
 			.await;
 	} else if force_update {
-		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", &*base_dir))
+		hub.publish(format!("\n=== {} '{}'", "Updating ~/.aipack-base at", *base_dir))
 			.await;
 		if is_new_version {
 			hub.publish("(needed because new aipack version)").await;
