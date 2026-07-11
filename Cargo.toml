@@ -24,7 +24,7 @@ path = "src/main.rs"
 
 # for local genai testing (set local version to match below)
 [patch.crates-io]
-genai = { version = "0.7.0-beta.11",  path = "/Users/jeremychone/_jeremy/_rust/utils/genai/rust-genai" }
+# genai = { version = "0.7.0-beta.11",  path = "" }
 
 [dependencies]
 # -- Async
@@ -35,7 +35,7 @@ flume = "0.12"
 futures-timer = "3.0.3"
 futures = "0.3.31"
 # -- AI
-genai = { version = "0.7.0-beta.11"}
+genai = { version = "0.7.0-beta.12"}
 udiffx = { version = "0.2.3", features = ["prompt"]}
 aicost = { version = "0.2.0" }
 # -- Json & Data Files
