@@ -7,7 +7,7 @@ use crate::run::{AiResponse, Attachments, DryMode, RunBaseOptions};
 use crate::runtime::Runtime;
 use crate::support::hbs::hbs_render;
 use crate::support::text::{self, format_duration, format_usage};
-use genai::chat::{CacheControl, ChatMessage, ChatRequest, ChatResponse, ContentPart};
+use genai::chat::{CacheControl, ChatMessage, ChatOptions, ChatRequest, ChatResponse, ContentPart};
 use genai::{ModelIden, ModelName};
 use serde_json::Value;
 use simple_fs::SPath;
@@ -227,6 +227,10 @@ async fn process_send_to_genai(
 
 	let rt_model = runtime.rt_model();
 
+	let has_cache_control = chat_messages
+		.iter()
+		.any(|message| message.options.as_ref().is_some_and(|options| options.cache_control.is_some()));
+
 	let chat_req = ChatRequest::from_messages(chat_messages);
 
 	hub.publish(format!("-> Sending rendered instruction to {model_resolved} ..."))
@@ -240,8 +244,19 @@ async fn process_send_to_genai(
 	}
 
 	let start = Instant::now();
-	let chat_options = agent.genai_chat_options();
-	let chat_res = client.exec_chat(model_resolved, chat_req, Some(chat_options)).await?;
+
+	// compute the cache options with the eventual cache key
+	// Note: For now, we use the runtime session as the key. Later, we will allow payload to provide it
+	let c_chat_options: Cow<ChatOptions> = if has_cache_control {
+		let opts = agent.genai_chat_options().clone();
+		Cow::Owned(opts.with_prompt_cache_key(runtime.session_str().to_string()))
+	} else {
+		Cow::Borrowed(agent.genai_chat_options())
+	};
+
+	let chat_res = client
+		.exec_chat(model_resolved, chat_req, Some(c_chat_options.as_ref()))
+		.await?;
 	let duration = start.elapsed();
 
 	// region:    --- First Info Part
