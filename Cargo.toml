@@ -36,7 +36,7 @@ futures-timer = "3.0.3"
 futures = "0.3.31"
 # -- AI
 genai = { version = "0.7.0-beta.11"}
-udiffx = { version = "0.2.2", features = ["prompt"]}
+udiffx = { version = "0.2.3", features = ["prompt"]}
 aicost = { version = "0.2.0" }
 # -- Json & Data Files
 serde = { version = "1", features = ["derive"] }
