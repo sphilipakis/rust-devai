@@ -42,6 +42,17 @@ pub fn format_f64(val: f64) -> String {
 	format!("{:.*}", 4, rounded)
 }
 
+/// Format a non-zero floating point value to four decimal places.
+///
+/// Values smaller than the display precision retain the smallest non-zero
+/// representation instead of being displayed as zero.
+pub fn format_f64_nonzero(val: f64) -> String {
+	let rounded = float_max_dec(val, 4);
+	let minimum = 0.0001_f64.copysign(val);
+	let display_value = if rounded == 0.0 && val != 0.0 { minimum } else { rounded };
+	format!("{display_value:.4}")
+}
+
 /// Format a floating point value as a whole-number percentage string (no `%` unit).
 ///
 /// Examples:
@@ -166,6 +177,26 @@ mod tests {
 		// -- Exec & Check
 		for &(input, expected) in &cases {
 			let actual = format_percentage(input);
+			assert_eq!(actual, expected, "input: {input}");
+		}
+
+		Ok(())
+	}
+
+	#[test]
+	fn test_support_text_format_f64_nonzero() -> Result<()> {
+		// -- Setup & Fixtures
+		let cases = [
+			//
+			(0.00003, "0.0001"),
+			(0.00023, "0.0002"),
+			(0.00026, "0.0003"),
+			(0.000203, "0.0002"),
+		];
+
+		// -- Exec & Check
+		for &(input, expected) in &cases {
+			let actual = format_f64_nonzero(input);
 			assert_eq!(actual, expected, "input: {input}");
 		}
 
