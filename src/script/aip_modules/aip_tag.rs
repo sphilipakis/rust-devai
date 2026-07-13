@@ -37,7 +37,7 @@ use crate::runtime::Runtime;
 use crate::script::support::into_vec_of_strings;
 use crate::support::W;
 use crate::types::Extrude;
-use markex::tag;
+use markex::tag::{self, TagOptions};
 use mlua::{Error as LuaError, IntoLua, Lua, MultiValue, Table, Value};
 use std::collections::HashMap;
 
@@ -203,7 +203,11 @@ fn extract_tag_elems(
 	}
 
 	let tag_names: Vec<&str> = tag_names.iter().map(String::as_str).collect();
-	let parts = tag::extract(content, &tag_names, extrude_enabled);
+	let parts = tag::extract(
+		content,
+		&tag_names,
+		TagOptions::default().with_capture_text(extrude_enabled),
+	);
 
 	let (elems, extruded_content) = parts.into_with_extrude_content();
 

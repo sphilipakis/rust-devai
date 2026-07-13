@@ -38,7 +38,8 @@ futures-timer = "3.0.3"
 futures = "0.3.31"
 # -- AI
 genai = { version = "0.7.0-beta.12"}
-udiffx = { version = "0.3.0-beta.3", features = ["prompt"]}
+udiffx = { version = "=0.3.0-beta.4", features = ["prompt"]}
+markex = { version = "=0.3.0-beta.2" }
 aicost = { version = "0.2.0" }
 # -- Json & Data Files
 serde = { version = "1", features = ["derive"] }
@@ -64,7 +65,6 @@ regex = "1"
 num-format = "0.4.4"
 humantime = "2.3.0"
 textwrap = "0.16"
-markex = { version = "0.2.0" }
 # -- HTML & XML
 htmlr = { version = "0.1.1" }
 url = "2.5.7"
