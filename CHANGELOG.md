@@ -3,6 +3,18 @@
 
 ## 2026-07-09 [v0.8.30](https://github.com/jeremychone/rust-devai/compare/v0.8.29...v0.8.30)
 
+- `^` OpenAI - improved AI caching hit support
+- `^` udiffx - auto-close file directives and more resilient `*** End Patch` cleanup
+- `^` prompt cache - check `cache_control` before setting the prompt cache key
+- `^` TUI cache - format cache savings to four decimals
+- `^` pricing compute - display cache saving surcharges
+- `^` cache cost reporting - report savings or additional costs as a net difference
+- `-` udiffx - fix prompt allowing text outside of the udiffx tag
+- `-` cost - fix cache computation on saving
+- `>` udiffx - big refactor, now tag brackets (internal, just change raw AI output)
+
+## 2026-07-14 [v0.8.31](https://github.com/jeremychone/rust-devai/compare/v0.8.30...v0.8.31)
+
 - `+` Models - added GPT-5.6 pricing and aliases (`luna`, `terra`, `sol`, `gpt == terra`)
 - `+` Models - added Grok 4.5 pricing with `sol`, `terra`, and `luna` aliases
 - `^` Provider - improved OMLX support with an optional `OMLX_API_KEY` and corrected default endpoint
