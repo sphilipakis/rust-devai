@@ -1,7 +1,7 @@
 `.` minor | `-` Fix | `+` Addition | `^` improvement | `!` Change | `*` important | `>` Refactor
 
 
-## 2026-07-09 [v0.8.30](https://github.com/jeremychone/rust-devai/compare/v0.8.29...v0.8.30)
+## 2026-07-14 [v0.8.31](https://github.com/jeremychone/rust-devai/compare/v0.8.30...v0.8.31)
 
 - `^` OpenAI - improved AI caching hit support
 - `^` udiffx - auto-close file directives and more resilient `*** End Patch` cleanup
@@ -13,7 +13,7 @@
 - `-` cost - fix cache computation on saving
 - `>` udiffx - big refactor, now tag brackets (internal, just change raw AI output)
 
-## 2026-07-14 [v0.8.31](https://github.com/jeremychone/rust-devai/compare/v0.8.30...v0.8.31)
+## 2026-07-09 [v0.8.30](https://github.com/jeremychone/rust-devai/compare/v0.8.29...v0.8.30)
 
 - `+` Models - added GPT-5.6 pricing and aliases (`luna`, `terra`, `sol`, `gpt == terra`)
 - `+` Models - added Grok 4.5 pricing with `sol`, `terra`, and `luna` aliases
